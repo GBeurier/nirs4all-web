@@ -4,8 +4,8 @@
 // (preprocessing fit-on-train, K-fold, OOF-by-sampleId, refit, metrics) is
 // identical and leakage-honest regardless of backend.
 import { nodeByType } from '@/catalog/nodes'
-import { type Mat, mat, selectRows, colMeans } from './algo/linalg'
-import { type Transformer, makeTransformer, mscFromRef } from './algo/preprocessing'
+import { type Mat, mat, selectRows } from './algo/linalg'
+import { type FittedTransformer, type Preprocessor } from './methods/preproc'
 import { buildFolds, testRowsOf, trainRowsOf } from './kfold'
 import { classificationMetrics, regressionMetrics } from './metrics'
 import type {
@@ -23,17 +23,22 @@ import type {
   TaskType,
 } from './types'
 
-/** A pluggable PLS implementation. Model blobs must be plain serializable data. */
+/** A pluggable numeric backend: the model (PLS) fit/predict + the preprocessing
+ *  operators. Both come from libn4m (C++ → WASM) in production; a JS backend is
+ *  the offline fallback. Model blobs + preprocessing state are plain serializable data. */
 export interface ModelBackend {
   id: string
   fit(X: Mat, Y: Mat, nComp: number): unknown
   predict(model: unknown, X: Mat): Mat
+  /** preprocessing operators (libn4m or JS) — the numerics never live here */
+  preproc: Preprocessor
 }
 
 interface FittedStep {
   type: string
   params: Record<string, unknown>
-  ref?: number[]
+  /** serialized fitted preprocessing state (empty for stateless ops) */
+  state: number[]
 }
 export interface FittedState {
   chain: FittedStep[]
@@ -115,45 +120,37 @@ export function trainAndPredict(
   const ncomp = Number(dsl.model.params.n_components ?? nodeByType(dsl.model.type)?.params.find((p) => p.name === 'n_components')?.default ?? 10)
   const { classNames, classIdx } = classInfo(ds)
   const Xfull: Mat = { data: ds.X, rows: ds.nSamples, cols: ds.nFeatures }
-  const { transformers, descriptors, Xout } = fitChain(dsl.steps, selectRows(Xfull, trainIdx))
+  const { transformers, descriptors, Xout } = fitChain(dsl.steps, selectRows(Xfull, trainIdx), backend.preproc)
   const model = backend.fit(Xout, buildYMatrix(ds, classNames, classIdx, trainIdx), clampNcomp(ncomp, Xout))
   const pred = backend.predict(model, applyTransformers(transformers, selectRows(Xfull, predictIdx)))
+  transformers.forEach((t) => t.free())
   return { pred, descriptors, model, classNames }
 }
 
-function fitChain(steps: PipelineStep[], Xin: Mat): { transformers: Transformer[]; descriptors: FittedStep[]; Xout: Mat } {
+function fitChain(steps: PipelineStep[], Xin: Mat, preproc: Preprocessor): { transformers: FittedTransformer[]; descriptors: FittedStep[]; Xout: Mat } {
   let cur = Xin
-  const transformers: Transformer[] = []
+  const transformers: FittedTransformer[] = []
   const descriptors: FittedStep[] = []
   for (const s of steps) {
-    let t: Transformer
-    let ref: number[] | undefined
-    if (s.type === 'MSC') {
-      const r = colMeans(cur)
-      ref = Array.from(r)
-      t = mscFromRef(r)
-    } else {
-      t = makeTransformer(s.type, s.params, cur)
-    }
+    const t = preproc.fit(s.type, s.params, cur) // fit-on-train, in libn4m
     cur = t.apply(cur)
     transformers.push(t)
-    descriptors.push({ type: s.type, params: s.params, ref })
+    descriptors.push({ type: s.type, params: s.params, state: t.state })
   }
   return { transformers, descriptors, Xout: cur }
 }
 
-function applyTransformers(transformers: Transformer[], X: Mat): Mat {
+function applyTransformers(transformers: FittedTransformer[], X: Mat): Mat {
   let cur = X
   for (const t of transformers) cur = t.apply(cur)
   return cur
 }
 
-function applyChain(chain: FittedStep[], X: Mat): Mat {
+function applyChain(chain: FittedStep[], X: Mat, preproc: Preprocessor): Mat {
   let cur = X
-  for (const d of chain) {
-    const t = d.type === 'MSC' && d.ref ? mscFromRef(Float64Array.from(d.ref)) : makeTransformer(d.type, d.params, cur)
-    cur = t.apply(cur)
-  }
+  const live = chain.map((d) => preproc.restore(d.type, d.params, d.state))
+  for (const t of live) cur = t.apply(cur)
+  live.forEach((t) => t.free())
   return cur
 }
 
@@ -204,10 +201,11 @@ export async function runPipeline(
   for (let fi = 0; fi < folds.length; fi++) {
     checkCancel()
     const f = folds[fi]
-    const { transformers, Xout: XtrP } = fitChain(dsl.steps, selectRows(Xfull, f.trainIdx))
+    const { transformers, Xout: XtrP } = fitChain(dsl.steps, selectRows(Xfull, f.trainIdx), backend.preproc)
     const model = backend.fit(XtrP, buildY(f.trainIdx), safeN(XtrP))
     const XvaP = applyTransformers(transformers, selectRows(Xfull, f.valIdx))
     const rows = decode(backend.predict(model, XvaP), f.valIdx)
+    transformers.forEach((t) => t.free())
     oof.push(...rows)
     foldNodes.push(scoreNode(`fold-${f.foldId}`, `Fold ${f.foldId}`, 'fold', rows, task, classNames))
     onP?.({ phase: 'fit_cv', pct: 4 + Math.round((72 * (fi + 1)) / folds.length) })
@@ -219,10 +217,11 @@ export async function runPipeline(
   onP?.({ phase: 'refit', pct: 82 })
   const trainIdx = trainRowsIdx
   const testIdx = testRowsOf(ds)
-  const { transformers, descriptors, Xout: XtrP } = fitChain(dsl.steps, selectRows(Xfull, trainIdx))
+  const { transformers, descriptors, Xout: XtrP } = fitChain(dsl.steps, selectRows(Xfull, trainIdx), backend.preproc)
   const model = backend.fit(XtrP, buildY(trainIdx), safeN(XtrP))
   const scoreIdx = testIdx.length > 0 ? testIdx : trainIdx
   const refitRows = decode(backend.predict(model, applyTransformers(transformers, selectRows(Xfull, scoreIdx))), scoreIdx)
+  transformers.forEach((t) => t.free())
   const refitNode = scoreNode('refit', testIdx.length > 0 ? 'Refit · test' : 'Refit · train', 'refit', refitRows, task, classNames)
 
   onP?.({ phase: 'done', pct: 100 })
@@ -258,7 +257,7 @@ export function predictPipeline(
   backend: ModelBackend,
 ): PredictResult {
   const st = model.state as FittedState
-  const Xp = applyChain(st.chain, { data: Xnew, rows: nSamples, cols: nFeatures })
+  const Xp = applyChain(st.chain, { data: Xnew, rows: nSamples, cols: nFeatures }, backend.preproc)
   const pred = backend.predict(st.model, Xp)
   if (model.taskType === 'regression') {
     return { values: Float64Array.from({ length: nSamples }, (_, i) => pred.data[i]) }

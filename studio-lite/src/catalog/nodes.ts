@@ -56,15 +56,14 @@ export const PREPROCESSING_NODES: NodeDef[] = [
     name: 'Derivative',
     category: 'preprocessing',
     subcategory: 'derivative',
-    description: 'Finite-difference derivative (gap-segment) — emphasizes spectral slopes and removes additive baseline.',
+    description: 'Shape-preserving central-difference derivative (np.gradient) — emphasizes spectral slopes and removes additive baseline.',
     icon: 'TrendingUp',
     params: [
       { name: 'order', label: 'Order', type: 'select', default: 1, options: [
         { value: 1, label: '1st' }, { value: 2, label: '2nd' },
       ] },
-      { name: 'gap', label: 'Gap', type: 'int', default: 1, min: 1, max: 21, help: 'Sample gap between difference points.' },
     ],
-    n4m: { fit: null, transform: 'n4m_pp_derivate_transform' },
+    n4m: { fit: null, transform: 'n4m_pp_first_derivative_transform' },
   },
   {
     id: 'preprocessing.baselines.detrend',
@@ -85,13 +84,9 @@ export const PREPROCESSING_NODES: NodeDef[] = [
     name: 'Normalize',
     category: 'preprocessing',
     subcategory: 'scaling',
-    description: 'Per-spectrum vector normalization (L2 / area / min-max).',
+    description: 'Per-spectrum vector normalization to unit L2 norm.',
     icon: 'Ruler',
-    params: [
-      { name: 'norm', label: 'Norm', type: 'select', default: 'l2', options: [
-        { value: 'l2', label: 'L2' }, { value: 'l1', label: 'L1' }, { value: 'max', label: 'Max' },
-      ] },
-    ],
+    params: [],
     n4m: { fit: null, transform: 'n4m_pp_normalize_transform' },
   },
   {
