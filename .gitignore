@@ -1,0 +1,12 @@
+# dependencies & build output
+**/node_modules/
+studio-lite/dist/
+studio-lite/dist-single/
+single-page-WASM/dist/
+single-page-WASM/pkg/
+*.log
+
+# design artifacts / OS cruft
+*.zip
+*:Zone.Identifier
+.DS_Store

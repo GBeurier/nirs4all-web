@@ -1,0 +1,220 @@
+// Real data stage powered by the vendored nirs4all-formats + nirs4all-io WASM:
+// decode ~58 vendor formats, infer dataset structure (DatasetPlan + DatasetSpec),
+// list the reader catalog, validate a DatasetSpec, and materialize X/y for the
+// engine. Loaded on demand (dynamic import) so the ~8 MB of WASM is fetched only
+// when a non-CSV file is uploaded — the CSV fast-path and the bundled sample never
+// pull it, keeping the initial bundle and the offline single-file build lean.
+import type { MaterializedDataset, Partition } from '@/engine/types'
+import { encodeTarget, inferTaskType } from './dataset'
+
+export interface DecodedFile {
+  ok: boolean
+  file: string
+  records?: SpectralRecord[]
+  error?: string
+}
+export interface SpectralRecord {
+  signals?: Record<string, { axis?: { values?: number[]; unit?: string }; values?: number[] }>
+  targets?: Record<string, number | string>
+  metadata?: { row_index?: number; sample_id?: string; id?: string; partition?: string }
+  provenance?: { format?: string; reader?: string }
+}
+export interface Analysis {
+  decoded: DecodedFile[]
+  plan: DatasetPlan | null
+  readers: { count: number; features: Record<string, boolean> }
+}
+export interface DatasetPlan {
+  overall_score?: number
+  structure?: Decision
+  signal_type?: Decision
+  task_type?: Decision
+  axis?: { n?: number; unit?: string; range?: [number, number] }
+  warnings?: string[]
+  recommendations?: string[]
+  resolved_spec?: DatasetSpec | null
+  blocked?: boolean
+}
+interface Decision {
+  value?: string
+  score?: number
+  evidence?: string[]
+}
+export interface DatasetSpec {
+  schema_version?: number
+  name?: string
+  task_type?: string
+  signal_type?: string
+  sources?: { id: string; role: string; input: string | string[]; partition?: string }[]
+  [k: string]: unknown
+}
+
+type FormatsMod = typeof import('@/engine/wasm/formats/nirs4all_formats_wasm.js')
+type IoMod = typeof import('@/engine/wasm/io/nirs4all_io_wasm.js')
+
+let modsPromise: Promise<{ formats: FormatsMod; io: IoMod }> | null = null
+async function mods() {
+  if (!modsPromise) {
+    modsPromise = (async () => {
+      const formats = await import('@/engine/wasm/formats/nirs4all_formats_wasm.js')
+      const io = await import('@/engine/wasm/io/nirs4all_io_wasm.js')
+      await formats.default()
+      await io.default()
+      return { formats, io }
+    })()
+  }
+  return modsPromise
+}
+
+export async function analyzeFiles(files: { name: string; bytes: Uint8Array }[]): Promise<Analysis> {
+  const { formats, io } = await mods()
+  const decoded: DecodedFile[] = []
+  const recordSets: { source: string; format: string; records: SpectralRecord[] }[] = []
+  for (const f of files) {
+    try {
+      const records = formats.openBytes(f.name, f.bytes) as SpectralRecord[]
+      if (Array.isArray(records) && records.length) {
+        decoded.push({ ok: true, file: f.name, records })
+        recordSets.push({ source: f.name, format: records[0]?.provenance?.format ?? '', records })
+      } else {
+        decoded.push({ ok: false, file: f.name, error: 'no records decoded' })
+      }
+    } catch (e) {
+      decoded.push({ ok: false, file: f.name, error: e instanceof Error ? e.message : String(e) })
+    }
+  }
+  let plan: DatasetPlan | null = null
+  try {
+    plan = io.inferDataset(files.map((f) => ({ name: f.name, bytes: f.bytes })), recordSets, {}) as DatasetPlan
+  } catch (e) {
+    plan = { warnings: [`io inference failed: ${e instanceof Error ? e.message : String(e)}`], resolved_spec: null }
+  }
+  let readers = { count: 0, features: {} as Record<string, boolean> }
+  try {
+    const cat = formats.readerCatalog() as unknown[]
+    readers = { count: Array.isArray(cat) ? cat.length : 0, features: (formats.features() as Record<string, boolean>) ?? {} }
+  } catch {
+    /* optional */
+  }
+  return { decoded, plan, readers }
+}
+
+export async function validateSpec(spec: DatasetSpec): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const { io } = await mods()
+    io.validate(JSON.stringify(spec))
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+  }
+}
+
+// --- materialization (format-agnostic) ---
+interface Row {
+  file: string
+  idx: number
+  partition: Partition
+  sampleId: string
+  realId: boolean // sampleId came from record metadata (not a synthetic file#idx)
+  values: number[]
+  axis: number[]
+  axisUnit: string
+  embeddedTarget?: number | string
+}
+
+const firstSignal = (r: SpectralRecord) => (r.signals ? Object.values(r.signals)[0] : undefined)
+const isTestName = (n: string) => /test|valid|holdout/i.test(n)
+const isMetaName = (n: string) => /meta/i.test(n)
+const asArray = (v: string | string[] | undefined) => (Array.isArray(v) ? v : v ? [v] : [])
+
+function rowsFrom(
+  decoded: DecodedFile[],
+  targetFiles: Set<string> | null,
+  metaFiles: Set<string>,
+): { x: Row[]; yByKey: Map<string, number | string> } {
+  const all: Row[] = []
+  const widths: number[] = []
+  for (const d of decoded) {
+    if (!d.ok || !d.records) continue
+    for (let i = 0; i < d.records.length; i++) {
+      const r = d.records[i]
+      const sig = firstSignal(r)
+      const values = (sig?.values ?? []).map(Number).filter(Number.isFinite)
+      const axis = (sig?.axis?.values ?? []).map(Number).filter(Number.isFinite)
+      const idx = Number(r.metadata?.row_index ?? i)
+      const partition: Partition = (r.metadata?.partition as Partition) || (isTestName(d.file) ? 'test' : 'train')
+      const metaId = r.metadata?.sample_id || r.metadata?.id
+      const targets = r.targets ? Object.values(r.targets) : []
+      all.push({
+        file: d.file,
+        idx,
+        partition,
+        sampleId: metaId || `${d.file}#${idx}`,
+        realId: !!metaId,
+        values,
+        axis,
+        axisUnit: sig?.axis?.unit ?? 'index',
+        embeddedTarget: targets[0],
+      })
+      widths.push(values.length)
+    }
+  }
+  // mode spectrum width identifies X; scalar (width 1) rows are target candidates
+  const counts = new Map<number, number>()
+  for (const w of widths) counts.set(w, (counts.get(w) ?? 0) + 1)
+  let modeW = 1
+  let best = -1
+  for (const [w, c] of counts) if (w > 1 && c > best) (best = c), (modeW = w)
+
+  const x = all.filter((r) => r.values.length === modeW && modeW > 1 && !metaFiles.has(r.file) && !(targetFiles?.has(r.file)))
+  const yByKey = new Map<string, number | string>()
+  for (const r of all) {
+    // a row is a target if the spec marks its file as targets, else if it is a
+    // lone scalar from a non-metadata file
+    const isTarget = targetFiles ? targetFiles.has(r.file) : r.values.length === 1 && !metaFiles.has(r.file)
+    if (!isTarget) continue
+    const val = r.values.length >= 1 ? r.values[0] : r.embeddedTarget
+    if (val == null) continue
+    yByKey.set(`${r.partition}#${r.idx}`, val)
+    if (r.realId) yByKey.set(r.sampleId, val) // only real ids can match across files
+  }
+  return { x, yByKey }
+}
+
+/** Build a MaterializedDataset from decoded records (vendor formats or CSV via formats). */
+export function materialize(decoded: DecodedFile[], name = 'Uploaded dataset', plan?: DatasetPlan | null): MaterializedDataset {
+  const sources = plan?.resolved_spec?.sources ?? []
+  const targetFiles = new Set(sources.filter((s) => s.role === 'targets').flatMap((s) => asArray(s.input)))
+  const metaFiles = new Set([
+    ...sources.filter((s) => s.role === 'metadata').flatMap((s) => asArray(s.input)),
+    ...decoded.filter((d) => isMetaName(d.file)).map((d) => d.file),
+  ])
+  const { x, yByKey } = rowsFrom(decoded, targetFiles.size ? targetFiles : null, metaFiles)
+  if (x.length === 0) throw new Error('No spectra found — every decoded file looked like scalar/target data.')
+  const nFeatures = x[0].values.length
+  const axis = x[0].axis.length === nFeatures ? x[0].axis : x[0].axis.length ? x[0].axis : Array.from({ length: nFeatures }, (_, i) => i)
+  const axisUnit = x[0].axisUnit
+
+  const X = new Float64Array(x.length * nFeatures)
+  const yRaw = new Float64Array(x.length)
+  const labelsRaw: string[] = []
+  const partitions: Partition[] = []
+  const sampleIds: string[] = []
+  for (let i = 0; i < x.length; i++) {
+    const r = x[i]
+    for (let j = 0; j < nFeatures; j++) X[i * nFeatures + j] = r.values[j] ?? 0
+    // prefer an embedded target, then a real shared sample id, then position within partition
+    const t = r.embeddedTarget ?? (r.realId ? yByKey.get(r.sampleId) : undefined) ?? yByKey.get(`${r.partition}#${r.idx}`)
+    const num = t == null || t === '' ? NaN : typeof t === 'number' ? t : Number(String(t).replace(',', '.'))
+    yRaw[i] = Number.isFinite(num) ? num : NaN
+    labelsRaw.push(t == null ? '' : String(t))
+    partitions.push(r.partition)
+    sampleIds.push(r.sampleId)
+  }
+
+  // targetless spectra are allowed (explore / predict-only); the engine refuses
+  // to *train* without targets, so an all-NaN y never silently produces a model.
+  const taskType = inferTaskType(Array.from(yRaw), labelsRaw)
+  const { y, classes } = encodeTarget(yRaw, labelsRaw, taskType)
+  return { X, nSamples: x.length, nFeatures, axis, axisUnit, y, yRaw, labelsRaw, targetName: 'target', taskType, classes, sampleIds, partitions }
+}

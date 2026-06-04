@@ -1,0 +1,27 @@
+/* tslint:disable */
+/* eslint-disable */
+export const memory: WebAssembly.Memory;
+export const build_execution_plan_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number, number, number];
+export const compile_pipeline_dsl_artifact_json: (a: number, b: number) => [number, number, number, number];
+export const compile_pipeline_dsl_artifact_with_controllers_json: (a: number, b: number, c: number, d: number) => [number, number, number, number];
+export const compile_pipeline_dsl_graph_json: (a: number, b: number) => [number, number, number, number];
+export const contract_manifest_json: () => [number, number, number, number];
+export const dag_ml_version: () => [number, number];
+export const execute_campaign_phase_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: any) => [number, number, number, number];
+export const fold_set_fingerprint_json: (a: number, b: number) => [number, number, number, number];
+export const validate_campaign_json: (a: number, b: number) => [number, number];
+export const validate_controller_manifest_json: (a: number, b: number) => [number, number];
+export const validate_controller_manifest_list_json: (a: number, b: number) => [number, number];
+export const validate_execution_bundle_json: (a: number, b: number) => [number, number];
+export const validate_execution_plan_json: (a: number, b: number) => [number, number];
+export const validate_fold_set_json: (a: number, b: number) => [number, number];
+export const validate_graph_json: (a: number, b: number) => [number, number];
+export const validate_pipeline_dsl_json: (a: number, b: number) => [number, number];
+export const __wbindgen_malloc: (a: number, b: number) => number;
+export const __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
+export const __wbindgen_exn_store: (a: number) => void;
+export const __externref_table_alloc: () => number;
+export const __wbindgen_externrefs: WebAssembly.Table;
+export const __externref_table_dealloc: (a: number) => void;
+export const __wbindgen_free: (a: number, b: number, c: number) => void;
+export const __wbindgen_start: () => void;
