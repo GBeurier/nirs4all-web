@@ -36,6 +36,7 @@ try {
   }
 
   // run → CV Scores proves targets were materialized (engine refuses targetless training)
+  await page.locator('[data-step="pipeline"]').click()
   await page.getByRole('button', { name: /Run pipeline/i }).click()
   await page.waitForSelector('text=/CV Scores/', { timeout: 60000 })
   console.log('✓ pipeline ran → CV Scores rendered (targets were loaded & aligned)')

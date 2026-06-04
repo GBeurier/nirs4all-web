@@ -32,7 +32,8 @@ try {
   await page.waitForSelector('text=/samples ×/', { timeout: 20000 })
   console.log('✓ sample dataset loaded + Explore section rendered')
 
-  // 2. run the default pipeline
+  // 2. open the Pipeline workbench step, then run the default pipeline
+  await page.locator('[data-step="pipeline"]').click()
   await page.getByRole('button', { name: /Run pipeline/i }).click()
   await page.waitForSelector('text=/CV Scores/', { timeout: 45000 })
   console.log('✓ pipeline executed, results tree rendered')
@@ -53,12 +54,14 @@ try {
   if (svgCount < 1) fail('expected at least one recharts chart')
   else console.log(`✓ ${svgCount} charts rendered`)
 
-  // 5. predict on new spectra → histogram (use the test spectra of the sample)
+  // 5. predict on new spectra → histogram (open the Predict step, use the sample's test spectra)
   const FRUIT_XTEST = process.env.FRUIT_XTEST || '/home/delete/nirs4all/nirs4all-lite/studio-lite/src/data/sample/X_test.csv'
+  await page.locator('[data-step="predict"]').click()
+  await page.waitForTimeout(300)
   await page.locator('input[type=file]').last().setInputFiles(FRUIT_XTEST)
-  await page.waitForTimeout(1200)
+  await page.waitForTimeout(1500)
   const svgAfter = await page.locator('svg.recharts-surface').count()
-  if (svgAfter > svgCount) console.log(`✓ prediction produced a histogram (${svgAfter} charts total)`)
+  if (svgAfter >= 1) console.log(`✓ prediction produced a histogram (${svgAfter} chart(s) on Predict)`)
   else fail('prediction did not render a histogram')
 
   await page.screenshot({ path: '/tmp/n4a_smoke.png', fullPage: true })

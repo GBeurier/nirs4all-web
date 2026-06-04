@@ -24,6 +24,7 @@ try {
   await page.waitForSelector('text=/samples ×/', { timeout: 20000 })
   console.log('✓ NIR classification sample loaded')
 
+  await page.locator('[data-step="pipeline"]').click()
   await page.getByRole('button', { name: /Run pipeline/i }).click()
   await page.waitForSelector('text=/CV Scores/', { timeout: 60000 })
   const body = (await page.textContent('body')) || ''

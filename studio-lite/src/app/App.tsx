@@ -1,5 +1,15 @@
-import { useCallback, useRef, useState } from 'react'
-import { Cpu, Database, FlaskConical, GitBranch, LineChart, ShieldCheck, Sparkles, Upload } from 'lucide-react'
+import { useCallback, useMemo, useRef, useState } from 'react'
+import {
+  Cpu,
+  Database,
+  FlaskConical,
+  GitBranch,
+  LineChart,
+  Loader2,
+  Lock,
+  Sparkles,
+  Upload,
+} from 'lucide-react'
 import { DatasetConfigDialog, DatasetUpload, DatasetView } from '@/components/dataset'
 import { PipelineBuilder } from '@/components/pipeline'
 import { PredictionPanel, ResultsList, ResultsVisualization } from '@/components/results'
@@ -8,46 +18,20 @@ import { engine } from '@/engine/client'
 import { type DatasetSummary, reencodeTarget, summarize } from '@/data/dataset'
 import { loadSampleDataset, type SampleId } from '@/data/samples'
 import { downloadRunCsv, downloadRunJson } from '@/lib/download'
+import { cn } from '@/app/components/ui/utils'
 import type { Analysis } from '@/data/wasm-io'
 import type { DagMlLineage } from '@/engine/dagml'
 import type { MaterializedDataset, PipelineDSL, Partition, RunProgress, RunResult, ScoreNode, TaskType } from '@/engine/types'
 
-function Section({
-  index,
-  title,
-  icon,
-  tint,
-  right,
-  children,
-}: {
-  index: number
-  title: string
-  icon: React.ReactNode
-  tint: string
-  right?: React.ReactNode
-  children: React.ReactNode
-}) {
-  return (
-    <section
-      className="n4a-card n4a-reveal rounded-2xl border border-border bg-card/95 p-6 backdrop-blur-sm sm:p-8"
-      style={{ animationDelay: `${Math.min(index, 5) * 70}ms` }}
-    >
-      <div className="mb-6 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className={`flex h-11 w-11 items-center justify-center rounded-xl ring-1 ring-inset ring-black/5 ${tint}`}>{icon}</div>
-          <div className="leading-tight">
-            <div className="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              Step {index}
-            </div>
-            <h2 className="font-display text-xl font-bold tracking-tight text-foreground sm:text-2xl">{title}</h2>
-          </div>
-        </div>
-        {right}
-      </div>
-      {children}
-    </section>
-  )
-}
+type StepId = 'dataset' | 'explore' | 'pipeline' | 'results' | 'predict'
+
+const STEPS: { id: StepId; label: string; hint: string; icon: typeof Upload }[] = [
+  { id: 'dataset', label: 'Dataset', hint: 'Upload spectra', icon: Upload },
+  { id: 'explore', label: 'Explore', hint: 'Inspect & configure', icon: Database },
+  { id: 'pipeline', label: 'Pipeline', hint: 'Build & run', icon: GitBranch },
+  { id: 'results', label: 'Results', hint: 'Scores & residuals', icon: LineChart },
+  { id: 'predict', label: 'Predict', hint: 'New spectra', icon: Sparkles },
+]
 
 export default function App() {
   const [dataset, setDataset] = useState<MaterializedDataset | null>(null)
@@ -62,12 +46,13 @@ export default function App() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
+  const [step, setStep] = useState<StepId>('dataset')
   const abortRef = useRef<AbortController | null>(null)
   const runTokenRef = useRef(0)
 
   const adoptDataset = useCallback((ds: MaterializedDataset) => {
-    abortRef.current?.abort() // cancel any in-flight run for the previous dataset
-    runTokenRef.current++ // invalidate its results if they resolve late
+    abortRef.current?.abort()
+    runTokenRef.current++
     setDataset(ds)
     setSummary(summarize(ds))
     setPipeline(defaultPipeline(ds.taskType))
@@ -75,6 +60,7 @@ export default function App() {
     setSelectedRunId(null)
     setSelectedScore(null)
     setError(null)
+    setStep('explore') // land on Explore so the user reviews the loaded dataset
   }, [])
 
   const onDataset = useCallback(
@@ -85,18 +71,21 @@ export default function App() {
     [adoptDataset],
   )
 
-  const onLoadSample = useCallback(async (sample?: SampleId) => {
-    setBusy(true)
-    setError(null)
-    try {
-      adoptDataset(await loadSampleDataset(sample))
-      setAnalysis(null)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
-    } finally {
-      setBusy(false)
-    }
-  }, [adoptDataset])
+  const onLoadSample = useCallback(
+    async (sample?: SampleId) => {
+      setBusy(true)
+      setError(null)
+      try {
+        adoptDataset(await loadSampleDataset(sample))
+        setAnalysis(null)
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e))
+      } finally {
+        setBusy(false)
+      }
+    },
+    [adoptDataset],
+  )
 
   const applyConfigPatch = useCallback(
     (patch: { targetName?: string; taskType?: TaskType; testFraction?: number }) => {
@@ -132,10 +121,11 @@ export default function App() {
     const token = ++runTokenRef.current
     try {
       const result = await engine.run(dataset, pipeline, { signal: ctrl.signal, onProgress: setProgress })
-      if (token !== runTokenRef.current) return // dataset/config changed mid-run — drop stale result
+      if (token !== runTokenRef.current) return
       setRuns((r) => [result, ...r])
       setSelectedRunId(result.id)
       setSelectedScore(result.cv)
+      setStep('results')
     } catch (e) {
       if (!(e instanceof DOMException && e.name === 'AbortError')) setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -154,175 +144,331 @@ export default function App() {
 
   const selectedRun = runs.find((r) => r.id === selectedRunId) ?? null
 
+  const enabled = useMemo<Record<StepId, boolean>>(
+    () => ({
+      dataset: true,
+      explore: !!dataset,
+      pipeline: !!dataset,
+      results: runs.length > 0,
+      predict: !!selectedRun,
+    }),
+    [dataset, runs.length, selectedRun],
+  )
+
+  const go = (id: StepId) => {
+    if (enabled[id]) setStep(id)
+  }
+
+  const lineage = selectedRun?.lineage as DagMlLineage | undefined
+  const runEngineLabel = lineage?.executed ? 'executed by dag-ml' : lineage?.compiled ? 'compiled by dag-ml' : null
+
   return (
-    <div className="min-h-screen n4a-app-bg">
-      <div className="h-2 n4a-spectrum-strip" />
-      <header className="n4a-grid relative overflow-hidden border-b border-border/70">
-        <div className="mx-auto max-w-6xl px-6 pb-10 pt-9">
-          <div className="flex items-start justify-between gap-6">
-            <div className="relative z-10">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-brand-teal/20">
-                  <FlaskConical className="h-5 w-5" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-display text-2xl font-bold tracking-tight text-foreground">nirs4all</span>
-                  <span className="rounded-full border border-brand-teal/30 bg-accent px-2 py-0.5 font-mono text-xs font-semibold uppercase tracking-wider text-accent-foreground">
-                    lite
-                  </span>
-                </div>
-              </div>
-              <h1 className="mt-5 max-w-2xl font-display text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-[2.6rem]">
-                Near-infrared modelling,
-                <br className="hidden sm:block" /> end-to-end in your browser
-                <span className="text-brand-teal"> — for everyone.</span>
-              </h1>
-              <p className="mt-3 max-w-xl text-base text-muted-foreground">
-                Upload spectra, build a pipeline from nirs4all-methods, run it, and read the scores. No install, no
-                Python, nothing leaves your machine.
-              </p>
-              <div className="mt-5 flex flex-wrap gap-2">
-                {[
-                  { icon: <ShieldCheck className="h-3.5 w-3.5 text-brand-green" />, label: 'Runs locally · WASM' },
-                  { icon: <GitBranch className="h-3.5 w-3.5 text-brand-indigo" />, label: 'PLS · PLS-DA' },
-                  { icon: <Database className="h-3.5 w-3.5 text-brand-cyan" />, label: '~58 formats' },
-                  { icon: <Cpu className="h-3.5 w-3.5 text-brand-teal" />, label: 'dag-ml ready' },
-                ].map((c) => (
-                  <span
-                    key={c.label}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/70 px-3 py-1 text-xs font-medium text-foreground/80 backdrop-blur"
-                  >
-                    {c.icon}
-                    {c.label}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <a
-              href="https://nirs4all.org"
-              target="_blank"
-              rel="noreferrer"
-              className="relative z-10 hidden shrink-0 items-center gap-1.5 rounded-full border border-border bg-card/70 px-3 py-1.5 text-sm font-medium text-muted-foreground backdrop-blur transition-colors hover:border-brand-teal/40 hover:text-foreground sm:flex"
-            >
-              <Sparkles className="h-4 w-4 text-brand-cyan" /> nirs4all.org
-            </a>
+    <div className="flex min-h-screen flex-col n4a-app-bg">
+      <div className="h-1.5 shrink-0 n4a-spectrum-strip" />
+
+      {/* ── top runtime bar ───────────────────────────────────────────── */}
+      <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-border/70 bg-card/80 px-4 backdrop-blur supports-[backdrop-filter]:bg-card/65">
+        <div className="flex items-center gap-2.5">
+          <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm shadow-brand-teal/30">
+            <FlaskConical className="size-4" />
+          </span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-display text-lg font-bold tracking-tight text-foreground">nirs4all</span>
+            <span className="rounded bg-accent px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-accent-foreground">
+              studio lite
+            </span>
           </div>
         </div>
-        {/* decorative floating spectral curve */}
-        <svg
-          aria-hidden
-          className="n4a-float pointer-events-none absolute -right-10 top-2 hidden h-40 w-[34rem] opacity-50 lg:block"
-          viewBox="0 0 560 160"
-          fill="none"
-        >
-          <defs>
-            <linearGradient id="n4a-wave" x1="0" y1="0" x2="560" y2="0" gradientUnits="userSpaceOnUse">
-              <stop stopColor="#4f46e5" />
-              <stop offset="0.5" stopColor="#06b6d4" />
-              <stop offset="1" stopColor="#2dd4bf" />
-            </linearGradient>
-          </defs>
-          <path
-            d="M0 120 C 60 120, 90 40, 150 44 C 210 48, 230 132, 290 120 C 340 110, 360 30, 410 36 C 460 42, 480 110, 560 86"
-            stroke="url(#n4a-wave)"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-          />
-        </svg>
+
+        {/* active dataset chip — always visible once loaded */}
+        {dataset && summary && (
+          <div className="ml-2 hidden items-center gap-2 rounded-full border border-border bg-background/60 px-3 py-1 md:flex">
+            <Database className="size-3.5 text-brand-cyan" />
+            <span className="max-w-[14rem] truncate text-xs font-medium text-foreground">{dataset.targetName || 'dataset'}</span>
+            <span className="font-mono text-[11px] text-muted-foreground">
+              {summary.nSamples} samples × {summary.nFeatures} wavelengths
+            </span>
+            <span className="rounded-full bg-muted px-1.5 py-0.5 font-mono text-[10px] uppercase text-muted-foreground">{dataset.taskType}</span>
+          </div>
+        )}
+
+        <div className="ml-auto flex items-center gap-2">
+          {running && (
+            <span className="flex items-center gap-1.5 rounded-full border border-brand-teal/30 bg-brand-teal/5 px-2.5 py-1 text-xs font-medium text-brand-teal">
+              <Loader2 className="size-3.5 animate-spin" /> running…
+            </span>
+          )}
+          {!running && runEngineLabel && (
+            <span className="hidden items-center gap-1.5 rounded-full border border-brand-indigo/30 bg-brand-indigo/5 px-2.5 py-1 text-xs font-medium text-brand-indigo sm:flex">
+              <Cpu className="size-3.5" /> {runEngineLabel}
+            </span>
+          )}
+          <a
+            href="https://nirs4all.org"
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-brand-teal/40 hover:text-foreground"
+          >
+            <Sparkles className="size-3.5 text-brand-cyan" /> nirs4all.org
+          </a>
+        </div>
       </header>
 
-      <main className="mx-auto max-w-6xl space-y-6 px-6 py-10">
-        <Section index={1} title="Dataset" icon={<Upload className="h-5 w-5 text-brand-teal" />} tint="bg-accent">
-          <DatasetUpload onDataset={onDataset} onLoadSample={onLoadSample} busy={busy} error={error} />
-        </Section>
-
-        {dataset && summary && (
-          <Section
-            index={2}
-            title="Explore"
-            icon={<Database className="h-5 w-5 text-brand-cyan" />}
-            tint="bg-brand-cyan/10"
-          >
-            <DatasetView ds={dataset} summary={summary} onOpenConfig={() => setConfigOpen(true)} />
-            <DatasetConfigDialog open={configOpen} ds={dataset} analysis={analysis} onOpenChange={setConfigOpen} onApply={applyConfigPatch} />
-          </Section>
-        )}
-
-        {dataset && (
-          <Section
-            index={3}
-            title="Pipeline"
-            icon={<GitBranch className="h-5 w-5 text-brand-indigo" />}
-            tint="bg-brand-indigo/10"
-          >
-            <PipelineBuilder
-              pipeline={pipeline}
-              taskType={dataset.taskType}
-              running={running}
-              progress={progress}
-              onChange={setPipeline}
-              onRun={onRun}
-              onCancel={onCancel}
-            />
-          </Section>
-        )}
-
-        {runs.length > 0 && (
-          <Section
-            index={4}
-            title="Results"
-            icon={<LineChart className="h-5 w-5 text-brand-teal" />}
-            tint="bg-accent"
-            right={
-              <div className="flex items-center gap-2">
-                {(() => {
-                  const lin = selectedRun?.lineage as DagMlLineage | undefined
-                  if (!lin?.compiled && !lin?.executed) return null
-                  return (
-                    <span className="hidden items-center gap-1.5 rounded-full border border-brand-indigo/30 bg-brand-indigo/5 px-3 py-1 text-xs font-medium text-brand-indigo sm:inline-flex">
-                      <Cpu className="h-3.5 w-3.5" /> {lin.executed ? 'executed by dag-ml' : 'compiled by dag-ml'}
+      <div className="flex flex-1 overflow-hidden">
+        {/* ── workflow rail ───────────────────────────────────────────── */}
+        <nav className="hidden w-60 shrink-0 flex-col border-r border-border/70 bg-sidebar/60 p-3 md:flex">
+          <div className="space-y-1">
+            {STEPS.map((s, i) => {
+              const Icon = s.icon
+              const isActive = step === s.id
+              const isEnabled = enabled[s.id]
+              const isDone = isEnabled && !isActive && stepIndex(step) > i
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  data-step={s.id}
+                  disabled={!isEnabled}
+                  onClick={() => go(s.id)}
+                  className={cn(
+                    'group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all',
+                    isActive
+                      ? 'bg-card text-foreground shadow-sm ring-1 ring-brand-teal/30'
+                      : isEnabled
+                        ? 'text-foreground/80 hover:bg-card/60'
+                        : 'cursor-not-allowed text-muted-foreground/50',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors',
+                      isActive ? 'bg-primary text-primary-foreground' : isDone ? 'bg-brand-teal/15 text-brand-teal' : 'bg-muted text-muted-foreground',
+                    )}
+                  >
+                    {isEnabled ? <Icon className="size-4" /> : <Lock className="size-3.5" />}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-1.5">
+                      <span className="font-mono text-[10px] text-muted-foreground">{i + 1}</span>
+                      <span className="truncate text-sm font-semibold">{s.label}</span>
                     </span>
-                  )
-                })()}
-                <span className="rounded-full border border-border px-3 py-1 text-sm text-muted-foreground">{runs.length} runs</span>
+                    <span className="block truncate text-[11px] text-muted-foreground">{s.hint}</span>
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="mt-auto space-y-3 px-1 pt-4">
+            <div className="rounded-xl border border-border bg-background/50 p-3">
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold text-foreground">
+                <Cpu className="size-3.5 text-brand-teal" /> Local WASM stack
               </div>
-            }
-          >
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
-              <ResultsList
+              <p className="mt-1 font-mono text-[10px] leading-relaxed text-muted-foreground">
+                formats → io → dag-ml-data → dag-ml + methods
+              </p>
+              <p className="mt-1.5 text-[10px] text-muted-foreground">Nothing leaves your browser.</p>
+            </div>
+          </div>
+        </nav>
+
+        {/* ── mobile step tabs ────────────────────────────────────────── */}
+        <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+          <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-border/60 bg-card/40 px-3 py-2 md:hidden">
+            {STEPS.map((s, i) => (
+              <button
+                key={s.id}
+                type="button"
+                data-step-mobile={s.id}
+                disabled={!enabled[s.id]}
+                onClick={() => go(s.id)}
+                className={cn(
+                  'shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
+                  step === s.id ? 'bg-primary text-primary-foreground' : enabled[s.id] ? 'bg-muted text-foreground' : 'text-muted-foreground/40',
+                )}
+              >
+                {i + 1}. {s.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+            <div className="mx-auto h-full max-w-6xl p-4 sm:p-6">
+              <StepPanel
+                step={step}
+                dataset={dataset}
+                summary={summary}
+                pipeline={pipeline}
                 runs={runs}
-                selectedRunId={selectedRunId}
+                selectedRun={selectedRun}
+                selectedScore={selectedScore}
+                running={running}
+                progress={progress}
+                busy={busy}
+                error={error}
+                analysis={analysis}
+                configOpen={configOpen}
+                onDataset={onDataset}
+                onLoadSample={onLoadSample}
+                onOpenConfig={() => setConfigOpen(true)}
+                onConfigOpenChange={setConfigOpen}
+                onApplyConfig={applyConfigPatch}
+                onChangePipeline={setPipeline}
+                onRun={onRun}
+                onCancel={onCancel}
+                onSelectScore={onSelect}
                 selectedScoreId={selectedScore?.id ?? null}
-                onSelect={onSelect}
                 onExport={(run) => {
                   downloadRunCsv(run)
                   downloadRunJson(run)
                 }}
+                onGoPipeline={() => go('pipeline')}
               />
-              {selectedRun && selectedScore && <ResultsVisualization run={selectedRun} score={selectedScore} />}
             </div>
-          </Section>
-        )}
-
-        {selectedRun && (
-          <Section
-            index={5}
-            title="Predict"
-            icon={<Sparkles className="h-5 w-5 text-brand-amber" />}
-            tint="bg-brand-amber/10"
-          >
-            <PredictionPanel run={selectedRun} engine={engine} />
-          </Section>
-        )}
-      </main>
-
-      <footer className="mx-auto max-w-6xl px-6 pb-12 pt-4 text-center text-sm text-muted-foreground">
-        Powered by{' '}
-        <span className="font-mono text-foreground">nirs4all-formats</span> ·{' '}
-        <span className="font-mono text-foreground">nirs4all-io</span> ·{' '}
-        <span className="font-mono text-foreground">nirs4all-methods</span> ·{' '}
-        <span className="font-mono text-foreground">dag-ml</span> — all running locally as WebAssembly.
-      </footer>
+          </div>
+        </main>
+      </div>
     </div>
+  )
+}
+
+function stepIndex(id: StepId): number {
+  return STEPS.findIndex((s) => s.id === id)
+}
+
+/** Header + body wrapper for a workbench panel. */
+function Panel({ title, subtitle, icon: Icon, right, children }: { title: string; subtitle?: string; icon: typeof Upload; right?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section className="flex h-full min-h-0 flex-col">
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="flex size-10 items-center justify-center rounded-xl bg-accent text-brand-teal ring-1 ring-inset ring-brand-teal/15">
+            <Icon className="size-5" />
+          </span>
+          <div>
+            <h1 className="font-display text-xl font-bold tracking-tight text-foreground">{title}</h1>
+            {subtitle ? <p className="text-sm text-muted-foreground">{subtitle}</p> : null}
+          </div>
+        </div>
+        {right}
+      </div>
+      <div className="min-h-0 flex-1">{children}</div>
+    </section>
+  )
+}
+
+function LockedNote({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex h-full items-center justify-center">
+      <div className="max-w-sm rounded-2xl border border-dashed border-border bg-card/50 p-8 text-center">
+        <Lock className="mx-auto mb-3 size-6 text-muted-foreground/60" />
+        <p className="text-sm text-muted-foreground">{children}</p>
+      </div>
+    </div>
+  )
+}
+
+interface StepPanelProps {
+  step: StepId
+  dataset: MaterializedDataset | null
+  summary: DatasetSummary | null
+  pipeline: PipelineDSL
+  runs: RunResult[]
+  selectedRun: RunResult | null
+  selectedScore: ScoreNode | null
+  running: boolean
+  progress: RunProgress | null
+  busy: boolean
+  error: string | null
+  analysis: Analysis | null
+  configOpen: boolean
+  selectedScoreId: string | null
+  onDataset: (ds: MaterializedDataset, name: string, a?: Analysis) => void
+  onLoadSample: (sample?: SampleId) => void
+  onOpenConfig: () => void
+  onConfigOpenChange: (open: boolean) => void
+  onApplyConfig: (patch: { targetName?: string; taskType?: TaskType; testFraction?: number }) => void
+  onChangePipeline: (p: PipelineDSL) => void
+  onRun: () => void
+  onCancel: () => void
+  onSelectScore: (run: RunResult, score: ScoreNode) => void
+  onExport: (run: RunResult) => void
+  onGoPipeline: () => void
+}
+
+function StepPanel(props: StepPanelProps) {
+  const { step, dataset, summary, selectedRun, selectedScore } = props
+
+  if (step === 'dataset') {
+    return (
+      <Panel title="Dataset" subtitle="Drop spectra or load a sample — decoded and inferred locally by nirs4all-formats + nirs4all-io." icon={Upload}>
+        <DatasetUpload onDataset={props.onDataset} onLoadSample={props.onLoadSample} busy={props.busy} error={props.error} />
+      </Panel>
+    )
+  }
+
+  if (step === 'explore') {
+    if (!dataset || !summary) return <LockedNote>Load a dataset first.</LockedNote>
+    return (
+      <Panel
+        title="Explore"
+        subtitle="Spectra, target distribution and dataset health."
+        icon={Database}
+        right={
+          <button
+            type="button"
+            onClick={props.onGoPipeline}
+            className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+          >
+            Build pipeline →
+          </button>
+        }
+      >
+        <DatasetView ds={dataset} summary={summary} onOpenConfig={props.onOpenConfig} />
+        <DatasetConfigDialog open={props.configOpen} ds={dataset} analysis={props.analysis} onOpenChange={props.onConfigOpenChange} onApply={props.onApplyConfig} />
+      </Panel>
+    )
+  }
+
+  if (step === 'pipeline') {
+    if (!dataset) return <LockedNote>Load a dataset first.</LockedNote>
+    return (
+      <Panel title="Pipeline" subtitle="Compose preprocessing + a model, then run cross-validation." icon={GitBranch}>
+        <PipelineBuilder
+          pipeline={props.pipeline}
+          taskType={dataset.taskType}
+          running={props.running}
+          progress={props.progress}
+          onChange={props.onChangePipeline}
+          onRun={props.onRun}
+          onCancel={props.onCancel}
+        />
+      </Panel>
+    )
+  }
+
+  if (step === 'results') {
+    if (props.runs.length === 0) return <LockedNote>Run a pipeline to see results.</LockedNote>
+    return (
+      <Panel
+        title="Results"
+        subtitle="Refit, cross-validation and per-fold scores. Click a score to inspect residuals."
+        icon={LineChart}
+        right={<span className="rounded-full border border-border px-3 py-1 text-sm text-muted-foreground">{props.runs.length} run{props.runs.length === 1 ? '' : 's'}</span>}
+      >
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
+          <ResultsList runs={props.runs} selectedRunId={selectedRun?.id ?? null} selectedScoreId={props.selectedScoreId} onSelect={props.onSelectScore} onExport={props.onExport} />
+          {selectedRun && selectedScore && <ResultsVisualization run={selectedRun} score={selectedScore} />}
+        </div>
+      </Panel>
+    )
+  }
+
+  // predict
+  if (!selectedRun) return <LockedNote>Run a pipeline first, then predict on new spectra.</LockedNote>
+  return (
+    <Panel title="Predict" subtitle="Score new spectra with the selected model." icon={Sparkles}>
+      <PredictionPanel run={selectedRun} engine={engine} />
+    </Panel>
   )
 }
