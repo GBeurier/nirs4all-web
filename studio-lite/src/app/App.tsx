@@ -89,6 +89,16 @@ export default function App() {
 
   const applyConfigPatch = useCallback(
     (patch: { targetName?: string; taskType?: TaskType; testFraction?: number }) => {
+      // a target/task/partition change invalidates any prior run — abort, drop
+      // stale results & their fitted models, and send the user back to the pipeline
+      if (patch.taskType !== undefined || patch.testFraction != null) {
+        abortRef.current?.abort()
+        runTokenRef.current++
+        setRuns([])
+        setSelectedRunId(null)
+        setSelectedScore(null)
+        setStep((s) => (s === 'results' || s === 'predict' ? 'pipeline' : s))
+      }
       setDataset((prev) => {
         if (!prev) return prev
         const next: MaterializedDataset = { ...prev }
@@ -127,11 +137,14 @@ export default function App() {
       setSelectedScore(result.cv)
       setStep('results')
     } catch (e) {
-      if (!(e instanceof DOMException && e.name === 'AbortError')) setError(e instanceof Error ? e.message : String(e))
+      if (token === runTokenRef.current && !(e instanceof DOMException && e.name === 'AbortError')) setError(e instanceof Error ? e.message : String(e))
     } finally {
-      setRunning(false)
-      setProgress(null)
-      abortRef.current = null
+      // only the latest run owns the run-scoped UI state
+      if (token === runTokenRef.current) {
+        setRunning(false)
+        setProgress(null)
+      }
+      if (abortRef.current === ctrl) abortRef.current = null
     }
   }, [dataset, pipeline])
 
@@ -162,6 +175,7 @@ export default function App() {
   const lineage = selectedRun?.lineage as DagMlLineage | undefined
   const runEngineLabel = lineage?.executed ? 'executed by dag-ml' : lineage?.compiled ? 'compiled by dag-ml' : null
   const dataServed = lineage?.dataProvider?.status === 'materialized' ? lineage.dataProvider : null
+  const dataFallback = lineage?.dataProvider && lineage.dataProvider.status !== 'materialized' ? lineage.dataProvider : null
 
   return (
     <div className="flex min-h-screen flex-col n4a-app-bg">
@@ -205,6 +219,14 @@ export default function App() {
               title={`dag-ml-data ${dataServed.version ?? ''} · schema ${dataServed.fingerprints?.schema?.slice(0, 10) ?? ''}…`}
             >
               <Database className="size-3.5" /> data by dag-ml-data
+            </span>
+          )}
+          {!running && dataFallback && (
+            <span
+              className="hidden items-center gap-1.5 rounded-full border border-brand-amber/40 bg-brand-amber/5 px-2.5 py-1 text-xs font-medium text-brand-amber lg:flex"
+              title={dataFallback.error ? `dag-ml-data unavailable: ${dataFallback.error}` : 'dag-ml-data unavailable'}
+            >
+              <Database className="size-3.5" /> data: in-memory fallback
             </span>
           )}
           {!running && runEngineLabel && (

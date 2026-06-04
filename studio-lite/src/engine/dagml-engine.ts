@@ -70,15 +70,11 @@ export class DagMlEngine implements Engine {
   private async runViaDagMl(ds: MaterializedDataset, dsl: PipelineDSL, opts: RunOptions, backend: ModelBackend): Promise<RunResult> {
     const { onProgress: onP, signal } = opts
     const task = ds.taskType
-    const { classNames, classIdx } = classInfo(ds)
-    if (task === 'regression' && !trainRowsOf(ds).some((i) => Number.isFinite(ds.y[i]))) {
-      throw new Error('No numeric targets in the training data.')
-    }
-    if (task !== 'regression' && classNames.length < 2) throw new Error('Classification needs ≥2 classes.')
 
-    // --- dag-ml-data: materialize X/y through the provider (the data-contract layer).
-    // The provider serves the exact feature/target blocks the model trains on, by
-    // sampleId. Degrade visibly (recorded in lineage) if the provider is unavailable.
+    // --- dag-ml-data: materialize X/y through the provider (the data-contract layer)
+    // FIRST, so the run — and the class vocabulary below — is derived from the exact
+    // feature/target blocks the provider serves (by sampleId). Degrade visibly
+    // (recorded in lineage) if the provider is unavailable.
     let dataProvider: { layer: string; status: string; fingerprints?: { schema: string; plan: string; relation: string | null }; representation?: string; version?: string; error?: string } = {
       layer: 'dag-ml-data',
       status: 'unavailable',
@@ -92,6 +88,12 @@ export class DagMlEngine implements Engine {
       dataProvider = { layer: 'dag-ml-data', status: 'unavailable', error: e instanceof Error ? e.message : String(e) }
       console.warn('[dag-ml-data] provider unavailable, using in-memory matrices:', e)
     }
+
+    const { classNames, classIdx } = classInfo(ds)
+    if (task === 'regression' && !trainRowsOf(ds).some((i) => Number.isFinite(ds.y[i]))) {
+      throw new Error('No numeric targets in the training data.')
+    }
+    if (task !== 'regression' && classNames.length < 2) throw new Error('Classification needs ≥2 classes.')
 
     const dagml = await loadDagMl()
     const sidToIdx = new Map(ds.sampleIds.map((s, i) => [s, i]))

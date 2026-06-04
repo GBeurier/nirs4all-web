@@ -189,6 +189,8 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
   ]
 
   const provider = new m.WasmInMemoryProvider(envelopeJson, JSON.stringify(targetTables), null, JSON.stringify(featureMatrices))
+  let dataHandle: string | null = null
+  let viewHandle: string | null = null
   try {
     const matRequest = {
       run_id: 'run:lite',
@@ -205,30 +207,37 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
       source_ids: [SOURCE_ID],
       require_relations: true,
     }
-    const dataHandle = provider.materialize(JSON.stringify(matRequest))
-    const viewHandle = provider.make_view(dataHandle, JSON.stringify({ sample_ids: ds.sampleIds, include_augmented: false }))
+    dataHandle = provider.materialize(JSON.stringify(matRequest))
+    viewHandle = provider.make_view(dataHandle, JSON.stringify({ sample_ids: ds.sampleIds, include_augmented: false }))
 
     const fblock = JSON.parse(provider.feature_block(viewHandle, FEATURE_SET)) as { sample_ids: string[]; values: number[][] }
     const tblock = JSON.parse(provider.target_block(viewHandle, TARGET_ID)) as { sample_ids: string[]; values: number[] }
 
-    // reconstruct in dataset order (provider blocks are aligned to their own sample_ids)
+    // reconstruct in dataset order, asserting exact 1:1 coverage — never train on
+    // zero-filled rows. Any gap/dup/width mismatch throws → visible degraded path.
     const pos = new Map(ds.sampleIds.map((s, i) => [s, i]))
     const X = new Float64Array(ds.nSamples * ds.nFeatures)
+    const y = new Float64Array(ds.nSamples)
+    const seenX = new Uint8Array(ds.nSamples)
+    const seenY = new Uint8Array(ds.nSamples)
+    if (fblock.sample_ids.length !== ds.nSamples) throw new Error(`provider feature block covered ${fblock.sample_ids.length}/${ds.nSamples} samples`)
+    if (tblock.sample_ids.length !== ds.nSamples) throw new Error(`provider target block covered ${tblock.sample_ids.length}/${ds.nSamples} samples`)
     for (let r = 0; r < fblock.sample_ids.length; r++) {
       const i = pos.get(fblock.sample_ids[r])
-      if (i === undefined) continue
+      if (i === undefined) throw new Error(`provider returned unknown sample id ${fblock.sample_ids[r]}`)
+      if (seenX[i]) throw new Error(`provider returned duplicate sample id ${fblock.sample_ids[r]}`)
+      seenX[i] = 1
       const row = fblock.values[r]
+      if (!row || row.length !== ds.nFeatures) throw new Error(`provider feature row ${fblock.sample_ids[r]} has ${row?.length ?? 0}/${ds.nFeatures} features`)
       for (let j = 0; j < ds.nFeatures; j++) X[i * ds.nFeatures + j] = Number(row[j])
     }
-    const y = new Float64Array(ds.nSamples)
     for (let r = 0; r < tblock.sample_ids.length; r++) {
       const i = pos.get(tblock.sample_ids[r])
-      if (i === undefined) continue
+      if (i === undefined) throw new Error(`provider returned unknown target sample id ${tblock.sample_ids[r]}`)
+      if (seenY[i]) throw new Error(`provider returned duplicate target sample id ${tblock.sample_ids[r]}`)
+      seenY[i] = 1
       y[i] = Number(tblock.values[r])
     }
-
-    provider.release(viewHandle)
-    provider.release(dataHandle)
 
     return {
       X,
@@ -237,12 +246,13 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
       outputRepresentation,
       version: m.dag_ml_data_version(),
     }
-  } catch (e) {
+  } finally {
     try {
+      if (viewHandle !== null) provider.release(viewHandle)
+      if (dataHandle !== null) provider.release(dataHandle)
       provider.free?.()
     } catch {
-      /* ignore */
+      /* best-effort cleanup */
     }
-    throw e
   }
 }

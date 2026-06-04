@@ -1,7 +1,7 @@
 import * as Icons from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { Preset } from '@/catalog/types'
-import { defaultParams } from '@/catalog/nodes'
+import { defaultParams, nodeByType } from '@/catalog/nodes'
 import type { PipelineDSL, PipelineStep } from '@/engine/types'
 
 // Drag-and-drop payload keys (native HTML5 DnD — no extra dependency).
@@ -47,14 +47,50 @@ export function pipelineFromPreset(preset: Preset): PipelineDSL {
   }
 }
 
-/** Minimal structural validation of an imported pipeline payload. */
-export function isPipelineDSL(value: unknown): value is PipelineDSL {
-  if (typeof value !== 'object' || value === null) return false
+const clampInt = (v: unknown, lo: number, hi: number, dflt: number): number => {
+  const n = Math.round(Number(v))
+  return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : dflt
+}
+const cleanParams = (raw: unknown, type: string): Record<string, unknown> => {
+  const provided = raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {}
+  return { ...defaultParams(type), ...provided }
+}
+
+/**
+ * Validate + normalize an imported pipeline payload against the catalog. Unknown
+ * node types, malformed steps, or a model invalid for the catalog are rejected
+ * (returns null); missing ids/params/cv are filled with defaults. This keeps a
+ * hand-edited or foreign JSON from crashing the editor or producing an invalid run.
+ */
+export function normalizeImportedPipeline(value: unknown): PipelineDSL | null {
+  if (typeof value !== 'object' || value === null) return null
   const v = value as Record<string, unknown>
-  if (!Array.isArray(v.steps)) return false
-  if (typeof v.model !== 'object' || v.model === null) return false
-  const model = v.model as Record<string, unknown>
-  return typeof model.type === 'string'
+  if (!Array.isArray(v.steps)) return null
+  if (typeof v.model !== 'object' || v.model === null) return null
+
+  const steps: PipelineStep[] = []
+  for (const raw of v.steps) {
+    if (typeof raw !== 'object' || raw === null) return null
+    const s = raw as Record<string, unknown>
+    if (typeof s.type !== 'string') return null
+    const def = nodeByType(s.type)
+    if (!def || def.category !== 'preprocessing') return null // unknown / non-preprocessing step
+    steps.push({ id: typeof s.id === 'string' ? s.id : newStepId(s.type), type: s.type, params: cleanParams(s.params, s.type) })
+  }
+
+  const m = v.model as Record<string, unknown>
+  if (typeof m.type !== 'string') return null
+  const modelDef = nodeByType(m.type)
+  if (!modelDef || modelDef.category !== 'model') return null
+  const model: PipelineStep = { id: typeof m.id === 'string' ? m.id : newStepId(m.type), type: m.type, params: cleanParams(m.params, m.type) }
+
+  const cvRaw = v.cv && typeof v.cv === 'object' ? (v.cv as Record<string, unknown>) : {}
+  return {
+    name: typeof v.name === 'string' && v.name.trim() ? v.name : 'Imported pipeline',
+    steps,
+    model,
+    cv: { folds: clampInt(cvRaw.folds, 2, 10, 5), seed: clampInt(cvRaw.seed, -2147483648, 2147483647, 42) },
+  }
 }
 
 /** Compact one-line summary of a step's parameters for the canvas node subtitle. */

@@ -38,6 +38,7 @@ function DropZone({ index, onInsert, onMove }: { index: number; onInsert: (type:
       onDragLeave={() => setOver(false)}
       onDrop={(e) => {
         e.preventDefault()
+        e.stopPropagation() // don't let the canvas append handler also fire
         setOver(false)
         const newType = e.dataTransfer.getData(DND_NEW_NODE)
         if (newType) return onInsert(newType, index)

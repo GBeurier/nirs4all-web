@@ -19,7 +19,7 @@ import {
 import { NodePalette } from './NodePalette'
 import { CanvasFlow, type Selection } from './CanvasFlow'
 import { Inspector } from './Inspector'
-import { isPipelineDSL, newStepId, pipelineFromPreset } from './_helpers'
+import { newStepId, normalizeImportedPipeline, pipelineFromPreset } from './_helpers'
 
 /**
  * Studio-style pipeline editor: a three-pane workspace — operator palette (left),
@@ -79,10 +79,11 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
     reader.onload = () => {
       try {
         const parsed = JSON.parse(String(reader.result))
-        if (isPipelineDSL(parsed)) {
-          onChange(parsed)
+        const normalized = normalizeImportedPipeline(parsed)
+        if (normalized) {
+          onChange(normalized)
           setSelected({ kind: 'model' })
-        } else window.alert('Invalid pipeline file: missing a valid `model` and `steps` array.')
+        } else window.alert('Invalid pipeline file: needs a `steps` array and a `model`, all with catalog node types.')
       } catch {
         window.alert('Could not parse the file as JSON.')
       }
