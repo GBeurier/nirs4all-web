@@ -126,6 +126,114 @@ const firstSignal = (r: SpectralRecord) => (r.signals ? Object.values(r.signals)
 const isTestName = (n: string) => /test|valid|holdout/i.test(n)
 const isMetaName = (n: string) => /meta/i.test(n)
 const asArray = (v: string | string[] | undefined) => (Array.isArray(v) ? v : v ? [v] : [])
+const baseFile = (n: string) => n.replace(/\.[^.]+$/, '')
+const unquote = (s: string) => s.replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1')
+const isNumericCell = (v: string) => v != null && v.trim() !== '' && Number.isFinite(Number(v.replace(',', '.')))
+const isIdColumn = (n: string) => /^(sample[_ ]?id|sampleid|sample|id|name|code|ref(erence)?|key|index|.*_id|id_.*)$/i.test(n)
+
+// --- targets read straight from the resolved DatasetSpec (the nirs4all-io path) ---
+// Target (y) files are scalar tables, not spectra, so nirs4all-formats refuses to
+// decode them. We instead read them as raw CSV with the spec's per-source delimiter
+// and align each target value to its X row by sampleId → (joined X file, rowIndex) →
+// (partition, rowIndex) — mirroring single-page-WASM's targetPreview().
+interface TargetItem {
+  key: string
+  value: number | string
+  partition: string
+  sampleId: string
+}
+interface TargetResolver {
+  hasTargets: boolean
+  find(sampleId: string, file: string, rowIndex: number, partition: string): TargetItem | null
+}
+
+function previewDelimiter(firstLine: string, declared?: string): string {
+  if (declared && firstLine.includes(declared)) return declared
+  const scored = [';', '\t', ','].map((d) => [d, firstLine.split(d).length - 1] as const).sort((a, b) => b[1] - a[1])
+  return scored[0][1] > 0 ? scored[0][0] : ''
+}
+
+function parseTargetTable(bytes: Uint8Array, params: { delimiter?: string; has_header?: boolean } = {}): { headers: string[]; rows: Record<string, string>[] } {
+  const text = new TextDecoder().decode(bytes)
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean)
+  if (!lines.length) return { headers: [], rows: [] }
+  const delimiter = previewDelimiter(lines[0], params.delimiter)
+  const split = (l: string) => (delimiter ? l.split(delimiter).map((s) => unquote(s.trim())) : [unquote(l.trim())])
+  const first = split(lines[0])
+  const second = lines[1] ? split(lines[1]) : []
+  const hasHeader = params.has_header !== false && first.some((c, i) => !isNumericCell(c) && isNumericCell(second[i] ?? ''))
+  const headers = hasHeader ? first : first.map((_, i) => (i === 0 ? 'target' : `col_${i + 1}`))
+  const dataLines = hasHeader ? lines.slice(1) : lines
+  const rows = dataLines.map((l) => {
+    const cells = split(l)
+    const row: Record<string, string> = {}
+    headers.forEach((h, i) => (row[h || `col_${i + 1}`] = cells[i] ?? ''))
+    return row
+  })
+  return { headers, rows }
+}
+
+function chooseTargetColumns(table: { headers: string[]; rows: Record<string, string>[] }): string[] {
+  const named = table.headers.filter((h) => h && !isIdColumn(h))
+  const cols = named.length ? named : table.headers.filter(Boolean)
+  const numeric = cols.filter((h) => table.rows.some((r) => isNumericCell(r[h])))
+  return [...numeric, ...cols.filter((h) => !numeric.includes(h))]
+}
+
+/** Build a target resolver from the resolved DatasetSpec + the raw uploaded files. */
+function buildTargetResolver(plan: DatasetPlan | null | undefined, rawFiles: { name: string; bytes: Uint8Array }[]): TargetResolver {
+  const sources = plan?.resolved_spec?.sources ?? []
+  const empty: TargetResolver = { hasTargets: false, find: () => null }
+  if (!sources.length || !rawFiles.length) return empty
+  const byId = new Map(sources.map((s) => [s.id, s]))
+  const fileByName = new Map(rawFiles.map((f) => [f.name, f]))
+  const byFileRow = new Map<string, TargetItem>()
+  const byPartRow = new Map<string, TargetItem>()
+  const bySampleId = new Map<string, TargetItem>()
+  const rowKey = (n: string, i: number) => `${n} ${i}`
+  let any = false
+  for (const src of sources) {
+    if (src.role !== 'targets') continue
+    for (const input of asArray(src.input)) {
+      const file = fileByName.get(input) ?? rawFiles.find((f) => baseFile(f.name) === input)
+      if (!file) continue
+      const params = (src as { params?: { delimiter?: string; has_header?: boolean } }).params ?? {}
+      const table = parseTargetTable(file.bytes, params)
+      if (!table.rows.length) continue
+      const targetCols = chooseTargetColumns(table)
+      if (!targetCols.length) continue
+      const idCol = table.headers.find(isIdColumn) ?? ''
+      const join = (src as { join?: { right?: string } }).join
+      const linked = join?.right ? byId.get(join.right) : undefined
+      const linkedInputs = linked ? asArray(linked.input) : []
+      const partition = src.partition || linked?.partition || ''
+      table.rows.forEach((row, ri) => {
+        // first target column wins (one y per sample for v1)
+        const col = targetCols[0]
+        const raw = row[col]
+        if (raw == null || raw.trim() === '') return
+        const num = Number(raw.replace(',', '.'))
+        const item: TargetItem = { key: col, value: Number.isFinite(num) ? num : raw, partition, sampleId: idCol ? String(row[idCol] ?? '') : '' }
+        any = true
+        if (item.sampleId) bySampleId.set(item.sampleId, item)
+        for (const li of linkedInputs) byFileRow.set(rowKey(li, ri), item)
+        if (partition) byPartRow.set(rowKey(partition, ri), item)
+      })
+    }
+  }
+  return {
+    hasTargets: any,
+    find(sampleId, file, rowIndex, partition) {
+      if (sampleId && bySampleId.has(sampleId)) return bySampleId.get(sampleId)!
+      return (
+        byFileRow.get(rowKey(file, rowIndex)) ??
+        byFileRow.get(rowKey(baseFile(file), rowIndex)) ??
+        byPartRow.get(rowKey(partition, rowIndex)) ??
+        null
+      )
+    },
+  }
+}
 
 function rowsFrom(
   decoded: DecodedFile[],
@@ -181,8 +289,18 @@ function rowsFrom(
   return { x, yByKey }
 }
 
-/** Build a MaterializedDataset from decoded records (vendor formats or CSV via formats). */
-export function materialize(decoded: DecodedFile[], name = 'Uploaded dataset', plan?: DatasetPlan | null): MaterializedDataset {
+/**
+ * Build a MaterializedDataset from decoded records (vendor formats or CSV via formats).
+ * `rawFiles` are the original uploaded bytes — needed because target (y) files are
+ * scalar tables that nirs4all-formats won't decode, so their values are read from the
+ * resolved DatasetSpec instead (see buildTargetResolver).
+ */
+export function materialize(
+  decoded: DecodedFile[],
+  name = 'Uploaded dataset',
+  plan?: DatasetPlan | null,
+  rawFiles: { name: string; bytes: Uint8Array }[] = [],
+): MaterializedDataset {
   const sources = plan?.resolved_spec?.sources ?? []
   const targetFiles = new Set(sources.filter((s) => s.role === 'targets').flatMap((s) => asArray(s.input)))
   const metaFiles = new Set([
@@ -191,6 +309,7 @@ export function materialize(decoded: DecodedFile[], name = 'Uploaded dataset', p
   ])
   const { x, yByKey } = rowsFrom(decoded, targetFiles.size ? targetFiles : null, metaFiles)
   if (x.length === 0) throw new Error('No spectra found — every decoded file looked like scalar/target data.')
+  const targets = buildTargetResolver(plan, rawFiles)
   const nFeatures = x[0].values.length
   const axis = x[0].axis.length === nFeatures ? x[0].axis : x[0].axis.length ? x[0].axis : Array.from({ length: nFeatures }, (_, i) => i)
   const axisUnit = x[0].axisUnit
@@ -203,8 +322,14 @@ export function materialize(decoded: DecodedFile[], name = 'Uploaded dataset', p
   for (let i = 0; i < x.length; i++) {
     const r = x[i]
     for (let j = 0; j < nFeatures; j++) X[i * nFeatures + j] = r.values[j] ?? 0
-    // prefer an embedded target, then a real shared sample id, then position within partition
-    const t = r.embeddedTarget ?? (r.realId ? yByKey.get(r.sampleId) : undefined) ?? yByKey.get(`${r.partition}#${r.idx}`)
+    // prefer an embedded target, then a real shared sample id, then position within
+    // partition (decoded scalar rows), then the spec-driven target files (y CSVs that
+    // didn't decode as spectra — the common nirs4all X*/Y* folder case)
+    const t =
+      r.embeddedTarget ??
+      (r.realId ? yByKey.get(r.sampleId) : undefined) ??
+      yByKey.get(`${r.partition}#${r.idx}`) ??
+      targets.find(r.realId ? r.sampleId : '', r.file, r.idx, r.partition)?.value
     const num = t == null || t === '' ? NaN : typeof t === 'number' ? t : Number(String(t).replace(',', '.'))
     yRaw[i] = Number.isFinite(num) ? num : NaN
     labelsRaw.push(t == null ? '' : String(t))

@@ -27,24 +27,33 @@ export function DatasetUpload({ onDataset, onLoadSample, busy: busyProp, error }
     if (files.length === 0) return
     const name = files[0]?.name ?? 'Uploaded dataset'
     const allText = files.every((f) => /\.(csv|tsv|txt)$/i.test(f.name))
+    setBusyLocal(true)
     try {
-      if (allText) {
-        // CSV/TXT: the axis-aware in-browser builder (no WASM needed)
-        const raw: RawFile[] = await readRawFiles(files)
-        onDataset(buildDataset(raw, name), name)
-        return
-      }
-      // Vendor formats: decode + infer through the nirs4all-formats / nirs4all-io WASM
-      setBusyLocal(true)
+      // Everything — CSV folders and vendor formats alike — goes through the real
+      // nirs4all-formats decode + nirs4all-io inference. nirs4all-io resolves the
+      // dataset structure (X*/Y* train/test convention, delimiters, joins, partitions,
+      // axis, task type) far more robustly than any hand-rolled CSV heuristic.
       const { analyzeFiles, materialize } = await import('@/data/wasm-io')
       const withBytes = await Promise.all(files.map(async (f) => ({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) })))
       const analysis = await analyzeFiles(withBytes)
       const failed = analysis.decoded.filter((d) => !d.ok)
       if (analysis.decoded.every((d) => !d.ok)) {
-        throw new Error(`No file could be decoded (${failed.map((d) => d.error).join('; ') || 'unsupported format'}).`)
+        throw new Error(`No spectra could be decoded (${failed.map((d) => d.error).join('; ') || 'unsupported format'}).`)
       }
-      onDataset(materialize(analysis.decoded, name, analysis.plan), name, analysis)
+      onDataset(materialize(analysis.decoded, name, analysis.plan, withBytes), name, analysis)
     } catch (e) {
+      // Offline single-file build (file://) can't always load the io WASM — fall back
+      // to the lightweight in-browser CSV builder when every file is delimited text.
+      if (allText) {
+        try {
+          const raw: RawFile[] = await readRawFiles(files)
+          onDataset(buildDataset(raw, name), name)
+          return
+        } catch (e2) {
+          setLocalError(e2 instanceof Error ? e2.message : 'Could not read the selected files.')
+          return
+        }
+      }
       setLocalError(e instanceof Error ? e.message : 'Could not read the selected files.')
     } finally {
       setBusyLocal(false)
