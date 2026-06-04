@@ -29,6 +29,19 @@ export function execute_campaign_phase_json(plan_id: string, graph_json: string,
 
 export function fold_set_fingerprint_json(json: string): string;
 
+/**
+ * Build a K-fold `FoldSet` from a `KFoldSpec` JSON + a JSON array of sample ids.
+ * dag-ml owns the split — the host stops building folds itself.
+ */
+export function kfold_split_json(spec_json: string, sample_ids_json: string, id: string): string;
+
+/**
+ * Build a stratified K-fold `FoldSet`: same OOF-once guarantee as K-fold, but
+ * balanced by a per-sample class label. `strata_json` is a JSON object mapping
+ * sample id → class label (identity-keyed metadata, never feature values).
+ */
+export function stratified_kfold_split_json(spec_json: string, sample_ids_json: string, strata_json: string, id: string): string;
+
 export function validate_campaign_json(json: string): void;
 
 export function validate_controller_manifest_json(json: string): void;
@@ -57,6 +70,8 @@ export interface InitOutput {
     readonly dag_ml_version: () => [number, number];
     readonly execute_campaign_phase_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: any) => [number, number, number, number];
     readonly fold_set_fingerprint_json: (a: number, b: number) => [number, number, number, number];
+    readonly kfold_split_json: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number, number, number];
+    readonly stratified_kfold_split_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number, number, number];
     readonly validate_campaign_json: (a: number, b: number) => [number, number];
     readonly validate_controller_manifest_json: (a: number, b: number) => [number, number];
     readonly validate_controller_manifest_list_json: (a: number, b: number) => [number, number];

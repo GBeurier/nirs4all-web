@@ -7,7 +7,7 @@
 import { loadLibn4mBackend } from './backends'
 import { dagMlAvailable, loadDagMl, toCompatDsl } from './dagml'
 import { materializeViaProvider } from './dagml-data'
-import { buildFolds, testRowsOf, trainRowsOf } from './kfold'
+import { testRowsOf, trainRowsOf } from './kfold'
 import type { Mat } from './algo/linalg'
 import {
   classInfo,
@@ -95,22 +95,26 @@ export class DagMlEngine implements Engine {
     const dagml = await loadDagMl()
     const sidToIdx = new Map(ds.sampleIds.map((s, i) => [s, i]))
 
-    // --- build the dag-ml fold_set from our CV folds (universe = train rows) ---
-    const folds = buildFolds(ds, dsl.cv.folds, dsl.cv.seed)
-    const foldIdFor = (i: number) => `fold${i}`
+    // --- dag-ml builds the CV fold_set (the SECOND split, over the train rows).
+    // KFold for regression, stratified K-fold for classification — both OOF-safe
+    // (each sample validated exactly once). The host no longer builds folds itself. ---
     const trainUniverse = trainRowsOf(ds)
-    const foldSet = {
-      id: 'outer',
-      sample_ids: trainUniverse.map((i) => ds.sampleIds[i]),
-      folds: folds.map((f, i) => ({
-        fold_id: foldIdFor(i),
-        train_sample_ids: f.trainIdx.map((r) => ds.sampleIds[r]),
-        validation_sample_ids: f.valIdx.map((r) => ds.sampleIds[r]),
-        metadata: {},
-      })),
-      sample_groups: {},
-    }
-    const foldByDagId = new Map(folds.map((f, i) => [foldIdFor(i), f]))
+    const trainSampleIds = trainUniverse.map((i) => ds.sampleIds[i])
+    const nSplits = Math.max(2, Math.min(dsl.cv.folds, trainSampleIds.length))
+    const splitSpec = JSON.stringify({ n_splits: nSplits, shuffle: true, seed: dsl.cv.seed })
+    const foldSet = JSON.parse(
+      task !== 'regression'
+        ? dagml.stratified_kfold_split_json(
+            splitSpec,
+            JSON.stringify(trainSampleIds),
+            JSON.stringify(Object.fromEntries(trainUniverse.map((i) => [ds.sampleIds[i], ds.classes?.[i] ?? String(Math.round(ds.y[i]))]))),
+            'outer',
+          )
+        : dagml.kfold_split_json(splitSpec, JSON.stringify(trainSampleIds), 'outer'),
+    ) as { id: string; sample_ids: string[]; folds: { fold_id: string; train_sample_ids: string[]; validation_sample_ids: string[]; metadata?: unknown }[]; sample_groups: Record<string, string> }
+    const folds = foldSet.folds
+    const toIdx = (ids: string[]) => ids.map((s) => sidToIdx.get(s)).filter((v): v is number => v !== undefined)
+    const foldByDagId = new Map(folds.map((f) => [f.fold_id, { trainIdx: toIdx(f.train_sample_ids), valIdx: toIdx(f.validation_sample_ids) }]))
 
     // --- dag-ml compiles the pipeline DSL → graph + campaign; inject our fold_set ---
     const artifact = JSON.parse(dagml.compile_pipeline_dsl_artifact_json(JSON.stringify(toCompatDsl(dsl))))
@@ -184,7 +188,7 @@ export class DagMlEngine implements Engine {
 
     // --- assemble OOF PredRows from dag-ml's returned validation predictions ---
     const oof: PredRow[] = []
-    const foldNodes = folds.map((_, i) => ({ id: foldIdFor(i), rows: [] as PredRow[] }))
+    const foldNodes = folds.map((f) => ({ id: f.fold_id, rows: [] as PredRow[] }))
     const foldNodeById = new Map(foldNodes.map((n) => [n.id, n]))
     for (const nr of nodeResults) {
       for (const blk of nr.predictions ?? []) {
