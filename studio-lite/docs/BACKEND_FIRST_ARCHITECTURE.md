@@ -193,10 +193,27 @@ Each phase: lib green → binding green (+docs) → frontend green → deploy.
 
 ---
 
-## Current state (2026-06-04)
+## Current state (2026-06-05)
 
-The deployed demo works but on a **JS shadow engine** for numerics/orchestration
-(libn4m used only for PLS; dag-ml executes CV via a JS controller that runs TS
-numerics; dag-ml-data serves the data). That shadow engine is the debt this plan
-retires, lib by lib. Phases A→C are the path; methods will keep growing, so the
-generic operator surface (Phase A) is the load-bearing first step.
+Progress retiring the JS shadow engine, lib by lib:
+
+- **Phase A — DONE (deployed).** Preprocessing numerics run in **libn4m** (C++ → WASM)
+  via the generic operator dispatcher (`n4m_wasm_pp_*`); studio-lite's served path uses
+  libn4m for all transforms, MSC state round-trips for `.n4a`. JS preprocessing is now
+  strictly the offline `file://` fallback. Codex-reviewed (8 findings fixed).
+- **Phase B — DONE (deployed).** **dag-ml** builds the CV fold set in WASM
+  (`kfold_split_json` / `stratified_kfold_split_json`; new `StratifiedKFoldSpec` in core,
+  OOF-safe). The served run no longer builds folds in TS (`kfold.ts` is offline-only).
+  *Remaining B.2 (smaller):* classification metrics + SELECT into dag-ml to retire
+  `metrics.ts` + the TS scoreNode; CV strategy picker in the UI.
+- **Phase C — BLOCKED on upstream io Phase-2.** The nirs4all-io wasm crate is deliberately
+  *fs-free* and depends only on `nirs4all-io-core` (inference); the `assemble/materialize`
+  facade is fs-based (`crates/nirs4all-io`). Exposing `assembleDataset`/`to_dag_ml_data`
+  in WASM (Phase-2 track T14) needs an fs-free assemble in io first. Until then studio-lite
+  still materializes X/y in TS (`data/dataset.ts`, `data/wasm-io.ts`).
+- **Phase D — minor, deferred.** Generate the catalog from the backend; align `.n4a` with
+  nirs4all's bundle.
+
+Net: the two heaviest numeric concerns (preprocessing + cross-validation) are now Rust/C++
+in the public demo. The remaining TS numerics are the dataset assembly (Phase C, gated on
+io Phase-2) and the display/selection metrics (Phase B.2).
