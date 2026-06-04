@@ -1,4 +1,5 @@
 import type { PipelineDSL, RunResult } from '@/engine/types'
+import { buildN4aBundle, serializeTyped } from './n4a'
 
 function save(filename: string, content: string, mime: string): void {
   const blob = new Blob([content], { type: mime })
@@ -33,6 +34,11 @@ export function downloadRunJson(run: RunResult): void {
   // strip the (large, non-portable) fitted model state from the exported bundle
   const { model, ...rest } = run
   downloadJson(`${slug(run.pipelineName)}.results.json`, { ...rest, modelSummary: { engine: model.dsl ? run.engine : run.engine, nFeatures: model.nFeatures } })
+}
+
+/** Export a re-importable .n4a model bundle (pipeline + fitted model + metadata). */
+export function downloadN4a(run: RunResult): void {
+  save(`${slug(run.pipelineName)}.n4a`, serializeTyped(buildN4aBundle(run)), 'application/json')
 }
 
 function slug(s: string): string {

@@ -11,6 +11,8 @@ import type { SampleId } from '@/data/samples'
 export interface DatasetUploadProps {
   onDataset: (ds: MaterializedDataset, sourceName: string, analysis?: Analysis) => void
   onLoadSample: (sample?: SampleId) => void
+  /** import a saved .n4a model bundle → jump straight to Predict (no dataset needed) */
+  onImportModel?: (file: File) => void
   busy?: boolean
   error?: string | null
 }
@@ -47,15 +49,19 @@ export interface ResultsListProps {
   selectedRunId: string | null
   selectedScoreId: string | null
   onSelect: (run: RunResult, score: ScoreNode) => void
-  onExport: (run: RunResult) => void
 }
 export interface ResultsVisualizationProps {
   run: RunResult
   score: ScoreNode
 }
 export interface PredictionPanelProps {
-  run: RunResult
+  /** the fitted model to score with — from a run or an imported .n4a bundle */
+  model: FittedPipeline
+  /** display name of the model's source (pipeline / bundle name) */
+  sourceName: string
   engine: Engine
+  /** swap in a different model from a .n4a bundle */
+  onImportModel?: (file: File) => void
 }
 
 // re-exports so components import everything from one place if they prefer

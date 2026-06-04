@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Upload, FileText, Loader2, ShieldCheck, Sparkles, AlertTriangle } from 'lucide-react'
+import { Upload, FileText, FileUp, Loader2, ShieldCheck, Sparkles, AlertTriangle } from 'lucide-react'
 import { buildDataset, type RawFile } from '@/data/dataset'
 import { SAMPLES } from '@/data/samples'
 import type { DatasetUploadProps } from '@/components/contracts'
@@ -12,8 +12,9 @@ import { readRawFiles } from './_helpers'
  * the browser, materializes them via buildDataset(), and hands the dataset up
  * through onDataset(). No bytes ever leave the page.
  */
-export function DatasetUpload({ onDataset, onLoadSample, busy: busyProp, error }: DatasetUploadProps) {
+export function DatasetUpload({ onDataset, onLoadSample, onImportModel, busy: busyProp, error }: DatasetUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const modelRef = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
   const [busyLocal, setBusyLocal] = useState(false)
@@ -158,6 +159,26 @@ export function DatasetUpload({ onDataset, onLoadSample, busy: busyProp, error }
         <ShieldCheck className="h-4 w-4 text-brand-green" />
         <span>Runs entirely in your browser — no files are uploaded.</span>
       </div>
+
+      {onImportModel && (
+        <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
+          <span>Already trained a model?</span>
+          <input
+            ref={modelRef}
+            type="file"
+            accept=".n4a,application/json"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              if (f) onImportModel(f)
+              e.target.value = ''
+            }}
+          />
+          <Button variant="outline" size="sm" className="h-7 gap-1.5" onClick={() => modelRef.current?.click()}>
+            <FileUp className="h-3.5 w-3.5 text-brand-indigo" /> Load a saved .n4a model to predict
+          </Button>
+        </div>
+      )}
 
       <div className="flex items-start gap-2 rounded-xl border border-border bg-card p-4 text-xs text-muted-foreground">
         <FileText className="mt-0.5 h-4 w-4 shrink-0 text-brand-cyan" />

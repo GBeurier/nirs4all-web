@@ -7,7 +7,16 @@ import { fmt, metricChips, primaryMetric } from '@/lib/format'
 import { Badge } from '@/app/components/ui/badge'
 import { Button } from '@/app/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/app/components/ui/collapsible'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/app/components/ui/dropdown-menu'
 import { cn } from '@/app/components/ui/utils'
+import { downloadN4a, downloadPipeline, downloadRunCsv, downloadRunJson } from '@/lib/download'
 
 import { formatDate } from './_helpers'
 
@@ -87,13 +96,11 @@ function RunCard({
   selectedRunId,
   selectedScoreId,
   onSelect,
-  onExport,
 }: {
   run: RunResult
   selectedRunId: string | null
   selectedScoreId: string | null
   onSelect: ResultsListProps['onSelect']
-  onExport: ResultsListProps['onExport']
 }) {
   const [cvOpen, setCvOpen] = useState(false)
   const pm = primaryMetric(run.taskType)
@@ -114,10 +121,39 @@ function RunCard({
             <span>{formatDate(run.createdAt)}</span>
           </div>
         </div>
-        <Button variant="outline" size="sm" className="shrink-0 gap-1.5" onClick={() => onExport(run)}>
-          <Download className="size-4" />
-          Export
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="shrink-0 gap-1.5">
+              <Download className="size-4" />
+              Export
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-60">
+            <DropdownMenuLabel>Export “{run.pipelineName}”</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => downloadN4a(run)} className="gap-2">
+              <Layers className="size-4 text-brand-teal" />
+              <span className="flex-1">Model bundle</span>
+              <span className="font-mono text-[10px] text-muted-foreground">.n4a</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => downloadPipeline(run.model.dsl)} className="gap-2">
+              <Target className="size-4 text-brand-indigo" />
+              <span className="flex-1">Pipeline</span>
+              <span className="font-mono text-[10px] text-muted-foreground">.json</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => downloadRunCsv(run)} className="gap-2">
+              <Download className="size-4 text-brand-cyan" />
+              <span className="flex-1">Predictions</span>
+              <span className="font-mono text-[10px] text-muted-foreground">.csv</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => downloadRunJson(run)} className="gap-2">
+              <Download className="size-4 text-brand-cyan" />
+              <span className="flex-1">Results</span>
+              <span className="font-mono text-[10px] text-muted-foreground">.json</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Headline CV primary metric */}
@@ -182,7 +218,7 @@ function RunCard({
 }
 
 export function ResultsList(props: ResultsListProps) {
-  const { runs, selectedRunId, selectedScoreId, onSelect, onExport } = props
+  const { runs, selectedRunId, selectedScoreId, onSelect } = props
 
   if (runs.length === 0) {
     return (
@@ -205,7 +241,6 @@ export function ResultsList(props: ResultsListProps) {
           selectedRunId={selectedRunId}
           selectedScoreId={selectedScoreId}
           onSelect={onSelect}
-          onExport={onExport}
         />
       ))}
     </div>

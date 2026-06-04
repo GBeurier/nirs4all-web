@@ -17,7 +17,7 @@ import { defaultPipeline } from '@/catalog/build'
 import { engine } from '@/engine/client'
 import { type DatasetSummary, reencodeTarget, summarize } from '@/data/dataset'
 import { loadSampleDataset, type SampleId } from '@/data/samples'
-import { downloadRunCsv, downloadRunJson } from '@/lib/download'
+import { type LoadedModel, parseN4a } from '@/lib/n4a'
 import { cn } from '@/app/components/ui/utils'
 import type { Analysis } from '@/data/wasm-io'
 import type { DagMlLineage } from '@/engine/dagml'
@@ -46,6 +46,7 @@ export default function App() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
+  const [loadedModel, setLoadedModel] = useState<LoadedModel | null>(null)
   const [step, setStep] = useState<StepId>('dataset')
   const abortRef = useRef<AbortController | null>(null)
   const runTokenRef = useRef(0)
@@ -86,6 +87,18 @@ export default function App() {
     },
     [adoptDataset],
   )
+
+  const onImportModel = useCallback(async (file: File) => {
+    setError(null)
+    try {
+      const loaded = parseN4a(await file.text())
+      setLoadedModel(loaded)
+      setStep('predict') // a saved model goes straight to scoring new spectra
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+      setStep('dataset')
+    }
+  }, [])
 
   const applyConfigPatch = useCallback(
     (patch: { targetName?: string; taskType?: TaskType; testFraction?: number }) => {
@@ -163,9 +176,9 @@ export default function App() {
       explore: !!dataset,
       pipeline: !!dataset,
       results: runs.length > 0,
-      predict: !!selectedRun,
+      predict: !!selectedRun || !!loadedModel,
     }),
-    [dataset, runs.length, selectedRun],
+    [dataset, runs.length, selectedRun, loadedModel],
   )
 
   const go = (id: StepId) => {
@@ -333,6 +346,7 @@ export default function App() {
                 runs={runs}
                 selectedRun={selectedRun}
                 selectedScore={selectedScore}
+                loadedModel={loadedModel}
                 running={running}
                 progress={progress}
                 busy={busy}
@@ -341,6 +355,7 @@ export default function App() {
                 configOpen={configOpen}
                 onDataset={onDataset}
                 onLoadSample={onLoadSample}
+                onImportModel={onImportModel}
                 onOpenConfig={() => setConfigOpen(true)}
                 onConfigOpenChange={setConfigOpen}
                 onApplyConfig={applyConfigPatch}
@@ -349,10 +364,6 @@ export default function App() {
                 onCancel={onCancel}
                 onSelectScore={onSelect}
                 selectedScoreId={selectedScore?.id ?? null}
-                onExport={(run) => {
-                  downloadRunCsv(run)
-                  downloadRunJson(run)
-                }}
                 onGoPipeline={() => go('pipeline')}
               />
             </div>
@@ -407,6 +418,7 @@ interface StepPanelProps {
   runs: RunResult[]
   selectedRun: RunResult | null
   selectedScore: ScoreNode | null
+  loadedModel: LoadedModel | null
   running: boolean
   progress: RunProgress | null
   busy: boolean
@@ -416,6 +428,7 @@ interface StepPanelProps {
   selectedScoreId: string | null
   onDataset: (ds: MaterializedDataset, name: string, a?: Analysis) => void
   onLoadSample: (sample?: SampleId) => void
+  onImportModel: (file: File) => void
   onOpenConfig: () => void
   onConfigOpenChange: (open: boolean) => void
   onApplyConfig: (patch: { targetName?: string; taskType?: TaskType; testFraction?: number }) => void
@@ -423,17 +436,16 @@ interface StepPanelProps {
   onRun: () => void
   onCancel: () => void
   onSelectScore: (run: RunResult, score: ScoreNode) => void
-  onExport: (run: RunResult) => void
   onGoPipeline: () => void
 }
 
 function StepPanel(props: StepPanelProps) {
-  const { step, dataset, summary, selectedRun, selectedScore } = props
+  const { step, dataset, summary, selectedRun, selectedScore, loadedModel } = props
 
   if (step === 'dataset') {
     return (
       <Panel title="Dataset" subtitle="Drop spectra or load a sample — decoded and inferred locally by nirs4all-formats + nirs4all-io." icon={Upload}>
-        <DatasetUpload onDataset={props.onDataset} onLoadSample={props.onLoadSample} busy={props.busy} error={props.error} />
+        <DatasetUpload onDataset={props.onDataset} onLoadSample={props.onLoadSample} onImportModel={props.onImportModel} busy={props.busy} error={props.error} />
       </Panel>
     )
   }
@@ -488,18 +500,20 @@ function StepPanel(props: StepPanelProps) {
         right={<span className="rounded-full border border-border px-3 py-1 text-sm text-muted-foreground">{props.runs.length} run{props.runs.length === 1 ? '' : 's'}</span>}
       >
         <div className="grid gap-6 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
-          <ResultsList runs={props.runs} selectedRunId={selectedRun?.id ?? null} selectedScoreId={props.selectedScoreId} onSelect={props.onSelectScore} onExport={props.onExport} />
+          <ResultsList runs={props.runs} selectedRunId={selectedRun?.id ?? null} selectedScoreId={props.selectedScoreId} onSelect={props.onSelectScore} />
           {selectedRun && selectedScore && <ResultsVisualization run={selectedRun} score={selectedScore} />}
         </div>
       </Panel>
     )
   }
 
-  // predict
-  if (!selectedRun) return <LockedNote>Run a pipeline first, then predict on new spectra.</LockedNote>
+  // predict — from the selected run's model, or a model imported from a .n4a bundle
+  const predictModel = selectedRun ? selectedRun.model : loadedModel?.model
+  const predictName = selectedRun ? selectedRun.pipelineName : loadedModel?.name
+  if (!predictModel || !predictName) return <LockedNote>Run a pipeline first, or load a saved .n4a model — then predict on new spectra.</LockedNote>
   return (
-    <Panel title="Predict" subtitle="Score new spectra with the selected model." icon={Sparkles}>
-      <PredictionPanel run={selectedRun} engine={engine} />
+    <Panel title="Predict" subtitle="Score new spectra with the selected model — drag a CSV in, or load a saved .n4a model." icon={Sparkles}>
+      <PredictionPanel model={predictModel} sourceName={predictName} engine={engine} onImportModel={props.onImportModel} />
     </Panel>
   )
 }
