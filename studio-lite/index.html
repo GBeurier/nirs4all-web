@@ -1,22 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>nirs4all-lite — NIRS modelling in your browser</title>
+    <meta
+      name="description"
+      content="A single-page, full-WASM demonstrator of the nirs4all ecosystem: upload spectra, build a pipeline, run cross-validated PLS / PLS-DA with dag-ml + libn4m, and predict — entirely in your browser, no install, nothing uploaded."
+    />
+    <meta property="og:title" content="nirs4all-lite — NIRS modelling in your browser" />
+    <meta property="og:description" content="Upload spectra → pipeline → run (dag-ml + libn4m WASM) → results → predict. 100% in-browser." />
+    <meta name="theme-color" content="#0d9488" />
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      #root {
+        height: 100%;
+      }
+    </style>
+  </head>
 
-  <!DOCTYPE html>
-  <html lang="en">
-    <head>
-      
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Single Page Pipeline Generator</title>
-      <meta name="description" content="This web application enables users to upload and visualize NIRS datasets, select or edit pipelines, and analyze results through interactive charts, enhancing scientific data analysis." />
-      <meta name="robots" content="noindex, nofollow" />
-      <style>html, body { height: 100%; margin: 0; } #root { height: 100%; }</style>
-      
-    </head>
-
-    <body>
-      
-      <div id="root"></div>
-      <script type="module" src="/src/main.tsx"></script>
-      
-    </body>
-  </html>
-  
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
