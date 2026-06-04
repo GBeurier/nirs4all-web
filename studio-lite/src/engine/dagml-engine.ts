@@ -6,6 +6,7 @@
 // JS-orchestrated path on any error.
 import { jsBackend, loadLibn4mBackend } from './backends'
 import { dagMlAvailable, loadDagMl, toCompatDsl } from './dagml'
+import { materializeViaProvider } from './dagml-data'
 import { buildFolds, testRowsOf, trainRowsOf } from './kfold'
 import type { Mat } from './algo/linalg'
 import {
@@ -74,6 +75,23 @@ export class DagMlEngine implements Engine {
       throw new Error('No numeric targets in the training data.')
     }
     if (task !== 'regression' && classNames.length < 2) throw new Error('Classification needs ≥2 classes.')
+
+    // --- dag-ml-data: materialize X/y through the provider (the data-contract layer).
+    // The provider serves the exact feature/target blocks the model trains on, by
+    // sampleId. Degrade visibly (recorded in lineage) if the provider is unavailable.
+    let dataProvider: { layer: string; status: string; fingerprints?: { schema: string; plan: string; relation: string | null }; representation?: string; version?: string; error?: string } = {
+      layer: 'dag-ml-data',
+      status: 'unavailable',
+    }
+    try {
+      onP?.({ phase: 'preprocess', pct: 1, message: 'materializing via dag-ml-data' })
+      const served = await materializeViaProvider(ds)
+      ds = { ...ds, X: served.X, y: served.y }
+      dataProvider = { layer: 'dag-ml-data', status: 'materialized', fingerprints: served.fingerprints, representation: served.outputRepresentation, version: served.version }
+    } catch (e) {
+      dataProvider = { layer: 'dag-ml-data', status: 'unavailable', error: e instanceof Error ? e.message : String(e) }
+      console.warn('[dag-ml-data] provider unavailable, using in-memory matrices:', e)
+    }
 
     const dagml = await loadDagMl()
     const sidToIdx = new Map(ds.sampleIds.map((s, i) => [s, i]))
@@ -212,7 +230,7 @@ export class DagMlEngine implements Engine {
       seed: dsl.cv.seed,
       engine: 'dag-ml-wasm + libn4m',
       scoreMetric: task === 'regression' ? 'rmse' : 'accuracy',
-      lineage: { engine: 'dag-ml-wasm', compiled: true, executed: true, phase: 'FIT_CV', nodeResults: nodeResults.map((n) => n.lineage), folds: folds.length, version: dagml.dag_ml_version() },
+      lineage: { engine: 'dag-ml-wasm', compiled: true, executed: true, phase: 'FIT_CV', nodeResults: nodeResults.map((n) => n.lineage), folds: folds.length, version: dagml.dag_ml_version(), dataProvider },
       model: fitted,
       createdAt: new Date().toISOString(),
     }

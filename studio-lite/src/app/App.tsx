@@ -161,6 +161,7 @@ export default function App() {
 
   const lineage = selectedRun?.lineage as DagMlLineage | undefined
   const runEngineLabel = lineage?.executed ? 'executed by dag-ml' : lineage?.compiled ? 'compiled by dag-ml' : null
+  const dataServed = lineage?.dataProvider?.status === 'materialized' ? lineage.dataProvider : null
 
   return (
     <div className="flex min-h-screen flex-col n4a-app-bg">
@@ -196,6 +197,14 @@ export default function App() {
           {running && (
             <span className="flex items-center gap-1.5 rounded-full border border-brand-teal/30 bg-brand-teal/5 px-2.5 py-1 text-xs font-medium text-brand-teal">
               <Loader2 className="size-3.5 animate-spin" /> running…
+            </span>
+          )}
+          {!running && dataServed && (
+            <span
+              className="hidden items-center gap-1.5 rounded-full border border-brand-cyan/30 bg-brand-cyan/5 px-2.5 py-1 text-xs font-medium text-brand-cyan lg:flex"
+              title={`dag-ml-data ${dataServed.version ?? ''} · schema ${dataServed.fingerprints?.schema?.slice(0, 10) ?? ''}…`}
+            >
+              <Database className="size-3.5" /> data by dag-ml-data
             </span>
           )}
           {!running && runEngineLabel && (

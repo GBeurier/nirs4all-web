@@ -1,0 +1,36 @@
+/* tslint:disable */
+/* eslint-disable */
+export const memory: WebAssembly.Memory;
+export const __wbg_wasminmemoryprovider_free: (a: number, b: number) => void;
+export const build_coordinator_data_plan_envelope_json: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number, number, number];
+export const contract_manifest_json: () => [number, number, number, number];
+export const dag_ml_data_version: () => [number, number];
+export const data_plan_fingerprint_json: (a: number, b: number) => [number, number, number, number];
+export const dataset_schema_fingerprint_json: (a: number, b: number) => [number, number, number, number];
+export const fold_set_fingerprint_json: (a: number, b: number) => [number, number, number, number];
+export const plan_model_input_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number, number, number];
+export const sample_relation_table_fingerprint_json: (a: number, b: number) => [number, number, number, number];
+export const validate_adapter_registry_json: (a: number, b: number) => [number, number];
+export const validate_coordinator_data_plan_envelope_json: (a: number, b: number) => [number, number];
+export const validate_data_plan_json: (a: number, b: number) => [number, number];
+export const validate_dataset_schema_json: (a: number, b: number) => [number, number];
+export const validate_fold_set_against_sample_relations_json: (a: number, b: number, c: number, d: number) => [number, number];
+export const validate_fold_set_json: (a: number, b: number) => [number, number];
+export const validate_model_input_spec_json: (a: number, b: number) => [number, number];
+export const validate_sample_relation_table_json: (a: number, b: number) => [number, number];
+export const wasminmemoryprovider_data_feature_buffer_bindings: (a: number, b: number, c: number) => [number, number, number, number];
+export const wasminmemoryprovider_feature_block: (a: number, b: number, c: number, d: number, e: number) => [number, number, number, number];
+export const wasminmemoryprovider_feature_buffer_manifests: (a: number) => [number, number, number, number];
+export const wasminmemoryprovider_feature_collation: (a: number, b: number, c: number, d: number, e: number) => [number, number, number, number];
+export const wasminmemoryprovider_make_view: (a: number, b: number, c: number, d: number, e: number) => [number, number, number, number];
+export const wasminmemoryprovider_materialize: (a: number, b: number, c: number) => [number, number, number, number];
+export const wasminmemoryprovider_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number, number];
+export const wasminmemoryprovider_release: (a: number, b: number, c: number) => [number, number, number];
+export const wasminmemoryprovider_target_block: (a: number, b: number, c: number, d: number, e: number) => [number, number, number, number];
+export const wasminmemoryprovider_view_identity: (a: number, b: number, c: number) => [number, number, number, number];
+export const __wbindgen_externrefs: WebAssembly.Table;
+export const __wbindgen_malloc: (a: number, b: number) => number;
+export const __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
+export const __externref_table_dealloc: (a: number) => void;
+export const __wbindgen_free: (a: number, b: number, c: number) => void;
+export const __wbindgen_start: () => void;

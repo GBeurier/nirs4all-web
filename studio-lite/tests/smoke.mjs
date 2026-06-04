@@ -47,6 +47,9 @@ try {
   if (!String(URL).startsWith('file:')) {
     if (/by dag-ml/i.test(body)) console.log('✓ pipeline run via dag-ml-wasm (badge present)')
     else fail('expected a "by dag-ml" badge on the served build')
+    // dag-ml-data served the X/y blocks (the data-contract layer is wired in)
+    if (/data by dag-ml-data/i.test(body)) console.log('✓ data materialized via dag-ml-data (badge present)')
+    else fail('expected a "data by dag-ml-data" badge on the served build')
   }
 
   // 4. visualization tab content present (parity / residual chart svg)

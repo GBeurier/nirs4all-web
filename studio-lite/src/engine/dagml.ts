@@ -14,6 +14,15 @@ export interface DagMlLineage {
   graph?: unknown
   nodeCount?: number
   error?: string
+  /** the dag-ml-data provider layer that materialized & served the X/y blocks */
+  dataProvider?: {
+    layer: string
+    status: string
+    fingerprints?: { schema: string; plan: string; relation: string | null }
+    representation?: string
+    version?: string
+    error?: string
+  }
 }
 
 export type DagMlMod = typeof import('./wasm/dagml/dag_ml_wasm.js')
