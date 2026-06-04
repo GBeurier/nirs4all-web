@@ -47,9 +47,16 @@ else
   echo "⚠ skip methods — $METHODS not found (run: cd $ECO/nirs4all-methods && cmake --preset emscripten && cmake --build --preset emscripten --target pls4all_wasm)"
 fi
 
-build_pack "$ECO/dag-ml/crates/dag-ml-wasm" dagml   # compile/validate the pipeline DSL (planning layer)
-# Deepening (WS1): dag-ml-wasm execute_* exports wrapping the SequentialScheduler +
-# dag-ml-data-wasm `provider` feature would let dag-ml *execute* in-browser too:
-#   "$WASM_PACK" build "$ECO/dag-ml-data/crates/dag-ml-data-wasm" --target web --release \
-#       --out-dir "$OUT/dagml-data" -- --features provider
-echo "✓ WASM staged into $OUT (formats · io · methods · dag-ml; dag-ml scheduler execution = roadmap)"
+build_pack "$ECO/dag-ml/crates/dag-ml-wasm" dagml   # compile + execute the pipeline DSL (SequentialScheduler in WASM)
+
+# dag-ml-data provider: the typed data-contract layer. The `provider` feature
+# compiles WasmInMemoryProvider (materialize / make_view / feature_block /
+# target_block) into the wasm so the browser can serve X/y by sampleId.
+if [ -d "$ECO/dag-ml-data/crates/dag-ml-data-wasm" ]; then
+  echo "▶ building dagml-data (provider feature)"
+  "$WASM_PACK" build "$ECO/dag-ml-data/crates/dag-ml-data-wasm" --target web --release \
+    --out-dir "$OUT/dagml-data" -- --features provider
+else
+  echo "⚠ skip dagml-data — crate not found"
+fi
+echo "✓ WASM staged into $OUT (formats · io · methods · dag-ml · dag-ml-data)"

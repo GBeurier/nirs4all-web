@@ -57,18 +57,27 @@ with no console errors.
 
 ## Architecture — the full nirs4all WASM stack
 
-Data and compute flow through four real WASM engines (staged under `src/engine/wasm/<name>/`), all
-in the browser:
+Data and compute flow through five real WASM engines (staged under `src/engine/wasm/<name>/`), all
+in the browser, mirroring the ecosystem stack **formats → io → dag-ml-data → dag-ml + methods**:
 
 ```
 upload → nirs4all-formats WASM (decode ~58 vendor formats)         [src/data/wasm-io.ts]
        → nirs4all-io WASM (inferDataset + DatasetSpec validation)  [src/data/wasm-io.ts]
-       → MaterializedDataset
-pipeline DSL → dag-ml WASM (compile + validate → canonical GraphSpec) [src/engine/dagml.ts]
-       → Engine.run(): preprocessing(fit-on-train) → K-fold → OOF(by sampleId) → refit → predict
-                        PLS / PLS-DA numerics by libn4m WASM        [src/engine/backends.ts]
-       → RunResult (refit/CV/folds + predictions + dag-ml lineage)
+       → MaterializedDataset (browser projection for the UI)
+run    → dag-ml-data WASM (WasmInMemoryProvider): schema + plan + sample relations →
+         CoordinatorDataPlan envelope (fingerprinted) → serves feature/target blocks
+         by sampleId — the data-contract layer                     [src/engine/dagml-data.ts]
+       → dag-ml WASM: compile DSL → GraphSpec, SequentialScheduler runs FIT_CV in-WASM,
+         invoking a JS controller per fold                          [src/engine/dagml-engine.ts]
+       → PLS / PLS-DA numerics by libn4m WASM                       [src/engine/backends.ts]
+       → RunResult (refit/CV/folds + predictions + dag-ml lineage incl. dataProvider)
 ```
+
+The UI is a **studio workbench** (`src/app/App.tsx`): a top runtime bar (brand + active-dataset
+chip + dag-ml / dag-ml-data badges), a left workflow rail (Dataset → Explore → Pipeline → Results →
+Predict) with progressive unlock, and one work panel per step. The pipeline step is a three-pane
+editor — operator palette (`NodePalette`) → drag-and-drop flow canvas (`CanvasFlow`) → context
+inspector (`Inspector`) — over the flat DSL, mirroring nirs4all-studio's editor in spirit.
 
 Load-bearing concepts (require reading several files):
 

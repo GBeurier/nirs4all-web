@@ -1,8 +1,9 @@
-// dag-ml-wasm participation: compile & validate the pipeline DSL through the real
-// dag-ml coordinator (Rust → WASM) on every run. dag-ml is the reproducible ML
-// coordinator of the ecosystem; here it canonicalizes the linear pipeline into a
-// dag-ml GraphSpec (the planning layer). In-browser *execution* by dag-ml's
-// scheduler is the next deepening; today libn4m executes and dag-ml plans/validates.
+// dag-ml-wasm participation: compile, validate AND execute the pipeline DSL through
+// the real dag-ml coordinator (Rust → WASM). dag-ml is the reproducible ML
+// coordinator of the ecosystem; it canonicalizes the linear pipeline into a GraphSpec
+// and its SequentialScheduler runs FIT_CV in-browser (see dagml-engine.ts), invoking
+// a JS controller that runs the numerics via libn4m. This module is the lighter
+// compile/validate entry (used for the badge + as a fallback probe).
 import type { PipelineDSL } from './types'
 
 export interface DagMlLineage {
