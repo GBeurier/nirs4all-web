@@ -25,17 +25,31 @@ function pushF64(m, data) {
         m.HEAPF64.set(data, ptr / 8);
     return ptr;
 }
+/** Validate matrix dims + that the buffer length matches n*p before crossing into C. */
+function checkDims(X, n, p) {
+    if (!Number.isSafeInteger(n) || !Number.isSafeInteger(p) || n < 0 || p < 0) {
+        throw new Error(`@nirs4all/methods-wasm: invalid matrix dims ${n}×${p}`);
+    }
+    if (X.length !== n * p) {
+        throw new Error(`@nirs4all/methods-wasm: data length ${X.length} != n*p (${n * p})`);
+    }
+}
 /** Create a preprocessing operator by catalog type token + numeric params. */
 export function ppCreate(op, params = []) {
     const m = getModule();
     let pPtr = 0;
-    if (params.length > 0) {
-        pPtr = m._malloc(params.length * 8);
-        m.HEAPF64.set(Float64Array.from(params), pPtr / 8);
+    let ptr = 0;
+    try {
+        if (params.length > 0) {
+            pPtr = m._malloc(params.length * 8);
+            m.HEAPF64.set(Float64Array.from(params), pPtr / 8);
+        }
+        ptr = m.ccall("n4m_wasm_pp_create", "number", ["string", "number", "number"], [op, pPtr, params.length]);
     }
-    const ptr = m.ccall("n4m_wasm_pp_create", "number", ["string", "number", "number"], [op, pPtr, params.length]);
-    if (pPtr !== 0)
-        m._free(pPtr);
+    finally {
+        if (pPtr !== 0)
+            m._free(pPtr);
+    }
     if (ptr === 0) {
         throw new Error(`@nirs4all/methods-wasm: unknown/unconstructable preprocessing operator "${op}"`);
     }
@@ -43,6 +57,7 @@ export function ppCreate(op, params = []) {
 }
 /** Fit a stateful operator on training data (no-op for stateless operators). */
 export function ppFit(op, X, n, p) {
+    checkDims(X, n, p);
     const m = getModule();
     const xp = pushF64(m, X);
     try {
@@ -54,6 +69,7 @@ export function ppFit(op, X, n, p) {
 }
 /** Transform X (n×p, row-major) → a fresh Float64Array (n×p). */
 export function ppTransform(op, X, n, p) {
+    checkDims(X, n, p);
     const m = getModule();
     const xp = pushF64(m, X);
     const out = m._malloc(Math.max(1, n * p) * 8);

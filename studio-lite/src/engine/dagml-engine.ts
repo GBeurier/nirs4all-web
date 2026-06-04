@@ -4,7 +4,7 @@
 // controller per fold that runs the actual preprocessing + PLS via libn4m WASM.
 // The refit (full-train) model is fit directly with libn4m. Falls back to the
 // JS-orchestrated path on any error.
-import { jsBackend, loadLibn4mBackend } from './backends'
+import { loadLibn4mBackend } from './backends'
 import { dagMlAvailable, loadDagMl, toCompatDsl } from './dagml'
 import { materializeViaProvider } from './dagml-data'
 import { buildFolds, testRowsOf, trainRowsOf } from './kfold'
@@ -50,17 +50,14 @@ export class DagMlEngine implements Engine {
   readonly name = 'dag-ml-wasm'
 
   async run(ds: MaterializedDataset, dsl: PipelineDSL, opts: RunOptions = {}): Promise<RunResult> {
-    let backend: ModelBackend
-    try {
-      backend = await loadLibn4mBackend() // libn4m numerics for the operator
-    } catch {
-      backend = jsBackend // libn4m unavailable → JS PLS numerics inside dag-ml
-    }
+    // Served path REQUIRES libn4m — no silent JS shadow engine. A load failure
+    // surfaces to the UI rather than producing numerics from a different engine.
+    const backend = await loadLibn4mBackend()
     try {
       return await this.runViaDagMl(ds, dsl, opts, backend)
     } catch (err) {
-      // never break the demo: fall back to the JS-orchestrated path
-      console.warn('[dag-ml] in-browser execution failed, falling back to direct orchestration:', err)
+      // dag-ml scheduling failed — fall back to direct orchestration, still on libn4m.
+      console.warn('[dag-ml] in-browser scheduling failed, falling back to direct orchestration (libn4m):', err)
       const res = await runPipeline(ds, dsl, opts, backend)
       res.engine = `${backend.id} (dag-ml fallback)`
       return res

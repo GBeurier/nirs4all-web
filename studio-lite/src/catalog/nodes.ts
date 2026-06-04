@@ -78,17 +78,9 @@ export const PREPROCESSING_NODES: NodeDef[] = [
     ],
     n4m: { fit: null, transform: 'n4m_pp_detrend_transform' },
   },
-  {
-    id: 'preprocessing.scaling.normalize',
-    type: 'Normalize',
-    name: 'Normalize',
-    category: 'preprocessing',
-    subcategory: 'scaling',
-    description: 'Per-spectrum vector normalization to unit L2 norm.',
-    icon: 'Ruler',
-    params: [],
-    n4m: { fit: null, transform: 'n4m_pp_normalize_transform' },
-  },
+  // NOTE: a per-spectrum (row-wise) L2 Normalize node is intentionally not
+  // shipped — libn4m's n4m_pp_normalize is column-wise/batch-dependent, which is
+  // wrong for spectra + unsafe for predict. Re-add when a row-wise op lands.
   {
     id: 'preprocessing.filtering.gaussian',
     type: 'GaussianFilter',

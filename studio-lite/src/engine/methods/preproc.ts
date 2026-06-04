@@ -56,14 +56,23 @@ export const libn4mPreprocessor: Preprocessor = {
   id: 'libn4m',
   fit(type, params, train) {
     const op = ppCreate(type, paramVector(type, params))
-    ppFit(op, train.data, train.rows, train.cols) // no-op for stateless ops
-    const state = Array.from(ppGetState(op))
-    return wrap(op, state)
+    try {
+      ppFit(op, train.data, train.rows, train.cols) // no-op for stateless ops
+      return wrap(op, Array.from(ppGetState(op)))
+    } catch (e) {
+      ppDestroy(op)
+      throw e
+    }
   },
   restore(type, params, state) {
     const op = ppCreate(type, paramVector(type, params))
-    if (state.length) ppSetState(op, Float64Array.from(state))
-    return wrap(op, state)
+    try {
+      if (state.length) ppSetState(op, Float64Array.from(state))
+      return wrap(op, state)
+    } catch (e) {
+      ppDestroy(op)
+      throw e
+    }
   },
 }
 

@@ -121,10 +121,13 @@ export function trainAndPredict(
   const { classNames, classIdx } = classInfo(ds)
   const Xfull: Mat = { data: ds.X, rows: ds.nSamples, cols: ds.nFeatures }
   const { transformers, descriptors, Xout } = fitChain(dsl.steps, selectRows(Xfull, trainIdx), backend.preproc)
-  const model = backend.fit(Xout, buildYMatrix(ds, classNames, classIdx, trainIdx), clampNcomp(ncomp, Xout))
-  const pred = backend.predict(model, applyTransformers(transformers, selectRows(Xfull, predictIdx)))
-  transformers.forEach((t) => t.free())
-  return { pred, descriptors, model, classNames }
+  try {
+    const model = backend.fit(Xout, buildYMatrix(ds, classNames, classIdx, trainIdx), clampNcomp(ncomp, Xout))
+    const pred = backend.predict(model, applyTransformers(transformers, selectRows(Xfull, predictIdx)))
+    return { pred, descriptors, model, classNames }
+  } finally {
+    transformers.forEach((t) => t.free())
+  }
 }
 
 function fitChain(steps: PipelineStep[], Xin: Mat, preproc: Preprocessor): { transformers: FittedTransformer[]; descriptors: FittedStep[]; Xout: Mat } {
@@ -147,11 +150,18 @@ function applyTransformers(transformers: FittedTransformer[], X: Mat): Mat {
 }
 
 function applyChain(chain: FittedStep[], X: Mat, preproc: Preprocessor): Mat {
-  let cur = X
-  const live = chain.map((d) => preproc.restore(d.type, d.params, d.state))
-  for (const t of live) cur = t.apply(cur)
-  live.forEach((t) => t.free())
-  return cur
+  const live: { apply(X: Mat): Mat; free(): void }[] = []
+  try {
+    let cur = X
+    for (const d of chain) {
+      const t = preproc.restore(d.type, d.params, d.state)
+      live.push(t)
+      cur = t.apply(cur)
+    }
+    return cur
+  } finally {
+    live.forEach((t) => t.free())
+  }
 }
 
 export function scoreNode(id: string, name: string, kind: ScoreKind, rows: PredRow[], task: TaskType, classNames: string[]): ScoreNode {
@@ -202,10 +212,14 @@ export async function runPipeline(
     checkCancel()
     const f = folds[fi]
     const { transformers, Xout: XtrP } = fitChain(dsl.steps, selectRows(Xfull, f.trainIdx), backend.preproc)
-    const model = backend.fit(XtrP, buildY(f.trainIdx), safeN(XtrP))
-    const XvaP = applyTransformers(transformers, selectRows(Xfull, f.valIdx))
-    const rows = decode(backend.predict(model, XvaP), f.valIdx)
-    transformers.forEach((t) => t.free())
+    let rows: PredRow[]
+    try {
+      const model = backend.fit(XtrP, buildY(f.trainIdx), safeN(XtrP))
+      const XvaP = applyTransformers(transformers, selectRows(Xfull, f.valIdx))
+      rows = decode(backend.predict(model, XvaP), f.valIdx)
+    } finally {
+      transformers.forEach((t) => t.free())
+    }
     oof.push(...rows)
     foldNodes.push(scoreNode(`fold-${f.foldId}`, `Fold ${f.foldId}`, 'fold', rows, task, classNames))
     onP?.({ phase: 'fit_cv', pct: 4 + Math.round((72 * (fi + 1)) / folds.length) })
@@ -218,10 +232,15 @@ export async function runPipeline(
   const trainIdx = trainRowsIdx
   const testIdx = testRowsOf(ds)
   const { transformers, descriptors, Xout: XtrP } = fitChain(dsl.steps, selectRows(Xfull, trainIdx), backend.preproc)
-  const model = backend.fit(XtrP, buildY(trainIdx), safeN(XtrP))
+  let model: unknown
+  let refitRows: PredRow[]
   const scoreIdx = testIdx.length > 0 ? testIdx : trainIdx
-  const refitRows = decode(backend.predict(model, applyTransformers(transformers, selectRows(Xfull, scoreIdx))), scoreIdx)
-  transformers.forEach((t) => t.free())
+  try {
+    model = backend.fit(XtrP, buildY(trainIdx), safeN(XtrP))
+    refitRows = decode(backend.predict(model, applyTransformers(transformers, selectRows(Xfull, scoreIdx))), scoreIdx)
+  } finally {
+    transformers.forEach((t) => t.free())
+  }
   const refitNode = scoreNode('refit', testIdx.length > 0 ? 'Refit · test' : 'Refit · train', 'refit', refitRows, task, classNames)
 
   onP?.({ phase: 'done', pct: 100 })
