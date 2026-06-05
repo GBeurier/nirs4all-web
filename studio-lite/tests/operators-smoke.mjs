@@ -33,17 +33,24 @@ try {
   await page.locator('[data-step="pipeline"]').click()
   await page.waitForTimeout(300)
 
-  // add two new A2 preprocessing operators from the palette (click-to-append)
-  await page.getByRole('button', { name: 'Robust NV', exact: true }).first().click()
-  await page.waitForTimeout(150)
-  await page.getByRole('button', { name: 'AsLS', exact: true }).first().click()
-  await page.waitForTimeout(150)
+  // add two new A2 preprocessing operators from the palette (search-then-click;
+  // the palette is an accordion so most families are collapsed by default).
+  const search = page.getByPlaceholder(/Search operators/i).first()
+  const addOp = async (name) => {
+    await search.fill(name)
+    await page.getByRole('button', { name, exact: true }).first().click()
+    await page.waitForTimeout(150)
+    await search.fill('')
+  }
+  await addOp('Robust NV')
+  await addOp('AsLS')
   const body1 = (await page.textContent('body')) || ''
   if (/Robust NV/.test(body1) && /AsLS/.test(body1)) console.log('✓ two new preprocessing operators added (Robust NV + AsLS)')
   else fail('expected the two added operators to appear on the canvas')
 
-  // select the terminal model node, then switch the estimator to Ridge
-  await page.getByRole('button', { name: /PLS Regression/ }).first().click()
+  // select the terminal model node on the CANVAS (palette now also lists models),
+  // then switch the estimator to Ridge
+  await page.getByRole('button', { name: /PLS Regression/ }).filter({ has: page.getByRole('button', { name: 'Remove step' }) }).first().click()
   await page.waitForTimeout(200)
   await page.locator('#model-select').click()
   await page.waitForTimeout(200)

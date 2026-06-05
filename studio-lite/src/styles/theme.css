@@ -207,11 +207,25 @@
 
 /* Warm-paper background with a soft brand aurora. */
 .n4a-app-bg {
-  background:
+  /* warm "paper" with soft brand glows + a faint dotted grain (à la the
+   * nirs4all-formats demo) for texture/depth. All layers are backgrounds, so
+   * they always sit behind content — no stacking concerns. */
+  background-color: var(--brand-paper);
+  background-image:
+    radial-gradient(color-mix(in oklab, var(--brand-teal) 15%, transparent) 0.6px, transparent 0.7px),
     radial-gradient(58rem 38rem at 12% -12%, color-mix(in oklab, var(--brand-teal) 13%, transparent), transparent 60%),
     radial-gradient(52rem 40rem at 92% -6%, color-mix(in oklab, var(--brand-indigo) 11%, transparent), transparent 55%),
-    radial-gradient(40rem 30rem at 60% 8%, color-mix(in oklab, var(--brand-cyan) 8%, transparent), transparent 60%),
-    var(--brand-paper);
+    radial-gradient(40rem 30rem at 60% 8%, color-mix(in oklab, var(--brand-cyan) 8%, transparent), transparent 60%);
+  background-size: 22px 22px, auto, auto, auto;
+  background-attachment: fixed;
+}
+
+/* Gradient-clip emphasis (teal → cyan → green), the demo's signature flourish. */
+.n4a-grad-text {
+  background: linear-gradient(120deg, var(--brand-teal-d) 0%, var(--brand-cyan) 55%, var(--brand-green) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 /* Faint spectral grid texture, fading downward (use on a relative container). */
