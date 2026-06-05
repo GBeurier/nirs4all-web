@@ -100,7 +100,7 @@ function BranchLane({
       }}
       className={cn(
         'flex cursor-pointer flex-col gap-1.5 rounded-lg border bg-card/60 p-2 transition-colors',
-        over ? 'border-brand-amber bg-brand-amber/5' : focused ? 'border-brand-amber/60 ring-1 ring-brand-amber/30' : 'border-border/70',
+        over ? 'border-brand-teal bg-brand-teal/5' : focused ? 'border-brand-teal/60 ring-1 ring-brand-teal/30' : 'border-border/70',
       )}
     >
       <div className="flex items-center justify-between gap-1">
@@ -127,10 +127,10 @@ function BranchLane({
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectStep(s.id) } }}
               className={cn(
                 'group/bs flex cursor-pointer items-center gap-1.5 rounded-md border bg-background px-2 py-1.5 transition-all',
-                isSel ? 'border-transparent ring-2 ring-brand-amber/50' : 'border-border hover:border-brand-amber/40',
+                isSel ? 'border-transparent ring-2 ring-brand-teal/50' : 'border-border hover:border-brand-teal/40',
               )}
             >
-              <span className="flex size-5 shrink-0 items-center justify-center rounded bg-brand-amber/10 text-brand-amber"><Icon className="size-3" /></span>
+              <span className="flex size-5 shrink-0 items-center justify-center rounded bg-brand-teal/10 text-brand-teal"><Icon className="size-3" /></span>
               <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-foreground">{def?.name ?? s.type}</span>
               <Button variant="ghost" size="icon" className="size-5 shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover/bs:opacity-100" onClick={(e) => { e.stopPropagation(); onRemoveStep(s.id) }} aria-label="Remove branch step" title="Remove">
                 <Trash2 className="size-3.5" />
@@ -182,7 +182,7 @@ export function ContainerTree({
       data-container-kind={container.container}
       className={cn(
         'group relative rounded-xl border bg-card p-2.5 shadow-sm transition-all',
-        isSel ? 'border-transparent ring-2 ring-brand-amber/50' : 'border-border',
+        isSel ? 'border-transparent ring-2 ring-brand-teal/50' : 'border-border',
       )}
     >
       <div className="mb-2 flex items-center gap-1.5">
@@ -190,14 +190,14 @@ export function ContainerTree({
           type="button"
           data-container-fold={container.id}
           onClick={(e) => { e.stopPropagation(); setExpanded((v) => !v) }}
-          className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-brand-amber"
+          className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-brand-teal"
           aria-label={expanded ? 'Collapse' : 'Expand'}
           aria-expanded={expanded}
         >
           {expanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
         </button>
         <button type="button" onClick={onSelect} className="flex min-w-0 flex-1 items-center gap-2 text-left">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-amber/10 text-brand-amber"><Icon className="size-4" /></span>
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-teal/10 text-brand-teal"><Icon className="size-4" /></span>
           <span className="min-w-0">
             <span className="flex items-center gap-1.5">
               <span className="block truncate text-sm font-semibold text-foreground">{label}</span>
@@ -227,7 +227,7 @@ export function ContainerTree({
               onClick={(e) => { e.stopPropagation(); onSetMode(m) }}
               className={cn(
                 'flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold transition-colors',
-                container.mode === m ? 'border-brand-amber bg-brand-amber/10 text-brand-amber' : 'border-border text-muted-foreground hover:border-brand-amber/50',
+                container.mode === m ? 'border-brand-teal bg-brand-teal/10 text-brand-teal' : 'border-border text-muted-foreground hover:border-brand-teal/50',
               )}
             >
               {m === 'cartesian' ? <Grid3x3 className="size-2.5" /> : <Shuffle className="size-2.5" />}
@@ -239,7 +239,7 @@ export function ContainerTree({
 
       {/* nested branches — the foldable, indented sub-tree */}
       {expanded && (
-        <div className="ml-3 space-y-1.5 border-l-2 border-brand-amber/20 pl-3">
+        <div className="ml-3 space-y-1.5 border-l-2 border-brand-teal/20 pl-3">
           {container.branches.map((b) => (
             <BranchLane
               key={b.id}
@@ -260,7 +260,7 @@ export function ContainerTree({
             type="button"
             data-add-branch-lane
             onClick={(e) => { e.stopPropagation(); onAddBranch() }}
-            className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-brand-amber/40 bg-brand-amber/5 px-2 py-1.5 text-brand-amber transition-colors hover:border-brand-amber/70 hover:bg-brand-amber/10"
+            className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-brand-teal/40 bg-brand-teal/5 px-2 py-1.5 text-brand-teal transition-colors hover:border-brand-teal/70 hover:bg-brand-teal/10"
           >
             <Plus className="size-3.5" />
             <span className="text-[10px] font-semibold">add {noun}</span>

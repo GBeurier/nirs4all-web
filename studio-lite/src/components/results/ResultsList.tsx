@@ -21,7 +21,7 @@ import { downloadN4a, downloadPipeline, downloadRunCsv, downloadRunJson } from '
 import { formatDate } from './_helpers'
 
 function StatusIcon({ status }: { status: ScoreNode['status'] }) {
-  if (status === 'running') return <Loader2 className="size-4 animate-spin text-brand-cyan" />
+  if (status === 'running') return <Loader2 className="size-4 animate-spin text-brand-teal" />
   if (status === 'failed') return <AlertCircle className="size-4 text-destructive" />
   return <CheckCircle2 className="size-4 text-brand-teal" />
 }
@@ -163,7 +163,7 @@ function RunCard({
         <div className="min-w-0">
           <h3 className="truncate text-base font-semibold text-foreground">{run.pipelineName}</h3>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <Badge variant="outline" className="gap-1 border-brand-indigo/30 text-brand-indigo">
+            <Badge variant="outline" className="gap-1 border-border text-muted-foreground">
               <Cpu className="size-3" />
               {run.engine}
             </Badge>
@@ -192,18 +192,18 @@ function RunCard({
               <span className="font-mono text-[10px] text-muted-foreground">.n4a</span>
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => downloadPipeline(run.model.dsl)} className="gap-2">
-              <Target className="size-4 text-brand-indigo" />
+              <Target className="size-4 text-brand-teal" />
               <span className="flex-1">Pipeline</span>
               <span className="font-mono text-[10px] text-muted-foreground">.json</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => downloadRunCsv(run)} className="gap-2">
-              <Download className="size-4 text-brand-cyan" />
+              <Download className="size-4 text-muted-foreground" />
               <span className="flex-1">Predictions</span>
               <span className="font-mono text-[10px] text-muted-foreground">.csv</span>
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => downloadRunJson(run)} className="gap-2">
-              <Download className="size-4 text-brand-cyan" />
+              <Download className="size-4 text-muted-foreground" />
               <span className="flex-1">Results</span>
               <span className="font-mono text-[10px] text-muted-foreground">.json</span>
             </DropdownMenuItem>
@@ -228,7 +228,7 @@ function RunCard({
           node={run.refit}
           selected={isSel(run.refit)}
           onSelect={onSelect}
-          accent="bg-brand-indigo/10 text-brand-indigo"
+          accent="bg-brand-teal/10 text-brand-teal"
           icon={<Target className="size-3.5" />}
         />
 
@@ -239,7 +239,7 @@ function RunCard({
               node={run.cv}
               selected={isSel(run.cv)}
               onSelect={onSelect}
-              accent="bg-brand-teal/10 text-brand-teal"
+              accent="bg-brand-teal-d/10 text-brand-teal-d"
               icon={<Layers className="size-3.5" />}
             >
               <CollapsibleTrigger asChild>
@@ -262,7 +262,7 @@ function RunCard({
                   node={fold}
                   selected={isSel(fold)}
                   onSelect={onSelect}
-                  accent="bg-brand-cyan/10 text-brand-cyan"
+                  accent="bg-muted text-muted-foreground"
                   icon={<Layers className="size-3.5" />}
                   indent
                 />

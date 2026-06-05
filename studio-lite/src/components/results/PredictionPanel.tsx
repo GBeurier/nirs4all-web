@@ -138,7 +138,7 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
         className={cn(
           'mb-4 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-8 text-center outline-none transition-colors',
           busy && 'pointer-events-none opacity-70',
-          dragging ? 'border-brand-teal bg-accent' : 'border-border bg-brand-paper hover:border-brand-teal/60 hover:bg-accent/40',
+          dragging ? 'border-brand-teal bg-accent' : 'border-border bg-muted/40 hover:border-brand-teal/60 hover:bg-accent/40',
         )}
       >
         <span className={cn('flex size-12 items-center justify-center rounded-full transition-colors', dragging ? 'bg-brand-teal text-primary-foreground' : 'bg-accent text-brand-teal')}>

@@ -147,10 +147,13 @@ function FlowNode({
   /** aria-label for the remove button (defaults to "Remove step") */
   removeLabel?: string
 }) {
+  // Teal-led chrome (matching the studio): the model is the teal "hero"; the
+  // structural spine (dataset / split / cv) reads as cool slate; preprocessing
+  // is teal. `indigo`/`cyan` are kept as accent *names* but resolve to teal/slate.
   const ring =
-    accent === 'indigo' ? 'ring-brand-indigo/50' : accent === 'cyan' ? 'ring-brand-cyan/50' : accent === 'slate' ? 'ring-border' : 'ring-brand-teal/50'
+    accent === 'indigo' ? 'ring-brand-teal/50' : accent === 'cyan' ? 'ring-border' : accent === 'slate' ? 'ring-border' : 'ring-brand-teal/50'
   const tint =
-    accent === 'indigo' ? 'bg-brand-indigo/10 text-brand-indigo' : accent === 'cyan' ? 'bg-brand-cyan/10 text-brand-cyan' : accent === 'slate' ? 'bg-muted text-muted-foreground' : 'bg-brand-teal/10 text-brand-teal'
+    accent === 'indigo' ? 'bg-brand-teal/10 text-brand-teal' : accent === 'cyan' ? 'bg-muted text-muted-foreground' : accent === 'slate' ? 'bg-muted text-muted-foreground' : 'bg-brand-teal/10 text-brand-teal'
   return (
     <div
       {...(testId ? { [`data-${testId}`]: '' } : {})}
@@ -249,7 +252,7 @@ export function CanvasFlow({
       </div>
 
       <div
-        className="flex-1 overflow-y-auto rounded-xl border border-dashed border-border/70 bg-brand-paper/40 p-4"
+        className="flex-1 overflow-y-auto rounded-xl border border-dashed border-border/70 bg-muted/40 p-4"
         onDragOver={(e) => {
           // allow dropping onto the empty canvas (append)
           if (e.dataTransfer.types.includes(DND_NEW_NODE)) e.preventDefault()
@@ -280,7 +283,7 @@ export function CanvasFlow({
             icon={<SplitIcon className="size-4" />}
             title={splitDef?.name ?? split.type}
             subtitle={`train / test · ${paramSummary(split) || 'overrides dataset partition'}`}
-            badge={<span className="rounded bg-brand-cyan/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-brand-cyan">split 1</span>}
+            badge={<span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground">split 1</span>}
             onClick={() => onSelect({ kind: 'split' })}
             onRemove={onRemoveSplit}
           />
@@ -290,13 +293,13 @@ export function CanvasFlow({
               <button
                 type="button"
                 data-add-split
-                className="flex w-full items-center gap-3 rounded-xl border border-dashed border-brand-cyan/40 bg-brand-cyan/5 px-3 py-2 text-left transition-colors hover:border-brand-cyan/70 hover:bg-brand-cyan/10"
+                className="flex w-full items-center gap-3 rounded-xl border border-dashed border-border bg-muted/40 px-3 py-2 text-left transition-colors hover:border-brand-teal/50 hover:bg-muted/70"
               >
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-cyan/10 text-brand-cyan">
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                   <Plus className="size-3.5" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <span className="block text-xs font-semibold text-foreground">Add a train/test split <span className="font-mono text-[9px] font-semibold uppercase tracking-wide text-brand-cyan">· split 1</span></span>
+                  <span className="block text-xs font-semibold text-foreground">Add a train/test split <span className="font-mono text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">· split 1</span></span>
                   <span className="block truncate text-[10px] text-muted-foreground">optional — overrides the dataset partition before CV</span>
                 </div>
               </button>
@@ -414,9 +417,9 @@ export function CanvasFlow({
             <button
               type="button"
               data-add-container
-              className="flex w-full items-center gap-3 rounded-xl border border-dashed border-brand-amber/40 bg-brand-amber/5 px-3 py-2 text-left transition-colors hover:border-brand-amber/70 hover:bg-brand-amber/10"
+              className="flex w-full items-center gap-3 rounded-xl border border-dashed border-brand-teal/40 bg-brand-teal/5 px-3 py-2 text-left transition-colors hover:border-brand-teal/70 hover:bg-brand-teal/10"
             >
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-amber/10 text-brand-amber">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-teal/10 text-brand-teal">
                 <GitBranch className="size-3.5" />
               </span>
               <div className="min-w-0 flex-1">
@@ -451,7 +454,7 @@ export function CanvasFlow({
                       <Sparkles className="size-2.5" /> auto
                     </span>
                   )}
-                  <Boxes className="size-3.5 text-brand-indigo/70" />
+                  <Boxes className="size-3.5 text-brand-teal/70" />
                   <VariantBadge step={model} />
                 </span>
               }
@@ -475,9 +478,9 @@ export function CanvasFlow({
             type="button"
             data-add-model
             onClick={onAddModel}
-            className="flex w-full items-center gap-3 rounded-xl border border-dashed border-brand-indigo/40 bg-brand-indigo/5 px-3 py-2.5 text-left transition-colors hover:border-brand-indigo/70 hover:bg-brand-indigo/10"
+            className="flex w-full items-center gap-3 rounded-xl border border-dashed border-brand-teal/40 bg-brand-teal/5 px-3 py-2.5 text-left transition-colors hover:border-brand-teal/70 hover:bg-brand-teal/10"
           >
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-indigo/10 text-brand-indigo">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-teal/10 text-brand-teal">
               <Plus className="size-4" />
             </span>
             <div className="min-w-0 flex-1">

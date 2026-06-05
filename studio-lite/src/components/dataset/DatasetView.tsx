@@ -33,7 +33,7 @@ function SectionIcon({ children }: { children: React.ReactNode }) {
 
 function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-border bg-brand-paper px-4 py-3">
+    <div className="rounded-xl border border-border bg-muted/40 px-4 py-3">
       <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className="mt-1 font-mono text-sm font-semibold text-foreground">{value}</div>
     </div>
@@ -111,7 +111,7 @@ export function DatasetView({ ds, summary, onOpenConfig }: DatasetViewProps) {
               </span>
             )}
             <span className="flex items-center gap-1.5">
-              <span className="h-2 w-4 rounded-full bg-brand-indigo" /> mean
+              <span className="h-2 w-4 rounded-full" style={{ background: CHART.indigo }} /> mean
             </span>
           </div>
           <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
@@ -141,7 +141,7 @@ export function DatasetView({ ds, summary, onOpenConfig }: DatasetViewProps) {
               {spectra.testKeys.map((k) => (
                 <Line key={k} type="monotone" dataKey={k} stroke={CHART.amber} strokeOpacity={0.25} strokeWidth={1} dot={false} isAnimationActive={false} />
               ))}
-              <Line type="monotone" dataKey="mean" stroke="var(--brand-indigo)" strokeWidth={2.5} dot={false} isAnimationActive={false} />
+              <Line type="monotone" dataKey="mean" stroke={CHART.indigo} strokeWidth={2.5} dot={false} isAnimationActive={false} />
             </LineChart>
           </ResponsiveContainer>
         </TabsContent>

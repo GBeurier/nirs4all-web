@@ -89,7 +89,7 @@ export function DatasetUpload({ onDataset, onLoadSample, onImportModel, busy: bu
           busy && 'pointer-events-none opacity-70',
           dragging
             ? 'border-brand-teal bg-accent'
-            : 'border-border bg-brand-paper hover:border-brand-teal/60 hover:bg-accent/40',
+            : 'border-border bg-muted/40 hover:border-brand-teal/60 hover:bg-accent/40',
         )}
       >
         <span
@@ -112,7 +112,7 @@ export function DatasetUpload({ onDataset, onLoadSample, onImportModel, busy: bu
 
         <div className="mt-1 flex flex-col items-center gap-2">
           <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-            <Sparkles className="h-3.5 w-3.5 text-brand-indigo" /> or try a sample
+            <Sparkles className="h-3.5 w-3.5 text-brand-teal" /> or try a sample
           </span>
           <div className="flex flex-wrap items-center justify-center gap-2">
             {SAMPLES.map((s) => (
@@ -126,9 +126,9 @@ export function DatasetUpload({ onDataset, onLoadSample, onImportModel, busy: bu
                   e.stopPropagation()
                   onLoadSample(s.id)
                 }}
-                className="h-auto flex-col items-start gap-0.5 border-brand-indigo/30 px-3 py-1.5 text-left hover:bg-brand-indigo/5"
+                className="h-auto flex-col items-start gap-0.5 border-brand-teal/30 px-3 py-1.5 text-left hover:bg-brand-teal/5"
               >
-                <span className="text-sm font-semibold text-brand-indigo">{s.name}</span>
+                <span className="text-sm font-semibold text-brand-teal">{s.name}</span>
                 <span className="text-[11px] font-normal text-muted-foreground">{s.hint}</span>
               </Button>
             ))}
@@ -175,13 +175,13 @@ export function DatasetUpload({ onDataset, onLoadSample, onImportModel, busy: bu
             }}
           />
           <Button variant="outline" size="sm" className="h-7 gap-1.5" onClick={() => modelRef.current?.click()}>
-            <FileUp className="h-3.5 w-3.5 text-brand-indigo" /> Load a saved .n4a model to predict
+            <FileUp className="h-3.5 w-3.5 text-brand-teal" /> Load a saved .n4a model to predict
           </Button>
         </div>
       )}
 
       <div className="flex items-start gap-2 rounded-xl border border-border bg-card p-4 text-xs text-muted-foreground">
-        <FileText className="mt-0.5 h-4 w-4 shrink-0 text-brand-cyan" />
+        <FileText className="mt-0.5 h-4 w-4 shrink-0 text-brand-teal" />
         <p className="leading-relaxed">
           Accepted layout:{' '}
           <code className="font-mono text-foreground">X_train.csv</code> +{' '}

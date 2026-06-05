@@ -39,7 +39,7 @@ function OperatorBankField({ id, value, onChange }: { id: string; value: unknown
           >
             <input
               type="checkbox"
-              className="size-3.5 accent-brand-indigo"
+              className="size-3.5 accent-brand-teal"
               checked={on}
               data-op-kind={op.value}
               onChange={() => toggle(op.value)}

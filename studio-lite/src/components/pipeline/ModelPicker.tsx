@@ -53,7 +53,7 @@ export function ModelPicker({ model, taskType, onChangeType, onChangeParam, rend
       {def ? (
         <div className="rounded-xl border border-border bg-muted/40 p-4">
           <div className="flex items-start gap-3">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-indigo/10 text-brand-indigo">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-teal/10 text-brand-teal">
               <Icon className="size-4" />
             </span>
             <div className="min-w-0 flex-1">

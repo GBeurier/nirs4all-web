@@ -68,7 +68,7 @@ function InspectorShell({ icon, eyebrow, title, children }: { icon: React.ReactN
   return (
     <div className="flex h-full flex-col gap-4">
       <div className="flex items-center gap-2.5 border-b border-border pb-3">
-        <span className="flex size-8 items-center justify-center rounded-lg bg-brand-indigo/10 text-brand-indigo">{icon}</span>
+        <span className="flex size-8 items-center justify-center rounded-lg bg-brand-teal/10 text-brand-teal">{icon}</span>
         <div>
           <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{eyebrow}</div>
           <h3 className="font-display text-sm font-semibold leading-tight text-foreground">{title}</h3>
@@ -95,7 +95,7 @@ export function Inspector({ pipeline, taskType, selected, onStepParam, onStepSwe
     return (
       <InspectorShell icon={<Icon className="size-4" />} eyebrow="Train/test split" title={def.name}>
         <p className="text-xs leading-relaxed text-muted-foreground">{def.description}</p>
-        <p className="rounded-lg border border-dashed border-brand-cyan/40 bg-brand-cyan/5 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+        <p className="rounded-lg border border-dashed border-border bg-muted/40 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
           This split overrides the dataset's train/test partition. Its test rows are held out of cross-validation and scored by the refit.
         </p>
         {def.params.length > 0 ? (
@@ -182,7 +182,7 @@ export function Inspector({ pipeline, taskType, selected, onStepParam, onStepSwe
                   key={m}
                   type="button"
                   onClick={() => onSetContainerMode(container.id, m)}
-                  className={`flex-1 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${container.mode === m ? 'border-brand-amber bg-brand-amber/10 text-brand-amber' : 'border-border text-muted-foreground hover:border-brand-amber/50'}`}
+                  className={`flex-1 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${container.mode === m ? 'border-brand-teal bg-brand-teal/10 text-brand-teal' : 'border-border text-muted-foreground hover:border-brand-teal/50'}`}
                 >
                   {m === 'cartesian' ? 'Cartesian' : 'OR'}
                 </button>
@@ -211,7 +211,7 @@ export function Inspector({ pipeline, taskType, selected, onStepParam, onStepSwe
         <button
           type="button"
           onClick={() => onAddContainerBranch(container.id)}
-          className="w-full rounded-lg border border-dashed border-brand-amber/40 bg-brand-amber/5 px-3 py-2 text-xs font-semibold text-brand-amber transition-colors hover:border-brand-amber/70 hover:bg-brand-amber/10"
+          className="w-full rounded-lg border border-dashed border-brand-teal/40 bg-brand-teal/5 px-3 py-2 text-xs font-semibold text-brand-teal transition-colors hover:border-brand-teal/70 hover:bg-brand-teal/10"
         >
           + add {noun}
         </button>

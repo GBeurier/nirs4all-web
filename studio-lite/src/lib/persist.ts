@@ -110,3 +110,27 @@ export function clearSession(): void {
     /* non-fatal */
   }
 }
+
+// ── light/dark theme (the studio chrome ships a real dark mode) ──────────────
+// Pure frontend UI state: a `dark` class on <html> + a localStorage flag, read
+// once on boot so the choice survives reloads. Defaults to light.
+const THEME_KEY = 'nirs4all-lite:theme:v1'
+export type Theme = 'light' | 'dark'
+
+export function loadTheme(): Theme {
+  try {
+    return localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light'
+  } catch {
+    return 'light'
+  }
+}
+
+/** Apply the theme (toggle the `.dark` class on <html>) and persist it. */
+export function applyTheme(theme: Theme): void {
+  document.documentElement.classList.toggle('dark', theme === 'dark')
+  try {
+    localStorage.setItem(THEME_KEY, theme)
+  } catch {
+    /* non-fatal */
+  }
+}

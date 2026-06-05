@@ -17,11 +17,14 @@ export interface NodePaletteProps {
 // structural + generator operators (Branch / Concat-transform / Merge / OR /
 // Cartesian), each a real catalog node added through `onAdd` like any other.
 type BucketKey = 'split' | 'preprocessing' | 'model' | 'dag'
+// Teal-led palette (matching the studio chrome): the active data path —
+// preprocessing, DAG containers, and the model "hero" — is teal; the passive
+// train/test split (dataset scaffolding) reads as cool slate.
 const BUCKETS: { key: BucketKey; label: string; accent: string; dot: string }[] = [
-  { key: 'split', label: 'Train / test split', accent: 'text-brand-indigo', dot: 'bg-brand-indigo' },
+  { key: 'split', label: 'Train / test split', accent: 'text-muted-foreground', dot: 'bg-muted-foreground' },
   { key: 'preprocessing', label: 'Preprocessings', accent: 'text-brand-teal', dot: 'bg-brand-teal' },
-  { key: 'model', label: 'Models', accent: 'text-brand-amber', dot: 'bg-brand-amber' },
-  { key: 'dag', label: 'DAG / structure', accent: 'text-brand-amber', dot: 'bg-brand-amber' },
+  { key: 'model', label: 'Models', accent: 'text-brand-teal-d', dot: 'bg-brand-teal-d' },
+  { key: 'dag', label: 'DAG / structure', accent: 'text-brand-teal', dot: 'bg-brand-teal' },
 ]
 // nice sub-labels for the preprocessing sub-groups
 const SUBCAT_LABEL: Record<string, string> = {

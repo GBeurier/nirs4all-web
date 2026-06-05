@@ -7,7 +7,9 @@ import {
   LineChart,
   Loader2,
   Lock,
+  Moon,
   Sparkles,
+  Sun,
   Upload,
 } from 'lucide-react'
 import { DatasetConfigDialog, DatasetUpload, DatasetView } from '@/components/dataset'
@@ -19,7 +21,7 @@ import { engine } from '@/engine/client'
 import { type DatasetSummary, reencodeTarget, summarize } from '@/data/dataset'
 import { loadSampleDataset, type SampleId } from '@/data/samples'
 import { type LoadedModel, parseN4a } from '@/lib/n4a'
-import { loadSession, saveSession } from '@/lib/persist'
+import { applyTheme, loadSession, loadTheme, saveSession, type Theme } from '@/lib/persist'
 import { cn } from '@/app/components/ui/utils'
 import type { Analysis } from '@/data/wasm-io'
 import type { DagMlLineage } from '@/engine/dagml'
@@ -56,8 +58,14 @@ export default function App() {
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
   const [loadedModel, setLoadedModel] = useState<LoadedModel | null>(() => loadSession().model ?? null)
   const [step, setStep] = useState<StepId>('dataset')
+  const [theme, setTheme] = useState<Theme>(() => loadTheme())
   const abortRef = useRef<AbortController | null>(null)
   const runTokenRef = useRef(0)
+
+  // apply the persisted light/dark choice to <html> (and on every toggle)
+  useEffect(() => {
+    applyTheme(theme)
+  }, [theme])
 
   const adoptDataset = useCallback((ds: MaterializedDataset, opts?: { keepPipeline?: boolean }) => {
     abortRef.current?.abort()
@@ -252,7 +260,7 @@ export default function App() {
         {/* active dataset chip — always visible once loaded */}
         {dataset && summary && (
           <div className="ml-2 hidden items-center gap-2 rounded-full border border-border bg-background/60 px-3 py-1 md:flex">
-            <Database className="size-3.5 text-brand-cyan" />
+            <Database className="size-3.5 text-brand-teal" />
             <span className="max-w-[14rem] truncate text-xs font-medium text-foreground">{dataset.targetName || 'dataset'}</span>
             <span className="font-mono text-[11px] text-muted-foreground">
               {summary.nSamples} samples × {summary.nFeatures} wavelengths
@@ -269,7 +277,7 @@ export default function App() {
           )}
           {!running && dataServed && (
             <span
-              className="hidden items-center gap-1.5 rounded-full border border-brand-cyan/30 bg-brand-cyan/5 px-2.5 py-1 text-xs font-medium text-brand-cyan lg:flex"
+              className="hidden items-center gap-1.5 rounded-full border border-brand-teal/30 bg-brand-teal/5 px-2.5 py-1 text-xs font-medium text-brand-teal lg:flex"
               title={`dag-ml-data ${dataServed.version ?? ''} · schema ${dataServed.fingerprints?.schema?.slice(0, 10) ?? ''}…`}
             >
               <Database className="size-3.5" /> data by dag-ml-data
@@ -284,17 +292,27 @@ export default function App() {
             </span>
           )}
           {!running && runEngineLabel && (
-            <span className="hidden items-center gap-1.5 rounded-full border border-brand-indigo/30 bg-brand-indigo/5 px-2.5 py-1 text-xs font-medium text-brand-indigo sm:flex">
+            <span className="hidden items-center gap-1.5 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs font-medium text-muted-foreground sm:flex">
               <Cpu className="size-3.5" /> {runEngineLabel}
             </span>
           )}
+          <button
+            type="button"
+            data-theme-toggle
+            aria-label="Toggle dark mode"
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+            className="flex size-8 items-center justify-center rounded-full border border-border bg-background/60 text-muted-foreground transition-colors hover:border-brand-teal/40 hover:text-foreground"
+          >
+            {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
+          </button>
           <a
             href="https://nirs4all.org"
             target="_blank"
             rel="noreferrer"
             className="flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-brand-teal/40 hover:text-foreground"
           >
-            <Sparkles className="size-3.5 text-brand-cyan" /> nirs4all.org
+            <Sparkles className="size-3.5 text-brand-teal" /> nirs4all.org
           </a>
         </div>
       </header>

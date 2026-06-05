@@ -1,54 +1,53 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * nirs4all brand theme (matches nirs4all.org): teal / cyan / indigo on warm-white paper.
- * Token *structure* is the standard shadcn/Tailwind-v4 set so every primitive keeps working;
- * only the values are rebranded, plus brand-specific tokens (--brand-*, spectrum strip).
+ * nirs4all-studio design system (ported from the updated nirs4all-studio:
+ * src/index.css :root/.dark + tailwind.config.ts). Cool slate + teal, with a
+ * real dark theme. Token *structure* is the standard shadcn/Tailwind-v4 set so
+ * every primitive keeps working; values mirror the studio (HSL→hex), plus a few
+ * brand-specific tokens (--brand-*, spectrum strip, chart series).
  */
 :root {
   --font-size: 15px;
 
-  /* Brand palette (nirs4all.org) */
-  --brand-teal: #0d9488;
-  --brand-teal-d: #0f766e;
-  --brand-teal-l: #2dd4bf;
-  --brand-cyan: #06b6d4;
-  --brand-cyan-d: #0891b2;
-  --brand-indigo: #4f46e5;
-  --brand-indigo-d: #4338ca;
-  --brand-green: #10b981;
-  --brand-amber: #d97706;
-  --brand-paper: #faf7f0;
-  --brand-paper-2: #f3efe5;
+  /* Brand palette — teal-led, matching the studio's primary/accent.
+   * (cyan/indigo/amber survive only as chart-series hints; the UI chrome is
+   * teal + slate + semantic.) */
+  --brand-teal: #12a190;     /* primary  — hsl(173 80% 35%) */
+  --brand-teal-d: #1f7a70;   /* accent   — hsl(173 60% 30%) */
+  --brand-teal-l: #30e8d3;   /* light teal accent */
+  --brand-green: #16a249;    /* success  — hsl(142 76% 36%) */
+  --brand-amber: #f59f0a;    /* warning  — hsl(38 92% 50%) */
 
-  /* shadcn semantic tokens */
-  --background: #ffffff;
-  --foreground: #0f172a;
+  /* shadcn semantic tokens — light (studio "Teal/Cyan scientific palette") */
+  --background: #f8fafc;
+  --foreground: #0f1729;
   --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card-foreground: #0f1729;
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
-  --primary: #0f766e;
+  --popover-foreground: #0f1729;
+  --primary: #12a190;
   --primary-foreground: #ffffff;
   --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent: #ccfbf1;
-  --accent-foreground: #0f766e;
-  --destructive: #dc2626;
+  --secondary-foreground: #0f1729;
+  --muted: #eaf0f6;
+  --muted-foreground: #65758b;
+  --accent: #1f7a70;
+  --accent-foreground: #ffffff;
+  --destructive: #dc2828;
   --destructive-foreground: #ffffff;
-  --success: #10b981;
-  --warning: #d97706;
-  --border: #e2e8f0;
+  --success: #16a249;
+  --warning: #f59f0a;
+  --border: #e1e7ef;
   --input: transparent;
   --input-background: #f8fafc;
   --switch-background: #cbd5e1;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: #14b8a6;
+  --ring: #12a190;
 
-  /* Charts: brand sequence (teal, cyan, indigo, green, amber) */
+  /* Charts: a small multi-hue sequence for data-viz only (kept from lite —
+   * the studio defines no chart tokens; recharts genuinely needs many colors). */
   --chart-1: #0d9488;
   --chart-2: #06b6d4;
   --chart-3: #4f46e5;
@@ -58,50 +57,61 @@
   --radius: 0.75rem;
 
   --sidebar: #f8fafc;
-  --sidebar-foreground: #0f172a;
-  --sidebar-primary: #0f766e;
+  --sidebar-foreground: #1b294b;
+  --sidebar-primary: #12a190;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #ccfbf1;
-  --sidebar-accent-foreground: #0f766e;
-  --sidebar-border: #e2e8f0;
-  --sidebar-ring: #14b8a6;
+  --sidebar-accent: #eaf0f6;
+  --sidebar-accent-foreground: #0f1729;
+  --sidebar-border: #e1e7ef;
+  --sidebar-ring: #12a190;
 }
 
 .dark {
-  --background: #0b1220;
-  --foreground: #e2e8f0;
-  --card: #0f172a;
-  --card-foreground: #e2e8f0;
-  --popover: #0f172a;
-  --popover-foreground: #e2e8f0;
-  --primary: #2dd4bf;
-  --primary-foreground: #042f2e;
-  --secondary: #1e293b;
-  --secondary-foreground: #e2e8f0;
-  --muted: #1e293b;
-  --muted-foreground: #94a3b8;
-  --accent: #134e4a;
-  --accent-foreground: #99f6e4;
-  --destructive: #ef4444;
+  /* Dark scientific theme — ported from the studio's full .dark block. */
+  --background: #080c16;
+  --foreground: #f1f5f9;
+  --card: #0b111e;
+  --card-foreground: #f1f5f9;
+  --popover: #0e1525;
+  --popover-foreground: #f1f5f9;
+  --primary: #17cfb9;
+  --primary-foreground: #080c16;
+  --secondary: #191f2e;
+  --secondary-foreground: #dbe6f0;
+  --muted: #151b28;
+  --muted-foreground: #7588a3;
+  --accent: #248f82;
+  --accent-foreground: #f8fafc;
+  --destructive: #dc2828;
   --destructive-foreground: #ffffff;
-  --success: #34d399;
-  --warning: #f59e0b;
-  --border: #1e293b;
-  --input: #1e293b;
-  --ring: #2dd4bf;
+  --success: #1cca5b;
+  --warning: #f59f0a;
+  --border: #20283c;
+  --input: #1d2435;
+  --input-background: #0e1525;
+  --switch-background: #334155;
+  --ring: #17cfb9;
+
+  /* Brand teal tracks the dark primary so teal accents stay legible. */
+  --brand-teal: #17cfb9;
+  --brand-teal-d: #248f82;
+  --brand-teal-l: #30e8d3;
+  --brand-green: #1cca5b;
+  --brand-amber: #f59f0a;
+
   --chart-1: #2dd4bf;
   --chart-2: #22d3ee;
   --chart-3: #818cf8;
   --chart-4: #34d399;
   --chart-5: #fbbf24;
-  --sidebar: #0f172a;
-  --sidebar-foreground: #e2e8f0;
-  --sidebar-primary: #2dd4bf;
-  --sidebar-primary-foreground: #042f2e;
-  --sidebar-accent: #134e4a;
-  --sidebar-accent-foreground: #99f6e4;
-  --sidebar-border: #1e293b;
-  --sidebar-ring: #2dd4bf;
+  --sidebar: #090e1a;
+  --sidebar-foreground: #c9d9e8;
+  --sidebar-primary: #17cfb9;
+  --sidebar-primary-foreground: #080c16;
+  --sidebar-accent: #191f2e;
+  --sidebar-accent-foreground: #f1f5f9;
+  --sidebar-border: #1b2232;
+  --sidebar-ring: #17cfb9;
 }
 
 @theme inline {
@@ -141,12 +151,8 @@
   --color-brand-teal: var(--brand-teal);
   --color-brand-teal-d: var(--brand-teal-d);
   --color-brand-teal-l: var(--brand-teal-l);
-  --color-brand-cyan: var(--brand-cyan);
-  --color-brand-cyan-d: var(--brand-cyan-d);
-  --color-brand-indigo: var(--brand-indigo);
   --color-brand-green: var(--brand-green);
   --color-brand-amber: var(--brand-amber);
-  --color-brand-paper: var(--brand-paper);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -191,12 +197,12 @@
   code, pre, .font-mono { font-family: var(--font-mono); }
 }
 
-/* Wavelength spectrum strip — the nirs4all signature motif. */
+/* Wavelength spectrum strip — the nirs4all signature motif, recolored to the
+ * studio's teal-led palette (teal → light-teal, no indigo/cyan chrome). */
 .n4a-spectrum-strip {
   background: linear-gradient(
     90deg,
-    #4338ca 0%, #4f46e5 18%, #6366f1 30%,
-    #0891b2 48%, #06b6d4 62%, #14b8a6 76%, #2dd4bf 88%, #5eead4 100%
+    var(--brand-teal-d) 0%, var(--brand-teal) 45%, var(--brand-teal-l) 100%
   );
   background-size: 200% 100%;
   animation: n4a-strip 14s linear infinite;
@@ -205,24 +211,18 @@
   to { background-position: 200% 0; }
 }
 
-/* Warm-paper background with a soft brand aurora. */
+/* Flat slate app background (the studio look): no warm paper, no dotted grain —
+ * just the slate `--background` with a single very subtle teal glow up top. */
 .n4a-app-bg {
-  /* warm "paper" with soft brand glows + a faint dotted grain (à la the
-   * nirs4all-formats demo) for texture/depth. All layers are backgrounds, so
-   * they always sit behind content — no stacking concerns. */
-  background-color: var(--brand-paper);
+  background-color: var(--background);
   background-image:
-    radial-gradient(color-mix(in oklab, var(--brand-teal) 15%, transparent) 0.6px, transparent 0.7px),
-    radial-gradient(58rem 38rem at 12% -12%, color-mix(in oklab, var(--brand-teal) 13%, transparent), transparent 60%),
-    radial-gradient(52rem 40rem at 92% -6%, color-mix(in oklab, var(--brand-indigo) 11%, transparent), transparent 55%),
-    radial-gradient(40rem 30rem at 60% 8%, color-mix(in oklab, var(--brand-cyan) 8%, transparent), transparent 60%);
-  background-size: 22px 22px, auto, auto, auto;
+    radial-gradient(60rem 40rem at 50% -16%, color-mix(in oklab, var(--brand-teal) 8%, transparent), transparent 60%);
   background-attachment: fixed;
 }
 
-/* Gradient-clip emphasis (teal → cyan → green), the demo's signature flourish. */
+/* Gradient-clip emphasis — the studio's text-gradient (teal → teal-dark). */
 .n4a-grad-text {
-  background: linear-gradient(120deg, var(--brand-teal-d) 0%, var(--brand-cyan) 55%, var(--brand-green) 100%);
+  background: linear-gradient(135deg, var(--brand-teal) 0%, var(--brand-teal-d) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -251,7 +251,7 @@
   animation: n4a-rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
-/* Section card: hairline border, layered depth, hover lift + accent. */
+/* Section card: hairline border, layered depth, hover lift + teal accent. */
 .n4a-card {
   position: relative;
   transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
@@ -259,7 +259,7 @@
 }
 .n4a-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 18px 40px -22px rgba(13, 148, 136, 0.32);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 18px 40px -22px rgba(18, 161, 144, 0.32);
   border-color: color-mix(in oklab, var(--brand-teal) 28%, var(--border));
 }
 .n4a-card::after {
@@ -268,7 +268,7 @@
   inset: 0 0 auto 0;
   height: 3px;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  background: linear-gradient(90deg, var(--brand-teal), var(--brand-cyan), var(--brand-indigo));
+  background: linear-gradient(90deg, var(--brand-teal), var(--brand-teal-d));
   opacity: 0;
   transition: opacity 0.25s ease;
 }

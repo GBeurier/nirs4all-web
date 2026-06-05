@@ -146,9 +146,9 @@ export function DatasetConfigDialog({ open, ds, analysis, onOpenChange, onApply 
           )}
 
           {plan && (
-            <div className="space-y-3 rounded-xl border border-border bg-brand-paper/50 p-4">
+            <div className="space-y-3 rounded-xl border border-border bg-muted/40 p-4">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <Database className="h-4 w-4 text-brand-cyan" />
+                <Database className="h-4 w-4 text-brand-teal" />
                 nirs4all-io inference
                 {analysis?.readers?.count ? (
                   <span className="ml-auto rounded-full bg-card px-2 py-0.5 text-xs font-normal text-muted-foreground">
