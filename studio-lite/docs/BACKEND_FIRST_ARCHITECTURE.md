@@ -193,27 +193,45 @@ Each phase: lib green → binding green (+docs) → frontend green → deploy.
 
 ---
 
-## Current state (2026-06-05)
+## Current state (2026-06-05) — backend core complete
 
-Progress retiring the JS shadow engine, lib by lib:
+The JS shadow engine is retired: every heavy concern now runs in a Rust/C++ lib → WASM
+in the public demo. All phases are DONE + deployed + live-verified, each Codex-reviewed
+with findings fixed in the lib/frontend (never papered over), Python untouched.
 
-- **Phase A — DONE (deployed).** Preprocessing numerics run in **libn4m** (C++ → WASM)
-  via the generic operator dispatcher (`n4m_wasm_pp_*`); studio-lite's served path uses
-  libn4m for all transforms, MSC state round-trips for `.n4a`. JS preprocessing is now
-  strictly the offline `file://` fallback. Codex-reviewed (8 findings fixed).
-- **Phase B — DONE (deployed).** **dag-ml** builds the CV fold set in WASM
-  (`kfold_split_json` / `stratified_kfold_split_json`; new `StratifiedKFoldSpec` in core,
-  OOF-safe). The served run no longer builds folds in TS (`kfold.ts` is offline-only).
-  *Remaining B.2 (smaller):* classification metrics + SELECT into dag-ml to retire
-  `metrics.ts` + the TS scoreNode; CV strategy picker in the UI.
-- **Phase C — BLOCKED on upstream io Phase-2.** The nirs4all-io wasm crate is deliberately
-  *fs-free* and depends only on `nirs4all-io-core` (inference); the `assemble/materialize`
-  facade is fs-based (`crates/nirs4all-io`). Exposing `assembleDataset`/`to_dag_ml_data`
-  in WASM (Phase-2 track T14) needs an fs-free assemble in io first. Until then studio-lite
-  still materializes X/y in TS (`data/dataset.ts`, `data/wasm-io.ts`).
-- **Phase D — minor, deferred.** Generate the catalog from the backend; align `.n4a` with
-  nirs4all's bundle.
+- **Phase A — DONE.** Preprocessing numerics in **libn4m** (C++→WASM) via the generic
+  `n4m_wasm_pp_*` dispatcher; 20 preprocessing operators in the catalog (baseline
+  correctors, signal conversions, scatter/scaling). MSC state round-trips for `.n4a`. JS
+  preprocessing is strictly the offline `file://` fallback (which now *throws* on operators
+  it doesn't implement rather than masking with identity). Codex: 8 findings fixed.
+- **Models — DONE.** Generic `n4m_wasm_model_fit` dispatcher: PLS family (SIMPLS fast-path)
+  + Tier-A (PCR/PLSCanonical/PLSSVD) + Tier-B coeff models (Ridge/RidgePLS/RobustPLS/CPPLS/
+  SparseSIMPLS/Bagging/Boosting/RandomSubspace/…), all respecting `n_components`, with a
+  correct intercept contract (only genuinely-affine models carry one). **AOM-PLS**
+  (operator-adaptive PLS) via `n4m_wasm_aom_fit` — builds an operator bank + validation
+  plan, runs `n4m_aom_global_select`, predicts on raw X from input-space coefficients +
+  intercept, surfaces the selected operator. Codex-reviewed.
+- **Phase B — DONE.** **dag-ml** builds the CV fold set in WASM (`kfold_split_json` /
+  `stratified_kfold_split_json`, OOF-safe). **Generators** (cartesian/OR sweeps) + finetune
+  lower to dag-ml `param_generators`; one `execute_campaign_phase_json` runs all variants,
+  OOF bucketed per `variant_id`, `select_candidates_json` picks the winner. `kfold.ts` is
+  offline-only. Codex: 6 + 5 findings fixed (incl. the OOF-duplication bug).
+- **Phase C — DONE.** **nirs4all-io** (Rust) lifted its materialize layer into
+  `nirs4all-io-core`, added fs-free `assemble_in_memory` + `records_to_frame` + the
+  `assembleDataset` WASM export; studio materializes uploads through io (deleted ~230 lines
+  of TS target-alignment). Assembled goldens byte-identical. Codex: 5 findings fixed (incl.
+  the records role-leak — inference now emits feature/target/metadata selectors).
+- **Session persistence — DONE.** Pipeline + imported `.n4a` model + active sample survive
+  reload (localStorage, n4a typed-array codec); restored data is validated against the
+  catalog before use. Codex: 2 findings folded.
 
-Net: the two heaviest numeric concerns (preprocessing + cross-validation) are now Rust/C++
-in the public demo. The remaining TS numerics are the dataset assembly (Phase C, gated on
-io Phase-2) and the display/selection metrics (Phase B.2).
+**Deferred (low value, documented backlog):**
+- *Moments engine* (`n4m_moments_*`): pure infra (μ, XᵀY, XᵀX) used inside AOM/PLS sweeps —
+  no fit/predict/transform, maps to no editor operator. Not user-facing.
+- *Phase D polish*: generate the catalog from the abi map in CI (it is already
+  ABI-validated by `validate-catalog`); align `.n4a` with nirs4all's full bundle format
+  (the lite `.n4a` is intentionally demo-scoped). Per-phase gates + deploy already happen.
+
+Net: preprocessing, models (incl. AOM), cross-validation, generators/finetune selection,
+and dataset assembly all run in Rust/C++ → WASM. TypeScript is UI + WASM glue; the only JS
+numerics left are the deliberately-degraded offline `file://` fallback.
