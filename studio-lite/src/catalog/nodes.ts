@@ -1,4 +1,5 @@
 import type { NodeDef } from './types'
+import { AOM_DEFAULT_BANK } from './types'
 
 // Curated v1 catalog — only nirs4all-methods operators that are actually exported
 // in the libn4m ABI (verified against catalog/abi_method_map.yaml +
@@ -431,14 +432,32 @@ export const MODEL_NODES: NodeDef[] = [
     name: 'AOM-PLS',
     category: 'model',
     description:
-      'Operator-adaptive PLS — screens a bank of preprocessing operators (identity, detrend, SG smooth/derivative, finite-difference) by internal CV and fits SIMPLS on the winner, returning input-space coefficients. Screens preprocessing internally, so use it WITHOUT preceding preprocessing steps.',
+      'Operator-adaptive PLS — screens a bank of strict-linear preprocessing operators by internal CV and fits SIMPLS on the single winner, returning input-space coefficients. Screens preprocessing internally, so use it WITHOUT preceding preprocessing steps.',
     icon: 'Wand2',
     task: 'regression',
     params: [
       { name: 'n_components', label: 'Max components', type: 'int', default: 10, min: 1, max: 40, help: 'Max latent variables for the internal SIMPLS fits.' },
       { name: 'screen_folds', label: 'Screen CV folds', type: 'int', default: 5, min: 2, max: 10, help: 'Internal-CV fold count for the operator screen.' },
+      { name: 'operator_bank', label: 'Operator bank', type: 'operators', default: AOM_DEFAULT_BANK, help: 'Strict-linear operators screened by the AOM selector. Picking fewer/different operators changes the fit.' },
     ],
     n4m: { fit: 'n4m_aom_global_select', predict: 'n4m_wasm_model_predict_from_coeffs' },
+  },
+
+  {
+    id: 'models.pls.pop_pls',
+    type: 'POPPLS',
+    name: 'POP-PLS',
+    category: 'model',
+    description:
+      'Per-operator PLS — like AOM-PLS but picks one strict-linear operator PER latent component (per-component AOM) rather than one for the whole model, then returns input-space coefficients. Screens preprocessing internally, so use it WITHOUT preceding preprocessing steps.',
+    icon: 'Wand2',
+    task: 'regression',
+    params: [
+      { name: 'n_components', label: 'Max components', type: 'int', default: 10, min: 1, max: 40, help: 'Max latent variables; the screen picks an operator for each one.' },
+      { name: 'screen_folds', label: 'Screen CV folds', type: 'int', default: 5, min: 2, max: 10, help: 'Internal-CV fold count for the per-component operator screen.' },
+      { name: 'operator_bank', label: 'Operator bank', type: 'operators', default: AOM_DEFAULT_BANK, help: 'Strict-linear operators the per-component selector may pick from.' },
+    ],
+    n4m: { fit: 'n4m_aom_per_component_select', predict: 'n4m_wasm_model_predict_from_coeffs' },
   },
 
   // ---- Tier A: algorithm-enum family (via n4m_wasm_model_fit) -------------

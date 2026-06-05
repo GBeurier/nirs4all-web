@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { Download, Sparkles, Upload } from 'lucide-react'
 import type { PipelineBuilderProps } from '@/components/contracts'
-import type { Preset } from '@/catalog/types'
+import type { Preset, ParamValue } from '@/catalog/types'
 import type { FinetuneSpec, ParamSweep, PipelineDSL, PipelineStep, StepVariant } from '@/engine/types'
 import { countVariants } from '@/engine/dagml'
 import { PRESETS } from '@/catalog/presets'
@@ -59,7 +59,7 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
     if (selected.kind === 'step' && selected.id === id) setSelected({ kind: 'model' })
   }
 
-  const setStepParam = (id: string, name: string, value: number | boolean | string) =>
+  const setStepParam = (id: string, name: string, value: ParamValue) =>
     setSteps(pipeline.steps.map((s) => (s.id === id ? { ...s, params: { ...s.params, [name]: value } } : s)))
 
   // generators / finetune mutators (write the optional DSL fields dag-ml expands)
@@ -77,7 +77,7 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
     setSteps(pipeline.steps.map((s) => (s.id === id ? { ...s, variants } : s)))
 
   const setModelType = (type: string, params: Record<string, unknown>) => update({ model: { id: newStepId(type), type, params } })
-  const setModelParam = (name: string, value: number | boolean | string) =>
+  const setModelParam = (name: string, value: ParamValue) =>
     update({ model: { ...pipeline.model, params: { ...pipeline.model.params, [name]: value } } })
   const setModelSweep = (param: string, sweep: ParamSweep | undefined) => {
     const sweeps = { ...(pipeline.model.sweeps ?? {}) }

@@ -1,9 +1,11 @@
-// AOM smoke (task #13): build an AOM-PLS pipeline with NO preprocessing on the
-// NIR protein regression sample, run it via the served WASM stack, and confirm
-// CV Scores render with an RMSE metric, the "by dag-ml" badge, and no console
-// errors. AOM screens preprocessing internally and returns input-space coeffs +
-// intercept, so it is used WITHOUT preceding preproc steps (default preset is
-// already empty-step). Exercises n4m.fitAom (n4m_aom_global_select) end-to-end.
+// POP-PLS smoke: build a POP-PLS (per-component AOM) pipeline with NO
+// preprocessing on the NIR protein regression sample, run it via the served
+// WASM stack, and confirm CV Scores render with an RMSE metric, the "by dag-ml"
+// badge, and no console errors. Also asserts the operator-bank picker is present
+// and editable on the AOM/POP model node (a checkbox-group of strict-linear
+// operator kinds). POP screens preprocessing internally and returns input-space
+// coeffs + intercept, so it is used WITHOUT preceding preproc steps. Exercises
+// n4m.fitPop (n4m_aom_per_component_select) end-to-end.
 import { chromium } from 'playwright-core'
 
 const URL = process.env.SMOKE_URL || 'http://localhost:4345/'
@@ -35,38 +37,40 @@ try {
   await page.locator('[data-step="pipeline"]').click()
   await page.waitForTimeout(300)
 
-  // select the terminal model node, then switch the estimator to AOM-PLS
+  // select the terminal model node, then switch the estimator to POP-PLS
   await page.getByRole('button', { name: /PLS Regression/ }).first().click()
   await page.waitForTimeout(200)
   await page.locator('#model-select').click()
   await page.waitForTimeout(200)
-  await page.getByRole('option', { name: 'AOM-PLS', exact: true }).click()
+  await page.getByRole('option', { name: 'POP-PLS', exact: true }).click()
   await page.waitForTimeout(200)
   const body1 = (await page.textContent('body')) || ''
-  if (/AOM-PLS/.test(body1)) console.log('✓ estimator switched to AOM-PLS')
-  else fail('expected AOM-PLS to be selected')
+  if (/POP-PLS/.test(body1)) console.log('✓ estimator switched to POP-PLS')
+  else fail('expected POP-PLS to be selected')
 
-  // operator-bank picker present + editable on the AOM node (a checkbox group of
-  // strict-linear operator kinds the AOM selector screens)
+  // operator-bank picker present + editable (a checkbox group of strict-linear ops)
   const bank = page.locator('[data-operator-bank]').first()
-  if ((await bank.count()) > 0) console.log('✓ operator-bank picker present on AOM node')
-  else fail('expected an operator-bank picker on the AOM-PLS node')
+  if ((await bank.count()) > 0) console.log('✓ operator-bank picker present on POP node')
+  else fail('expected an operator-bank picker on the POP-PLS node')
   const boxes = bank.locator('input[type="checkbox"]')
-  if ((await boxes.count()) >= 5) console.log(`✓ operator-bank exposes ${await boxes.count()} operator kinds`)
-  else fail('expected >=5 operator-kind checkboxes on the AOM node')
+  const nBoxes = await boxes.count()
+  if (nBoxes >= 5) console.log(`✓ operator-bank exposes ${nBoxes} operator kinds`)
+  else fail(`expected >=5 operator-kind checkboxes, got ${nBoxes}`)
+  // toggle the first checkbox off then back on → confirms it is editable
   const first = boxes.first()
   const before = await first.isChecked()
   await first.click()
   await page.waitForTimeout(150)
-  if ((await first.isChecked()) !== before) console.log('✓ operator-bank checkbox is editable (toggled)')
+  const after = await first.isChecked()
+  if (after !== before) console.log('✓ operator-bank checkbox is editable (toggled)')
   else fail('expected the operator-bank checkbox to toggle')
-  await first.click() // restore the default bank before running
+  await first.click() // restore so the run keeps a non-degenerate bank
   await page.waitForTimeout(150)
 
-  // run the pipeline (no preprocessing — AOM screens it internally)
+  // run the pipeline (no preprocessing — POP screens it internally)
   await page.getByRole('button', { name: /Run pipeline/i }).click()
   await page.waitForSelector('text=/CV Scores/', { timeout: 60000 })
-  console.log('✓ AOM-PLS pipeline executed (CV Scores rendered)')
+  console.log('✓ POP-PLS pipeline executed (CV Scores rendered)')
 
   const body2 = (await page.textContent('body')) || ''
   if (/RMSE/i.test(body2)) console.log('✓ RMSE metric present')
@@ -77,7 +81,7 @@ try {
     else fail('expected a "by dag-ml" badge on the served build')
   }
 
-  await page.screenshot({ path: '/tmp/aom_smoke.png', fullPage: true })
+  await page.screenshot({ path: '/tmp/pop_smoke.png', fullPage: true })
 
   if (errors.length) {
     console.error(`✗ ${errors.length} console error(s):`)
@@ -92,4 +96,4 @@ try {
 } finally {
   await browser.close()
 }
-console.log(process.exitCode ? 'AOM SMOKE FAILED' : 'AOM SMOKE PASSED')
+console.log(process.exitCode ? 'POP SMOKE FAILED' : 'POP SMOKE PASSED')

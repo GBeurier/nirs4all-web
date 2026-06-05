@@ -1,5 +1,6 @@
 import { Settings2, SlidersHorizontal } from 'lucide-react'
 import type { FinetuneSpec, ParamSweep, PipelineDSL, PipelineStep, StepVariant, TaskType } from '@/engine/types'
+import type { ParamValue } from '@/catalog/types'
 import { nodeByType } from '@/catalog/nodes'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
@@ -16,11 +17,11 @@ export interface InspectorProps {
   pipeline: PipelineDSL
   taskType: TaskType
   selected: Selection
-  onStepParam: (id: string, name: string, value: number | boolean | string) => void
+  onStepParam: (id: string, name: string, value: ParamValue) => void
   onStepSweep: (id: string, param: string, sweep: ParamSweep | undefined) => void
   onStepVariants: (id: string, variants: StepVariant[] | undefined) => void
   onModelType: (type: string, params: Record<string, unknown>) => void
-  onModelParam: (name: string, value: number | boolean | string) => void
+  onModelParam: (name: string, value: ParamValue) => void
   onModelSweep: (param: string, sweep: ParamSweep | undefined) => void
   onModelFinetune: (finetune: FinetuneSpec | undefined) => void
   onCv: (patch: Partial<PipelineDSL['cv']>) => void
@@ -39,7 +40,7 @@ function SweepableParamField({
   param: { name: string; type: string }
   value: unknown
   numeric: boolean
-  onParam: (value: number | boolean | string) => void
+  onParam: (value: ParamValue) => void
   onSweep: (sweep: ParamSweep | undefined) => void
 }) {
   const def = nodeByType(step.type)?.params.find((p) => p.name === param.name)

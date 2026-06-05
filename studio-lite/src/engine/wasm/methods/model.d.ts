@@ -77,6 +77,38 @@ export interface AomModel extends FittedModel {
  *   derivative / finite-difference) is screened.
  */
 export declare function fitAom(X: Matrix, Y: Matrix, maxComponents: number, nFolds?: number, seed?: number, operatorKinds?: number[]): AomModel;
+/** A fitted POP-PLS model — a {@link FittedModel} (so {@link predictModel}
+ *  works unchanged) plus the per-component screen result. Its `intercept` is a
+ *  genuine input-space intercept and its `xMean` / `yMean` are zero, so
+ *  prediction is the affine form  y = intercept + X.B  on RAW X. */
+export interface PopModel extends FittedModel {
+    /** Bank index of the operator picked at each selected latent component
+     *  (length = `selectedComponents`). */
+    selectedOperators: number[];
+    /** Number of latent components the per-component screen selected. */
+    selectedComponents: number;
+    /** Best internal-CV prefix score of the selected model. */
+    score: number;
+}
+/** Fit POP-PLS (per-component operator-adaptive PLS) on (X, Y).
+ *
+ * Like AOM-PLS but picks one strict-linear operator PER latent component
+ * (`n4m_aom_per_component_select`) rather than one for the whole model, then
+ * returns INPUT-SPACE coefficients so it predicts on RAW X via the same affine
+ * intercept path — so it is used WITHOUT preceding preprocessing steps (the
+ * screen does the preprocessing internally). Numerics are 100% libn4m; this
+ * only builds the bank + validation plan.
+ *
+ * @param X row-major (n × p) input matrix.
+ * @param Y row-major (n × q) target matrix.
+ * @param maxComponents max latent components for the internal SIMPLS fits.
+ * @param nFolds internal-CV fold count for the operator screen.
+ * @param seed reserved (the contiguous-fold partition is deterministic).
+ * @param operatorKinds optional `n4m_operator_kind_t` bank override; when
+ *   omitted a default strict bank (identity / detrend / SG smooth / SG
+ *   derivative / finite-difference) is screened.
+ */
+export declare function fitPop(X: Matrix, Y: Matrix, maxComponents: number, nFolds?: number, seed?: number, operatorKinds?: number[]): PopModel;
 export declare class Model {
     private _data;
     private constructor();

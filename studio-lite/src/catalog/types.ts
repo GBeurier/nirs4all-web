@@ -1,19 +1,41 @@
 import type { TaskType } from '@/engine/types'
 
 export type NodeCategory = 'preprocessing' | 'model'
-export type ParamType = 'int' | 'float' | 'bool' | 'select'
+export type ParamType = 'int' | 'float' | 'bool' | 'select' | 'operators'
+
+/** A single editable parameter value as carried by the pipeline DSL. The
+ *  `operators` param type carries an `int[]` (n4m_operator_kind_t bank). */
+export type ParamValue = number | boolean | string | number[]
 
 export interface ParamDef {
   name: string
   label?: string
   type: ParamType
-  default: number | boolean | string
+  default: ParamValue
   min?: number
   max?: number
   step?: number
   options?: { value: string | number; label: string }[]
   help?: string
 }
+
+/** The strict-linear operator kinds the AOM / POP selectors accept as a bank.
+ *  Values are n4m_operator_kind_t ints (see nirs4all-methods/cpp/include/n4m/
+ *  pls.h §15); non-strict operators (SNV, MSC, ...) are rejected by libn4m and
+ *  are intentionally absent. `label` is the picker text. */
+export const AOM_OPERATOR_KINDS: { value: number; label: string }[] = [
+  { value: 0, label: 'Identity' },
+  { value: 7, label: 'Detrend (poly)' },
+  { value: 8, label: 'SG smooth' },
+  { value: 9, label: 'SG derivative' },
+  { value: 10, label: 'Norris–Williams' },
+  { value: 15, label: 'Finite difference' },
+  { value: 16, label: 'Whittaker' },
+  { value: 17, label: 'FCK' },
+]
+
+/** Default AOM/POP operator bank (matches the libn4m default screen set). */
+export const AOM_DEFAULT_BANK: number[] = [0, 7, 8, 9, 15]
 
 /**
  * One node = one exported nirs4all-methods operator. The `type` token is what the

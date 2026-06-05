@@ -1,4 +1,5 @@
 import type { PipelineStep, TaskType } from '@/engine/types'
+import type { ParamValue } from '@/catalog/types'
 import { modelsForTask, nodeByType, defaultParams } from '@/catalog/nodes'
 import { Label } from '@/app/components/ui/label'
 import {
@@ -15,7 +16,7 @@ export interface ModelPickerProps {
   model: PipelineStep
   taskType: TaskType
   onChangeType: (type: string, params: Record<string, unknown>) => void
-  onChangeParam: (name: string, value: number | boolean | string) => void
+  onChangeParam: (name: string, value: ParamValue) => void
   /** optional per-param renderer (lets the Inspector pair each field with a sweep activator) */
   renderParam?: (def: import('@/catalog/types').ParamDef, value: unknown) => React.ReactNode
 }

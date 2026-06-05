@@ -1,4 +1,5 @@
-import type { ParamDef } from '@/catalog/types'
+import type { ParamDef, ParamValue } from '@/catalog/types'
+import { AOM_OPERATOR_KINDS } from '@/catalog/types'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
 import { Switch } from '@/app/components/ui/switch'
@@ -13,7 +14,42 @@ import {
 export interface ParamFieldProps {
   def: ParamDef
   value: unknown
-  onChange: (value: number | boolean | string) => void
+  onChange: (value: ParamValue) => void
+}
+
+/** Compact checkbox list for an `operators` param (an n4m_operator_kind_t
+ *  int[] AOM/POP bank). Selecting/deselecting toggles a kind in the bank. */
+function OperatorBankField({ id, value, onChange }: { id: string; value: unknown; onChange: (value: number[]) => void }) {
+  const selected = new Set(Array.isArray(value) ? value.map((v) => Number(v)) : [])
+  const toggle = (kind: number) => {
+    const next = new Set(selected)
+    if (next.has(kind)) next.delete(kind)
+    else next.add(kind)
+    // keep bank in the catalog's display order for stable lineage
+    onChange(AOM_OPERATOR_KINDS.filter((o) => next.has(o.value)).map((o) => o.value))
+  }
+  return (
+    <div id={id} data-operator-bank className="grid grid-cols-2 gap-1.5 rounded-lg border border-border bg-muted/30 p-2">
+      {AOM_OPERATOR_KINDS.map((op) => {
+        const on = selected.has(op.value)
+        return (
+          <label
+            key={op.value}
+            className="flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-1 text-[11px] hover:bg-muted"
+          >
+            <input
+              type="checkbox"
+              className="size-3.5 accent-brand-indigo"
+              checked={on}
+              data-op-kind={op.value}
+              onChange={() => toggle(op.value)}
+            />
+            <span className={on ? 'text-foreground' : 'text-muted-foreground'}>{op.label}</span>
+          </label>
+        )
+      })}
+    </div>
+  )
 }
 
 /** Renders a single pipeline-step parameter control driven by its ParamDef. */
@@ -26,7 +62,9 @@ export function ParamField({ def, value, onChange }: ParamFieldProps) {
       <Label htmlFor={id} className="text-xs text-muted-foreground">
         {label}
       </Label>
-      {def.type === 'bool' ? (
+      {def.type === 'operators' ? (
+        <OperatorBankField id={id} value={value} onChange={onChange} />
+      ) : def.type === 'bool' ? (
         <div className="flex h-9 items-center">
           <Switch
             id={id}

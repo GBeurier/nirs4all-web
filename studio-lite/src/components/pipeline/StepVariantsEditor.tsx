@@ -1,5 +1,6 @@
 import { Plus, Trash2, Workflow } from 'lucide-react'
 import type { PipelineStep, StepVariant } from '@/engine/types'
+import type { ParamValue } from '@/catalog/types'
 import { defaultParams, nodeByType } from '@/catalog/nodes'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
@@ -31,7 +32,7 @@ export function StepVariantsEditor({ step, onChange }: StepVariantsEditorProps) 
     setVariants([...variants, { label: `Alt ${idx}`, type: step.type, params: { ...defaultParams(step.type) } }])
   }
   const patch = (i: number, change: Partial<StepVariant>) => setVariants(variants.map((v, k) => (k === i ? { ...v, ...change } : v)))
-  const setVariantParam = (i: number, name: string, value: number | boolean | string) =>
+  const setVariantParam = (i: number, name: string, value: ParamValue) =>
     patch(i, { params: { ...variants[i].params, [name]: value } })
   const removeVariant = (i: number) => setVariants(variants.filter((_, k) => k !== i))
 
