@@ -225,13 +225,34 @@ with findings fixed in the lib/frontend (never papered over), Python untouched.
   reload (localStorage, n4a typed-array codec); restored data is validated against the
   catalog before use. Codex: 2 findings folded.
 
-**Deferred (low value, documented backlog):**
+**Editor expansion (DONE, deployed).** The pipeline editor is no longer a fixed
+preproc-chain+model: **the model and the split are OPTIONAL nodes** (a pipeline can be
+preprocessing-only; Run guards when no model is present). **Split operators** are a new
+`split` node category — Kennard-Stone / SPXY / KMeans / KBins-stratified via a methods
+`n4m_wasm_split` dispatcher; a split node computes the train/test mask in libn4m and sets
+`ds.partitions` (the FIRST split) before dag-ml builds the CV folds over the train rows.
+**More models** in the catalog: MIR-PLS, MB-PLS, missing-aware NIPALS (joining PLS family +
+PCR + Tier-B + AOM/POP). Classification heads (PLS-LDA/QDA/logistic), tensor models
+(NPLS/ONPLS), DI-PLS, GPR/LW/kernel-PLS are deferred — they don't expose an input-space
+coefficient triple, so the predict-later (centred/affine) path can't carry them without a
+dedicated decision-score/local/dual predict surface (a future methods+engine track).
+
+**Deferred (low value / not feasible, documented backlog):**
 - *Moments engine* (`n4m_moments_*`): pure infra (μ, XᵀY, XᵀX) used inside AOM/PLS sweeps —
   no fit/predict/transform, maps to no editor operator. Not user-facing.
-- *Phase D polish*: generate the catalog from the abi map in CI (it is already
-  ABI-validated by `validate-catalog`); align `.n4a` with nirs4all's full bundle format
-  (the lite `.n4a` is intentionally demo-scoped). Per-phase gates + deploy already happen.
+- *Classification-head / tensor / local / kernel models*: need a non-coeff predict surface
+  (decision scores, 3-way tensors, local refit, dual coeffs) — out of the current generic
+  coeff-dispatcher contract.
+- *Phase D*: catalog-gen-in-CI is moot — the catalog is already ABI-validated by
+  `validate-catalog`; per-phase gates + deploy already happen. **`.n4a` alignment is NOT
+  feasible by design** — nirs4all's `.n4a` is a *ZIP archive of serialized Python pipeline
+  artifacts + metadata* (`nirs4all/pipeline/bundle`, for the Python predict/retrain runtime),
+  whereas the lite `.n4a` is a self-contained browser JSON of one libn4m-fitted model
+  (coefficients + preprocessing state) for in-browser re-prediction. A browser cannot emit
+  nirs4all's serialized-Python bundle, so the lite `.n4a` stays deliberately demo-scoped and
+  distinctly named; cross-tool import is a non-goal.
 
-Net: preprocessing, models (incl. AOM), cross-validation, generators/finetune selection,
-and dataset assembly all run in Rust/C++ → WASM. TypeScript is UI + WASM glue; the only JS
-numerics left are the deliberately-degraded offline `file://` fallback.
+Net: preprocessing, models (incl. AOM/POP + the extended set), train/test split operators,
+cross-validation, generators/finetune selection, and dataset assembly all run in Rust/C++ →
+WASM. TypeScript is UI + WASM glue; the only JS numerics left are the deliberately-degraded
+offline `file://` fallback.
