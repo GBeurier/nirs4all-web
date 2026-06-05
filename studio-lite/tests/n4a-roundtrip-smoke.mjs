@@ -38,7 +38,16 @@ try {
   console.log(`✓ exported .n4a → ${dl.suggestedFilename()}`)
   if (!/\.n4a$/.test(dl.suggestedFilename())) fail('exported file is not a .n4a')
 
-  // 3. reload the app FRESH (no dataset, no run)
+  // 3. reload the app FRESH (no dataset, no run) — clear the persisted session
+  // first so this is a genuine cold start (persistence would otherwise restore
+  // the trained sample + pipeline and land on the editor, hiding the upload step).
+  await page.evaluate(() => {
+    try {
+      localStorage.clear()
+    } catch {
+      /* private mode */
+    }
+  })
   await page.goto(URL, { waitUntil: 'load', timeout: 30000 })
   await page.waitForSelector('text=nirs4all', { timeout: 10000 })
 
