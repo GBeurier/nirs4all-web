@@ -24,12 +24,22 @@ import type {
   TaskType,
 } from './types'
 
-/** A pluggable numeric backend: the model (PLS) fit/predict + the preprocessing
+/** The terminal estimator to fit: its catalog `type` token + params. */
+export interface ModelSpec {
+  type: string
+  params: Record<string, unknown>
+}
+
+/** A pluggable numeric backend: the model fit/predict + the preprocessing
  *  operators. Both come from libn4m (C++ → WASM) in production; a JS backend is
- *  the offline fallback. Model blobs + preprocessing state are plain serializable data. */
+ *  the offline fallback. Model blobs + preprocessing state are plain serializable data.
+ *
+ *  `fit` dispatches on `spec.type` — the libn4m backend routes PLS/PLS-DA through
+ *  the legacy fast-path and every other catalog model through the generic
+ *  coeff dispatcher (`fitModel`); the JS fallback only does NIPALS PLS. */
 export interface ModelBackend {
   id: string
-  fit(X: Mat, Y: Mat, nComp: number): unknown
+  fit(spec: ModelSpec, X: Mat, Y: Mat, nComp: number): unknown
   predict(model: unknown, X: Mat): Mat
   /** preprocessing operators (libn4m or JS) — the numerics never live here */
   preproc: Preprocessor
@@ -122,8 +132,9 @@ export function trainAndPredict(
   const { classNames, classIdx } = classInfo(ds)
   const Xfull: Mat = { data: ds.X, rows: ds.nSamples, cols: ds.nFeatures }
   const { transformers, descriptors, Xout } = fitChain(dsl.steps, selectRows(Xfull, trainIdx), backend.preproc)
+  const modelSpec: ModelSpec = { type: dsl.model.type, params: dsl.model.params }
   try {
-    const model = backend.fit(Xout, buildYMatrix(ds, classNames, classIdx, trainIdx), clampNcomp(ncomp, Xout))
+    const model = backend.fit(modelSpec, Xout, buildYMatrix(ds, classNames, classIdx, trainIdx), clampNcomp(ncomp, Xout))
     const pred = backend.predict(model, applyTransformers(transformers, selectRows(Xfull, predictIdx)))
     return { pred, descriptors, model, classNames }
   } finally {
@@ -203,6 +214,7 @@ export async function runPipeline(
     throw new Error('Classification needs at least two classes in the training data.')
   }
 
+  const modelSpec: ModelSpec = { type: dsl.model.type, params: dsl.model.params }
   const buildY = (idx: number[]): Mat => buildYMatrix(ds, classNames, classIdx, idx)
   const decode = (pred: Mat, idx: number[]): PredRow[] => decodeRows(ds, classNames, classIdx, pred, idx)
   const checkCancel = () => {
@@ -219,7 +231,7 @@ export async function runPipeline(
     const { transformers, Xout: XtrP } = fitChain(dsl.steps, selectRows(Xfull, f.trainIdx), backend.preproc)
     let rows: PredRow[]
     try {
-      const model = backend.fit(XtrP, buildY(f.trainIdx), safeN(XtrP))
+      const model = backend.fit(modelSpec, XtrP, buildY(f.trainIdx), safeN(XtrP))
       const XvaP = applyTransformers(transformers, selectRows(Xfull, f.valIdx))
       rows = decode(backend.predict(model, XvaP), f.valIdx)
     } finally {
@@ -241,7 +253,7 @@ export async function runPipeline(
   let refitRows: PredRow[]
   const scoreIdx = testIdx.length > 0 ? testIdx : trainIdx
   try {
-    model = backend.fit(XtrP, buildY(trainIdx), safeN(XtrP))
+    model = backend.fit(modelSpec, XtrP, buildY(trainIdx), safeN(XtrP))
     refitRows = decode(backend.predict(model, applyTransformers(transformers, selectRows(Xfull, scoreIdx))), scoreIdx)
   } finally {
     transformers.forEach((t) => t.free())

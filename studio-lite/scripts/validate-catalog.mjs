@@ -36,8 +36,9 @@ for (const m of nodesSrc.matchAll(/n4m:\s*\{([^}]*)\}/g)) {
 }
 
 const missing = [...symbols].filter((s) => !exported.has(s))
-// predict-side helpers live in the JS binding, not the C ABI snapshot — allow them
-const ALLOW = new Set(['n4m_wasm_pls_predict_from_coeffs'])
+// predict-side helpers live in the JS binding (emscripten-only n4m_wasm_*),
+// not the C ABI snapshot — allow them
+const ALLOW = new Set(['n4m_wasm_pls_predict_from_coeffs', 'n4m_wasm_model_predict_from_coeffs'])
 const realMissing = missing.filter((s) => !ALLOW.has(s))
 
 console.log(`catalog validator: ${symbols.size} symbols referenced, ${exported.size} exported upstream.`)
