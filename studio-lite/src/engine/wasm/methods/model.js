@@ -120,6 +120,7 @@ export function fitModel(model, X, Y, n_components, params = []) {
     const xmBuf = _malloc_f64(M, p);
     const ymBuf = _malloc_f64(M, q);
     const interBuf = _malloc_f64(M, q);
+    const hasInterBuf = M._malloc(4); // int32 flag: 1 iff a genuine intercept
     const pPtr = params.length > 0 ? _malloc_f64(M, params.length) : { ptr: 0, len: 0 };
     try {
         _copy_in(M, X.data, xBuf.ptr);
@@ -128,15 +129,21 @@ export function fitModel(model, X, Y, n_components, params = []) {
             _copy_in(M, Float64Array.from(params), pPtr.ptr);
         const status = M.ccall("n4m_wasm_model_fit", "number", ["string", "number", "number", "number", "number",
             "number", "number", "number", "number",
-            "number", "number", "number", "number", "number"], [model, pPtr.ptr, params.length, xBuf.ptr, yBuf.ptr,
+            "number", "number", "number", "number", "number", "number"], [model, pPtr.ptr, params.length, xBuf.ptr, yBuf.ptr,
             n, p, q, n_components,
-            coefsBuf.ptr, xmBuf.ptr, ymBuf.ptr, interBuf.ptr, 0]);
+            coefsBuf.ptr, xmBuf.ptr, ymBuf.ptr, interBuf.ptr,
+            hasInterBuf, 0]);
         checkStatus(status);
+        // Only models with a genuine affine intercept (currently Ridge) report
+        // has_intercept=1; the PLS/PCR family and the PLS-based Tier-B fits
+        // predict via the centred form and carry no intercept (kept null so a
+        // caller never adds a misleading zero/y_mean term to x.B).
+        const hasIntercept = M.HEAP32[hasInterBuf >> 2] === 1;
         return {
             coefficients: _read_out(M, coefsBuf.ptr, p * q),
             xMean: _read_out(M, xmBuf.ptr, p),
             yMean: _read_out(M, ymBuf.ptr, q),
-            intercept: _read_out(M, interBuf.ptr, q),
+            intercept: hasIntercept ? _read_out(M, interBuf.ptr, q) : null,
             n_features: p,
             n_targets: q,
         };
@@ -148,6 +155,7 @@ export function fitModel(model, X, Y, n_components, params = []) {
         M._free(xmBuf.ptr);
         M._free(ymBuf.ptr);
         M._free(interBuf.ptr);
+        M._free(hasInterBuf);
         if (pPtr.ptr !== 0)
             M._free(pPtr.ptr);
     }
