@@ -92,10 +92,19 @@ Load-bearing concepts (require reading several files):
   `sampleId`, never row order; test partition held out of CV; refuses to train without targets),
   parameterized by a `ModelBackend`. `src/engine/backends.ts` provides two: `jsBackend` (NIPALS in
   `algo/pls.ts`) and the real `libn4m` backend (`@nirs4all/methods-wasm`, C++→WASM, staged in
-  `src/engine/wasm/methods/`). `MainEngine` (`src/engine/main-engine.ts`, the app's engine via
-  `client.ts`) runs on the **main thread**, prefers libn4m, and **falls back to the JS backend under
-  `file://`** (the single-file build can't fetch the emscripten `n4m.wasm`). `StubEngine` =
-  JS-backend engine kept for unit tests / fallback.
+  `src/engine/wasm/methods/`). `MainEngine` (`src/engine/main-engine.ts`) prefers libn4m and **falls
+  back to the JS backend under `file://`** (the single-file build can't fetch the emscripten
+  `n4m.wasm`). `StubEngine` = JS-backend engine kept for unit tests / fallback.
+
+- **The engine runs in a Web Worker (served build).** `client.ts` wraps `MainEngine` in a
+  `WorkerEngine` (`src/engine/worker-engine.ts` + `worker.ts`) so heavy libn4m / dag-ml WASM compute
+  (notably the AOM operator screen on a large dataset) never blocks the UI thread — progress streams,
+  Cancel works, and a cancel mid-schedule is normalized back to an `AbortError` (App suppresses it).
+  The **single-file** build aliases `@/engine/client` → `client.singlefile.ts` (vite.config.ts,
+  `singlefile` mode) to keep the engine in-thread: a module worker that code-splits its WASM via
+  dynamic `import()` can't be inlined into one HTML, and the offline build uses the light JS backend
+  anyway. `src/engine/guard.ts` warns (or refuses) before an oversized AOM/POP screen so a long run
+  is never silent. **Don't move engine compute back onto the main thread.**
 
 - **Two data paths, one `MaterializedDataset`.** `src/data/dataset.ts` is the axis-aware **CSV**
   builder (the `X_train/y_train(+_test,+metadata)` convention; a numeric *first row* is the

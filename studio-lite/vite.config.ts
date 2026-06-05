@@ -14,11 +14,19 @@ export default defineConfig(({ mode }) => {
     base: './',
     plugins: [react(), tailwindcss(), ...(singlefile ? [viteSingleFile()] : [])],
     resolve: {
-      alias: { '@': path.resolve(__dirname, './src') },
+      alias: {
+        // singlefile builds swap the engine entry for a worker-free, in-thread
+        // one so the Web Worker (and its WASM code-split chunks, which can't be
+        // inlined into one HTML) never enters the graph. Listed before '@' so the
+        // exact match wins. The served/dev build keeps client.ts (WorkerEngine).
+        ...(singlefile ? { '@/engine/client': path.resolve(__dirname, './src/engine/client.singlefile.ts') } : {}),
+        '@': path.resolve(__dirname, './src'),
+      },
     },
-    // classic (iife) workers instantiate from a blob under file:// (module blob
-    // workers are blocked there) — required for the single-file deliverable.
-    worker: { format: 'iife' },
+    // The served build runs the engine in a MODULE worker so it can code-split its
+    // WASM via dynamic import() (IIFE/UMD workers can't). The single-file build has
+    // no worker at all (see the alias above).
+    worker: { format: 'es' },
     assetsInclude: ['**/*.csv', '**/*.wasm'],
     build: {
       target: 'es2022',

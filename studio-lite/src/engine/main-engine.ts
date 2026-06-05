@@ -6,6 +6,7 @@
 import { jsBackend, loadLibn4mBackend } from './backends'
 import { DagMlEngine } from './dagml-engine'
 import { activeOrGenerator, dagMlAvailable, expandGeneratorVariants, hasUnsupportedGenerator } from './dagml'
+import { assertAomBudget } from './guard'
 import { backendIdOf, predictPipeline, runGeneratorOr, runPipeline } from './orchestrate'
 import type { Engine, FittedPipeline, MaterializedDataset, PipelineDSL, PredictResult, RunOptions, RunResult } from './types'
 
@@ -14,6 +15,9 @@ export class MainEngine implements Engine {
   private dagml = new DagMlEngine()
 
   async run(ds: MaterializedDataset, dsl: PipelineDSL, opts: RunOptions = {}): Promise<RunResult> {
+    // Warn (or refuse) an oversized operator-adaptive screen before any compute,
+    // so a heavy AOM/POP run is never silent (it runs in a worker, cancellable).
+    assertAomBudget(ds, dsl, opts.onProgress)
     if (dagMlAvailable()) return this.dagml.run(ds, dsl, opts) // dag-ml executes; libn4m numerics
     // offline single-file (JS backend). Handle a generator-OR pipeline by
     // expanding alternatives + selecting the best by the canonical metric (host

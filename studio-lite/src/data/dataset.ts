@@ -25,8 +25,11 @@ export interface DatasetSummary {
 }
 
 const baseName = (n: string) => n.replace(/\.[^.]+$/, '').toLowerCase()
-const isX = (n: string) => /(^|[^a-z])x([^a-z]|$)|spectr|features?/i.test(baseName(n))
-const isY = (n: string) => /(^|[^a-z])y([^a-z]|$)|target|label|conc|reference/i.test(baseName(n))
+// `x`/`y` as a delimited token (X_train, x.csv) OR a leading x/y glued to a
+// partition word (Xtrain, Ytest, Xcal) — the latter is the common no-underscore
+// convention the bare `[^a-z]x[^a-z]` rule misses.
+const isX = (n: string) => /(^|[^a-z])x([^a-z]|$)|^x(train|test|cal|val|valid|calib|pred|holdout)|spectr|features?/i.test(baseName(n))
+const isY = (n: string) => /(^|[^a-z])y([^a-z]|$)|^y(train|test|cal|val|valid|calib|pred|holdout)|target|label|conc|reference/i.test(baseName(n))
 const isMeta = (n: string) => /meta/i.test(baseName(n))
 const isTest = (n: string) => /test|valid|holdout/i.test(baseName(n))
 

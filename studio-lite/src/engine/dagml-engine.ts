@@ -415,7 +415,10 @@ export class DagMlEngine implements Engine {
           dagml.execute_campaign_phase_json('plan:n4a', JSON.stringify(graph), JSON.stringify(campaign), JSON.stringify(modelManifest()), 'run:n4a', cv.seed >>> 0, 'FIT_CV', invoke),
         )
       } catch (err) {
-        if (signal?.aborted) throw err
+        // A cancel mid-schedule surfaces as the JS controller's AbortError wrapped
+        // in a dag-ml runtime_validation error — normalize it back to a clean
+        // AbortError so the UI suppresses it (App.tsx) instead of showing a fault.
+        if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError')
         // The scheduler can't run this graph. The libn4m-chain fallback only knows
         // how to run ONE variant over the folds; for a real multi-variant sweep that
         // would silently drop every non-base variant, so re-throw instead of mis-
