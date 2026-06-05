@@ -107,4 +107,25 @@ describe('mapAssembledToMaterialized', () => {
     )
     expect(ds.axis).toEqual([0, 1, 2])
   })
+
+  it('uses the first feature source for a multi-source block (v1 single-source)', () => {
+    // io can emit multiple feature matrices (x[]); studio v1 models the first.
+    const ds = mapAssembledToMaterialized(
+      full({
+        train: block({
+          n_samples: 2,
+          x: [mat([1, 2, 3, 4], 2, 2), mat([9, 9, 9, 9, 9, 9], 2, 3)],
+          feature_headers: [
+            ['1', '2'],
+            ['a', 'b', 'c'],
+          ],
+          header_units: ['nm', 'nm'],
+          y: mat([1, 2], 2, 1),
+          y_headers: ['y'],
+        }),
+      }),
+    )
+    expect(ds.nFeatures).toBe(2) // first source
+    expect(Array.from(ds.X)).toEqual([1, 2, 3, 4])
+  })
 })

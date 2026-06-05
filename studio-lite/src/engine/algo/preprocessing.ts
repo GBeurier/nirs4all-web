@@ -223,7 +223,9 @@ export function makeTransformer(type: string, params: Record<string, unknown>, t
     case 'GaussianFilter':
       return gaussian(params)
     default:
-      // unknown preprocessing → identity (the catalog/validator guards against this)
-      return { apply: (m) => ({ data: Float64Array.from(m.data), rows: m.rows, cols: m.cols }) }
+      // Offline JS implements only this core set; the served build runs every
+      // catalog operator via libn4m. Fail loudly rather than silently applying
+      // identity (which would mislabel an un-run step as "preprocessed").
+      throw new Error(`Offline mode has no transform for "${type}"; it needs the served build (libn4m).`)
   }
 }

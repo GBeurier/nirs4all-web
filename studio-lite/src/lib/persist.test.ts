@@ -55,6 +55,19 @@ describe('session persistence', () => {
     expect(Array.from(s.model.model.state.model.coefficients)).toEqual([1.5, 2.5, 3.5])
   })
 
+  it('discards a stale pipeline that references an operator no longer in the catalog', () => {
+    const pipeline = { name: 'p', steps: [{ id: 's', type: 'GhostOperator', params: {} }], model: { id: 'm', type: 'PLS', params: {} }, cv: { folds: 5, seed: 42 } } as never
+    saveSession({ pipeline, sampleId: 'fruit' })
+    const s = loadSession()
+    expect(s.pipeline).toBeUndefined() // invalid → dropped, App falls back to the default
+    expect(s.sampleId).toBe('fruit') // the valid parts survive
+  })
+
+  it('drops a malformed persisted model rather than trusting it into Predict', () => {
+    saveSession({ model: { name: 'X', model: { nope: true } } as never })
+    expect(loadSession().model).toBeUndefined()
+  })
+
   it('returns {} for an empty, cleared, or corrupt store (never throws)', () => {
     expect(loadSession()).toEqual({})
     saveSession({ sampleId: 'fruit' })

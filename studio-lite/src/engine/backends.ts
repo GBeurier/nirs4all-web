@@ -10,7 +10,14 @@ import type { ModelBackend } from './orchestrate'
  *  NIPALS PLS (the offline build is a degraded demonstrator). */
 export const jsBackend: ModelBackend = {
   id: 'js-pls',
-  fit: (_spec, X, Y, nComp) => plsFit(X, Y, nComp),
+  // Offline NIPALS only models PLS / PLS-DA. Fail loudly on anything else rather
+  // than silently fitting PLS for it (the served build uses libn4m for all models).
+  fit: (spec, X, Y, nComp) => {
+    if (!LEGACY_PLS_MODELS.has(spec.type)) {
+      throw new Error(`Offline mode runs PLS-family models only; "${spec.type}" needs the served build (libn4m).`)
+    }
+    return plsFit(X, Y, nComp)
+  },
   predict: (model, X) => plsPredict(model as PlsModel, X),
   preproc: jsPreprocessor,
 }
