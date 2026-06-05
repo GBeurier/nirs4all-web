@@ -10,6 +10,7 @@ export const dag_ml_version: () => [number, number];
 export const execute_campaign_phase_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: any) => [number, number, number, number];
 export const fold_set_fingerprint_json: (a: number, b: number) => [number, number, number, number];
 export const kfold_split_json: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number, number, number];
+export const select_candidates_json: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number, number, number];
 export const stratified_kfold_split_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number, number, number];
 export const validate_campaign_json: (a: number, b: number) => [number, number];
 export const validate_controller_manifest_json: (a: number, b: number) => [number, number];

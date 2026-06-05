@@ -36,6 +36,15 @@ export function fold_set_fingerprint_json(json: string): string;
 export function kfold_split_json(spec_json: string, sample_ids_json: string, id: string): string;
 
 /**
+ * Rank candidate variants and return the winner — the SELECT phase for in-browser
+ * generators/finetune. Selection stays in dag-ml (deterministic argmin/argmax +
+ * id tie-break), not the host. `policy_json` = SelectionPolicy, `candidates_json`
+ * = CandidateScore[]. With `groups_json` (group_id → [candidate_id]) returns a
+ * {group → SelectionDecision} map; otherwise a single SelectionDecision.
+ */
+export function select_candidates_json(policy_json: string, candidates_json: string, groups_json?: string | null): string;
+
+/**
  * Build a stratified K-fold `FoldSet`: same OOF-once guarantee as K-fold, but
  * balanced by a per-sample class label. `strata_json` is a JSON object mapping
  * sample id → class label (identity-keyed metadata, never feature values).
@@ -71,6 +80,7 @@ export interface InitOutput {
     readonly execute_campaign_phase_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: any) => [number, number, number, number];
     readonly fold_set_fingerprint_json: (a: number, b: number) => [number, number, number, number];
     readonly kfold_split_json: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number, number, number];
+    readonly select_candidates_json: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number, number, number];
     readonly stratified_kfold_split_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number, number, number];
     readonly validate_campaign_json: (a: number, b: number) => [number, number];
     readonly validate_controller_manifest_json: (a: number, b: number) => [number, number];
