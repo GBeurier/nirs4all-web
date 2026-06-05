@@ -45,18 +45,20 @@ const canUse = dagMlAvailable
 
 // --- generator DSL emission -------------------------------------------------
 // Field names below are emitted to match dag-ml's PipelineDslParamGenerator /
-// PipelineDslVariantChoice / PipelineDslTuningSpec exactly
-// (dag-ml/crates/dag-ml-core/src/dsl.rs):
+// PipelineDslVariantChoice exactly (dag-ml/crates/dag-ml-core/src/dsl.rs):
 //   - Or:       { kind:'or',        param, values:[...] }              (dsl.rs:196)
 //   - Range:    { kind:'range',     param, start, stop, step }         (dsl.rs:204)
 //   - LogRange: { kind:'log_range', param, start, stop, count }        (dsl.rs:216)
 //   tag is `kind`, rename_all snake_case (dsl.rs:194); generator values are bare
 //   JSON (untagged PipelineDslGeneratorValue, dsl.rs:255).
 // A step object carries them under `generators` (alias of param_generators,
-// dsl.rs:153/2250) and `variants` (dsl.rs:152/2249); the model also under
-// `tuning` (dsl.rs:150/2246) with `model_params` (dsl.rs:177). The DSL root
-// carries `generation_strategy` / `max_variants` / `root_seed`
-// (dsl.rs:39/41/47, parsed compat-side at dsl.rs:998-1003).
+// dsl.rs:153/2250) and `variants` (dsl.rs:152/2249). The DSL root carries
+// `generation_strategy` / `max_variants` / `root_seed` (dsl.rs:39/41/47, parsed
+// compat-side at dsl.rs:998-1003). NOTE: the model `tuning` block (dsl.rs:150/2246)
+// is metadata-only — dag-ml does NOT expand it into generation dimensions
+// (collect_operator_generation reads only `variants` + `param_generators`,
+// dsl.rs:4501), so finetune is lowered to real `generators` on the model node
+// (see finetuneGenerators) rather than a `tuning` block.
 
 /** One dag-ml param_generator JSON object for a single-param sweep. */
 function genFromSweep(param: string, sweep: ParamSweep): object | null {
@@ -91,10 +93,48 @@ function variantsForStep(variants: StepVariant[] | undefined): object[] {
   return variants.map((v) => ({ label: v.label, params: { ...v.params } }))
 }
 
-/** dag-ml model tuning spec: model_params[name] = ['categorical', choices] | [type, low, high]. */
-function tuningParam(p: FinetuneParam): unknown {
-  if (p.type === 'categorical') return ['categorical', p.choices ?? []]
-  return [p.type, p.low ?? 0, p.high ?? 0]
+/**
+ * Lower a finetune (model `tuning`) param to a real dag-ml param_generator the
+ * compiler EXPANDS into generation dimensions — NOT a `tuning` block. dag-ml's
+ * compat importer only collects generation dims from `variants` + `param_generators`
+ * (dsl.rs collect_operator_generation / 4501); `tuning` is serialized to metadata
+ * (`dsl_tuning`) and never expanded, so a `tuning`-only finetune would plan as a
+ * single variant. We map the search space to a discrete grid the engine actually
+ * sweeps + selects over:
+ *   - categorical → `or` over choices
+ *   - int        → `range` (integer grid, step defaults to 1, inclusive)
+ *   - float      → `range` ONLY when a discretizing `step` is given (else unbounded)
+ *   - log_float  → `log_range` ONLY when a `count` is given
+ * A param that can't be lowered to a finite grid is dropped (returns null) rather
+ * than overstating the variant count.
+ */
+function finetuneSweep(p: FinetuneParam): ParamSweep | null {
+  if (p.type === 'categorical') {
+    const choices = p.choices ?? []
+    return choices.length > 0 ? { type: 'or', choices } : null
+  }
+  if (p.low === undefined || p.high === undefined || p.high < p.low) return null
+  if (p.type === 'log_float') {
+    return p.count !== undefined ? { type: 'log_range', from: p.low, to: p.high, count: p.count } : null
+  }
+  if (p.type === 'float') {
+    return p.step !== undefined && p.step > 0 ? { type: 'range', from: p.low, to: p.high, step: p.step } : null
+  }
+  // int: an integer grid; default step 1
+  return { type: 'range', from: p.low, to: p.high, step: p.step ?? 1 }
+}
+
+/** dag-ml param_generators[] for the finetune search space (lowerable params only). */
+function finetuneGenerators(finetune: PipelineDSL['finetune']): object[] {
+  if (!finetune?.enabled || finetune.params.length === 0) return []
+  const gens: object[] = []
+  for (const p of finetune.params) {
+    const sweep = finetuneSweep(p)
+    if (!sweep) continue
+    const g = genFromSweep(p.name, sweep)
+    if (g) gens.push(g)
+  }
+  return gens
 }
 
 // Map the studio-lite pipeline to dag-ml's nirs4all-compat DSL (accepted by the
@@ -123,20 +163,13 @@ export function toCompatDsl(dsl: PipelineDSL): object {
     model: dsl.model.type === 'PLSDA' ? 'PLSDA' : 'PLSRegression',
     params: dsl.model.params,
   }
-  const modelGenerators = generatorsForStep(dsl.model)
+  // The model node carries BOTH its explicit param sweeps AND the finetune search
+  // space — both lowered to real param_generators so dag-ml expands + selects them
+  // (the finetune `tuning` block is metadata-only in dag-ml and was never swept).
+  const modelGenerators = [...generatorsForStep(dsl.model), ...finetuneGenerators(dsl.finetune)]
   if (modelGenerators.length) modelStep.generators = modelGenerators
   const modelVariants = variantsForStep(dsl.model.variants)
   if (modelVariants.length) modelStep.variants = modelVariants
-  if (dsl.finetune?.enabled && dsl.finetune.params.length > 0) {
-    const model_params: Record<string, unknown> = {}
-    for (const p of dsl.finetune.params) model_params[p.name] = tuningParam(p)
-    modelStep.tuning = {
-      n_trials: dsl.finetune.n_trials,
-      ...(dsl.finetune.approach ? { approach: dsl.finetune.approach } : {}),
-      ...(dsl.finetune.eval_mode ? { eval_mode: dsl.finetune.eval_mode } : {}),
-      model_params,
-    }
-  }
   steps.push(modelStep)
 
   const out: Record<string, unknown> = {
@@ -179,8 +212,17 @@ export function countVariants(dsl: PipelineDSL): number {
   const dims: number[] = []
   for (const s of dsl.steps) dims.push(...stepDimensions(s))
   dims.push(...stepDimensions(dsl.model))
-  // finetune (model tuning) contributes n_trials candidate variants
-  if (dsl.finetune?.enabled && dsl.finetune.params.length > 0) dims.push(Math.max(1, dsl.finetune.n_trials))
+  // finetune contributes one cartesian dimension per LOWERABLE param (the real
+  // grid dag-ml expands), NOT n_trials — params that can't be lowered to a finite
+  // grid are dropped so the count never overstates what dag-ml actually sweeps.
+  if (dsl.finetune?.enabled) {
+    for (const p of dsl.finetune.params) {
+      const sweep = finetuneSweep(p)
+      if (!sweep) continue
+      const n = sweepVariantCount(sweep)
+      if (n > 1) dims.push(n)
+    }
+  }
   if (dims.length === 0) return 1
   if (dsl.generation?.strategy === 'zip') return Math.max(...dims)
   return dims.reduce((a, b) => a * b, 1)

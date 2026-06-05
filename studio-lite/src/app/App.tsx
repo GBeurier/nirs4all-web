@@ -174,6 +174,9 @@ export default function App() {
     try {
       const result = await engine.run(dataset, pipeline, { signal: ctrl.signal, onProgress: setProgress })
       if (token !== runTokenRef.current) return
+      // Test-only introspection hook (read by tests/generators-smoke.mjs to prove
+      // OOF is assembled once per variant, not duplicated ×variantCount).
+      ;(window as unknown as { __n4aLastRun?: RunResult }).__n4aLastRun = result
       setRuns((r) => [result, ...r])
       setSelectedRunId(result.id)
       setSelectedScore(result.cv)

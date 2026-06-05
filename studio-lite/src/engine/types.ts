@@ -68,7 +68,10 @@ export interface FinetuneParam {
   type: FinetuneParamType;
   low?: number;
   high?: number;
+  /** discretizing step for `float` (and override for `int`) → lowers to a `range` generator */
   step?: number;
+  /** sample count for `log_float` → lowers to a `log_range` generator */
+  count?: number;
   choices?: (string | number)[];
 }
 export interface FinetuneSpec {

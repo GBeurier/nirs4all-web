@@ -82,6 +82,47 @@ try {
   if (selected === 1) console.log('✓ exactly one variant marked as best/selected')
   else fail(`expected exactly one selected variant, got ${selected}`)
 
+  // --- BUG #5 PROOF: a single execute_campaign_phase_json runs dag-ml's WHOLE
+  // variant plan (the scheduler loops all variants). The earlier code called it
+  // once PER variant, so each variant's OOF was duplicated ×variantCount. Assert
+  // the SELECTED variant's CV (OOF) + refit predictions have UNIQUE sampleIds (each
+  // sample validated exactly once) and the count is NOT ×3, plus exactly one
+  // variant selected — straight from the run result the engine produced.
+  const run = await page.evaluate(() => {
+    const r = window.__n4aLastRun
+    if (!r) return null
+    const ids = (rows) => (rows || []).map((p) => p.sampleId)
+    const cvIds = ids(r.cv?.predictions)
+    const refitIds = ids(r.refit?.predictions)
+    return {
+      variantCount: r.variantCount,
+      selectedCount: (r.variants || []).filter((v) => v.selected).length,
+      cvN: cvIds.length,
+      cvUnique: new Set(cvIds).size,
+      cvMetricN: r.cv?.metrics?.n,
+      refitN: refitIds.length,
+      refitUnique: new Set(refitIds).size,
+    }
+  })
+  if (!run) fail('window.__n4aLastRun was not set — could not introspect the run result')
+  else {
+    if (run.variantCount === 3) console.log('✓ run.variantCount === 3')
+    else fail(`expected run.variantCount === 3, got ${run.variantCount}`)
+
+    if (run.selectedCount === 1) console.log('✓ exactly one variant selected in the run result')
+    else fail(`expected exactly 1 selected variant in run result, got ${run.selectedCount}`)
+
+    // the load-bearing assertion: OOF NOT duplicated ×variantCount
+    if (run.cvN > 0 && run.cvN === run.cvUnique) console.log(`✓ CV OOF has unique sampleIds (${run.cvN} rows, no ×3 duplication)`)
+    else fail(`CV OOF rows are duplicated: ${run.cvN} rows but only ${run.cvUnique} unique sampleIds (bug #5 — ×variantCount duplication)`)
+
+    if (run.cvMetricN === run.cvUnique) console.log(`✓ cv.metrics.n (${run.cvMetricN}) == unique OOF samples`)
+    else fail(`cv.metrics.n (${run.cvMetricN}) != unique OOF samples (${run.cvUnique})`)
+
+    if (run.refitN > 0 && run.refitN === run.refitUnique) console.log(`✓ refit predictions have unique sampleIds (${run.refitN} rows)`)
+    else fail(`refit predictions are duplicated: ${run.refitN} rows but only ${run.refitUnique} unique sampleIds`)
+  }
+
   // run still via dag-ml (badge present) — selection stays in dag-ml
   const body = (await page.textContent('body')) || ''
   if (/by dag-ml/i.test(body)) console.log('✓ run via dag-ml-wasm (badge present)')

@@ -5,7 +5,7 @@
 // The refit (full-train) model is fit directly with libn4m. Falls back to the
 // JS-orchestrated path on any error.
 import { loadLibn4mBackend } from './backends'
-import { dagMlAvailable, loadDagMl, toCompatDsl } from './dagml'
+import { countVariants, dagMlAvailable, loadDagMl, toCompatDsl } from './dagml'
 import { materializeViaProvider } from './dagml-data'
 import type { Fold } from './kfold'
 import { testRowsOf, trainRowsOf } from './partition'
@@ -53,17 +53,20 @@ type VariantPlan = { variant_id: string; choices: Record<string, VariantChoice>;
 
 /**
  * Map a studio-lite element (a preprocessing step, by index, or the model) to the
- * compat node_id dag-ml mints for it. toCompatDsl numbers operator steps with a
- * single `compat.K` counter in pipeline order (bare SNV/MSC sugar carries no
- * generator, so a variant-bearing step is always a full operator step); the model
- * is the last operator step. Mirrors the lowering in dag-ml dsl.rs.
+ * compat node_id dag-ml mints for it. dag-ml's compat importer mints one id per
+ * operator step from a SINGLE `node_counter` (dsl.rs `next_node_id` / 2486–2490),
+ * advancing it for EVERY operator step — including bare string sugar like `"SNV"`
+ * / `"MSC"`, which still lowers to a `transform:compat.N` Transform step
+ * (dsl.rs:1120–1141 String branch → `compat_operator_step` → `next_node_id`). The
+ * prefix is keyword-derived (`transform` for preprocessing, `model` for the
+ * model — dsl.rs `compat_node_prefix`/2806) but the counter is shared, so the
+ * model's id is `model:compat.<#preprocessing-steps>`. We must mirror that count
+ * EXACTLY (every step, bare or not) or a sweep on a step after a bare SNV/MSC
+ * would target the wrong node when overrides are applied back.
  */
-function compatNodeIds(dsl: PipelineDSL): { stepIds: string[]; modelId: string } {
+export function compatNodeIds(dsl: PipelineDSL): { stepIds: string[]; modelId: string } {
   let k = 0
-  const stepIds = dsl.steps.map((s) => {
-    const bare = (s.type === 'StandardNormalVariate' || s.type === 'MSC') && !s.sweeps && !s.variants
-    return bare ? '' : `transform:compat.${k++}`
-  })
+  const stepIds = dsl.steps.map(() => `transform:compat.${k++}`)
   return { stepIds, modelId: `model:compat.${k}` }
 }
 
@@ -177,6 +180,11 @@ export class DagMlEngine implements Engine {
     // --- dag-ml enumerates the variant set (cartesian/zip, max_variants-capped,
     // deterministic + fingerprinted). The host never expands variants itself; we
     // only read the materialized ExecutionPlan.variants[]. ---
+    // `hasGenerators` mirrors what the editor displays: any sweep/variant/finetune
+    // dimension that toCompatDsl lowered to a real param_generator/variants choice.
+    // It gates the planning_failed fallback below — silently collapsing a generated
+    // sweep to a single base variant would skip the search the user configured.
+    const hasGenerators = countVariants(dsl) > 1
     const baseVariant: VariantPlan = { variant_id: 'variant:base', choices: {}, fingerprint: 'base' }
     let variants: VariantPlan[]
     try {
@@ -191,10 +199,14 @@ export class DagMlEngine implements Engine {
         throw new Error('Too many variants for the configured cap — lower a sweep range or raise the variant cap.')
       }
       // planning_failed (multi-node graph: dag-ml can't yet schedule per-node
-      // preprocessing without a per-node provider) → run the single base variant
-      // through the libn4m-chain-over-dag-ml-folds fallback. This preserves the
-      // pre-generators behavior for flat pipelines (no regression).
+      // preprocessing without a per-node provider). The single-base fallback is
+      // only honest when there is NOTHING to expand: collapsing a real sweep to one
+      // variant would silently drop the search. With generators present, surface a
+      // clear guard instead.
       if (/no controller registered|planning failed|planning_failed/i.test(msg)) {
+        if (hasGenerators) {
+          throw new Error('Variant sweeps need a model-only pipeline for now — multi-node preprocessing sweeps are not schedulable yet. Move the sweep onto the model, or remove preprocessing steps.')
+        }
         variants = [baseVariant]
       } else {
         throw err
@@ -202,112 +214,139 @@ export class DagMlEngine implements Engine {
     }
     const multiVariant = variants.length > 1
 
-    // --- per-variant FIT_CV through dag-ml's scheduler over the SAME fold_set.
-    // dag-ml overlays each variant's params onto task.node_plan.params; the JS
-    // controller runs the libn4m chain on the variant's effective DSL. The
-    // scheduler can execute a model-only graph here; pipelines whose preprocessing
-    // compiled to multi-node graphs fall back to the leakage-honest libn4m chain
-    // over dag-ml's folds (folds stay dag-ml's, numerics stay libn4m). ---
-    const runVariantFitCv = async (vDsl: PipelineDSL, planId: string, runId: string): Promise<PredRow[][]> => {
-      const foldRows = folds.map(() => [] as PredRow[])
-      const foldIndexById = new Map(folds.map((f, i) => [f.fold_id, i]))
-      const invoke = (_controllerId: string, taskJson: string): string => {
-        if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError')
-        const t = JSON.parse(taskJson)
-        const np = t.node_plan
-        // NodeTask.seed is a u64 JSON.parse would round — echo the exact digits.
-        const seedMatches = [...taskJson.matchAll(/"seed":\s*(\d+|null)/g)]
-        const seedRaw = seedMatches.length ? seedMatches[seedMatches.length - 1][1] : 'null'
-        const fold = t.fold_id ? foldByDagId.get(t.fold_id) : null
-        const valIdx = fold ? fold.valIdx : []
-        const trainIdx = fold ? fold.trainIdx : trainUniverse
-        const { pred } = trainAndPredict(ds, vDsl, backend, trainIdx, valIdx)
-        const valSampleIds = valIdx.map(dagId)
-        const result = {
-          node_id: np.node_id,
-          outputs: {},
-          predictions: [{
-            prediction_id: `pred:${np.node_id}:${t.variant_id ?? 'base'}:${t.fold_id ?? 'nofold'}`,
-            producer_node: np.node_id,
-            partition: 'validation',
-            fold_id: t.fold_id ?? null,
-            sample_ids: valSampleIds,
-            values: matToRows(pred),
-            target_names: [ds.targetName],
-          }],
-          observation_predictions: [],
-          aggregated_predictions: [],
-          explanations: [],
-          shape_deltas: [],
-          artifacts: [],
-          artifact_handles: {},
-          lineage: {
-            record_id: `lineage:${np.node_id}:${t.phase}:${t.variant_id ?? 'base'}:${t.fold_id ?? 'nofold'}`,
-            run_id: t.run_id,
-            node_id: np.node_id,
-            phase: t.phase,
-            controller_id: np.controller_id,
-            controller_version: np.controller_version,
-            variant_id: t.variant_id ?? null,
-            fold_id: t.fold_id ?? null,
-            branch_path: t.branch_path ?? [],
-            input_lineage: [],
-            artifact_refs: [],
-            params_fingerprint: np.params_fingerprint,
-            data_model_shape_fingerprint: null,
-            aggregation_policy_fingerprint: null,
-            seed: '__SEED__',
-            unsafe_flags: [],
-            metrics: {},
-          },
-        }
-        return JSON.stringify(result).replace('"__SEED__"', seedRaw)
-      }
-      let nodeResults: { predictions?: { partition: string; fold_id: string | null; sample_ids: string[]; values: number[][] }[] }[]
-      try {
-        nodeResults = JSON.parse(
-          dagml.execute_campaign_phase_json(planId, JSON.stringify(graph), JSON.stringify(campaign), JSON.stringify(modelManifest()), runId, dsl.cv.seed >>> 0, 'FIT_CV', invoke),
-        )
-      } catch (err) {
-        if (signal?.aborted) throw err
-        // scheduler can't run this (multi-node) graph → libn4m chain over dag-ml's folds
-        const prebuilt: Fold[] = [...foldByDagId.entries()].map(([, v], i) => ({ foldId: i + 1, trainIdx: v.trainIdx, valIdx: v.valIdx }))
-        for (let i = 0; i < folds.length; i++) {
-          const f = prebuilt[i]
-          const { pred } = trainAndPredict(ds, vDsl, backend, f.trainIdx, f.valIdx)
-          foldRows[i].push(...decodeRows(ds, classNames, classIdx, pred, f.valIdx))
-        }
-        return foldRows
-      }
-      for (const nr of nodeResults) {
-        for (const blk of nr.predictions ?? []) {
-          if (blk.partition !== 'validation') continue
-          const idx = blk.sample_ids.map(rowOfDagId).filter((v) => Number.isInteger(v) && v >= 0)
-          const predMat: Mat = { data: Float64Array.from(blk.values.flat()), rows: blk.sample_ids.length, cols: blk.values[0]?.length ?? 1 }
-          const rows = decodeRows(ds, classNames, classIdx, predMat, idx)
-          const fi = blk.fold_id ? foldIndexById.get(blk.fold_id) : undefined
-          if (fi !== undefined) foldRows[fi].push(...rows)
-        }
-      }
-      return foldRows
-    }
+    // --- ONE FIT_CV campaign over ALL variants × the SAME fold_set. dag-ml's
+    // scheduler (runtime.rs execute_campaign_phase / 3388) loops every plan.variant
+    // and every fold itself, overlaying each variant's param_overrides onto
+    // task.node_plan.params and stamping task.variant_id. The JS controller is
+    // invoked once per (variant, node, fold); it reads that task's variant_id +
+    // fold_id, fits the variant's effective DSL on the fold's TRAIN rows, and
+    // returns OOF for the fold's VALIDATION rows. We must NOT re-loop variants in
+    // the host (that ran the full plan once per outer variant → OOF duplicated
+    // ×variantCount). Results are bucketed back BY variant_id, so each variant's
+    // OOF has exactly the validation rows of the fold_set (≈ nSamples), once. ---
+    const baseDslByVariant = new Map(variants.map((v) => [v.variant_id, effectiveDsl(dsl, v)]))
+    const dslForVariantId = (vid: string | null): PipelineDSL =>
+      (vid ? baseDslByVariant.get(vid) : undefined) ?? baseDslByVariant.get(variants[0].variant_id) ?? dsl
+    const foldIndexById = new Map(folds.map((f, i) => [f.fold_id, i]))
+    // per variant_id → per-fold accumulated OOF rows
+    const foldRowsByVariant = new Map<string, PredRow[][]>(variants.map((v) => [v.variant_id, folds.map(() => [] as PredRow[])]))
 
-    // --- run FIT_CV for every variant; collect per-variant OOF + CandidateScore ---
     onP?.({ phase: 'fit_cv', pct: 2 })
     const scoreMetric: RunResult['scoreMetric'] = task === 'regression' ? 'rmse' : 'accuracy'
-    const evaluated: { variant: VariantPlan; vDsl: PipelineDSL; oof: PredRow[]; foldRows: PredRow[][]; cvNode: ReturnType<typeof scoreNode>; metric: number }[] = []
-    for (let vi = 0; vi < variants.length; vi++) {
+
+    const invoke = (_controllerId: string, taskJson: string): string => {
       if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError')
-      const variant = variants[vi]
-      const vDsl = effectiveDsl(dsl, variant)
-      const foldRows = await runVariantFitCv(vDsl, `plan:n4a:${vi}`, `run:n4a:${vi}`)
+      const t = JSON.parse(taskJson)
+      const np = t.node_plan
+      // NodeTask.seed is a u64 JSON.parse would round — echo the exact digits.
+      const seedMatches = [...taskJson.matchAll(/"seed":\s*(\d+|null)/g)]
+      const seedRaw = seedMatches.length ? seedMatches[seedMatches.length - 1][1] : 'null'
+      const fold = t.fold_id ? foldByDagId.get(t.fold_id) : null
+      const valIdx = fold ? fold.valIdx : []
+      const trainIdx = fold ? fold.trainIdx : trainUniverse
+      // Fit THIS task's variant (by id): use the variant's effective DSL so the
+      // overlaid model/preprocessing params drive libn4m. (dag-ml also overlays the
+      // params onto np.params; we re-derive from the variant id for parity with the
+      // refit + the preprocessing nodes, which the model-only task does not carry.)
+      const vDsl = dslForVariantId(t.variant_id ?? null)
+      const { pred } = trainAndPredict(ds, vDsl, backend, trainIdx, valIdx)
+      const valSampleIds = valIdx.map(dagId)
+      const result = {
+        node_id: np.node_id,
+        outputs: {},
+        predictions: [{
+          prediction_id: `pred:${np.node_id}:${t.variant_id ?? 'base'}:${t.fold_id ?? 'nofold'}`,
+          producer_node: np.node_id,
+          partition: 'validation',
+          fold_id: t.fold_id ?? null,
+          sample_ids: valSampleIds,
+          values: matToRows(pred),
+          target_names: [ds.targetName],
+        }],
+        observation_predictions: [],
+        aggregated_predictions: [],
+        explanations: [],
+        shape_deltas: [],
+        artifacts: [],
+        artifact_handles: {},
+        lineage: {
+          record_id: `lineage:${np.node_id}:${t.phase}:${t.variant_id ?? 'base'}:${t.fold_id ?? 'nofold'}`,
+          run_id: t.run_id,
+          node_id: np.node_id,
+          phase: t.phase,
+          controller_id: np.controller_id,
+          controller_version: np.controller_version,
+          variant_id: t.variant_id ?? null,
+          fold_id: t.fold_id ?? null,
+          branch_path: t.branch_path ?? [],
+          input_lineage: [],
+          artifact_refs: [],
+          params_fingerprint: np.params_fingerprint,
+          data_model_shape_fingerprint: null,
+          aggregation_policy_fingerprint: null,
+          seed: '__SEED__',
+          unsafe_flags: [],
+          metrics: {},
+        },
+      }
+      return JSON.stringify(result).replace('"__SEED__"', seedRaw)
+    }
+
+    type ResultBlock = { partition: string; fold_id: string | null; sample_ids: string[]; values: number[][] }
+    type NodeRes = { predictions?: ResultBlock[]; lineage?: { variant_id?: string | null } }
+    let nodeResults: NodeRes[]
+    try {
+      nodeResults = JSON.parse(
+        dagml.execute_campaign_phase_json('plan:n4a', JSON.stringify(graph), JSON.stringify(campaign), JSON.stringify(modelManifest()), 'run:n4a', dsl.cv.seed >>> 0, 'FIT_CV', invoke),
+      )
+    } catch (err) {
+      if (signal?.aborted) throw err
+      // The scheduler can't run this graph. The libn4m-chain fallback only knows
+      // how to run ONE variant over the folds; for a real multi-variant sweep that
+      // would silently drop every non-base variant, so re-throw instead of mis-
+      // bucketing. (In practice the planning guard above already fired for
+      // generators + multi-node graphs, so this path is the single-base case.)
+      if (multiVariant) throw err
+      // single-base case: run the leakage-honest libn4m chain over dag-ml's folds
+      // (folds stay dag-ml's, numerics stay libn4m) and bucket into the base variant.
+      const base = variants[0]
+      const baseFoldRows = foldRowsByVariant.get(base.variant_id)!
+      const prebuilt: Fold[] = [...foldByDagId.entries()].map(([, v], i) => ({ foldId: i + 1, trainIdx: v.trainIdx, valIdx: v.valIdx }))
+      for (let i = 0; i < folds.length; i++) {
+        if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError')
+        const f = prebuilt[i]
+        const { pred } = trainAndPredict(ds, baseDslByVariant.get(base.variant_id) ?? dsl, backend, f.trainIdx, f.valIdx)
+        baseFoldRows[i].push(...decodeRows(ds, classNames, classIdx, pred, f.valIdx))
+      }
+      nodeResults = []
+    }
+    // Bucket every validation block back to its variant + fold (BY variant_id, never
+    // by call order) so each variant's OOF is assembled exactly once.
+    for (const nr of nodeResults) {
+      const vid = nr.lineage?.variant_id ?? variants[0].variant_id
+      const bucket = foldRowsByVariant.get(vid) ?? foldRowsByVariant.get(variants[0].variant_id)!
+      for (const blk of nr.predictions ?? []) {
+        if (blk.partition !== 'validation') continue
+        const idx = blk.sample_ids.map(rowOfDagId).filter((v) => Number.isInteger(v) && v >= 0)
+        const predMat: Mat = { data: Float64Array.from(blk.values.flat()), rows: blk.sample_ids.length, cols: blk.values[0]?.length ?? 1 }
+        const rows = decodeRows(ds, classNames, classIdx, predMat, idx)
+        const fi = blk.fold_id ? foldIndexById.get(blk.fold_id) : undefined
+        if (fi !== undefined) bucket[fi].push(...rows)
+      }
+    }
+    if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError')
+
+    // --- score each variant's OOF → one CandidateScore per variant_id ---
+    const evaluated: { variant: VariantPlan; vDsl: PipelineDSL; oof: PredRow[]; foldRows: PredRow[][]; cvNode: ReturnType<typeof scoreNode>; metric: number }[] = []
+    for (const variant of variants) {
+      const foldRows = foldRowsByVariant.get(variant.variant_id)!
       const oof = foldRows.flat()
       if (oof.length === 0) throw new Error('dag-ml produced no OOF predictions')
       const cvNode = scoreNode('cv', 'CV Scores', 'cv', oof, task, classNames)
       const metric = Number(cvNode.metrics[scoreMetric] ?? (task === 'regression' ? Infinity : -Infinity))
-      evaluated.push({ variant, vDsl, oof, foldRows, cvNode, metric })
-      onP?.({ phase: 'fit_cv', pct: 2 + Math.round((78 * (vi + 1)) / variants.length) })
+      evaluated.push({ variant, vDsl: baseDslByVariant.get(variant.variant_id) ?? dsl, oof, foldRows, cvNode, metric })
     }
+    onP?.({ phase: 'fit_cv', pct: 80 })
 
     // --- SELECT: dag-ml ranks the candidates (deterministic argmin/argmax + id
     // tie-break); the host does not pick. Objective: rmse→minimize, accuracy→
