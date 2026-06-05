@@ -24,7 +24,7 @@ page.on('pageerror', (e) => errors.push('PAGEERR: ' + e.message))
 
 try {
   await page.goto(URL, { waitUntil: 'load', timeout: 30000 })
-  await page.locator('input[type=file]').setInputFiles(SPC)
+  await page.locator('input[type=file]').first().setInputFiles(SPC)
   await page.waitForSelector('text=/samples ×/', { timeout: 30000 })
   const badge = (await page.locator('text=/samples ×/').first().textContent()) || ''
   console.log(`✓ vendor SPC decoded → Explore badge: "${badge.trim()}"`)

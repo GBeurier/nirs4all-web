@@ -48,6 +48,12 @@ const FEATURE_SET = 'X'
 const TARGET_ID = 'y'
 const SOURCE_ID = 'nir'
 
+// dag-ml-data (like dag-ml) restricts SampleId to [A-Za-z0-9_-.:]; studio sample
+// ids may contain '#' or other characters. Address the provider with stable
+// row-index ids and map blocks back by index — original ds.sampleIds stay for UI.
+const canonicalIds = (n: number): string[] => Array.from({ length: n }, (_, i) => `s${i}`)
+const rowOfCanonical = (id: string): number => Number(id.slice(1))
+
 function buildSchema(ds: MaterializedDataset) {
   const axisOk = ds.axis && ds.axis.length === ds.nFeatures
   const axisValues = axisOk ? Array.from(ds.axis) : Array.from({ length: ds.nFeatures }, (_, j) => j)
@@ -55,7 +61,7 @@ function buildSchema(ds: MaterializedDataset) {
   return {
     schema: {
       dataset_id: ds.targetName ? `lite-${ds.targetName}` : 'lite-dataset',
-      sample_ids: ds.sampleIds,
+      sample_ids: canonicalIds(ds.nSamples),
       sources: [
         {
           id: SOURCE_ID,
@@ -147,6 +153,7 @@ const ADAPTER_REGISTRY = {
  */
 export async function materializeViaProvider(ds: MaterializedDataset): Promise<DataProviderResult> {
   const m = await mod()
+  const cids = canonicalIds(ds.nSamples) // dag-ml-data-safe ids (row-index based)
   const { schema, featureNames } = buildSchema(ds)
   const schemaJson = JSON.stringify(schema)
   m.validate_dataset_schema_json(schemaJson)
@@ -156,7 +163,7 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
   const outputRepresentation = JSON.parse(dataPlanJson).output_representation as string
 
   const sampleRelations = {
-    rows: ds.sampleIds.map((sid) => ({
+    rows: cids.map((sid) => ({
       observation_id: sid,
       sample_id: sid,
       source_id: SOURCE_ID,
@@ -177,13 +184,13 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
   const envelope = JSON.parse(envelopeJson)
 
   // target table (keyed by sample_id) + numeric feature matrix (keyed by observation_id)
-  const targetTables = [{ target_id: TARGET_ID, values: ds.sampleIds.map((sid, i) => ({ sample_id: sid, value: ds.y[i] })) }]
+  const targetTables = [{ target_id: TARGET_ID, values: cids.map((sid, i) => ({ sample_id: sid, value: ds.y[i] })) }]
   const featureMatrices = [
     {
       feature_set_id: FEATURE_SET,
       representation_id: 'tabular_numeric',
       feature_names: featureNames,
-      observation_ids: ds.sampleIds,
+      observation_ids: cids,
       values: Array.from(ds.X),
     },
   ]
@@ -208,14 +215,18 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
       require_relations: true,
     }
     dataHandle = provider.materialize(JSON.stringify(matRequest))
-    viewHandle = provider.make_view(dataHandle, JSON.stringify({ sample_ids: ds.sampleIds, include_augmented: false }))
+    viewHandle = provider.make_view(dataHandle, JSON.stringify({ sample_ids: cids, include_augmented: false }))
 
     const fblock = JSON.parse(provider.feature_block(viewHandle, FEATURE_SET)) as { sample_ids: string[]; values: number[][] }
     const tblock = JSON.parse(provider.target_block(viewHandle, TARGET_ID)) as { sample_ids: string[]; values: number[] }
 
     // reconstruct in dataset order, asserting exact 1:1 coverage — never train on
     // zero-filled rows. Any gap/dup/width mismatch throws → visible degraded path.
-    const pos = new Map(ds.sampleIds.map((s, i) => [s, i]))
+    const at = (id: string): number => {
+      const i = rowOfCanonical(id)
+      if (!Number.isInteger(i) || i < 0 || i >= ds.nSamples) throw new Error(`provider returned unknown sample id ${id}`)
+      return i
+    }
     const X = new Float64Array(ds.nSamples * ds.nFeatures)
     const y = new Float64Array(ds.nSamples)
     const seenX = new Uint8Array(ds.nSamples)
@@ -223,8 +234,7 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
     if (fblock.sample_ids.length !== ds.nSamples) throw new Error(`provider feature block covered ${fblock.sample_ids.length}/${ds.nSamples} samples`)
     if (tblock.sample_ids.length !== ds.nSamples) throw new Error(`provider target block covered ${tblock.sample_ids.length}/${ds.nSamples} samples`)
     for (let r = 0; r < fblock.sample_ids.length; r++) {
-      const i = pos.get(fblock.sample_ids[r])
-      if (i === undefined) throw new Error(`provider returned unknown sample id ${fblock.sample_ids[r]}`)
+      const i = at(fblock.sample_ids[r])
       if (seenX[i]) throw new Error(`provider returned duplicate sample id ${fblock.sample_ids[r]}`)
       seenX[i] = 1
       const row = fblock.values[r]
@@ -232,8 +242,7 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
       for (let j = 0; j < ds.nFeatures; j++) X[i * ds.nFeatures + j] = Number(row[j])
     }
     for (let r = 0; r < tblock.sample_ids.length; r++) {
-      const i = pos.get(tblock.sample_ids[r])
-      if (i === undefined) throw new Error(`provider returned unknown target sample id ${tblock.sample_ids[r]}`)
+      const i = at(tblock.sample_ids[r])
       if (seenY[i]) throw new Error(`provider returned duplicate target sample id ${tblock.sample_ids[r]}`)
       seenY[i] = 1
       y[i] = Number(tblock.values[r])

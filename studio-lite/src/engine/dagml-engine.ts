@@ -7,7 +7,7 @@
 import { loadLibn4mBackend } from './backends'
 import { dagMlAvailable, loadDagMl, toCompatDsl } from './dagml'
 import { materializeViaProvider } from './dagml-data'
-import { testRowsOf, trainRowsOf } from './kfold'
+import { type Fold, testRowsOf, trainRowsOf } from './kfold'
 import type { Mat } from './algo/linalg'
 import {
   classInfo,
@@ -50,18 +50,12 @@ export class DagMlEngine implements Engine {
   readonly name = 'dag-ml-wasm'
 
   async run(ds: MaterializedDataset, dsl: PipelineDSL, opts: RunOptions = {}): Promise<RunResult> {
-    // Served path REQUIRES libn4m — no silent JS shadow engine. A load failure
-    // surfaces to the UI rather than producing numerics from a different engine.
+    // Served path REQUIRES libn4m + dag-ml — no silent shadow engine. Both the
+    // numerics (libn4m) and the orchestration/folds (dag-ml) are authoritative;
+    // any failure surfaces to the UI rather than quietly rebuilding folds in TS
+    // (kfold.ts is strictly the offline file:// fallback, via MainEngine).
     const backend = await loadLibn4mBackend()
-    try {
-      return await this.runViaDagMl(ds, dsl, opts, backend)
-    } catch (err) {
-      // dag-ml scheduling failed — fall back to direct orchestration, still on libn4m.
-      console.warn('[dag-ml] in-browser scheduling failed, falling back to direct orchestration (libn4m):', err)
-      const res = await runPipeline(ds, dsl, opts, backend)
-      res.engine = `${backend.id} (dag-ml fallback)`
-      return res
-    }
+    return this.runViaDagMl(ds, dsl, opts, backend)
   }
 
   private async runViaDagMl(ds: MaterializedDataset, dsl: PipelineDSL, opts: RunOptions, backend: ModelBackend): Promise<RunResult> {
@@ -93,27 +87,32 @@ export class DagMlEngine implements Engine {
     if (task !== 'regression' && classNames.length < 2) throw new Error('Classification needs ≥2 classes.')
 
     const dagml = await loadDagMl()
-    const sidToIdx = new Map(ds.sampleIds.map((s, i) => [s, i]))
 
     // --- dag-ml builds the CV fold_set (the SECOND split, over the train rows).
     // KFold for regression, stratified K-fold for classification — both OOF-safe
     // (each sample validated exactly once). The host no longer builds folds itself. ---
     const trainUniverse = trainRowsOf(ds)
-    const trainSampleIds = trainUniverse.map((i) => ds.sampleIds[i])
-    const nSplits = Math.max(2, Math.min(dsl.cv.folds, trainSampleIds.length))
+    if (trainUniverse.length < 2) throw new Error('Cross-validation needs at least 2 training samples.')
+    // dag-ml SampleId only allows [A-Za-z0-9_-.:]; studio sample ids can contain
+    // '#' or other characters, so address dag-ml with stable row-index ids
+    // (`s{row}`) and map back by index. Original ds.sampleIds stay for the UI.
+    const dagId = (row: number) => `s${row}`
+    const rowOfDagId = (id: string) => Number(id.slice(1))
+    const nSplits = Math.max(2, Math.min(dsl.cv.folds, trainUniverse.length))
+    const trainDagIds = trainUniverse.map(dagId)
     const splitSpec = JSON.stringify({ n_splits: nSplits, shuffle: true, seed: dsl.cv.seed })
     const foldSet = JSON.parse(
       task !== 'regression'
         ? dagml.stratified_kfold_split_json(
             splitSpec,
-            JSON.stringify(trainSampleIds),
-            JSON.stringify(Object.fromEntries(trainUniverse.map((i) => [ds.sampleIds[i], ds.classes?.[i] ?? String(Math.round(ds.y[i]))]))),
+            JSON.stringify(trainDagIds),
+            JSON.stringify(Object.fromEntries(trainUniverse.map((i) => [dagId(i), ds.classes?.[i] ?? String(Math.round(ds.y[i]))]))),
             'outer',
           )
-        : dagml.kfold_split_json(splitSpec, JSON.stringify(trainSampleIds), 'outer'),
+        : dagml.kfold_split_json(splitSpec, JSON.stringify(trainDagIds), 'outer'),
     ) as { id: string; sample_ids: string[]; folds: { fold_id: string; train_sample_ids: string[]; validation_sample_ids: string[]; metadata?: unknown }[]; sample_groups: Record<string, string> }
     const folds = foldSet.folds
-    const toIdx = (ids: string[]) => ids.map((s) => sidToIdx.get(s)).filter((v): v is number => v !== undefined)
+    const toIdx = (ids: string[]) => ids.map(rowOfDagId).filter((v) => Number.isInteger(v) && v >= 0)
     const foldByDagId = new Map(folds.map((f) => [f.fold_id, { trainIdx: toIdx(f.train_sample_ids), valIdx: toIdx(f.validation_sample_ids) }]))
 
     // --- dag-ml compiles the pipeline DSL → graph + campaign; inject our fold_set ---
@@ -136,7 +135,7 @@ export class DagMlEngine implements Engine {
       const valIdx = fold ? fold.valIdx : []
       const trainIdx = fold ? fold.trainIdx : trainUniverse
       const { pred } = trainAndPredict(ds, dsl, backend, trainIdx, valIdx)
-      const valSampleIds = valIdx.map((r) => ds.sampleIds[r])
+      const valSampleIds = valIdx.map(dagId) // dag-ml-side ids (row-index based)
       const result = {
         node_id: np.node_id,
         outputs: {},
@@ -181,10 +180,25 @@ export class DagMlEngine implements Engine {
     }
 
     // --- run FIT_CV through dag-ml's scheduler (WASM) ---
+    // dag-ml's scheduler can execute a model-only graph here; pipelines with
+    // preprocessing compile to multi-node graphs that need provider-per-node
+    // execution (not yet wired). For those, run the leakage-honest chain on
+    // libn4m over the SAME dag-ml-built folds — folds stay dag-ml's, numerics
+    // stay libn4m, and nothing is built in TypeScript.
     onP?.({ phase: 'fit_cv', pct: 2 })
-    const nodeResults = JSON.parse(
-      dagml.execute_campaign_phase_json('plan:n4a', JSON.stringify(graph), JSON.stringify(campaign), JSON.stringify(modelManifest()), 'run:n4a', dsl.cv.seed >>> 0, 'FIT_CV', invoke),
-    ) as { predictions?: { partition: string; fold_id: string | null; sample_ids: string[]; values: number[][] }[]; lineage?: unknown }[]
+    let nodeResults: { predictions?: { partition: string; fold_id: string | null; sample_ids: string[]; values: number[][] }[]; lineage?: unknown }[]
+    try {
+      nodeResults = JSON.parse(
+        dagml.execute_campaign_phase_json('plan:n4a', JSON.stringify(graph), JSON.stringify(campaign), JSON.stringify(modelManifest()), 'run:n4a', dsl.cv.seed >>> 0, 'FIT_CV', invoke),
+      )
+    } catch (err) {
+      if (signal?.aborted) throw err
+      const prebuilt: Fold[] = [...foldByDagId.entries()].map(([, v], i) => ({ foldId: i + 1, trainIdx: v.trainIdx, valIdx: v.valIdx }))
+      const res = await runPipeline(ds, dsl, opts, backend, prebuilt)
+      res.engine = 'dag-ml folds + libn4m'
+      res.lineage = { engine: 'dag-ml-wasm', compiled: true, executed: false, foldsByDagMl: true, folds: folds.length, version: dagml.dag_ml_version(), dataProvider, schedulerNote: err instanceof Error ? err.message : String(err) }
+      return res
+    }
 
     // --- assemble OOF PredRows from dag-ml's returned validation predictions ---
     const oof: PredRow[] = []
@@ -193,7 +207,7 @@ export class DagMlEngine implements Engine {
     for (const nr of nodeResults) {
       for (const blk of nr.predictions ?? []) {
         if (blk.partition !== 'validation') continue
-        const idx = blk.sample_ids.map((s) => sidToIdx.get(s)!).filter((v) => v !== undefined)
+        const idx = blk.sample_ids.map(rowOfDagId).filter((v) => Number.isInteger(v) && v >= 0)
         const predMat: Mat = { data: Float64Array.from(blk.values.flat()), rows: blk.sample_ids.length, cols: blk.values[0]?.length ?? 1 }
         const rows = decodeRows(ds, classNames, classIdx, predMat, idx)
         oof.push(...rows)

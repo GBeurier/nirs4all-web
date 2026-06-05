@@ -6,7 +6,7 @@
 import { nodeByType } from '@/catalog/nodes'
 import { type Mat, mat, selectRows } from './algo/linalg'
 import { type FittedTransformer, type Preprocessor } from './methods/preproc'
-import { buildFolds, testRowsOf, trainRowsOf } from './kfold'
+import { buildFolds, type Fold, testRowsOf, trainRowsOf } from './kfold'
 import { classificationMetrics, regressionMetrics } from './metrics'
 import type {
   FittedPipeline,
@@ -179,6 +179,10 @@ export async function runPipeline(
   dsl: PipelineDSL,
   opts: RunOptions,
   backend: ModelBackend,
+  /** when provided (served path), use these dag-ml-built folds instead of
+   *  building them in TS — keeps fold construction in dag-ml even on the
+   *  multi-node-pipeline path that dag-ml's scheduler can't yet execute. */
+  prebuiltFolds?: Fold[],
 ): Promise<RunResult> {
   const { onProgress: onP, signal } = opts
   const task = ds.taskType
@@ -205,7 +209,7 @@ export async function runPipeline(
   }
 
   onP?.({ phase: 'fit_cv', pct: 4 })
-  const folds = buildFolds(ds, dsl.cv.folds, dsl.cv.seed)
+  const folds = prebuiltFolds ?? buildFolds(ds, dsl.cv.folds, dsl.cv.seed)
   const foldNodes: ScoreNode[] = []
   const oof: PredRow[] = []
   for (let fi = 0; fi < folds.length; fi++) {
