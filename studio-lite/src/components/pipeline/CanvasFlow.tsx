@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Boxes, ChevronDown, Database, GitBranch, GripVertical, Play, Plus, Settings2, Square, Trash2 } from 'lucide-react'
+import { Boxes, Database, GitBranch, GripVertical, Play, Plus, Settings2, Sparkles, Square, Trash2 } from 'lucide-react'
 import type { PipelineDSL, PipelineStep, RunProgress, TaskType } from '@/engine/types'
 import { sweepVariantCount } from '@/engine/dagml'
 import { nodeByType, SPLIT_NODES } from '@/catalog/nodes'
@@ -241,8 +241,8 @@ export function CanvasFlow({
             accent="cyan"
             icon={<SplitIcon className="size-4" />}
             title={splitDef?.name ?? split.type}
-            subtitle={`train/test split · ${paramSummary(split) || 'before CV'}`}
-            badge={<span className="rounded bg-brand-cyan/10 px-1.5 py-0.5 font-mono text-[10px] text-brand-cyan">split</span>}
+            subtitle={`train / test · ${paramSummary(split) || 'overrides dataset partition'}`}
+            badge={<span className="rounded bg-brand-cyan/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-brand-cyan">split 1</span>}
             onClick={() => onSelect({ kind: 'split' })}
             onRemove={onRemoveSplit}
           />
@@ -258,7 +258,7 @@ export function CanvasFlow({
                   <Plus className="size-3.5" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <span className="block text-xs font-semibold text-foreground">Add a train/test split</span>
+                  <span className="block text-xs font-semibold text-foreground">Add a train/test split <span className="font-mono text-[9px] font-semibold uppercase tracking-wide text-brand-cyan">· split 1</span></span>
                   <span className="block truncate text-[10px] text-muted-foreground">optional — overrides the dataset partition before CV</span>
                 </div>
               </button>
@@ -315,23 +315,41 @@ export function CanvasFlow({
           </p>
         )}
 
-        {/* terminal model (OPTIONAL) */}
+        {/* terminal model (OPTIONAL) — always last, before CV */}
         {model ? (
-          <FlowNode
-            selected={selected.kind === 'model'}
-            accent="indigo"
-            icon={<ModelIcon className="size-4" />}
-            title={modelDef?.name ?? model.type}
-            subtitle={paramSummary(model) || 'estimator'}
-            badge={
-              <span className="flex items-center gap-1">
-                <Boxes className="size-3.5 text-brand-indigo/70" />
-                <VariantBadge step={model} />
-              </span>
-            }
-            onClick={() => onSelect({ kind: 'model' })}
-            onRemove={onRemoveModel}
-          />
+          <>
+            <FlowNode
+              selected={selected.kind === 'model'}
+              accent="indigo"
+              icon={<ModelIcon className="size-4" />}
+              title={modelDef?.name ?? model.type}
+              subtitle={modelDef?.autonomous ? 'self-preprocessing · self-tuned' : paramSummary(model) || 'estimator'}
+              badge={
+                <span className="flex items-center gap-1">
+                  {modelDef?.autonomous && (
+                    <span title="Screens preprocessing internally and tunes itself" className="flex items-center gap-0.5 rounded-full bg-brand-amber/12 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wide text-brand-amber">
+                      <Sparkles className="size-2.5" /> auto
+                    </span>
+                  )}
+                  <Boxes className="size-3.5 text-brand-indigo/70" />
+                  <VariantBadge step={model} />
+                </span>
+              }
+              onClick={() => onSelect({ kind: 'model' })}
+              onRemove={onRemoveModel}
+            />
+            {modelDef?.autonomous && (pipeline.steps.length > 0 || pipeline.finetune?.enabled) && (
+              <div className="mt-1 flex items-start gap-1.5 rounded-lg border border-brand-amber/40 bg-brand-amber/5 px-2.5 py-1.5 text-[10px] leading-snug text-brand-amber">
+                <Sparkles className="mt-0.5 size-3 shrink-0" />
+                <span>
+                  {modelDef.name} screens preprocessing and tunes itself — the
+                  {pipeline.steps.length > 0 ? ' preprocessing steps' : ''}
+                  {pipeline.steps.length > 0 && pipeline.finetune?.enabled ? ' and' : ''}
+                  {pipeline.finetune?.enabled ? ' finetune' : ''} above are redundant.
+                </span>
+              </div>
+            )}
+          </>
         ) : (
           <button
             type="button"
@@ -359,7 +377,7 @@ export function CanvasFlow({
           icon={<Settings2 className="size-4" />}
           title="Cross-validation"
           subtitle={`${pipeline.cv.folds}-fold · seed ${pipeline.cv.seed} · ${taskType}`}
-          badge={<ChevronDown className="size-3.5 text-muted-foreground/60" />}
+          badge={<span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground">split 2</span>}
           onClick={() => onSelect({ kind: 'cv' })}
         />
       </div>

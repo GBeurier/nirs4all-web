@@ -22,7 +22,7 @@ try {
   await page.waitForSelector('text=/Run pipeline/i', { timeout: 15000 })
 
   // the family headers prove all categories live in the palette
-  for (const [label, kind] of [['Scatter correction', 'preprocessing'], ['Train / test split', 'split'], ['Models', 'model']]) {
+  for (const [label, kind] of [['Preprocessings', 'preprocessing'], ['Train / test split', 'split'], ['Models', 'model']]) {
     if (await page.getByRole('button', { name: new RegExp(label) }).count()) console.log(`✓ palette has the "${label}" family`)
     else fail(`palette is missing the "${label}" family — ${kind} operators not surfaced`)
   }

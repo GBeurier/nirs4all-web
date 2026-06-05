@@ -63,6 +63,10 @@ export interface NodeDef {
   /** stateful transforms must reuse fit-state on test/predict data */
   stateful?: boolean
   advanced?: boolean
+  /** self-contained models (e.g. AOM/POP) that screen preprocessing internally
+   *  AND tune themselves — adding preprocessing steps or a finetune in front of
+   *  them is redundant; the UI surfaces this so users don't duplicate work. */
+  autonomous?: boolean
 }
 
 export interface Preset {

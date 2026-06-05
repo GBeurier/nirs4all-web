@@ -441,6 +441,7 @@ export const MODEL_NODES: NodeDef[] = [
       { name: 'operator_bank', label: 'Operator bank', type: 'operators', default: AOM_DEFAULT_BANK, help: 'Strict-linear operators screened by the AOM selector. Picking fewer/different operators changes the fit.' },
     ],
     n4m: { fit: 'n4m_aom_global_select', predict: 'n4m_wasm_model_predict_from_coeffs' },
+    autonomous: true,
   },
 
   {
@@ -458,6 +459,7 @@ export const MODEL_NODES: NodeDef[] = [
       { name: 'operator_bank', label: 'Operator bank', type: 'operators', default: AOM_DEFAULT_BANK, help: 'Strict-linear operators the per-component selector may pick from.' },
     ],
     n4m: { fit: 'n4m_aom_per_component_select', predict: 'n4m_wasm_model_predict_from_coeffs' },
+    autonomous: true,
   },
 
   // ---- Tier A: algorithm-enum family (via n4m_wasm_model_fit) -------------
