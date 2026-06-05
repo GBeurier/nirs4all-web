@@ -673,6 +673,50 @@ export const MODEL_NODES: NodeDef[] = [
     ],
     n4m: { fit: 'n4m_random_subspace_pls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
   },
+
+  // ---- Tier B extension: additional coeff-triple fits (via n4m_wasm_model_fit) ----
+  {
+    id: 'models.pls.mir_pls',
+    type: 'MIRPLS',
+    name: 'MIR-PLS',
+    category: 'model',
+    description: 'Multiple Inverse Regression PLS — runs SIMPLS on (Y, X) and pseudo-inverts the Y→X map to get X→Y coefficients; predicts via the centred coefficient form.',
+    icon: 'GitBranch',
+    task: 'regression',
+    advanced: true,
+    params: [
+      { name: 'n_components', label: 'Components', type: 'int', default: 10, min: 1, max: 40, help: 'Number of latent variables.' },
+    ],
+    n4m: { fit: 'n4m_mir_pls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
+  },
+  {
+    id: 'models.pls.mb_pls',
+    type: 'MBPLS',
+    name: 'MB-PLS',
+    category: 'model',
+    description: 'Multi-block PLS over the full spectrum as a single block — block-weighted SIMPLS returning input-space coefficients with a fitted affine intercept (predicts on raw X).',
+    icon: 'Boxes',
+    task: 'regression',
+    advanced: true,
+    params: [
+      { name: 'n_components', label: 'Components', type: 'int', default: 10, min: 1, max: 40, help: 'Number of latent variables.' },
+    ],
+    n4m: { fit: 'n4m_mb_pls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
+  },
+  {
+    id: 'models.pls.missing_aware_nipals',
+    type: 'MissingAwareNIPALS',
+    name: 'Missing-aware PLS',
+    category: 'model',
+    description: 'NIPALS PLS that tolerates missing (NaN) entries in the spectra — same centred coefficient form as PLS, robust to gaps in the input matrix.',
+    icon: 'GitBranch',
+    task: 'regression',
+    advanced: true,
+    params: [
+      { name: 'n_components', label: 'Components', type: 'int', default: 10, min: 1, max: 40, help: 'Number of latent variables.' },
+    ],
+    n4m: { fit: 'n4m_missing_aware_nipals_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
+  },
 ]
 
 export const ALL_NODES: NodeDef[] = [...PREPROCESSING_NODES, ...MODEL_NODES]

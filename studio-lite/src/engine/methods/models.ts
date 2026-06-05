@@ -45,6 +45,13 @@ export function modelParamVector(type: string, p: Record<string, unknown>): numb
       return [num(p.n_estimators, 10), num(p.learning_rate, 0.1)]
     case 'RandomSubspacePLS':
       return [num(p.n_estimators, 10), num(p.features_per_subspace, 50), num(p.seed, 0)]
+    // MIR-PLS (multiple inverse regression), MB-PLS (single-block) and
+    // missing-aware NIPALS take only n_components (passed separately); no
+    // positional hyper-params.
+    case 'MIRPLS':
+    case 'MBPLS':
+    case 'MissingAwareNIPALS':
+      return []
     default:
       return []
   }
