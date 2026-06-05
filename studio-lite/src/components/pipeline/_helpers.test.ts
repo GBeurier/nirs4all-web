@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { normalizeImportedPipeline } from './_helpers'
+import { normalizeImportedPipeline, pipelineWarnings } from './_helpers'
+import type { PipelineDSL } from '@/engine/types'
 
 // Validates the pipeline-JSON import path (Import button + future .n4a re-import).
 // A foreign/hand-edited payload must never crash the editor: unknown node types,
@@ -55,5 +56,78 @@ describe('normalizeImportedPipeline', () => {
     expect(normalizeImportedPipeline({ steps: 'nope', model: { type: 'PLS' } })).toBeNull()
     expect(normalizeImportedPipeline({ steps: [], model: {} })).toBeNull()
     expect(normalizeImportedPipeline({ steps: [null], model: { type: 'PLS' } })).toBeNull()
+  })
+
+  it('carries per-step sweeps and variants through import (not dropped)', () => {
+    const p = normalizeImportedPipeline({
+      steps: [{ type: 'SavitzkyGolay', params: { window: 11 }, sweeps: { window: { type: 'range', from: 7, to: 15, step: 2 } } }],
+      model: { type: 'PLS', sweeps: { n_components: { type: 'or', choices: [5, 10, 20] } } },
+    })
+    expect(p).not.toBeNull()
+    expect(p!.steps[0].sweeps?.window).toEqual({ type: 'range', from: 7, to: 15, step: 2 })
+    expect(p!.model!.sweeps?.n_components).toEqual({ type: 'or', choices: [5, 10, 20] })
+  })
+
+  it('drops malformed sweeps but keeps the step', () => {
+    const p = normalizeImportedPipeline({
+      steps: [{ type: 'StandardNormalVariate', sweeps: { foo: { type: 'bogus' }, bar: { type: 'or', choices: [] } } }],
+      model: { type: 'PLS' },
+    })
+    expect(p).not.toBeNull()
+    expect(p!.steps[0].sweeps).toBeUndefined()
+  })
+
+  it('normalizes the legacy float_log finetune alias to log_float on import', () => {
+    const p = normalizeImportedPipeline({
+      steps: [],
+      model: { type: 'PLS' },
+      finetune: { enabled: true, n_trials: 30, params: [{ name: 'alpha', type: 'float_log', low: 1e-3, high: 100, count: 6 }] },
+    })
+    expect(p).not.toBeNull()
+    expect(p!.finetune!.enabled).toBe(true)
+    expect(p!.finetune!.n_trials).toBe(30)
+    expect(p!.finetune!.params[0]).toMatchObject({ name: 'alpha', type: 'log_float', low: 1e-3, high: 100, count: 6 })
+  })
+
+  it('drops a finetune with no lowerable params', () => {
+    const p = normalizeImportedPipeline({
+      steps: [],
+      model: { type: 'PLS' },
+      finetune: { enabled: true, params: [{ name: 'x', type: 'not-a-type' }] },
+    })
+    expect(p!.finetune).toBeUndefined()
+  })
+})
+
+describe('pipelineWarnings (light validation pass)', () => {
+  const base = (over: Partial<PipelineDSL>): PipelineDSL => ({ name: 't', steps: [], model: { id: 'm', type: 'PLS', params: {} }, ...over })
+
+  it('flags an empty branch in a structural container', () => {
+    const w = pipelineWarnings(
+      base({
+        containers: [{ id: 'c1', container: 'branch', branches: [{ id: 'b1', steps: [{ id: 's1', type: 'StandardNormalVariate', params: {} }] }, { id: 'b2', steps: [] }] }],
+      }),
+    )
+    expect(w.some((m) => /empty branch/i.test(m))).toBe(true)
+  })
+
+  it('flags a generator with <2 non-empty alternatives', () => {
+    const w = pipelineWarnings(
+      base({
+        containers: [{ id: 'g1', container: 'generator', mode: 'or', branches: [{ id: 'b1', steps: [{ id: 's1', type: 'StandardNormalVariate', params: {} }] }, { id: 'b2', steps: [] }] }],
+      }),
+    )
+    expect(w.some((m) => /single variant/i.test(m))).toBe(true)
+  })
+
+  it('flags duplicate consecutive preprocessing ops', () => {
+    const w = pipelineWarnings(
+      base({ steps: [{ id: 's1', type: 'StandardNormalVariate', params: {} }, { id: 's2', type: 'StandardNormalVariate', params: {} }] }),
+    )
+    expect(w.some((m) => /[Dd]uplicate consecutive/.test(m))).toBe(true)
+  })
+
+  it('is clean for a healthy pipeline', () => {
+    expect(pipelineWarnings(base({ steps: [{ id: 's1', type: 'StandardNormalVariate', params: {} }, { id: 's2', type: 'SavitzkyGolay', params: {} }] }))).toEqual([])
   })
 })

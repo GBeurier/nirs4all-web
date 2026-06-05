@@ -2,7 +2,20 @@ import * as Icons from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { Preset } from '@/catalog/types'
 import { defaultParams, nodeByType } from '@/catalog/nodes'
-import type { ContainerNode, ContainerType, GeneratorMode, PipelineBranch, PipelineDSL, PipelineStep } from '@/engine/types'
+import type {
+  ContainerNode,
+  ContainerType,
+  FinetuneParam,
+  FinetuneParamType,
+  FinetuneSpec,
+  GeneratorMode,
+  ParamSweep,
+  PipelineBranch,
+  PipelineDSL,
+  PipelineStep,
+  StepVariant,
+  SweepType,
+} from '@/engine/types'
 
 // Drag-and-drop payload keys (native HTML5 DnD — no extra dependency).
 /** dataTransfer key carrying a catalog node `type` dragged from the palette. */
@@ -94,6 +107,101 @@ const cleanParams = (raw: unknown, type: string): Record<string, unknown> => {
   return { ...defaultParams(type), ...provided }
 }
 
+// --- generators / finetune on import ---------------------------------------
+// An imported pipeline can carry the optional sweep / variant / finetune intent
+// dag-ml expands; normalizeImportedPipeline must preserve it (not silently drop
+// it) so exported pipelines round-trip. Each is validated/normalized loosely:
+// malformed entries are dropped, never fatal.
+
+const SWEEP_TYPES = new Set<SweepType>(['range', 'log_range', 'or'])
+/** Parse one per-param ParamSweep from imported JSON (drops if malformed). */
+function parseSweep(raw: unknown): ParamSweep | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const s = raw as Record<string, unknown>
+  if (typeof s.type !== 'string' || !SWEEP_TYPES.has(s.type as SweepType)) return undefined
+  const out: ParamSweep = { type: s.type as SweepType }
+  if (typeof s.from === 'number') out.from = s.from
+  if (typeof s.to === 'number') out.to = s.to
+  if (typeof s.step === 'number') out.step = s.step
+  if (typeof s.count === 'number') out.count = s.count
+  if (Array.isArray(s.choices)) out.choices = s.choices.filter((c) => ['string', 'number', 'boolean'].includes(typeof c)) as (string | number | boolean)[]
+  // require the fields the chosen kind needs, else drop
+  if (out.type === 'or' && (!out.choices || out.choices.length === 0)) return undefined
+  if ((out.type === 'range' || out.type === 'log_range') && (out.from === undefined || out.to === undefined)) return undefined
+  return out
+}
+
+/** Parse a step's `sweeps` map (param → ParamSweep); undefined when none valid. */
+function parseSweeps(raw: unknown): Record<string, ParamSweep> | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined
+  const out: Record<string, ParamSweep> = {}
+  for (const [param, sweep] of Object.entries(raw as Record<string, unknown>)) {
+    const s = parseSweep(sweep)
+    if (s) out[param] = s
+  }
+  return Object.keys(out).length ? out : undefined
+}
+
+/** Parse a step's `variants` array (labelled alternatives); undefined when empty. */
+function parseVariants(raw: unknown): StepVariant[] | undefined {
+  if (!Array.isArray(raw)) return undefined
+  const out: StepVariant[] = []
+  for (const vv of raw) {
+    if (!vv || typeof vv !== 'object') continue
+    const v = vv as Record<string, unknown>
+    const type = typeof v.type === 'string' ? v.type : undefined
+    const label = typeof v.label === 'string' ? v.label : type
+    if (!type || !label) continue
+    out.push({ label, type, params: cleanParams(v.params, type) })
+  }
+  return out.length ? out : undefined
+}
+
+// Canonical finetune param-type vocabulary. nirs4all-studio (commit 50077b5,
+// api/pipeline_canonical.py) normalizes the single legacy alias `float_log` to
+// `log_float` over the canonical token set {int, float, categorical, log_float};
+// mirror that exactly on import so older exported pipelines hydrate to the token
+// the editor + the dag-ml lowering (finetuneSweep) understand.
+const FINETUNE_TYPE_ALIASES: Record<string, FinetuneParamType> = {
+  float_log: 'log_float',
+  log_float: 'log_float',
+  int: 'int',
+  float: 'float',
+  categorical: 'categorical',
+}
+
+/** Parse one finetune param, normalizing its type alias (float_log → log_float). */
+function parseFinetuneParam(raw: unknown): FinetuneParam | null {
+  if (!raw || typeof raw !== 'object') return null
+  const p = raw as Record<string, unknown>
+  if (typeof p.name !== 'string' || !p.name) return null
+  const type = typeof p.type === 'string' ? FINETUNE_TYPE_ALIASES[p.type] : undefined
+  if (!type) return null
+  const out: FinetuneParam = { name: p.name, type }
+  if (typeof p.low === 'number') out.low = p.low
+  if (typeof p.high === 'number') out.high = p.high
+  if (typeof p.step === 'number') out.step = p.step
+  if (typeof p.count === 'number') out.count = p.count
+  if (Array.isArray(p.choices)) out.choices = p.choices.filter((c) => ['string', 'number'].includes(typeof c)) as (string | number)[]
+  return out
+}
+
+/** Parse a finetune spec, dropping unlowerable params; undefined when disabled/empty. */
+function parseFinetune(raw: unknown): FinetuneSpec | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const f = raw as Record<string, unknown>
+  if (f.enabled === false) return undefined
+  const params = Array.isArray(f.params) ? f.params.map(parseFinetuneParam).filter((p): p is FinetuneParam => p !== null) : []
+  if (params.length === 0) return undefined
+  return {
+    enabled: true,
+    n_trials: clampInt(f.n_trials, 1, 1000, 20),
+    approach: f.approach === 'individual' ? 'individual' : f.approach === 'grouped' ? 'grouped' : undefined,
+    eval_mode: f.eval_mode === 'mean' ? 'mean' : f.eval_mode === 'best' ? 'best' : undefined,
+    params,
+  }
+}
+
 /**
  * Validate + normalize an imported pipeline payload against the catalog. Unknown
  * node types, malformed steps, or a model invalid for the catalog are rejected
@@ -115,7 +223,13 @@ export function normalizeImportedPipeline(value: unknown): PipelineDSL | null {
       if (typeof s.type !== 'string') return null
       const def = nodeByType(s.type)
       if (!def || def.category !== 'preprocessing') return null // unknown / non-preprocessing step
-      out.push({ id: typeof s.id === 'string' ? s.id : newStepId(s.type), type: s.type, params: cleanParams(s.params, s.type) })
+      out.push({
+        id: typeof s.id === 'string' ? s.id : newStepId(s.type),
+        type: s.type,
+        params: cleanParams(s.params, s.type),
+        sweeps: parseSweeps(s.sweeps),
+        variants: parseVariants(s.variants),
+      })
     }
     return out
   }
@@ -127,7 +241,12 @@ export function normalizeImportedPipeline(value: unknown): PipelineDSL | null {
   if (typeof m.type !== 'string') return null
   const modelDef = nodeByType(m.type)
   if (!modelDef || modelDef.category !== 'model') return null
-  const model: PipelineStep = { id: typeof m.id === 'string' ? m.id : newStepId(m.type), type: m.type, params: cleanParams(m.params, m.type) }
+  const model: PipelineStep = {
+    id: typeof m.id === 'string' ? m.id : newStepId(m.type),
+    type: m.type,
+    params: cleanParams(m.params, m.type),
+    sweeps: parseSweeps(m.sweeps),
+  }
 
   // optional split operator (a split-category catalog node); dropped if unknown.
   let split: PipelineStep | undefined
@@ -189,14 +308,52 @@ export function normalizeImportedPipeline(value: unknown): PipelineDSL | null {
     const cvRaw = v.cv && typeof v.cv === 'object' ? (v.cv as Record<string, unknown>) : {}
     cv = { folds: clampInt(cvRaw.folds, 2, 10, 5), seed: clampInt(cvRaw.seed, -2147483648, 2147483647, 42) }
   }
+  // finetune (model `tuning` search space) — carried through with the legacy
+  // `float_log` → `log_float` type-alias normalization (nirs4all-studio 50077b5).
+  const finetune = parseFinetune(v.finetune)
+
   return {
     name: typeof v.name === 'string' && v.name.trim() ? v.name : 'Imported pipeline',
     split,
     steps,
     containers: containers.length ? containers : undefined,
     model,
+    finetune,
     cv,
   }
+}
+
+/**
+ * A light, pre-run validation pass — soft *warnings* (never blocking) for the
+ * structurally-possible mistakes lite's fixed-slot editor can't prevent by
+ * construction (model-last / split-before-model are already guaranteed by the
+ * canvas layout, so they need no rule). A trimmed subset of nirs4all-studio's
+ * validation engine: STEP_EMPTY_BRANCHES, an empty/degenerate generator, and a
+ * duplicate-consecutive-operator check. dag-ml stays authoritative at run time;
+ * this is just editor guidance.
+ */
+export function pipelineWarnings(dsl: PipelineDSL): string[] {
+  const out: string[] = []
+  const containers = dsl.containers ?? []
+  for (const c of containers) {
+    const label = nodeByType(c.container === 'generator' ? (c.mode === 'cartesian' ? 'GeneratorCartesian' : 'GeneratorOr') : c.container === 'concat_transform' ? 'ConcatTransform' : c.container === 'merge' ? 'Merge' : 'Branch')?.name ?? c.container
+    const nonEmpty = c.branches.filter((b) => b.steps.length > 0)
+    // empty branch in a structural container contributes nothing to the fusion
+    if (c.container !== 'generator' && nonEmpty.length < c.branches.length) {
+      out.push(`${label}: ${c.branches.length - nonEmpty.length} empty branch${c.branches.length - nonEmpty.length === 1 ? '' : 'es'} — add operators or remove them (empty branches contribute nothing).`)
+    }
+    // a generator needs ≥2 *distinct* non-empty alternatives to expand to >1 variant
+    if (c.container === 'generator' && nonEmpty.length < 2) {
+      out.push(`${label}: fewer than 2 non-empty alternatives — it expands to a single variant. Fill at least two branches.`)
+    }
+  }
+  // duplicate consecutive preprocessing op in the linear chain (likely a slip)
+  for (let i = 1; i < dsl.steps.length; i++) {
+    if (dsl.steps[i].type === dsl.steps[i - 1].type) {
+      out.push(`Duplicate consecutive ${nodeByType(dsl.steps[i].type)?.name ?? dsl.steps[i].type} — applying it twice in a row is usually unintended.`)
+    }
+  }
+  return out
 }
 
 /** Compact one-line summary of a step's parameters for the canvas node subtitle. */

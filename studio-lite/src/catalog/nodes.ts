@@ -824,7 +824,7 @@ export const DAG_NODES: NodeDef[] = [
     category: 'dag',
     subcategory: 'combine',
     description:
-      'Combine branch outputs into one feature matrix (dag-ml Merge, output_as features). Runs ≥2 sub-chains and merges their feature blocks column-wise before the model — makes the fusion of parallel paths explicit.',
+      'Combine the branch outputs into one feature matrix by concatenating their columns (dag-ml MergeSources, axis=features). Runs ≥2 sub-chains and merges their feature blocks column-wise before the model — makes the fusion of parallel paths explicit. Note: this is feature concatenation, not prediction stacking (merge.predictions / stacking ensembles need ensembling — see roadmap).',
     icon: 'GitMerge',
     params: [],
     n4m: { fit: null },

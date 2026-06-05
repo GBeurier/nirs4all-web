@@ -9,6 +9,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/app/components/ui/dropdown-menu'
 import { cn } from '@/app/components/ui/utils'
@@ -435,6 +436,17 @@ export function CanvasFlow({
                 <span className="text-[11px] leading-snug text-muted-foreground">{d.description}</span>
               </DropdownMenuItem>
             ))}
+            {/* Honest roadmap: the canonical nirs4all-studio flow set also has
+                per-source branch/merge + extra generator kinds that need
+                multi-source data or ensembling — not yet executable here. */}
+            <DropdownMenuSeparator />
+            <div data-dag-roadmap className="px-2 py-1.5 text-[10px] leading-snug text-muted-foreground">
+              <span className="font-mono font-semibold uppercase tracking-wide text-muted-foreground/80">Roadmap</span>
+              <p className="mt-0.5">
+                Parameter sweeps (range / log&nbsp;range) live on each operator's params; a grid search is just several sweeps combined.
+                Source branch / merge predictions (stacking) and the zip / chain / sample generators need multi-source or ensembling — coming soon.
+              </p>
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
 

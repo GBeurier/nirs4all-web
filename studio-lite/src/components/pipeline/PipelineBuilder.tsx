@@ -20,7 +20,8 @@ import {
 import { NodePalette } from './NodePalette'
 import { CanvasFlow, type Selection } from './CanvasFlow'
 import { Inspector } from './Inspector'
-import { newBranchId, newContainer, newStepId, normalizeImportedPipeline, pipelineFromPreset } from './_helpers'
+import { newBranchId, newContainer, newStepId, normalizeImportedPipeline, pipelineFromPreset, pipelineWarnings } from './_helpers'
+import { AlertTriangle } from 'lucide-react'
 
 /**
  * Studio-style pipeline editor: a three-pane workspace — operator palette (left),
@@ -194,6 +195,7 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
   }
 
   const totalVariants = countVariants(pipeline)
+  const warnings = pipelineWarnings(pipeline)
 
   const applyPreset = (preset: Preset) => {
     onChange(pipelineFromPreset(preset))
@@ -273,6 +275,17 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
           </Button>
         </div>
       </div>
+
+      {/* light validation pass — soft, non-blocking editor guidance */}
+      {warnings.length > 0 && (
+        <div data-pipeline-warnings className="flex flex-col gap-1 rounded-xl border border-warning/40 bg-warning/5 px-3 py-2">
+          {warnings.map((w, i) => (
+            <p key={i} className="flex items-start gap-1.5 text-[11px] leading-snug text-warning">
+              <AlertTriangle className="mt-0.5 size-3 shrink-0" /> {w}
+            </p>
+          ))}
+        </div>
+      )}
 
       {/* three-pane editor */}
       <div className="grid min-h-[30rem] flex-1 gap-4 lg:grid-cols-[15rem_minmax(0,1fr)_19rem]">
