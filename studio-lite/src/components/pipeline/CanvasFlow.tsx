@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Boxes, ChevronDown, Database, GitBranch, GripVertical, Play, Settings2, Square, Trash2 } from 'lucide-react'
+import { Boxes, ChevronDown, Database, GitBranch, GripVertical, Play, Plus, Settings2, Square, Trash2 } from 'lucide-react'
 import type { PipelineDSL, PipelineStep, RunProgress, TaskType } from '@/engine/types'
 import { sweepVariantCount } from '@/engine/dagml'
 import { nodeByType } from '@/catalog/nodes'
@@ -47,6 +47,8 @@ export interface CanvasFlowProps {
   onInsert: (type: string, index: number) => void
   onMove: (from: number, to: number) => void
   onRemove: (id: string) => void
+  onAddModel: () => void
+  onRemoveModel: () => void
   onRun: () => void
   onCancel: () => void
 }
@@ -175,10 +177,13 @@ export function CanvasFlow({
   onInsert,
   onMove,
   onRemove,
+  onAddModel,
+  onRemoveModel,
   onRun,
   onCancel,
 }: CanvasFlowProps) {
-  const modelDef = nodeByType(pipeline.model.type)
+  const model = pipeline.model
+  const modelDef = model ? nodeByType(model.type) : undefined
   const ModelIcon = iconByName(modelDef?.icon ?? 'Boxes')
 
   return (
@@ -187,7 +192,7 @@ export function CanvasFlow({
         <div>
           <h3 className="font-display text-sm font-semibold text-foreground">Pipeline flow</h3>
           <p className="text-[11px] text-muted-foreground">
-            {pipeline.steps.length} preprocessing step{pipeline.steps.length === 1 ? '' : 's'} → {modelDef?.name ?? pipeline.model.type}
+            {pipeline.steps.length} preprocessing step{pipeline.steps.length === 1 ? '' : 's'} → {model ? (modelDef?.name ?? model.type) : 'no model'}
           </p>
         </div>
       </div>
@@ -255,21 +260,39 @@ export function CanvasFlow({
           </p>
         )}
 
-        {/* terminal model */}
-        <FlowNode
-          selected={selected.kind === 'model'}
-          accent="indigo"
-          icon={<ModelIcon className="size-4" />}
-          title={modelDef?.name ?? pipeline.model.type}
-          subtitle={paramSummary(pipeline.model) || 'estimator'}
-          badge={
-            <span className="flex items-center gap-1">
-              <Boxes className="size-3.5 text-brand-indigo/70" />
-              <VariantBadge step={pipeline.model} />
+        {/* terminal model (OPTIONAL) */}
+        {model ? (
+          <FlowNode
+            selected={selected.kind === 'model'}
+            accent="indigo"
+            icon={<ModelIcon className="size-4" />}
+            title={modelDef?.name ?? model.type}
+            subtitle={paramSummary(model) || 'estimator'}
+            badge={
+              <span className="flex items-center gap-1">
+                <Boxes className="size-3.5 text-brand-indigo/70" />
+                <VariantBadge step={model} />
+              </span>
+            }
+            onClick={() => onSelect({ kind: 'model' })}
+            onRemove={onRemoveModel}
+          />
+        ) : (
+          <button
+            type="button"
+            data-add-model
+            onClick={onAddModel}
+            className="flex w-full items-center gap-3 rounded-xl border border-dashed border-brand-indigo/40 bg-brand-indigo/5 px-3 py-2.5 text-left transition-colors hover:border-brand-indigo/70 hover:bg-brand-indigo/10"
+          >
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-indigo/10 text-brand-indigo">
+              <Plus className="size-4" />
             </span>
-          }
-          onClick={() => onSelect({ kind: 'model' })}
-        />
+            <div className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold text-foreground">Add a model</span>
+              <span className="block truncate text-[11px] text-muted-foreground">preprocessing-only — add a model to score</span>
+            </div>
+          </button>
+        )}
 
         {/* cross-validation node */}
         <div className="mt-0.5">
@@ -303,6 +326,11 @@ export function CanvasFlow({
               </div>
             </div>
             <Progress value={progress.pct} />
+          </div>
+        ) : !model ? (
+          <div data-run-guard className="rounded-xl border border-dashed border-brand-amber/50 bg-brand-amber/5 p-3.5 text-center">
+            <p className="text-sm font-medium text-brand-amber">Add a model to run / score.</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">This pipeline is preprocessing-only — pick a model to cross-validate and score.</p>
           </div>
         ) : (
           <Button size="lg" className="w-full gap-2 shadow-md shadow-brand-teal/20" onClick={onRun}>

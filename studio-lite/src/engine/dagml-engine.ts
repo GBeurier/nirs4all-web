@@ -84,8 +84,8 @@ function effectiveDsl(dsl: PipelineDSL, variant: VariantPlan): PipelineDSL {
     const ov = stepIds[i] ? overrides.get(stepIds[i]) : undefined
     return ov ? { ...s, params: { ...s.params, ...ov } } : s
   })
-  const mOv = overrides.get(modelId)
-  const model = mOv ? { ...dsl.model, params: { ...dsl.model.params, ...mOv } } : dsl.model
+  const mOv = dsl.model && overrides.get(modelId)
+  const model = dsl.model && mOv ? { ...dsl.model, params: { ...dsl.model.params, ...mOv } } : dsl.model
   return { ...dsl, steps, model }
 }
 
@@ -104,6 +104,9 @@ export class DagMlEngine implements Engine {
   readonly name = 'dag-ml-wasm'
 
   async run(ds: MaterializedDataset, dsl: PipelineDSL, opts: RunOptions = {}): Promise<RunResult> {
+    // A model is mandatory to score/refit — refuse early with a clear message
+    // (the editor guards too, but the engine is the authoritative gate).
+    if (!dsl.model) throw new Error('This pipeline has no model — add a model to run / score.')
     // Served path REQUIRES libn4m + dag-ml — no silent shadow engine. Both the
     // numerics (libn4m) and the orchestration/folds (dag-ml) are authoritative;
     // any failure surfaces to the UI rather than quietly rebuilding folds in TS

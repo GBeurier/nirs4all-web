@@ -5,7 +5,7 @@ import type { Preset, ParamValue } from '@/catalog/types'
 import type { FinetuneSpec, ParamSweep, PipelineDSL, PipelineStep, StepVariant } from '@/engine/types'
 import { countVariants } from '@/engine/dagml'
 import { PRESETS } from '@/catalog/presets'
-import { defaultParams } from '@/catalog/nodes'
+import { defaultParams, modelsForTask } from '@/catalog/nodes'
 import { downloadPipeline } from '@/lib/download'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
@@ -77,13 +77,29 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
     setSteps(pipeline.steps.map((s) => (s.id === id ? { ...s, variants } : s)))
 
   const setModelType = (type: string, params: Record<string, unknown>) => update({ model: { id: newStepId(type), type, params } })
-  const setModelParam = (name: string, value: ParamValue) =>
+  const setModelParam = (name: string, value: ParamValue) => {
+    if (!pipeline.model) return
     update({ model: { ...pipeline.model, params: { ...pipeline.model.params, [name]: value } } })
+  }
   const setModelSweep = (param: string, sweep: ParamSweep | undefined) => {
+    if (!pipeline.model) return
     const sweeps = { ...(pipeline.model.sweeps ?? {}) }
     if (sweep) sweeps[param] = sweep
     else delete sweeps[param]
     update({ model: { ...pipeline.model, sweeps: Object.keys(sweeps).length ? sweeps : undefined } })
+  }
+  // model is OPTIONAL — removing it leaves a preprocessing-only pipeline; adding
+  // one drops in the first model valid for the active task.
+  const removeModel = () => {
+    onChange({ ...pipeline, model: undefined, finetune: undefined })
+    if (selected.kind === 'model') setSelected(pipeline.steps.length ? { kind: 'step', id: pipeline.steps[pipeline.steps.length - 1].id } : { kind: 'cv' })
+  }
+  const addModel = () => {
+    const models = modelsForTask(taskType)
+    const type = models[0]?.type
+    if (!type) return
+    update({ model: { id: newStepId(type), type, params: defaultParams(type) } })
+    setSelected({ kind: 'model' })
   }
   const setModelFinetune = (finetune: FinetuneSpec | undefined) => update({ finetune })
   const setCv = (patch: Partial<PipelineDSL['cv']>) => update({ cv: { ...pipeline.cv, ...patch } })
@@ -185,6 +201,8 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
             onInsert={insertStep}
             onMove={moveStep}
             onRemove={removeStep}
+            onAddModel={addModel}
+            onRemoveModel={removeModel}
             onRun={onRun}
             onCancel={onCancel}
           />

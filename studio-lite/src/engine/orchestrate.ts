@@ -128,11 +128,13 @@ export function trainAndPredict(
   trainIdx: number[],
   predictIdx: number[],
 ): { pred: Mat; descriptors: FittedStep[]; model: unknown; classNames: string[] } {
-  const ncomp = Number(dsl.model.params.n_components ?? nodeByType(dsl.model.type)?.params.find((p) => p.name === 'n_components')?.default ?? 10)
+  if (!dsl.model) throw new Error('This pipeline has no model — add a model to fit and score.')
+  const model0 = dsl.model
+  const ncomp = Number(model0.params.n_components ?? nodeByType(model0.type)?.params.find((p) => p.name === 'n_components')?.default ?? 10)
   const { classNames, classIdx } = classInfo(ds)
   const Xfull: Mat = { data: ds.X, rows: ds.nSamples, cols: ds.nFeatures }
   const { transformers, descriptors, Xout } = fitChain(dsl.steps, selectRows(Xfull, trainIdx), backend.preproc)
-  const modelSpec: ModelSpec = { type: dsl.model.type, params: dsl.model.params }
+  const modelSpec: ModelSpec = { type: model0.type, params: model0.params }
   try {
     const model = backend.fit(modelSpec, Xout, buildYMatrix(ds, classNames, classIdx, trainIdx), clampNcomp(ncomp, Xout))
     const pred = backend.predict(model, applyTransformers(transformers, selectRows(Xfull, predictIdx)))
@@ -198,7 +200,9 @@ export async function runPipeline(
 ): Promise<RunResult> {
   const { onProgress: onP, signal } = opts
   const task = ds.taskType
-  const ncomp = Number(dsl.model.params.n_components ?? nodeByType(dsl.model.type)?.params.find((p) => p.name === 'n_components')?.default ?? 10)
+  if (!dsl.model) throw new Error('This pipeline has no model — add a model to run / score.')
+  const model0 = dsl.model
+  const ncomp = Number(model0.params.n_components ?? nodeByType(model0.type)?.params.find((p) => p.name === 'n_components')?.default ?? 10)
   const Xfull: Mat = { data: ds.X, rows: ds.nSamples, cols: ds.nFeatures }
   const { classNames, classIdx } = classInfo(ds)
   // clamp components to the matrix dims — libn4m (unlike the JS backend) does not,
@@ -214,7 +218,7 @@ export async function runPipeline(
     throw new Error('Classification needs at least two classes in the training data.')
   }
 
-  const modelSpec: ModelSpec = { type: dsl.model.type, params: dsl.model.params }
+  const modelSpec: ModelSpec = { type: model0.type, params: model0.params }
   const buildY = (idx: number[]): Mat => buildYMatrix(ds, classNames, classIdx, idx)
   const decode = (pred: Mat, idx: number[]): PredRow[] => decodeRows(ds, classNames, classIdx, pred, idx)
   const checkCancel = () => {

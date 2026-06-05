@@ -165,6 +165,10 @@ export default function App() {
 
   const onRun = useCallback(async () => {
     if (!dataset) return
+    if (!pipeline.model) {
+      setError('Add a model to run / score — this pipeline is preprocessing-only.')
+      return
+    }
     setRunning(true)
     setError(null)
     setProgress({ phase: 'fit_cv', pct: 0 })

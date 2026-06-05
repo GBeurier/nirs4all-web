@@ -23,7 +23,8 @@ export function defaultPipeline(taskType: TaskType): PipelineDSL {
     PRESETS[0]
   const dsl = dslFromPreset(preset)
   const models = modelsForTask(taskType)
-  if (!models.some((m) => m.type === dsl.model.type) && models.length) {
+  // dslFromPreset always sets a model; swap it for a task-valid one if needed.
+  if (dsl.model && !models.some((m) => m.type === dsl.model!.type) && models.length) {
     dsl.model = { id: sid(), type: models[0].type, params: defaultParams(models[0].type) }
   }
   return dsl

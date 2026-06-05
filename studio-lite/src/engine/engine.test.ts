@@ -109,6 +109,17 @@ describe('StubEngine', () => {
     await expect(new StubEngine().run(ds, dsl)).rejects.toThrow(/no numeric targets/i)
   })
 
+  it('refuses to run a pipeline with no model (model is optional in the DSL)', async () => {
+    const ds = synthRegression(40, 20)
+    // a preprocessing-only DSL — model omitted entirely
+    const dsl: PipelineDSL = {
+      name: 'preproc-only',
+      steps: [{ id: '1', type: 'StandardNormalVariate', params: {} }],
+      cv: { folds: 3, seed: 0 },
+    }
+    await expect(new StubEngine().run(ds, dsl)).rejects.toThrow(/no model/i)
+  })
+
   it('honors cancellation', async () => {
     const ds = synthRegression(60, 30)
     const ctrl = new AbortController()

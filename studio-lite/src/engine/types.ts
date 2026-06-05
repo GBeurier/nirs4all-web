@@ -95,8 +95,10 @@ export interface PipelineDSL {
   name: string;
   /** ordered preprocessing chain */
   steps: PipelineStep[];
-  /** terminal estimator */
-  model: PipelineStep;
+  /** terminal estimator — OPTIONAL: a pipeline can be preprocessing-only
+   *  (transform preview) or split+preproc with no model. The engine refuses to
+   *  score/run a no-model pipeline; the editor surfaces a clear guard. */
+  model?: PipelineStep;
   cv: { folds: number; seed: number };
   /** model hyperparameter search → dag-ml model `tuning` */
   finetune?: FinetuneSpec;

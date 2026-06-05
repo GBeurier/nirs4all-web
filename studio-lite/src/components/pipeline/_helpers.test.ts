@@ -19,8 +19,8 @@ describe('normalizeImportedPipeline', () => {
     // catalog defaults merged for SavitzkyGolay (polyorder/deriv) + provided window kept
     expect(p!.steps[1].params.window).toBe(15)
     expect(p!.steps[1].params).toHaveProperty('polyorder')
-    expect(p!.model.type).toBe('PLS')
-    expect(p!.model.params.n_components).toBe(8)
+    expect(p!.model!.type).toBe('PLS')
+    expect(p!.model!.params.n_components).toBe(8)
     // cv defaults
     expect(p!.cv.folds).toBe(5)
     expect(p!.cv.seed).toBe(42)

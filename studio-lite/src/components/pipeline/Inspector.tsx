@@ -118,9 +118,18 @@ export function Inspector({ pipeline, taskType, selected, onStepParam, onStepSwe
   }
 
   if (selected.kind === 'model') {
-    const def = nodeByType(pipeline.model.type)
-    const Icon = iconByName(def?.icon ?? 'Boxes')
     const model = pipeline.model
+    if (!model) {
+      return (
+        <InspectorShell icon={<SlidersHorizontal className="size-4" />} eyebrow="Estimator" title="No model">
+          <p className="text-xs text-muted-foreground">
+            This pipeline has no model. Add one on the canvas to fit, cross-validate and score.
+          </p>
+        </InspectorShell>
+      )
+    }
+    const def = nodeByType(model.type)
+    const Icon = iconByName(def?.icon ?? 'Boxes')
     return (
       <InspectorShell icon={<Icon className="size-4" />} eyebrow="Estimator" title={def?.name ?? model.type}>
         <Tabs defaultValue="model" className="flex h-full flex-col">

@@ -159,18 +159,22 @@ export function toCompatDsl(dsl: PipelineDSL): object {
   }
   steps.push({ split: { type: 'KFold', n_splits: dsl.cv.folds } })
 
-  const modelStep: Record<string, unknown> = {
-    model: dsl.model.type === 'PLSDA' ? 'PLSDA' : 'PLSRegression',
-    params: dsl.model.params,
+  // A model is OPTIONAL: a preprocessing-only (or split+preproc) pipeline lowers
+  // to the preprocessing chain + split, with no terminal estimator step.
+  if (dsl.model) {
+    const modelStep: Record<string, unknown> = {
+      model: dsl.model.type === 'PLSDA' ? 'PLSDA' : 'PLSRegression',
+      params: dsl.model.params,
+    }
+    // The model node carries BOTH its explicit param sweeps AND the finetune search
+    // space — both lowered to real param_generators so dag-ml expands + selects them
+    // (the finetune `tuning` block is metadata-only in dag-ml and was never swept).
+    const modelGenerators = [...generatorsForStep(dsl.model), ...finetuneGenerators(dsl.finetune)]
+    if (modelGenerators.length) modelStep.generators = modelGenerators
+    const modelVariants = variantsForStep(dsl.model.variants)
+    if (modelVariants.length) modelStep.variants = modelVariants
+    steps.push(modelStep)
   }
-  // The model node carries BOTH its explicit param sweeps AND the finetune search
-  // space — both lowered to real param_generators so dag-ml expands + selects them
-  // (the finetune `tuning` block is metadata-only in dag-ml and was never swept).
-  const modelGenerators = [...generatorsForStep(dsl.model), ...finetuneGenerators(dsl.finetune)]
-  if (modelGenerators.length) modelStep.generators = modelGenerators
-  const modelVariants = variantsForStep(dsl.model.variants)
-  if (modelVariants.length) modelStep.variants = modelVariants
-  steps.push(modelStep)
 
   const out: Record<string, unknown> = {
     id: `n4a-lite-${dsl.name}`.replace(/[^A-Za-z0-9_.:-]+/g, '-'),
@@ -211,7 +215,7 @@ function stepDimensions(step: PipelineStep): number[] {
 export function countVariants(dsl: PipelineDSL): number {
   const dims: number[] = []
   for (const s of dsl.steps) dims.push(...stepDimensions(s))
-  dims.push(...stepDimensions(dsl.model))
+  if (dsl.model) dims.push(...stepDimensions(dsl.model))
   // finetune contributes one cartesian dimension per LOWERABLE param (the real
   // grid dag-ml expands), NOT n_trials — params that can't be lowered to a finite
   // grid are dropped so the count never overstates what dag-ml actually sweeps.

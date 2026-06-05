@@ -25,10 +25,15 @@ export interface Session {
 function validPipeline(p: unknown): PipelineDSL | undefined {
   if (!p || typeof p !== 'object') return undefined
   const dsl = p as PipelineDSL
-  if (!Array.isArray(dsl.steps) || !dsl.model || typeof dsl.model.type !== 'string') return undefined
+  if (!Array.isArray(dsl.steps)) return undefined
   if (!dsl.cv || typeof dsl.cv.folds !== 'number' || typeof dsl.cv.seed !== 'number') return undefined
   if (!dsl.steps.every((s) => s && typeof s.type === 'string' && nodeByType(s.type))) return undefined
-  if (!nodeByType(dsl.model.type)) return undefined
+  // model is OPTIONAL (preprocessing-only pipelines persist too); but if present
+  // it must be a known catalog model. A malformed/unknown model is dropped to
+  // undefined rather than failing the whole restore.
+  if (dsl.model !== undefined) {
+    if (typeof dsl.model.type !== 'string' || !nodeByType(dsl.model.type)) return undefined
+  }
   return dsl
 }
 function validModel(m: unknown): LoadedModel | undefined {
