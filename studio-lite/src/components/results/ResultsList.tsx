@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AlertCircle, CheckCircle2, ChevronDown, ChevronRight, Cpu, Download, Layers, Loader2, Target } from 'lucide-react'
+import { AlertCircle, CheckCircle2, ChevronDown, ChevronRight, Cpu, Download, GitBranch, Layers, Loader2, Sparkles, Target, Trophy } from 'lucide-react'
 
 import type { ResultsListProps } from '@/components/contracts'
 import type { Metrics, RunResult, ScoreNode } from '@/engine/types'
@@ -91,6 +91,53 @@ function ScoreRow({ run, node, selected, onSelect, accent, icon, indent, childre
   )
 }
 
+/** Collapsible list of dag-ml's evaluated variants, the selected winner highlighted. */
+function VariantRows({ run }: { run: RunResult }) {
+  const [open, setOpen] = useState(false)
+  const variants = run.variants
+  if (!variants || variants.length <= 1) return null
+  const pm = primaryMetric(run.taskType)
+  return (
+    <Collapsible open={open} onOpenChange={setOpen} className="rounded-xl border border-orange-500/20 bg-orange-500/5 p-3" data-variants>
+      <CollapsibleTrigger asChild>
+        <button
+          type="button"
+          className="flex w-full items-center justify-between gap-3 text-left"
+        >
+          <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <Sparkles className="size-3.5 text-orange-500" />
+            {variants.length} variants explored by dag-ml
+          </span>
+          {open ? <ChevronDown className="size-4 text-muted-foreground" /> : <ChevronRight className="size-4 text-muted-foreground" />}
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="mt-2 space-y-1.5">
+        {variants.map((v) => (
+          <div
+            key={v.variantId}
+            data-variant-row
+            data-variant-selected={v.selected ? 'true' : 'false'}
+            className={cn(
+              'flex items-center justify-between gap-3 rounded-lg border px-3 py-2',
+              v.selected ? 'border-primary bg-primary/5 ring-1 ring-primary/30' : 'border-border bg-card',
+            )}
+          >
+            <span className="flex min-w-0 items-center gap-2">
+              {v.selected ? <Trophy className="size-3.5 shrink-0 text-amber-500" /> : <GitBranch className="size-3.5 shrink-0 text-muted-foreground/60" />}
+              <span className="truncate font-mono text-xs text-foreground">{v.label}</span>
+              {v.selected ? <span className="shrink-0 rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">best</span> : null}
+            </span>
+            <span className="inline-flex shrink-0 items-baseline gap-1 rounded-md bg-muted px-2 py-0.5 text-xs">
+              <span className="text-muted-foreground">{pm.label}</span>
+              <span className="font-mono font-medium text-foreground">{fmt(v.metrics[pm.key])}</span>
+            </span>
+          </div>
+        ))}
+      </CollapsibleContent>
+    </Collapsible>
+  )
+}
+
 function RunCard({
   run,
   selectedRunId,
@@ -118,6 +165,12 @@ function RunCard({
               <Cpu className="size-3" />
               {run.engine}
             </Badge>
+            {run.variantCount && run.variantCount > 1 ? (
+              <Badge variant="outline" className="gap-1 border-orange-500/40 text-orange-600" data-variant-chip>
+                <GitBranch className="size-3" />
+                {run.variantCount} variants
+              </Badge>
+            ) : null}
             <span>{formatDate(run.createdAt)}</span>
           </div>
         </div>
@@ -167,6 +220,7 @@ function RunCard({
 
       {/* Score tree */}
       <div className="space-y-2">
+        <VariantRows run={run} />
         <ScoreRow
           run={run}
           node={run.refit}

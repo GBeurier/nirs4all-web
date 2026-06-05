@@ -39,10 +39,54 @@ export interface MaterializedDataset {
 // ---------------------------------------------------------------------------
 // Pipeline DSL (the internal, serializable representation; can grow to a graph)
 // ---------------------------------------------------------------------------
+// --- generators / finetune (all optional; existing flat pipelines stay valid) ---
+// These map 1:1 onto dag-ml's per-step `param_generators` + `variants`, the model
+// `tuning` spec, and the DSL-level `generation_strategy` / `max_variants`. Variant
+// expansion and selection happen in dag-ml (Rust → WASM); these types only carry
+// the user's intent to the compiler. See toCompatDsl in dagml.ts.
+export type SweepType = 'range' | 'log_range' | 'or';
+export interface ParamSweep {
+  type: SweepType;
+  /** range / log_range bounds */
+  from?: number;
+  to?: number;
+  step?: number;
+  /** log_range value count (also caps range) */
+  count?: number;
+  /** or: explicit discrete values */
+  choices?: (string | number | boolean)[];
+}
+export interface StepVariant {
+  label: string;
+  /** catalog `type` token of the alternative operator */
+  type: string;
+  params: Record<string, unknown>;
+}
+export type FinetuneParamType = 'int' | 'float' | 'log_float' | 'categorical';
+export interface FinetuneParam {
+  name: string;
+  type: FinetuneParamType;
+  low?: number;
+  high?: number;
+  step?: number;
+  choices?: (string | number)[];
+}
+export interface FinetuneSpec {
+  enabled: boolean;
+  n_trials: number;
+  approach?: 'grouped' | 'individual';
+  eval_mode?: 'best' | 'mean';
+  params: FinetuneParam[];
+}
+
 export interface PipelineStep {
   id: string; // unique instance id
   type: string; // node catalog `type` token (e.g. 'StandardNormalVariate', 'PLS')
   params: Record<string, unknown>;
+  /** per-param sweeps → dag-ml `param_generators` (or/range/log_range) */
+  sweeps?: Record<string, ParamSweep>;
+  /** labelled alternatives → dag-ml per-step `variants` */
+  variants?: StepVariant[];
 }
 export interface PipelineDSL {
   name: string;
@@ -51,6 +95,10 @@ export interface PipelineDSL {
   /** terminal estimator */
   model: PipelineStep;
   cv: { folds: number; seed: number };
+  /** model hyperparameter search → dag-ml model `tuning` */
+  finetune?: FinetuneSpec;
+  /** DSL-level cartesian/zip expansion → `generation_strategy` / `max_variants` */
+  generation?: { strategy: 'cartesian' | 'zip'; maxVariants?: number };
 }
 
 // ---------------------------------------------------------------------------
@@ -119,6 +167,10 @@ export interface RunResult {
   bundleJson?: unknown;
   model: FittedPipeline;
   createdAt: string;
+  /** number of variants dag-ml expanded + evaluated (omitted / 1 for a single-variant run) */
+  variantCount?: number;
+  /** per-variant CV scores; the winner dag-ml's selection picked has `selected: true` */
+  variants?: { variantId: string; label: string; metrics: Metrics; selected: boolean }[];
 }
 
 // ---------------------------------------------------------------------------

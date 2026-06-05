@@ -16,10 +16,12 @@ export interface ModelPickerProps {
   taskType: TaskType
   onChangeType: (type: string, params: Record<string, unknown>) => void
   onChangeParam: (name: string, value: number | boolean | string) => void
+  /** optional per-param renderer (lets the Inspector pair each field with a sweep activator) */
+  renderParam?: (def: import('@/catalog/types').ParamDef, value: unknown) => React.ReactNode
 }
 
 /** Terminal estimator selector + its parameters. */
-export function ModelPicker({ model, taskType, onChangeType, onChangeParam }: ModelPickerProps) {
+export function ModelPicker({ model, taskType, onChangeType, onChangeParam, renderParam }: ModelPickerProps) {
   const models = modelsForTask(taskType)
   const def = nodeByType(model.type)
   const Icon = iconByName(def?.icon)
@@ -59,15 +61,19 @@ export function ModelPicker({ model, taskType, onChangeType, onChangeParam }: Mo
             </div>
           </div>
           {def.params.length > 0 ? (
-            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {def.params.map((p) => (
-                <ParamField
-                  key={p.name}
-                  def={p}
-                  value={model.params[p.name] ?? p.default}
-                  onChange={(v) => onChangeParam(p.name, v)}
-                />
-              ))}
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              {def.params.map((p) =>
+                renderParam ? (
+                  <div key={p.name}>{renderParam(p, model.params[p.name] ?? p.default)}</div>
+                ) : (
+                  <ParamField
+                    key={p.name}
+                    def={p}
+                    value={model.params[p.name] ?? p.default}
+                    onChange={(v) => onChangeParam(p.name, v)}
+                  />
+                ),
+              )}
             </div>
           ) : null}
         </div>

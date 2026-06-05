@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Boxes, ChevronDown, Database, GripVertical, Play, Settings2, Square, Trash2 } from 'lucide-react'
-import type { PipelineDSL, RunProgress, TaskType } from '@/engine/types'
+import { Boxes, ChevronDown, Database, GitBranch, GripVertical, Play, Settings2, Square, Trash2 } from 'lucide-react'
+import type { PipelineDSL, PipelineStep, RunProgress, TaskType } from '@/engine/types'
+import { sweepVariantCount } from '@/engine/dagml'
 import { nodeByType } from '@/catalog/nodes'
 import { Button } from '@/app/components/ui/button'
 import { Progress } from '@/app/components/ui/progress'
@@ -8,6 +9,32 @@ import { cn } from '@/app/components/ui/utils'
 import { DND_NEW_NODE, DND_REORDER, iconByName, paramSummary, phaseLabel } from './_helpers'
 
 export type Selection = { kind: 'step'; id: string } | { kind: 'model' } | { kind: 'cv' }
+
+/** Display-only count of the variants one element contributes (dag-ml is authoritative). */
+function elementVariants(step: PipelineStep): number {
+  const dims: number[] = []
+  if (step.sweeps) for (const s of Object.values(step.sweeps)) {
+    const n = sweepVariantCount(s)
+    if (n > 1) dims.push(n)
+  }
+  if (step.variants && step.variants.length > 1) dims.push(step.variants.length)
+  return dims.length ? dims.reduce((a, b) => a * b, 1) : 1
+}
+
+/** Orange ×N chip shown on a node that defines sweeps/variants. */
+function VariantBadge({ step }: { step: PipelineStep }) {
+  const n = elementVariants(step)
+  if (n <= 1) return null
+  return (
+    <span
+      className="inline-flex items-center gap-0.5 rounded bg-orange-500/15 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-orange-600"
+      data-node-variant-badge
+      title={`${n} variants from this node`}
+    >
+      <GitBranch className="size-3" />×{n}
+    </span>
+  )
+}
 
 export interface CanvasFlowProps {
   pipeline: PipelineDSL
@@ -207,7 +234,10 @@ export function CanvasFlow({
                 title={def?.name ?? step.type}
                 subtitle={paramSummary(step) || def?.subcategory}
                 badge={
-                  <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">{index + 1}</span>
+                  <span className="flex items-center gap-1">
+                    <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">{index + 1}</span>
+                    <VariantBadge step={step} />
+                  </span>
                 }
                 onClick={() => onSelect({ kind: 'step', id: step.id })}
                 onRemove={() => onRemove(step.id)}
@@ -232,7 +262,12 @@ export function CanvasFlow({
           icon={<ModelIcon className="size-4" />}
           title={modelDef?.name ?? pipeline.model.type}
           subtitle={paramSummary(pipeline.model) || 'estimator'}
-          badge={<Boxes className="size-3.5 text-brand-indigo/70" />}
+          badge={
+            <span className="flex items-center gap-1">
+              <Boxes className="size-3.5 text-brand-indigo/70" />
+              <VariantBadge step={pipeline.model} />
+            </span>
+          }
           onClick={() => onSelect({ kind: 'model' })}
         />
 

@@ -4,7 +4,7 @@
 // and its SequentialScheduler runs FIT_CV in-browser (see dagml-engine.ts), invoking
 // a JS controller that runs the numerics via libn4m. This module is the lighter
 // compile/validate entry (used for the badge + as a fallback probe).
-import type { PipelineDSL } from './types'
+import type { FinetuneParam, ParamSweep, PipelineDSL, PipelineStep, StepVariant } from './types'
 
 export interface DagMlLineage {
   engine: 'dag-ml-wasm'
@@ -43,18 +43,147 @@ export async function loadDagMl(): Promise<DagMlMod> {
 export const dagMlAvailable = () => typeof location === 'undefined' || location.protocol !== 'file:'
 const canUse = dagMlAvailable
 
+// --- generator DSL emission -------------------------------------------------
+// Field names below are emitted to match dag-ml's PipelineDslParamGenerator /
+// PipelineDslVariantChoice / PipelineDslTuningSpec exactly
+// (dag-ml/crates/dag-ml-core/src/dsl.rs):
+//   - Or:       { kind:'or',        param, values:[...] }              (dsl.rs:196)
+//   - Range:    { kind:'range',     param, start, stop, step }         (dsl.rs:204)
+//   - LogRange: { kind:'log_range', param, start, stop, count }        (dsl.rs:216)
+//   tag is `kind`, rename_all snake_case (dsl.rs:194); generator values are bare
+//   JSON (untagged PipelineDslGeneratorValue, dsl.rs:255).
+// A step object carries them under `generators` (alias of param_generators,
+// dsl.rs:153/2250) and `variants` (dsl.rs:152/2249); the model also under
+// `tuning` (dsl.rs:150/2246) with `model_params` (dsl.rs:177). The DSL root
+// carries `generation_strategy` / `max_variants` / `root_seed`
+// (dsl.rs:39/41/47, parsed compat-side at dsl.rs:998-1003).
+
+/** One dag-ml param_generator JSON object for a single-param sweep. */
+function genFromSweep(param: string, sweep: ParamSweep): object | null {
+  if (sweep.type === 'or') {
+    const values = sweep.choices ?? []
+    if (values.length === 0) return null
+    return { kind: 'or', param, values }
+  }
+  if (sweep.type === 'log_range') {
+    if (sweep.from === undefined || sweep.to === undefined) return null
+    return { kind: 'log_range', param, start: sweep.from, stop: sweep.to, count: Math.max(2, sweep.count ?? 5) }
+  }
+  // range
+  if (sweep.from === undefined || sweep.to === undefined) return null
+  return { kind: 'range', param, start: sweep.from, stop: sweep.to, step: sweep.step ?? 1 }
+}
+
+/** dag-ml param_generators[] for a step's sweeps map (skips empty/invalid). */
+function generatorsForStep(step: PipelineStep): object[] {
+  if (!step.sweeps) return []
+  const gens: object[] = []
+  for (const [param, sweep] of Object.entries(step.sweeps)) {
+    const g = genFromSweep(param, sweep)
+    if (g) gens.push(g)
+  }
+  return gens
+}
+
+/** dag-ml variants[] (PipelineDslVariantChoice: { label, params }) for a step. */
+function variantsForStep(variants: StepVariant[] | undefined): object[] {
+  if (!variants || variants.length === 0) return []
+  return variants.map((v) => ({ label: v.label, params: { ...v.params } }))
+}
+
+/** dag-ml model tuning spec: model_params[name] = ['categorical', choices] | [type, low, high]. */
+function tuningParam(p: FinetuneParam): unknown {
+  if (p.type === 'categorical') return ['categorical', p.choices ?? []]
+  return [p.type, p.low ?? 0, p.high ?? 0]
+}
+
 // Map the studio-lite pipeline to dag-ml's nirs4all-compat DSL (accepted by the
-// compatibility importer: bare "SNV"/"MSC", {preprocessing,params}, {model,params}).
+// compatibility importer: bare "SNV"/"MSC", {preprocessing,params}, {model,params}),
+// now carrying per-step `generators`/`variants`, model `tuning`, and DSL-level
+// `generation_strategy`/`max_variants`/`root_seed` so dag-ml expands the cartesian
+// product of variants itself.
 export function toCompatDsl(dsl: PipelineDSL): object {
   const steps: unknown[] = [{ sources: ['x'] }]
   for (const s of dsl.steps) {
-    if (s.type === 'StandardNormalVariate') steps.push('SNV')
-    else if (s.type === 'MSC') steps.push('MSC')
-    else steps.push({ preprocessing: s.type, params: s.params })
+    const generators = generatorsForStep(s)
+    const variants = variantsForStep(s.variants)
+    const hasGen = generators.length > 0 || variants.length > 0
+    if (s.type === 'StandardNormalVariate' && !hasGen) steps.push('SNV')
+    else if (s.type === 'MSC' && !hasGen) steps.push('MSC')
+    else {
+      const step: Record<string, unknown> = { preprocessing: s.type, params: s.params }
+      if (generators.length) step.generators = generators
+      if (variants.length) step.variants = variants
+      steps.push(step)
+    }
   }
   steps.push({ split: { type: 'KFold', n_splits: dsl.cv.folds } })
-  steps.push({ model: dsl.model.type === 'PLSDA' ? 'PLSDA' : 'PLSRegression', params: dsl.model.params })
-  return { id: `n4a-lite-${dsl.name}`.replace(/[^A-Za-z0-9_.:-]+/g, '-'), pipeline: steps }
+
+  const modelStep: Record<string, unknown> = {
+    model: dsl.model.type === 'PLSDA' ? 'PLSDA' : 'PLSRegression',
+    params: dsl.model.params,
+  }
+  const modelGenerators = generatorsForStep(dsl.model)
+  if (modelGenerators.length) modelStep.generators = modelGenerators
+  const modelVariants = variantsForStep(dsl.model.variants)
+  if (modelVariants.length) modelStep.variants = modelVariants
+  if (dsl.finetune?.enabled && dsl.finetune.params.length > 0) {
+    const model_params: Record<string, unknown> = {}
+    for (const p of dsl.finetune.params) model_params[p.name] = tuningParam(p)
+    modelStep.tuning = {
+      n_trials: dsl.finetune.n_trials,
+      ...(dsl.finetune.approach ? { approach: dsl.finetune.approach } : {}),
+      ...(dsl.finetune.eval_mode ? { eval_mode: dsl.finetune.eval_mode } : {}),
+      model_params,
+    }
+  }
+  steps.push(modelStep)
+
+  const out: Record<string, unknown> = {
+    id: `n4a-lite-${dsl.name}`.replace(/[^A-Za-z0-9_.:-]+/g, '-'),
+    pipeline: steps,
+    root_seed: dsl.cv.seed,
+  }
+  if (dsl.generation) {
+    out.generation_strategy = dsl.generation.strategy
+    if (dsl.generation.maxVariants !== undefined) out.max_variants = dsl.generation.maxVariants
+  }
+  return out
+}
+
+/**
+ * Display-only count of the cartesian product of all sweeps + variants in the
+ * pipeline. dag-ml is authoritative (it enumerates + caps via `max_variants`);
+ * this only powers the editor's `×N` chip and the pre-run guard.
+ */
+export function sweepVariantCount(sweep: ParamSweep): number {
+  if (sweep.type === 'or') return sweep.choices?.length ?? 0
+  if (sweep.type === 'log_range') return Math.max(2, sweep.count ?? 5)
+  if (sweep.from === undefined || sweep.to === undefined) return 0
+  const step = sweep.step ?? 1
+  if (step === 0) return 0
+  return Math.max(1, Math.floor((sweep.to - sweep.from) / step) + 1)
+}
+
+function stepDimensions(step: PipelineStep): number[] {
+  const dims: number[] = []
+  if (step.sweeps) for (const sweep of Object.values(step.sweeps)) {
+    const n = sweepVariantCount(sweep)
+    if (n > 1) dims.push(n)
+  }
+  if (step.variants && step.variants.length > 1) dims.push(step.variants.length)
+  return dims
+}
+
+export function countVariants(dsl: PipelineDSL): number {
+  const dims: number[] = []
+  for (const s of dsl.steps) dims.push(...stepDimensions(s))
+  dims.push(...stepDimensions(dsl.model))
+  // finetune (model tuning) contributes n_trials candidate variants
+  if (dsl.finetune?.enabled && dsl.finetune.params.length > 0) dims.push(Math.max(1, dsl.finetune.n_trials))
+  if (dims.length === 0) return 1
+  if (dsl.generation?.strategy === 'zip') return Math.max(...dims)
+  return dims.reduce((a, b) => a * b, 1)
 }
 
 /** Compile+validate a pipeline via dag-ml-wasm. Best-effort: never throws. */

@@ -2,7 +2,8 @@ import { useRef, useState } from 'react'
 import { Download, Sparkles, Upload } from 'lucide-react'
 import type { PipelineBuilderProps } from '@/components/contracts'
 import type { Preset } from '@/catalog/types'
-import type { PipelineDSL, PipelineStep } from '@/engine/types'
+import type { FinetuneSpec, ParamSweep, PipelineDSL, PipelineStep, StepVariant } from '@/engine/types'
+import { countVariants } from '@/engine/dagml'
 import { PRESETS } from '@/catalog/presets'
 import { defaultParams } from '@/catalog/nodes'
 import { downloadPipeline } from '@/lib/download'
@@ -61,10 +62,33 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
   const setStepParam = (id: string, name: string, value: number | boolean | string) =>
     setSteps(pipeline.steps.map((s) => (s.id === id ? { ...s, params: { ...s.params, [name]: value } } : s)))
 
+  // generators / finetune mutators (write the optional DSL fields dag-ml expands)
+  const setStepSweep = (id: string, param: string, sweep: ParamSweep | undefined) =>
+    setSteps(
+      pipeline.steps.map((s) => {
+        if (s.id !== id) return s
+        const sweeps = { ...(s.sweeps ?? {}) }
+        if (sweep) sweeps[param] = sweep
+        else delete sweeps[param]
+        return { ...s, sweeps: Object.keys(sweeps).length ? sweeps : undefined }
+      }),
+    )
+  const setStepVariants = (id: string, variants: StepVariant[] | undefined) =>
+    setSteps(pipeline.steps.map((s) => (s.id === id ? { ...s, variants } : s)))
+
   const setModelType = (type: string, params: Record<string, unknown>) => update({ model: { id: newStepId(type), type, params } })
   const setModelParam = (name: string, value: number | boolean | string) =>
     update({ model: { ...pipeline.model, params: { ...pipeline.model.params, [name]: value } } })
+  const setModelSweep = (param: string, sweep: ParamSweep | undefined) => {
+    const sweeps = { ...(pipeline.model.sweeps ?? {}) }
+    if (sweep) sweeps[param] = sweep
+    else delete sweeps[param]
+    update({ model: { ...pipeline.model, sweeps: Object.keys(sweeps).length ? sweeps : undefined } })
+  }
+  const setModelFinetune = (finetune: FinetuneSpec | undefined) => update({ finetune })
   const setCv = (patch: Partial<PipelineDSL['cv']>) => update({ cv: { ...pipeline.cv, ...patch } })
+
+  const totalVariants = countVariants(pipeline)
 
   const applyPreset = (preset: Preset) => {
     onChange(pipelineFromPreset(preset))
@@ -107,6 +131,15 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
           <span className="hidden rounded-full border border-border px-2.5 py-1 font-mono text-[11px] text-muted-foreground sm:inline">
             {pipeline.steps.length} step{pipeline.steps.length === 1 ? '' : 's'} · {pipeline.cv.folds}-fold
           </span>
+          {totalVariants > 1 ? (
+            <span
+              className="inline-flex items-center gap-1 rounded-full border border-orange-500/40 bg-orange-500/10 px-2.5 py-1 font-mono text-[11px] font-semibold text-orange-600"
+              data-variant-chip
+              title="Variants dag-ml will expand and select among"
+            >
+              ×{totalVariants} variants
+            </span>
+          ) : null}
         </div>
         <div className="flex items-center gap-2">
           <DropdownMenu>
@@ -162,8 +195,12 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
             taskType={taskType}
             selected={selected}
             onStepParam={setStepParam}
+            onStepSweep={setStepSweep}
+            onStepVariants={setStepVariants}
             onModelType={setModelType}
             onModelParam={setModelParam}
+            onModelSweep={setModelSweep}
+            onModelFinetune={setModelFinetune}
             onCv={setCv}
           />
         </aside>
