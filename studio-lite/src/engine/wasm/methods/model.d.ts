@@ -109,6 +109,34 @@ export interface PopModel extends FittedModel {
  *   derivative / finite-difference) is screened.
  */
 export declare function fitPop(X: Matrix, Y: Matrix, maxComponents: number, nFolds?: number, seed?: number, operatorKinds?: number[]): PopModel;
+/** A train/test splitter kind for {@link computeSplit}. */
+export type SplitKind = "KennardStone" | "SPXY" | "KMeans" | "KBinsStratified";
+/** Options for {@link computeSplit}. `testSize` is a fraction in (0, 1). */
+export interface SplitOptions {
+    /** test fraction in (0, 1); default 0.25. */
+    testSize?: number;
+    /** seed for the stochastic splitters (KMeans, KBinsStratified). */
+    seed?: number;
+    /** KMeans: max iterations (default 100). */
+    maxIter?: number;
+    /** KBinsStratified: number of Y bins (default 5). */
+    nBins?: number;
+    /** KBinsStratified: 0 = uniform-width bins, 1 = quantile bins. */
+    strategy?: number;
+}
+/** Compute a single train/test split over the rows of X (and Y) via libn4m's
+ * splitters, returning a `Uint8Array` mask of length n where 1 = test, 0 = train.
+ *
+ * Numerics are 100% libn4m (`n4m_wasm_split` → n4m_split_*). KennardStone and
+ * SPXY are deterministic; KMeans and KBinsStratified use `opts.seed`. SPXY and
+ * KBinsStratified need Y; KennardStone and KMeans use X only.
+ *
+ * @param kind splitter strategy.
+ * @param X row-major (n × p) input matrix.
+ * @param Y row-major (n × q) target matrix (required for SPXY / KBinsStratified).
+ * @param opts split options (testSize / seed / maxIter / nBins / strategy).
+ */
+export declare function computeSplit(kind: SplitKind, X: Matrix, Y: Matrix | null, opts?: SplitOptions): Uint8Array;
 export declare class Model {
     private _data;
     private constructor();

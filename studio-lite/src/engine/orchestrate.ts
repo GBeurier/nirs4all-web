@@ -8,6 +8,7 @@ import { type Mat, mat, selectRows } from './algo/linalg'
 import { type FittedTransformer, type Preprocessor } from './methods/preproc'
 import { buildFolds, type Fold } from './kfold'
 import { testRowsOf, trainRowsOf } from './partition'
+import { applySplit, SPLIT_KINDS } from './split'
 import { classificationMetrics, regressionMetrics } from './metrics'
 import type {
   FittedPipeline,
@@ -201,6 +202,17 @@ export async function runPipeline(
   const { onProgress: onP, signal } = opts
   const task = ds.taskType
   if (!dsl.model) throw new Error('This pipeline has no model — add a model to run / score.')
+  // SPLIT (optional, the FIRST split): override partitions before CV. Best-effort
+  // offline — if libn4m can't compute the split (file://), keep the existing
+  // partition rather than failing the whole run.
+  if (dsl.split && SPLIT_KINDS.has(dsl.split.type)) {
+    try {
+      onP?.({ phase: 'preprocess', pct: 1, message: `splitting via ${dsl.split.type}` })
+      ds = await applySplit(ds, dsl.split)
+    } catch (e) {
+      console.warn('[split] could not compute split, keeping dataset partition:', e)
+    }
+  }
   const model0 = dsl.model
   const ncomp = Number(model0.params.n_components ?? nodeByType(model0.type)?.params.find((p) => p.name === 'n_components')?.default ?? 10)
   const Xfull: Mat = { data: ds.X, rows: ds.nSamples, cols: ds.nFeatures }

@@ -37,6 +37,27 @@ describe('session persistence', () => {
     expect(s.sampleId).toBe('nir-reg')
   })
 
+  it('round-trips a pipeline with a split node and an OPTIONAL (omitted) model', () => {
+    const pipeline = {
+      name: 'split-only',
+      split: { id: 'sp', type: 'KennardStone', params: { test_size: 0.3 } },
+      steps: [{ id: 's1', type: 'StandardNormalVariate', params: {} }],
+      // model intentionally omitted — preprocessing-only is now valid
+      cv: { folds: 5, seed: 42 },
+    } as never
+    saveSession({ pipeline, sampleId: 'fruit' })
+    const s = loadSession()
+    expect(s.pipeline).toEqual(pipeline)
+    expect((s.pipeline as { split?: { type: string } }).split?.type).toBe('KennardStone')
+    expect((s.pipeline as { model?: unknown }).model).toBeUndefined()
+  })
+
+  it('discards a pipeline whose split references an unknown split operator', () => {
+    const pipeline = { name: 'p', split: { id: 'sp', type: 'GhostSplit', params: {} }, steps: [], model: { id: 'm', type: 'PLS', params: {} }, cv: { folds: 5, seed: 42 } } as never
+    saveSession({ pipeline, sampleId: 'fruit' })
+    expect(loadSession().pipeline).toBeUndefined()
+  })
+
   it('round-trips an imported model with typed-array coefficients (lossless)', () => {
     const model = {
       name: 'M',

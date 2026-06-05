@@ -93,6 +93,12 @@ export interface PipelineStep {
 }
 export interface PipelineDSL {
   name: string;
+  /** optional train/test split operator applied BEFORE cross-validation: it
+   *  overrides the dataset's partition (its test rows are held out of CV, the
+   *  train rows feed the CV fold builder). At most one, runs before the model.
+   *  type is a split-category catalog token (KennardStone / SPXY / KMeans /
+   *  KBinsStratified). */
+  split?: PipelineStep;
   /** ordered preprocessing chain */
   steps: PipelineStep[];
   /** terminal estimator — OPTIONAL: a pipeline can be preprocessing-only

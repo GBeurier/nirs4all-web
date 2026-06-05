@@ -1,6 +1,6 @@
 import type { TaskType } from '@/engine/types'
 
-export type NodeCategory = 'preprocessing' | 'model'
+export type NodeCategory = 'preprocessing' | 'model' | 'split'
 export type ParamType = 'int' | 'float' | 'bool' | 'select' | 'operators'
 
 /** A single editable parameter value as carried by the pipeline DSL. The

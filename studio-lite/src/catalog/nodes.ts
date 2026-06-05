@@ -719,7 +719,68 @@ export const MODEL_NODES: NodeDef[] = [
   },
 ]
 
-export const ALL_NODES: NodeDef[] = [...PREPROCESSING_NODES, ...MODEL_NODES]
+// Split operators — a single train/test split applied BEFORE cross-validation,
+// overriding the dataset's partition (the FIRST split). Numerics in libn4m via
+// computeSplit → n4m_wasm_split → the n4m_split_* splitters.
+export const SPLIT_NODES: NodeDef[] = [
+  {
+    id: 'split.kennard_stone',
+    type: 'KennardStone',
+    name: 'Kennard–Stone',
+    category: 'split',
+    description: 'Kennard–Stone — deterministic train/test split that maximises X-space coverage (picks the most mutually distant spectra into the train set).',
+    icon: 'Split',
+    params: [
+      { name: 'test_size', label: 'Test fraction', type: 'float', default: 0.25, min: 0.05, max: 0.6, step: 0.05, help: 'Fraction of samples held out as the test set.' },
+    ],
+    n4m: { fit: 'n4m_split_kennard_stone_create', transform: 'n4m_split_kennard_stone_split' },
+  },
+  {
+    id: 'split.spxy',
+    type: 'SPXY',
+    name: 'SPXY',
+    category: 'split',
+    description: 'SPXY — Kennard–Stone using joint X-and-Y distance, so the split spans both spectral and reference-value space. Deterministic.',
+    icon: 'Split',
+    params: [
+      { name: 'test_size', label: 'Test fraction', type: 'float', default: 0.25, min: 0.05, max: 0.6, step: 0.05, help: 'Fraction of samples held out as the test set.' },
+    ],
+    n4m: { fit: 'n4m_split_spxy_create', transform: 'n4m_split_spxy_split' },
+  },
+  {
+    id: 'split.kmeans',
+    type: 'KMeans',
+    name: 'K-means',
+    category: 'split',
+    description: 'K-means++ clustering split — samples test rows across clusters of the X space for a representative held-out set.',
+    icon: 'Split',
+    params: [
+      { name: 'test_size', label: 'Test fraction', type: 'float', default: 0.25, min: 0.05, max: 0.6, step: 0.05, help: 'Fraction of samples held out as the test set.' },
+      { name: 'seed', label: 'Seed', type: 'int', default: 42, min: 0, max: 1e9, help: 'Random seed (k-means++ init).' },
+      { name: 'max_iter', label: 'Max iter', type: 'int', default: 100, min: 1, max: 1000 },
+    ],
+    n4m: { fit: 'n4m_split_kmeans_create', transform: 'n4m_split_kmeans_split' },
+  },
+  {
+    id: 'split.kbins_stratified',
+    type: 'KBinsStratified',
+    name: 'K-bins stratified',
+    category: 'split',
+    description: 'Stratified split on binned Y — bins the target then samples test rows proportionally from each bin, so the test set matches the target distribution.',
+    icon: 'Split',
+    params: [
+      { name: 'test_size', label: 'Test fraction', type: 'float', default: 0.25, min: 0.05, max: 0.6, step: 0.05, help: 'Fraction of samples held out as the test set.' },
+      { name: 'seed', label: 'Seed', type: 'int', default: 42, min: 0, max: 1e9 },
+      { name: 'n_bins', label: 'Bins', type: 'int', default: 5, min: 2, max: 20, help: 'Number of Y bins to stratify over.' },
+      { name: 'strategy', label: 'Bin edges', type: 'select', default: 0, options: [
+        { value: 0, label: 'uniform' }, { value: 1, label: 'quantile' },
+      ] },
+    ],
+    n4m: { fit: 'n4m_split_kbins_stratified_create', transform: 'n4m_split_kbins_stratified_split' },
+  },
+]
+
+export const ALL_NODES: NodeDef[] = [...PREPROCESSING_NODES, ...MODEL_NODES, ...SPLIT_NODES]
 
 const BY_TYPE = new Map(ALL_NODES.map((n) => [n.type, n]))
 export function nodeByType(type: string): NodeDef | undefined {

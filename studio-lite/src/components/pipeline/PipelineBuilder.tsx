@@ -104,6 +104,20 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
   const setModelFinetune = (finetune: FinetuneSpec | undefined) => update({ finetune })
   const setCv = (patch: Partial<PipelineDSL['cv']>) => update({ cv: { ...pipeline.cv, ...patch } })
 
+  // split operator (optional, at most one, applied before CV) ---------------
+  const addSplit = (type: string) => {
+    update({ split: { id: newStepId(type), type, params: defaultParams(type) } })
+    setSelected({ kind: 'split' })
+  }
+  const removeSplit = () => {
+    onChange({ ...pipeline, split: undefined })
+    if (selected.kind === 'split') setSelected({ kind: 'cv' })
+  }
+  const setSplitParam = (name: string, value: ParamValue) => {
+    if (!pipeline.split) return
+    update({ split: { ...pipeline.split, params: { ...pipeline.split.params, [name]: value } } })
+  }
+
   const totalVariants = countVariants(pipeline)
 
   const applyPreset = (preset: Preset) => {
@@ -203,6 +217,8 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
             onRemove={removeStep}
             onAddModel={addModel}
             onRemoveModel={removeModel}
+            onAddSplit={addSplit}
+            onRemoveSplit={removeSplit}
             onRun={onRun}
             onCancel={onCancel}
           />
@@ -219,6 +235,7 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
             onModelParam={setModelParam}
             onModelSweep={setModelSweep}
             onModelFinetune={setModelFinetune}
+            onSplitParam={setSplitParam}
             onCv={setCv}
           />
         </aside>

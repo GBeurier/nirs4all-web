@@ -84,9 +84,20 @@ export function normalizeImportedPipeline(value: unknown): PipelineDSL | null {
   if (!modelDef || modelDef.category !== 'model') return null
   const model: PipelineStep = { id: typeof m.id === 'string' ? m.id : newStepId(m.type), type: m.type, params: cleanParams(m.params, m.type) }
 
+  // optional split operator (a split-category catalog node); dropped if unknown.
+  let split: PipelineStep | undefined
+  if (v.split && typeof v.split === 'object' && !Array.isArray(v.split)) {
+    const sp = v.split as Record<string, unknown>
+    const sdef = typeof sp.type === 'string' ? nodeByType(sp.type) : undefined
+    if (sdef && sdef.category === 'split') {
+      split = { id: typeof sp.id === 'string' ? sp.id : newStepId(sp.type as string), type: sp.type as string, params: cleanParams(sp.params, sp.type as string) }
+    }
+  }
+
   const cvRaw = v.cv && typeof v.cv === 'object' ? (v.cv as Record<string, unknown>) : {}
   return {
     name: typeof v.name === 'string' && v.name.trim() ? v.name : 'Imported pipeline',
+    split,
     steps,
     model,
     cv: { folds: clampInt(cvRaw.folds, 2, 10, 5), seed: clampInt(cvRaw.seed, -2147483648, 2147483647, 42) },

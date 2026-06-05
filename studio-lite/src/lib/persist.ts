@@ -34,6 +34,12 @@ function validPipeline(p: unknown): PipelineDSL | undefined {
   if (dsl.model !== undefined) {
     if (typeof dsl.model.type !== 'string' || !nodeByType(dsl.model.type)) return undefined
   }
+  // split is OPTIONAL; if present it must be a known split-category catalog node.
+  if (dsl.split !== undefined) {
+    if (typeof dsl.split.type !== 'string') return undefined
+    const sdef = nodeByType(dsl.split.type)
+    if (!sdef || sdef.category !== 'split') return undefined
+  }
   return dsl
 }
 function validModel(m: unknown): LoadedModel | undefined {

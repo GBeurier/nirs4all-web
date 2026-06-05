@@ -7,6 +7,7 @@
 import { loadLibn4mBackend } from './backends'
 import { countVariants, dagMlAvailable, loadDagMl, toCompatDsl } from './dagml'
 import { materializeViaProvider } from './dagml-data'
+import { applySplit, SPLIT_KINDS } from './split'
 import type { Fold } from './kfold'
 import { testRowsOf, trainRowsOf } from './partition'
 import type { Mat } from './algo/linalg'
@@ -135,6 +136,16 @@ export class DagMlEngine implements Engine {
     } catch (e) {
       dataProvider = { layer: 'dag-ml-data', status: 'unavailable', error: e instanceof Error ? e.message : String(e) }
       console.warn('[dag-ml-data] provider unavailable, using in-memory matrices:', e)
+    }
+
+    // --- SPLIT (optional, the FIRST split): a split operator computes train/test
+    // in libn4m and OVERRIDES ds.partitions before CV. dag-ml then builds the CV
+    // fold_set over the resulting train rows; the test rows are held out of CV
+    // and scored by the refit. Runs before classInfo so the class vocab is the
+    // same regardless of split. ---
+    if (dsl.split && SPLIT_KINDS.has(dsl.split.type)) {
+      onP?.({ phase: 'preprocess', pct: 1, message: `splitting via ${dsl.split.type}` })
+      ds = await applySplit(ds, dsl.split)
     }
 
     const { classNames, classIdx } = classInfo(ds)

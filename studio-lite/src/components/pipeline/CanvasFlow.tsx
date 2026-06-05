@@ -2,13 +2,19 @@ import { useState } from 'react'
 import { Boxes, ChevronDown, Database, GitBranch, GripVertical, Play, Plus, Settings2, Square, Trash2 } from 'lucide-react'
 import type { PipelineDSL, PipelineStep, RunProgress, TaskType } from '@/engine/types'
 import { sweepVariantCount } from '@/engine/dagml'
-import { nodeByType } from '@/catalog/nodes'
+import { nodeByType, SPLIT_NODES } from '@/catalog/nodes'
 import { Button } from '@/app/components/ui/button'
 import { Progress } from '@/app/components/ui/progress'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/app/components/ui/dropdown-menu'
 import { cn } from '@/app/components/ui/utils'
 import { DND_NEW_NODE, DND_REORDER, iconByName, paramSummary, phaseLabel } from './_helpers'
 
-export type Selection = { kind: 'step'; id: string } | { kind: 'model' } | { kind: 'cv' }
+export type Selection = { kind: 'step'; id: string } | { kind: 'model' } | { kind: 'split' } | { kind: 'cv' }
 
 /** Display-only count of the variants one element contributes (dag-ml is authoritative). */
 function elementVariants(step: PipelineStep): number {
@@ -49,6 +55,8 @@ export interface CanvasFlowProps {
   onRemove: (id: string) => void
   onAddModel: () => void
   onRemoveModel: () => void
+  onAddSplit: (type: string) => void
+  onRemoveSplit: () => void
   onRun: () => void
   onCancel: () => void
 }
@@ -179,12 +187,17 @@ export function CanvasFlow({
   onRemove,
   onAddModel,
   onRemoveModel,
+  onAddSplit,
+  onRemoveSplit,
   onRun,
   onCancel,
 }: CanvasFlowProps) {
   const model = pipeline.model
   const modelDef = model ? nodeByType(model.type) : undefined
   const ModelIcon = iconByName(modelDef?.icon ?? 'Boxes')
+  const split = pipeline.split
+  const splitDef = split ? nodeByType(split.type) : undefined
+  const SplitIcon = iconByName(splitDef?.icon ?? 'Split')
 
   return (
     <div className="flex h-full flex-col">
@@ -219,6 +232,48 @@ export function CanvasFlow({
           title={datasetLabel ?? 'Dataset'}
           subtitle="input spectra"
         />
+
+        {/* optional train/test SPLIT (overrides the dataset partition, before CV) */}
+        <div className="mt-0.5"><span className="mx-auto block h-3 w-px bg-border" /></div>
+        {split ? (
+          <FlowNode
+            selected={selected.kind === 'split'}
+            accent="cyan"
+            icon={<SplitIcon className="size-4" />}
+            title={splitDef?.name ?? split.type}
+            subtitle={`train/test split · ${paramSummary(split) || 'before CV'}`}
+            badge={<span className="rounded bg-brand-cyan/10 px-1.5 py-0.5 font-mono text-[10px] text-brand-cyan">split</span>}
+            onClick={() => onSelect({ kind: 'split' })}
+            onRemove={onRemoveSplit}
+          />
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                data-add-split
+                className="flex w-full items-center gap-3 rounded-xl border border-dashed border-brand-cyan/40 bg-brand-cyan/5 px-3 py-2 text-left transition-colors hover:border-brand-cyan/70 hover:bg-brand-cyan/10"
+              >
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-cyan/10 text-brand-cyan">
+                  <Plus className="size-3.5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <span className="block text-xs font-semibold text-foreground">Add a train/test split</span>
+                  <span className="block truncate text-[10px] text-muted-foreground">optional — overrides the dataset partition before CV</span>
+                </div>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-64">
+              {SPLIT_NODES.map((s) => (
+                <DropdownMenuItem key={s.type} onSelect={() => onAddSplit(s.type)} className="flex-col items-start gap-0.5 py-2">
+                  <span className="text-sm font-medium text-foreground">{s.name}</span>
+                  <span className="text-[11px] leading-snug text-muted-foreground">{s.description}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+        <div className="mt-0.5"><span className="mx-auto block h-3 w-px bg-border" /></div>
 
         {/* preprocessing chain with insert/reorder drop zones */}
         {pipeline.steps.map((step, index) => {

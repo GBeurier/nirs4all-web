@@ -24,6 +24,7 @@ export interface InspectorProps {
   onModelParam: (name: string, value: ParamValue) => void
   onModelSweep: (param: string, sweep: ParamSweep | undefined) => void
   onModelFinetune: (finetune: FinetuneSpec | undefined) => void
+  onSplitParam: (name: string, value: ParamValue) => void
   onCv: (patch: Partial<PipelineDSL['cv']>) => void
 }
 
@@ -75,7 +76,35 @@ function InspectorShell({ icon, eyebrow, title, children }: { icon: React.ReactN
 }
 
 /** Right rail of the editor: parameters for whatever node is selected on the canvas. */
-export function Inspector({ pipeline, taskType, selected, onStepParam, onStepSweep, onStepVariants, onModelType, onModelParam, onModelSweep, onModelFinetune, onCv }: InspectorProps) {
+export function Inspector({ pipeline, taskType, selected, onStepParam, onStepSweep, onStepVariants, onModelType, onModelParam, onModelSweep, onModelFinetune, onSplitParam, onCv }: InspectorProps) {
+  if (selected.kind === 'split') {
+    const split = pipeline.split
+    const def = split ? nodeByType(split.type) : undefined
+    const Icon = iconByName(def?.icon ?? 'Split')
+    if (!split || !def) {
+      return (
+        <InspectorShell icon={<SlidersHorizontal className="size-4" />} eyebrow="Split" title="No split">
+          <p className="text-xs text-muted-foreground">Add a train/test split on the canvas to configure it.</p>
+        </InspectorShell>
+      )
+    }
+    return (
+      <InspectorShell icon={<Icon className="size-4" />} eyebrow="Train/test split" title={def.name}>
+        <p className="text-xs leading-relaxed text-muted-foreground">{def.description}</p>
+        <p className="rounded-lg border border-dashed border-brand-cyan/40 bg-brand-cyan/5 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+          This split overrides the dataset's train/test partition. Its test rows are held out of cross-validation and scored by the refit.
+        </p>
+        {def.params.length > 0 ? (
+          <div className="grid grid-cols-1 gap-3">
+            {def.params.map((p) => (
+              <ParamField key={p.name} def={p} value={split.params[p.name] ?? p.default} onChange={(v) => onSplitParam(p.name, v)} />
+            ))}
+          </div>
+        ) : null}
+      </InspectorShell>
+    )
+  }
+
   if (selected.kind === 'cv') {
     return (
       <InspectorShell icon={<Settings2 className="size-4" />} eyebrow="Validation" title="Cross-validation">
