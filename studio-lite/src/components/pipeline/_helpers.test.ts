@@ -21,9 +21,9 @@ describe('normalizeImportedPipeline', () => {
     expect(p!.steps[1].params).toHaveProperty('polyorder')
     expect(p!.model!.type).toBe('PLS')
     expect(p!.model!.params.n_components).toBe(8)
-    // cv defaults
-    expect(p!.cv.folds).toBe(5)
-    expect(p!.cv.seed).toBe(42)
+    // cv defaults (missing cv → legacy 5-fold default, back-compatible)
+    expect(p!.cv!.folds).toBe(5)
+    expect(p!.cv!.seed).toBe(42)
   })
 
   it('clamps cv folds into [2,10] and keeps a provided seed', () => {
@@ -32,8 +32,8 @@ describe('normalizeImportedPipeline', () => {
       model: { type: 'PLS' },
       cv: { folds: 99, seed: 7 },
     })
-    expect(p!.cv.folds).toBe(10)
-    expect(p!.cv.seed).toBe(7)
+    expect(p!.cv!.folds).toBe(10)
+    expect(p!.cv!.seed).toBe(7)
   })
 
   it('rejects an unknown preprocessing node type', () => {

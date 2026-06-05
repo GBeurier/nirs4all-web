@@ -73,9 +73,9 @@ describe('StubEngine', () => {
     expect(res.folds.length).toBe(5)
     // OOF covers every train sample exactly once
     const trainN = ds.partitions.filter((p) => p === 'train').length
-    expect(res.cv.predictions.length).toBe(trainN)
-    expect(new Set(res.cv.predictions.map((r) => r.sampleId)).size).toBe(trainN)
-    expect(Number.isFinite(res.cv.metrics.rmse!)).toBe(true)
+    expect(res.cv!.predictions.length).toBe(trainN)
+    expect(new Set(res.cv!.predictions.map((r) => r.sampleId)).size).toBe(trainN)
+    expect(Number.isFinite(res.cv!.metrics.rmse!)).toBe(true)
     expect(res.refit.metrics.r2!).toBeGreaterThan(0.6)
 
     // predict() on new spectra returns one value per sample

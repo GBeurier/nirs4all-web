@@ -57,6 +57,8 @@ export interface CanvasFlowProps {
   onRemoveModel: () => void
   onAddSplit: (type: string) => void
   onRemoveSplit: () => void
+  onAddCv: () => void
+  onRemoveCv: () => void
   onRun: () => void
   onCancel: () => void
 }
@@ -109,6 +111,8 @@ function FlowNode({
   onDragStart,
   onClick,
   onRemove,
+  testId,
+  removeLabel,
 }: {
   selected: boolean
   accent: 'teal' | 'indigo' | 'cyan' | 'slate'
@@ -120,6 +124,10 @@ function FlowNode({
   onDragStart?: (e: React.DragEvent) => void
   onClick?: () => void
   onRemove?: () => void
+  /** stable test hook on the node card */
+  testId?: string
+  /** aria-label for the remove button (defaults to "Remove step") */
+  removeLabel?: string
 }) {
   const ring =
     accent === 'indigo' ? 'ring-brand-indigo/50' : accent === 'cyan' ? 'ring-brand-cyan/50' : accent === 'slate' ? 'ring-border' : 'ring-brand-teal/50'
@@ -127,6 +135,7 @@ function FlowNode({
     accent === 'indigo' ? 'bg-brand-indigo/10 text-brand-indigo' : accent === 'cyan' ? 'bg-brand-cyan/10 text-brand-cyan' : accent === 'slate' ? 'bg-muted text-muted-foreground' : 'bg-brand-teal/10 text-brand-teal'
   return (
     <div
+      {...(testId ? { [`data-${testId}`]: '' } : {})}
       draggable={draggable}
       onDragStart={onDragStart}
       onClick={onClick}
@@ -164,7 +173,7 @@ function FlowNode({
             e.stopPropagation()
             onRemove()
           }}
-          aria-label="Remove step"
+          aria-label={removeLabel ?? 'Remove step'}
           title="Remove"
         >
           <Trash2 className="size-4" />
@@ -189,12 +198,15 @@ export function CanvasFlow({
   onRemoveModel,
   onAddSplit,
   onRemoveSplit,
+  onAddCv,
+  onRemoveCv,
   onRun,
   onCancel,
 }: CanvasFlowProps) {
   const model = pipeline.model
   const modelDef = model ? nodeByType(model.type) : undefined
   const ModelIcon = iconByName(modelDef?.icon ?? 'Boxes')
+  const cv = pipeline.cv
   const split = pipeline.split
   const splitDef = split ? nodeByType(split.type) : undefined
   const SplitIcon = iconByName(splitDef?.icon ?? 'Split')
@@ -272,6 +284,39 @@ export function CanvasFlow({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+        )}
+        <div className="mt-0.5"><span className="mx-auto block h-3 w-px bg-border" /></div>
+
+        {/* cross-validation (the SECOND split) — OPTIONAL, right after the
+            train/test split and BEFORE preprocessing. Absent → refit-only run. */}
+        {cv ? (
+          <FlowNode
+            selected={selected.kind === 'cv'}
+            accent="slate"
+            icon={<Settings2 className="size-4" />}
+            title="Cross-validation"
+            subtitle={`${cv.folds}-fold · seed ${cv.seed} · ${taskType}`}
+            badge={<span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground">split 2</span>}
+            onClick={() => onSelect({ kind: 'cv' })}
+            onRemove={onRemoveCv}
+            testId="cv-node"
+            removeLabel="Remove cross-validation"
+          />
+        ) : (
+          <button
+            type="button"
+            data-add-cv
+            onClick={onAddCv}
+            className="flex w-full items-center gap-3 rounded-xl border border-dashed border-border bg-muted/20 px-3 py-2 text-left transition-colors hover:border-muted-foreground/50 hover:bg-muted/40"
+          >
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+              <Plus className="size-3.5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <span className="block text-xs font-semibold text-foreground">Add cross-validation <span className="font-mono text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">· split 2</span></span>
+              <span className="block truncate text-[10px] text-muted-foreground">optional — without it the run is refit-only (train → score on test)</span>
+            </div>
+          </button>
         )}
         <div className="mt-0.5"><span className="mx-auto block h-3 w-px bg-border" /></div>
 
@@ -366,20 +411,6 @@ export function CanvasFlow({
             </div>
           </button>
         )}
-
-        {/* cross-validation node */}
-        <div className="mt-0.5">
-          <span className="mx-auto block h-3 w-px bg-border" />
-        </div>
-        <FlowNode
-          selected={selected.kind === 'cv'}
-          accent="slate"
-          icon={<Settings2 className="size-4" />}
-          title="Cross-validation"
-          subtitle={`${pipeline.cv.folds}-fold · seed ${pipeline.cv.seed} · ${taskType}`}
-          badge={<span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground">split 2</span>}
-          onClick={() => onSelect({ kind: 'cv' })}
-        />
       </div>
 
       {/* run bar */}

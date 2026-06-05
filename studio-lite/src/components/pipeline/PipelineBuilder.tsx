@@ -114,7 +114,18 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
     setSelected({ kind: 'model' })
   }
   const setModelFinetune = (finetune: FinetuneSpec | undefined) => update({ finetune })
-  const setCv = (patch: Partial<PipelineDSL['cv']>) => update({ cv: { ...pipeline.cv, ...patch } })
+
+  // cross-validation (the SECOND split) is OPTIONAL ---------------------------
+  const DEFAULT_CV = { folds: 5, seed: 42 }
+  const setCv = (patch: Partial<NonNullable<PipelineDSL['cv']>>) => update({ cv: { ...(pipeline.cv ?? DEFAULT_CV), ...patch } })
+  const addCv = () => {
+    update({ cv: pipeline.cv ?? DEFAULT_CV })
+    setSelected({ kind: 'cv' })
+  }
+  const removeCv = () => {
+    onChange({ ...pipeline, cv: undefined })
+    if (selected.kind === 'cv') setSelected({ kind: 'model' })
+  }
 
   // split operator (optional, at most one, applied before CV) ---------------
   const addSplit = (type: string) => {
@@ -171,7 +182,7 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
             aria-label="Pipeline name"
           />
           <span className="hidden rounded-full border border-border px-2.5 py-1 font-mono text-[11px] text-muted-foreground sm:inline">
-            {pipeline.steps.length} step{pipeline.steps.length === 1 ? '' : 's'} · {pipeline.cv.folds}-fold
+            {pipeline.steps.length} step{pipeline.steps.length === 1 ? '' : 's'} · {pipeline.cv ? `${pipeline.cv.folds}-fold` : 'refit-only'}
           </span>
           {totalVariants > 1 ? (
             <span
@@ -231,6 +242,8 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
             onRemoveModel={removeModel}
             onAddSplit={addSplit}
             onRemoveSplit={removeSplit}
+            onAddCv={addCv}
+            onRemoveCv={removeCv}
             onRun={onRun}
             onCancel={onCancel}
           />

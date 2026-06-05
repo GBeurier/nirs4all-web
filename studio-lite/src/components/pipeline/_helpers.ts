@@ -94,13 +94,21 @@ export function normalizeImportedPipeline(value: unknown): PipelineDSL | null {
     }
   }
 
-  const cvRaw = v.cv && typeof v.cv === 'object' ? (v.cv as Record<string, unknown>) : {}
+  // CV is OPTIONAL (FEATURE 1): present → KFold; absent → refit-only run.
+  // Back-compatible: a missing `cv` defaults to 5-fold (legacy files always had it),
+  // an explicit `cv: null`/`false` means refit-only.
+  let cv: PipelineDSL['cv']
+  if (v.cv === null || v.cv === false) cv = undefined
+  else {
+    const cvRaw = v.cv && typeof v.cv === 'object' ? (v.cv as Record<string, unknown>) : {}
+    cv = { folds: clampInt(cvRaw.folds, 2, 10, 5), seed: clampInt(cvRaw.seed, -2147483648, 2147483647, 42) }
+  }
   return {
     name: typeof v.name === 'string' && v.name.trim() ? v.name : 'Imported pipeline',
     split,
     steps,
     model,
-    cv: { folds: clampInt(cvRaw.folds, 2, 10, 5), seed: clampInt(cvRaw.seed, -2147483648, 2147483647, 42) },
+    cv,
   }
 }
 

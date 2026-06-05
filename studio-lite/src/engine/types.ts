@@ -105,7 +105,11 @@ export interface PipelineDSL {
    *  (transform preview) or split+preproc with no model. The engine refuses to
    *  score/run a no-model pipeline; the editor surfaces a clear guard. */
   model?: PipelineStep;
-  cv: { folds: number; seed: number };
+  /** cross-validation (the SECOND split, right after train/test) — OPTIONAL.
+   *  When ABSENT the run is REFIT-ONLY: the pipeline is fit on the train rows and
+   *  scored on the test partition (or train if none) with no CV / OOF / CV score
+   *  node. When present, dag-ml builds the KFold fold_set and runs FIT_CV. */
+  cv?: { folds: number; seed: number };
   /** model hyperparameter search → dag-ml model `tuning` */
   finetune?: FinetuneSpec;
   /** DSL-level cartesian/zip expansion → `generation_strategy` / `max_variants` */
@@ -166,8 +170,9 @@ export interface RunResult {
   targetName: string;
   /** model refit on all training data, scored on the held-out test partition (or train if none) */
   refit: ScoreNode;
-  /** cross-validation aggregate over folds */
-  cv: ScoreNode;
+  /** cross-validation aggregate over folds — OPTIONAL: omitted for a refit-only
+   *  run (pipeline.cv absent). When omitted, `folds` is empty too. */
+  cv?: ScoreNode;
   folds: ScoreNode[];
   seed: number;
   /** which engine produced this ('stub-js-pls' | 'dag-ml-wasm' | ...) */

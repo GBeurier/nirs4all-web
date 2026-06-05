@@ -26,7 +26,7 @@ export function downloadRunCsv(run: RunResult): void {
     for (const p of preds) rows.push([scope, p.sampleId, String(p.actual), String(p.predicted), String(p.residual)])
   }
   push('refit', run.refit.predictions)
-  push('cv', run.cv.predictions)
+  if (run.cv) push('cv', run.cv.predictions) // refit-only run has no CV predictions
   save(`${slug(run.pipelineName)}.predictions.csv`, rows.map((r) => r.join(',')).join('\n'), 'text/csv')
 }
 

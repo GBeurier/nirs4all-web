@@ -183,7 +183,7 @@ export default function App() {
       ;(window as unknown as { __n4aLastRun?: RunResult }).__n4aLastRun = result
       setRuns((r) => [result, ...r])
       setSelectedRunId(result.id)
-      setSelectedScore(result.cv)
+      setSelectedScore(result.cv ?? result.refit) // refit-only run has no CV node
       setStep('results')
     } catch (e) {
       if (token === runTokenRef.current && !(e instanceof DOMException && e.name === 'AbortError')) setError(e instanceof Error ? e.message : String(e))

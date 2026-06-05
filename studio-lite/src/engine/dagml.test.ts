@@ -121,6 +121,19 @@ describe('toCompatDsl generator DSL', () => {
     expect(out.generation_strategy).toBe('cartesian')
     expect(out.max_variants).toBe(64)
   })
+
+  it('emits a KFold split when cv is present (FEATURE 1)', () => {
+    const out = toCompatDsl(basePipeline({ cv: { folds: 4, seed: 7 } })) as { pipeline: Record<string, unknown>[] }
+    const split = out.pipeline.find((s) => 'split' in s) as { split: { type: string; n_splits: number } }
+    expect(split.split).toEqual({ type: 'KFold', n_splits: 4 })
+  })
+
+  it('omits the KFold split when cv is ABSENT — refit-only (FEATURE 1)', () => {
+    const out = toCompatDsl(basePipeline({ cv: undefined })) as Record<string, unknown>
+    const pipeline = out.pipeline as Record<string, unknown>[]
+    expect(pipeline.some((s) => 'split' in s)).toBe(false)
+    expect(out.root_seed).toBe(0)
+  })
 })
 
 describe('countVariants (display-only mirror of dag-ml enumeration)', () => {

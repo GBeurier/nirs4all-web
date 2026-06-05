@@ -61,7 +61,7 @@ export function buildN4aBundle(run: RunResult): N4aBundle {
     taskType: run.taskType,
     engine: run.engine,
     scoreMetric: run.scoreMetric,
-    metrics: { cv: run.cv.metrics, refit: run.refit.metrics },
+    metrics: { cv: run.cv?.metrics, refit: run.refit.metrics },
     model: run.model,
   }
 }

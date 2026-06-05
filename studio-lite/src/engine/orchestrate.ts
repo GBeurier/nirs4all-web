@@ -237,28 +237,33 @@ export async function runPipeline(
     if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError')
   }
 
-  onP?.({ phase: 'fit_cv', pct: 4 })
-  const folds = prebuiltFolds ?? buildFolds(ds, dsl.cv.folds, dsl.cv.seed)
+  // CV is OPTIONAL: with `dsl.cv` present, run the leakage-honest fold loop and
+  // assemble OOF; with it absent, skip CV entirely (refit-only run).
+  let cvNode: ScoreNode | undefined
   const foldNodes: ScoreNode[] = []
-  const oof: PredRow[] = []
-  for (let fi = 0; fi < folds.length; fi++) {
-    checkCancel()
-    const f = folds[fi]
-    const { transformers, Xout: XtrP } = fitChain(dsl.steps, selectRows(Xfull, f.trainIdx), backend.preproc)
-    let rows: PredRow[]
-    try {
-      const model = backend.fit(modelSpec, XtrP, buildY(f.trainIdx), safeN(XtrP))
-      const XvaP = applyTransformers(transformers, selectRows(Xfull, f.valIdx))
-      rows = decode(backend.predict(model, XvaP), f.valIdx)
-    } finally {
-      transformers.forEach((t) => t.free())
+  if (dsl.cv) {
+    onP?.({ phase: 'fit_cv', pct: 4 })
+    const folds = prebuiltFolds ?? buildFolds(ds, dsl.cv.folds, dsl.cv.seed)
+    const oof: PredRow[] = []
+    for (let fi = 0; fi < folds.length; fi++) {
+      checkCancel()
+      const f = folds[fi]
+      const { transformers, Xout: XtrP } = fitChain(dsl.steps, selectRows(Xfull, f.trainIdx), backend.preproc)
+      let rows: PredRow[]
+      try {
+        const model = backend.fit(modelSpec, XtrP, buildY(f.trainIdx), safeN(XtrP))
+        const XvaP = applyTransformers(transformers, selectRows(Xfull, f.valIdx))
+        rows = decode(backend.predict(model, XvaP), f.valIdx)
+      } finally {
+        transformers.forEach((t) => t.free())
+      }
+      oof.push(...rows)
+      foldNodes.push(scoreNode(`fold-${f.foldId}`, `Fold ${f.foldId}`, 'fold', rows, task, classNames))
+      onP?.({ phase: 'fit_cv', pct: 4 + Math.round((72 * (fi + 1)) / folds.length) })
+      await yieldToLoop()
     }
-    oof.push(...rows)
-    foldNodes.push(scoreNode(`fold-${f.foldId}`, `Fold ${f.foldId}`, 'fold', rows, task, classNames))
-    onP?.({ phase: 'fit_cv', pct: 4 + Math.round((72 * (fi + 1)) / folds.length) })
-    await yieldToLoop()
+    cvNode = scoreNode('cv', 'CV Scores', 'cv', oof, task, classNames)
   }
-  const cvNode = scoreNode('cv', 'CV Scores', 'cv', oof, task, classNames)
 
   checkCancel()
   onP?.({ phase: 'refit', pct: 82 })
@@ -293,7 +298,7 @@ export async function runPipeline(
     refit: refitNode,
     cv: cvNode,
     folds: foldNodes,
-    seed: dsl.cv.seed,
+    seed: dsl.cv?.seed ?? 0,
     engine: backend.id,
     scoreMetric,
     model: fitted,

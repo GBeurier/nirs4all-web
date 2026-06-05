@@ -25,7 +25,7 @@ export interface InspectorProps {
   onModelSweep: (param: string, sweep: ParamSweep | undefined) => void
   onModelFinetune: (finetune: FinetuneSpec | undefined) => void
   onSplitParam: (name: string, value: ParamValue) => void
-  onCv: (patch: Partial<PipelineDSL['cv']>) => void
+  onCv: (patch: Partial<NonNullable<PipelineDSL['cv']>>) => void
 }
 
 /** A numeric ParamField paired with its sweep activator (orange Repeat badge). */
@@ -106,6 +106,14 @@ export function Inspector({ pipeline, taskType, selected, onStepParam, onStepSwe
   }
 
   if (selected.kind === 'cv') {
+    const cv = pipeline.cv
+    if (!cv) {
+      return (
+        <InspectorShell icon={<Settings2 className="size-4" />} eyebrow="Validation" title="No cross-validation">
+          <p className="text-xs text-muted-foreground">This run is refit-only — the pipeline is fit on the train rows and scored on the test partition (or train if none). Add cross-validation on the canvas to estimate generalization with OOF folds.</p>
+        </InspectorShell>
+      )
+    }
     return (
       <InspectorShell icon={<Settings2 className="size-4" />} eyebrow="Validation" title="Cross-validation">
         <p className="text-xs leading-relaxed text-muted-foreground">
@@ -121,7 +129,7 @@ export function Inspector({ pipeline, taskType, selected, onStepParam, onStepSwe
               className="h-9 font-mono"
               min={2}
               max={10}
-              value={pipeline.cv.folds}
+              value={cv.folds}
               onChange={(e) => {
                 const v = Math.round(Number(e.target.value))
                 if (Number.isFinite(v)) onCv({ folds: Math.min(10, Math.max(2, v)) })
@@ -134,7 +142,7 @@ export function Inspector({ pipeline, taskType, selected, onStepParam, onStepSwe
               id="cv-seed"
               type="number"
               className="h-9 font-mono"
-              value={pipeline.cv.seed}
+              value={cv.seed}
               onChange={(e) => {
                 const v = Math.round(Number(e.target.value))
                 if (Number.isFinite(v)) onCv({ seed: v })

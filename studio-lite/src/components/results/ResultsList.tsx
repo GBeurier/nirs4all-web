@@ -151,7 +151,9 @@ function RunCard({
 }) {
   const [cvOpen, setCvOpen] = useState(false)
   const pm = primaryMetric(run.taskType)
-  const headline = run.cv.metrics[pm.key]
+  // CV is optional (refit-only run): headline + the CV score row fall back to refit.
+  const headlineNode = run.cv ?? run.refit
+  const headline = headlineNode.metrics[pm.key]
   const isSel = (node: ScoreNode) => run.id === selectedRunId && node.id === selectedScoreId
 
   return (
@@ -209,9 +211,9 @@ function RunCard({
         </DropdownMenu>
       </div>
 
-      {/* Headline CV primary metric */}
+      {/* Headline primary metric — CV when cross-validated, else the refit. */}
       <div className="mb-4 flex items-baseline gap-2 rounded-xl bg-muted/50 px-4 py-3">
-        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">CV {pm.label}</span>
+        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{run.cv ? 'CV' : 'Refit'} {pm.label}</span>
         <span className="font-mono text-2xl font-bold text-brand-teal">{fmt(headline)}</span>
         <span className="ml-auto text-xs text-muted-foreground">
           {pm.higherIsBetter ? 'higher is better' : 'lower is better'}
@@ -230,42 +232,44 @@ function RunCard({
           icon={<Target className="size-3.5" />}
         />
 
-        <Collapsible open={cvOpen} onOpenChange={setCvOpen}>
-          <ScoreRow
-            run={run}
-            node={run.cv}
-            selected={isSel(run.cv)}
-            onSelect={onSelect}
-            accent="bg-brand-teal/10 text-brand-teal"
-            icon={<Layers className="size-3.5" />}
-          >
-            <CollapsibleTrigger asChild>
-              <button
-                type="button"
-                onClick={(e) => e.stopPropagation()}
-                className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
-              >
-                {run.folds.length} folds
-                {cvOpen ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
-              </button>
-            </CollapsibleTrigger>
-          </ScoreRow>
+        {run.cv ? (
+          <Collapsible open={cvOpen} onOpenChange={setCvOpen}>
+            <ScoreRow
+              run={run}
+              node={run.cv}
+              selected={isSel(run.cv)}
+              onSelect={onSelect}
+              accent="bg-brand-teal/10 text-brand-teal"
+              icon={<Layers className="size-3.5" />}
+            >
+              <CollapsibleTrigger asChild>
+                <button
+                  type="button"
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+                >
+                  {run.folds.length} folds
+                  {cvOpen ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
+                </button>
+              </CollapsibleTrigger>
+            </ScoreRow>
 
-          <CollapsibleContent className="mt-2 space-y-2 border-l-2 border-dashed border-border pl-2">
-            {run.folds.map((fold) => (
-              <ScoreRow
-                key={fold.id}
-                run={run}
-                node={fold}
-                selected={isSel(fold)}
-                onSelect={onSelect}
-                accent="bg-brand-cyan/10 text-brand-cyan"
-                icon={<Layers className="size-3.5" />}
-                indent
-              />
-            ))}
-          </CollapsibleContent>
-        </Collapsible>
+            <CollapsibleContent className="mt-2 space-y-2 border-l-2 border-dashed border-border pl-2">
+              {run.folds.map((fold) => (
+                <ScoreRow
+                  key={fold.id}
+                  run={run}
+                  node={fold}
+                  selected={isSel(fold)}
+                  onSelect={onSelect}
+                  accent="bg-brand-cyan/10 text-brand-cyan"
+                  icon={<Layers className="size-3.5" />}
+                  indent
+                />
+              ))}
+            </CollapsibleContent>
+          </Collapsible>
+        ) : null}
       </div>
     </div>
   )

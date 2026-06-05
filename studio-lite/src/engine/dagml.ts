@@ -157,7 +157,8 @@ export function toCompatDsl(dsl: PipelineDSL): object {
       steps.push(step)
     }
   }
-  steps.push({ split: { type: 'KFold', n_splits: dsl.cv.folds } })
+  // CV is OPTIONAL: when absent the run is refit-only — emit NO KFold split_invocation.
+  if (dsl.cv) steps.push({ split: { type: 'KFold', n_splits: dsl.cv.folds } })
 
   // A model is OPTIONAL: a preprocessing-only (or split+preproc) pipeline lowers
   // to the preprocessing chain + split, with no terminal estimator step.
@@ -179,7 +180,7 @@ export function toCompatDsl(dsl: PipelineDSL): object {
   const out: Record<string, unknown> = {
     id: `n4a-lite-${dsl.name}`.replace(/[^A-Za-z0-9_.:-]+/g, '-'),
     pipeline: steps,
-    root_seed: dsl.cv.seed,
+    root_seed: dsl.cv?.seed ?? 0,
   }
   if (dsl.generation) {
     out.generation_strategy = dsl.generation.strategy

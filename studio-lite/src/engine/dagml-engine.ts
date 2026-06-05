@@ -5,7 +5,7 @@
 // The refit (full-train) model is fit directly with libn4m. Falls back to the
 // JS-orchestrated path on any error.
 import { loadLibn4mBackend } from './backends'
-import { countVariants, dagMlAvailable, loadDagMl, toCompatDsl } from './dagml'
+import { compileWithDagMl, countVariants, dagMlAvailable, loadDagMl, toCompatDsl } from './dagml'
 import { materializeViaProvider } from './dagml-data'
 import { applySplit, SPLIT_KINDS } from './split'
 import type { Fold } from './kfold'
@@ -156,9 +156,50 @@ export class DagMlEngine implements Engine {
 
     const dagml = await loadDagMl()
 
+    // --- CV is OPTIONAL: with no `pipeline.cv` the run is REFIT-ONLY. We still
+    // compile the DSL through dag-ml (lineage / "compiled by dag-ml" badge) but
+    // skip the FIT_CV fold loop, variant sweep and SELECT entirely: there is no CV
+    // to evaluate variants against. The pipeline is fit on the full train rows and
+    // scored on the held-out test partition (or train if none) via libn4m. ---
+    if (!dsl.cv) {
+      onP?.({ phase: 'refit', pct: 10 })
+      const lineage = await compileWithDagMl(dsl)
+      const trainIdx = trainRowsOf(ds)
+      const testIdx = testRowsOf(ds)
+      const scoreIdx = testIdx.length > 0 ? testIdx : trainIdx
+      const { pred: refitPred, descriptors, model } = trainAndPredict(ds, dsl, backend, trainIdx, scoreIdx)
+      const refitRows = decodeRows(ds, classNames, classIdx, refitPred, scoreIdx)
+      const refitNode = scoreNode('refit', testIdx.length > 0 ? 'Refit · test' : 'Refit · train', 'refit', refitRows, task, classNames)
+      onP?.({ phase: 'done', pct: 100 })
+      const scoreMetric: RunResult['scoreMetric'] = task === 'regression' ? 'rmse' : 'accuracy'
+      const fitted: FittedPipeline = {
+        dsl,
+        taskType: task,
+        nFeatures: ds.nFeatures,
+        classes: classNames.length ? classNames : undefined,
+        state: { chain: descriptors, model, classNames: classNames.length ? classNames : undefined, backendId: backend.id } as FittedState,
+      }
+      return {
+        id: `run-${Date.now().toString(36)}`,
+        pipelineName: dsl.name,
+        taskType: task,
+        targetName: ds.targetName,
+        refit: refitNode,
+        folds: [],
+        seed: 0,
+        engine: 'dag-ml-wasm + libn4m',
+        scoreMetric,
+        lineage: { engine: 'dag-ml-wasm', compiled: lineage.compiled, executed: false, phase: 'REFIT', version: lineage.version, dataProvider },
+        model: fitted,
+        createdAt: new Date().toISOString(),
+      }
+    }
+
     // --- dag-ml builds the CV fold_set (the SECOND split, over the train rows).
     // KFold for regression, stratified K-fold for classification — both OOF-safe
     // (each sample validated exactly once). The host no longer builds folds itself. ---
+    // `dsl.cv` is guaranteed present here (the refit-only path returned above).
+    const cv = dsl.cv
     const trainUniverse = trainRowsOf(ds)
     if (trainUniverse.length < 2) throw new Error('Cross-validation needs at least 2 training samples.')
     // dag-ml SampleId only allows [A-Za-z0-9_-.:]; studio sample ids can contain
@@ -166,9 +207,9 @@ export class DagMlEngine implements Engine {
     // (`s{row}`) and map back by index. Original ds.sampleIds stay for the UI.
     const dagId = (row: number) => `s${row}`
     const rowOfDagId = (id: string) => Number(id.slice(1))
-    const nSplits = Math.max(2, Math.min(dsl.cv.folds, trainUniverse.length))
+    const nSplits = Math.max(2, Math.min(cv.folds, trainUniverse.length))
     const trainDagIds = trainUniverse.map(dagId)
-    const splitSpec = JSON.stringify({ n_splits: nSplits, shuffle: true, seed: dsl.cv.seed })
+    const splitSpec = JSON.stringify({ n_splits: nSplits, shuffle: true, seed: cv.seed })
     const foldSet = JSON.parse(
       task !== 'regression'
         ? dagml.stratified_kfold_split_json(
@@ -189,7 +230,7 @@ export class DagMlEngine implements Engine {
     const graph = artifact.graph
     const campaign = artifact.campaign_template
     campaign.split_invocation.fold_set = foldSet
-    campaign.root_seed = dsl.cv.seed
+    campaign.root_seed = cv.seed
 
     // --- dag-ml enumerates the variant set (cartesian/zip, max_variants-capped,
     // deterministic + fingerprinted). The host never expands variants itself; we
@@ -311,7 +352,7 @@ export class DagMlEngine implements Engine {
     let nodeResults: NodeRes[]
     try {
       nodeResults = JSON.parse(
-        dagml.execute_campaign_phase_json('plan:n4a', JSON.stringify(graph), JSON.stringify(campaign), JSON.stringify(modelManifest()), 'run:n4a', dsl.cv.seed >>> 0, 'FIT_CV', invoke),
+        dagml.execute_campaign_phase_json('plan:n4a', JSON.stringify(graph), JSON.stringify(campaign), JSON.stringify(modelManifest()), 'run:n4a', cv.seed >>> 0, 'FIT_CV', invoke),
       )
     } catch (err) {
       if (signal?.aborted) throw err
@@ -414,7 +455,7 @@ export class DagMlEngine implements Engine {
       refit: refitNode,
       cv: cvNode,
       folds: foldScoreNodes,
-      seed: dsl.cv.seed,
+      seed: cv.seed,
       engine: 'dag-ml-wasm + libn4m',
       scoreMetric,
       lineage: { engine: 'dag-ml-wasm', compiled: true, executed: true, phase: multiVariant ? 'FIT_CV+SELECT' : 'FIT_CV', variantCount: variants.length, selectedVariant: winner.variant.variant_id, folds: folds.length, version: dagml.dag_ml_version(), dataProvider },

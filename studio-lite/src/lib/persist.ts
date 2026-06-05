@@ -26,7 +26,8 @@ function validPipeline(p: unknown): PipelineDSL | undefined {
   if (!p || typeof p !== 'object') return undefined
   const dsl = p as PipelineDSL
   if (!Array.isArray(dsl.steps)) return undefined
-  if (!dsl.cv || typeof dsl.cv.folds !== 'number' || typeof dsl.cv.seed !== 'number') return undefined
+  // cv is OPTIONAL (refit-only run); if present it must be well-formed.
+  if (dsl.cv !== undefined && (typeof dsl.cv.folds !== 'number' || typeof dsl.cv.seed !== 'number')) return undefined
   if (!dsl.steps.every((s) => s && typeof s.type === 'string' && nodeByType(s.type))) return undefined
   // model is OPTIONAL (preprocessing-only pipelines persist too); but if present
   // it must be a known catalog model. A malformed/unknown model is dropped to
