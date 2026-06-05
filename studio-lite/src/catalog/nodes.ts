@@ -802,7 +802,7 @@ export const DAG_NODES: NodeDef[] = [
     icon: 'GitBranch',
     params: [],
     n4m: { fit: null },
-    dag: { container: 'branch', studioNodeType: 'branch' },
+    dag: { container: 'branch', studioNodeType: 'branch.parallel' },
   },
   {
     id: 'dag.concat_transform',
@@ -815,7 +815,7 @@ export const DAG_NODES: NodeDef[] = [
     icon: 'Combine',
     params: [],
     n4m: { fit: null },
-    dag: { container: 'concat_transform', studioNodeType: 'concat_transform' },
+    dag: { container: 'concat_transform', studioNodeType: 'container.concat_transform' },
   },
   {
     id: 'dag.merge',
@@ -828,7 +828,7 @@ export const DAG_NODES: NodeDef[] = [
     icon: 'GitMerge',
     params: [],
     n4m: { fit: null },
-    dag: { container: 'merge', studioNodeType: 'merge' },
+    dag: { container: 'merge', studioNodeType: 'merge.sources' },
   },
   {
     id: 'dag.generator.or',
@@ -841,7 +841,7 @@ export const DAG_NODES: NodeDef[] = [
     icon: 'Shuffle',
     params: [],
     n4m: { fit: null },
-    dag: { container: 'generator', mode: 'or', studioNodeType: 'generator' },
+    dag: { container: 'generator', mode: 'or', studioNodeType: 'generator.or' },
   },
   {
     id: 'dag.generator.cartesian',
@@ -854,7 +854,7 @@ export const DAG_NODES: NodeDef[] = [
     icon: 'Grid3x3',
     params: [],
     n4m: { fit: null },
-    dag: { container: 'generator', mode: 'cartesian', studioNodeType: 'generator' },
+    dag: { container: 'generator', mode: 'cartesian', studioNodeType: 'generator.cartesian' },
   },
 ]
 

@@ -51,29 +51,36 @@ if (/\bOPLS\b/.test(nodesSrc) && /type:\s*'OPLS'/.test(nodesSrc)) {
   process.exit(1)
 }
 
-// --- DAG / structure operators ↔ nirs4all-studio NodeType -------------------
-// Every `dag.studioNodeType` token in the catalog must be a real NodeType in
-// nirs4all-studio's node registry, so the structural/generator operator set lines
-// up with what studio provides. Best-effort: skips if the studio repo isn't in the
-// tree (e.g. CI without the sibling checkout).
-let studioTypesSrc = ''
+// --- DAG / structure operators ↔ nirs4all-studio canonical registry ---------
+// Every `dag.studioNodeType` token in the catalog must be a real flow/utility
+// node id in nirs4all-studio's CANONICAL registry (the generated
+// node-reference.json — e.g. branch.parallel, merge.sources,
+// container.concat_transform, generator.or), so the structural/generator
+// operator set lines up with what studio actually provides. Best-effort: skips
+// if the studio repo isn't in the tree (e.g. CI without the sibling checkout).
+const referenced = [...new Set([...nodesSrc.matchAll(/studioNodeType:\s*'([a-z_.]+)'/g)].map((x) => x[1]))]
+let studioFlowIds = null
 try {
-  studioTypesSrc = readFileSync(join(root, '../../nirs4all-studio/src/data/nodes/types.ts'), 'utf8')
+  const reg = JSON.parse(readFileSync(join(root, '../../nirs4all-studio/src/data/nodes/generated/node-reference.json'), 'utf8'))
+  const nodes = Array.isArray(reg) ? reg : (reg.nodes ?? Object.values(reg.definitions ?? reg))
+  studioFlowIds = new Set(
+    (Array.isArray(nodes) ? nodes : Object.values(nodes))
+      .filter((n) => n && (n.type === 'flow' || n.type === 'utility'))
+      .map((n) => n.id ?? n.name),
+  )
 } catch {
-  /* optional */
+  /* optional — canonical registry absent */
 }
-if (studioTypesSrc) {
-  const m = studioTypesSrc.match(/export type NodeType\s*=\s*([\s\S]*?);/)
-  const studioNodeTypes = new Set(m ? [...m[1].matchAll(/"([a-z_]+)"/g)].map((x) => x[1]) : [])
-  const referenced = [...new Set([...nodesSrc.matchAll(/studioNodeType:\s*'([a-z_]+)'/g)].map((x) => x[1]))]
-  const badStudio = referenced.filter((t) => !studioNodeTypes.has(t))
-  if (studioNodeTypes.size && badStudio.length) {
-    console.error('✗ DAG operators reference NodeType(s) NOT in nirs4all-studio:\n  - ' + badStudio.join('\n  - '))
+if (studioFlowIds && studioFlowIds.size) {
+  const badStudio = referenced.filter((t) => !studioFlowIds.has(t))
+  if (badStudio.length) {
+    console.error('✗ DAG operators reference id(s) NOT in nirs4all-studio’s canonical flow registry:\n  - ' + badStudio.join('\n  - '))
+    console.error('  (canonical flow ids: ' + [...studioFlowIds].sort().join(', ') + ')')
     process.exit(1)
   }
-  console.log(`✓ DAG operators ↔ nirs4all-studio NodeType in sync (${referenced.length} structural ops checked: ${referenced.join(', ')}).`)
+  console.log(`✓ DAG operators ↔ nirs4all-studio canonical registry in sync (${referenced.length} ops: ${referenced.join(', ')}).`)
 } else {
-  console.warn('⚠ catalog validator: nirs4all-studio NodeType not found — skipping DAG NodeType check.')
+  console.warn('⚠ catalog validator: nirs4all-studio canonical registry not found — skipping DAG flow-id check.')
 }
 
 console.log('✓ catalog ↔ ABI in sync.')

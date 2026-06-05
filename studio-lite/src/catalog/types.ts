@@ -68,14 +68,16 @@ export interface NodeDef {
    *  them is redundant; the UI surfaces this so users don't duplicate work. */
   autonomous?: boolean
   /** for `dag`-category structural operators: the container kind + generator mode
-   *  it creates, and the studio-lite/nirs4all-studio NodeType it corresponds to.
-   *  Validated against nirs4all-studio's NodeType union by scripts/validate-catalog. */
+   *  it creates, and the nirs4all-studio CANONICAL flow node id it corresponds to
+   *  (e.g. branch.parallel, merge.sources, container.concat_transform,
+   *  generator.or). Validated against the studio's generated canonical registry
+   *  (src/data/nodes/generated/node-reference.json) by scripts/validate-catalog. */
   dag?: {
     /** the ContainerNode.container token this operator builds */
     container: 'branch' | 'concat_transform' | 'merge' | 'generator'
     /** generator mode (only for container 'generator') */
     mode?: 'or' | 'cartesian'
-    /** the nirs4all-studio NodeType this maps to (the validation key) */
+    /** the nirs4all-studio canonical flow node id this maps to (validation key) */
     studioNodeType: string
   }
 }
