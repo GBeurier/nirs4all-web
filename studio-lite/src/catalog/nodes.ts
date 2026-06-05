@@ -425,6 +425,22 @@ export const MODEL_NODES: NodeDef[] = [
     n4m: { fit: 'n4m_pls_lda_fit', predict: 'n4m_wasm_pls_predict_from_coeffs' },
   },
 
+  {
+    id: 'models.pls.aom_pls',
+    type: 'AOMPLS',
+    name: 'AOM-PLS',
+    category: 'model',
+    description:
+      'Operator-adaptive PLS — screens a bank of preprocessing operators (identity, detrend, SG smooth/derivative, finite-difference) by internal CV and fits SIMPLS on the winner, returning input-space coefficients. Screens preprocessing internally, so use it WITHOUT preceding preprocessing steps.',
+    icon: 'Wand2',
+    task: 'regression',
+    params: [
+      { name: 'n_components', label: 'Max components', type: 'int', default: 10, min: 1, max: 40, help: 'Max latent variables for the internal SIMPLS fits.' },
+      { name: 'screen_folds', label: 'Screen CV folds', type: 'int', default: 5, min: 2, max: 10, help: 'Internal-CV fold count for the operator screen.' },
+    ],
+    n4m: { fit: 'n4m_aom_global_select', predict: 'n4m_wasm_model_predict_from_coeffs' },
+  },
+
   // ---- Tier A: algorithm-enum family (via n4m_wasm_model_fit) -------------
   {
     id: 'models.pls.pcr',

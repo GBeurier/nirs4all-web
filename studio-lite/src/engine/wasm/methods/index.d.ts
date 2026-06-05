@@ -1,7 +1,7 @@
 export { loadModule, getModule, makeMatrixView, readArrayView } from "./ffi.js";
 export { Context } from "./context.js";
 export { Config } from "./config.js";
-export { Model, fitPls, predictPls, fitModel, predictModel, type PlsModel, type FittedModel } from "./model.js";
+export { Model, fitPls, predictPls, fitModel, predictModel, fitAom, type PlsModel, type FittedModel, type AomModel } from "./model.js";
 export { ppCreate, ppFit, ppTransform, ppGetState, ppSetState, ppDestroy, type PpOperator, } from "./preprocessing.js";
 export { MethodResult } from "./methodResult.js";
 export { Status, Dtype, Algorithm, Solver, Deflation, Pls4allError, type Matrix, } from "./types.js";

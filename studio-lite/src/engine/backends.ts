@@ -44,6 +44,14 @@ export async function loadLibn4mBackend(): Promise<ModelBackend> {
         const m = n4m.fitPls(Xm, Ym, nComp)
         return { coefficients: m.coefficients, xMean: m.xMean, yMean: m.yMean, intercept: null, n_features: m.n_features, n_targets: m.n_targets }
       }
+      // AOM-PLS screens preprocessing internally and returns input-space coeffs +
+      // a genuine intercept (zero means), so it predicts on RAW X via predictModel's
+      // explicit-intercept path. selectedOperator/score ride along on the model blob
+      // (serialized in lineage) for display only.
+      if (spec.type === 'AOMPLS') {
+        const folds = Math.max(2, Math.round(Number(spec.params.screen_folds ?? 5)))
+        return n4m.fitAom(Xm, Ym, nComp, folds)
+      }
       return n4m.fitModel(spec.type, Xm, Ym, nComp, modelParamVector(spec.type, spec.params))
     },
     predict: (model, X) => {
