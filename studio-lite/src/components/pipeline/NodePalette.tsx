@@ -1,22 +1,28 @@
 import { useMemo, useState } from 'react'
 import { Plus, Search } from 'lucide-react'
-import { PREPROCESSING_NODES } from '@/catalog/nodes'
+import { modelsForTask, PREPROCESSING_NODES, SPLIT_NODES } from '@/catalog/nodes'
 import type { NodeDef } from '@/catalog/types'
+import type { TaskType } from '@/engine/types'
 import { Input } from '@/app/components/ui/input'
 import { cn } from '@/app/components/ui/utils'
 import { DND_NEW_NODE, iconByName } from './_helpers'
 
 export interface NodePaletteProps {
   onAdd: (type: string) => void
+  taskType: TaskType
 }
 
 /**
- * Left rail of the editor: the catalog of preprocessing operators, searchable
- * and draggable onto the canvas (or click-to-append). Mirrors studio's
- * StepPalette in spirit, scoped to the exported nirs4all-methods nodes.
+ * Left rail of the editor: the FULL operator catalog — preprocessing, train/test
+ * split operators, and the models valid for the active task — searchable and
+ * draggable onto the canvas (or click-to-add). The builder routes each add by the
+ * node's category (preprocessing → chain step, split → split node, model → model).
  */
-export function NodePalette({ onAdd }: NodePaletteProps) {
+export function NodePalette({ onAdd, taskType }: NodePaletteProps) {
   const [q, setQ] = useState('')
+
+  const models = useMemo(() => modelsForTask(taskType), [taskType])
+  const total = PREPROCESSING_NODES.length + SPLIT_NODES.length + models.length
 
   const groups = useMemo(() => {
     const query = q.trim().toLowerCase()
@@ -24,17 +30,21 @@ export function NodePalette({ onAdd }: NodePaletteProps) {
       !query ||
       n.name.toLowerCase().includes(query) ||
       n.subcategory?.toLowerCase().includes(query) ||
+      n.category.toLowerCase().includes(query) ||
       n.description.toLowerCase().includes(query)
     const byCat = new Map<string, NodeDef[]>()
-    for (const n of PREPROCESSING_NODES) {
-      if (!match(n)) continue
-      const key = n.subcategory ?? 'other'
+    const push = (key: string, n: NodeDef) => {
+      if (!match(n)) return
       const arr = byCat.get(key) ?? []
       arr.push(n)
       byCat.set(key, arr)
     }
+    // preprocessing grouped by subcategory, then split operators, then models
+    for (const n of PREPROCESSING_NODES) push(n.subcategory ?? 'preprocessing', n)
+    for (const n of SPLIT_NODES) push('split', n)
+    for (const n of models) push('model', n)
     return [...byCat.entries()]
-  }, [q])
+  }, [q, models])
 
   return (
     <div className="flex h-full flex-col gap-3">
@@ -42,7 +52,7 @@ export function NodePalette({ onAdd }: NodePaletteProps) {
         <div className="flex items-center gap-2">
           <span className="font-display text-sm font-semibold text-foreground">Operators</span>
           <span className="rounded-full bg-brand-teal/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-brand-teal">
-            {PREPROCESSING_NODES.length}
+            {total}
           </span>
         </div>
         <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">Drag onto the pipeline, or click to add.</p>

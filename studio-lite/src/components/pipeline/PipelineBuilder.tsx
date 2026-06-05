@@ -5,7 +5,7 @@ import type { Preset, ParamValue } from '@/catalog/types'
 import type { FinetuneSpec, ParamSweep, PipelineDSL, PipelineStep, StepVariant } from '@/engine/types'
 import { countVariants } from '@/engine/dagml'
 import { PRESETS } from '@/catalog/presets'
-import { defaultParams, modelsForTask } from '@/catalog/nodes'
+import { defaultParams, modelsForTask, nodeByType } from '@/catalog/nodes'
 import { downloadPipeline } from '@/lib/download'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
@@ -35,7 +35,19 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
   const update = (patch: Partial<PipelineDSL>) => onChange({ ...pipeline, ...patch })
   const setSteps = (steps: PipelineStep[]) => update({ steps })
 
-  const addStep = (type: string) => insertStep(type, pipeline.steps.length)
+  // The palette/canvas surface ALL operators; route each add by its catalog
+  // category — preprocessing → chain step, split → split node, model → model slot.
+  const addOperator = (type: string, index?: number) => {
+    const cat = nodeByType(type)?.category
+    if (cat === 'model') {
+      update({ model: { id: newStepId(type), type, params: defaultParams(type) } })
+      setSelected({ kind: 'model' })
+    } else if (cat === 'split') {
+      addSplit(type)
+    } else {
+      insertStep(type, index ?? pipeline.steps.length)
+    }
+  }
 
   const insertStep = (type: string, index: number) => {
     const step: PipelineStep = { id: newStepId(type), type, params: defaultParams(type) }
@@ -202,7 +214,7 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
       {/* three-pane editor */}
       <div className="grid min-h-[30rem] flex-1 gap-4 lg:grid-cols-[15rem_minmax(0,1fr)_19rem]">
         <aside className="hidden rounded-2xl border border-border bg-card/70 p-3 lg:block">
-          <NodePalette onAdd={addStep} />
+          <NodePalette onAdd={addOperator} taskType={taskType} />
         </aside>
         <section className="rounded-2xl border border-border bg-card/70 p-4">
           <CanvasFlow
@@ -212,7 +224,7 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
             running={running}
             progress={progress}
             onSelect={setSelected}
-            onInsert={insertStep}
+            onInsert={addOperator}
             onMove={moveStep}
             onRemove={removeStep}
             onAddModel={addModel}
@@ -244,7 +256,7 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
       {/* mobile palette fallback (left palette is hidden on small screens) */}
       <div className="lg:hidden">
         <div className="rounded-2xl border border-border bg-card/70 p-3">
-          <NodePalette onAdd={addStep} />
+          <NodePalette onAdd={addOperator} taskType={taskType} />
         </div>
       </div>
     </div>
