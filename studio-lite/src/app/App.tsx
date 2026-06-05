@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Cpu,
   Database,
@@ -18,6 +18,7 @@ import { engine } from '@/engine/client'
 import { type DatasetSummary, reencodeTarget, summarize } from '@/data/dataset'
 import { loadSampleDataset, type SampleId } from '@/data/samples'
 import { type LoadedModel, parseN4a } from '@/lib/n4a'
+import { loadSession, saveSession } from '@/lib/persist'
 import { cn } from '@/app/components/ui/utils'
 import type { Analysis } from '@/data/wasm-io'
 import type { DagMlLineage } from '@/engine/dagml'
@@ -36,7 +37,9 @@ const STEPS: { id: StepId; label: string; hint: string; icon: typeof Upload }[] 
 export default function App() {
   const [dataset, setDataset] = useState<MaterializedDataset | null>(null)
   const [summary, setSummary] = useState<DatasetSummary | null>(null)
-  const [pipeline, setPipeline] = useState<PipelineDSL>(() => defaultPipeline('regression'))
+  // session restore: the user's edited pipeline + an imported model survive reload
+  const [pipeline, setPipeline] = useState<PipelineDSL>(() => loadSession().pipeline ?? defaultPipeline('regression'))
+  const [sampleId, setSampleId] = useState<SampleId | null>(null)
   const [runs, setRuns] = useState<RunResult[]>([])
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null)
   const [selectedScore, setSelectedScore] = useState<ScoreNode | null>(null)
@@ -46,17 +49,17 @@ export default function App() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
-  const [loadedModel, setLoadedModel] = useState<LoadedModel | null>(null)
+  const [loadedModel, setLoadedModel] = useState<LoadedModel | null>(() => loadSession().model ?? null)
   const [step, setStep] = useState<StepId>('dataset')
   const abortRef = useRef<AbortController | null>(null)
   const runTokenRef = useRef(0)
 
-  const adoptDataset = useCallback((ds: MaterializedDataset) => {
+  const adoptDataset = useCallback((ds: MaterializedDataset, opts?: { keepPipeline?: boolean }) => {
     abortRef.current?.abort()
     runTokenRef.current++
     setDataset(ds)
     setSummary(summarize(ds))
-    setPipeline(defaultPipeline(ds.taskType))
+    if (!opts?.keepPipeline) setPipeline(defaultPipeline(ds.taskType)) // keep a restored pipeline on session reload
     setRuns([])
     setSelectedRunId(null)
     setSelectedScore(null)
@@ -67,6 +70,7 @@ export default function App() {
   const onDataset = useCallback(
     (ds: MaterializedDataset, _name: string, a?: Analysis) => {
       adoptDataset(ds)
+      setSampleId(null) // an uploaded dataset isn't a restorable bundled sample
       setAnalysis(a ?? null)
     },
     [adoptDataset],
@@ -78,6 +82,7 @@ export default function App() {
       setError(null)
       try {
         adoptDataset(await loadSampleDataset(sample))
+        setSampleId(sample ?? 'fruit') // remember which bundled sample, for session restore
         setAnalysis(null)
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e))
@@ -87,6 +92,30 @@ export default function App() {
     },
     [adoptDataset],
   )
+
+  // Restore a previous session's bundled sample (once, on mount), keeping the
+  // restored pipeline rather than resetting it to the task default.
+  const didRestore = useRef(false)
+  useEffect(() => {
+    if (didRestore.current) return
+    didRestore.current = true
+    const sid = loadSession().sampleId
+    if (!sid) return
+    setBusy(true)
+    loadSampleDataset(sid)
+      .then((ds) => {
+        adoptDataset(ds, { keepPipeline: true })
+        setSampleId(sid)
+        setStep('pipeline') // land on the editor where the restored pipeline lives
+      })
+      .catch(() => {/* sample unavailable — start fresh */})
+      .finally(() => setBusy(false))
+  }, [adoptDataset])
+
+  // Persist the session (pipeline + imported model + active bundled sample).
+  useEffect(() => {
+    saveSession({ pipeline, model: loadedModel, sampleId })
+  }, [pipeline, loadedModel, sampleId])
 
   const onImportModel = useCallback(async (file: File) => {
     setError(null)
