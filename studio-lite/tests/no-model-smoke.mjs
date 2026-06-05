@@ -38,7 +38,9 @@ try {
   else fail('expected a Run button before removing the model')
 
   // hover the terminal model node and remove it via its trash affordance.
-  const modelNode = page.getByRole('button', { name: /PLS Regression/ }).first()
+  // NB: the palette now also lists "PLS Regression" (models are browsable), so
+  // target the CANVAS node — the one that actually has a "Remove step" child.
+  const modelNode = page.getByRole('button', { name: /PLS Regression/ }).filter({ has: page.getByRole('button', { name: 'Remove step' }) }).first()
   await modelNode.hover()
   await page.waitForTimeout(150)
   await modelNode.getByRole('button', { name: 'Remove step' }).click()
