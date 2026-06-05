@@ -4,7 +4,7 @@
 // and its SequentialScheduler runs FIT_CV in-browser (see dagml-engine.ts), invoking
 // a JS controller that runs the numerics via libn4m. This module is the lighter
 // compile/validate entry (used for the badge + as a fallback probe).
-import type { FinetuneParam, ParamSweep, PipelineDSL, PipelineStep, StepVariant } from './types'
+import type { ContainerNode, FinetuneParam, ParamSweep, PipelineDSL, PipelineStep, StepVariant } from './types'
 
 export interface DagMlLineage {
   engine: 'dag-ml-wasm'
@@ -156,26 +156,114 @@ function compatStepEntry(s: PipelineStep): unknown {
   return step
 }
 
+/** Migrate the legacy single inline `branch` block (v1) to a `branch` ContainerNode,
+ *  and concatenate it with any explicit `containers`. The editor only writes
+ *  `containers`; this keeps old .n4a / persisted sessions runnable. */
+export function effectiveContainers(dsl: PipelineDSL): ContainerNode[] {
+  const out: ContainerNode[] = []
+  if (dsl.branch && dsl.branch.branches.length >= 2) {
+    out.push({ id: 'legacy-branch', container: 'branch', branches: dsl.branch.branches })
+  }
+  if (dsl.containers) out.push(...dsl.containers)
+  return out
+}
+
+/** The single OR-generator container in a pipeline, if exactly one runnable one is
+ *  present (≥2 alternatives). v1 executes ONE generator-OR per pipeline. */
+export function activeOrGenerator(dsl: PipelineDSL): ContainerNode | undefined {
+  const gens = effectiveContainers(dsl).filter((c) => c.container === 'generator' && c.mode !== 'cartesian' && c.branches.length >= 2)
+  return gens.length === 1 ? gens[0] : undefined
+}
+
+/** True when the pipeline contains a generator the host can't yet execute
+ *  (a Cartesian generator, or >1 OR generator). The engine surfaces a clear guard. */
+export function hasUnsupportedGenerator(dsl: PipelineDSL): boolean {
+  const gens = effectiveContainers(dsl).filter((c) => c.container === 'generator' && c.branches.length >= 2)
+  const cartesian = gens.some((c) => c.mode === 'cartesian')
+  const ors = gens.filter((c) => c.mode !== 'cartesian')
+  return cartesian || ors.length > 1
+}
+
+/** Expand a generator-OR container into one effective PipelineDSL per alternative.
+ *  Each alternative's sub-chain is appended to the main `steps` (an alternative
+ *  preprocessing path before the shared model), the generator container is dropped,
+ *  and all OTHER containers (fusion branches) are preserved. The engine runs the
+ *  EXISTING leakage-safe CV-per-variant loop over these and dag-ml selects the best.
+ *  Returns a single-element list (the pipeline itself) when there's no runnable
+ *  generator. */
+export function expandGeneratorVariants(dsl: PipelineDSL): { label: string; dsl: PipelineDSL }[] {
+  const gen = activeOrGenerator(dsl)
+  if (!gen) return [{ label: 'base', dsl }]
+  const others = (dsl.containers ?? []).filter((c) => c.id !== gen.id)
+  // also fold a migrated legacy branch back in (it lives outside `containers`)
+  const keepLegacyBranch = dsl.branch
+  return gen.branches.map((b, i) => {
+    const altSteps = b.steps.map((s) => ({ ...s, params: { ...s.params } }))
+    const label = b.steps.length ? b.steps.map((s) => s.type).join('+') : `option ${i + 1}`
+    return {
+      label,
+      dsl: { ...dsl, steps: [...dsl.steps, ...altSteps], containers: others.length ? others : undefined, branch: keepLegacyBranch },
+    }
+  })
+}
+
+/** Lower ONE feature-fusion container (branch | concat_transform | merge) to the
+ *  nirs4all-compat `concat_transform` step. dag-ml's lower_concat_transform_step
+ *  (dsl.rs:1742) lowers the object form `{ concat_transform: { <id>: [steps...] } }`
+ *  to a PipelineDslConcatTransformStep { branches:[PipelineDslConcatBranch{id,steps}] }
+ *  (dsl.rs:379-403) — a column-wise feature merge feeding the model. branch/merge
+ *  in duplication mode are the SAME executable feature fusion, so all three emit
+ *  the canonical concat_transform that compiles + runs identically. */
+function compatFusionStep(c: ContainerNode): unknown {
+  const concat: Record<string, unknown[]> = {}
+  // concat tolerates empty lanes; the branch ids carry into dag-ml's graph/lineage.
+  c.branches.forEach((b, i) => {
+    concat[b.id || `branch${i}`] = b.steps.map(compatStepEntry)
+  })
+  return { concat_transform: concat }
+}
+
+/** Lower an OR generator container (alternatives → one variant each) to the
+ *  nirs4all-compat `_or_` step. dag-ml's lower_or_generator (dsl.rs:1837) lowers
+ *  `{ _or_: [ <subpipeline>, ... ] }` to a PipelineDslGeneratorStep { mode:Or,
+ *  branches:[PipelineDslBranch{id,steps}] } (dsl.rs:1860). Each alternative is a
+ *  preprocessing sub-chain tried before the shared model; the host expands these
+ *  into per-variant effective DSLs (generatorVariants) for FIT_CV + selection. */
+function compatOrStep(c: ContainerNode): unknown {
+  return { _or_: c.branches.map((b) => b.steps.map(compatStepEntry)) }
+}
+
+/** Lower a Cartesian generator container (axes → cross-product) to the
+ *  nirs4all-compat `_cartesian_` step. dag-ml's lower_cartesian_generator
+ *  (dsl.rs:1874) lowers `{ _cartesian_: [ {_or_:[...]}, ... ] }` to a
+ *  PipelineDslGeneratorStep { mode:Cartesian, stages:[...] } (dsl.rs:1892). Each
+ *  branch of the container is one AXIS holding alternatives; we wrap each axis as
+ *  an `_or_` stage. (Single-alternative axes are still valid stages.) */
+function compatCartesianStep(c: ContainerNode): unknown {
+  return { _cartesian_: c.branches.map((b) => ({ _or_: [b.steps.map(compatStepEntry)] })) }
+}
+
+/** Lower one container to its nirs4all-compat pipeline entry. */
+export function compatContainerEntry(c: ContainerNode): unknown {
+  if (c.container === 'generator') {
+    return c.mode === 'cartesian' ? compatCartesianStep(c) : compatOrStep(c)
+  }
+  // branch | concat_transform | merge all fuse features column-wise
+  return compatFusionStep(c)
+}
+
 export function toCompatDsl(dsl: PipelineDSL): object {
   const steps: unknown[] = [{ sources: ['x'] }]
   for (const s of dsl.steps) steps.push(compatStepEntry(s))
 
-  // DAG feature-union (FEATURE 2): one optional branch block of ≥2 parallel
-  // preprocessing sub-chains, the input duplicated into each, the outputs
-  // concatenated column-wise into the model's X. We emit it as the nirs4all-compat
-  // `concat_transform` step — dag-ml's lower_concat_transform_step (dsl.rs:1742)
-  // lowers the object form `{ concat_transform: { <branchId>: [steps...] } }` to a
-  // PipelineDslConcatTransformStep { id, branches:[PipelineDslConcatBranch{id,steps}] }
-  // (dsl.rs:379-403), which compiles to a column-wise feature merge feeding the
-  // model. This is the duplication-mode feature fusion the editor builds; the
-  // branch ids carry into dag-ml's graph/lineage. Empty branches are skipped.
-  if (dsl.branch && dsl.branch.branches.length >= 2) {
-    const concat: Record<string, unknown[]> = {}
-    for (const b of dsl.branch.branches) {
-      // each branch is its own (possibly empty) compat sub-chain
-      concat[b.id] = b.steps.map(compatStepEntry)
-    }
-    steps.push({ concat_transform: concat })
+  // DAG containers (the recursive structural tree): each container lowers to its
+  // dag-ml step — branch/concat_transform/merge → a column-wise feature fusion
+  // (nirs4all-compat concat_transform); generator OR/Cartesian → a `_or_`/
+  // `_cartesian_` generator. Containers with <2 branches are skipped (nothing to
+  // fuse / no alternatives). Containers carry into dag-ml's graph/lineage.
+  for (const c of effectiveContainers(dsl)) {
+    if (c.branches.length < 2) continue
+    steps.push(compatContainerEntry(c))
   }
 
   // CV is OPTIONAL: when absent the run is refit-only — emit NO KFold split_invocation.
@@ -234,10 +322,25 @@ function stepDimensions(step: PipelineStep): number[] {
   return dims
 }
 
+/** Number of variants ONE generator container contributes. OR/Cartesian both
+ *  enumerate one variant per branch (each branch is an alternative sub-pipeline);
+ *  dag-ml is authoritative for the real cartesian product across stages. Fusion
+ *  containers (branch/concat/merge) contribute no variants (one fused matrix). */
+export function containerVariants(c: ContainerNode): number {
+  if (c.container !== 'generator') return 1
+  return Math.max(1, c.branches.length)
+}
+
 export function countVariants(dsl: PipelineDSL): number {
   const dims: number[] = []
   for (const s of dsl.steps) dims.push(...stepDimensions(s))
   if (dsl.model) dims.push(...stepDimensions(dsl.model))
+  // generator containers each add a cartesian dimension equal to their variant
+  // count (OR = #alternatives). Fusion containers add nothing.
+  for (const c of effectiveContainers(dsl)) {
+    const n = containerVariants(c)
+    if (n > 1) dims.push(n)
+  }
   // finetune contributes one cartesian dimension per LOWERABLE param (the real
   // grid dag-ml expands), NOT n_trials — params that can't be lowered to a finite
   // grid are dropped so the count never overstates what dag-ml actually sweeps.

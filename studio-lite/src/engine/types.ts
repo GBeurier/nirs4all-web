@@ -91,20 +91,61 @@ export interface PipelineStep {
   /** labelled alternatives → dag-ml per-step `variants` */
   variants?: StepVariant[];
 }
-/** A single branch of a feature-union: an id + its own preprocessing sub-chain.
+
+// ---------------------------------------------------------------------------
+// DAG containers (a FOLDABLE recursive step tree) — the structural / generator
+// operator set, matching nirs4all-studio's NodeType (branch | concat_transform |
+// merge | generator) and dag-ml's PipelineDslStep variants. A container holds
+// nested sub-pipelines (`branches`) and renders as a collapsible, indented tree
+// node in the editor (not inline lanes). Each maps to a runnable dag-ml step:
+//   - 'branch'   (mode duplication)  → input duplicated into each branch, the
+//                                       branch outputs concatenated column-wise.
+//   - 'concat_transform'             → the canonical column-wise feature fusion
+//                                       (dag-ml ConcatTransform).
+//   - 'merge'    (output_as features)→ explicit combine of the branch outputs
+//                                       into one feature matrix (dag-ml Merge).
+//   - 'generator'(or | cartesian)    → variant expansion over the contained
+//                                       sub-pipelines / param axes (dag-ml
+//                                       Generator); reuses the existing variant
+//                                       machinery.
+// ---------------------------------------------------------------------------
+/** The structural container kinds — 1:1 with nirs4all-studio NodeType tokens. */
+export type ContainerType = 'branch' | 'concat_transform' | 'merge' | 'generator';
+/** dag-ml PipelineDslGeneratorMode (Or | Cartesian) — only for generator containers. */
+export type GeneratorMode = 'or' | 'cartesian';
+/** dag-ml PipelineDslMergeOutput — what a merge container emits. */
+export type MergeOutput = 'features' | 'predictions';
+
+/** A single branch of a container: an id + its own preprocessing sub-chain.
  *  Maps to dag-ml's PipelineDslConcatBranch / PipelineDslBranch (id + steps). */
 export interface PipelineBranch {
   id: string;
+  /** a (possibly empty) preprocessing sub-chain; the recursive step tree lives here */
   steps: PipelineStep[];
 }
-/** ONE optional feature-union block applied to the input BEFORE the model: the
- *  input is duplicated into each branch (dag-ml BranchMode `duplication`), each
- *  branch runs its own preprocessing sub-chain, and the branch outputs are
- *  concatenated column-wise into one feature matrix that feeds the model
- *  (classic NIRS multi-preprocessing fusion). v1 is a single, non-nested block. */
+
+/** ONE structural container node in the recursive pipeline tree. It is applied
+ *  to the (preprocessed) input AFTER `steps` and BEFORE the model; its branches
+ *  are nested sub-pipelines the foldable tree expands/collapses. */
+export interface ContainerNode {
+  id: string;
+  /** which structural operator this is (validated against the catalog `dag` bucket) */
+  container: ContainerType;
+  /** parallel sub-pipelines (≥2 for branch/concat/merge; ≥2 alternatives for an OR generator) */
+  branches: PipelineBranch[];
+  /** generator only: OR (one-of per variant) vs CARTESIAN (cross-product of axes) */
+  mode?: GeneratorMode;
+  /** merge only: combine branch outputs as feature concat (default) or predictions */
+  output?: MergeOutput;
+}
+
+/** v1 back-compat shim: the old single inline feature-union block (one branch
+ *  array). normalizeImportedPipeline / loadSession migrate it to a `branch`
+ *  ContainerNode so old .n4a / persisted sessions still restore. */
 export interface BranchBlock {
   branches: PipelineBranch[];
 }
+
 export interface PipelineDSL {
   name: string;
   /** optional train/test split operator applied BEFORE cross-validation: it
@@ -115,8 +156,12 @@ export interface PipelineDSL {
   split?: PipelineStep;
   /** ordered preprocessing chain */
   steps: PipelineStep[];
-  /** optional feature-union block (≥2 parallel preprocessing branches concatenated
-   *  column-wise) applied AFTER `steps` and BEFORE the model. At most one for v1. */
+  /** optional recursive DAG container tree (branch / concat_transform / merge /
+   *  generator), applied AFTER `steps` and BEFORE the model. Each container holds
+   *  nested sub-pipelines and renders as a foldable tree node. */
+  containers?: ContainerNode[];
+  /** DEPRECATED — the old single inline feature-union block. Read on restore and
+   *  migrated to `containers`; never written by the editor. */
   branch?: BranchBlock;
   /** terminal estimator — OPTIONAL: a pipeline can be preprocessing-only
    *  (transform preview) or split+preproc with no model. The engine refuses to

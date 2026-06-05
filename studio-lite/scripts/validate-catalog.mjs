@@ -50,4 +50,30 @@ if (/\bOPLS\b/.test(nodesSrc) && /type:\s*'OPLS'/.test(nodesSrc)) {
   console.error('✗ OPLS is advertised but not exported in the ABI — remove it from the v1 catalog.')
   process.exit(1)
 }
+
+// --- DAG / structure operators ↔ nirs4all-studio NodeType -------------------
+// Every `dag.studioNodeType` token in the catalog must be a real NodeType in
+// nirs4all-studio's node registry, so the structural/generator operator set lines
+// up with what studio provides. Best-effort: skips if the studio repo isn't in the
+// tree (e.g. CI without the sibling checkout).
+let studioTypesSrc = ''
+try {
+  studioTypesSrc = readFileSync(join(root, '../../nirs4all-studio/src/data/nodes/types.ts'), 'utf8')
+} catch {
+  /* optional */
+}
+if (studioTypesSrc) {
+  const m = studioTypesSrc.match(/export type NodeType\s*=\s*([\s\S]*?);/)
+  const studioNodeTypes = new Set(m ? [...m[1].matchAll(/"([a-z_]+)"/g)].map((x) => x[1]) : [])
+  const referenced = [...new Set([...nodesSrc.matchAll(/studioNodeType:\s*'([a-z_]+)'/g)].map((x) => x[1]))]
+  const badStudio = referenced.filter((t) => !studioNodeTypes.has(t))
+  if (studioNodeTypes.size && badStudio.length) {
+    console.error('✗ DAG operators reference NodeType(s) NOT in nirs4all-studio:\n  - ' + badStudio.join('\n  - '))
+    process.exit(1)
+  }
+  console.log(`✓ DAG operators ↔ nirs4all-studio NodeType in sync (${referenced.length} structural ops checked: ${referenced.join(', ')}).`)
+} else {
+  console.warn('⚠ catalog validator: nirs4all-studio NodeType not found — skipping DAG NodeType check.')
+}
+
 console.log('✓ catalog ↔ ABI in sync.')

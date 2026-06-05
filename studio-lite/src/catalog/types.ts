@@ -1,6 +1,6 @@
 import type { TaskType } from '@/engine/types'
 
-export type NodeCategory = 'preprocessing' | 'model' | 'split'
+export type NodeCategory = 'preprocessing' | 'model' | 'split' | 'dag'
 export type ParamType = 'int' | 'float' | 'bool' | 'select' | 'operators'
 
 /** A single editable parameter value as carried by the pipeline DSL. The
@@ -67,6 +67,17 @@ export interface NodeDef {
    *  AND tune themselves — adding preprocessing steps or a finetune in front of
    *  them is redundant; the UI surfaces this so users don't duplicate work. */
   autonomous?: boolean
+  /** for `dag`-category structural operators: the container kind + generator mode
+   *  it creates, and the studio-lite/nirs4all-studio NodeType it corresponds to.
+   *  Validated against nirs4all-studio's NodeType union by scripts/validate-catalog. */
+  dag?: {
+    /** the ContainerNode.container token this operator builds */
+    container: 'branch' | 'concat_transform' | 'merge' | 'generator'
+    /** generator mode (only for container 'generator') */
+    mode?: 'or' | 'cartesian'
+    /** the nirs4all-studio NodeType this maps to (the validation key) */
+    studioNodeType: string
+  }
 }
 
 export interface Preset {

@@ -782,7 +782,83 @@ export const SPLIT_NODES: NodeDef[] = [
   },
 ]
 
-export const ALL_NODES: NodeDef[] = [...PREPROCESSING_NODES, ...MODEL_NODES, ...SPLIT_NODES]
+// DAG / structure operators — the structural + generator container set. Each is
+// a real, executable operator that lowers to a dag-ml step and runs through the
+// existing leakage-safe feature-union (concat) + variant machinery (no new
+// numerics). `type` is the ContainerNode.container token the editor builds;
+// `dag.studioNodeType` is the nirs4all-studio NodeType it corresponds to
+// (validated by scripts/validate-catalog.mjs against ../../nirs4all-studio's
+// NodeType union). These carry no libn4m ABI symbols (n4m.fit = null) — they are
+// orchestration, not numerics.
+export const DAG_NODES: NodeDef[] = [
+  {
+    id: 'dag.branch',
+    type: 'Branch',
+    name: 'Branch',
+    category: 'dag',
+    subcategory: 'parallel',
+    description:
+      'Parallel paths (duplication mode): the input is duplicated into each branch, every branch runs its own preprocessing sub-chain, and the branch outputs are concatenated column-wise into one feature matrix that feeds the model (classic NIRS multi-preprocessing fusion). Leakage-safe — each branch is fit on the training fold only.',
+    icon: 'GitBranch',
+    params: [],
+    n4m: { fit: null },
+    dag: { container: 'branch', studioNodeType: 'branch' },
+  },
+  {
+    id: 'dag.concat_transform',
+    type: 'ConcatTransform',
+    name: 'Concat-transform',
+    category: 'dag',
+    subcategory: 'parallel',
+    description:
+      'Feature fusion: runs ≥2 preprocessing sub-chains on the same input and concatenates their outputs column-wise (dag-ml ConcatTransform). The canonical column-wise feature merge — like Branch, but emitted as dag-ml\'s native concat_transform node.',
+    icon: 'Combine',
+    params: [],
+    n4m: { fit: null },
+    dag: { container: 'concat_transform', studioNodeType: 'concat_transform' },
+  },
+  {
+    id: 'dag.merge',
+    type: 'Merge',
+    name: 'Merge',
+    category: 'dag',
+    subcategory: 'combine',
+    description:
+      'Combine branch outputs into one feature matrix (dag-ml Merge, output_as features). Runs ≥2 sub-chains and merges their feature blocks column-wise before the model — makes the fusion of parallel paths explicit.',
+    icon: 'GitMerge',
+    params: [],
+    n4m: { fit: null },
+    dag: { container: 'merge', studioNodeType: 'merge' },
+  },
+  {
+    id: 'dag.generator.or',
+    type: 'GeneratorOr',
+    name: 'Generator: OR',
+    category: 'dag',
+    subcategory: 'generator',
+    description:
+      'Alternatives → one variant per option (dag-ml Generator, OR mode). Each alternative is a sub-pipeline tried as its own variant; dag-ml expands them, cross-validates each, and selects the best. Reuses the existing per-variant FIT_CV + selection.',
+    icon: 'Shuffle',
+    params: [],
+    n4m: { fit: null },
+    dag: { container: 'generator', mode: 'or', studioNodeType: 'generator' },
+  },
+  {
+    id: 'dag.generator.cartesian',
+    type: 'GeneratorCartesian',
+    name: 'Generator: Cartesian',
+    category: 'dag',
+    subcategory: 'generator',
+    description:
+      'Cross-product of axes → every combination as a variant (dag-ml Generator, Cartesian mode). Each axis is a set of alternatives; dag-ml expands the cartesian product, cross-validates each variant, and selects the best.',
+    icon: 'Grid3x3',
+    params: [],
+    n4m: { fit: null },
+    dag: { container: 'generator', mode: 'cartesian', studioNodeType: 'generator' },
+  },
+]
+
+export const ALL_NODES: NodeDef[] = [...PREPROCESSING_NODES, ...MODEL_NODES, ...SPLIT_NODES, ...DAG_NODES]
 
 const BY_TYPE = new Map(ALL_NODES.map((n) => [n.type, n]))
 export function nodeByType(type: string): NodeDef | undefined {
@@ -796,4 +872,9 @@ export function defaultParams(type: string): Record<string, unknown> {
   const def = BY_TYPE.get(type)
   if (!def) return {}
   return Object.fromEntries(def.params.map((p) => [p.name, p.default]))
+}
+
+/** The dag-node catalog entry for a structural container kind (+ generator mode). */
+export function dagNodeFor(container: string, mode?: string): NodeDef | undefined {
+  return DAG_NODES.find((n) => n.dag?.container === container && (mode === undefined || n.dag?.mode === mode))
 }

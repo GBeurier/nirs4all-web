@@ -1,5 +1,5 @@
 import { GitBranch, Settings2, SlidersHorizontal } from 'lucide-react'
-import type { FinetuneSpec, ParamSweep, PipelineDSL, PipelineStep, StepVariant, TaskType } from '@/engine/types'
+import type { FinetuneSpec, GeneratorMode, ParamSweep, PipelineDSL, PipelineStep, StepVariant, TaskType } from '@/engine/types'
 import type { ParamValue } from '@/catalog/types'
 import { nodeByType } from '@/catalog/nodes'
 import { Input } from '@/app/components/ui/input'
@@ -26,9 +26,10 @@ export interface InspectorProps {
   onModelFinetune: (finetune: FinetuneSpec | undefined) => void
   onSplitParam: (name: string, value: ParamValue) => void
   onCv: (patch: Partial<NonNullable<PipelineDSL['cv']>>) => void
-  onBranchStepParam: (branchId: string, stepId: string, name: string, value: ParamValue) => void
-  onAddBranchLane: () => void
-  onRemoveBranchLane: (branchId: string) => void
+  onContainerStepParam: (containerId: string, branchId: string, stepId: string, name: string, value: ParamValue) => void
+  onAddContainerBranch: (containerId: string) => void
+  onRemoveContainerBranch: (containerId: string, branchId: string) => void
+  onSetContainerMode: (containerId: string, mode: GeneratorMode) => void
 }
 
 /** A numeric ParamField paired with its sweep activator (orange Repeat badge). */
@@ -79,7 +80,7 @@ function InspectorShell({ icon, eyebrow, title, children }: { icon: React.ReactN
 }
 
 /** Right rail of the editor: parameters for whatever node is selected on the canvas. */
-export function Inspector({ pipeline, taskType, selected, onStepParam, onStepSweep, onStepVariants, onModelType, onModelParam, onModelSweep, onModelFinetune, onSplitParam, onCv, onBranchStepParam, onAddBranchLane, onRemoveBranchLane }: InspectorProps) {
+export function Inspector({ pipeline, taskType, selected, onStepParam, onStepSweep, onStepVariants, onModelType, onModelParam, onModelSweep, onModelFinetune, onSplitParam, onCv, onContainerStepParam, onAddContainerBranch, onRemoveContainerBranch, onSetContainerMode }: InspectorProps) {
   if (selected.kind === 'split') {
     const split = pipeline.split
     const def = split ? nodeByType(split.type) : undefined
@@ -157,56 +158,77 @@ export function Inspector({ pipeline, taskType, selected, onStepParam, onStepSwe
     )
   }
 
-  if (selected.kind === 'branch') {
-    const branch = pipeline.branch
-    if (!branch) {
+  if (selected.kind === 'container') {
+    const container = pipeline.containers?.find((c) => c.id === selected.containerId)
+    const def = container ? nodeByType(container.container === 'generator' ? (container.mode === 'cartesian' ? 'GeneratorCartesian' : 'GeneratorOr') : container.container === 'branch' ? 'Branch' : container.container === 'merge' ? 'Merge' : 'ConcatTransform') : undefined
+    if (!container) {
       return (
-        <InspectorShell icon={<GitBranch className="size-4" />} eyebrow="DAG" title="No branch">
-          <p className="text-xs text-muted-foreground">Add a branch (feature union) on the canvas to fuse several preprocessing chains.</p>
+        <InspectorShell icon={<GitBranch className="size-4" />} eyebrow="DAG" title="No structure">
+          <p className="text-xs text-muted-foreground">Add a DAG structure (branch / merge / concat-transform / generator) on the canvas to configure it.</p>
         </InspectorShell>
       )
     }
+    const isGenerator = container.container === 'generator'
+    const noun = isGenerator ? (container.mode === 'cartesian' ? 'axis' : 'alternative') : 'branch'
     return (
-      <InspectorShell icon={<GitBranch className="size-4" />} eyebrow="DAG" title="Branch · feature union">
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          The input is duplicated into each branch; every branch runs its own preprocessing sub-chain and the outputs are
-          concatenated column-wise into one feature matrix that feeds the model (classic NIRS multi-preprocessing fusion).
-          Each branch is fit on the training fold only — leakage-safe.
-        </p>
+      <InspectorShell icon={<GitBranch className="size-4" />} eyebrow="DAG" title={def?.name ?? container.container}>
+        <p className="text-xs leading-relaxed text-muted-foreground">{def?.description}</p>
+        {isGenerator && (
+          <div className="space-y-1.5">
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Generator mode</span>
+            <div className="flex gap-1.5">
+              {(['or', 'cartesian'] as GeneratorMode[]).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => onSetContainerMode(container.id, m)}
+                  className={`flex-1 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${container.mode === m ? 'border-brand-amber bg-brand-amber/10 text-brand-amber' : 'border-border text-muted-foreground hover:border-brand-amber/50'}`}
+                >
+                  {m === 'cartesian' ? 'Cartesian' : 'OR'}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] leading-snug text-muted-foreground">
+              {container.mode === 'cartesian'
+                ? 'Cross-product of axes → every combination becomes a variant. (Execution of Cartesian generators is not wired yet — use OR.)'
+                : 'Each alternative is tried as its own variant; dag-ml cross-validates each and selects the best.'}
+            </p>
+          </div>
+        )}
         <div className="space-y-2">
-          {branch.branches.map((b) => (
+          {container.branches.map((b) => (
             <div key={b.id} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card/60 px-3 py-2">
               <span className="min-w-0 flex-1">
                 <span className="block truncate font-mono text-[11px] font-semibold text-foreground">{b.id}</span>
                 <span className="block text-[10px] text-muted-foreground">{b.steps.length} step{b.steps.length === 1 ? '' : 's'}</span>
               </span>
-              {branch.branches.length > 2 && (
-                <button type="button" className="text-[11px] text-muted-foreground hover:text-destructive" onClick={() => onRemoveBranchLane(b.id)}>remove</button>
+              {container.branches.length > 2 && (
+                <button type="button" className="text-[11px] text-muted-foreground hover:text-destructive" onClick={() => onRemoveContainerBranch(container.id, b.id)}>remove</button>
               )}
             </div>
           ))}
         </div>
         <button
           type="button"
-          onClick={onAddBranchLane}
+          onClick={() => onAddContainerBranch(container.id)}
           className="w-full rounded-lg border border-dashed border-brand-amber/40 bg-brand-amber/5 px-3 py-2 text-xs font-semibold text-brand-amber transition-colors hover:border-brand-amber/70 hover:bg-brand-amber/10"
         >
-          + add a branch
+          + add {noun}
         </button>
         <p className="rounded-lg border border-dashed border-border px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
-          Select an operator in the palette (or drop one onto a branch lane) to add it to the focused branch. Click a branch
-          op on the canvas to edit its parameters.
+          Select an operator in the palette (or drop one onto a branch) to add it to the focused branch. Click a branch op on the canvas to edit its parameters.
         </p>
       </InspectorShell>
     )
   }
 
-  if (selected.kind === 'branchStep') {
-    const lane = pipeline.branch?.branches.find((b) => b.id === selected.branchId)
+  if (selected.kind === 'containerStep') {
+    const container = pipeline.containers?.find((c) => c.id === selected.containerId)
+    const lane = container?.branches.find((b) => b.id === selected.branchId)
     const step = lane?.steps.find((s) => s.id === selected.stepId)
     const def = step ? nodeByType(step.type) : undefined
     const Icon = iconByName(def?.icon)
-    if (!step || !def) {
+    if (!container || !step || !def) {
       return (
         <InspectorShell icon={<SlidersHorizontal className="size-4" />} eyebrow="Branch op" title="Nothing selected">
           <p className="text-xs text-muted-foreground">Select a branch operator on the canvas to edit its parameters.</p>
@@ -219,7 +241,7 @@ export function Inspector({ pipeline, taskType, selected, onStepParam, onStepSwe
         {def.params.length > 0 ? (
           <div className="grid grid-cols-1 gap-3">
             {def.params.map((p) => (
-              <ParamField key={p.name} def={p} value={step.params[p.name] ?? p.default} onChange={(v) => onBranchStepParam(selected.branchId, selected.stepId, p.name, v)} />
+              <ParamField key={p.name} def={p} value={step.params[p.name] ?? p.default} onChange={(v) => onContainerStepParam(container.id, selected.branchId, selected.stepId, p.name, v)} />
             ))}
           </div>
         ) : (

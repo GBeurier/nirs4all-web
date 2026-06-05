@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { ChevronRight, GitBranch, Plus, Search, Sparkles } from 'lucide-react'
-import { modelsForTask, PREPROCESSING_NODES, SPLIT_NODES } from '@/catalog/nodes'
+import { ChevronRight, Plus, Search, Sparkles } from 'lucide-react'
+import { DAG_NODES, modelsForTask, PREPROCESSING_NODES, SPLIT_NODES } from '@/catalog/nodes'
 import type { NodeDef } from '@/catalog/types'
 import type { TaskType } from '@/engine/types'
 import { Input } from '@/app/components/ui/input'
@@ -9,17 +9,19 @@ import { DND_NEW_NODE, iconByName } from './_helpers'
 
 export interface NodePaletteProps {
   onAdd: (type: string) => void
-  /** add the DAG feature-union (branch) structural block */
-  onAddBranch: () => void
   taskType: TaskType
 }
 
-// Three top-level buckets, in pipeline order: Split → Preprocessing → Models.
-type BucketKey = 'split' | 'preprocessing' | 'model'
+// Four top-level buckets, in pipeline order: Split → Preprocessing → Models →
+// DAG / structure. The DAG bucket is a normal foldable accordion holding the
+// structural + generator operators (Branch / Concat-transform / Merge / OR /
+// Cartesian), each a real catalog node added through `onAdd` like any other.
+type BucketKey = 'split' | 'preprocessing' | 'model' | 'dag'
 const BUCKETS: { key: BucketKey; label: string; accent: string; dot: string }[] = [
   { key: 'split', label: 'Train / test split', accent: 'text-brand-indigo', dot: 'bg-brand-indigo' },
   { key: 'preprocessing', label: 'Preprocessings', accent: 'text-brand-teal', dot: 'bg-brand-teal' },
   { key: 'model', label: 'Models', accent: 'text-brand-amber', dot: 'bg-brand-amber' },
+  { key: 'dag', label: 'DAG / structure', accent: 'text-brand-amber', dot: 'bg-brand-amber' },
 ]
 // nice sub-labels for the preprocessing sub-groups
 const SUBCAT_LABEL: Record<string, string> = {
@@ -29,6 +31,9 @@ const SUBCAT_LABEL: Record<string, string> = {
   filtering: 'Smoothing & filtering',
   signal: 'Signal transforms',
   scaling: 'Scaling',
+  parallel: 'Parallel paths',
+  combine: 'Combine',
+  generator: 'Generators',
 }
 
 /**
@@ -38,9 +43,9 @@ const SUBCAT_LABEL: Record<string, string> = {
  * "auto" badge so users don't stack redundant preprocessing/finetune on them.
  * Styling echoes the nirs4all-formats demo (mono eyebrows, pill counts, glass).
  */
-export function NodePalette({ onAdd, onAddBranch, taskType }: NodePaletteProps) {
+export function NodePalette({ onAdd, taskType }: NodePaletteProps) {
   const [q, setQ] = useState('')
-  const [openManual, setOpenManual] = useState<Record<string, boolean>>({ preprocessing: true })
+  const [openManual, setOpenManual] = useState<Record<string, boolean>>({ preprocessing: true, dag: true })
 
   const models = useMemo(() => modelsForTask(taskType), [taskType])
 
@@ -56,16 +61,11 @@ export function NodePalette({ onAdd, onAddBranch, taskType }: NodePaletteProps) 
       split: SPLIT_NODES.filter(match),
       preprocessing: PREPROCESSING_NODES.filter(match),
       model: models.filter(match),
+      dag: DAG_NODES.filter(match),
     } as Record<BucketKey, NodeDef[]>
   }, [q, models])
 
-  // DAG bucket is a single structural action (Branch / feature union), not a
-  // catalog node — surfaced as a 4th bucket and matched by keyword.
-  const dagMatch = (() => {
-    const query = q.trim().toLowerCase()
-    return !query || 'branch feature union dag fusion'.includes(query)
-  })()
-  const total = SPLIT_NODES.length + PREPROCESSING_NODES.length + models.length + 1
+  const total = SPLIT_NODES.length + PREPROCESSING_NODES.length + models.length + DAG_NODES.length
   const searching = q.trim().length > 0
   const isOpen = (key: string) => (searching ? true : openManual[key] ?? false)
   const toggle = (key: string) => setOpenManual((s) => ({ ...s, [key]: !(s[key] ?? false) }))
@@ -110,7 +110,7 @@ export function NodePalette({ onAdd, onAddBranch, taskType }: NodePaletteProps) 
           <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-teal">Operators</span>
           <span className="rounded-full bg-brand-teal/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-brand-teal">{total}</span>
         </div>
-        <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">Split → preprocessings → model. Search, or open a family; drag or click to add.</p>
+        <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">Split → preprocessings → model → DAG structure. Search, or open a family; drag or click to add.</p>
       </div>
 
       <div className="relative">
@@ -119,18 +119,21 @@ export function NodePalette({ onAdd, onAddBranch, taskType }: NodePaletteProps) 
       </div>
 
       <div className="-mr-1 flex-1 space-y-1 overflow-y-auto pr-1">
-        {BUCKETS.every((b) => matched[b.key].length === 0) && !dagMatch ? (
+        {BUCKETS.every((b) => matched[b.key].length === 0) ? (
           <p className="px-1 py-6 text-center text-xs text-muted-foreground">No operator matches “{q}”.</p>
         ) : (
           BUCKETS.filter((b) => matched[b.key].length > 0).map((b) => {
             const nodes = matched[b.key]
             const open = isOpen(b.key)
+            // preprocessing + dag sub-group by subcategory family with captions
+            const grouped = b.key === 'preprocessing' || b.key === 'dag'
             return (
-              <div key={b.key} className="overflow-hidden rounded-lg border border-border/70 bg-card/40">
+              <div key={b.key} className="overflow-hidden rounded-lg border border-border/70 bg-card/40" {...(b.key === 'dag' ? { 'data-palette-dag': '' } : {})}>
                 <button
                   type="button"
                   onClick={() => toggle(b.key)}
                   aria-expanded={open}
+                  data-palette-bucket={b.key}
                   className="group flex w-full items-center gap-2 px-2.5 py-2 text-left transition-colors hover:bg-accent/30"
                 >
                   <span className={cn('size-1.5 shrink-0 rounded-full', b.dot)} />
@@ -140,7 +143,7 @@ export function NodePalette({ onAdd, onAddBranch, taskType }: NodePaletteProps) 
                 </button>
                 {open && (
                   <div className="space-y-1 px-1.5 pb-1.5">
-                    {b.key === 'preprocessing'
+                    {grouped
                       ? // sub-group by family with light captions
                         Object.entries(
                           nodes.reduce<Record<string, NodeDef[]>>((acc, n) => {
@@ -160,34 +163,6 @@ export function NodePalette({ onAdd, onAddBranch, taskType }: NodePaletteProps) 
               </div>
             )
           })
-        )}
-
-        {/* DAG bucket (4th) — structural feature-union action, not a catalog node */}
-        {dagMatch && (
-          <div className="overflow-hidden rounded-lg border border-border/70 bg-card/40" data-palette-dag>
-            <div className="flex w-full items-center gap-2 px-2.5 py-2 text-left">
-              <span className="size-1.5 shrink-0 rounded-full bg-brand-amber" />
-              <span className="flex-1 truncate font-display text-xs font-semibold text-brand-amber">DAG / structure</span>
-              <span className="font-mono text-[10px] text-muted-foreground">1</span>
-            </div>
-            <div className="space-y-1 px-1.5 pb-1.5">
-              <button
-                type="button"
-                data-palette-add-branch
-                onClick={onAddBranch}
-                title="Fuse ≥2 preprocessing branches column-wise before the model"
-                className={cn(
-                  'group/op flex w-full items-center gap-2.5 rounded-md border border-transparent bg-background/60 px-2 py-1.5 text-left',
-                  'transition-all hover:border-brand-amber/40 hover:bg-card hover:shadow-sm',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-amber/40',
-                )}
-              >
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted/70 text-brand-amber"><GitBranch className="size-3.5" /></span>
-                <span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">Branch · feature union</span>
-                <Plus className="size-3.5 shrink-0 text-muted-foreground/0 transition-colors group-hover/op:text-brand-amber" />
-              </button>
-            </div>
-          </div>
         )}
       </div>
     </div>

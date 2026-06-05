@@ -2,7 +2,7 @@ import * as Icons from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { Preset } from '@/catalog/types'
 import { defaultParams, nodeByType } from '@/catalog/nodes'
-import type { BranchBlock, PipelineBranch, PipelineDSL, PipelineStep } from '@/engine/types'
+import type { ContainerNode, ContainerType, GeneratorMode, PipelineBranch, PipelineDSL, PipelineStep } from '@/engine/types'
 
 // Drag-and-drop payload keys (native HTML5 DnD — no extra dependency).
 /** dataTransfer key carrying a catalog node `type` dragged from the palette. */
@@ -32,6 +32,37 @@ let branchCounter = 0
 export function newBranchId(): string {
   branchCounter += 1
   return `branch-${Date.now().toString(36)}-${branchCounter}`
+}
+
+let containerCounter = 0
+/** Mint a unique structural-container instance id. */
+export function newContainerId(): string {
+  containerCounter += 1
+  return `dag-${Date.now().toString(36)}-${containerCounter}`
+}
+
+/** A fresh container of the given kind, pre-seeded with 2 empty branches (the
+ *  minimum for a feature fusion / a meaningful OR generator). */
+export function newContainer(container: ContainerType, mode?: GeneratorMode): ContainerNode {
+  return {
+    id: newContainerId(),
+    container,
+    mode: container === 'generator' ? (mode ?? 'or') : undefined,
+    output: container === 'merge' ? 'features' : undefined,
+    branches: [
+      { id: newBranchId(), steps: [] },
+      { id: newBranchId(), steps: [] },
+    ],
+  }
+}
+
+/** Migrate the legacy single inline `branch` block (v1) into a `branch`
+ *  ContainerNode, so old persisted sessions / .n4a bundles open in the new tree
+ *  editor. The editor only ever writes `containers`. Idempotent. */
+export function migrateLegacyBranch(dsl: PipelineDSL): PipelineDSL {
+  if (!dsl.branch) return dsl
+  const migrated: ContainerNode = { id: newContainerId(), container: 'branch', branches: dsl.branch.branches }
+  return { ...dsl, branch: undefined, containers: [...(dsl.containers ?? []), migrated] }
 }
 
 /** Build an editable PipelineDSL from a preset, merging defaults with preset params. */
@@ -108,23 +139,45 @@ export function normalizeImportedPipeline(value: unknown): PipelineDSL | null {
     }
   }
 
-  // optional feature-union block (FEATURE 2): ≥2 branches, each a preprocessing
-  // sub-chain. A malformed/under-filled branch block is dropped, not fatal.
-  let branch: BranchBlock | undefined
+  const parseBranches = (arr: unknown): PipelineBranch[] | null => {
+    if (!Array.isArray(arr)) return null
+    const parsed: PipelineBranch[] = []
+    for (const bb of arr) {
+      if (!bb || typeof bb !== 'object') return null
+      const b = bb as Record<string, unknown>
+      const bsteps = parsePreprocChain(b.steps)
+      if (bsteps === null) return null
+      parsed.push({ id: typeof b.id === 'string' ? b.id : newBranchId(), steps: bsteps })
+    }
+    return parsed
+  }
+
+  // optional DAG containers (the recursive tree): each is a branch/concat/merge/
+  // generator with ≥2 preprocessing sub-chains. Malformed/under-filled containers
+  // are dropped, not fatal.
+  const containers: ContainerNode[] = []
+  if (Array.isArray(v.containers)) {
+    for (const cc of v.containers) {
+      if (!cc || typeof cc !== 'object') continue
+      const c = cc as Record<string, unknown>
+      const kind = c.container
+      if (!['branch', 'concat_transform', 'merge', 'generator'].includes(String(kind))) continue
+      const branches = parseBranches(c.branches)
+      if (!branches || branches.length < 2) continue
+      containers.push({
+        id: typeof c.id === 'string' ? c.id : newContainerId(),
+        container: kind as ContainerType,
+        mode: kind === 'generator' ? (c.mode === 'cartesian' ? 'cartesian' : 'or') : undefined,
+        output: kind === 'merge' ? (c.output === 'predictions' ? 'predictions' : 'features') : undefined,
+        branches,
+      })
+    }
+  }
+  // legacy feature-union block (v1) → migrate into a `branch` container.
   if (v.branch && typeof v.branch === 'object' && !Array.isArray(v.branch)) {
     const braw = v.branch as Record<string, unknown>
-    if (Array.isArray(braw.branches)) {
-      const parsed: PipelineBranch[] = []
-      let ok = true
-      for (const bb of braw.branches) {
-        if (!bb || typeof bb !== 'object') { ok = false; break }
-        const b = bb as Record<string, unknown>
-        const bsteps = parsePreprocChain(b.steps)
-        if (bsteps === null) { ok = false; break }
-        parsed.push({ id: typeof b.id === 'string' ? b.id : newBranchId(), steps: bsteps })
-      }
-      if (ok && parsed.length >= 2) branch = { branches: parsed }
-    }
+    const parsed = parseBranches(braw.branches)
+    if (parsed && parsed.length >= 2) containers.push({ id: newContainerId(), container: 'branch', branches: parsed })
   }
 
   // CV is OPTIONAL (FEATURE 1): present → KFold; absent → refit-only run.
@@ -140,7 +193,7 @@ export function normalizeImportedPipeline(value: unknown): PipelineDSL | null {
     name: typeof v.name === 'string' && v.name.trim() ? v.name : 'Imported pipeline',
     split,
     steps,
-    branch,
+    containers: containers.length ? containers : undefined,
     model,
     cv,
   }

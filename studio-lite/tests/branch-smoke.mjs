@@ -1,8 +1,10 @@
-// FEATURE 2 smoke: build a 2-branch feature union (Branch / DAG node) — an
-// SNV branch + a Savitzky–Golay (1st-derivative) branch — feeding PLS, run it
-// through the served WASM stack, and confirm the run uses the union:
-//   - the Branch node renders with 2 lanes,
-//   - CV Scores render (the union actually executed + scored),
+// Branch smoke (FOLDABLE-TREE editor): build a 2-branch feature union — an SNV
+// branch + a Savitzky–Golay (1st-derivative) branch — feeding PLS, run it through
+// the served WASM stack, and confirm the union actually executed:
+//   - the Branch is added from the foldable DAG palette bucket,
+//   - it renders as a container node with 2 indented branch lanes,
+//   - the container folds/unfolds (chevron),
+//   - CV Scores render (the union executed + scored),
 //   - the fitted model carries a 2-lane `branch` in its state (the column-wise
 //     concat of the two branch outputs fed the model),
 //   - no console errors.
@@ -38,18 +40,32 @@ try {
   await page.locator('[data-step="pipeline"]').click()
   await page.waitForTimeout(300)
 
-  // add the Branch (feature union) from the DAG palette bucket. The model from the
-  // default pipeline stays; the branches run on the (preprocessed) input and their
-  // outputs are concatenated column-wise into the model's X.
-  await palette().locator('[data-palette-add-branch]').click()
+  // the DAG / structure palette bucket is a real foldable accordion (open by
+  // default) holding multiple operators — add the Branch operator from it.
+  if (!(await palette().locator('[data-palette-dag]').count())) fail('expected a foldable DAG / structure palette bucket')
+  else console.log('✓ foldable DAG / structure palette bucket present')
+  await palette().getByRole('button', { name: 'Branch', exact: true }).first().click()
   await page.waitForTimeout(250)
-  if (!(await page.locator('[data-branch-node]').count())) { fail('expected a Branch node on the canvas'); }
-  else console.log('✓ Branch node added (feature union)')
+
+  const container = page.locator('[data-container-node]').first()
+  if (!(await container.count())) { fail('expected a Branch container node on the canvas') }
+  else console.log('✓ Branch container node added (feature union)')
 
   const lanes = page.locator('[data-branch-lane]')
   const laneCount = await lanes.count()
   if (laneCount < 2) fail(`expected ≥2 branch lanes, got ${laneCount}`)
-  else console.log(`✓ ${laneCount} branch lanes present`)
+  else console.log(`✓ ${laneCount} branch lanes present (indented sub-tree)`)
+
+  // FOLD / UNFOLD: the container's chevron collapses the nested branches.
+  const fold = page.locator('[data-container-fold]').first()
+  await fold.click()
+  await page.waitForTimeout(150)
+  if ((await page.locator('[data-branch-lane]').count()) === 0) console.log('✓ container folds (branches hidden)')
+  else fail('expected branches hidden after folding')
+  await fold.click()
+  await page.waitForTimeout(150)
+  if ((await page.locator('[data-branch-lane]').count()) >= 2) console.log('✓ container unfolds (branches shown)')
+  else fail('expected branches shown after unfolding')
 
   // focus lane 0 and add SNV from the palette
   await lanes.nth(0).click()
@@ -63,10 +79,7 @@ try {
   await palette().getByRole('button', { name: /Savitzky/ }).first().click()
   await page.waitForTimeout(150)
 
-  // verify each lane now holds one op via the editor state
   const built = await page.evaluate(() => {
-    // peek at the live pipeline via the export button is overkill; instead read the
-    // canvas DOM: each lane shows its op names.
     const out = []
     for (const lane of document.querySelectorAll('[data-branch-lane]')) {
       const ops = [...lane.querySelectorAll('span')].map((s) => s.textContent || '').filter(Boolean)
@@ -81,7 +94,6 @@ try {
   await page.waitForSelector('text=/CV Scores/', { timeout: 90000 })
   console.log('✓ pipeline executed (CV Scores rendered)')
 
-  // introspect: the fitted model must carry a 2-lane branch (the union actually ran)
   const info = await page.evaluate(() => {
     const r = window.__n4aLastRun
     if (!r) return null
@@ -93,7 +105,6 @@ try {
       cvN: r.cv?.predictions?.length ?? 0,
       branchLanes: Array.isArray(branch) ? branch.length : 0,
       laneTypes: Array.isArray(branch) ? branch.map((c) => (Array.isArray(c) ? c.map((d) => d.type) : [])) : [],
-      mainChain: Array.isArray(st?.chain) ? st.chain.map((d) => d.type) : [],
     }
   })
   if (!info) { fail('no __n4aLastRun captured'); }

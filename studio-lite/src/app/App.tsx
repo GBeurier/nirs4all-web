@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { DatasetConfigDialog, DatasetUpload, DatasetView } from '@/components/dataset'
 import { PipelineBuilder } from '@/components/pipeline'
+import { migrateLegacyBranch } from '@/components/pipeline/_helpers'
 import { PredictionPanel, ResultsList, ResultsVisualization } from '@/components/results'
 import { defaultPipeline } from '@/catalog/build'
 import { engine } from '@/engine/client'
@@ -37,8 +38,12 @@ const STEPS: { id: StepId; label: string; hint: string; icon: typeof Upload }[] 
 export default function App() {
   const [dataset, setDataset] = useState<MaterializedDataset | null>(null)
   const [summary, setSummary] = useState<DatasetSummary | null>(null)
-  // session restore: the user's edited pipeline + an imported model survive reload
-  const [pipeline, setPipeline] = useState<PipelineDSL>(() => loadSession().pipeline ?? defaultPipeline('regression'))
+  // session restore: the user's edited pipeline + an imported model survive reload.
+  // A restored legacy `branch` block is migrated to the `containers` tree model.
+  const [pipeline, setPipeline] = useState<PipelineDSL>(() => {
+    const restored = loadSession().pipeline
+    return restored ? migrateLegacyBranch(restored) : defaultPipeline('regression')
+  })
   const [sampleId, setSampleId] = useState<SampleId | null>(null)
   const [runs, setRuns] = useState<RunResult[]>([])
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null)

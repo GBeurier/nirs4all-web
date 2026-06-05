@@ -29,8 +29,26 @@ function validPipeline(p: unknown): PipelineDSL | undefined {
   // cv is OPTIONAL (refit-only run); if present it must be well-formed.
   if (dsl.cv !== undefined && (typeof dsl.cv.folds !== 'number' || typeof dsl.cv.seed !== 'number')) return undefined
   if (!dsl.steps.every((s) => s && typeof s.type === 'string' && nodeByType(s.type))) return undefined
-  // branch is OPTIONAL (feature-union); if present, every branch step must be a
-  // known preprocessing node — a malformed block fails the whole restore.
+  // containers are OPTIONAL (the recursive DAG tree); if present, validate each
+  // against the catalog. branch/concat/merge branches hold preprocessing nodes;
+  // generator branches hold preprocessing nodes too (the alternative sub-chains).
+  // A malformed container fails the whole restore.
+  if (dsl.containers !== undefined) {
+    if (!Array.isArray(dsl.containers)) return undefined
+    const okContainer = (c: unknown): boolean => {
+      if (!c || typeof c !== 'object') return false
+      const cn = c as { container?: unknown; branches?: unknown; mode?: unknown }
+      if (!['branch', 'concat_transform', 'merge', 'generator'].includes(String(cn.container))) return false
+      if (!Array.isArray(cn.branches)) return false
+      return cn.branches.every(
+        (b) => b && typeof b === 'object' && Array.isArray((b as { steps?: unknown }).steps) &&
+          (b as { steps: unknown[] }).steps.every((s) => s && typeof (s as { type?: unknown }).type === 'string' && nodeByType((s as { type: string }).type)?.category === 'preprocessing'),
+      )
+    }
+    if (!dsl.containers.every(okContainer)) return undefined
+  }
+  // legacy `branch` block (v1) — if present, every branch step must be a known
+  // preprocessing node. (Migrated to `containers` at load by migrateLegacyBranch.)
   if (dsl.branch !== undefined) {
     if (!dsl.branch || !Array.isArray(dsl.branch.branches)) return undefined
     const branchesOk = dsl.branch.branches.every(

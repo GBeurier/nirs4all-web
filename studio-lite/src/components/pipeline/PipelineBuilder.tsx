@@ -2,10 +2,10 @@ import { useRef, useState } from 'react'
 import { Download, Sparkles, Upload } from 'lucide-react'
 import type { PipelineBuilderProps } from '@/components/contracts'
 import type { Preset, ParamValue } from '@/catalog/types'
-import type { BranchBlock, FinetuneSpec, ParamSweep, PipelineDSL, PipelineStep, StepVariant } from '@/engine/types'
+import type { ContainerNode, FinetuneSpec, GeneratorMode, ParamSweep, PipelineDSL, PipelineStep, StepVariant } from '@/engine/types'
 import { countVariants } from '@/engine/dagml'
 import { PRESETS } from '@/catalog/presets'
-import { defaultParams, modelsForTask, nodeByType } from '@/catalog/nodes'
+import { dagNodeFor, defaultParams, modelsForTask, nodeByType } from '@/catalog/nodes'
 import { downloadPipeline } from '@/lib/download'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
@@ -20,7 +20,7 @@ import {
 import { NodePalette } from './NodePalette'
 import { CanvasFlow, type Selection } from './CanvasFlow'
 import { Inspector } from './Inspector'
-import { newBranchId, newStepId, normalizeImportedPipeline, pipelineFromPreset } from './_helpers'
+import { newBranchId, newContainer, newStepId, normalizeImportedPipeline, pipelineFromPreset } from './_helpers'
 
 /**
  * Studio-style pipeline editor: a three-pane workspace — operator palette (left),
@@ -36,8 +36,8 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
   const setSteps = (steps: PipelineStep[]) => update({ steps })
 
   // The palette/canvas surface ALL operators; route each add by its catalog
-  // category — preprocessing → chain step (or a selected branch lane), split →
-  // split node, model → model slot.
+  // category — preprocessing → chain step (or a focused container branch), split →
+  // split node, model → model slot, dag → a structural container.
   const addOperator = (type: string, index?: number) => {
     const cat = nodeByType(type)?.category
     if (cat === 'model') {
@@ -45,11 +45,15 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
       setSelected({ kind: 'model' })
     } else if (cat === 'split') {
       addSplit(type)
-    } else if (cat === 'preprocessing' && (selected.kind === 'branch' || selected.kind === 'branchStep') && pipeline.branch) {
-      // a preprocessing add while a branch is focused goes into the focused lane
-      // (the lane of a selected branch step, the explicitly-focused lane, else lane 0)
-      const branchId = selected.branchId ?? pipeline.branch.branches[0]?.id
-      if (branchId) insertBranchStep(branchId, type)
+    } else if (cat === 'dag') {
+      addContainer(type)
+    } else if (cat === 'preprocessing' && (selected.kind === 'container' || selected.kind === 'containerStep')) {
+      // a preprocessing add while a container branch is focused goes into the
+      // focused branch (the branch of a selected step, the explicitly-focused
+      // branch, else branch 0 of that container).
+      const container = pipeline.containers?.find((c) => c.id === selected.containerId)
+      const branchId = selected.branchId ?? container?.branches[0]?.id
+      if (container && branchId) insertContainerStep(container.id, branchId, type)
       else insertStep(type, index ?? pipeline.steps.length)
     } else {
       insertStep(type, index ?? pipeline.steps.length)
@@ -134,44 +138,46 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
     if (selected.kind === 'cv') setSelected({ kind: 'model' })
   }
 
-  // branch / feature-union (FEATURE 2) — at most one block, ≥2 lanes -----------
-  const setBranch = (branch: BranchBlock | undefined) => onChange({ ...pipeline, branch })
-  const addBranch = () => {
-    setBranch({ branches: [{ id: newBranchId(), steps: [] }, { id: newBranchId(), steps: [] }] })
-    setSelected({ kind: 'branch' })
+  // DAG containers (the recursive tree) — branch / concat / merge / generator ----
+  const setContainers = (containers: ContainerNode[] | undefined) => onChange({ ...pipeline, containers: containers && containers.length ? containers : undefined })
+  const patchContainer = (containerId: string, fn: (c: ContainerNode) => ContainerNode) =>
+    setContainers((pipeline.containers ?? []).map((c) => (c.id === containerId ? fn(c) : c)))
+
+  const addContainer = (dagType: string) => {
+    const def = dagNodeFor(dagType) ?? nodeByType(dagType)
+    const meta = def?.dag
+    if (!meta) return
+    const c = newContainer(meta.container, meta.mode)
+    setContainers([...(pipeline.containers ?? []), c])
+    setSelected({ kind: 'container', containerId: c.id })
   }
-  const removeBranch = () => {
-    setBranch(undefined)
-    if (selected.kind === 'branch' || selected.kind === 'branchStep') setSelected({ kind: 'model' })
+  const removeContainer = (containerId: string) => {
+    setContainers((pipeline.containers ?? []).filter((c) => c.id !== containerId))
+    if ((selected.kind === 'container' || selected.kind === 'containerStep') && selected.containerId === containerId) setSelected({ kind: 'model' })
   }
-  const addBranchLane = () => {
-    if (!pipeline.branch) return
-    setBranch({ branches: [...pipeline.branch.branches, { id: newBranchId(), steps: [] }] })
+  const addContainerBranch = (containerId: string) =>
+    patchContainer(containerId, (c) => ({ ...c, branches: [...c.branches, { id: newBranchId(), steps: [] }] }))
+  const removeContainerBranch = (containerId: string, branchId: string) => {
+    const c = pipeline.containers?.find((x) => x.id === containerId)
+    if (!c || c.branches.length <= 2) return
+    patchContainer(containerId, (c) => ({ ...c, branches: c.branches.filter((b) => b.id !== branchId) }))
+    if (selected.kind === 'containerStep' && selected.containerId === containerId && selected.branchId === branchId) setSelected({ kind: 'container', containerId })
   }
-  const removeBranchLane = (branchId: string) => {
-    if (!pipeline.branch || pipeline.branch.branches.length <= 2) return
-    setBranch({ branches: pipeline.branch.branches.filter((b) => b.id !== branchId) })
-    if (selected.kind === 'branchStep' && selected.branchId === branchId) setSelected({ kind: 'branch' })
-  }
-  const insertBranchStep = (branchId: string, type: string) => {
-    if (!pipeline.branch) return
+  const setContainerMode = (containerId: string, mode: GeneratorMode) => patchContainer(containerId, (c) => ({ ...c, mode }))
+  const insertContainerStep = (containerId: string, branchId: string, type: string) => {
     const step: PipelineStep = { id: newStepId(type), type, params: defaultParams(type) }
-    setBranch({ branches: pipeline.branch.branches.map((b) => (b.id === branchId ? { ...b, steps: [...b.steps, step] } : b)) })
-    setSelected({ kind: 'branchStep', branchId, stepId: step.id })
+    patchContainer(containerId, (c) => ({ ...c, branches: c.branches.map((b) => (b.id === branchId ? { ...b, steps: [...b.steps, step] } : b)) }))
+    setSelected({ kind: 'containerStep', containerId, branchId, stepId: step.id })
   }
-  const removeBranchStep = (branchId: string, stepId: string) => {
-    if (!pipeline.branch) return
-    setBranch({ branches: pipeline.branch.branches.map((b) => (b.id === branchId ? { ...b, steps: b.steps.filter((s) => s.id !== stepId) } : b)) })
-    if (selected.kind === 'branchStep' && selected.branchId === branchId && selected.stepId === stepId) setSelected({ kind: 'branch' })
+  const removeContainerStep = (containerId: string, branchId: string, stepId: string) => {
+    patchContainer(containerId, (c) => ({ ...c, branches: c.branches.map((b) => (b.id === branchId ? { ...b, steps: b.steps.filter((s) => s.id !== stepId) } : b)) }))
+    if (selected.kind === 'containerStep' && selected.containerId === containerId && selected.branchId === branchId && selected.stepId === stepId) setSelected({ kind: 'container', containerId })
   }
-  const setBranchStepParam = (branchId: string, stepId: string, name: string, value: ParamValue) => {
-    if (!pipeline.branch) return
-    setBranch({
-      branches: pipeline.branch.branches.map((b) =>
-        b.id === branchId ? { ...b, steps: b.steps.map((s) => (s.id === stepId ? { ...s, params: { ...s.params, [name]: value } } : s)) } : b,
-      ),
-    })
-  }
+  const setContainerStepParam = (containerId: string, branchId: string, stepId: string, name: string, value: ParamValue) =>
+    patchContainer(containerId, (c) => ({
+      ...c,
+      branches: c.branches.map((b) => (b.id === branchId ? { ...b, steps: b.steps.map((s) => (s.id === stepId ? { ...s, params: { ...s.params, [name]: value } } : s)) } : b)),
+    }))
 
   // split operator (optional, at most one, applied before CV) ---------------
   const addSplit = (type: string) => {
@@ -271,7 +277,7 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
       {/* three-pane editor */}
       <div className="grid min-h-[30rem] flex-1 gap-4 lg:grid-cols-[15rem_minmax(0,1fr)_19rem]">
         <aside className="hidden rounded-2xl border border-border bg-card/70 p-3 lg:block">
-          <NodePalette onAdd={addOperator} onAddBranch={addBranch} taskType={taskType} />
+          <NodePalette onAdd={addOperator} taskType={taskType} />
         </aside>
         <section className="rounded-2xl border border-border bg-card/70 p-4">
           <CanvasFlow
@@ -290,12 +296,13 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
             onRemoveSplit={removeSplit}
             onAddCv={addCv}
             onRemoveCv={removeCv}
-            onAddBranch={addBranch}
-            onRemoveBranch={removeBranch}
-            onInsertBranchStep={insertBranchStep}
-            onRemoveBranchStep={removeBranchStep}
-            onAddBranchLane={addBranchLane}
-            onRemoveBranchLane={removeBranchLane}
+            onAddContainer={addContainer}
+            onRemoveContainer={removeContainer}
+            onInsertContainerStep={insertContainerStep}
+            onRemoveContainerStep={removeContainerStep}
+            onAddContainerBranch={addContainerBranch}
+            onRemoveContainerBranch={removeContainerBranch}
+            onSetContainerMode={setContainerMode}
             onRun={onRun}
             onCancel={onCancel}
           />
@@ -314,9 +321,10 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
             onModelFinetune={setModelFinetune}
             onSplitParam={setSplitParam}
             onCv={setCv}
-            onBranchStepParam={setBranchStepParam}
-            onAddBranchLane={addBranchLane}
-            onRemoveBranchLane={removeBranchLane}
+            onContainerStepParam={setContainerStepParam}
+            onAddContainerBranch={addContainerBranch}
+            onRemoveContainerBranch={removeContainerBranch}
+            onSetContainerMode={setContainerMode}
           />
         </aside>
       </div>
@@ -324,7 +332,7 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
       {/* mobile palette fallback (left palette is hidden on small screens) */}
       <div className="lg:hidden">
         <div className="rounded-2xl border border-border bg-card/70 p-3">
-          <NodePalette onAdd={addOperator} onAddBranch={addBranch} taskType={taskType} />
+          <NodePalette onAdd={addOperator} taskType={taskType} />
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { countVariants, toCompatDsl } from './dagml'
+import { activeOrGenerator, countVariants, expandGeneratorVariants, hasUnsupportedGenerator, toCompatDsl } from './dagml'
 import { compatNodeIds } from './dagml-engine'
-import type { PipelineDSL } from './types'
+import type { ContainerNode, PipelineDSL } from './types'
 
 // These assertions pin the emitted JSON field names to dag-ml's ground truth in
 // dag-ml/crates/dag-ml-core/src/dsl.rs. A drift here silently collapses every
@@ -155,6 +155,79 @@ describe('toCompatDsl generator DSL', () => {
   it('skips the branch block when fewer than 2 branches (FEATURE 2)', () => {
     const out = toCompatDsl(basePipeline({ branch: { branches: [{ id: 'only', steps: [] }] } })) as { pipeline: Record<string, unknown>[] }
     expect(out.pipeline.some((s) => 'concat_transform' in s)).toBe(false)
+  })
+})
+
+// --- DAG container tree (branch / concat / merge / generator) -----------------
+const branchC = (over: Partial<ContainerNode> = {}): ContainerNode => ({
+  id: 'c1', container: 'branch',
+  branches: [
+    { id: 'snv', steps: [{ id: 'a', type: 'StandardNormalVariate', params: {} }] },
+    { id: 'd1', steps: [{ id: 'b', type: 'SavitzkyGolay', params: { deriv: 1 } }] },
+  ],
+  ...over,
+})
+
+describe('toCompatDsl DAG containers', () => {
+  it('lowers a branch container to a concat_transform (dsl.rs:1742)', () => {
+    const out = toCompatDsl(basePipeline({ containers: [branchC()] })) as { pipeline: Record<string, unknown>[] }
+    const ct = out.pipeline.find((s) => 'concat_transform' in s) as { concat_transform: Record<string, unknown[]> }
+    expect(Object.keys(ct.concat_transform)).toEqual(['snv', 'd1'])
+    expect(ct.concat_transform.snv).toEqual(['SNV'])
+    expect(ct.concat_transform.d1).toEqual([{ preprocessing: 'SavitzkyGolay', params: { deriv: 1 } }])
+  })
+  it('lowers concat_transform + merge containers to concat_transform too (same fusion)', () => {
+    for (const kind of ['concat_transform', 'merge'] as const) {
+      const out = toCompatDsl(basePipeline({ containers: [branchC({ container: kind })] })) as { pipeline: Record<string, unknown>[] }
+      expect(out.pipeline.some((s) => 'concat_transform' in s)).toBe(true)
+    }
+  })
+  it('lowers an OR generator container to a `_or_` step (dsl.rs:1837)', () => {
+    const gen: ContainerNode = { id: 'g', container: 'generator', mode: 'or', branches: [
+      { id: 'o1', steps: [{ id: 'a', type: 'StandardNormalVariate', params: {} }] },
+      { id: 'o2', steps: [{ id: 'b', type: 'MSC', params: {} }] },
+    ] }
+    const out = toCompatDsl(basePipeline({ containers: [gen] })) as { pipeline: Record<string, unknown>[] }
+    const orStep = out.pipeline.find((s) => '_or_' in s) as { _or_: unknown[] }
+    expect(orStep._or_).toEqual([['SNV'], ['MSC']])
+  })
+  it('lowers a Cartesian generator container to a `_cartesian_` step (dsl.rs:1874)', () => {
+    const gen: ContainerNode = { id: 'g', container: 'generator', mode: 'cartesian', branches: [
+      { id: 'ax1', steps: [{ id: 'a', type: 'StandardNormalVariate', params: {} }] },
+      { id: 'ax2', steps: [{ id: 'b', type: 'Detrend', params: { degree: 1 } }] },
+    ] }
+    const out = toCompatDsl(basePipeline({ containers: [gen] })) as { pipeline: Record<string, unknown>[] }
+    const cart = out.pipeline.find((s) => '_cartesian_' in s) as { _cartesian_: unknown[] }
+    expect(cart._cartesian_).toHaveLength(2)
+    expect(cart._cartesian_[0]).toEqual({ _or_: [['SNV']] })
+  })
+})
+
+describe('generator container variant expansion / guards', () => {
+  const orGen: ContainerNode = { id: 'g', container: 'generator', mode: 'or', branches: [
+    { id: 'o1', steps: [{ id: 'a', type: 'StandardNormalVariate', params: {} }] },
+    { id: 'o2', steps: [{ id: 'b', type: 'MSC', params: {} }] },
+    { id: 'o3', steps: [{ id: 'c', type: 'Detrend', params: { degree: 1 } }] },
+  ] }
+  it('countVariants counts an OR generator (one variant per alternative)', () => {
+    expect(countVariants(basePipeline({ containers: [orGen] }))).toBe(3)
+  })
+  it('activeOrGenerator finds exactly one runnable OR generator', () => {
+    expect(activeOrGenerator(basePipeline({ containers: [orGen] }))?.id).toBe('g')
+  })
+  it('expandGeneratorVariants appends each alternative to the main steps', () => {
+    const cands = expandGeneratorVariants(basePipeline({ steps: [{ id: 's0', type: 'Detrend', params: {} }], containers: [orGen] }))
+    expect(cands).toHaveLength(3)
+    // each candidate keeps the base step + adds the alternative; the generator is dropped
+    expect(cands[0].dsl.steps.map((s) => s.type)).toEqual(['Detrend', 'StandardNormalVariate'])
+    expect(cands[1].dsl.steps.map((s) => s.type)).toEqual(['Detrend', 'MSC'])
+    expect(cands.every((c) => !c.dsl.containers || c.dsl.containers.every((x) => x.container !== 'generator'))).toBe(true)
+  })
+  it('flags Cartesian + multiple OR generators as unsupported (clear guard)', () => {
+    const cart: ContainerNode = { ...orGen, id: 'g2', mode: 'cartesian' }
+    expect(hasUnsupportedGenerator(basePipeline({ containers: [cart] }))).toBe(true)
+    expect(hasUnsupportedGenerator(basePipeline({ containers: [orGen, { ...orGen, id: 'g2' }] }))).toBe(true)
+    expect(hasUnsupportedGenerator(basePipeline({ containers: [orGen] }))).toBe(false)
   })
 })
 

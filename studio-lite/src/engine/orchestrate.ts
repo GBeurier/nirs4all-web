@@ -186,9 +186,19 @@ export function trainAndPredict(
   }
 }
 
-/** The branch block's branches if it's an active feature-union (≥2 branches), else undefined. */
+/** All feature-fusion sub-chains the pipeline concatenates before the model: the
+ *  branches of every branch/concat_transform/merge container (≥2 branches), plus
+ *  a migrated legacy `branch` block. Generator containers are NOT fused here —
+ *  the engine expands them into per-variant DSLs upstream (expandGeneratorVariants).
+ *  Returns undefined when nothing fuses (the model sees the main chain directly). */
 function activeBranches(dsl: PipelineDSL): PipelineBranch[] | undefined {
-  return dsl.branch && dsl.branch.branches.length >= 2 ? dsl.branch.branches : undefined
+  const lanes: PipelineBranch[] = []
+  if (dsl.branch && dsl.branch.branches.length >= 2) lanes.push(...dsl.branch.branches)
+  for (const c of dsl.containers ?? []) {
+    if (c.container === 'generator') continue // expanded into variants, not fused
+    if (c.branches.length >= 2) lanes.push(...c.branches)
+  }
+  return lanes.length >= 2 ? lanes : undefined
 }
 
 function fitChain(steps: PipelineStep[], Xin: Mat, preproc: Preprocessor): { transformers: FittedTransformer[]; descriptors: FittedStep[]; Xout: Mat } {
@@ -234,6 +244,45 @@ export function scoreNode(id: string, name: string, kind: ScoreKind, rows: PredR
 }
 
 const yieldToLoop = (): Promise<void> => new Promise((r) => setTimeout(r, 0))
+
+/**
+ * Run a generator-OR pipeline by expanding it into candidate DSLs (one per
+ * alternative), running each through the engine's existing single-DSL CV/refit
+ * path (`runOne`), then selecting the best by the canonical metric. Selection is
+ * delegated (`select`) — the served engine routes it through dag-ml's
+ * `select_candidates_json`, the offline engine uses host argmin/argmax — so this
+ * reuses the EXISTING per-variant FIT_CV + selection machinery rather than
+ * reinventing it. The winner's RunResult is returned, annotated with the full
+ * variant list (the selected one flagged). `dsl` must already contain exactly one
+ * runnable OR generator (the caller checks via activeOrGenerator).
+ */
+export async function runGeneratorOr(
+  dsl: PipelineDSL,
+  candidates: { label: string; dsl: PipelineDSL }[],
+  scoreMetric: keyof Metrics,
+  minimize: boolean,
+  runOne: (candidate: PipelineDSL) => Promise<RunResult>,
+  select: (ranked: { id: string; metric: number }[]) => Promise<string>,
+): Promise<RunResult> {
+  const results: { variantId: string; label: string; run: RunResult; metric: number }[] = []
+  for (let i = 0; i < candidates.length; i++) {
+    const { label, dsl: cdsl } = candidates[i]
+    const run = await runOne(cdsl)
+    const m = run.cv?.metrics[scoreMetric] ?? run.refit.metrics[scoreMetric]
+    results.push({ variantId: `variant:${i}`, label, run, metric: Number(m ?? (minimize ? Infinity : -Infinity)) })
+  }
+  const ranked = results.filter((r) => Number.isFinite(r.metric)).map((r) => ({ id: r.variantId, metric: r.metric }))
+  let winnerId = results[0]?.variantId
+  if (ranked.length > 0) winnerId = await select(ranked)
+  const winnerIdx = Math.max(0, results.findIndex((r) => r.variantId === winnerId))
+  const winner = results[winnerIdx]
+  return {
+    ...winner.run,
+    pipelineName: dsl.name,
+    variantCount: candidates.length,
+    variants: results.map((r, i) => ({ variantId: r.variantId, label: r.label, metrics: r.run.cv?.metrics ?? r.run.refit.metrics, selected: i === winnerIdx })),
+  }
+}
 
 export async function runPipeline(
   ds: MaterializedDataset,

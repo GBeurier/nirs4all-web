@@ -5,7 +5,7 @@
 // The refit (full-train) model is fit directly with libn4m. Falls back to the
 // JS-orchestrated path on any error.
 import { loadLibn4mBackend } from './backends'
-import { compileWithDagMl, countVariants, dagMlAvailable, loadDagMl, toCompatDsl } from './dagml'
+import { activeOrGenerator, compileWithDagMl, countVariants, dagMlAvailable, expandGeneratorVariants, hasUnsupportedGenerator, loadDagMl, toCompatDsl } from './dagml'
 import { materializeViaProvider } from './dagml-data'
 import { applySplit, SPLIT_KINDS } from './split'
 import type { Fold } from './kfold'
@@ -17,6 +17,7 @@ import {
   type FittedState,
   type ModelBackend,
   predictPipeline,
+  runGeneratorOr,
   scoreNode,
   trainAndPredict,
 } from './orchestrate'
@@ -108,11 +109,37 @@ export class DagMlEngine implements Engine {
     // A model is mandatory to score/refit — refuse early with a clear message
     // (the editor guards too, but the engine is the authoritative gate).
     if (!dsl.model) throw new Error('This pipeline has no model — add a model to run / score.')
+    // Cartesian / multiple OR generators are not schedulable yet — clear guard.
+    if (hasUnsupportedGenerator(dsl)) {
+      throw new Error('Cartesian generators (and more than one OR generator) are not executable yet — use a single OR generator, or move param sweeps onto the model.')
+    }
+    const backend = await loadLibn4mBackend()
+    // GENERATOR: OR — expand the alternatives into candidate pipelines, run each
+    // through the normal dag-ml CV path, and let dag-ml SELECT the best (reuses the
+    // existing per-variant FIT_CV + select_candidates_json machinery).
+    const gen = activeOrGenerator(dsl)
+    if (gen) {
+      const dagml = await loadDagMl()
+      const minimize = ds.taskType === 'regression'
+      const metric: RunResult['scoreMetric'] = minimize ? 'rmse' : 'accuracy'
+      return runGeneratorOr(
+        dsl,
+        expandGeneratorVariants(dsl),
+        metric,
+        minimize,
+        (candidate) => this.runViaDagMl(ds, candidate, opts, backend),
+        async (ranked) => {
+          const policy = { id: 'sel:n4a-gen', metric: { name: metric, objective: minimize ? 'minimize' : 'maximize' } }
+          const candidates = ranked.map((r) => ({ candidate_id: r.id, metrics: { [metric]: r.metric } }))
+          const decision = JSON.parse(dagml.select_candidates_json(JSON.stringify(policy), JSON.stringify(candidates), undefined)) as { selected_candidate_id: string }
+          return decision.selected_candidate_id
+        },
+      )
+    }
     // Served path REQUIRES libn4m + dag-ml — no silent shadow engine. Both the
     // numerics (libn4m) and the orchestration/folds (dag-ml) are authoritative;
     // any failure surfaces to the UI rather than quietly rebuilding folds in TS
     // (kfold.ts is strictly the offline file:// fallback, via MainEngine).
-    const backend = await loadLibn4mBackend()
     return this.runViaDagMl(ds, dsl, opts, backend)
   }
 
@@ -241,30 +268,41 @@ export class DagMlEngine implements Engine {
     // sweep to a single base variant would skip the search the user configured.
     const hasGenerators = countVariants(dsl) > 1
     const baseVariant: VariantPlan = { variant_id: 'variant:base', choices: {}, fingerprint: 'base' }
+    // A multi-node graph (preprocessing steps and/or fusion DAG containers) is NOT
+    // schedulable by dag-ml's WASM scheduler in-browser (no per-node controller),
+    // and dag-ml's own legacy PLS fast-path can HANG on it — so for a single-variant
+    // multi-node pipeline we skip both build_execution_plan_json AND the scheduler,
+    // and run dag-ml's folds through the leakage-honest libn4m chain below. The
+    // scheduler is reserved for model-only (single-node) graphs, which it runs cleanly.
+    const multiNodeGraph = dsl.steps.length > 0 || (dsl.containers?.some((c) => c.container !== 'generator' && c.branches.length >= 2) ?? false) || !!dsl.branch
     let variants: VariantPlan[]
-    try {
-      const plan = JSON.parse(
-        dagml.build_execution_plan_json('plan:n4a', JSON.stringify(graph), JSON.stringify(campaign), JSON.stringify(modelManifest())),
-      ) as { variants: VariantPlan[] }
-      variants = plan.variants.length ? plan.variants : [baseVariant]
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      // max_variants cap → friendly guard, not a thrown stack.
-      if (/max_variants|exceed/i.test(msg)) {
-        throw new Error('Too many variants for the configured cap — lower a sweep range or raise the variant cap.')
-      }
-      // planning_failed (multi-node graph: dag-ml can't yet schedule per-node
-      // preprocessing without a per-node provider). The single-base fallback is
-      // only honest when there is NOTHING to expand: collapsing a real sweep to one
-      // variant would silently drop the search. With generators present, surface a
-      // clear guard instead.
-      if (/no controller registered|planning failed|planning_failed/i.test(msg)) {
-        if (hasGenerators) {
-          throw new Error('Variant sweeps need a model-only pipeline for now — multi-node preprocessing sweeps are not schedulable yet. Move the sweep onto the model, or remove preprocessing steps.')
+    if (multiNodeGraph && !hasGenerators) {
+      variants = [baseVariant]
+    } else {
+      try {
+        const plan = JSON.parse(
+          dagml.build_execution_plan_json('plan:n4a', JSON.stringify(graph), JSON.stringify(campaign), JSON.stringify(modelManifest())),
+        ) as { variants: VariantPlan[] }
+        variants = plan.variants.length ? plan.variants : [baseVariant]
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        // max_variants cap → friendly guard, not a thrown stack.
+        if (/max_variants|exceed/i.test(msg)) {
+          throw new Error('Too many variants for the configured cap — lower a sweep range or raise the variant cap.')
         }
-        variants = [baseVariant]
-      } else {
-        throw err
+        // planning_failed (multi-node graph: dag-ml can't yet schedule per-node
+        // preprocessing without a per-node provider). The single-base fallback is
+        // only honest when there is NOTHING to expand: collapsing a real sweep to one
+        // variant would silently drop the search. With generators present, surface a
+        // clear guard instead.
+        if (/no controller registered|planning failed|planning_failed/i.test(msg)) {
+          if (hasGenerators) {
+            throw new Error('Variant sweeps need a model-only pipeline for now — multi-node preprocessing sweeps are not schedulable yet. Move the sweep onto the model, or remove preprocessing steps.')
+          }
+          variants = [baseVariant]
+        } else {
+          throw err
+        }
       }
     }
     const multiVariant = variants.length > 1
@@ -350,20 +388,11 @@ export class DagMlEngine implements Engine {
     type ResultBlock = { partition: string; fold_id: string | null; sample_ids: string[]; values: number[][] }
     type NodeRes = { predictions?: ResultBlock[]; lineage?: { variant_id?: string | null } }
     let nodeResults: NodeRes[]
-    try {
-      nodeResults = JSON.parse(
-        dagml.execute_campaign_phase_json('plan:n4a', JSON.stringify(graph), JSON.stringify(campaign), JSON.stringify(modelManifest()), 'run:n4a', cv.seed >>> 0, 'FIT_CV', invoke),
-      )
-    } catch (err) {
-      if (signal?.aborted) throw err
-      // The scheduler can't run this graph. The libn4m-chain fallback only knows
-      // how to run ONE variant over the folds; for a real multi-variant sweep that
-      // would silently drop every non-base variant, so re-throw instead of mis-
-      // bucketing. (In practice the planning guard above already fired for
-      // generators + multi-node graphs, so this path is the single-base case.)
-      if (multiVariant) throw err
-      // single-base case: run the leakage-honest libn4m chain over dag-ml's folds
-      // (folds stay dag-ml's, numerics stay libn4m) and bucket into the base variant.
+    // For a single-variant multi-node pipeline (see multiNodeGraph above) we run
+    // dag-ml's folds through the leakage-honest libn4m chain DIRECTLY (folds stay
+    // dag-ml's, numerics stay libn4m) — the same orchestration the scheduler's
+    // catch-block fallback uses, chosen up front so we never hit the legacy-PLS hang.
+    const runChainOverFolds = () => {
       const base = variants[0]
       const baseFoldRows = foldRowsByVariant.get(base.variant_id)!
       const prebuilt: Fold[] = [...foldByDagId.entries()].map(([, v], i) => ({ foldId: i + 1, trainIdx: v.trainIdx, valIdx: v.valIdx }))
@@ -372,8 +401,30 @@ export class DagMlEngine implements Engine {
         const f = prebuilt[i]
         const { pred } = trainAndPredict(ds, baseDslByVariant.get(base.variant_id) ?? dsl, backend, f.trainIdx, f.valIdx)
         baseFoldRows[i].push(...decodeRows(ds, classNames, classIdx, pred, f.valIdx))
+        onP?.({ phase: 'fit_cv', pct: 2 + Math.round((76 * (i + 1)) / folds.length) })
       }
+    }
+    if (multiNodeGraph && !multiVariant) {
+      // proven libn4m-chain path for single-variant multi-node pipelines (incl. our
+      // generator-OR candidates, which append a preprocessing alternative to steps).
+      runChainOverFolds()
       nodeResults = []
+    } else {
+      try {
+        nodeResults = JSON.parse(
+          dagml.execute_campaign_phase_json('plan:n4a', JSON.stringify(graph), JSON.stringify(campaign), JSON.stringify(modelManifest()), 'run:n4a', cv.seed >>> 0, 'FIT_CV', invoke),
+        )
+      } catch (err) {
+        if (signal?.aborted) throw err
+        // The scheduler can't run this graph. The libn4m-chain fallback only knows
+        // how to run ONE variant over the folds; for a real multi-variant sweep that
+        // would silently drop every non-base variant, so re-throw instead of mis-
+        // bucketing. (In practice the planning guard above already fired for
+        // generators + multi-node graphs, so this path is the single-base case.)
+        if (multiVariant) throw err
+        runChainOverFolds()
+        nodeResults = []
+      }
     }
     // Bucket every validation block back to its variant + fold (BY variant_id, never
     // by call order) so each variant's OOF is assembled exactly once.
