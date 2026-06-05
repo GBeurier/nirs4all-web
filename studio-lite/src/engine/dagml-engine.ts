@@ -7,7 +7,8 @@
 import { loadLibn4mBackend } from './backends'
 import { dagMlAvailable, loadDagMl, toCompatDsl } from './dagml'
 import { materializeViaProvider } from './dagml-data'
-import { type Fold, testRowsOf, trainRowsOf } from './kfold'
+import type { Fold } from './kfold'
+import { testRowsOf, trainRowsOf } from './partition'
 import type { Mat } from './algo/linalg'
 import {
   classInfo,

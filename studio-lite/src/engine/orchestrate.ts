@@ -6,7 +6,8 @@
 import { nodeByType } from '@/catalog/nodes'
 import { type Mat, mat, selectRows } from './algo/linalg'
 import { type FittedTransformer, type Preprocessor } from './methods/preproc'
-import { buildFolds, type Fold, testRowsOf, trainRowsOf } from './kfold'
+import { buildFolds, type Fold } from './kfold'
+import { testRowsOf, trainRowsOf } from './partition'
 import { classificationMetrics, regressionMetrics } from './metrics'
 import type {
   FittedPipeline,

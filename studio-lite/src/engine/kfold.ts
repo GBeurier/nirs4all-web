@@ -40,16 +40,3 @@ export function buildFolds(ds: MaterializedDataset, k: number, seed: number): Fo
   }
   return folds
 }
-
-export function trainRowsOf(ds: MaterializedDataset): number[] {
-  const r: number[] = []
-  for (let i = 0; i < ds.nSamples; i++) if (ds.partitions[i] === 'train') r.push(i)
-  if (r.length === 0) for (let i = 0; i < ds.nSamples; i++) if (ds.partitions[i] !== 'predict') r.push(i)
-  return r
-}
-
-export function testRowsOf(ds: MaterializedDataset): number[] {
-  const r: number[] = []
-  for (let i = 0; i < ds.nSamples; i++) if (ds.partitions[i] === 'test') r.push(i)
-  return r
-}
