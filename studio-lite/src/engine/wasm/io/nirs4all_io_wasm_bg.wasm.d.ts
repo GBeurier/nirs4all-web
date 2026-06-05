@@ -1,6 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export const memory: WebAssembly.Memory;
+export const assembleDataset: (a: any, b: any, c: number, d: number) => [number, number, number];
 export const inferDataset: (a: any, b: any, c: any) => [number, number, number];
 export const inferFiles: (a: any, b: any) => [number, number, number];
 export const inferRecords: (a: any) => [number, number, number];

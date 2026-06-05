@@ -1,16 +1,21 @@
 // Validates the real nirs4all-formats + nirs4all-io WASM upload path in-browser:
-// upload several vendor SPC files → decode → infer → materialize → Explore renders.
-// (No pipeline run: bare SPC files carry no targets.)
+// upload a coherent multi-sample vendor SPC file → decode → infer →
+// io.assembleDataset (fs-free, Rust) → Explore renders. (No pipeline run: the
+// file carries no targets.) NB: nir.spc holds 20 NIR spectra of one width — a
+// real dataset. The other galactic samples (BENZENE/TOLUENE/HCL) are single
+// spectra of *different* widths, which io correctly refuses to fuse into one
+// dataset (the old TS heuristic silently kept only the mode-width file).
 import { existsSync } from 'node:fs'
 import { chromium } from 'playwright-core'
 
 const URL = process.env.SMOKE_URL || 'http://localhost:4320/'
 const EXE = process.env.CHROME || '/home/delete/.cache/ms-playwright/chromium-1200/chrome-linux64/chrome'
 const SPC_DIR = process.env.SPC_DIR || '/home/delete/nirs4all/nirs4all-formats/samples/galactic_spc'
-const SPC = ['BENZENE.SPC', 'TOLUENE.SPC', 'HCL.SPC', 'nir.spc'].map((f) => `${SPC_DIR}/${f}`).filter(existsSync)
+const SPC = [`${SPC_DIR}/nir.spc`].filter(existsSync)
+const EXPECT_SAMPLES = 20
 
-if (SPC.length < 2) {
-  console.log(`⚠ skipping — need ≥2 SPC fixtures under ${SPC_DIR} (found ${SPC.length})`)
+if (SPC.length < 1) {
+  console.log(`⚠ skipping — need nir.spc under ${SPC_DIR}`)
   process.exit(0)
 }
 
@@ -29,8 +34,8 @@ try {
   const badge = (await page.locator('text=/samples ×/').first().textContent()) || ''
   console.log(`✓ vendor SPC decoded → Explore badge: "${badge.trim()}"`)
   const n = parseInt(badge, 10)
-  if (!(n >= SPC.length)) {
-    console.error(`✗ expected ≥${SPC.length} samples, badge says "${badge.trim()}"`)
+  if (!(n === EXPECT_SAMPLES)) {
+    console.error(`✗ expected ${EXPECT_SAMPLES} samples (nir.spc), badge says "${badge.trim()}"`)
     process.exitCode = 1
   }
   if (errors.length) {

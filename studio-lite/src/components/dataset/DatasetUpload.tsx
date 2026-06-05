@@ -34,14 +34,14 @@ export function DatasetUpload({ onDataset, onLoadSample, onImportModel, busy: bu
       // nirs4all-formats decode + nirs4all-io inference. nirs4all-io resolves the
       // dataset structure (X*/Y* train/test convention, delimiters, joins, partitions,
       // axis, task type) far more robustly than any hand-rolled CSV heuristic.
-      const { analyzeFiles, materialize } = await import('@/data/wasm-io')
+      const { analyzeFiles, assembleDataset } = await import('@/data/wasm-io')
       const withBytes = await Promise.all(files.map(async (f) => ({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) })))
       const analysis = await analyzeFiles(withBytes)
       const failed = analysis.decoded.filter((d) => !d.ok)
       if (analysis.decoded.every((d) => !d.ok)) {
         throw new Error(`No spectra could be decoded (${failed.map((d) => d.error).join('; ') || 'unsupported format'}).`)
       }
-      onDataset(materialize(analysis.decoded, name, analysis.plan, withBytes), name, analysis)
+      onDataset(await assembleDataset(analysis.decoded, analysis.plan, withBytes), name, analysis)
     } catch (e) {
       // Offline single-file build (file://) can't always load the io WASM — fall back
       // to the lightweight in-browser CSV builder when every file is delimited text.

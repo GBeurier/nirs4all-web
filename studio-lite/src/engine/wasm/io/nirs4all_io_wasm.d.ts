@@ -2,6 +2,22 @@
 /* eslint-disable */
 
 /**
+ * Assemble a `DatasetSpec` into a materialized, target-agnostic dataset, fs-free.
+ *
+ * `files` = array of `{name, bytes}` — CSV/tabular bytes the formats layer won't
+ * decode (y / metadata tables). `recordSets` = array of `{source, format?,
+ * records}` — pre-decoded `nirs4all-formats` records (signals → X, targets,
+ * metadata). `spec` = a `DatasetSpec` JSON string (typically `plan.resolved_spec`);
+ * its source `input` strings must match the `name`/`source` of the supplied
+ * sources (exact, then file-stem, then glob). Returns `AssembledDataset` as a
+ * plain JS object (per-partition `blocks` with `x`/`y`/headers/metadata + `folds`).
+ *
+ * `index_file`/`folds.file` partitions are not browser-reachable here (no fs) and
+ * raise an error — column/inline partitions and folds work.
+ */
+export function assembleDataset(files: any, record_sets: any, spec: string): any;
+
+/**
  * Infer a browser dataset plan from raw files and decoded spectral records.
  *
  * `files` must be an array of `{name, bytes}`. `recordSets` must be an array
@@ -45,6 +61,7 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
+    readonly assembleDataset: (a: any, b: any, c: number, d: number) => [number, number, number];
     readonly inferDataset: (a: any, b: any, c: any) => [number, number, number];
     readonly inferFiles: (a: any, b: any) => [number, number, number];
     readonly inferRecords: (a: any) => [number, number, number];

@@ -109,237 +109,130 @@ export async function validateSpec(spec: DatasetSpec): Promise<{ ok: boolean; er
   }
 }
 
-// --- materialization (format-agnostic) ---
-interface Row {
-  file: string
-  idx: number
-  partition: Partition
-  sampleId: string
-  realId: boolean // sampleId came from record metadata (not a synthetic file#idx)
-  values: number[]
-  axis: number[]
-  axisUnit: string
-  embeddedTarget?: number | string
+// --- materialization is a BACKEND capability: nirs4all-io (Rust → WASM) assembles
+// X/y from the decoded records + the resolved DatasetSpec, fs-free. The old
+// per-row target-alignment heuristics that used to live here moved into
+// nirs4all-io-core::materialize::assemble_in_memory (roles, joins, partitions are
+// the io layer's job, not the browser's). studio only maps io's AssembledDataset
+// onto the engine's MaterializedDataset + applies the shared task-type/encode step.
+
+/** AssembledDataset.to_full_value() as returned by io's `assembleDataset`. */
+interface IoMatrix {
+  data: number[]
+  n_rows: number
+  n_cols: number
+}
+interface IoBlock {
+  n_samples: number
+  x: IoMatrix[]
+  feature_headers: string[][]
+  header_units: string[]
+  signal_types: (string | null)[]
+  y: IoMatrix | null
+  y_headers: string[]
+  y_categorical?: Record<string, { categories?: string[] }>
+  metadata: { n_rows: number; columns: { name: string; values: (number | string | null)[] }[] } | null
+  weights: number[] | null
+  weights_header: string | null
+}
+export interface AssembledFull {
+  name: string
+  task_type: string
+  signal_type: string
+  n_sources: number
+  blocks: Record<string, IoBlock>
+  folds: [number[], number[]][]
 }
 
-const firstSignal = (r: SpectralRecord) => (r.signals ? Object.values(r.signals)[0] : undefined)
-const isTestName = (n: string) => /test|valid|holdout/i.test(n)
-const isMetaName = (n: string) => /meta/i.test(n)
-const asArray = (v: string | string[] | undefined) => (Array.isArray(v) ? v : v ? [v] : [])
-const baseFile = (n: string) => n.replace(/\.[^.]+$/, '')
-const unquote = (s: string) => s.replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1')
-const isNumericCell = (v: string) => v != null && v.trim() !== '' && Number.isFinite(Number(v.replace(',', '.')))
-const isIdColumn = (n: string) => /^(sample[_ ]?id|sampleid|sample|id|name|code|ref(erence)?|key|index|.*_id|id_.*)$/i.test(n)
-
-// --- targets read straight from the resolved DatasetSpec (the nirs4all-io path) ---
-// Target (y) files are scalar tables, not spectra, so nirs4all-formats refuses to
-// decode them. We instead read them as raw CSV with the spec's per-source delimiter
-// and align each target value to its X row by sampleId → (joined X file, rowIndex) →
-// (partition, rowIndex) — mirroring single-page-WASM's targetPreview().
-interface TargetItem {
-  key: string
-  value: number | string
-  partition: string
-  sampleId: string
+const ID_COL = /^(sample[_ ]?id|sampleid|sample|id|name|code|ref(erence)?|key)$/i
+function metaIdColumn(b: IoBlock): (number | string | null)[] | null {
+  const col = (b.metadata?.columns ?? []).find((c) => ID_COL.test(c.name))
+  return col ? col.values : null
 }
-interface TargetResolver {
-  hasTargets: boolean
-  find(sampleId: string, file: string, rowIndex: number, partition: string): TargetItem | null
-}
-
-function previewDelimiter(firstLine: string, declared?: string): string {
-  if (declared && firstLine.includes(declared)) return declared
-  const scored = [';', '\t', ','].map((d) => [d, firstLine.split(d).length - 1] as const).sort((a, b) => b[1] - a[1])
-  return scored[0][1] > 0 ? scored[0][0] : ''
-}
-
-function parseTargetTable(bytes: Uint8Array, params: { delimiter?: string; has_header?: boolean } = {}): { headers: string[]; rows: Record<string, string>[] } {
-  const text = new TextDecoder().decode(bytes)
-  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean)
-  if (!lines.length) return { headers: [], rows: [] }
-  const delimiter = previewDelimiter(lines[0], params.delimiter)
-  const split = (l: string) => (delimiter ? l.split(delimiter).map((s) => unquote(s.trim())) : [unquote(l.trim())])
-  const first = split(lines[0])
-  const second = lines[1] ? split(lines[1]) : []
-  const hasHeader = params.has_header !== false && first.some((c, i) => !isNumericCell(c) && isNumericCell(second[i] ?? ''))
-  const headers = hasHeader ? first : first.map((_, i) => (i === 0 ? 'target' : `col_${i + 1}`))
-  const dataLines = hasHeader ? lines.slice(1) : lines
-  const rows = dataLines.map((l) => {
-    const cells = split(l)
-    const row: Record<string, string> = {}
-    headers.forEach((h, i) => (row[h || `col_${i + 1}`] = cells[i] ?? ''))
-    return row
-  })
-  return { headers, rows }
-}
-
-function chooseTargetColumns(table: { headers: string[]; rows: Record<string, string>[] }): string[] {
-  const named = table.headers.filter((h) => h && !isIdColumn(h))
-  const cols = named.length ? named : table.headers.filter(Boolean)
-  const numeric = cols.filter((h) => table.rows.some((r) => isNumericCell(r[h])))
-  return [...numeric, ...cols.filter((h) => !numeric.includes(h))]
-}
-
-/** Build a target resolver from the resolved DatasetSpec + the raw uploaded files. */
-function buildTargetResolver(plan: DatasetPlan | null | undefined, rawFiles: { name: string; bytes: Uint8Array }[]): TargetResolver {
-  const sources = plan?.resolved_spec?.sources ?? []
-  const empty: TargetResolver = { hasTargets: false, find: () => null }
-  if (!sources.length || !rawFiles.length) return empty
-  const byId = new Map(sources.map((s) => [s.id, s]))
-  const fileByName = new Map(rawFiles.map((f) => [f.name, f]))
-  const byFileRow = new Map<string, TargetItem>()
-  const byPartRow = new Map<string, TargetItem>()
-  const bySampleId = new Map<string, TargetItem>()
-  const rowKey = (n: string, i: number) => `${n} ${i}`
-  let any = false
-  for (const src of sources) {
-    if (src.role !== 'targets') continue
-    for (const input of asArray(src.input)) {
-      const file = fileByName.get(input) ?? rawFiles.find((f) => baseFile(f.name) === input)
-      if (!file) continue
-      const params = (src as { params?: { delimiter?: string; has_header?: boolean } }).params ?? {}
-      const table = parseTargetTable(file.bytes, params)
-      if (!table.rows.length) continue
-      const targetCols = chooseTargetColumns(table)
-      if (!targetCols.length) continue
-      const idCol = table.headers.find(isIdColumn) ?? ''
-      const join = (src as { join?: { right?: string } }).join
-      const linked = join?.right ? byId.get(join.right) : undefined
-      const linkedInputs = linked ? asArray(linked.input) : []
-      const partition = src.partition || linked?.partition || ''
-      table.rows.forEach((row, ri) => {
-        // first target column wins (one y per sample for v1)
-        const col = targetCols[0]
-        const raw = row[col]
-        if (raw == null || raw.trim() === '') return
-        const num = Number(raw.replace(',', '.'))
-        const item: TargetItem = { key: col, value: Number.isFinite(num) ? num : raw, partition, sampleId: idCol ? String(row[idCol] ?? '') : '' }
-        any = true
-        if (item.sampleId) bySampleId.set(item.sampleId, item)
-        for (const li of linkedInputs) byFileRow.set(rowKey(li, ri), item)
-        if (partition) byPartRow.set(rowKey(partition, ri), item)
-      })
-    }
-  }
-  return {
-    hasTargets: any,
-    find(sampleId, file, rowIndex, partition) {
-      if (sampleId && bySampleId.has(sampleId)) return bySampleId.get(sampleId)!
-      return (
-        byFileRow.get(rowKey(file, rowIndex)) ??
-        byFileRow.get(rowKey(baseFile(file), rowIndex)) ??
-        byPartRow.get(rowKey(partition, rowIndex)) ??
-        null
-      )
-    },
-  }
-}
-
-function rowsFrom(
-  decoded: DecodedFile[],
-  targetFiles: Set<string> | null,
-  metaFiles: Set<string>,
-): { x: Row[]; yByKey: Map<string, number | string> } {
-  const all: Row[] = []
-  const widths: number[] = []
-  for (const d of decoded) {
-    if (!d.ok || !d.records) continue
-    for (let i = 0; i < d.records.length; i++) {
-      const r = d.records[i]
-      const sig = firstSignal(r)
-      const values = (sig?.values ?? []).map(Number).filter(Number.isFinite)
-      const axis = (sig?.axis?.values ?? []).map(Number).filter(Number.isFinite)
-      const idx = Number(r.metadata?.row_index ?? i)
-      const partition: Partition = (r.metadata?.partition as Partition) || (isTestName(d.file) ? 'test' : 'train')
-      const metaId = r.metadata?.sample_id || r.metadata?.id
-      const targets = r.targets ? Object.values(r.targets) : []
-      all.push({
-        file: d.file,
-        idx,
-        partition,
-        sampleId: metaId || `${d.file}#${idx}`,
-        realId: !!metaId,
-        values,
-        axis,
-        axisUnit: sig?.axis?.unit ?? 'index',
-        embeddedTarget: targets[0],
-      })
-      widths.push(values.length)
-    }
-  }
-  // mode spectrum width identifies X; scalar (width 1) rows are target candidates
-  const counts = new Map<number, number>()
-  for (const w of widths) counts.set(w, (counts.get(w) ?? 0) + 1)
-  let modeW = 1
-  let best = -1
-  for (const [w, c] of counts) if (w > 1 && c > best) (best = c), (modeW = w)
-
-  const x = all.filter((r) => r.values.length === modeW && modeW > 1 && !metaFiles.has(r.file) && !(targetFiles?.has(r.file)))
-  const yByKey = new Map<string, number | string>()
-  for (const r of all) {
-    // a row is a target if the spec marks its file as targets, else if it is a
-    // lone scalar from a non-metadata file
-    const isTarget = targetFiles ? targetFiles.has(r.file) : r.values.length === 1 && !metaFiles.has(r.file)
-    if (!isTarget) continue
-    const val = r.values.length >= 1 ? r.values[0] : r.embeddedTarget
-    if (val == null) continue
-    yByKey.set(`${r.partition}#${r.idx}`, val)
-    if (r.realId) yByKey.set(r.sampleId, val) // only real ids can match across files
-  }
-  return { x, yByKey }
-}
+const toPartition = (name: string): Partition =>
+  /test|valid|holdout/i.test(name) ? 'test' : /predict|infer|unknown/i.test(name) ? 'predict' : 'train'
 
 /**
- * Build a MaterializedDataset from decoded records (vendor formats or CSV via formats).
- * `rawFiles` are the original uploaded bytes — needed because target (y) files are
- * scalar tables that nirs4all-formats won't decode, so their values are read from the
- * resolved DatasetSpec instead (see buildTargetResolver).
+ * Map io's `AssembledDataset` (per-partition feature/target blocks) onto the
+ * engine's `MaterializedDataset`. Pure data shaping — no NIRS/IO logic (that ran
+ * in nirs4all-io). Uses the first feature source (studio v1 is single-source);
+ * y is the first target column, with class labels recovered from `y_categorical`.
+ * Task-type + class encoding stay on the shared `inferTaskType`/`encodeTarget`.
  */
-export function materialize(
-  decoded: DecodedFile[],
-  name = 'Uploaded dataset',
-  plan?: DatasetPlan | null,
-  rawFiles: { name: string; bytes: Uint8Array }[] = [],
-): MaterializedDataset {
-  const sources = plan?.resolved_spec?.sources ?? []
-  const targetFiles = new Set(sources.filter((s) => s.role === 'targets').flatMap((s) => asArray(s.input)))
-  const metaFiles = new Set([
-    ...sources.filter((s) => s.role === 'metadata').flatMap((s) => asArray(s.input)),
-    ...decoded.filter((d) => isMetaName(d.file)).map((d) => d.file),
-  ])
-  const { x, yByKey } = rowsFrom(decoded, targetFiles.size ? targetFiles : null, metaFiles)
-  if (x.length === 0) throw new Error('No spectra found — every decoded file looked like scalar/target data.')
-  const targets = buildTargetResolver(plan, rawFiles)
-  const nFeatures = x[0].values.length
-  const axis = x[0].axis.length === nFeatures ? x[0].axis : x[0].axis.length ? x[0].axis : Array.from({ length: nFeatures }, (_, i) => i)
-  const axisUnit = x[0].axisUnit
+export function mapAssembledToMaterialized(full: AssembledFull): MaterializedDataset {
+  const parts = Object.keys(full.blocks ?? {})
+  if (!parts.length) throw new Error('nirs4all-io returned no partitions to assemble.')
+  const first = full.blocks[parts[0]]
+  const x0 = first.x?.[0]
+  if (!x0 || !x0.n_cols) throw new Error('No spectra found — nirs4all-io assembled no feature matrix.')
+  const nFeatures = x0.n_cols
+  const headers = first.feature_headers?.[0] ?? []
+  const axisNums = headers.map(Number)
+  const axis = axisNums.length === nFeatures && axisNums.every((v) => Number.isFinite(v)) ? axisNums : Array.from({ length: nFeatures }, (_, i) => i)
+  const axisUnit = first.header_units?.[0] || 'index'
+  const targetName = first.y_headers?.[0] ?? 'target'
 
-  const X = new Float64Array(x.length * nFeatures)
-  const yRaw = new Float64Array(x.length)
+  let nSamples = 0
+  for (const p of parts) nSamples += full.blocks[p].x?.[0]?.n_rows ?? 0
+  if (nSamples === 0) throw new Error('No spectra found — every assembled partition was empty.')
+
+  const X = new Float64Array(nSamples * nFeatures)
+  const yRaw = new Float64Array(nSamples)
   const labelsRaw: string[] = []
   const partitions: Partition[] = []
   const sampleIds: string[] = []
-  for (let i = 0; i < x.length; i++) {
-    const r = x[i]
-    for (let j = 0; j < nFeatures; j++) X[i * nFeatures + j] = r.values[j] ?? 0
-    // prefer an embedded target, then a real shared sample id, then position within
-    // partition (decoded scalar rows), then the spec-driven target files (y CSVs that
-    // didn't decode as spectra — the common nirs4all X*/Y* folder case)
-    const t =
-      r.embeddedTarget ??
-      (r.realId ? yByKey.get(r.sampleId) : undefined) ??
-      yByKey.get(`${r.partition}#${r.idx}`) ??
-      targets.find(r.realId ? r.sampleId : '', r.file, r.idx, r.partition)?.value
-    const num = t == null || t === '' ? NaN : typeof t === 'number' ? t : Number(String(t).replace(',', '.'))
-    yRaw[i] = Number.isFinite(num) ? num : NaN
-    labelsRaw.push(t == null ? '' : String(t))
-    partitions.push(r.partition)
-    sampleIds.push(r.sampleId)
+  let off = 0
+  for (const p of parts) {
+    const b = full.blocks[p]
+    const xm = b.x?.[0]
+    if (!xm || xm.n_rows === 0) continue
+    if (xm.n_cols !== nFeatures) throw new Error(`nirs4all-io partition "${p}" has ${xm.n_cols} features, expected ${nFeatures}.`)
+    const rows = xm.n_rows
+    X.set(Float64Array.from(xm.data.slice(0, rows * nFeatures)), off * nFeatures)
+    const part = toPartition(p)
+    const idCol = metaIdColumn(b)
+    const cats = b.y_categorical && Object.keys(b.y_categorical).length ? Object.values(b.y_categorical)[0]?.categories ?? null : null
+    const yCols = b.y?.n_cols ?? 0
+    for (let r = 0; r < rows; r++) {
+      partitions.push(part)
+      sampleIds.push(idCol && idCol[r] != null ? String(idCol[r]) : `${p}#${r}`)
+      if (b.y && yCols > 0) {
+        const v = b.y.data[r * yCols] // first target column
+        yRaw[off + r] = v
+        labelsRaw.push(cats ? cats[Math.round(v)] ?? String(v) : Number.isFinite(v) ? String(v) : '')
+      } else {
+        yRaw[off + r] = NaN
+        labelsRaw.push('')
+      }
+    }
+    off += rows
   }
 
   // targetless spectra are allowed (explore / predict-only); the engine refuses
-  // to *train* without targets, so an all-NaN y never silently produces a model.
+  // to train without targets, so an all-NaN y never silently produces a model.
   const taskType = inferTaskType(Array.from(yRaw), labelsRaw)
   const { y, classes } = encodeTarget(yRaw, labelsRaw, taskType)
-  return { X, nSamples: x.length, nFeatures, axis, axisUnit, y, yRaw, labelsRaw, targetName: 'target', taskType, classes, sampleIds, partitions }
+  return { X, nSamples, nFeatures, axis, axisUnit, y, yRaw, labelsRaw, targetName, taskType, classes, sampleIds, partitions }
+}
+
+/**
+ * Assemble decoded records + uploaded tables into a `MaterializedDataset` via
+ * nirs4all-io's fs-free `assembleDataset` (Rust → WASM). Decoded vendor records
+ * are passed as record sets; files io reads itself (CSV y/metadata tables that
+ * didn't decode as spectra) are passed as bytes. The resolved DatasetSpec
+ * (`plan.resolved_spec`) drives roles/joins/partitions inside io.
+ */
+export async function assembleDataset(
+  decoded: DecodedFile[],
+  plan: DatasetPlan | null | undefined,
+  files: { name: string; bytes: Uint8Array }[],
+): Promise<MaterializedDataset> {
+  const spec = plan?.resolved_spec
+  if (!spec) throw new Error('nirs4all-io produced no DatasetSpec to assemble — check the uploaded files.')
+  const { io } = await mods()
+  const okNames = new Set(decoded.filter((d) => d.ok && d.records?.length).map((d) => d.file))
+  const recordSets = decoded.filter((d) => d.ok && d.records?.length).map((d) => ({ source: d.file, records: d.records! }))
+  const byteFiles = files.filter((f) => !okNames.has(f.name)).map((f) => ({ name: f.name, bytes: f.bytes }))
+  const full = io.assembleDataset(byteFiles, recordSets, JSON.stringify(spec)) as AssembledFull
+  return mapAssembledToMaterialized(full)
 }
