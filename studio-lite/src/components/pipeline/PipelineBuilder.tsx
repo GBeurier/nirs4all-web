@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { Download, Sparkles, Upload } from 'lucide-react'
 import type { PipelineBuilderProps } from '@/components/contracts'
 import type { Preset, ParamValue } from '@/catalog/types'
-import type { FinetuneSpec, ParamSweep, PipelineDSL, PipelineStep, StepVariant } from '@/engine/types'
+import type { BranchBlock, FinetuneSpec, ParamSweep, PipelineDSL, PipelineStep, StepVariant } from '@/engine/types'
 import { countVariants } from '@/engine/dagml'
 import { PRESETS } from '@/catalog/presets'
 import { defaultParams, modelsForTask, nodeByType } from '@/catalog/nodes'
@@ -20,7 +20,7 @@ import {
 import { NodePalette } from './NodePalette'
 import { CanvasFlow, type Selection } from './CanvasFlow'
 import { Inspector } from './Inspector'
-import { newStepId, normalizeImportedPipeline, pipelineFromPreset } from './_helpers'
+import { newBranchId, newStepId, normalizeImportedPipeline, pipelineFromPreset } from './_helpers'
 
 /**
  * Studio-style pipeline editor: a three-pane workspace — operator palette (left),
@@ -36,7 +36,8 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
   const setSteps = (steps: PipelineStep[]) => update({ steps })
 
   // The palette/canvas surface ALL operators; route each add by its catalog
-  // category — preprocessing → chain step, split → split node, model → model slot.
+  // category — preprocessing → chain step (or a selected branch lane), split →
+  // split node, model → model slot.
   const addOperator = (type: string, index?: number) => {
     const cat = nodeByType(type)?.category
     if (cat === 'model') {
@@ -44,6 +45,12 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
       setSelected({ kind: 'model' })
     } else if (cat === 'split') {
       addSplit(type)
+    } else if (cat === 'preprocessing' && (selected.kind === 'branch' || selected.kind === 'branchStep') && pipeline.branch) {
+      // a preprocessing add while a branch is focused goes into the focused lane
+      // (the lane of a selected branch step, the explicitly-focused lane, else lane 0)
+      const branchId = selected.branchId ?? pipeline.branch.branches[0]?.id
+      if (branchId) insertBranchStep(branchId, type)
+      else insertStep(type, index ?? pipeline.steps.length)
     } else {
       insertStep(type, index ?? pipeline.steps.length)
     }
@@ -125,6 +132,45 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
   const removeCv = () => {
     onChange({ ...pipeline, cv: undefined })
     if (selected.kind === 'cv') setSelected({ kind: 'model' })
+  }
+
+  // branch / feature-union (FEATURE 2) — at most one block, ≥2 lanes -----------
+  const setBranch = (branch: BranchBlock | undefined) => onChange({ ...pipeline, branch })
+  const addBranch = () => {
+    setBranch({ branches: [{ id: newBranchId(), steps: [] }, { id: newBranchId(), steps: [] }] })
+    setSelected({ kind: 'branch' })
+  }
+  const removeBranch = () => {
+    setBranch(undefined)
+    if (selected.kind === 'branch' || selected.kind === 'branchStep') setSelected({ kind: 'model' })
+  }
+  const addBranchLane = () => {
+    if (!pipeline.branch) return
+    setBranch({ branches: [...pipeline.branch.branches, { id: newBranchId(), steps: [] }] })
+  }
+  const removeBranchLane = (branchId: string) => {
+    if (!pipeline.branch || pipeline.branch.branches.length <= 2) return
+    setBranch({ branches: pipeline.branch.branches.filter((b) => b.id !== branchId) })
+    if (selected.kind === 'branchStep' && selected.branchId === branchId) setSelected({ kind: 'branch' })
+  }
+  const insertBranchStep = (branchId: string, type: string) => {
+    if (!pipeline.branch) return
+    const step: PipelineStep = { id: newStepId(type), type, params: defaultParams(type) }
+    setBranch({ branches: pipeline.branch.branches.map((b) => (b.id === branchId ? { ...b, steps: [...b.steps, step] } : b)) })
+    setSelected({ kind: 'branchStep', branchId, stepId: step.id })
+  }
+  const removeBranchStep = (branchId: string, stepId: string) => {
+    if (!pipeline.branch) return
+    setBranch({ branches: pipeline.branch.branches.map((b) => (b.id === branchId ? { ...b, steps: b.steps.filter((s) => s.id !== stepId) } : b)) })
+    if (selected.kind === 'branchStep' && selected.branchId === branchId && selected.stepId === stepId) setSelected({ kind: 'branch' })
+  }
+  const setBranchStepParam = (branchId: string, stepId: string, name: string, value: ParamValue) => {
+    if (!pipeline.branch) return
+    setBranch({
+      branches: pipeline.branch.branches.map((b) =>
+        b.id === branchId ? { ...b, steps: b.steps.map((s) => (s.id === stepId ? { ...s, params: { ...s.params, [name]: value } } : s)) } : b,
+      ),
+    })
   }
 
   // split operator (optional, at most one, applied before CV) ---------------
@@ -225,7 +271,7 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
       {/* three-pane editor */}
       <div className="grid min-h-[30rem] flex-1 gap-4 lg:grid-cols-[15rem_minmax(0,1fr)_19rem]">
         <aside className="hidden rounded-2xl border border-border bg-card/70 p-3 lg:block">
-          <NodePalette onAdd={addOperator} taskType={taskType} />
+          <NodePalette onAdd={addOperator} onAddBranch={addBranch} taskType={taskType} />
         </aside>
         <section className="rounded-2xl border border-border bg-card/70 p-4">
           <CanvasFlow
@@ -244,6 +290,12 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
             onRemoveSplit={removeSplit}
             onAddCv={addCv}
             onRemoveCv={removeCv}
+            onAddBranch={addBranch}
+            onRemoveBranch={removeBranch}
+            onInsertBranchStep={insertBranchStep}
+            onRemoveBranchStep={removeBranchStep}
+            onAddBranchLane={addBranchLane}
+            onRemoveBranchLane={removeBranchLane}
             onRun={onRun}
             onCancel={onCancel}
           />
@@ -262,6 +314,9 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
             onModelFinetune={setModelFinetune}
             onSplitParam={setSplitParam}
             onCv={setCv}
+            onBranchStepParam={setBranchStepParam}
+            onAddBranchLane={addBranchLane}
+            onRemoveBranchLane={removeBranchLane}
           />
         </aside>
       </div>
@@ -269,7 +324,7 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, onChang
       {/* mobile palette fallback (left palette is hidden on small screens) */}
       <div className="lg:hidden">
         <div className="rounded-2xl border border-border bg-card/70 p-3">
-          <NodePalette onAdd={addOperator} taskType={taskType} />
+          <NodePalette onAdd={addOperator} onAddBranch={addBranch} taskType={taskType} />
         </div>
       </div>
     </div>

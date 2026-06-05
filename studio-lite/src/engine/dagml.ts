@@ -142,21 +142,42 @@ function finetuneGenerators(finetune: PipelineDSL['finetune']): object[] {
 // now carrying per-step `generators`/`variants`, model `tuning`, and DSL-level
 // `generation_strategy`/`max_variants`/`root_seed` so dag-ml expands the cartesian
 // product of variants itself.
+/** Lower one studio-lite preprocessing step to its nirs4all-compat pipeline entry
+ *  (bare "SNV"/"MSC" sugar, else `{preprocessing,params,generators?,variants?}`). */
+function compatStepEntry(s: PipelineStep): unknown {
+  const generators = generatorsForStep(s)
+  const variants = variantsForStep(s.variants)
+  const hasGen = generators.length > 0 || variants.length > 0
+  if (s.type === 'StandardNormalVariate' && !hasGen) return 'SNV'
+  if (s.type === 'MSC' && !hasGen) return 'MSC'
+  const step: Record<string, unknown> = { preprocessing: s.type, params: s.params }
+  if (generators.length) step.generators = generators
+  if (variants.length) step.variants = variants
+  return step
+}
+
 export function toCompatDsl(dsl: PipelineDSL): object {
   const steps: unknown[] = [{ sources: ['x'] }]
-  for (const s of dsl.steps) {
-    const generators = generatorsForStep(s)
-    const variants = variantsForStep(s.variants)
-    const hasGen = generators.length > 0 || variants.length > 0
-    if (s.type === 'StandardNormalVariate' && !hasGen) steps.push('SNV')
-    else if (s.type === 'MSC' && !hasGen) steps.push('MSC')
-    else {
-      const step: Record<string, unknown> = { preprocessing: s.type, params: s.params }
-      if (generators.length) step.generators = generators
-      if (variants.length) step.variants = variants
-      steps.push(step)
+  for (const s of dsl.steps) steps.push(compatStepEntry(s))
+
+  // DAG feature-union (FEATURE 2): one optional branch block of ≥2 parallel
+  // preprocessing sub-chains, the input duplicated into each, the outputs
+  // concatenated column-wise into the model's X. We emit it as the nirs4all-compat
+  // `concat_transform` step — dag-ml's lower_concat_transform_step (dsl.rs:1742)
+  // lowers the object form `{ concat_transform: { <branchId>: [steps...] } }` to a
+  // PipelineDslConcatTransformStep { id, branches:[PipelineDslConcatBranch{id,steps}] }
+  // (dsl.rs:379-403), which compiles to a column-wise feature merge feeding the
+  // model. This is the duplication-mode feature fusion the editor builds; the
+  // branch ids carry into dag-ml's graph/lineage. Empty branches are skipped.
+  if (dsl.branch && dsl.branch.branches.length >= 2) {
+    const concat: Record<string, unknown[]> = {}
+    for (const b of dsl.branch.branches) {
+      // each branch is its own (possibly empty) compat sub-chain
+      concat[b.id] = b.steps.map(compatStepEntry)
     }
+    steps.push({ concat_transform: concat })
   }
+
   // CV is OPTIONAL: when absent the run is refit-only — emit NO KFold split_invocation.
   if (dsl.cv) steps.push({ split: { type: 'KFold', n_splits: dsl.cv.folds } })
 

@@ -1,4 +1,4 @@
-import { Settings2, SlidersHorizontal } from 'lucide-react'
+import { GitBranch, Settings2, SlidersHorizontal } from 'lucide-react'
 import type { FinetuneSpec, ParamSweep, PipelineDSL, PipelineStep, StepVariant, TaskType } from '@/engine/types'
 import type { ParamValue } from '@/catalog/types'
 import { nodeByType } from '@/catalog/nodes'
@@ -26,6 +26,9 @@ export interface InspectorProps {
   onModelFinetune: (finetune: FinetuneSpec | undefined) => void
   onSplitParam: (name: string, value: ParamValue) => void
   onCv: (patch: Partial<NonNullable<PipelineDSL['cv']>>) => void
+  onBranchStepParam: (branchId: string, stepId: string, name: string, value: ParamValue) => void
+  onAddBranchLane: () => void
+  onRemoveBranchLane: (branchId: string) => void
 }
 
 /** A numeric ParamField paired with its sweep activator (orange Repeat badge). */
@@ -76,7 +79,7 @@ function InspectorShell({ icon, eyebrow, title, children }: { icon: React.ReactN
 }
 
 /** Right rail of the editor: parameters for whatever node is selected on the canvas. */
-export function Inspector({ pipeline, taskType, selected, onStepParam, onStepSweep, onStepVariants, onModelType, onModelParam, onModelSweep, onModelFinetune, onSplitParam, onCv }: InspectorProps) {
+export function Inspector({ pipeline, taskType, selected, onStepParam, onStepSweep, onStepVariants, onModelType, onModelParam, onModelSweep, onModelFinetune, onSplitParam, onCv, onBranchStepParam, onAddBranchLane, onRemoveBranchLane }: InspectorProps) {
   if (selected.kind === 'split') {
     const split = pipeline.split
     const def = split ? nodeByType(split.type) : undefined
@@ -150,6 +153,78 @@ export function Inspector({ pipeline, taskType, selected, onStepParam, onStepSwe
             />
           </div>
         </div>
+      </InspectorShell>
+    )
+  }
+
+  if (selected.kind === 'branch') {
+    const branch = pipeline.branch
+    if (!branch) {
+      return (
+        <InspectorShell icon={<GitBranch className="size-4" />} eyebrow="DAG" title="No branch">
+          <p className="text-xs text-muted-foreground">Add a branch (feature union) on the canvas to fuse several preprocessing chains.</p>
+        </InspectorShell>
+      )
+    }
+    return (
+      <InspectorShell icon={<GitBranch className="size-4" />} eyebrow="DAG" title="Branch · feature union">
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          The input is duplicated into each branch; every branch runs its own preprocessing sub-chain and the outputs are
+          concatenated column-wise into one feature matrix that feeds the model (classic NIRS multi-preprocessing fusion).
+          Each branch is fit on the training fold only — leakage-safe.
+        </p>
+        <div className="space-y-2">
+          {branch.branches.map((b) => (
+            <div key={b.id} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card/60 px-3 py-2">
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-mono text-[11px] font-semibold text-foreground">{b.id}</span>
+                <span className="block text-[10px] text-muted-foreground">{b.steps.length} step{b.steps.length === 1 ? '' : 's'}</span>
+              </span>
+              {branch.branches.length > 2 && (
+                <button type="button" className="text-[11px] text-muted-foreground hover:text-destructive" onClick={() => onRemoveBranchLane(b.id)}>remove</button>
+              )}
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={onAddBranchLane}
+          className="w-full rounded-lg border border-dashed border-brand-amber/40 bg-brand-amber/5 px-3 py-2 text-xs font-semibold text-brand-amber transition-colors hover:border-brand-amber/70 hover:bg-brand-amber/10"
+        >
+          + add a branch
+        </button>
+        <p className="rounded-lg border border-dashed border-border px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+          Select an operator in the palette (or drop one onto a branch lane) to add it to the focused branch. Click a branch
+          op on the canvas to edit its parameters.
+        </p>
+      </InspectorShell>
+    )
+  }
+
+  if (selected.kind === 'branchStep') {
+    const lane = pipeline.branch?.branches.find((b) => b.id === selected.branchId)
+    const step = lane?.steps.find((s) => s.id === selected.stepId)
+    const def = step ? nodeByType(step.type) : undefined
+    const Icon = iconByName(def?.icon)
+    if (!step || !def) {
+      return (
+        <InspectorShell icon={<SlidersHorizontal className="size-4" />} eyebrow="Branch op" title="Nothing selected">
+          <p className="text-xs text-muted-foreground">Select a branch operator on the canvas to edit its parameters.</p>
+        </InspectorShell>
+      )
+    }
+    return (
+      <InspectorShell icon={<Icon className="size-4" />} eyebrow={`Branch · ${selected.branchId}`} title={def.name}>
+        <p className="text-xs leading-relaxed text-muted-foreground">{def.description}</p>
+        {def.params.length > 0 ? (
+          <div className="grid grid-cols-1 gap-3">
+            {def.params.map((p) => (
+              <ParamField key={p.name} def={p} value={step.params[p.name] ?? p.default} onChange={(v) => onBranchStepParam(selected.branchId, selected.stepId, p.name, v)} />
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-lg border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">This operator has no parameters.</p>
+        )}
       </InspectorShell>
     )
   }

@@ -14,6 +14,7 @@ import type {
   FittedPipeline,
   MaterializedDataset,
   Metrics,
+  PipelineBranch,
   PipelineDSL,
   PipelineStep,
   PredRow,
@@ -54,9 +55,28 @@ interface FittedStep {
 }
 export interface FittedState {
   chain: FittedStep[]
+  /** optional feature-union: per-branch fitted sub-chains, applied to the main
+   *  chain's output then concatenated column-wise before the model (FEATURE 2). */
+  branch?: FittedStep[][]
   model: unknown
   classNames?: string[]
   backendId: string
+}
+
+/** Column-wise concatenation of matrices that share the same row count. */
+function concatCols(mats: Mat[]): Mat {
+  if (mats.length === 1) return mats[0]
+  const rows = mats[0].rows
+  const cols = mats.reduce((a, m) => a + m.cols, 0)
+  const out = mat(rows, cols)
+  for (let r = 0; r < rows; r++) {
+    let off = r * cols
+    for (const m of mats) {
+      out.data.set(m.data.subarray(r * m.cols, (r + 1) * m.cols), off)
+      off += m.cols
+    }
+  }
+  return out
 }
 
 export function classInfo(ds: MaterializedDataset): { classNames: string[]; classIdx: Int32Array } {
@@ -128,21 +148,47 @@ export function trainAndPredict(
   backend: ModelBackend,
   trainIdx: number[],
   predictIdx: number[],
-): { pred: Mat; descriptors: FittedStep[]; model: unknown; classNames: string[] } {
+): { pred: Mat; descriptors: FittedStep[]; branch?: FittedStep[][]; model: unknown; classNames: string[] } {
   if (!dsl.model) throw new Error('This pipeline has no model — add a model to fit and score.')
   const model0 = dsl.model
   const ncomp = Number(model0.params.n_components ?? nodeByType(model0.type)?.params.find((p) => p.name === 'n_components')?.default ?? 10)
   const { classNames, classIdx } = classInfo(ds)
   const Xfull: Mat = { data: ds.X, rows: ds.nSamples, cols: ds.nFeatures }
+  // Main preprocessing chain, fit on the train rows only.
   const { transformers, descriptors, Xout } = fitChain(dsl.steps, selectRows(Xfull, trainIdx), backend.preproc)
+  // Optional feature-union: fit each branch sub-chain on the (train) main-chain
+  // output, then concat columns. Leakage-safe — every fit sees only train rows.
+  const branches = activeBranches(dsl)
+  const branchTransformers: FittedTransformer[][] = []
+  const branchDescriptors: FittedStep[][] = []
   const modelSpec: ModelSpec = { type: model0.type, params: model0.params }
   try {
-    const model = backend.fit(modelSpec, Xout, buildYMatrix(ds, classNames, classIdx, trainIdx), clampNcomp(ncomp, Xout))
-    const pred = backend.predict(model, applyTransformers(transformers, selectRows(Xfull, predictIdx)))
-    return { pred, descriptors, model, classNames }
+    let Xtr = Xout
+    if (branches) {
+      const parts: Mat[] = []
+      for (const b of branches) {
+        const fb = fitChain(b.steps, Xout, backend.preproc)
+        branchTransformers.push(fb.transformers)
+        branchDescriptors.push(fb.descriptors)
+        parts.push(fb.Xout)
+      }
+      Xtr = concatCols(parts)
+    }
+    const model = backend.fit(modelSpec, Xtr, buildYMatrix(ds, classNames, classIdx, trainIdx), clampNcomp(ncomp, Xtr))
+    // Replay on predict rows: main chain → branch sub-chains → concat columns.
+    const Xpre = applyTransformers(transformers, selectRows(Xfull, predictIdx))
+    const Xpred = branches ? concatCols(branchTransformers.map((ts) => applyTransformers(ts, Xpre))) : Xpre
+    const pred = backend.predict(model, Xpred)
+    return { pred, descriptors, branch: branches ? branchDescriptors : undefined, model, classNames }
   } finally {
     transformers.forEach((t) => t.free())
+    branchTransformers.forEach((ts) => ts.forEach((t) => t.free()))
   }
+}
+
+/** The branch block's branches if it's an active feature-union (≥2 branches), else undefined. */
+function activeBranches(dsl: PipelineDSL): PipelineBranch[] | undefined {
+  return dsl.branch && dsl.branch.branches.length >= 2 ? dsl.branch.branches : undefined
 }
 
 function fitChain(steps: PipelineStep[], Xin: Mat, preproc: Preprocessor): { transformers: FittedTransformer[]; descriptors: FittedStep[]; Xout: Mat } {
@@ -213,13 +259,7 @@ export async function runPipeline(
       console.warn('[split] could not compute split, keeping dataset partition:', e)
     }
   }
-  const model0 = dsl.model
-  const ncomp = Number(model0.params.n_components ?? nodeByType(model0.type)?.params.find((p) => p.name === 'n_components')?.default ?? 10)
-  const Xfull: Mat = { data: ds.X, rows: ds.nSamples, cols: ds.nFeatures }
   const { classNames, classIdx } = classInfo(ds)
-  // clamp components to the matrix dims — libn4m (unlike the JS backend) does not,
-  // and n_components > min(n, p) is invalid PLS.
-  const safeN = (X: Mat) => Math.max(1, Math.min(ncomp, X.cols, X.rows - 1))
 
   // refuse to train on missing targets rather than producing a meaningless model
   const trainRowsIdx = trainRowsOf(ds)
@@ -230,8 +270,6 @@ export async function runPipeline(
     throw new Error('Classification needs at least two classes in the training data.')
   }
 
-  const modelSpec: ModelSpec = { type: model0.type, params: model0.params }
-  const buildY = (idx: number[]): Mat => buildYMatrix(ds, classNames, classIdx, idx)
   const decode = (pred: Mat, idx: number[]): PredRow[] => decodeRows(ds, classNames, classIdx, pred, idx)
   const checkCancel = () => {
     if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError')
@@ -248,15 +286,10 @@ export async function runPipeline(
     for (let fi = 0; fi < folds.length; fi++) {
       checkCancel()
       const f = folds[fi]
-      const { transformers, Xout: XtrP } = fitChain(dsl.steps, selectRows(Xfull, f.trainIdx), backend.preproc)
-      let rows: PredRow[]
-      try {
-        const model = backend.fit(modelSpec, XtrP, buildY(f.trainIdx), safeN(XtrP))
-        const XvaP = applyTransformers(transformers, selectRows(Xfull, f.valIdx))
-        rows = decode(backend.predict(model, XvaP), f.valIdx)
-      } finally {
-        transformers.forEach((t) => t.free())
-      }
+      // trainAndPredict fits the main chain + optional branch union on the fold's
+      // train rows and predicts its validation rows — branch- and leakage-safe.
+      const { pred } = trainAndPredict(ds, dsl, backend, f.trainIdx, f.valIdx)
+      const rows = decode(pred, f.valIdx)
       oof.push(...rows)
       foldNodes.push(scoreNode(`fold-${f.foldId}`, `Fold ${f.foldId}`, 'fold', rows, task, classNames))
       onP?.({ phase: 'fit_cv', pct: 4 + Math.round((72 * (fi + 1)) / folds.length) })
@@ -269,16 +302,9 @@ export async function runPipeline(
   onP?.({ phase: 'refit', pct: 82 })
   const trainIdx = trainRowsIdx
   const testIdx = testRowsOf(ds)
-  const { transformers, descriptors, Xout: XtrP } = fitChain(dsl.steps, selectRows(Xfull, trainIdx), backend.preproc)
-  let model: unknown
-  let refitRows: PredRow[]
   const scoreIdx = testIdx.length > 0 ? testIdx : trainIdx
-  try {
-    model = backend.fit(modelSpec, XtrP, buildY(trainIdx), safeN(XtrP))
-    refitRows = decode(backend.predict(model, applyTransformers(transformers, selectRows(Xfull, scoreIdx))), scoreIdx)
-  } finally {
-    transformers.forEach((t) => t.free())
-  }
+  const { pred: refitPred, descriptors, branch, model } = trainAndPredict(ds, dsl, backend, trainIdx, scoreIdx)
+  const refitRows = decode(refitPred, scoreIdx)
   const refitNode = scoreNode('refit', testIdx.length > 0 ? 'Refit · test' : 'Refit · train', 'refit', refitRows, task, classNames)
 
   onP?.({ phase: 'done', pct: 100 })
@@ -287,7 +313,7 @@ export async function runPipeline(
     taskType: task,
     nFeatures: ds.nFeatures,
     classes: classNames.length ? classNames : undefined,
-    state: { chain: descriptors, model, classNames: classNames.length ? classNames : undefined, backendId: backend.id } as FittedState,
+    state: { chain: descriptors, branch, model, classNames: classNames.length ? classNames : undefined, backendId: backend.id } as FittedState,
   }
   const scoreMetric: keyof Metrics = task === 'regression' ? 'rmse' : 'accuracy'
   return {
@@ -314,7 +340,9 @@ export function predictPipeline(
   backend: ModelBackend,
 ): PredictResult {
   const st = model.state as FittedState
-  const Xp = applyChain(st.chain, { data: Xnew, rows: nSamples, cols: nFeatures }, backend.preproc)
+  // main chain → optional branch sub-chains → concat columns (mirrors training).
+  const Xpre = applyChain(st.chain, { data: Xnew, rows: nSamples, cols: nFeatures }, backend.preproc)
+  const Xp = st.branch && st.branch.length >= 2 ? concatCols(st.branch.map((c) => applyChain(c, Xpre, backend.preproc))) : Xpre
   const pred = backend.predict(st.model, Xp)
   if (model.taskType === 'regression') {
     return { values: Float64Array.from({ length: nSamples }, (_, i) => pred.data[i]) }

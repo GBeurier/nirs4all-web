@@ -2,7 +2,7 @@ import * as Icons from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { Preset } from '@/catalog/types'
 import { defaultParams, nodeByType } from '@/catalog/nodes'
-import type { PipelineDSL, PipelineStep } from '@/engine/types'
+import type { BranchBlock, PipelineBranch, PipelineDSL, PipelineStep } from '@/engine/types'
 
 // Drag-and-drop payload keys (native HTML5 DnD — no extra dependency).
 /** dataTransfer key carrying a catalog node `type` dragged from the palette. */
@@ -25,6 +25,13 @@ let stepCounter = 0
 export function newStepId(type: string): string {
   stepCounter += 1
   return `${type.toLowerCase()}-${Date.now().toString(36)}-${stepCounter}`
+}
+
+let branchCounter = 0
+/** Mint a branch id that's a valid dag-ml branch id token ([A-Za-z0-9_-]). */
+export function newBranchId(): string {
+  branchCounter += 1
+  return `branch-${Date.now().toString(36)}-${branchCounter}`
 }
 
 /** Build an editable PipelineDSL from a preset, merging defaults with preset params. */
@@ -68,15 +75,22 @@ export function normalizeImportedPipeline(value: unknown): PipelineDSL | null {
   if (!Array.isArray(v.steps)) return null
   if (typeof v.model !== 'object' || v.model === null) return null
 
-  const steps: PipelineStep[] = []
-  for (const raw of v.steps) {
-    if (typeof raw !== 'object' || raw === null) return null
-    const s = raw as Record<string, unknown>
-    if (typeof s.type !== 'string') return null
-    const def = nodeByType(s.type)
-    if (!def || def.category !== 'preprocessing') return null // unknown / non-preprocessing step
-    steps.push({ id: typeof s.id === 'string' ? s.id : newStepId(s.type), type: s.type, params: cleanParams(s.params, s.type) })
+  const parsePreprocChain = (arr: unknown): PipelineStep[] | null => {
+    if (!Array.isArray(arr)) return null
+    const out: PipelineStep[] = []
+    for (const raw of arr) {
+      if (typeof raw !== 'object' || raw === null) return null
+      const s = raw as Record<string, unknown>
+      if (typeof s.type !== 'string') return null
+      const def = nodeByType(s.type)
+      if (!def || def.category !== 'preprocessing') return null // unknown / non-preprocessing step
+      out.push({ id: typeof s.id === 'string' ? s.id : newStepId(s.type), type: s.type, params: cleanParams(s.params, s.type) })
+    }
+    return out
   }
+
+  const steps = parsePreprocChain(v.steps)
+  if (steps === null) return null
 
   const m = v.model as Record<string, unknown>
   if (typeof m.type !== 'string') return null
@@ -94,6 +108,25 @@ export function normalizeImportedPipeline(value: unknown): PipelineDSL | null {
     }
   }
 
+  // optional feature-union block (FEATURE 2): ≥2 branches, each a preprocessing
+  // sub-chain. A malformed/under-filled branch block is dropped, not fatal.
+  let branch: BranchBlock | undefined
+  if (v.branch && typeof v.branch === 'object' && !Array.isArray(v.branch)) {
+    const braw = v.branch as Record<string, unknown>
+    if (Array.isArray(braw.branches)) {
+      const parsed: PipelineBranch[] = []
+      let ok = true
+      for (const bb of braw.branches) {
+        if (!bb || typeof bb !== 'object') { ok = false; break }
+        const b = bb as Record<string, unknown>
+        const bsteps = parsePreprocChain(b.steps)
+        if (bsteps === null) { ok = false; break }
+        parsed.push({ id: typeof b.id === 'string' ? b.id : newBranchId(), steps: bsteps })
+      }
+      if (ok && parsed.length >= 2) branch = { branches: parsed }
+    }
+  }
+
   // CV is OPTIONAL (FEATURE 1): present → KFold; absent → refit-only run.
   // Back-compatible: a missing `cv` defaults to 5-fold (legacy files always had it),
   // an explicit `cv: null`/`false` means refit-only.
@@ -107,6 +140,7 @@ export function normalizeImportedPipeline(value: unknown): PipelineDSL | null {
     name: typeof v.name === 'string' && v.name.trim() ? v.name : 'Imported pipeline',
     split,
     steps,
+    branch,
     model,
     cv,
   }

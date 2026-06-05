@@ -134,6 +134,28 @@ describe('toCompatDsl generator DSL', () => {
     expect(pipeline.some((s) => 'split' in s)).toBe(false)
     expect(out.root_seed).toBe(0)
   })
+
+  it('emits a concat_transform feature-union with branch ids → steps (FEATURE 2)', () => {
+    // dag-ml lower_concat_transform_step (dsl.rs:1742) → PipelineDslConcatTransformStep
+    // { branches:[PipelineDslConcatBranch{id,steps}] } (dsl.rs:379-403).
+    const out = toCompatDsl(basePipeline({
+      branch: { branches: [
+        { id: 'snv', steps: [{ id: 'a', type: 'StandardNormalVariate', params: {} }] },
+        { id: 'd1', steps: [{ id: 'b', type: 'SavitzkyGolay', params: { deriv: 1 } }] },
+      ] },
+    })) as { pipeline: Record<string, unknown>[] }
+    const ct = out.pipeline.find((s) => 'concat_transform' in s) as { concat_transform: Record<string, unknown[]> }
+    expect(ct).toBeDefined()
+    expect(Object.keys(ct.concat_transform)).toEqual(['snv', 'd1'])
+    // bare SNV lowers to the "SNV" string sugar; SG carries preprocessing+params
+    expect(ct.concat_transform.snv).toEqual(['SNV'])
+    expect(ct.concat_transform.d1).toEqual([{ preprocessing: 'SavitzkyGolay', params: { deriv: 1 } }])
+  })
+
+  it('skips the branch block when fewer than 2 branches (FEATURE 2)', () => {
+    const out = toCompatDsl(basePipeline({ branch: { branches: [{ id: 'only', steps: [] }] } })) as { pipeline: Record<string, unknown>[] }
+    expect(out.pipeline.some((s) => 'concat_transform' in s)).toBe(false)
+  })
 })
 
 describe('countVariants (display-only mirror of dag-ml enumeration)', () => {

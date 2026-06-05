@@ -14,7 +14,14 @@ import {
 import { cn } from '@/app/components/ui/utils'
 import { DND_NEW_NODE, DND_REORDER, iconByName, paramSummary, phaseLabel } from './_helpers'
 
-export type Selection = { kind: 'step'; id: string } | { kind: 'model' } | { kind: 'split' } | { kind: 'cv' }
+export type Selection =
+  | { kind: 'step'; id: string }
+  | { kind: 'model' }
+  | { kind: 'split' }
+  | { kind: 'cv' }
+  /** the branch block; `branchId` is the focused lane new palette ops go into */
+  | { kind: 'branch'; branchId?: string }
+  | { kind: 'branchStep'; branchId: string; stepId: string }
 
 /** Display-only count of the variants one element contributes (dag-ml is authoritative). */
 function elementVariants(step: PipelineStep): number {
@@ -59,6 +66,13 @@ export interface CanvasFlowProps {
   onRemoveSplit: () => void
   onAddCv: () => void
   onRemoveCv: () => void
+  onAddBranch: () => void
+  onRemoveBranch: () => void
+  /** add an operator (by catalog type) to a specific branch lane */
+  onInsertBranchStep: (branchId: string, type: string) => void
+  onRemoveBranchStep: (branchId: string, stepId: string) => void
+  onAddBranchLane: () => void
+  onRemoveBranchLane: (branchId: string) => void
   onRun: () => void
   onCancel: () => void
 }
@@ -183,6 +197,196 @@ function FlowNode({
   )
 }
 
+/** A single branch lane: a drop target + a mini preprocessing chain. */
+function BranchLane({
+  branch,
+  selected,
+  removable,
+  focused,
+  onFocusLane,
+  onSelectStep,
+  onInsertStep,
+  onRemoveStep,
+  onRemoveLane,
+}: {
+  branch: { id: string; steps: PipelineStep[] }
+  selected: Selection
+  removable: boolean
+  focused: boolean
+  onFocusLane: () => void
+  onSelectStep: (stepId: string) => void
+  onInsertStep: (type: string) => void
+  onRemoveStep: (stepId: string) => void
+  onRemoveLane: () => void
+}) {
+  const [over, setOver] = useState(false)
+  return (
+    <div
+      data-branch-lane={branch.id}
+      onClick={onFocusLane}
+      onDragOver={(e) => {
+        if (e.dataTransfer.types.includes(DND_NEW_NODE)) {
+          e.preventDefault()
+          setOver(true)
+        }
+      }}
+      onDragLeave={() => setOver(false)}
+      onDrop={(e) => {
+        const t = e.dataTransfer.getData(DND_NEW_NODE)
+        if (t) {
+          e.preventDefault()
+          e.stopPropagation()
+          setOver(false)
+          onInsertStep(t)
+        }
+      }}
+      className={cn(
+        'flex min-w-0 flex-1 cursor-pointer flex-col gap-1.5 rounded-lg border bg-card/60 p-2 transition-colors',
+        over ? 'border-brand-amber bg-brand-amber/5' : focused ? 'border-brand-amber/60 ring-1 ring-brand-amber/30' : 'border-border/70',
+      )}
+    >
+      <div className="flex items-center justify-between gap-1">
+        <span className="truncate font-mono text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{branch.id}</span>
+        {removable && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-5 shrink-0 text-muted-foreground hover:text-destructive"
+            onClick={onRemoveLane}
+            aria-label="Remove branch"
+            title="Remove branch"
+          >
+            <Trash2 className="size-3.5" />
+          </Button>
+        )}
+      </div>
+      {branch.steps.length === 0 ? (
+        <p className="rounded border border-dashed border-border/70 px-2 py-3 text-center text-[10px] text-muted-foreground">drag ops here</p>
+      ) : (
+        branch.steps.map((s) => {
+          const def = nodeByType(s.type)
+          const Icon = iconByName(def?.icon)
+          const isSel = selected.kind === 'branchStep' && selected.branchId === branch.id && selected.stepId === s.id
+          return (
+            <div
+              key={s.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => onSelectStep(s.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  onSelectStep(s.id)
+                }
+              }}
+              className={cn(
+                'group/bs flex cursor-pointer items-center gap-1.5 rounded-md border bg-background px-2 py-1.5 transition-all',
+                isSel ? 'border-transparent ring-2 ring-brand-amber/50' : 'border-border hover:border-brand-amber/40',
+              )}
+            >
+              <span className="flex size-5 shrink-0 items-center justify-center rounded bg-brand-amber/10 text-brand-amber"><Icon className="size-3" /></span>
+              <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-foreground">{def?.name ?? s.type}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-5 shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover/bs:opacity-100"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onRemoveStep(s.id)
+                }}
+                aria-label="Remove branch step"
+                title="Remove"
+              >
+                <Trash2 className="size-3.5" />
+              </Button>
+            </div>
+          )
+        })
+      )}
+    </div>
+  )
+}
+
+/** The Branch (feature-union) node: N parallel preprocessing lanes whose outputs
+ *  are concatenated column-wise into the model's X. */
+function BranchBlockNode({
+  branch,
+  selected,
+  onSelect,
+  onFocusLane,
+  onSelectStep,
+  onInsertStep,
+  onRemoveStep,
+  onAddLane,
+  onRemoveLane,
+  onRemove,
+}: {
+  branch: { branches: { id: string; steps: PipelineStep[] }[] }
+  selected: Selection
+  onSelect: () => void
+  onFocusLane: (branchId: string) => void
+  onSelectStep: (branchId: string, stepId: string) => void
+  onInsertStep: (branchId: string, type: string) => void
+  onRemoveStep: (branchId: string, stepId: string) => void
+  onAddLane: () => void
+  onRemoveLane: (branchId: string) => void
+  onRemove: () => void
+}) {
+  const focusedLane = selected.kind === 'branch' ? selected.branchId : selected.kind === 'branchStep' ? selected.branchId : undefined
+  const isSel = selected.kind === 'branch'
+  return (
+    <div
+      data-branch-node
+      className={cn(
+        'group relative rounded-xl border bg-card p-2.5 shadow-sm transition-all',
+        isSel ? 'border-transparent ring-2 ring-brand-amber/50' : 'border-border',
+      )}
+    >
+      <div className="mb-2 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onSelect}
+          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+        >
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-amber/10 text-brand-amber"><GitBranch className="size-4" /></span>
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-semibold text-foreground">Branch · feature union</span>
+            <span className="block truncate text-[11px] text-muted-foreground">{branch.branches.length} branches concatenated column-wise → model</span>
+          </span>
+        </button>
+        <Button variant="ghost" size="icon" className="size-7 shrink-0 text-muted-foreground hover:text-destructive" onClick={onRemove} aria-label="Remove branch block" title="Remove branch">
+          <Trash2 className="size-4" />
+        </Button>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {branch.branches.map((b) => (
+          <BranchLane
+            key={b.id}
+            branch={b}
+            selected={selected}
+            removable={branch.branches.length > 2}
+            focused={focusedLane === b.id}
+            onFocusLane={() => onFocusLane(b.id)}
+            onSelectStep={(stepId) => onSelectStep(b.id, stepId)}
+            onInsertStep={(type) => onInsertStep(b.id, type)}
+            onRemoveStep={(stepId) => onRemoveStep(b.id, stepId)}
+            onRemoveLane={() => onRemoveLane(b.id)}
+          />
+        ))}
+        <button
+          type="button"
+          data-add-branch-lane
+          onClick={onAddLane}
+          className="flex w-24 shrink-0 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-brand-amber/40 bg-brand-amber/5 p-2 text-brand-amber transition-colors hover:border-brand-amber/70 hover:bg-brand-amber/10"
+        >
+          <Plus className="size-4" />
+          <span className="text-[10px] font-semibold">branch</span>
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export function CanvasFlow({
   pipeline,
   taskType,
@@ -200,16 +404,23 @@ export function CanvasFlow({
   onRemoveSplit,
   onAddCv,
   onRemoveCv,
+  onAddBranch,
+  onRemoveBranch,
+  onInsertBranchStep,
+  onRemoveBranchStep,
+  onAddBranchLane,
+  onRemoveBranchLane,
   onRun,
   onCancel,
 }: CanvasFlowProps) {
   const model = pipeline.model
   const modelDef = model ? nodeByType(model.type) : undefined
   const ModelIcon = iconByName(modelDef?.icon ?? 'Boxes')
-  const cv = pipeline.cv
   const split = pipeline.split
   const splitDef = split ? nodeByType(split.type) : undefined
   const SplitIcon = iconByName(splitDef?.icon ?? 'Split')
+  const cv = pipeline.cv
+  const branch = pipeline.branch
 
   return (
     <div className="flex h-full flex-col">
@@ -358,6 +569,39 @@ export function CanvasFlow({
           <p className="py-3 text-center text-[11px] text-muted-foreground">
             Raw spectra feed the model directly — drag an operator here to preprocess.
           </p>
+        )}
+
+        {/* DAG feature-union (OPTIONAL): parallel preprocessing branches whose
+            outputs are concatenated column-wise before the model. */}
+        <div className="mt-0.5"><span className="mx-auto block h-3 w-px bg-border" /></div>
+        {branch ? (
+          <BranchBlockNode
+            branch={branch}
+            selected={selected}
+            onSelect={() => onSelect({ kind: 'branch' })}
+            onFocusLane={(branchId) => onSelect({ kind: 'branch', branchId })}
+            onSelectStep={(branchId, stepId) => onSelect({ kind: 'branchStep', branchId, stepId })}
+            onInsertStep={onInsertBranchStep}
+            onRemoveStep={onRemoveBranchStep}
+            onAddLane={onAddBranchLane}
+            onRemoveLane={onRemoveBranchLane}
+            onRemove={onRemoveBranch}
+          />
+        ) : (
+          <button
+            type="button"
+            data-add-branch
+            onClick={onAddBranch}
+            className="flex w-full items-center gap-3 rounded-xl border border-dashed border-brand-amber/40 bg-brand-amber/5 px-3 py-2 text-left transition-colors hover:border-brand-amber/70 hover:bg-brand-amber/10"
+          >
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-amber/10 text-brand-amber">
+              <GitBranch className="size-3.5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <span className="block text-xs font-semibold text-foreground">Add a branch (feature union)</span>
+              <span className="block truncate text-[10px] text-muted-foreground">optional — fuse ≥2 preprocessing branches column-wise before the model</span>
+            </div>
+          </button>
         )}
 
         {/* terminal model (OPTIONAL) — always last, before CV */}

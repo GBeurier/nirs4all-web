@@ -29,6 +29,15 @@ function validPipeline(p: unknown): PipelineDSL | undefined {
   // cv is OPTIONAL (refit-only run); if present it must be well-formed.
   if (dsl.cv !== undefined && (typeof dsl.cv.folds !== 'number' || typeof dsl.cv.seed !== 'number')) return undefined
   if (!dsl.steps.every((s) => s && typeof s.type === 'string' && nodeByType(s.type))) return undefined
+  // branch is OPTIONAL (feature-union); if present, every branch step must be a
+  // known preprocessing node — a malformed block fails the whole restore.
+  if (dsl.branch !== undefined) {
+    if (!dsl.branch || !Array.isArray(dsl.branch.branches)) return undefined
+    const branchesOk = dsl.branch.branches.every(
+      (b) => b && Array.isArray(b.steps) && b.steps.every((s) => s && typeof s.type === 'string' && nodeByType(s.type)?.category === 'preprocessing'),
+    )
+    if (!branchesOk) return undefined
+  }
   // model is OPTIONAL (preprocessing-only pipelines persist too); but if present
   // it must be a known catalog model. A malformed/unknown model is dropped to
   // undefined rather than failing the whole restore.

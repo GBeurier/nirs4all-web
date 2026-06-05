@@ -91,6 +91,20 @@ export interface PipelineStep {
   /** labelled alternatives → dag-ml per-step `variants` */
   variants?: StepVariant[];
 }
+/** A single branch of a feature-union: an id + its own preprocessing sub-chain.
+ *  Maps to dag-ml's PipelineDslConcatBranch / PipelineDslBranch (id + steps). */
+export interface PipelineBranch {
+  id: string;
+  steps: PipelineStep[];
+}
+/** ONE optional feature-union block applied to the input BEFORE the model: the
+ *  input is duplicated into each branch (dag-ml BranchMode `duplication`), each
+ *  branch runs its own preprocessing sub-chain, and the branch outputs are
+ *  concatenated column-wise into one feature matrix that feeds the model
+ *  (classic NIRS multi-preprocessing fusion). v1 is a single, non-nested block. */
+export interface BranchBlock {
+  branches: PipelineBranch[];
+}
 export interface PipelineDSL {
   name: string;
   /** optional train/test split operator applied BEFORE cross-validation: it
@@ -101,6 +115,9 @@ export interface PipelineDSL {
   split?: PipelineStep;
   /** ordered preprocessing chain */
   steps: PipelineStep[];
+  /** optional feature-union block (≥2 parallel preprocessing branches concatenated
+   *  column-wise) applied AFTER `steps` and BEFORE the model. At most one for v1. */
+  branch?: BranchBlock;
   /** terminal estimator — OPTIONAL: a pipeline can be preprocessing-only
    *  (transform preview) or split+preproc with no model. The engine refuses to
    *  score/run a no-model pipeline; the editor surfaces a clear guard. */

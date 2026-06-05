@@ -167,7 +167,7 @@ export class DagMlEngine implements Engine {
       const trainIdx = trainRowsOf(ds)
       const testIdx = testRowsOf(ds)
       const scoreIdx = testIdx.length > 0 ? testIdx : trainIdx
-      const { pred: refitPred, descriptors, model } = trainAndPredict(ds, dsl, backend, trainIdx, scoreIdx)
+      const { pred: refitPred, descriptors, branch, model } = trainAndPredict(ds, dsl, backend, trainIdx, scoreIdx)
       const refitRows = decodeRows(ds, classNames, classIdx, refitPred, scoreIdx)
       const refitNode = scoreNode('refit', testIdx.length > 0 ? 'Refit · test' : 'Refit · train', 'refit', refitRows, task, classNames)
       onP?.({ phase: 'done', pct: 100 })
@@ -177,7 +177,7 @@ export class DagMlEngine implements Engine {
         taskType: task,
         nFeatures: ds.nFeatures,
         classes: classNames.length ? classNames : undefined,
-        state: { chain: descriptors, model, classNames: classNames.length ? classNames : undefined, backendId: backend.id } as FittedState,
+        state: { chain: descriptors, branch, model, classNames: classNames.length ? classNames : undefined, backendId: backend.id } as FittedState,
       }
       return {
         id: `run-${Date.now().toString(36)}`,
@@ -432,7 +432,7 @@ export class DagMlEngine implements Engine {
     const trainIdx = trainUniverse
     const testIdx = testRowsOf(ds)
     const scoreIdx = testIdx.length > 0 ? testIdx : trainIdx
-    const { pred: refitPred, descriptors, model } = trainAndPredict(ds, winner.vDsl, backend, trainIdx, scoreIdx)
+    const { pred: refitPred, descriptors, branch, model } = trainAndPredict(ds, winner.vDsl, backend, trainIdx, scoreIdx)
     const refitRows = decodeRows(ds, classNames, classIdx, refitPred, scoreIdx)
     const refitNode = scoreNode('refit', testIdx.length > 0 ? 'Refit · test' : 'Refit · train', 'refit', refitRows, task, classNames)
 
@@ -442,7 +442,7 @@ export class DagMlEngine implements Engine {
       taskType: task,
       nFeatures: ds.nFeatures,
       classes: classNames.length ? classNames : undefined,
-      state: { chain: descriptors, model, classNames: classNames.length ? classNames : undefined, backendId: backend.id } as FittedState,
+      state: { chain: descriptors, branch, model, classNames: classNames.length ? classNames : undefined, backendId: backend.id } as FittedState,
     }
     const variantSummaries = multiVariant
       ? evaluated.map((e, i) => ({ variantId: e.variant.variant_id, label: variantLabel(e.variant), metrics: e.cvNode.metrics, selected: i === winnerIdx }))
