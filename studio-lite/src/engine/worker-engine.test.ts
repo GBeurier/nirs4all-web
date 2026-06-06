@@ -35,6 +35,21 @@ const dsl = {
 } as PipelineDSL
 
 describe('WorkerEngine', () => {
+  it('terminates a completed worker so the next run starts with fresh WASM state', async () => {
+    const fake = new FakeWorker()
+    const engine = new WorkerEngine(() => fake as unknown as Worker)
+
+    const run = engine.run(ds, dsl)
+    fake.dispatchEvent(
+      new MessageEvent('message', {
+        data: { type: 'result', id: 'job-1', result: { id: 'ok' } },
+      }),
+    )
+
+    await expect(run).resolves.toEqual({ id: 'ok' })
+    expect(fake.terminated).toBe(true)
+  })
+
   it('terminates the worker on abort so synchronous WASM work can be cancelled', async () => {
     const fake = new FakeWorker()
     const engine = new WorkerEngine(() => fake as unknown as Worker)

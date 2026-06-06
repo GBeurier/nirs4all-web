@@ -135,6 +135,11 @@ describe('pipelineWarnings (light validation pass)', () => {
     const w = pipelineWarnings(base({ model: { id: 'm', type: 'AOMPLS', params: {} }, steps: [{ id: 's1', type: 'StandardNormalVariate', params: {} }] }))
     expect(w.some((m) => /screens preprocessing internally/i.test(m))).toBe(true)
   })
+
+  it('flags disabled Whittaker in an imported AOM operator bank', () => {
+    const w = pipelineWarnings(base({ model: { id: 'm', type: 'AOMPLS', params: { operator_bank: [0, 16, 10] } } }))
+    expect(w.some((m) => /Whittaker is ignored/i.test(m))).toBe(true)
+  })
 })
 
 describe('sanitizeAutonomousPipeline', () => {

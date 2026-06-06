@@ -29,7 +29,7 @@ import { AlertTriangle } from 'lucide-react'
  * the flat preprocessing→model→CV DSL. Mirrors the interaction model of
  * nirs4all-studio's pipeline editor, scoped to the exported nirs4all-methods nodes.
  */
-export function PipelineBuilder({ pipeline, taskType, running, progress, runLog, onChange, onRun, onCancel }: PipelineBuilderProps) {
+export function PipelineBuilder({ pipeline, taskType, datasetLabel, running, progress, runLog, onChange, onRun, onCancel }: PipelineBuilderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [selected, setSelected] = useState<Selection>({ kind: 'model' })
   const [blockedNotice, setBlockedNotice] = useState<string | null>(null)
@@ -326,6 +326,7 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, runLog,
             running={running}
             progress={progress}
             runLog={runLog}
+            datasetLabel={datasetLabel}
             onSelect={setSelected}
             onInsert={addOperator}
             onMove={moveStep}

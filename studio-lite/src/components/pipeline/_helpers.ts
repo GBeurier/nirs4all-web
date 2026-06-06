@@ -355,6 +355,9 @@ export function pipelineWarnings(dsl: PipelineDSL): string[] {
   if (isAutonomousPipeline(dsl) && (dsl.steps.length > 0 || !!dsl.branch || (dsl.containers?.length ?? 0) > 0 || !!dsl.finetune)) {
     out.push(`${nodeByType(dsl.model!.type)?.name ?? dsl.model!.type}: external preprocessing, DAG containers, and finetune are ignored because the model screens preprocessing internally.`)
   }
+  if (isAutonomousPipeline(dsl) && Array.isArray(dsl.model?.params.operator_bank) && dsl.model.params.operator_bank.includes(16)) {
+    out.push(`${nodeByType(dsl.model!.type)?.name ?? dsl.model!.type}: Whittaker is ignored in browser AOM/POP runs because libn4m 0.98 stalls on wide spectra with that operator.`)
+  }
   const containers = dsl.containers ?? []
   for (const c of containers) {
     const label = nodeByType(c.container === 'generator' ? (c.mode === 'cartesian' ? 'GeneratorCartesian' : 'GeneratorOr') : c.container === 'concat_transform' ? 'ConcatTransform' : c.container === 'merge' ? 'Merge' : 'Branch')?.name ?? c.container

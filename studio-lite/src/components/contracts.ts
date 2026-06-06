@@ -36,6 +36,7 @@ export type { Analysis }
 export interface PipelineBuilderProps {
   pipeline: PipelineDSL
   taskType: TaskType
+  datasetLabel?: string
   running: boolean
   progress: RunProgress | null
   runLog: RunLogEntry[]

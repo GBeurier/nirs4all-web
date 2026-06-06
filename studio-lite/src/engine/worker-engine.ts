@@ -60,6 +60,7 @@ export class WorkerEngine implements Engine {
           return
         }
         finish(() => {
+          this.dispose(worker)
           if (m.type === 'result') resolve(m.result as T)
           else reject(m.name === 'AbortError' ? new DOMException(m.message, 'AbortError') : new Error(m.message))
         })

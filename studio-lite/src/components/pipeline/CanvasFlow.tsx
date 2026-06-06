@@ -541,7 +541,7 @@ export function CanvasFlow({
           <div className="rounded-xl border border-border bg-card p-3.5 shadow-sm">
             <div className="mb-2 flex items-center justify-between gap-3">
               <span className="text-sm font-medium text-foreground">
-                {phaseLabel(progress.phase)}
+                Analysis running · {phaseLabel(progress.phase)}
                 {progress.message ? <span className="ml-1 font-normal text-muted-foreground">— {progress.message}</span> : null}
               </span>
               <div className="flex items-center gap-3">

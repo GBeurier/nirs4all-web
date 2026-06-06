@@ -30,7 +30,6 @@ export const AOM_OPERATOR_KINDS: { value: number; label: string }[] = [
   { value: 9, label: 'SG derivative' },
   { value: 10, label: 'Norris–Williams' },
   { value: 15, label: 'Finite difference' },
-  { value: 16, label: 'Whittaker' },
   { value: 17, label: 'FCK' },
 ]
 

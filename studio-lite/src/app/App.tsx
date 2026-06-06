@@ -9,6 +9,7 @@ import {
   Loader2,
   Lock,
   Moon,
+  Play,
   Sparkles,
   Sun,
   Upload,
@@ -20,7 +21,7 @@ import { PredictionPanel, ResultsList, ResultsVisualization } from '@/components
 import { defaultPipeline } from '@/catalog/build'
 import { engine } from '@/engine/client'
 import { type DatasetSummary, reencodeTarget, summarize } from '@/data/dataset'
-import { loadSampleDataset, type SampleId } from '@/data/samples'
+import { loadSampleDataset, SAMPLES, type SampleId } from '@/data/samples'
 import { type LoadedModel, parseN4a } from '@/lib/n4a'
 import { applyTheme, loadSession, loadTheme, saveSession, type Theme } from '@/lib/persist'
 import { cn } from '@/app/components/ui/utils'
@@ -29,6 +30,13 @@ import type { DagMlLineage } from '@/engine/dagml'
 import type { MaterializedDataset, PipelineDSL, Partition, RunLogEntry, RunProgress, RunResult, ScoreNode, TaskType } from '@/engine/types'
 
 type StepId = 'dataset' | 'explore' | 'pipeline' | 'results' | 'predict'
+type DatasetSourceKind = 'upload' | 'sample'
+
+interface DatasetSessionInfo {
+  name: string
+  kind: DatasetSourceKind
+  loadedAt: number
+}
 
 const STEPS: { id: StepId; label: string; hint: string; icon: typeof Upload }[] = [
   { id: 'dataset', label: 'Dataset', hint: 'Upload spectra', icon: Upload },
@@ -41,6 +49,7 @@ const STEPS: { id: StepId; label: string; hint: string; icon: typeof Upload }[] 
 export default function App() {
   const [dataset, setDataset] = useState<MaterializedDataset | null>(null)
   const [summary, setSummary] = useState<DatasetSummary | null>(null)
+  const [datasetInfo, setDatasetInfo] = useState<DatasetSessionInfo | null>(null)
   // session restore: the user's edited pipeline + an imported model survive reload.
   // A restored legacy `branch` block is migrated to the `containers` tree model.
   const [pipeline, setPipeline] = useState<PipelineDSL>(() => {
@@ -69,22 +78,31 @@ export default function App() {
     applyTheme(theme)
   }, [theme])
 
-  const adoptDataset = useCallback((ds: MaterializedDataset, opts?: { keepPipeline?: boolean }) => {
+  const adoptDataset = useCallback((ds: MaterializedDataset, opts?: { keepPipeline?: boolean; sourceName?: string; sourceKind?: DatasetSourceKind }) => {
     abortRef.current?.abort()
+    abortRef.current = null
     runTokenRef.current++
     setDataset(ds)
     setSummary(summarize(ds))
+    setDatasetInfo({
+      name: opts?.sourceName ?? ds.targetName ?? 'Dataset',
+      kind: opts?.sourceKind ?? 'upload',
+      loadedAt: Date.now(),
+    })
     if (!opts?.keepPipeline) setPipeline(defaultPipeline(ds.taskType)) // keep a restored pipeline on session reload
     setRuns([])
     setSelectedRunId(null)
     setSelectedScore(null)
+    setRunning(false)
+    setProgress(null)
+    setRunLog([])
     setError(null)
     setStep('explore') // land on Explore so the user reviews the loaded dataset
   }, [])
 
   const onDataset = useCallback(
-    (ds: MaterializedDataset, _name: string, a?: Analysis) => {
-      adoptDataset(ds)
+    (ds: MaterializedDataset, name: string, a?: Analysis) => {
+      adoptDataset(ds, { sourceName: name, sourceKind: 'upload' })
       setSampleId(null) // an uploaded dataset isn't a restorable bundled sample
       setAnalysis(a ?? null)
     },
@@ -96,8 +114,10 @@ export default function App() {
       setBusy(true)
       setError(null)
       try {
-        adoptDataset(await loadSampleDataset(sample))
-        setSampleId(sample ?? 'fruit') // remember which bundled sample, for session restore
+        const sid = sample ?? 'fruit'
+        const sampleName = SAMPLES.find((s) => s.id === sid)?.name ?? sid
+        adoptDataset(await loadSampleDataset(sample), { sourceName: sampleName, sourceKind: 'sample' })
+        setSampleId(sid) // remember which bundled sample, for session restore
         setAnalysis(null)
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e))
@@ -119,7 +139,7 @@ export default function App() {
     setBusy(true)
     loadSampleDataset(sid)
       .then((ds) => {
-        adoptDataset(ds, { keepPipeline: true })
+        adoptDataset(ds, { keepPipeline: true, sourceName: SAMPLES.find((s) => s.id === sid)?.name ?? sid, sourceKind: 'sample' })
         setSampleId(sid)
         setStep('pipeline') // land on the editor where the restored pipeline lives
       })
@@ -150,10 +170,14 @@ export default function App() {
       // stale results & their fitted models, and send the user back to the pipeline
       if (patch.taskType !== undefined || patch.testFraction != null) {
         abortRef.current?.abort()
+        abortRef.current = null
         runTokenRef.current++
         setRuns([])
         setSelectedRunId(null)
         setSelectedScore(null)
+        setRunning(false)
+        setProgress(null)
+        setRunLog([])
         setStep((s) => (s === 'results' || s === 'predict' ? 'pipeline' : s))
       }
       setDataset((prev) => {
@@ -184,9 +208,11 @@ export default function App() {
       setError('Add a model to run / score — this pipeline is preprocessing-only.')
       return
     }
+    abortRef.current?.abort()
     setRunning(true)
     setError(null)
-    setProgress({ phase: 'fit_cv', pct: 0 })
+    setStep('pipeline')
+    setProgress({ phase: 'preprocess', pct: 0, message: 'starting analysis' })
     setRunLog([])
     const ctrl = new AbortController()
     abortRef.current = ctrl
@@ -273,7 +299,7 @@ export default function App() {
         {dataset && summary && (
           <div className="ml-2 hidden items-center gap-2 rounded-full border border-border bg-background/60 px-3 py-1 md:flex">
             <Database className="size-3.5 text-brand-teal" />
-            <span className="max-w-[14rem] truncate text-xs font-medium text-foreground">{dataset.targetName || 'dataset'}</span>
+            <span className="max-w-[14rem] truncate text-xs font-medium text-foreground">{datasetInfo?.name || dataset.targetName || 'dataset'}</span>
             <span className="font-mono text-[11px] text-muted-foreground">
               {summary.nSamples} samples × {summary.nFeatures} wavelengths
             </span>
@@ -413,6 +439,7 @@ export default function App() {
                 step={step}
                 dataset={dataset}
                 summary={summary}
+                datasetInfo={datasetInfo}
                 pipeline={pipeline}
                 runs={runs}
                 selectedRun={selectedRun}
@@ -436,6 +463,7 @@ export default function App() {
                 onCancel={onCancel}
                 onSelectScore={onSelect}
                 selectedScoreId={selectedScore?.id ?? null}
+                onGoDataset={() => go('dataset')}
                 onGoPipeline={() => go('pipeline')}
               />
             </div>
@@ -492,10 +520,97 @@ function ErrorBanner({ error }: { error: string | null }) {
   )
 }
 
+function runPhaseText(progress: RunProgress | null): string {
+  if (!progress) return 'Idle'
+  switch (progress.phase) {
+    case 'preprocess':
+      return 'Preparing'
+    case 'fit_cv':
+      return 'Cross-validation'
+    case 'select':
+      return 'Selecting'
+    case 'refit':
+      return 'Refit'
+    case 'predict':
+      return 'Predicting'
+    case 'done':
+      return 'Done'
+  }
+}
+
+function DatasetSessionBanner({
+  info,
+  summary,
+  running,
+  progress,
+  runCount,
+  onGoDataset,
+  onCancel,
+}: {
+  info: DatasetSessionInfo | null
+  summary: DatasetSummary
+  running: boolean
+  progress: RunProgress | null
+  runCount: number
+  onGoDataset: () => void
+  onCancel: () => void
+}) {
+  const persistence =
+    info?.kind === 'sample'
+      ? 'Bundled sample: restored on reload with the saved pipeline.'
+      : 'Uploaded dataset: kept in memory for this browser session; reload requires re-upload.'
+  const resultContext =
+    runCount > 0
+      ? `${runCount} result${runCount === 1 ? '' : 's'} ${runCount === 1 ? 'belongs' : 'belong'} to this loaded dataset.`
+      : 'No result yet for this loaded dataset.'
+  return (
+    <div className="mb-4 rounded-xl border border-border bg-card/70 px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <Database className="size-4 shrink-0 text-brand-teal" />
+            <span className="truncate text-sm font-semibold text-foreground">{info?.name ?? 'Current dataset'}</span>
+            <span className="rounded-full bg-muted px-2 py-0.5 font-mono text-[10px] uppercase text-muted-foreground">
+              {summary.nSamples} × {summary.nFeatures}
+            </span>
+            <span className="rounded-full bg-muted px-2 py-0.5 font-mono text-[10px] uppercase text-muted-foreground">{summary.taskType}</span>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {persistence} {resultContext}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {running ? (
+            <span data-running-status className="inline-flex items-center gap-2 rounded-full border border-brand-teal/30 bg-brand-teal/5 px-3 py-1.5 text-xs font-semibold text-brand-teal">
+              <Loader2 className="size-3.5 animate-spin" />
+              Running · {runPhaseText(progress)} {progress ? `${Math.round(progress.pct)}%` : ''}
+            </span>
+          ) : (
+            <span className="rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs text-muted-foreground">
+              Ready{info?.loadedAt ? ` · loaded ${new Date(info.loadedAt).toLocaleTimeString()}` : ''}
+            </span>
+          )}
+          {running ? (
+            <button type="button" onClick={onCancel} className="rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted">
+              Cancel
+            </button>
+          ) : (
+            <button type="button" onClick={onGoDataset} className="rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted">
+              Replace dataset
+            </button>
+          )}
+        </div>
+      </div>
+      {running && progress?.message ? <p className="mt-2 truncate font-mono text-[11px] text-muted-foreground">{progress.message}</p> : null}
+    </div>
+  )
+}
+
 interface StepPanelProps {
   step: StepId
   dataset: MaterializedDataset | null
   summary: DatasetSummary | null
+  datasetInfo: DatasetSessionInfo | null
   pipeline: PipelineDSL
   runs: RunResult[]
   selectedRun: RunResult | null
@@ -519,11 +634,12 @@ interface StepPanelProps {
   onRun: () => void
   onCancel: () => void
   onSelectScore: (run: RunResult, score: ScoreNode) => void
+  onGoDataset: () => void
   onGoPipeline: () => void
 }
 
 function StepPanel(props: StepPanelProps) {
-  const { step, dataset, summary, selectedRun, selectedScore, loadedModel } = props
+  const { step, dataset, summary, datasetInfo, selectedRun, selectedScore, loadedModel } = props
 
   if (step === 'dataset') {
     return (
@@ -550,6 +666,15 @@ function StepPanel(props: StepPanelProps) {
           </button>
         }
       >
+        <DatasetSessionBanner
+          info={datasetInfo}
+          summary={summary}
+          running={props.running}
+          progress={props.progress}
+          runCount={props.runs.length}
+          onGoDataset={props.onGoDataset}
+          onCancel={props.onCancel}
+        />
         <DatasetView ds={dataset} summary={summary} onOpenConfig={props.onOpenConfig} />
         <DatasetConfigDialog open={props.configOpen} ds={dataset} analysis={props.analysis} onOpenChange={props.onConfigOpenChange} onApply={props.onApplyConfig} />
       </Panel>
@@ -561,9 +686,21 @@ function StepPanel(props: StepPanelProps) {
     return (
       <Panel title="Pipeline" subtitle="Compose preprocessing + a model, then run cross-validation." icon={GitBranch}>
         <ErrorBanner error={props.error} />
+        {summary ? (
+          <DatasetSessionBanner
+            info={datasetInfo}
+            summary={summary}
+            running={props.running}
+            progress={props.progress}
+            runCount={props.runs.length}
+            onGoDataset={props.onGoDataset}
+            onCancel={props.onCancel}
+          />
+        ) : null}
         <PipelineBuilder
           pipeline={props.pipeline}
           taskType={dataset.taskType}
+          datasetLabel={datasetInfo?.name ?? summary?.name ?? dataset.targetName}
           running={props.running}
           progress={props.progress}
           runLog={props.runLog}
@@ -582,8 +719,32 @@ function StepPanel(props: StepPanelProps) {
         title="Results"
         subtitle="Refit, cross-validation and per-fold scores. Click a score to inspect residuals."
         icon={LineChart}
-        right={<span className="rounded-full border border-border px-3 py-1 text-sm text-muted-foreground">{props.runs.length} run{props.runs.length === 1 ? '' : 's'}</span>}
+        right={
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={props.onRun}
+              disabled={props.running}
+              className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {props.running ? <Loader2 className="size-3.5 animate-spin" /> : <Play className="size-3.5" />}
+              {props.running ? 'Running' : 'Run again'}
+            </button>
+            <span className="rounded-full border border-border px-3 py-1 text-sm text-muted-foreground">{props.runs.length} run{props.runs.length === 1 ? '' : 's'}</span>
+          </div>
+        }
       >
+        {summary ? (
+          <DatasetSessionBanner
+            info={datasetInfo}
+            summary={summary}
+            running={props.running}
+            progress={props.progress}
+            runCount={props.runs.length}
+            onGoDataset={props.onGoDataset}
+            onCancel={props.onCancel}
+          />
+        ) : null}
         <div className="grid gap-6 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
           <ResultsList runs={props.runs} selectedRunId={selectedRun?.id ?? null} selectedScoreId={props.selectedScoreId} onSelect={props.onSelectScore} />
           {selectedRun && selectedScore && <ResultsVisualization run={selectedRun} score={selectedScore} />}

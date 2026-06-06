@@ -5,11 +5,17 @@ import { jsPreprocessor, libn4mPreprocessor } from './methods/preproc'
 import type { ModelBackend } from './orchestrate'
 import { AOM_DEFAULT_BANK } from '@/catalog/types'
 
+const DISABLED_AOM_OPERATOR_KINDS = new Set([16])
+
 /** Coerce the AOM/POP `operator_bank` param (an int[] of n4m_operator_kind_t)
  *  into a clean integer array; an empty/invalid bank falls back to the libn4m
  *  default screen set so the screen always has operators to choose from. */
-function operatorBank(raw: unknown): number[] {
-  const arr = Array.isArray(raw) ? raw.map((v) => Math.round(Number(v))).filter((v) => Number.isInteger(v)) : []
+export function operatorBank(raw: unknown): number[] {
+  const arr = Array.isArray(raw)
+    ? raw
+        .map((v) => Math.round(Number(v)))
+        .filter((v) => Number.isInteger(v) && !DISABLED_AOM_OPERATOR_KINDS.has(v))
+    : []
   return arr.length > 0 ? arr : AOM_DEFAULT_BANK
 }
 
