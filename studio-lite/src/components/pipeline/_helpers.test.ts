@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { normalizeImportedPipeline, pipelineWarnings } from './_helpers'
+import { normalizeImportedPipeline, pipelineWarnings, sanitizeAutonomousPipeline } from './_helpers'
 import type { PipelineDSL } from '@/engine/types'
 
 // Validates the pipeline-JSON import path (Import button + future .n4a re-import).
@@ -129,5 +129,30 @@ describe('pipelineWarnings (light validation pass)', () => {
 
   it('is clean for a healthy pipeline', () => {
     expect(pipelineWarnings(base({ steps: [{ id: 's1', type: 'StandardNormalVariate', params: {} }, { id: 's2', type: 'SavitzkyGolay', params: {} }] }))).toEqual([])
+  })
+
+  it('flags external preprocessing around an autonomous model', () => {
+    const w = pipelineWarnings(base({ model: { id: 'm', type: 'AOMPLS', params: {} }, steps: [{ id: 's1', type: 'StandardNormalVariate', params: {} }] }))
+    expect(w.some((m) => /screens preprocessing internally/i.test(m))).toBe(true)
+  })
+})
+
+describe('sanitizeAutonomousPipeline', () => {
+  it('strips external preprocessing, DAG containers and finetune for AOM/POP', () => {
+    const p = sanitizeAutonomousPipeline({
+      name: 'aom',
+      steps: [{ id: 's1', type: 'StandardNormalVariate', params: {} }],
+      model: { id: 'm', type: 'AOMPLS', params: { n_components: 4 } },
+      split: { id: 'sp', type: 'RandomSplit', params: {} },
+      cv: { folds: 5, seed: 42 },
+      containers: [{ id: 'c1', container: 'branch', branches: [{ id: 'b1', steps: [] }, { id: 'b2', steps: [] }] }],
+      finetune: { enabled: true, n_trials: 10, params: [{ name: 'n_components', type: 'int', low: 1, high: 8 }] },
+    })
+    expect(p.steps).toEqual([])
+    expect(p.containers).toBeUndefined()
+    expect(p.finetune).toBeUndefined()
+    expect(p.split?.type).toBe('RandomSplit')
+    expect(p.cv?.folds).toBe(5)
+    expect(p.model?.type).toBe('AOMPLS')
   })
 })

@@ -20,7 +20,7 @@ import {
 import { NodePalette } from './NodePalette'
 import { CanvasFlow, type Selection } from './CanvasFlow'
 import { Inspector } from './Inspector'
-import { newBranchId, newContainer, newStepId, normalizeImportedPipeline, pipelineFromPreset, pipelineWarnings } from './_helpers'
+import { isAutonomousPipeline, newBranchId, newContainer, newStepId, normalizeImportedPipeline, pipelineFromPreset, pipelineWarnings, sanitizeAutonomousPipeline } from './_helpers'
 import { AlertTriangle } from 'lucide-react'
 
 /**
@@ -32,9 +32,16 @@ import { AlertTriangle } from 'lucide-react'
 export function PipelineBuilder({ pipeline, taskType, running, progress, runLog, onChange, onRun, onCancel }: PipelineBuilderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [selected, setSelected] = useState<Selection>({ kind: 'model' })
+  const [blockedNotice, setBlockedNotice] = useState<string | null>(null)
 
   const update = (patch: Partial<PipelineDSL>) => onChange({ ...pipeline, ...patch })
   const setSteps = (steps: PipelineStep[]) => update({ steps })
+  const autonomous = isAutonomousPipeline(pipeline)
+  const autonomousName = pipeline.model ? (nodeByType(pipeline.model.type)?.name ?? pipeline.model.type) : 'This model'
+  const blockAutonomousExternal = () => {
+    setBlockedNotice(`${autonomousName} screens preprocessing internally; external preprocessing and DAG nodes were not added.`)
+    setSelected({ kind: 'model' })
+  }
 
   // The palette/canvas surface ALL operators; route each add by its catalog
   // category — preprocessing → chain step (or a focused container branch), split →
@@ -42,8 +49,12 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, runLog,
   const addOperator = (type: string, index?: number) => {
     const cat = nodeByType(type)?.category
     if (cat === 'model') {
-      update({ model: { id: newStepId(type), type, params: defaultParams(type) } })
+      const next = { ...pipeline, model: { id: newStepId(type), type, params: defaultParams(type) } }
+      onChange(sanitizeAutonomousPipeline(next))
+      setBlockedNotice(null)
       setSelected({ kind: 'model' })
+    } else if (autonomous && (cat === 'preprocessing' || cat === 'dag')) {
+      blockAutonomousExternal()
     } else if (cat === 'split') {
       addSplit(type)
     } else if (cat === 'dag') {
@@ -100,7 +111,11 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, runLog,
   const setStepVariants = (id: string, variants: StepVariant[] | undefined) =>
     setSteps(pipeline.steps.map((s) => (s.id === id ? { ...s, variants } : s)))
 
-  const setModelType = (type: string, params: Record<string, unknown>) => update({ model: { id: newStepId(type), type, params } })
+  const setModelType = (type: string, params: Record<string, unknown>) => {
+    const next = { ...pipeline, model: { id: newStepId(type), type, params } }
+    onChange(sanitizeAutonomousPipeline(next))
+    setBlockedNotice(null)
+  }
   const setModelParam = (name: string, value: ParamValue) => {
     if (!pipeline.model) return
     update({ model: { ...pipeline.model, params: { ...pipeline.model.params, [name]: value } } })
@@ -145,6 +160,10 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, runLog,
     setContainers((pipeline.containers ?? []).map((c) => (c.id === containerId ? fn(c) : c)))
 
   const addContainer = (dagType: string) => {
+    if (autonomous) {
+      blockAutonomousExternal()
+      return
+    }
     const def = dagNodeFor(dagType) ?? nodeByType(dagType)
     const meta = def?.dag
     if (!meta) return
@@ -166,6 +185,10 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, runLog,
   }
   const setContainerMode = (containerId: string, mode: GeneratorMode) => patchContainer(containerId, (c) => ({ ...c, mode }))
   const insertContainerStep = (containerId: string, branchId: string, type: string) => {
+    if (autonomous) {
+      blockAutonomousExternal()
+      return
+    }
     const step: PipelineStep = { id: newStepId(type), type, params: defaultParams(type) }
     patchContainer(containerId, (c) => ({ ...c, branches: c.branches.map((b) => (b.id === branchId ? { ...b, steps: [...b.steps, step] } : b)) }))
     setSelected({ kind: 'containerStep', containerId, branchId, stepId: step.id })
@@ -196,9 +219,11 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, runLog,
 
   const totalVariants = countVariants(pipeline)
   const warnings = pipelineWarnings(pipeline)
+  const shownWarnings = blockedNotice ? [blockedNotice, ...warnings] : warnings
 
   const applyPreset = (preset: Preset) => {
-    onChange(pipelineFromPreset(preset))
+    onChange(sanitizeAutonomousPipeline(pipelineFromPreset(preset)))
+    setBlockedNotice(null)
     setSelected({ kind: 'model' })
   }
 
@@ -212,7 +237,8 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, runLog,
         const parsed = JSON.parse(String(reader.result))
         const normalized = normalizeImportedPipeline(parsed)
         if (normalized) {
-          onChange(normalized)
+          onChange(sanitizeAutonomousPipeline(normalized))
+          setBlockedNotice(null)
           setSelected({ kind: 'model' })
         } else window.alert('Invalid pipeline file: needs a `steps` array and a `model`, all with catalog node types.')
       } catch {
@@ -277,9 +303,9 @@ export function PipelineBuilder({ pipeline, taskType, running, progress, runLog,
       </div>
 
       {/* light validation pass — soft, non-blocking editor guidance */}
-      {warnings.length > 0 && (
+      {shownWarnings.length > 0 && (
         <div data-pipeline-warnings className="flex flex-col gap-1 rounded-xl border border-warning/40 bg-warning/5 px-3 py-2">
-          {warnings.map((w, i) => (
+          {shownWarnings.map((w, i) => (
             <p key={i} className="flex items-start gap-1.5 text-[11px] leading-snug text-warning">
               <AlertTriangle className="mt-0.5 size-3 shrink-0" /> {w}
             </p>

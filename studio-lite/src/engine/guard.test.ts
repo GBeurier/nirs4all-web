@@ -6,8 +6,8 @@ import type { MaterializedDataset, PipelineDSL } from './types'
 const ds = (nSamples: number, nFeatures: number): MaterializedDataset =>
   ({ nSamples, nFeatures, partitions: [] }) as unknown as MaterializedDataset
 
-const dsl = (type: string, params: Record<string, unknown> = {}): PipelineDSL =>
-  ({ name: 't', steps: [], model: { id: 'm', type, params } }) as unknown as PipelineDSL
+const dsl = (type: string, params: Record<string, unknown> = {}, cv?: { folds: number; seed: number }): PipelineDSL =>
+  ({ name: 't', steps: [], model: { id: 'm', type, params }, cv }) as unknown as PipelineDSL
 
 describe('assertAomBudget', () => {
   it('is a no-op for non-AOM models, however large', () => {
@@ -29,6 +29,12 @@ describe('assertAomBudget', () => {
     expect(onP.mock.calls[0][0].message).toMatch(/AOMPLS/)
   })
 
+  it('refuses the same heavy screen on the single-file main thread', () => {
+    const onP = vi.fn()
+    expect(() => assertAomBudget(ds(1000, 1000), dsl('AOMPLS'), onP, { mainThread: true })).toThrow(/offline single-file/i)
+    expect(onP).not.toHaveBeenCalled()
+  })
+
   it('refuses an extreme AOM screen with actionable guidance', () => {
     expect(() => assertAomBudget(ds(10000, 4000), dsl('AOMPLS'))).toThrow(/too large/i)
   })
@@ -42,5 +48,11 @@ describe('assertAomBudget', () => {
     // a tiny 1-operator, 2-fold screen on the same size stays under the warn bound
     assertAomBudget(ds(1000, 1000), dsl('AOMPLS', { operator_bank: [0], screen_folds: 2 }), onP)
     expect(onP).not.toHaveBeenCalled()
+  })
+
+  it('includes outer CV folds in the AOM estimate', () => {
+    const onP = vi.fn()
+    assertAomBudget(ds(1000, 1000), dsl('AOMPLS', { operator_bank: [0], screen_folds: 2 }, { folds: 10, seed: 1 }), onP)
+    expect(onP).toHaveBeenCalledTimes(1)
   })
 })

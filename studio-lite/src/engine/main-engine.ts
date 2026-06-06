@@ -15,10 +15,11 @@ export class MainEngine implements Engine {
   private dagml = new DagMlEngine()
 
   async run(ds: MaterializedDataset, dsl: PipelineDSL, opts: RunOptions = {}): Promise<RunResult> {
+    const useDagMl = dagMlAvailable()
     // Warn (or refuse) an oversized operator-adaptive screen before any compute,
     // so a heavy AOM/POP run is never silent (it runs in a worker, cancellable).
-    assertAomBudget(ds, dsl, opts.onProgress)
-    if (dagMlAvailable()) return this.dagml.run(ds, dsl, opts) // dag-ml executes; libn4m numerics
+    assertAomBudget(ds, dsl, opts.onProgress, { mainThread: !useDagMl })
+    if (useDagMl) return this.dagml.run(ds, dsl, opts) // dag-ml executes; libn4m numerics
     // Offline single-file: dag-ml scheduling is intentionally disabled under
     // file://, but vite-plugin-singlefile inlines libn4m's WASM. Use it when
     // available so catalog models such as AOM/POP do not fall back to slow or

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
+  AlertTriangle,
   Cpu,
   Database,
   FlaskConical,
@@ -481,6 +482,16 @@ function LockedNote({ children }: { children: React.ReactNode }) {
   )
 }
 
+function ErrorBanner({ error }: { error: string | null }) {
+  if (!error) return null
+  return (
+    <div className="mb-4 flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+      <span>{error}</span>
+    </div>
+  )
+}
+
 interface StepPanelProps {
   step: StepId
   dataset: MaterializedDataset | null
@@ -549,6 +560,7 @@ function StepPanel(props: StepPanelProps) {
     if (!dataset) return <LockedNote>Load a dataset first.</LockedNote>
     return (
       <Panel title="Pipeline" subtitle="Compose preprocessing + a model, then run cross-validation." icon={GitBranch}>
+        <ErrorBanner error={props.error} />
         <PipelineBuilder
           pipeline={props.pipeline}
           taskType={dataset.taskType}

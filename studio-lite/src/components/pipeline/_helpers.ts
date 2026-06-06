@@ -98,6 +98,24 @@ export function pipelineFromPreset(preset: Preset): PipelineDSL {
   }
 }
 
+export function isAutonomousPipeline(dsl: PipelineDSL): boolean {
+  return !!dsl.model && !!nodeByType(dsl.model.type)?.autonomous
+}
+
+/** Autonomous models (AOM/POP) screen preprocessing internally. Keep split/CV
+ *  and model params, but remove external preprocessing, feature-fusion DAG, and
+ *  finetune search state that would otherwise be misleading in the editor. */
+export function sanitizeAutonomousPipeline(dsl: PipelineDSL): PipelineDSL {
+  if (!isAutonomousPipeline(dsl)) return dsl
+  return {
+    ...dsl,
+    steps: [],
+    branch: undefined,
+    containers: undefined,
+    finetune: undefined,
+  }
+}
+
 const clampInt = (v: unknown, lo: number, hi: number, dflt: number): number => {
   const n = Math.round(Number(v))
   return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : dflt
@@ -334,6 +352,9 @@ export function normalizeImportedPipeline(value: unknown): PipelineDSL | null {
  */
 export function pipelineWarnings(dsl: PipelineDSL): string[] {
   const out: string[] = []
+  if (isAutonomousPipeline(dsl) && (dsl.steps.length > 0 || !!dsl.branch || (dsl.containers?.length ?? 0) > 0 || !!dsl.finetune)) {
+    out.push(`${nodeByType(dsl.model!.type)?.name ?? dsl.model!.type}: external preprocessing, DAG containers, and finetune are ignored because the model screens preprocessing internally.`)
+  }
   const containers = dsl.containers ?? []
   for (const c of containers) {
     const label = nodeByType(c.container === 'generator' ? (c.mode === 'cartesian' ? 'GeneratorCartesian' : 'GeneratorOr') : c.container === 'concat_transform' ? 'ConcatTransform' : c.container === 'merge' ? 'Merge' : 'Branch')?.name ?? c.container
