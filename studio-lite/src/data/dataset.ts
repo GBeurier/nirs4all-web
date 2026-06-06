@@ -214,9 +214,13 @@ export function summarize(ds: MaterializedDataset): DatasetSummary {
   }
   if (ds.taskType === 'regression') {
     const vals = Array.from(ds.y).filter(Number.isFinite)
-    const mean = vals.reduce((a, b) => a + b, 0) / Math.max(1, vals.length)
-    const std = Math.sqrt(vals.reduce((a, b) => a + (b - mean) ** 2, 0) / Math.max(1, vals.length - 1))
-    summary.yStats = { min: Math.min(...vals), max: Math.max(...vals), mean, std }
+    // a target-less dataset (explore / predict-only) has no finite y — leave
+    // yStats undefined rather than emitting Math.min([]) = +Infinity in the UI.
+    if (vals.length > 0) {
+      const mean = vals.reduce((a, b) => a + b, 0) / vals.length
+      const std = Math.sqrt(vals.reduce((a, b) => a + (b - mean) ** 2, 0) / Math.max(1, vals.length - 1))
+      summary.yStats = { min: Math.min(...vals), max: Math.max(...vals), mean, std }
+    }
   } else if (ds.classes) {
     const counts = new Map<string, number>()
     for (const c of ds.classes) counts.set(c, (counts.get(c) ?? 0) + 1)

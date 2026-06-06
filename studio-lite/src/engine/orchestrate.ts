@@ -154,6 +154,20 @@ export function trainAndPredict(
   const ncomp = Number(model0.params.n_components ?? nodeByType(model0.type)?.params.find((p) => p.name === 'n_components')?.default ?? 10)
   const { classNames, classIdx } = classInfo(ds)
   const Xfull: Mat = { data: ds.X, rows: ds.nSamples, cols: ds.nFeatures }
+  const modelSpec: ModelSpec = { type: model0.type, params: model0.params }
+  // AUTONOMOUS models (AOM-PLS / POP-PLS) screen their own strict-linear operator
+  // bank by internal CV — they MUST receive raw X. Applying the editor's
+  // preprocessing chain (and branch fusion) first double-transforms the spectra,
+  // which degrades or breaks the internal screen (NaN/Inf, doubled derivatives) and
+  // makes libn4m reject the fold. Bypass the chain entirely (no descriptors → the
+  // saved model replays nothing on predict), feeding raw train/predict rows straight
+  // to the backend. The UI flags `autonomous` so users don't stack preprocessing.
+  if (nodeByType(model0.type)?.autonomous) {
+    const Xtr = selectRows(Xfull, trainIdx)
+    const model = backend.fit(modelSpec, Xtr, buildYMatrix(ds, classNames, classIdx, trainIdx), clampNcomp(ncomp, Xtr))
+    const pred = backend.predict(model, selectRows(Xfull, predictIdx))
+    return { pred, descriptors: [], branch: undefined, model, classNames }
+  }
   // Main preprocessing chain, fit on the train rows only.
   const { transformers, descriptors, Xout } = fitChain(dsl.steps, selectRows(Xfull, trainIdx), backend.preproc)
   // Optional feature-union: fit each branch sub-chain on the (train) main-chain
@@ -161,7 +175,6 @@ export function trainAndPredict(
   const branches = activeBranches(dsl)
   const branchTransformers: FittedTransformer[][] = []
   const branchDescriptors: FittedStep[][] = []
-  const modelSpec: ModelSpec = { type: model0.type, params: model0.params }
   try {
     let Xtr = Xout
     if (branches) {
