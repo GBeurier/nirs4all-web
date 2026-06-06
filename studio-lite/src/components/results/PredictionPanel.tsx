@@ -33,6 +33,8 @@ const TOOLTIP_STYLE = {
   padding: '0.5rem 0.75rem',
 } as const
 
+const axisTick = (value: string | number): string => (typeof value === 'number' ? fmt(value, 2) : value)
+
 interface PredState {
   result: PredictResult
   nSamples: number
@@ -330,7 +332,7 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={chartData} margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                <XAxis dataKey="name" stroke="var(--muted-foreground)" tick={{ fontSize: 10 }} interval={isRegression ? 2 : 0} />
+                <XAxis dataKey="name" stroke="var(--muted-foreground)" tick={{ fontSize: 10 }} tickFormatter={axisTick} interval={isRegression ? 2 : 0} />
                 <YAxis stroke="var(--muted-foreground)" tick={{ fontSize: 11 }} allowDecimals={false} />
                 <Tooltip cursor={{ fill: 'var(--muted)' }} contentStyle={TOOLTIP_STYLE} />
                 <Bar dataKey="count" name="Count" fill={CHART.teal} radius={[4, 4, 0, 0]} />
@@ -493,6 +495,7 @@ function ValidationParity({ rows }: { rows: PredRow[] }) {
             domain={[lo, hi]}
             stroke="var(--muted-foreground)"
             tick={{ fontSize: 11 }}
+            tickFormatter={axisTick}
             label={{ value: 'Actual', position: 'insideBottom', offset: -8, fontSize: 12 }}
           />
           <YAxis
@@ -502,6 +505,7 @@ function ValidationParity({ rows }: { rows: PredRow[] }) {
             domain={[lo, hi]}
             stroke="var(--muted-foreground)"
             tick={{ fontSize: 11 }}
+            tickFormatter={axisTick}
             label={{ value: 'Predicted', angle: -90, position: 'insideLeft', fontSize: 12 }}
           />
           <ZAxis range={[36, 36]} />

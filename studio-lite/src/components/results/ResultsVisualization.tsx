@@ -30,6 +30,8 @@ const TOOLTIP_STYLE = {
   padding: '0.5rem 0.75rem',
 } as const
 
+const axisTick = (value: string | number): string => (typeof value === 'number' ? fmt(value, 2) : value)
+
 function EmptyChart({ message }: { message: string }) {
   return (
     <div className="flex h-[360px] items-center justify-center rounded-xl border border-dashed border-border bg-muted/30">
@@ -53,6 +55,7 @@ function ParityChart({ score }: { score: ScoreNode }) {
           domain={[lo, hi]}
           stroke="var(--muted-foreground)"
           tick={{ fontSize: 11 }}
+          tickFormatter={axisTick}
           label={{ value: 'Actual', position: 'insideBottom', offset: -8, fontSize: 12 }}
         />
         <YAxis
@@ -62,6 +65,7 @@ function ParityChart({ score }: { score: ScoreNode }) {
           domain={[lo, hi]}
           stroke="var(--muted-foreground)"
           tick={{ fontSize: 11 }}
+          tickFormatter={axisTick}
           label={{ value: 'Predicted', angle: -90, position: 'insideLeft', fontSize: 12 }}
         />
         <ZAxis range={[36, 36]} />
@@ -97,6 +101,7 @@ function ResidualChart({ score }: { score: ScoreNode }) {
           domain={[xlo, xhi]}
           stroke="var(--muted-foreground)"
           tick={{ fontSize: 11 }}
+          tickFormatter={axisTick}
           label={{ value: 'Predicted', position: 'insideBottom', offset: -8, fontSize: 12 }}
         />
         <YAxis
@@ -105,6 +110,7 @@ function ResidualChart({ score }: { score: ScoreNode }) {
           name="Residual"
           stroke="var(--muted-foreground)"
           tick={{ fontSize: 11 }}
+          tickFormatter={axisTick}
           label={{ value: 'Residual', angle: -90, position: 'insideLeft', fontSize: 12 }}
         />
         <ZAxis range={[36, 36]} />
@@ -191,6 +197,7 @@ function FoldsChart({ run, score }: { run: RunResult; score: ScoreNode }) {
         <YAxis
           stroke="var(--muted-foreground)"
           tick={{ fontSize: 11 }}
+          tickFormatter={axisTick}
           label={{ value: pm.label, angle: -90, position: 'insideLeft', fontSize: 12 }}
         />
         <Tooltip cursor={{ fill: 'var(--muted)' }} contentStyle={TOOLTIP_STYLE} formatter={(v: number) => fmt(v)} />

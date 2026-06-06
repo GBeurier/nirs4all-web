@@ -44,6 +44,41 @@ function relTime(ts: number, startTs: number): string {
   return `+${Math.floor(s / 60)}m${String(s % 60).padStart(2, '0')}s`
 }
 
+export function ExecutionLog({ runLog }: { runLog: RunLogEntry[] }) {
+  const logRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = logRef.current
+    if (!el) return
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 48
+    if (nearBottom) el.scrollTop = el.scrollHeight
+  }, [runLog])
+
+  if (runLog.length === 0) return null
+  return (
+    <div className="mt-3">
+      <p className="mb-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Exec log</p>
+      <div
+        ref={logRef}
+        className="max-h-40 overflow-y-auto rounded-lg border border-border bg-muted/50 p-2 font-mono text-[10px] leading-relaxed"
+        data-run-log
+      >
+        {runLog.map((e, i) => (
+          <div key={i} className="flex items-baseline gap-2">
+            <span className="w-14 shrink-0 text-right text-muted-foreground/70">{relTime(e.ts, runLog[0].ts)}</span>
+            <span className={`w-8 shrink-0 ${LOG_PHASE_COLOR[e.phase] ?? 'text-muted-foreground'}`}>{LOG_PHASE_TAG[e.phase] ?? e.phase.slice(0, 4)}</span>
+            <span className="w-7 shrink-0 text-right tabular-nums text-muted-foreground/70">{e.pct}%</span>
+            {e.message && (
+              <span className="min-w-0 truncate text-foreground/75" title={e.message}>
+                {e.message}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 /** Display-only count of the variants one element contributes (dag-ml is authoritative). */
 function elementVariants(step: PipelineStep): number {
   const dims: number[] = []
@@ -260,18 +295,6 @@ export function CanvasFlow({
   const SplitIcon = iconByName(splitDef?.icon ?? 'Split')
   const cv = pipeline.cv
   const containers = pipeline.containers ?? []
-
-  // Pin the exec log to its latest entry only while the user is already at the
-  // bottom — scrolling up to read earlier entries must not be fought. (The
-  // effect runs after the DOM grew, so compare against the OLD scrollTop with
-  // a tolerance covering the freshly appended row.)
-  const logRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    const el = logRef.current
-    if (!el) return
-    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 48
-    if (nearBottom) el.scrollTop = el.scrollHeight
-  }, [runLog])
 
   return (
     <div className="flex h-full flex-col">
@@ -565,29 +588,7 @@ export function CanvasFlow({
         )}
 
         {/* execution log — visible during and after the run until the next run starts */}
-        {runLog.length > 0 && (
-          <div className="mt-3">
-            <p className="mb-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Exec log</p>
-            <div
-              ref={logRef}
-              className="max-h-40 overflow-y-auto rounded-lg border border-border bg-muted/50 p-2 font-mono text-[10px] leading-relaxed"
-              data-run-log
-            >
-              {runLog.map((e, i) => (
-                <div key={i} className="flex items-baseline gap-2">
-                  <span className="w-14 shrink-0 text-right text-muted-foreground/70">{relTime(e.ts, runLog[0].ts)}</span>
-                  <span className={`w-8 shrink-0 ${LOG_PHASE_COLOR[e.phase] ?? 'text-muted-foreground'}`}>{LOG_PHASE_TAG[e.phase] ?? e.phase.slice(0, 4)}</span>
-                  <span className="w-7 shrink-0 text-right tabular-nums text-muted-foreground/70">{e.pct}%</span>
-                  {e.message && (
-                    <span className="min-w-0 truncate text-foreground/75" title={e.message}>
-                      {e.message}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <ExecutionLog runLog={runLog} />
       </div>
     </div>
   )

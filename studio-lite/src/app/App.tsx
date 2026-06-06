@@ -15,7 +15,7 @@ import {
   Upload,
 } from 'lucide-react'
 import { DatasetConfigDialog, DatasetUpload, DatasetView } from '@/components/dataset'
-import { PipelineBuilder } from '@/components/pipeline'
+import { ExecutionLog, PipelineBuilder } from '@/components/pipeline'
 import { migrateLegacyBranch } from '@/components/pipeline/_helpers'
 import { PredictionPanel, ResultsList, ResultsVisualization } from '@/components/results'
 import { defaultPipeline } from '@/catalog/build'
@@ -212,8 +212,9 @@ export default function App() {
     setRunning(true)
     setError(null)
     setStep('pipeline')
-    setProgress({ phase: 'preprocess', pct: 0, message: 'starting analysis' })
-    setRunLog([])
+    const firstProgress: RunProgress = { phase: 'preprocess', pct: 0, message: 'starting analysis' }
+    setProgress(firstProgress)
+    setRunLog([{ ts: Date.now(), phase: firstProgress.phase, pct: firstProgress.pct, message: firstProgress.message }])
     const ctrl = new AbortController()
     abortRef.current = ctrl
     const token = ++runTokenRef.current
@@ -745,6 +746,7 @@ function StepPanel(props: StepPanelProps) {
             onCancel={props.onCancel}
           />
         ) : null}
+        <ExecutionLog runLog={props.runLog} />
         <div className="grid gap-6 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
           <ResultsList runs={props.runs} selectedRunId={selectedRun?.id ?? null} selectedScoreId={props.selectedScoreId} onSelect={props.onSelectScore} />
           {selectedRun && selectedScore && <ResultsVisualization run={selectedRun} score={selectedScore} />}
