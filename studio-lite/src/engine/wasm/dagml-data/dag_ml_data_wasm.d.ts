@@ -36,6 +36,8 @@ export class WasmInMemoryProvider {
      * Typed-output projection: returns a [`WasmFeatureBlockF64`] whose `values`
      * are a flat `Float64Array`, avoiding the O(rows×cols) JSON of
      * [`Self::feature_block`] (the prime memory/latency cost on large datasets).
+     * Flattens straight from the columnar store — no boxed per-cell values in
+     * WASM either. Masked cells are an error; use `feature_block` for those.
      */
     featureBlockF64(view_handle: string, feature_set_id: string): WasmFeatureBlockF64;
     feature_block(view_handle: string, feature_set_id: string): string;
@@ -54,6 +56,9 @@ export class WasmInMemoryProvider {
      * boxed-array encoding on the JS side. `feature_matrix_meta_json` carries
      * the matrix metadata (`feature_set_id`, `representation_id`,
      * `feature_names`, `observation_ids`) WITHOUT a `values` field.
+     *
+     * DENSE-ONLY by contract: no validity mask, every value finite. Masked /
+     * missing data must use the JSON constructor + `feature_block` path.
      */
     static withF64Features(envelope_json: string, target_tables_json: string | null | undefined, feature_matrix_meta_json: string, values: Float64Array): WasmInMemoryProvider;
 }

@@ -192,7 +192,12 @@ export default function App() {
     const token = ++runTokenRef.current
     const handleProgress = (p: RunProgress) => {
       setProgress(p)
-      setRunLog((prev) => [...prev, { ts: Date.now(), phase: p.phase, pct: Math.round(p.pct), message: p.message }])
+      setRunLog((prev) => {
+        const entry: RunLogEntry = { ts: Date.now(), phase: p.phase, pct: Math.round(p.pct), message: p.message }
+        // bounded for huge sweeps; entry 0 is kept — it anchors the relative timestamps
+        if (prev.length >= 500) return [prev[0], ...prev.slice(prev.length - 498), entry]
+        return [...prev, entry]
+      })
     }
     try {
       const result = await engine.run(dataset, pipeline, { signal: ctrl.signal, onProgress: handleProgress })

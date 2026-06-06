@@ -10,3 +10,6 @@ single-page-WASM/pkg/
 *.zip
 *:Zone.Identifier
 .DS_Store
+
+# local code-intelligence index
+.codegraph/

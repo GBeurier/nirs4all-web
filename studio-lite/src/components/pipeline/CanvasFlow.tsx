@@ -26,6 +26,24 @@ export type Selection =
   /** a preprocessing op inside a container's branch */
   | { kind: 'containerStep'; containerId: string; branchId: string; stepId: string }
 
+// exec-log phase chips: short tag + color per RunProgress phase (module-level —
+// never re-allocated per row per render)
+const LOG_PHASE_TAG: Record<string, string> = {
+  preprocess: 'prep', fit_cv: 'cv', select: 'sel', refit: 'fit', predict: 'pred', done: 'done',
+}
+const LOG_PHASE_COLOR: Record<string, string> = {
+  preprocess: 'text-slate-400', fit_cv: 'text-teal-400', select: 'text-orange-400',
+  refit: 'text-violet-400', predict: 'text-blue-400', done: 'text-green-400',
+}
+/** "+1.23s" under a minute, "+1m02s" above — rounded BEFORE the split so the
+ *  seconds part can never display as 60. */
+function relTime(ts: number, startTs: number): string {
+  const secs = (ts - startTs) / 1000
+  if (secs < 60) return `+${secs.toFixed(2)}s`
+  const s = Math.round(secs)
+  return `+${Math.floor(s / 60)}m${String(s % 60).padStart(2, '0')}s`
+}
+
 /** Display-only count of the variants one element contributes (dag-ml is authoritative). */
 function elementVariants(step: PipelineStep): number {
   const dims: number[] = []
@@ -243,9 +261,16 @@ export function CanvasFlow({
   const cv = pipeline.cv
   const containers = pipeline.containers ?? []
 
+  // Pin the exec log to its latest entry only while the user is already at the
+  // bottom — scrolling up to read earlier entries must not be fought. (The
+  // effect runs after the DOM grew, so compare against the OLD scrollTop with
+  // a tolerance covering the freshly appended row.)
   const logRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight
+    const el = logRef.current
+    if (!el) return
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 48
+    if (nearBottom) el.scrollTop = el.scrollHeight
   }, [runLog])
 
   return (
@@ -548,26 +573,18 @@ export function CanvasFlow({
               className="max-h-40 overflow-y-auto rounded-lg border border-border bg-muted/50 p-2 font-mono text-[10px] leading-relaxed"
               data-run-log
             >
-              {runLog.map((e, i) => {
-                const startTs = runLog[0].ts
-                const secs = (e.ts - startTs) / 1000
-                const rel = secs < 60 ? `+${secs.toFixed(2)}s` : `+${Math.floor(secs / 60)}m${(secs % 60).toFixed(0)}s`
-                const phaseShort: Record<string, string> = {
-                  preprocess: 'prep', fit_cv: 'cv  ', select: 'sel ', refit: 'fit ', predict: 'pred', done: 'done',
-                }
-                const phaseColor: Record<string, string> = {
-                  preprocess: 'text-slate-400', fit_cv: 'text-teal-400', select: 'text-orange-400',
-                  refit: 'text-violet-400', predict: 'text-blue-400', done: 'text-green-400',
-                }
-                return (
-                  <div key={i} className="flex items-baseline gap-2">
-                    <span className="w-14 shrink-0 text-right text-muted-foreground/70">{rel}</span>
-                    <span className={`w-8 shrink-0 ${phaseColor[e.phase] ?? 'text-muted-foreground'}`}>{phaseShort[e.phase] ?? e.phase.slice(0, 4)}</span>
-                    <span className="w-7 shrink-0 text-right tabular-nums text-muted-foreground/70">{e.pct}%</span>
-                    {e.message && <span className="min-w-0 truncate text-foreground/75">{e.message}</span>}
-                  </div>
-                )
-              })}
+              {runLog.map((e, i) => (
+                <div key={i} className="flex items-baseline gap-2">
+                  <span className="w-14 shrink-0 text-right text-muted-foreground/70">{relTime(e.ts, runLog[0].ts)}</span>
+                  <span className={`w-8 shrink-0 ${LOG_PHASE_COLOR[e.phase] ?? 'text-muted-foreground'}`}>{LOG_PHASE_TAG[e.phase] ?? e.phase.slice(0, 4)}</span>
+                  <span className="w-7 shrink-0 text-right tabular-nums text-muted-foreground/70">{e.pct}%</span>
+                  {e.message && (
+                    <span className="min-w-0 truncate text-foreground/75" title={e.message}>
+                      {e.message}
+                    </span>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         )}

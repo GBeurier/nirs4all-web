@@ -221,10 +221,14 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
     viewHandle = provider.make_view(dataHandle, JSON.stringify({ sample_ids: cids, include_augmented: false }))
 
     // Feature matrix via the TYPED path: a small layout JSON (ids + shape) plus
-    // the flat row-major values as a Float64Array — no O(rows×cols) JSON string.
+    // the flat row-major values as a Float64Array — no O(rows×cols) JSON string,
+    // and (typed projection upstream) no boxed per-cell values in WASM either.
+    // Consume the WASM block IMMEDIATELY (getter then into_values) so no error
+    // path can strand the large buffer in WASM memory awaiting finalization.
     const fblock = provider.featureBlockF64(viewHandle, FEATURE_SET)
-    const fLayout = JSON.parse(fblock.layout) as { sample_ids: string[]; n_rows: number; n_cols: number }
-    const fValues = fblock.into_values() // flat row-major, length n_rows*n_cols
+    const fLayoutStr = fblock.layout
+    const fValues = fblock.into_values() // consumes the block; flat row-major, length n_rows*n_cols
+    const fLayout = JSON.parse(fLayoutStr) as { sample_ids: string[]; n_rows: number; n_cols: number }
     const tblock = JSON.parse(provider.target_block(viewHandle, TARGET_ID)) as { sample_ids: string[]; values: number[] }
 
     // reconstruct in dataset order, asserting exact 1:1 coverage — never train on
@@ -234,21 +238,36 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
       if (!Number.isInteger(i) || i < 0 || i >= ds.nSamples) throw new Error(`provider returned unknown sample id ${id}`)
       return i
     }
-    const X = new Float64Array(ds.nSamples * ds.nFeatures)
-    const y = new Float64Array(ds.nSamples)
-    const seenX = new Uint8Array(ds.nSamples)
-    const seenY = new Uint8Array(ds.nSamples)
     if (fLayout.sample_ids.length !== ds.nSamples) throw new Error(`provider feature block covered ${fLayout.sample_ids.length}/${ds.nSamples} samples`)
     if (fLayout.n_cols !== ds.nFeatures) throw new Error(`provider feature block has ${fLayout.n_cols}/${ds.nFeatures} features`)
     if (fValues.length !== ds.nSamples * ds.nFeatures) throw new Error(`provider feature block has ${fValues.length} values, expected ${ds.nSamples * ds.nFeatures}`)
     if (tblock.sample_ids.length !== ds.nSamples) throw new Error(`provider target block covered ${tblock.sample_ids.length}/${ds.nSamples} samples`)
+
+    // The provider serves rows in relation order, which we registered as
+    // s0..s{n-1} — when it echoes that identity ordering (the steady state),
+    // adopt the served buffer DIRECTLY: zero copy. Anything else falls back to
+    // an explicit reorder by sampleId (row-block memcpy), with duplicate
+    // detection; full length + no dups ⇒ exact coverage either way.
+    let X = fValues
+    let identity = true
     for (let r = 0; r < fLayout.sample_ids.length; r++) {
-      const i = at(fLayout.sample_ids[r])
-      if (seenX[i]) throw new Error(`provider returned duplicate sample id ${fLayout.sample_ids[r]}`)
-      seenX[i] = 1
-      const base = r * ds.nFeatures
-      for (let j = 0; j < ds.nFeatures; j++) X[i * ds.nFeatures + j] = fValues[base + j]
+      if (fLayout.sample_ids[r] !== `s${r}`) {
+        identity = false
+        break
+      }
     }
+    if (!identity) {
+      X = new Float64Array(ds.nSamples * ds.nFeatures)
+      const seenX = new Uint8Array(ds.nSamples)
+      for (let r = 0; r < fLayout.sample_ids.length; r++) {
+        const i = at(fLayout.sample_ids[r])
+        if (seenX[i]) throw new Error(`provider returned duplicate sample id ${fLayout.sample_ids[r]}`)
+        seenX[i] = 1
+        X.set(fValues.subarray(r * ds.nFeatures, (r + 1) * ds.nFeatures), i * ds.nFeatures)
+      }
+    }
+    const y = new Float64Array(ds.nSamples)
+    const seenY = new Uint8Array(ds.nSamples)
     for (let r = 0; r < tblock.sample_ids.length; r++) {
       const i = at(tblock.sample_ids[r])
       if (seenY[i]) throw new Error(`provider returned duplicate target sample id ${tblock.sample_ids[r]}`)

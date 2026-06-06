@@ -327,6 +327,7 @@ export class DagMlEngine implements Engine {
     const dslForVariantId = (vid: string | null): PipelineDSL =>
       (vid ? baseDslByVariant.get(vid) : undefined) ?? baseDslByVariant.get(variants[0].variant_id) ?? dsl
     const foldIndexById = new Map(folds.map((f, i) => [f.fold_id, i]))
+    const variantIndexById = new Map(variants.map((v, i) => [v.variant_id, i]))
     // per variant_id → per-fold accumulated OOF rows
     const foldRowsByVariant = new Map<string, PredRow[][]>(variants.map((v) => [v.variant_id, folds.map(() => [] as PredRow[])]))
 
@@ -345,11 +346,19 @@ export class DagMlEngine implements Engine {
       const fold = t.fold_id ? foldByDagId.get(t.fold_id) : null
       const valIdx = fold ? fold.valIdx : []
       const trainIdx = fold ? fold.trainIdx : trainUniverse
+      // Progress: pct reflects COMPLETED work (this task is only starting), and
+      // the label names the task from its OWN ids — scheduler call order is the
+      // scheduler's business, never assume variant-outer/fold-inner.
       foldsDone++
-      const foldPct = 12 + Math.round((64 * foldsDone) / totalFoldCalls)
-      const foldLabel = multiVariant
-        ? `fold ${((foldsDone - 1) % folds.length) + 1}/${folds.length} · variant ${Math.ceil(foldsDone / folds.length)}/${variants.length}`
-        : `fold ${foldsDone}/${folds.length}`
+      const foldPct = 12 + Math.round((64 * (foldsDone - 1)) / totalFoldCalls)
+      const foldNo = t.fold_id != null ? foldIndexById.get(t.fold_id) : undefined
+      const vNo = t.variant_id != null ? variantIndexById.get(t.variant_id) : undefined
+      const foldLabel =
+        foldNo === undefined
+          ? `task ${foldsDone}/${totalFoldCalls}`
+          : multiVariant && vNo !== undefined
+            ? `fold ${foldNo + 1}/${folds.length} · variant ${vNo + 1}/${variants.length}`
+            : `fold ${foldNo + 1}/${folds.length}`
       onP?.({ phase: 'fit_cv', pct: Math.min(foldPct, 76), message: foldLabel })
       // Fit THIS task's variant (by id): use the variant's effective DSL so the
       // overlaid model/preprocessing params drive libn4m. (dag-ml also overlays the
@@ -412,10 +421,12 @@ export class DagMlEngine implements Engine {
       const prebuilt: Fold[] = [...foldByDagId.entries()].map(([, v], i) => ({ foldId: i + 1, trainIdx: v.trainIdx, valIdx: v.valIdx }))
       for (let i = 0; i < folds.length; i++) {
         if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError')
+        // same convention as the scheduler path: announce the STARTING fold,
+        // pct reflects the folds already completed.
+        onP?.({ phase: 'fit_cv', pct: 12 + Math.round((64 * i) / folds.length), message: `fold ${i + 1}/${folds.length}` })
         const f = prebuilt[i]
         const { pred } = trainAndPredict(ds, baseDslByVariant.get(base.variant_id) ?? dsl, backend, f.trainIdx, f.valIdx)
         baseFoldRows[i].push(...decodeRows(ds, classNames, classIdx, pred, f.valIdx))
-        onP?.({ phase: 'fit_cv', pct: 12 + Math.round((64 * (i + 1)) / folds.length), message: `fold ${i + 1}/${folds.length}` })
       }
     }
     if (multiNodeGraph && !multiVariant) {
@@ -469,7 +480,7 @@ export class DagMlEngine implements Engine {
       const metric = Number(cvNode.metrics[scoreMetric] ?? (task === 'regression' ? Infinity : -Infinity))
       evaluated.push({ variant, vDsl: baseDslByVariant.get(variant.variant_id) ?? dsl, oof, foldRows, cvNode, metric })
     }
-    onP?.({ phase: 'fit_cv', pct: 80 })
+    onP?.({ phase: 'fit_cv', pct: 80, message: 'scoring out-of-fold predictions' })
 
     // --- SELECT: dag-ml ranks the candidates (deterministic argmin/argmax + id
     // tie-break); the host does not pick. Objective: rmse→minimize, accuracy→
