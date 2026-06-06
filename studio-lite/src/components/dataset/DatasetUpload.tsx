@@ -29,11 +29,25 @@ export function DatasetUpload({ onDataset, onLoadSample, onImportModel, busy: bu
     const name = files[0]?.name ?? 'Uploaded dataset'
     const allText = files.every((f) => /\.(csv|tsv|txt)$/i.test(f.name))
     setBusyLocal(true)
+    let fastPathError: unknown = null
     try {
-      // Everything — CSV folders and vendor formats alike — goes through the real
+      // Conventional delimited-text uploads are common and should not pay the
+      // nirs4all-formats/io WASM startup cost. If the local parser cannot identify
+      // an X/y-style layout, fall through to the robust WASM inference path below.
+      if (allText) {
+        try {
+          const raw: RawFile[] = await readRawFiles(files)
+          onDataset(buildDataset(raw, name), name)
+          return
+        } catch (e) {
+          fastPathError = e
+        }
+      }
+
+      // Vendor formats and non-conventional CSV folders go through the real
       // nirs4all-formats decode + nirs4all-io inference. nirs4all-io resolves the
-      // dataset structure (X*/Y* train/test convention, delimiters, joins, partitions,
-      // axis, task type) far more robustly than any hand-rolled CSV heuristic.
+      // dataset structure (roles, joins, partitions, axis, task type) more robustly
+      // than the lightweight CSV fast-path.
       const { analyzeFiles, assembleDataset } = await import('@/data/wasm-io')
       const withBytes = await Promise.all(files.map(async (f) => ({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) })))
       const analysis = await analyzeFiles(withBytes)
@@ -43,17 +57,11 @@ export function DatasetUpload({ onDataset, onLoadSample, onImportModel, busy: bu
       }
       onDataset(await assembleDataset(analysis.decoded, analysis.plan, withBytes), name, analysis)
     } catch (e) {
-      // Offline single-file build (file://) can't always load the io WASM — fall back
-      // to the lightweight in-browser CSV builder when every file is delimited text.
-      if (allText) {
-        try {
-          const raw: RawFile[] = await readRawFiles(files)
-          onDataset(buildDataset(raw, name), name)
-          return
-        } catch (e2) {
-          setLocalError(e2 instanceof Error ? e2.message : 'Could not read the selected files.')
-          return
-        }
+      if (fastPathError) {
+        const fast = fastPathError instanceof Error ? fastPathError.message : String(fastPathError)
+        const wasm = e instanceof Error ? e.message : String(e)
+        setLocalError(`Could not parse the text dataset locally (${fast}); nirs4all-io fallback also failed (${wasm}).`)
+        return
       }
       setLocalError(e instanceof Error ? e.message : 'Could not read the selected files.')
     } finally {
