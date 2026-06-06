@@ -2,19 +2,18 @@
 // Both fit an INTERNAL screen_folds-fold CV over an operator bank *inside every
 // outer CV fold*, so the work scales with nTrain · nFeatures · screen_folds ·
 // |bank| — easily many minutes on a wide, large dataset (e.g. Cassava 3825×1050).
-// The served engine runs in a Web Worker so heavy runs stay cancellable. The
-// single-file build runs in the UI thread, so it must refuse heavy AOM/POP work
-// before libn4m starts; otherwise the browser cannot repaint or handle Cancel.
+// Worker-backed engines run heavy screens in the background so the UI stays
+// cancellable. Only a main-thread fallback must refuse heavy AOM/POP work before
+// libn4m starts; otherwise the browser cannot repaint or handle Cancel.
 import type { MaterializedDataset, PipelineDSL, RunProgress } from './types'
 import { AOM_DEFAULT_BANK } from '@/catalog/types'
 
 const AOM_MODELS = new Set(['AOMPLS', 'POPPLS'])
 
 // Heuristic on (train rows × features × inner screen fits). Calibrated so a small
-// demo dataset runs unremarked, a large one (Cassava) warns + runs (cancellable),
-// and a pathological one is refused with actionable guidance rather than grinding.
+// demo dataset runs unremarked, a large one warns + runs when worker-backed, and
+// the main-thread fallback refuses before the tab becomes unresponsive.
 const WARN_COST = 2e7
-const REFUSE_COST = 8e8
 const MAIN_THREAD_REFUSE_COST = WARN_COST
 
 interface AomBudgetOptions {
@@ -34,25 +33,19 @@ export function assertAomBudget(
 
   const nTrain = ds.partitions.reduce((a, p) => a + (p === 'train' ? 1 : 0), 0) || ds.nSamples
   const folds = Math.max(2, Math.round(Number(model.params.screen_folds ?? 5)))
+  const nComp = Math.max(1, Math.round(Number(model.params.n_components ?? 10)))
   const bankRaw = model.params.operator_bank
   const bank = Array.isArray(bankRaw) && bankRaw.length ? bankRaw.length : AOM_DEFAULT_BANK.length
-  const outerFits = Math.max(1, Math.round(Number(dsl.cv?.folds ?? 0)) + 1) // CV folds + final refit
-  const cost = nTrain * ds.nFeatures * folds * bank * outerFits
+  const outerFits = Math.max(1, Math.round(Number(dsl.cv?.folds ?? 0)) + 1) // outer CV folds + final refit
+  const cost = nTrain * ds.nFeatures * folds * bank * nComp * outerFits
   if (cost <= WARN_COST) return
 
-  const human = `${nTrain}×${ds.nFeatures}, screening ${bank} operators × ${folds} folds, ${outerFits} fit(s)`
+  const human = `${nTrain}×${ds.nFeatures}, screening ${bank} operators × ${folds} inner folds × ${nComp} components, ${outerFits} outer fit${outerFits === 1 ? '' : 's'}`
   if (opts.mainThread && cost > MAIN_THREAD_REFUSE_COST) {
     throw new Error(
       `This ${model.type} screen is too large for the offline single-file build (${human}). ` +
         `AOM/POP would run on the browser UI thread, so Cancel cannot interrupt it. ` +
         `Use the served build for worker-backed execution, or reduce rows, features, Screen CV folds, the operator bank, or components.`,
-    )
-  }
-  if (cost > REFUSE_COST) {
-    throw new Error(
-      `This ${model.type} screen is too large for the in-browser demo (${human}). ` +
-        `Reduce it by subsampling rows, lowering "Screen CV folds" or the operator bank, ` +
-        `using fewer components — or run plain PLS (no operator screen) instead.`,
     )
   }
   onProgress?.({

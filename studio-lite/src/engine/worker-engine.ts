@@ -23,13 +23,15 @@ export class WorkerEngine implements Engine {
   readonly name = 'nirs4all-wasm-worker'
   private worker: Worker | null = null
   private seq = 0
+  private readonly createWorker: () => Worker
+
+  constructor(createWorker: () => Worker) {
+    this.createWorker = createWorker
+  }
 
   private ensure(): Worker {
     if (!this.worker) {
-      // Module worker: the engine code-splits its WASM via dynamic import(), which
-      // an IIFE worker can't bundle. The served build supports module workers; the
-      // single-file (file://) build never instantiates this (see client.ts).
-      this.worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' })
+      this.worker = this.createWorker()
     }
     return this.worker
   }
@@ -49,12 +51,24 @@ export class WorkerEngine implements Engine {
         if (m.type === 'result') resolve(m.result as T)
         else reject(m.name === 'AbortError' ? new DOMException(m.message, 'AbortError') : new Error(m.message))
       }
+      const onWorkerError = (ev: ErrorEvent) => {
+        cleanup()
+        reject(new Error(ev.message || 'Engine worker failed to load or crashed.'))
+      }
+      const onMessageError = () => {
+        cleanup()
+        reject(new Error('Engine worker sent an unreadable message.'))
+      }
       const onAbort = () => worker.postMessage({ type: 'cancel', id })
       const cleanup = () => {
         worker.removeEventListener('message', onMessage)
+        worker.removeEventListener('error', onWorkerError)
+        worker.removeEventListener('messageerror', onMessageError)
         opts?.signal?.removeEventListener('abort', onAbort)
       }
       worker.addEventListener('message', onMessage)
+      worker.addEventListener('error', onWorkerError)
+      worker.addEventListener('messageerror', onMessageError)
       if (opts?.signal) {
         if (opts.signal.aborted) onAbort()
         opts.signal.addEventListener('abort', onAbort)

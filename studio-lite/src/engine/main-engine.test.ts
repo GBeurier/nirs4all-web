@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { MainEngine } from './main-engine'
 import type { MaterializedDataset, PipelineDSL } from './types'
 
@@ -13,15 +13,10 @@ const heavyAom: PipelineDSL = {
 }
 
 describe('MainEngine offline guards', () => {
-  afterEach(() => {
-    vi.unstubAllGlobals()
-  })
-
-  it('refuses heavy AOM on file:// before starting main-thread backend work', async () => {
-    vi.stubGlobal('location', { protocol: 'file:' })
+  it('refuses heavy AOM before starting main-thread backend work', async () => {
     const onProgress = vi.fn()
 
-    await expect(new MainEngine().run(ds(220, 1000), heavyAom, { onProgress })).rejects.toThrow(/offline single-file/i)
+    await expect(new MainEngine({ mainThread: true }).run(ds(220, 1000), heavyAom, { onProgress })).rejects.toThrow(/offline single-file/i)
     expect(onProgress).not.toHaveBeenCalled()
   })
 })

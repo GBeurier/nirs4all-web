@@ -9,7 +9,7 @@ import { MainEngine } from './main-engine'
 import type { RunOptions } from './types'
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope
-const engine = new MainEngine()
+const engine = new MainEngine({ mainThread: false, useDagMl: ctx.location?.protocol !== 'blob:' })
 const controllers = new Map<string, AbortController>()
 
 interface RunMsg { type: 'run'; id: string; ds: Parameters<MainEngine['run']>[0]; dsl: Parameters<MainEngine['run']>[1] }

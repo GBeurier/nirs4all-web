@@ -10,15 +10,29 @@ import { assertAomBudget } from './guard'
 import { backendIdOf, predictPipeline, runGeneratorOr, runPipeline } from './orchestrate'
 import type { Engine, FittedPipeline, MaterializedDataset, PipelineDSL, PredictResult, RunOptions, RunResult } from './types'
 
+interface MainEngineOptions {
+  /** true when MainEngine runs on the browser UI thread instead of a Worker. */
+  mainThread?: boolean
+  /** served build uses dag-ml; offline/inline-worker builds can force direct libn4m. */
+  useDagMl?: boolean
+}
+
 export class MainEngine implements Engine {
   readonly name = 'nirs4all-wasm'
   private dagml = new DagMlEngine()
+  private readonly mainThread: boolean
+  private readonly useDagMlEngine: boolean
+
+  constructor(opts: MainEngineOptions = {}) {
+    this.mainThread = opts.mainThread ?? (typeof location !== 'undefined' && location.protocol === 'file:')
+    this.useDagMlEngine = opts.useDagMl ?? true
+  }
 
   async run(ds: MaterializedDataset, dsl: PipelineDSL, opts: RunOptions = {}): Promise<RunResult> {
-    const useDagMl = dagMlAvailable()
+    const useDagMl = this.useDagMlEngine && dagMlAvailable()
     // Warn (or refuse) an oversized operator-adaptive screen before any compute,
     // so a heavy AOM/POP run is never silent (it runs in a worker, cancellable).
-    assertAomBudget(ds, dsl, opts.onProgress, { mainThread: !useDagMl })
+    assertAomBudget(ds, dsl, opts.onProgress, { mainThread: this.mainThread })
     if (useDagMl) return this.dagml.run(ds, dsl, opts) // dag-ml executes; libn4m numerics
     // Offline single-file: dag-ml scheduling is intentionally disabled under
     // file://, but vite-plugin-singlefile inlines libn4m's WASM. Use it when

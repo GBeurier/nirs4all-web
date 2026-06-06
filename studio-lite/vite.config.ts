@@ -15,18 +15,19 @@ export default defineConfig(({ mode }) => {
     plugins: [react(), tailwindcss(), ...(singlefile ? [viteSingleFile()] : [])],
     resolve: {
       alias: {
-        // singlefile builds swap the engine entry for a worker-free, in-thread
-        // one so the Web Worker (and its WASM code-split chunks, which can't be
-        // inlined into one HTML) never enters the graph. Listed before '@' so the
-        // exact match wins. The served/dev build keeps client.ts (WorkerEngine).
+        // singlefile builds swap the engine entry for a Blob-backed classic
+        // worker. Listed before '@' so the exact match wins. The served/dev build
+        // keeps client.ts, which uses a module worker.
         ...(singlefile ? { '@/engine/client': path.resolve(__dirname, './src/engine/client.singlefile.ts') } : {}),
         '@': path.resolve(__dirname, './src'),
       },
     },
-    // The served build runs the engine in a MODULE worker so it can code-split its
-    // WASM via dynamic import() (IIFE/UMD workers can't). The single-file build has
-    // no worker at all (see the alias above).
-    worker: { format: 'es' },
+    // Served: module worker with code-split WASM chunks. Single-file: inline
+    // classic Blob worker; Chrome refuses Blob *module* workers on file://.
+    worker: {
+      format: singlefile ? 'iife' : 'es',
+      ...(singlefile ? { rollupOptions: { output: { inlineDynamicImports: true } } } : {}),
+    },
     assetsInclude: ['**/*.csv', '**/*.wasm'],
     build: {
       target: 'es2022',

@@ -35,12 +35,29 @@ describe('assertAomBudget', () => {
     expect(onP).not.toHaveBeenCalled()
   })
 
-  it('refuses an extreme AOM screen with actionable guidance', () => {
-    expect(() => assertAomBudget(ds(10000, 4000), dsl('AOMPLS'))).toThrow(/too large/i)
+  it('warns but does not refuse an extreme AOM screen in a worker-backed run', () => {
+    const onP = vi.fn()
+    expect(() => assertAomBudget(ds(10000, 4000), dsl('AOMPLS'), onP, { mainThread: false })).not.toThrow()
+    expect(onP).toHaveBeenCalledTimes(1)
   })
 
-  it('also guards POP-PLS', () => {
-    expect(() => assertAomBudget(ds(10000, 4000), dsl('POPPLS'))).toThrow(/too large/i)
+  it('also warns for POP-PLS', () => {
+    const onP = vi.fn()
+    expect(() => assertAomBudget(ds(10000, 4000), dsl('POPPLS'), onP, { mainThread: false })).not.toThrow()
+    expect(onP).toHaveBeenCalledTimes(1)
+  })
+
+  it('lets the large offline worker AOM case run with an explicit warning', () => {
+    const onP = vi.fn()
+    const pipeline = dsl(
+      'AOMPLS',
+      { operator_bank: [0, 1, 2, 3, 4], screen_folds: 5, n_components: 10 },
+      { folds: 5, seed: 42 },
+    )
+    expect(() => assertAomBudget(ds(3021, 1050), pipeline, onP, { mainThread: false })).not.toThrow()
+    expect(onP.mock.calls[0][0].message).toMatch(/3021×1050/)
+    expect(onP.mock.calls[0][0].message).toMatch(/5 inner folds × 10 components/)
+    expect(onP.mock.calls[0][0].message).toMatch(/6 outer fits/)
   })
 
   it('honours an explicit operator_bank + screen_folds in the estimate', () => {
