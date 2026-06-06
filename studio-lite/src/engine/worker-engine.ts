@@ -36,10 +36,22 @@ export class WorkerEngine implements Engine {
     return this.worker
   }
 
+  private dispose(worker: Worker): void {
+    if (this.worker === worker) this.worker = null
+    worker.terminate()
+  }
+
   private call<T>(payload: Record<string, unknown>, opts?: RunOptions): Promise<T> {
     const worker = this.ensure()
     const id = `job-${++this.seq}`
     return new Promise<T>((resolve, reject) => {
+      let done = false
+      const finish = (fn: () => void) => {
+        if (done) return
+        done = true
+        cleanup()
+        fn()
+      }
       const onMessage = (ev: MessageEvent<OutMsg>) => {
         const m = ev.data
         if (!m || m.id !== id) return
@@ -47,19 +59,29 @@ export class WorkerEngine implements Engine {
           opts?.onProgress?.(m.progress)
           return
         }
-        cleanup()
-        if (m.type === 'result') resolve(m.result as T)
-        else reject(m.name === 'AbortError' ? new DOMException(m.message, 'AbortError') : new Error(m.message))
+        finish(() => {
+          if (m.type === 'result') resolve(m.result as T)
+          else reject(m.name === 'AbortError' ? new DOMException(m.message, 'AbortError') : new Error(m.message))
+        })
       }
       const onWorkerError = (ev: ErrorEvent) => {
-        cleanup()
-        reject(new Error(ev.message || 'Engine worker failed to load or crashed.'))
+        finish(() => {
+          this.dispose(worker)
+          reject(new Error(ev.message || 'Engine worker failed to load or crashed.'))
+        })
       }
       const onMessageError = () => {
-        cleanup()
-        reject(new Error('Engine worker sent an unreadable message.'))
+        finish(() => {
+          this.dispose(worker)
+          reject(new Error('Engine worker sent an unreadable message.'))
+        })
       }
-      const onAbort = () => worker.postMessage({ type: 'cancel', id })
+      const onAbort = () => {
+        finish(() => {
+          this.dispose(worker)
+          reject(new DOMException('Operation canceled.', 'AbortError'))
+        })
+      }
       const cleanup = () => {
         worker.removeEventListener('message', onMessage)
         worker.removeEventListener('error', onWorkerError)
@@ -70,7 +92,10 @@ export class WorkerEngine implements Engine {
       worker.addEventListener('error', onWorkerError)
       worker.addEventListener('messageerror', onMessageError)
       if (opts?.signal) {
-        if (opts.signal.aborted) onAbort()
+        if (opts.signal.aborted) {
+          onAbort()
+          return
+        }
         opts.signal.addEventListener('abort', onAbort)
       }
       worker.postMessage({ ...payload, id })
