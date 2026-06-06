@@ -160,8 +160,10 @@ export class DagMlEngine implements Engine {
       const served = await materializeViaProvider(ds)
       ds = { ...ds, X: served.X, y: served.y }
       dataProvider = { layer: 'dag-ml-data', status: 'materialized', fingerprints: served.fingerprints, representation: served.outputRepresentation, version: served.version }
+      onP?.({ phase: 'preprocess', pct: 5, message: `dag-ml-data ok — ${ds.nSamples}×${ds.nFeatures}` })
     } catch (e) {
       dataProvider = { layer: 'dag-ml-data', status: 'unavailable', error: e instanceof Error ? e.message : String(e) }
+      onP?.({ phase: 'preprocess', pct: 5, message: 'dag-ml-data unavailable — using in-memory matrices' })
       console.warn('[dag-ml-data] provider unavailable, using in-memory matrices:', e)
     }
 
@@ -171,8 +173,11 @@ export class DagMlEngine implements Engine {
     // and scored by the refit. Runs before classInfo so the class vocab is the
     // same regardless of split. ---
     if (dsl.split && SPLIT_KINDS.has(dsl.split.type)) {
-      onP?.({ phase: 'preprocess', pct: 1, message: `splitting via ${dsl.split.type}` })
+      onP?.({ phase: 'preprocess', pct: 7, message: `splitting via ${dsl.split.type}` })
       ds = await applySplit(ds, dsl.split)
+      const nTrain = trainRowsOf(ds).length
+      const nTest = testRowsOf(ds).length
+      onP?.({ phase: 'preprocess', pct: 9, message: `split → train ${nTrain} / test ${nTest}` })
     }
 
     const { classNames, classIdx } = classInfo(ds)
@@ -189,9 +194,10 @@ export class DagMlEngine implements Engine {
     // to evaluate variants against. The pipeline is fit on the full train rows and
     // scored on the held-out test partition (or train if none) via libn4m. ---
     if (!dsl.cv) {
-      onP?.({ phase: 'refit', pct: 10 })
+      const trainIdxForMsg = trainRowsOf(ds)
+      onP?.({ phase: 'refit', pct: 10, message: `fitting on ${trainIdxForMsg.length} samples — no CV` })
       const lineage = await compileWithDagMl(dsl)
-      const trainIdx = trainRowsOf(ds)
+      const trainIdx = trainIdxForMsg
       const testIdx = testRowsOf(ds)
       const scoreIdx = testIdx.length > 0 ? testIdx : trainIdx
       const { pred: refitPred, descriptors, branch, model } = trainAndPredict(ds, dsl, backend, trainIdx, scoreIdx)
@@ -324,9 +330,11 @@ export class DagMlEngine implements Engine {
     // per variant_id → per-fold accumulated OOF rows
     const foldRowsByVariant = new Map<string, PredRow[][]>(variants.map((v) => [v.variant_id, folds.map(() => [] as PredRow[])]))
 
-    onP?.({ phase: 'fit_cv', pct: 2 })
+    onP?.({ phase: 'fit_cv', pct: 10, message: `building ${nSplits}-fold CV over ${trainUniverse.length} samples` })
     const scoreMetric: RunResult['scoreMetric'] = task === 'regression' ? 'rmse' : 'accuracy'
 
+    let foldsDone = 0
+    const totalFoldCalls = folds.length * variants.length
     const invoke = (_controllerId: string, taskJson: string): string => {
       if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError')
       const t = JSON.parse(taskJson)
@@ -337,6 +345,12 @@ export class DagMlEngine implements Engine {
       const fold = t.fold_id ? foldByDagId.get(t.fold_id) : null
       const valIdx = fold ? fold.valIdx : []
       const trainIdx = fold ? fold.trainIdx : trainUniverse
+      foldsDone++
+      const foldPct = 12 + Math.round((64 * foldsDone) / totalFoldCalls)
+      const foldLabel = multiVariant
+        ? `fold ${((foldsDone - 1) % folds.length) + 1}/${folds.length} · variant ${Math.ceil(foldsDone / folds.length)}/${variants.length}`
+        : `fold ${foldsDone}/${folds.length}`
+      onP?.({ phase: 'fit_cv', pct: Math.min(foldPct, 76), message: foldLabel })
       // Fit THIS task's variant (by id): use the variant's effective DSL so the
       // overlaid model/preprocessing params drive libn4m. (dag-ml also overlays the
       // params onto np.params; we re-derive from the variant id for parity with the
@@ -401,7 +415,7 @@ export class DagMlEngine implements Engine {
         const f = prebuilt[i]
         const { pred } = trainAndPredict(ds, baseDslByVariant.get(base.variant_id) ?? dsl, backend, f.trainIdx, f.valIdx)
         baseFoldRows[i].push(...decodeRows(ds, classNames, classIdx, pred, f.valIdx))
-        onP?.({ phase: 'fit_cv', pct: 2 + Math.round((76 * (i + 1)) / folds.length) })
+        onP?.({ phase: 'fit_cv', pct: 12 + Math.round((64 * (i + 1)) / folds.length), message: `fold ${i + 1}/${folds.length}` })
       }
     }
     if (multiNodeGraph && !multiVariant) {
@@ -482,9 +496,9 @@ export class DagMlEngine implements Engine {
     // libn4m. dag-ml's variant scheduler has no per-variant REFIT pin, so the host
     // pins the winner by refitting its effective DSL directly (folds + selection
     // stay dag-ml's; this is host-side pinning, no dag-ml change). ---
-    onP?.({ phase: 'refit', pct: 86 })
     const trainIdx = trainUniverse
     const testIdx = testRowsOf(ds)
+    onP?.({ phase: 'refit', pct: 86, message: `final fit on ${trainIdx.length} samples${testIdx.length ? ` · test ${testIdx.length}` : ''}` })
     const scoreIdx = testIdx.length > 0 ? testIdx : trainIdx
     const { pred: refitPred, descriptors, branch, model } = trainAndPredict(ds, winner.vDsl, backend, trainIdx, scoreIdx)
     const refitRows = decodeRows(ds, classNames, classIdx, refitPred, scoreIdx)

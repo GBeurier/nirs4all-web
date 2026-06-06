@@ -259,6 +259,13 @@ export interface RunProgress {
   pct: number; // 0..100
   message?: string;
 }
+/** One entry in the live execution log — every onProgress call becomes an entry. */
+export interface RunLogEntry {
+  ts: number   // Date.now() in ms (absolute; relative display computed vs. first entry)
+  phase: RunProgress['phase']
+  pct: number
+  message?: string
+}
 export interface RunOptions {
   onProgress?: (p: RunProgress) => void;
   signal?: AbortSignal;

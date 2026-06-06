@@ -1,6 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export const memory: WebAssembly.Memory;
+export const __wbg_wasmfeatureblockf64_free: (a: number, b: number) => void;
 export const __wbg_wasminmemoryprovider_free: (a: number, b: number) => void;
 export const build_coordinator_data_plan_envelope_json: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number, number, number];
 export const contract_manifest_json: () => [number, number, number, number];
@@ -18,7 +19,10 @@ export const validate_fold_set_against_sample_relations_json: (a: number, b: num
 export const validate_fold_set_json: (a: number, b: number) => [number, number];
 export const validate_model_input_spec_json: (a: number, b: number) => [number, number];
 export const validate_sample_relation_table_json: (a: number, b: number) => [number, number];
+export const wasmfeatureblockf64_into_values: (a: number) => [number, number];
+export const wasmfeatureblockf64_layout: (a: number) => [number, number];
 export const wasminmemoryprovider_data_feature_buffer_bindings: (a: number, b: number, c: number) => [number, number, number, number];
+export const wasminmemoryprovider_featureBlockF64: (a: number, b: number, c: number, d: number, e: number) => [number, number, number];
 export const wasminmemoryprovider_feature_block: (a: number, b: number, c: number, d: number, e: number) => [number, number, number, number];
 export const wasminmemoryprovider_feature_buffer_manifests: (a: number) => [number, number, number, number];
 export const wasminmemoryprovider_feature_collation: (a: number, b: number, c: number, d: number, e: number) => [number, number, number, number];
@@ -28,6 +32,7 @@ export const wasminmemoryprovider_new: (a: number, b: number, c: number, d: numb
 export const wasminmemoryprovider_release: (a: number, b: number, c: number) => [number, number, number];
 export const wasminmemoryprovider_target_block: (a: number, b: number, c: number, d: number, e: number) => [number, number, number, number];
 export const wasminmemoryprovider_view_identity: (a: number, b: number, c: number) => [number, number, number, number];
+export const wasminmemoryprovider_withF64Features: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number, number];
 export const __wbindgen_externrefs: WebAssembly.Table;
 export const __wbindgen_malloc: (a: number, b: number) => number;
 export const __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;

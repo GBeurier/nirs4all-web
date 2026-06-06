@@ -183,19 +183,22 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
   m.validate_coordinator_data_plan_envelope_json(envelopeJson)
   const envelope = JSON.parse(envelopeJson)
 
-  // target table (keyed by sample_id) + numeric feature matrix (keyed by observation_id)
+  // target table (keyed by sample_id) — small (one value per sample), stays JSON.
   const targetTables = [{ target_id: TARGET_ID, values: cids.map((sid, i) => ({ sample_id: sid, value: ds.y[i] })) }]
-  const featureMatrices = [
-    {
-      feature_set_id: FEATURE_SET,
-      representation_id: 'tabular_numeric',
-      feature_names: featureNames,
-      observation_ids: cids,
-      values: Array.from(ds.X),
-    },
-  ]
+  // Feature matrix: only the METADATA goes as JSON; the flat row-major values
+  // cross as a typed Float64Array (one memcpy in WASM), never through
+  // `JSON.stringify` + a boxed array. ds.X is already row-major in dataset
+  // (= observation) order, so it maps 1:1 to `observation_ids` (cids). This is
+  // the load-bearing fix for large datasets (e.g. Cassava 3021×1050): the old
+  // JSON value-transport peaked at hundreds of MB and crashed the worker.
+  const featureMeta = {
+    feature_set_id: FEATURE_SET,
+    representation_id: 'tabular_numeric',
+    feature_names: featureNames,
+    observation_ids: cids,
+  }
 
-  const provider = new m.WasmInMemoryProvider(envelopeJson, JSON.stringify(targetTables), null, JSON.stringify(featureMatrices))
+  const provider = m.WasmInMemoryProvider.withF64Features(envelopeJson, JSON.stringify(targetTables), JSON.stringify(featureMeta), ds.X)
   let dataHandle: string | null = null
   let viewHandle: string | null = null
   try {
@@ -217,7 +220,11 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
     dataHandle = provider.materialize(JSON.stringify(matRequest))
     viewHandle = provider.make_view(dataHandle, JSON.stringify({ sample_ids: cids, include_augmented: false }))
 
-    const fblock = JSON.parse(provider.feature_block(viewHandle, FEATURE_SET)) as { sample_ids: string[]; values: number[][] }
+    // Feature matrix via the TYPED path: a small layout JSON (ids + shape) plus
+    // the flat row-major values as a Float64Array — no O(rows×cols) JSON string.
+    const fblock = provider.featureBlockF64(viewHandle, FEATURE_SET)
+    const fLayout = JSON.parse(fblock.layout) as { sample_ids: string[]; n_rows: number; n_cols: number }
+    const fValues = fblock.into_values() // flat row-major, length n_rows*n_cols
     const tblock = JSON.parse(provider.target_block(viewHandle, TARGET_ID)) as { sample_ids: string[]; values: number[] }
 
     // reconstruct in dataset order, asserting exact 1:1 coverage — never train on
@@ -231,15 +238,16 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
     const y = new Float64Array(ds.nSamples)
     const seenX = new Uint8Array(ds.nSamples)
     const seenY = new Uint8Array(ds.nSamples)
-    if (fblock.sample_ids.length !== ds.nSamples) throw new Error(`provider feature block covered ${fblock.sample_ids.length}/${ds.nSamples} samples`)
+    if (fLayout.sample_ids.length !== ds.nSamples) throw new Error(`provider feature block covered ${fLayout.sample_ids.length}/${ds.nSamples} samples`)
+    if (fLayout.n_cols !== ds.nFeatures) throw new Error(`provider feature block has ${fLayout.n_cols}/${ds.nFeatures} features`)
+    if (fValues.length !== ds.nSamples * ds.nFeatures) throw new Error(`provider feature block has ${fValues.length} values, expected ${ds.nSamples * ds.nFeatures}`)
     if (tblock.sample_ids.length !== ds.nSamples) throw new Error(`provider target block covered ${tblock.sample_ids.length}/${ds.nSamples} samples`)
-    for (let r = 0; r < fblock.sample_ids.length; r++) {
-      const i = at(fblock.sample_ids[r])
-      if (seenX[i]) throw new Error(`provider returned duplicate sample id ${fblock.sample_ids[r]}`)
+    for (let r = 0; r < fLayout.sample_ids.length; r++) {
+      const i = at(fLayout.sample_ids[r])
+      if (seenX[i]) throw new Error(`provider returned duplicate sample id ${fLayout.sample_ids[r]}`)
       seenX[i] = 1
-      const row = fblock.values[r]
-      if (!row || row.length !== ds.nFeatures) throw new Error(`provider feature row ${fblock.sample_ids[r]} has ${row?.length ?? 0}/${ds.nFeatures} features`)
-      for (let j = 0; j < ds.nFeatures; j++) X[i * ds.nFeatures + j] = Number(row[j])
+      const base = r * ds.nFeatures
+      for (let j = 0; j < ds.nFeatures; j++) X[i * ds.nFeatures + j] = fValues[base + j]
     }
     for (let r = 0; r < tblock.sample_ids.length; r++) {
       const i = at(tblock.sample_ids[r])

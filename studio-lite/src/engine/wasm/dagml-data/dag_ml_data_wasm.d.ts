@@ -2,6 +2,27 @@
 /* eslint-disable */
 
 /**
+ * A typed feature projection: a compact JSON `layout` (ids + shape) plus the
+ * flat row-major `values`. The `values` getter marshals the f64 slice as one
+ * `Float64Array` copy — no O(rows×cols) JSON string for the browser to parse.
+ */
+export class WasmFeatureBlockF64 {
+    private constructor();
+    free(): void;
+    [Symbol.dispose](): void;
+    /**
+     * Flat row-major f64 values as a `Float64Array`. Consumes the block so the
+     * buffer is moved out without a second copy in WASM memory.
+     */
+    into_values(): Float64Array;
+    /**
+     * Compact JSON: `{ feature_set_id, representation_id, feature_names,
+     * sample_ids, observation_ids, n_rows, n_cols }` — no per-cell values.
+     */
+    readonly layout: string;
+}
+
+/**
  * Eager in-WASM provider over `dag-ml-data-provider`'s `InMemoryProvider`.
  *
  * JSON in, JSON out; handles cross as decimal strings (JS cannot represent the
@@ -11,6 +32,12 @@ export class WasmInMemoryProvider {
     free(): void;
     [Symbol.dispose](): void;
     data_feature_buffer_bindings(data_handle: string): string;
+    /**
+     * Typed-output projection: returns a [`WasmFeatureBlockF64`] whose `values`
+     * are a flat `Float64Array`, avoiding the O(rows×cols) JSON of
+     * [`Self::feature_block`] (the prime memory/latency cost on large datasets).
+     */
+    featureBlockF64(view_handle: string, feature_set_id: string): WasmFeatureBlockF64;
     feature_block(view_handle: string, feature_set_id: string): string;
     feature_buffer_manifests(): string;
     feature_collation(view_handle: string, selector_json: string): string;
@@ -20,6 +47,15 @@ export class WasmInMemoryProvider {
     release(handle: string): boolean;
     target_block(view_handle: string, target_id: string): string;
     view_identity(view_handle: string): string;
+    /**
+     * Typed-input constructor: the feature matrix's flat row-major `values`
+     * arrive as a `Float64Array` (copied straight into WASM memory) instead of
+     * a JSON array, so a large matrix never goes through `JSON.stringify` /
+     * boxed-array encoding on the JS side. `feature_matrix_meta_json` carries
+     * the matrix metadata (`feature_set_id`, `representation_id`,
+     * `feature_names`, `observation_ids`) WITHOUT a `values` field.
+     */
+    static withF64Features(envelope_json: string, target_tables_json: string | null | undefined, feature_matrix_meta_json: string, values: Float64Array): WasmInMemoryProvider;
 }
 
 export function build_coordinator_data_plan_envelope_json(schema_json: string, data_plan_json: string, sample_relations_json?: string | null): string;
@@ -58,6 +94,7 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
+    readonly __wbg_wasmfeatureblockf64_free: (a: number, b: number) => void;
     readonly __wbg_wasminmemoryprovider_free: (a: number, b: number) => void;
     readonly build_coordinator_data_plan_envelope_json: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number, number, number];
     readonly contract_manifest_json: () => [number, number, number, number];
@@ -75,7 +112,10 @@ export interface InitOutput {
     readonly validate_fold_set_json: (a: number, b: number) => [number, number];
     readonly validate_model_input_spec_json: (a: number, b: number) => [number, number];
     readonly validate_sample_relation_table_json: (a: number, b: number) => [number, number];
+    readonly wasmfeatureblockf64_into_values: (a: number) => [number, number];
+    readonly wasmfeatureblockf64_layout: (a: number) => [number, number];
     readonly wasminmemoryprovider_data_feature_buffer_bindings: (a: number, b: number, c: number) => [number, number, number, number];
+    readonly wasminmemoryprovider_featureBlockF64: (a: number, b: number, c: number, d: number, e: number) => [number, number, number];
     readonly wasminmemoryprovider_feature_block: (a: number, b: number, c: number, d: number, e: number) => [number, number, number, number];
     readonly wasminmemoryprovider_feature_buffer_manifests: (a: number) => [number, number, number, number];
     readonly wasminmemoryprovider_feature_collation: (a: number, b: number, c: number, d: number, e: number) => [number, number, number, number];
@@ -85,6 +125,7 @@ export interface InitOutput {
     readonly wasminmemoryprovider_release: (a: number, b: number, c: number) => [number, number, number];
     readonly wasminmemoryprovider_target_block: (a: number, b: number, c: number, d: number, e: number) => [number, number, number, number];
     readonly wasminmemoryprovider_view_identity: (a: number, b: number, c: number) => [number, number, number, number];
+    readonly wasminmemoryprovider_withF64Features: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number, number];
     readonly __wbindgen_externrefs: WebAssembly.Table;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;

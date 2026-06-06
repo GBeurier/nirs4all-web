@@ -2,7 +2,7 @@
 // component implements its matching interface exactly. This is the integration
 // boundary between the parallel UI workstreams — keep it the single source of
 // truth for component shapes.
-import type { Engine, FittedPipeline, MaterializedDataset, PipelineDSL, RunProgress, RunResult, ScoreNode, TaskType } from '@/engine/types'
+import type { Engine, FittedPipeline, MaterializedDataset, PipelineDSL, RunLogEntry, RunProgress, RunResult, ScoreNode, TaskType } from '@/engine/types'
 import type { DatasetSummary } from '@/data/dataset'
 import type { Analysis } from '@/data/wasm-io'
 import type { SampleId } from '@/data/samples'
@@ -38,6 +38,7 @@ export interface PipelineBuilderProps {
   taskType: TaskType
   running: boolean
   progress: RunProgress | null
+  runLog: RunLogEntry[]
   onChange: (pipeline: PipelineDSL) => void
   onRun: () => void
   onCancel: () => void
@@ -65,4 +66,4 @@ export interface PredictionPanelProps {
 }
 
 // re-exports so components import everything from one place if they prefer
-export type { Engine, FittedPipeline, MaterializedDataset, PipelineDSL, RunProgress, RunResult, ScoreNode, TaskType, DatasetSummary }
+export type { Engine, FittedPipeline, MaterializedDataset, PipelineDSL, RunLogEntry, RunProgress, RunResult, ScoreNode, TaskType, DatasetSummary }

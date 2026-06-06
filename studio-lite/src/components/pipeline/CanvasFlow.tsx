@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Boxes, Database, GitBranch, GripVertical, Play, Plus, Settings2, Sparkles, Square, Trash2 } from 'lucide-react'
-import type { PipelineDSL, PipelineStep, RunProgress, TaskType } from '@/engine/types'
+import type { PipelineDSL, PipelineStep, RunLogEntry, RunProgress, TaskType } from '@/engine/types'
 import { sweepVariantCount } from '@/engine/dagml'
 import { DAG_NODES, nodeByType, SPLIT_NODES } from '@/catalog/nodes'
 import { Button } from '@/app/components/ui/button'
@@ -58,6 +58,7 @@ export interface CanvasFlowProps {
   selected: Selection
   running: boolean
   progress: RunProgress | null
+  runLog: RunLogEntry[]
   datasetLabel?: string
   onSelect: (sel: Selection) => void
   onInsert: (type: string, index: number) => void
@@ -211,6 +212,7 @@ export function CanvasFlow({
   selected,
   running,
   progress,
+  runLog,
   datasetLabel,
   onSelect,
   onInsert,
@@ -240,6 +242,11 @@ export function CanvasFlow({
   const SplitIcon = iconByName(splitDef?.icon ?? 'Split')
   const cv = pipeline.cv
   const containers = pipeline.containers ?? []
+
+  const logRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight
+  }, [runLog])
 
   return (
     <div className="flex h-full flex-col">
@@ -530,6 +537,39 @@ export function CanvasFlow({
           <Button size="lg" className="w-full gap-2 shadow-md shadow-brand-teal/20" onClick={onRun}>
             <Play className="size-5" /> Run pipeline
           </Button>
+        )}
+
+        {/* execution log — visible during and after the run until the next run starts */}
+        {runLog.length > 0 && (
+          <div className="mt-3">
+            <p className="mb-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Exec log</p>
+            <div
+              ref={logRef}
+              className="max-h-40 overflow-y-auto rounded-lg border border-border bg-muted/50 p-2 font-mono text-[10px] leading-relaxed"
+              data-run-log
+            >
+              {runLog.map((e, i) => {
+                const startTs = runLog[0].ts
+                const secs = (e.ts - startTs) / 1000
+                const rel = secs < 60 ? `+${secs.toFixed(2)}s` : `+${Math.floor(secs / 60)}m${(secs % 60).toFixed(0)}s`
+                const phaseShort: Record<string, string> = {
+                  preprocess: 'prep', fit_cv: 'cv  ', select: 'sel ', refit: 'fit ', predict: 'pred', done: 'done',
+                }
+                const phaseColor: Record<string, string> = {
+                  preprocess: 'text-slate-400', fit_cv: 'text-teal-400', select: 'text-orange-400',
+                  refit: 'text-violet-400', predict: 'text-blue-400', done: 'text-green-400',
+                }
+                return (
+                  <div key={i} className="flex items-baseline gap-2">
+                    <span className="w-14 shrink-0 text-right text-muted-foreground/70">{rel}</span>
+                    <span className={`w-8 shrink-0 ${phaseColor[e.phase] ?? 'text-muted-foreground'}`}>{phaseShort[e.phase] ?? e.phase.slice(0, 4)}</span>
+                    <span className="w-7 shrink-0 text-right tabular-nums text-muted-foreground/70">{e.pct}%</span>
+                    {e.message && <span className="min-w-0 truncate text-foreground/75">{e.message}</span>}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         )}
       </div>
     </div>

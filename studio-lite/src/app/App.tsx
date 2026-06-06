@@ -25,7 +25,7 @@ import { applyTheme, loadSession, loadTheme, saveSession, type Theme } from '@/l
 import { cn } from '@/app/components/ui/utils'
 import type { Analysis } from '@/data/wasm-io'
 import type { DagMlLineage } from '@/engine/dagml'
-import type { MaterializedDataset, PipelineDSL, Partition, RunProgress, RunResult, ScoreNode, TaskType } from '@/engine/types'
+import type { MaterializedDataset, PipelineDSL, Partition, RunLogEntry, RunProgress, RunResult, ScoreNode, TaskType } from '@/engine/types'
 
 type StepId = 'dataset' | 'explore' | 'pipeline' | 'results' | 'predict'
 
@@ -52,6 +52,7 @@ export default function App() {
   const [selectedScore, setSelectedScore] = useState<ScoreNode | null>(null)
   const [running, setRunning] = useState(false)
   const [progress, setProgress] = useState<RunProgress | null>(null)
+  const [runLog, setRunLog] = useState<RunLogEntry[]>([])
   const [configOpen, setConfigOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -185,11 +186,16 @@ export default function App() {
     setRunning(true)
     setError(null)
     setProgress({ phase: 'fit_cv', pct: 0 })
+    setRunLog([])
     const ctrl = new AbortController()
     abortRef.current = ctrl
     const token = ++runTokenRef.current
+    const handleProgress = (p: RunProgress) => {
+      setProgress(p)
+      setRunLog((prev) => [...prev, { ts: Date.now(), phase: p.phase, pct: Math.round(p.pct), message: p.message }])
+    }
     try {
-      const result = await engine.run(dataset, pipeline, { signal: ctrl.signal, onProgress: setProgress })
+      const result = await engine.run(dataset, pipeline, { signal: ctrl.signal, onProgress: handleProgress })
       if (token !== runTokenRef.current) return
       // Test-only introspection hook (read by tests/generators-smoke.mjs to prove
       // OOF is assembled once per variant, not duplicated ×variantCount).
@@ -408,6 +414,7 @@ export default function App() {
                 loadedModel={loadedModel}
                 running={running}
                 progress={progress}
+                runLog={runLog}
                 busy={busy}
                 error={error}
                 analysis={analysis}
@@ -480,6 +487,7 @@ interface StepPanelProps {
   loadedModel: LoadedModel | null
   running: boolean
   progress: RunProgress | null
+  runLog: RunLogEntry[]
   busy: boolean
   error: string | null
   analysis: Analysis | null
@@ -541,6 +549,7 @@ function StepPanel(props: StepPanelProps) {
           taskType={dataset.taskType}
           running={props.running}
           progress={props.progress}
+          runLog={props.runLog}
           onChange={props.onChangePipeline}
           onRun={props.onRun}
           onCancel={props.onCancel}

@@ -45,15 +45,25 @@ Browser smokes (real Chromium; these are the end-to-end verification, run them b
 ```bash
 export CHROME=/home/delete/.cache/ms-playwright/chromium-1200/chrome-linux64/chrome
 nohup npm run preview -- --port 4345 --strictPort >/tmp/prev.log 2>&1 & sleep 4
-SMOKE_URL="http://localhost:4345/" node tests/smoke.mjs               # load→run→results→predict (+ dag-ml & libn4m)
-SMOKE_URL="http://localhost:4345/" node tests/classification-smoke.mjs# PLS-DA → confusion
-SMOKE_URL="http://localhost:4345/" node tests/wasm-upload-smoke.mjs   # vendor SPC decode (uses ../../nirs4all-formats/samples)
+# whole gate suite — every tests/*smoke.mjs (the *-timing probe is excluded by the glob):
+for t in tests/*smoke.mjs; do SMOKE_URL="http://localhost:4345/" node "$t" || break; done
 pkill -f "vite preview"
 SMOKE_URL="file://$PWD/dist-single/index.html" node tests/smoke.mjs   # offline single-file (JS-backend fallback)
 ```
 
-**Green gate** = typecheck + test + validate:catalog + build + build:single + the 4 smokes all pass
-with no console errors.
+The suite covers the **core path** — `smoke` (load→run→results→predict with dag-ml & libn4m),
+`classification` (PLS-DA → confusion), `wasm-upload` (vendor SPC decode, uses
+`../../nirs4all-formats/samples`), `amylose-folder` (the nirs4all-io CSV `X*`/`Y*` train/test folder
+path) — plus one smoke per editor/feature surface added since: the full DAG bucket (`dag-ops`,
+`branch` feature-union, `generators` sweep), `split` / optional `cv-optional` / optional `no-model`
+sequencing, the AOM family (`aom`, `pop`), the extra catalog models (`new-models`, `new-models-ui`,
+`operators`), the `palette`, and `persistence` + `n4a-roundtrip` (session and `.n4a` bundle
+round-trips). `tests/aom-cassava-timing.mjs` is a one-off `fitAom` wall-time probe, **not** part of
+the gate (and is excluded by the `*smoke.mjs` glob). Each smoke is independent and reads the served
+app from `$SMOKE_URL`; `new-models-smoke.mjs` is self-contained and ignores it.
+
+**Green gate** = typecheck + test + validate:catalog + build + build:single + the full `tests/*smoke.mjs`
+suite all pass with no console errors.
 
 ## Architecture — the full nirs4all WASM stack
 

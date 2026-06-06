@@ -1,12 +1,72 @@
 /* @ts-self-types="./dag_ml_data_wasm.d.ts" */
 
 /**
+ * A typed feature projection: a compact JSON `layout` (ids + shape) plus the
+ * flat row-major `values`. The `values` getter marshals the f64 slice as one
+ * `Float64Array` copy — no O(rows×cols) JSON string for the browser to parse.
+ */
+export class WasmFeatureBlockF64 {
+    static __wrap(ptr) {
+        const obj = Object.create(WasmFeatureBlockF64.prototype);
+        obj.__wbg_ptr = ptr;
+        WasmFeatureBlockF64Finalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        WasmFeatureBlockF64Finalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_wasmfeatureblockf64_free(ptr, 0);
+    }
+    /**
+     * Flat row-major f64 values as a `Float64Array`. Consumes the block so the
+     * buffer is moved out without a second copy in WASM memory.
+     * @returns {Float64Array}
+     */
+    into_values() {
+        const ptr = this.__destroy_into_raw();
+        const ret = wasm.wasmfeatureblockf64_into_values(ptr);
+        var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+        return v1;
+    }
+    /**
+     * Compact JSON: `{ feature_set_id, representation_id, feature_names,
+     * sample_ids, observation_ids, n_rows, n_cols }` — no per-cell values.
+     * @returns {string}
+     */
+    get layout() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.wasmfeatureblockf64_layout(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+}
+if (Symbol.dispose) WasmFeatureBlockF64.prototype[Symbol.dispose] = WasmFeatureBlockF64.prototype.free;
+
+/**
  * Eager in-WASM provider over `dag-ml-data-provider`'s `InMemoryProvider`.
  *
  * JSON in, JSON out; handles cross as decimal strings (JS cannot represent the
  * full `u64` range as a number). Available only with the `provider` feature.
  */
 export class WasmInMemoryProvider {
+    static __wrap(ptr) {
+        const obj = Object.create(WasmInMemoryProvider.prototype);
+        obj.__wbg_ptr = ptr;
+        WasmInMemoryProviderFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
     __destroy_into_raw() {
         const ptr = this.__wbg_ptr;
         this.__wbg_ptr = 0;
@@ -40,6 +100,25 @@ export class WasmInMemoryProvider {
         } finally {
             wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
         }
+    }
+    /**
+     * Typed-output projection: returns a [`WasmFeatureBlockF64`] whose `values`
+     * are a flat `Float64Array`, avoiding the O(rows×cols) JSON of
+     * [`Self::feature_block`] (the prime memory/latency cost on large datasets).
+     * @param {string} view_handle
+     * @param {string} feature_set_id
+     * @returns {WasmFeatureBlockF64}
+     */
+    featureBlockF64(view_handle, feature_set_id) {
+        const ptr0 = passStringToWasm0(view_handle, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(feature_set_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ret = wasm.wasminmemoryprovider_featureBlockF64(this.__wbg_ptr, ptr0, len0, ptr1, len1);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return WasmFeatureBlockF64.__wrap(ret[0]);
     }
     /**
      * @param {string} view_handle
@@ -253,6 +332,34 @@ export class WasmInMemoryProvider {
         } finally {
             wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
         }
+    }
+    /**
+     * Typed-input constructor: the feature matrix's flat row-major `values`
+     * arrive as a `Float64Array` (copied straight into WASM memory) instead of
+     * a JSON array, so a large matrix never goes through `JSON.stringify` /
+     * boxed-array encoding on the JS side. `feature_matrix_meta_json` carries
+     * the matrix metadata (`feature_set_id`, `representation_id`,
+     * `feature_names`, `observation_ids`) WITHOUT a `values` field.
+     * @param {string} envelope_json
+     * @param {string | null | undefined} target_tables_json
+     * @param {string} feature_matrix_meta_json
+     * @param {Float64Array} values
+     * @returns {WasmInMemoryProvider}
+     */
+    static withF64Features(envelope_json, target_tables_json, feature_matrix_meta_json, values) {
+        const ptr0 = passStringToWasm0(envelope_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        var ptr1 = isLikeNone(target_tables_json) ? 0 : passStringToWasm0(target_tables_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        var len1 = WASM_VECTOR_LEN;
+        const ptr2 = passStringToWasm0(feature_matrix_meta_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len2 = WASM_VECTOR_LEN;
+        const ptr3 = passArrayF64ToWasm0(values, wasm.__wbindgen_malloc);
+        const len3 = WASM_VECTOR_LEN;
+        const ret = wasm.wasminmemoryprovider_withF64Features(ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return WasmInMemoryProvider.__wrap(ret[0]);
     }
 }
 if (Symbol.dispose) WasmInMemoryProvider.prototype[Symbol.dispose] = WasmInMemoryProvider.prototype.free;
@@ -585,9 +692,25 @@ function __wbg_get_imports() {
     };
 }
 
+const WasmFeatureBlockF64Finalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_wasmfeatureblockf64_free(ptr, 1));
 const WasmInMemoryProviderFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_wasminmemoryprovider_free(ptr, 1));
+
+function getArrayF64FromWasm0(ptr, len) {
+    ptr = ptr >>> 0;
+    return getFloat64ArrayMemory0().subarray(ptr / 8, ptr / 8 + len);
+}
+
+let cachedFloat64ArrayMemory0 = null;
+function getFloat64ArrayMemory0() {
+    if (cachedFloat64ArrayMemory0 === null || cachedFloat64ArrayMemory0.byteLength === 0) {
+        cachedFloat64ArrayMemory0 = new Float64Array(wasm.memory.buffer);
+    }
+    return cachedFloat64ArrayMemory0;
+}
 
 function getStringFromWasm0(ptr, len) {
     return decodeText(ptr >>> 0, len);
@@ -603,6 +726,13 @@ function getUint8ArrayMemory0() {
 
 function isLikeNone(x) {
     return x === undefined || x === null;
+}
+
+function passArrayF64ToWasm0(arg, malloc) {
+    const ptr = malloc(arg.length * 8, 8) >>> 0;
+    getFloat64ArrayMemory0().set(arg, ptr / 8);
+    WASM_VECTOR_LEN = arg.length;
+    return ptr;
 }
 
 function passStringToWasm0(arg, malloc, realloc) {
@@ -682,6 +812,7 @@ function __wbg_finalize_init(instance, module) {
     wasmInstance = instance;
     wasm = instance.exports;
     wasmModule = module;
+    cachedFloat64ArrayMemory0 = null;
     cachedUint8ArrayMemory0 = null;
     wasm.__wbindgen_start();
     return wasm;
