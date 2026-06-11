@@ -1,7 +1,7 @@
-name: Deploy studio-lite to GitHub Pages
+name: Deploy nirs4all-web to GitHub Pages
 
-# Builds the nirs4all-lite/studio-lite single-page WASM demo and publishes it to
-# GitHub Pages (https://gbeurier.github.io/nirs4all-lite/). The WASM packages are
+# Builds the nirs4all-web/studio-lite single-page WASM app and publishes it to
+# GitHub Pages (https://gbeurier.github.io/nirs4all-web/). The WASM packages are
 # vendored in the repo, so the build is just `npm ci && npm run build`.
 
 on:

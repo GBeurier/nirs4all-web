@@ -1,47 +1,59 @@
-# nirs4all-lite
+# nirs4all-web
 
-> **Statut : planifié (à créer).** Ce dépôt est un placeholder. Aucun code n'est encore présent.
+Standalone browser client for the **nirs4all** ecosystem.
 
-**Distribution simplifiée multi-langages** de la chaîne bas-niveau de l'écosystème nirs4all —
-`nirs4all-formats` + `nirs4all-io` + `nirs4all-methods` (`libn4m`) + `dag-ml` [+ `dag-ml-data`] —
-emballée pour les écosystèmes scientifiques **non-Python**.
+`nirs4all-web` is the public, backend-free WASM application: upload spectra, inspect and configure
+the inferred dataset, build a compact NIRS pipeline, run cross-validated PLS / PLS-DA through
+`dag-ml` + `libn4m`, inspect results, predict on new spectra, and export a reusable `.n4a` bundle.
+All data stays in the browser.
 
-## Le « lite » est une sémantique de *capability*, pas de *codebase*
+This repository used to be named `nirs4all-lite`. The name is being freed for the canonical
+multi-language aggregate distribution of the low-level stack.
 
-Sans Python, on perd `sklearn` / `PyTorch` / `TensorFlow` / `JAX`. La stack distribuée ici est
-donc mécaniquement plus restreinte côté ML : lecture de formats spectroscopiques, assemblage de
-datasets, PLS et variants (`libn4m`), coordination DAG reproductible. C'est *lite* par capability,
-**pas par code**.
+## What Lives Here
 
-Ce que `nirs4all-lite` *n'est pas* : pas une réécriture du code Python, pas un sous-ensemble du
-code source, pas un fork. Ce qu'il *est* : un dépôt de **distribution et de release packaging**,
-zéro code numérique nouveau. Une release `lite` = un bundle immutable qui épingle des versions
-précises des libs amont et les expose en un produit par langage cible.
+- `studio-lite/`: active React/Vite app and the GitHub Pages deliverable.
+- `.github/workflows/deploy-pages.yml`: builds `studio-lite/` and publishes the static app.
+- staged WASM packages under `studio-lite/src/engine/wasm/`, consumed from upstream sibling repos.
 
-## Cibles de distribution envisagées
+There is no Python backend and no new numerical implementation here. Parser, dataset, DAG, and
+chemometric fixes belong upstream in `nirs4all-formats`, `nirs4all-io`, `dag-ml`,
+`dag-ml-data`, or `nirs4all-methods`.
 
-- **R** (CRAN)
-- **MATLAB / Octave** (FileExchange, `.mltbx`)
-- **Julia** (`Pkg`)
-- **JavaScript / WASM** (npm) — démos en ligne sur nirs4all.org
-- **C / C++** (vcpkg / Conan / Homebrew / `.deb` / `.rpm`)
-- **Conda** channel multi-langage
-- **Docker** images
+## Run
 
-> PyPI est exclu par construction : `lite` est non-Python.
+```bash
+cd studio-lite
+export PATH="$HOME/.nvm/versions/node/v22.21.1/bin:$HOME/.cargo/bin:$PATH"
+npm install
+npm run dev
+```
 
-## Hygiène (à écrire dès le démarrage)
+Main checks:
 
-- **Aucun patch upstream.** Un correctif de binding remonte en PR dans la lib source.
-- **Semver strict**, tags `v1`/`v2`, compat matrix « version `lite` × versions libs amont » publiée.
-- **Tests sur repos fixtures** : un dépôt test minimal consomme chaque bundle à chaque PR.
-- **SBOM + provenance + attestations** (Sigstore / SLSA / in-toto), **CVE rebuild policy**, politique
-  de retrait d'artefacts cassés, fenêtre EOL/support explicite.
-- **Matrice de compatibilité** (glibc / OpenSSL / R version / MATLAB version / cibles OS).
-- **Droits de redistribution** vérifiés par cible (licences hétérogènes : CeCILL, MIT, AGPL, BLAS/Eigen…).
-- **Règle d'admission d'une cible** : CODEOWNER nommé + fixture CI dédiée + politique de release écrite.
+```bash
+npm run typecheck
+npm run test
+npm run validate:catalog
+npm run build
+npm run build:single
+```
 
-## Références
+Browser smokes need a local Chromium:
 
-Voir `nirs4all-ecosystem/NIRS4ALL-ECOSYSTEM_VISION.md` §4.3 pour le cadrage complet, et l'annexe
-`nirs4all-dist` pour la factory de build (sujet distinct, à instruire après la première release `lite`).
+```bash
+export CHROME=/home/delete/.cache/ms-playwright/chromium-1200/chrome-linux64/chrome
+nohup npm run preview -- --port 4345 --strictPort >/tmp/n4a-web-preview.log 2>&1 & sleep 4
+for t in tests/*smoke.mjs; do SMOKE_URL="http://localhost:4345/" node "$t" || break; done
+pkill -f "vite preview"
+```
+
+## Deployment
+
+After the GitHub repository rename, GitHub Pages should publish at:
+
+```text
+https://gbeurier.github.io/nirs4all-web/
+```
+
+The long-term canonical entry point should be linked from `nirs4all.org`.

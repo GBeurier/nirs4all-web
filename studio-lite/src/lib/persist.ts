@@ -10,7 +10,8 @@ import type { SampleId } from '@/data/samples'
 import type { PipelineDSL } from '@/engine/types'
 import { deserializeTyped, type LoadedModel, serializeTyped } from './n4a'
 
-const KEY = 'nirs4all-lite:session:v1'
+const KEY = 'nirs4all-web:session:v1'
+const LEGACY_SESSION_KEYS = ['nirs4all-lite:session:v1']
 const SAMPLE_IDS: SampleId[] = ['fruit', 'nir-reg', 'nir-clf']
 
 export interface Session {
@@ -83,7 +84,7 @@ const validSampleId = (s: unknown): SampleId | undefined => (typeof s === 'strin
  *  none / unavailable / corrupt / stale). Invalid parts are dropped, not thrown. */
 export function loadSession(): Session {
   try {
-    const raw = localStorage.getItem(KEY)
+    const raw = localStorage.getItem(KEY) ?? LEGACY_SESSION_KEYS.map((k) => localStorage.getItem(k)).find(Boolean)
     if (!raw) return {}
     const s = deserializeTyped<Session>(raw)
     if (!s || typeof s !== 'object') return {}
@@ -114,12 +115,14 @@ export function clearSession(): void {
 // ── light/dark theme (the studio chrome ships a real dark mode) ──────────────
 // Pure frontend UI state: a `dark` class on <html> + a localStorage flag, read
 // once on boot so the choice survives reloads. Defaults to light.
-const THEME_KEY = 'nirs4all-lite:theme:v1'
+const THEME_KEY = 'nirs4all-web:theme:v1'
+const LEGACY_THEME_KEYS = ['nirs4all-lite:theme:v1']
 export type Theme = 'light' | 'dark'
 
 export function loadTheme(): Theme {
   try {
-    return localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light'
+    const stored = localStorage.getItem(THEME_KEY) ?? LEGACY_THEME_KEYS.map((k) => localStorage.getItem(k)).find(Boolean)
+    return stored === 'dark' ? 'dark' : 'light'
   } catch {
     return 'light'
   }

@@ -7,7 +7,7 @@ import { chromium } from 'playwright-core'
 
 const URL = process.env.SMOKE_URL || 'http://localhost:4355/'
 const EXE = process.env.CHROME || '/home/delete/.cache/ms-playwright/chromium-1200/chrome-linux64/chrome'
-const FRUIT_XTEST = process.env.FRUIT_XTEST || '/home/delete/nirs4all/nirs4all-lite/studio-lite/src/data/sample/X_test.csv'
+const FRUIT_XTEST = process.env.FRUIT_XTEST || new URL('../src/data/sample/X_test.csv', import.meta.url).pathname
 
 const browser = await chromium.launch({ executablePath: EXE, headless: true, args: ['--no-sandbox'] })
 const ctx = await browser.newContext({ acceptDownloads: true })

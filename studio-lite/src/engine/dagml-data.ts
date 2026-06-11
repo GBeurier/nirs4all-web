@@ -60,7 +60,7 @@ function buildSchema(ds: MaterializedDataset) {
   const featureNames = Array.from({ length: ds.nFeatures }, (_, j) => `w${j}`)
   return {
     schema: {
-      dataset_id: ds.targetName ? `lite-${ds.targetName}` : 'lite-dataset',
+      dataset_id: ds.targetName ? `web-${ds.targetName}` : 'web-dataset',
       sample_ids: canonicalIds(ds.nSamples),
       sources: [
         {
@@ -203,7 +203,7 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
   let viewHandle: string | null = null
   try {
     const matRequest = {
-      run_id: 'run:lite',
+      run_id: 'run:web',
       node_id: 'model:base',
       input_name: 'x',
       phase: 'FIT_CV',

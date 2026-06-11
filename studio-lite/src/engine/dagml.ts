@@ -287,7 +287,7 @@ export function toCompatDsl(dsl: PipelineDSL): object {
   }
 
   const out: Record<string, unknown> = {
-    id: `n4a-lite-${dsl.name}`.replace(/[^A-Za-z0-9_.:-]+/g, '-'),
+    id: `n4a-web-${dsl.name}`.replace(/[^A-Za-z0-9_.:-]+/g, '-'),
     pipeline: steps,
     root_seed: dsl.cv?.seed ?? 0,
   }

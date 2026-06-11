@@ -4,12 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`nirs4all-studio-lite` is a single-page, **full-WASM public demonstrator** — a "mini nirs4all-studio"
+`nirs4all-web` is a single-page, **full-WASM public browser client** — a "mini nirs4all-studio"
 that runs the whole NIRS modelling loop in the browser with **no Python and no backend**: upload
 spectra → explore + configure the dataset → build/choose a simple pipeline from nirs4all-methods
 nodes → run it → inspect scores (refit / CV / folds) → residual / parity / confusion views → predict
-on new spectra → export. It lives inside the `nirs4all-lite` distribution repo (the "online demos"
-target) and consumes the upstream ecosystem libraries **as prebuilt/staged WASM** — it never
+on new spectra → export. It consumes the upstream ecosystem libraries **as prebuilt/staged WASM** — it never
 reimplements NIRS, IO, or numerical logic. See `README.md` for the user-facing overview.
 
 ## Toolchain (IMPORTANT: not on the default PATH)

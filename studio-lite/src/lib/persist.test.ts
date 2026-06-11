@@ -98,4 +98,13 @@ describe('session persistence', () => {
     ;(globalThis as unknown as { localStorage: MemStorage }).localStorage.setItem('nirs4all-lite:session:v1', '{not json')
     expect(loadSession()).toEqual({})
   })
+
+  it('loads a legacy nirs4all-lite session key after the nirs4all-web rename', () => {
+    const legacy = {
+      pipeline: { name: 'p', steps: [], model: { id: 'm', type: 'PLS', params: {} }, cv: { folds: 5, seed: 42 } },
+      sampleId: 'fruit',
+    }
+    ;(globalThis as unknown as { localStorage: MemStorage }).localStorage.setItem('nirs4all-lite:session:v1', JSON.stringify(legacy))
+    expect(loadSession().sampleId).toBe('fruit')
+  })
 })

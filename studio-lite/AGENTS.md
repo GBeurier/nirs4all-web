@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-`nirs4all-studio-lite` is a Vite, React, and TypeScript single-page WASM demo. The app shell lives in `src/app/`; feature UI is grouped under `src/components/dataset`, `src/components/pipeline`, and `src/components/results`. Shared UI primitives are in `src/app/components/ui`. Domain code is split into `src/catalog` for operator definitions and presets, `src/data` for CSV/WASM ingestion and bundled samples, `src/engine` for the `Engine` contract, orchestration, workers, and staged WASM backends, and `src/lib` for small utilities. Styles are in `src/styles`. Unit tests live beside source as `src/**/*.test.ts`; browser smoke tests live in `tests/*.mjs`. Generated outputs are `dist/` and `dist-single/`; do not edit them directly.
+`nirs4all-web` is a Vite, React, and TypeScript single-page WASM app. The app shell lives in `src/app/`; feature UI is grouped under `src/components/dataset`, `src/components/pipeline`, and `src/components/results`. Shared UI primitives are in `src/app/components/ui`. Domain code is split into `src/catalog` for operator definitions and presets, `src/data` for CSV/WASM ingestion and bundled samples, `src/engine` for the `Engine` contract, orchestration, workers, and staged WASM backends, and `src/lib` for small utilities. Styles are in `src/styles`. Unit tests live beside source as `src/**/*.test.ts`; browser smoke tests live in `tests/*.mjs`. Generated outputs are `dist/` and `dist-single/`; do not edit them directly.
 
 ## Build, Test, and Development Commands
 

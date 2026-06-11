@@ -58,7 +58,7 @@ try {
   else console.log(`✓ ${svgCount} charts rendered`)
 
   // 5. predict on new spectra → histogram (open the Predict step, use the sample's test spectra)
-  const FRUIT_XTEST = process.env.FRUIT_XTEST || '/home/delete/nirs4all/nirs4all-lite/studio-lite/src/data/sample/X_test.csv'
+  const FRUIT_XTEST = process.env.FRUIT_XTEST || new URL('../src/data/sample/X_test.csv', import.meta.url).pathname
   await page.locator('[data-step="predict"]').click()
   await page.waitForTimeout(300)
   await page.locator('input[type=file]').last().setInputFiles(FRUIT_XTEST)

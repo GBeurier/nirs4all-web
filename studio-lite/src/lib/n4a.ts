@@ -1,11 +1,12 @@
-// .n4a — a portable, re-importable model bundle for studio-lite: the pipeline DSL
+// .n4a — a portable, re-importable model bundle for nirs4all-web: the pipeline DSL
 // + the fitted model (preprocessing state + coefficients) + metadata. Re-importing
 // one into the Predict step scores new spectra without retraining — the same idea
 // as nirs4all's .n4a bundles, scoped to this demo. It is JSON (with typed arrays
 // encoded losslessly), so it stays diff-able and works offline.
 import type { FittedPipeline, Metrics, RunResult, TaskType } from '@/engine/types'
 
-export const N4A_FORMAT = 'nirs4all-lite/n4a'
+export const N4A_FORMAT = 'nirs4all-web/n4a'
+const LEGACY_N4A_FORMATS = ['nirs4all-lite/n4a']
 export const N4A_VERSION = 1
 
 export interface N4aBundle {
@@ -80,10 +81,12 @@ export function parseN4a(text: string): LoadedModel {
   try {
     bundle = deserializeTyped<N4aBundle>(text)
   } catch {
-    throw new Error('Not valid JSON — expected a nirs4all-lite .n4a bundle.')
+    throw new Error('Not valid JSON — expected a nirs4all-web .n4a bundle.')
   }
-  if (!bundle || typeof bundle !== 'object' || !String(bundle.format ?? '').startsWith('nirs4all-lite/n4a')) {
-    throw new Error('Not a nirs4all-lite .n4a bundle (missing format tag).')
+  const format = String(bundle?.format ?? '')
+  const supported = format.startsWith(N4A_FORMAT) || LEGACY_N4A_FORMATS.some((f) => format.startsWith(f))
+  if (!bundle || typeof bundle !== 'object' || !supported) {
+    throw new Error('Not a nirs4all-web .n4a bundle (missing format tag).')
   }
   if ((bundle.version ?? 0) > N4A_VERSION) {
     throw new Error(`This .n4a was made by a newer version (v${bundle.version}); v${N4A_VERSION} can't read it.`)

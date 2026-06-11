@@ -1,4 +1,4 @@
-# nirs4all-lite · studio-lite
+# nirs4all-web · studio-lite
 
 A **single-page, full-WASM "mini nirs4all-studio"** — a public demonstrator that runs the whole
 NIRS modelling loop **in the browser, no Python**: upload spectra → explore & configure the dataset
@@ -6,8 +6,8 @@ NIRS modelling loop **in the browser, no Python**: upload spectra → explore & 
 (refit / CV / folds) → see residual/parity views → **predict on new spectra**. Everything runs
 locally; nothing is uploaded.
 
-> Part of the [nirs4all](https://nirs4all.org) ecosystem. This is a distribution/demo target
-> (the "JavaScript/WASM — online demos" bullet of `nirs4all-lite`), not new numerical code: the
+> Part of the [nirs4all](https://nirs4all.org) ecosystem. This is the standalone browser/WASM
+> client, not new numerical code: the
 > numerics live upstream in `nirs4all-methods` (libn4m) and are orchestrated by `dag-ml`.
 
 ## Run it

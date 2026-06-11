@@ -291,7 +291,7 @@ export default function App() {
           <div className="flex items-baseline gap-1.5">
             <span className="n4a-grad-text font-display text-lg font-bold tracking-tight">nirs4all</span>
             <span className="rounded bg-accent px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-accent-foreground">
-              studio lite
+              web
             </span>
           </div>
         </div>
