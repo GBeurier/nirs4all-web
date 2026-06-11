@@ -42,7 +42,7 @@ npx vitest run --config vitest.config.ts src/engine/engine.test.ts
 Browser smokes (real Chromium; these are the end-to-end verification, run them before declaring work done):
 
 ```bash
-export CHROME=/home/delete/.cache/ms-playwright/chromium-1200/chrome-linux64/chrome
+export CHROME=${CHROME:-/usr/bin/google-chrome}
 nohup npm run preview -- --port 4345 --strictPort >/tmp/prev.log 2>&1 & sleep 4
 # whole gate suite — every tests/*smoke.mjs (the *-timing probe is excluded by the glob):
 for t in tests/*smoke.mjs; do SMOKE_URL="http://localhost:4345/" node "$t" || break; done

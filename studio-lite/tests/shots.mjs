@@ -1,6 +1,6 @@
 import { chromium } from 'playwright-core'
 const URL = process.env.SMOKE_URL || 'http://localhost:4330/'
-const EXE = process.env.CHROME || '/home/delete/.cache/ms-playwright/chromium-1200/chrome-linux64/chrome'
+const EXE = process.env.CHROME || '/usr/bin/google-chrome'
 const b = await chromium.launch({ executablePath: EXE, headless: true, args: ['--no-sandbox'] })
 const p = await b.newPage()
 await p.setViewportSize({ width: 1280, height: 1400 })

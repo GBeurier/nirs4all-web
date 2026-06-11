@@ -42,7 +42,7 @@ npm run build:single
 Browser smokes need a local Chromium:
 
 ```bash
-export CHROME=/home/delete/.cache/ms-playwright/chromium-1200/chrome-linux64/chrome
+export CHROME=${CHROME:-/usr/bin/google-chrome}
 nohup npm run preview -- --port 4345 --strictPort >/tmp/n4a-web-preview.log 2>&1 & sleep 4
 for t in tests/*smoke.mjs; do SMOKE_URL="http://localhost:4345/" node "$t" || break; done
 pkill -f "vite preview"

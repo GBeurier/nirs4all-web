@@ -5,8 +5,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { chromium } from 'playwright-core'
 
-const URL = process.env.SMOKE_URL || 'http://localhost:4355/'
-const EXE = process.env.CHROME || '/home/delete/.cache/ms-playwright/chromium-1200/chrome-linux64/chrome'
+const APP_URL = process.env.SMOKE_URL || 'http://localhost:4355/'
+const EXE = process.env.CHROME || '/usr/bin/google-chrome'
 const FRUIT_XTEST = process.env.FRUIT_XTEST || new URL('../src/data/sample/X_test.csv', import.meta.url).pathname
 
 const browser = await chromium.launch({ executablePath: EXE, headless: true, args: ['--no-sandbox'] })
@@ -19,7 +19,7 @@ const fail = (m) => { console.error('✗ ' + m); process.exitCode = 1 }
 
 try {
   // 1. train a model
-  await page.goto(URL, { waitUntil: 'load', timeout: 30000 })
+  await page.goto(APP_URL, { waitUntil: 'load', timeout: 30000 })
   await page.locator('button').filter({ hasText: 'Fruit purée' }).first().click()
   await page.waitForSelector('text=/samples ×/', { timeout: 20000 })
   await page.locator('[data-step="pipeline"]').click()
@@ -48,7 +48,7 @@ try {
       /* private mode */
     }
   })
-  await page.goto(URL, { waitUntil: 'load', timeout: 30000 })
+  await page.goto(APP_URL, { waitUntil: 'load', timeout: 30000 })
   await page.waitForSelector('text=nirs4all', { timeout: 10000 })
 
   // 4. import the .n4a on the Dataset step → jumps to Predict

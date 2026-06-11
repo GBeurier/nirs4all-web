@@ -6,7 +6,7 @@ import { existsSync } from 'node:fs'
 import { chromium } from 'playwright-core'
 
 const URL = process.env.SMOKE_URL || 'http://localhost:4345/'
-const EXE = process.env.CHROME || '/home/delete/.cache/ms-playwright/chromium-1200/chrome-linux64/chrome'
+const EXE = process.env.CHROME || '/usr/bin/google-chrome'
 const DIR = process.env.AMYLOSE_DIR || '/home/delete/nirs4all/nirs4all-data/regression/AMYLOSE/Rice_Amylose_313_YbasedSplit'
 const FILES = ['Xtrain.csv', 'Ytrain.csv', 'Xtest.csv', 'Ytest.csv'].map((f) => `${DIR}/${f}`)
 

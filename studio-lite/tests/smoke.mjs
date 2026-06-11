@@ -3,8 +3,8 @@
 // console errors. Launches the cached Chromium directly via executablePath.
 import { chromium } from 'playwright-core'
 
-const URL = process.env.SMOKE_URL || 'http://localhost:4317/'
-const EXE = process.env.CHROME || '/home/delete/.cache/ms-playwright/chromium-1200/chrome-linux/chrome'
+const APP_URL = process.env.SMOKE_URL || 'http://localhost:4317/'
+const EXE = process.env.CHROME || '/usr/bin/google-chrome'
 
 const browser = await chromium.launch({ executablePath: EXE, headless: true, args: ['--no-sandbox'] })
 const page = await browser.newPage()
@@ -24,7 +24,7 @@ function fail(msg) {
 }
 
 try {
-  await page.goto(URL, { waitUntil: 'load', timeout: 30000 })
+  await page.goto(APP_URL, { waitUntil: 'load', timeout: 30000 })
   await page.waitForSelector('text=nirs4all', { timeout: 10000 })
 
   // 1. load the bundled sample dataset (a real <button>, not the dropzone div)
@@ -44,7 +44,7 @@ try {
   else console.log('✓ RMSE metric present')
 
   // 3b. dag-ml executed/compiled the pipeline (served build only; skipped under file://)
-  if (!String(URL).startsWith('file:')) {
+  if (!String(APP_URL).startsWith('file:')) {
     if (/by dag-ml/i.test(body)) console.log('✓ pipeline run via dag-ml-wasm (badge present)')
     else fail('expected a "by dag-ml" badge on the served build')
     // dag-ml-data served the X/y blocks (the data-contract layer is wired in)

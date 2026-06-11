@@ -9,7 +9,7 @@ import { existsSync } from 'node:fs'
 import { chromium } from 'playwright-core'
 
 const URL = process.env.SMOKE_URL || 'http://localhost:4320/'
-const EXE = process.env.CHROME || '/home/delete/.cache/ms-playwright/chromium-1200/chrome-linux64/chrome'
+const EXE = process.env.CHROME || '/usr/bin/google-chrome'
 const SPC_DIR = process.env.SPC_DIR || '/home/delete/nirs4all/nirs4all-formats/samples/galactic_spc'
 const SPC = [`${SPC_DIR}/nir.spc`].filter(existsSync)
 const EXPECT_SAMPLES = 20
