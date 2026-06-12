@@ -1,0 +1,55 @@
+{
+  "name": "nirs4all",
+  "version": "0.0.0",
+  "description": "Portable nirs4all aggregate binding for JavaScript and WASM",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
+    }
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GBeurier/nirs4all-lite.git",
+    "directory": "bindings/wasm"
+  },
+  "keywords": [
+    "nirs",
+    "spectroscopy",
+    "chemometrics",
+    "wasm"
+  ],
+  "dependencies": {
+    "yaml": "^2.9.0"
+  },
+  "peerDependenciesMeta": {
+    "@nirs4all/methods-wasm": {
+      "optional": true
+    },
+    "nirs4all-formats-wasm": {
+      "optional": true
+    },
+    "nirs4all-io-wasm": {
+      "optional": true
+    },
+    "@nirs4all/nirs4all-datasets-wasm": {
+      "optional": true
+    },
+    "dag-ml-wasm": {
+      "optional": true
+    },
+    "dag-ml-data-wasm": {
+      "optional": true
+    }
+  }
+}
