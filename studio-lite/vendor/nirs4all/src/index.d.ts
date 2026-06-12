@@ -37,6 +37,17 @@ export interface PortableVariantResult {
   predictions: number[];
 }
 
+export interface PortablePlsModel {
+  type: 'PLSRegression';
+  n_components: number;
+  coefficients: number[];
+  xMean: number[];
+  yMean: number[];
+  intercept: number[] | null;
+  n_features: number;
+  n_targets: number;
+}
+
 export interface PortableExecutionResult {
   name: string;
   rows: number;
@@ -45,7 +56,14 @@ export interface PortableExecutionResult {
   preprocessing: { type: string; params: number[] }[];
   variants: PortableVariantResult[];
   selected: PortableVariantResult;
+  model: PortablePlsModel;
   targets: number[];
+}
+
+export interface PortablePredictionResult {
+  data: number[];
+  rows: number;
+  cols: number;
 }
 
 export const upstreams: readonly Upstream[];
@@ -86,3 +104,8 @@ export function runPortablePipeline(
   dataset: PortableMatrixDataset,
   options?: { methods?: unknown },
 ): Promise<PortableExecutionResult>;
+export function predictPortablePipeline(
+  fitted: PortableExecutionResult | { preprocessing?: { type: string; params: number[] }[]; model?: PortablePlsModel },
+  dataset: Omit<PortableMatrixDataset, 'y'>,
+  options?: { methods?: unknown },
+): Promise<PortablePredictionResult>;

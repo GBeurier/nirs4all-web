@@ -277,4 +277,4 @@ function collectClasses(value, output) {
   }
 }
 
-export { parseExecutionPlan, runPortablePipeline } from './execution.js';
+export { parseExecutionPlan, predictPortablePipeline, runPortablePipeline } from './execution.js';

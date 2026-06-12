@@ -3,8 +3,9 @@
 Standalone browser client for the **nirs4all** ecosystem.
 
 `nirs4all-web` is the public, backend-free WASM application: upload spectra, inspect and configure
-the inferred dataset, build a compact NIRS pipeline, run cross-validated PLS / PLS-DA through
-`dag-ml` + `libn4m`, inspect results, predict on new spectra, and export a reusable `.n4a` bundle.
+the inferred dataset, build a compact NIRS pipeline, run portable PLS pipelines through the
+vendored `nirs4all` aggregate or broader cross-validated workflows through `dag-ml` + `libn4m`,
+inspect results, predict on new spectra, and export a reusable `.n4a` bundle.
 All data stays in the browser.
 
 This repository used to be named `nirs4all-lite`. The name is being freed for the canonical
@@ -15,6 +16,8 @@ multi-language aggregate distribution of the low-level stack.
 - `studio-lite/`: active React/Vite app and the GitHub Pages deliverable.
 - `.github/workflows/deploy-pages.yml`: builds `studio-lite/` and publishes the static app.
 - staged WASM packages under `studio-lite/src/engine/wasm/`, consumed from upstream sibling repos.
+- `studio-lite/vendor/nirs4all/`: vendored `nirs4all-lite` JavaScript/WASM aggregate used by the
+  browser runtime and checked for drift with `npm run check:lite-shim`.
 
 There is no Python backend and no new numerical implementation here. Parser, dataset, DAG, and
 chemometric fixes belong upstream in `nirs4all-formats`, `nirs4all-io`, `dag-ml`,

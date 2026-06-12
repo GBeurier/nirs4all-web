@@ -60,7 +60,7 @@ export async function runPortablePipeline(source, dataset, options = {}) {
     }
   }
 
-  const variants = plan.nComponents.map((nComponents) => {
+  const candidates = plan.nComponents.map((nComponents) => {
     const model = methods.fitPls(
       { data: XTrain.data, rows: XTrain.rows, cols: XTrain.cols },
       { data: yTrain.data, rows: yTrain.rows, cols: 1 },
@@ -77,10 +77,12 @@ export async function runPortablePipeline(source, dataset, options = {}) {
       n_components: nComponents,
       rmse: rmse(predictions, targets),
       predictions,
+      model: serializePlsModel(model, nComponents),
     };
   });
 
-  const selected = variants.reduce((best, item) => (item.rmse < best.rmse ? item : best), variants[0]);
+  const selected = candidates.reduce((best, item) => (item.rmse < best.rmse ? item : best), candidates[0]);
+  const variants = candidates.map(stripVariantModel);
 
   return {
     name: definition.name,
@@ -89,8 +91,46 @@ export async function runPortablePipeline(source, dataset, options = {}) {
     split,
     preprocessing,
     variants,
-    selected,
+    selected: stripVariantModel(selected),
+    model: selected.model,
     targets: Array.from(yTest.data),
+  };
+}
+
+export async function predictPortablePipeline(fitted, dataset, options = {}) {
+  if (!fitted || typeof fitted !== 'object') {
+    throw new TypeError('Portable prediction requires a fitted portable pipeline result.');
+  }
+  const methods = options.methods ?? await loadMethodsWasm();
+  if (typeof methods.loadModule === 'function') {
+    await methods.loadModule();
+  }
+
+  let X = coerceFeatures(dataset);
+  for (const step of fitted.preprocessing ?? []) {
+    const op = methods.ppCreate(step.type, step.params ?? []);
+    try {
+      methods.ppFit(op, X.data, X.rows, X.cols);
+      X = {
+        data: methods.ppTransform(op, X.data, X.rows, X.cols),
+        rows: X.rows,
+        cols: X.cols,
+      };
+    } finally {
+      methods.ppDestroy(op);
+    }
+  }
+
+  const model = hydratePlsModel(fitted.model ?? fitted.selected?.model);
+  const predicted = methods.predictPls(model, {
+    data: X.data,
+    rows: X.rows,
+    cols: X.cols,
+  });
+  return {
+    data: Array.from(predicted.data),
+    rows: predicted.rows,
+    cols: predicted.cols,
   };
 }
 
@@ -153,6 +193,16 @@ function coerceDataset(dataset) {
   const X = flattenMatrix(dataset.X, rows, cols, 'X');
   const y = flattenMatrix(dataset.y, rows, 1, 'y');
   return { X, y, rows, cols };
+}
+
+function coerceFeatures(dataset) {
+  if (!dataset || typeof dataset !== 'object') {
+    throw new TypeError('Portable prediction requires a feature dataset object.');
+  }
+  const rows = Number(dataset.rows ?? dataset.n_samples ?? 0);
+  const cols = Number(dataset.cols ?? dataset.n_features ?? 0);
+  const X = flattenMatrix(dataset.X, rows, cols, 'X');
+  return { data: X, rows, cols };
 }
 
 function flattenMatrix(value, rows, cols, label) {
@@ -250,7 +300,7 @@ function componentValues(step) {
       throw new Error("Portable execution only supports _range_ sweeps over 'n_components'.");
     }
     const [start, stop, stride] = step._range_.map(Number);
-    if (![start, stop, stride].every(Number.isFinite) || stride <= 0) {
+    if (![start, stop, stride].every(Number.isFinite) || stride <= 0 || start > stop) {
       throw new Error('Invalid n_components _range_; expected [start, stop, positive_step].');
     }
     const values = [];
@@ -278,4 +328,48 @@ function rmse(predictions, targets) {
     sum += diff * diff;
   }
   return Math.sqrt(sum / predictions.length);
+}
+
+function stripVariantModel(variant) {
+  return {
+    n_components: variant.n_components,
+    rmse: variant.rmse,
+    predictions: variant.predictions,
+  };
+}
+
+function serializePlsModel(model, nComponents) {
+  if (!model || typeof model !== 'object') {
+    throw new TypeError('nirs4all-methods returned an invalid PLS model.');
+  }
+  return {
+    type: 'PLSRegression',
+    n_components: nComponents,
+    coefficients: serializeVector(model.coefficients),
+    xMean: serializeVector(model.xMean),
+    yMean: serializeVector(model.yMean),
+    intercept: model.intercept == null ? null : serializeVector(model.intercept),
+    n_features: Number(model.n_features),
+    n_targets: Number(model.n_targets),
+  };
+}
+
+function hydratePlsModel(model) {
+  if (!model || typeof model !== 'object') {
+    throw new TypeError('Portable prediction requires a serialized PLS model.');
+  }
+  return {
+    coefficients: Float64Array.from(model.coefficients ?? []),
+    xMean: Float64Array.from(model.xMean ?? model.x_mean ?? []),
+    yMean: Float64Array.from(model.yMean ?? model.y_mean ?? []),
+    intercept: model.intercept == null ? null : Float64Array.from(model.intercept),
+    n_features: Number(model.n_features),
+    n_targets: Number(model.n_targets),
+  };
+}
+
+function serializeVector(value) {
+  if (value == null) return [];
+  if (typeof value === 'number') return [value];
+  return Array.from(value);
 }

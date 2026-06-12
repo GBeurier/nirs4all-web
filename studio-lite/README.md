@@ -8,7 +8,8 @@ locally; nothing is uploaded.
 
 > Part of the [nirs4all](https://nirs4all.org) ecosystem. This is the standalone browser/WASM
 > client, not new numerical code: the
-> numerics live upstream in `nirs4all-methods` (libn4m) and are orchestrated by `dag-ml`.
+> numerics live upstream in `nirs4all-methods` (libn4m), the portable subset is exposed through
+> the vendored `nirs4all` aggregate, and broader workflows are orchestrated by `dag-ml`.
 
 ## Run it
 
@@ -30,18 +31,25 @@ Runtime browser smoke (uses a local Chromium): `node tests/smoke.mjs` (set `SMOK
 ```
  upload → nirs4all-formats WASM (decode ~58 formats) → nirs4all-io WASM (infer + DatasetSpec)
         → MaterializedDataset
- pipeline (catalog) → dag-ml WASM compiles the DSL → GraphSpec, then its SequentialScheduler
+ portable pipeline subset → vendored nirs4all aggregate → nirs4all-methods WASM
+        (Kennard-Stone, SNV, Savitzky-Golay, PLS, n_components range sweep)
+ broader pipeline (catalog) → dag-ml WASM compiles the DSL → GraphSpec, then its SequentialScheduler
         EXECUTES the cross-validation in-browser: per (node, fold) it invokes a JS controller that
         runs preprocessing + PLS/PLS-DA via libn4m WASM; dag-ml owns the fold loop, OOF assembly
         (by sampleId) and lineage. Refit (full-train) is fit directly with libn4m.
         → RunResult (refit/CV/folds + predictions + dag-ml lineage) → results / residuals / predict
 ```
 
-Four real WASM engines participate: **formats** (decode), **io** (inference), **dag-ml** (the
-coordinator — compiles *and executes* the cross-validation), **libn4m** (the PLS numerics).
+Five real WASM surfaces participate: **formats** (decode), **io** (inference), **datasets**
+(catalog metadata utilities), **dag-ml** (the coordinator — compiles *and executes* the
+cross-validation), and **libn4m** (the PLS numerics), all reached through the vendored
+`nirs4all` aggregate where possible.
 
 - **Engine contract** (`src/engine/types.ts`): one `Engine` interface (`run`, `predict`) with a
-  pluggable `ModelBackend` (`orchestrate.ts`). On the served build `MainEngine` → `DagMlEngine`:
+  pluggable `ModelBackend` (`orchestrate.ts`). `MainEngine` first routes the strict portable subset
+  (`KennardStone`, `StandardNormalVariate`, `SavitzkyGolay`, `PLS`, `n_components` range sweep, no
+  CV) through `nirs4all.runPortablePipeline()` and saves its serialized model for
+  `predictPortablePipeline()`. Other served runs use `MainEngine` → `DagMlEngine`:
   dag-ml-wasm's `execute_campaign_phase_json` runs FIT_CV, calling a synchronous JS controller per
   fold that resolves the fold's samples (via `task.fold_id` + the host `FoldSet`) and runs the
   pipeline through the **libn4m** backend (real C++ PLS, WASM). `DagMlEngine` falls back to direct
@@ -81,8 +89,7 @@ target/task/split edits); offline webfont vendoring; continued visual polish.
 
 ## Verification
 
-`npm run typecheck` · `npm run test` (10 unit tests: PLS engine, materializer, CSV builder) ·
-`npm run validate:catalog`. Browser smokes (need a local Chromium via `CHROME=…`): `tests/smoke.mjs`
+`npm run typecheck` · `npm run test` · `npm run validate:catalog`. Browser smokes (need a local Chromium via `CHROME=…`): `tests/smoke.mjs`
 (regression load→run→results→predict), `tests/classification-smoke.mjs` (PLS-DA → confusion),
 `tests/wasm-upload-smoke.mjs` (vendor SPC decode). All pass on both the served build and the
 `file://` single-file build.

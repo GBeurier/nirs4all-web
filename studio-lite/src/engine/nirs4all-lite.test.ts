@@ -4,9 +4,12 @@ import {
   loadDatasetsWasm,
   loadMethodsWasm,
   parseExecutionPlan,
+  predictPortablePipeline,
   runPortablePipeline,
   upstreams,
 } from './nirs4all-lite'
+import { predictPortableLite, tryRunPortableLite } from './portable-lite'
+import type { MaterializedDataset, PipelineDSL } from './types'
 
 const liteRoot = new URL('../../../../nirs4all-lite/', import.meta.url)
 const oracleUrl = new URL('tests/parity/expected/portable_python_oracle.json', liteRoot)
@@ -29,6 +32,7 @@ describe('nirs4all-lite aggregate loaders', () => {
   it('re-exports the portable execution and initialized WASM loaders from nirs4all-lite', () => {
     expect(typeof parseExecutionPlan).toBe('function')
     expect(typeof runPortablePipeline).toBe('function')
+    expect(typeof predictPortablePipeline).toBe('function')
     expect(typeof loadMethodsWasm).toBe('function')
     expect(typeof loadDatasetsWasm).toBe('function')
   })
@@ -77,5 +81,62 @@ describe('nirs4all-lite aggregate loaders', () => {
       }
       expect(actual.selected.n_components, expected.name).toBe(expected.selected.n_components)
     }
+  })
+
+  it('runs the web portable subset through the vendored aggregate and predicts from the fitted model', async () => {
+    if (!existsSync(oracleUrl)) return
+    const oracle = JSON.parse(readFileSync(oracleUrl, 'utf8')) as {
+      metadata: { tolerances: { predictions_abs: number } }
+      dataset: { X: number[]; y: number[]; rows: number; cols: number }
+      cases: {
+        name: string
+        split: { testIndices: number[] }
+        selected: { n_components: number; predictions: number[] }
+      }[]
+    }
+    const expected = oracle.cases.find((item) => item.name === 'portable_methods_pipeline')
+    expect(expected).toBeTruthy()
+
+    const ds: MaterializedDataset = {
+      X: Float64Array.from(oracle.dataset.X),
+      y: Float64Array.from(oracle.dataset.y),
+      nSamples: oracle.dataset.rows,
+      nFeatures: oracle.dataset.cols,
+      axis: Array.from({ length: oracle.dataset.cols }, (_, i) => i),
+      axisUnit: 'index',
+      targetName: 'target',
+      taskType: 'regression',
+      sampleIds: Array.from({ length: oracle.dataset.rows }, (_, i) => `s${i}`),
+      partitions: Array.from({ length: oracle.dataset.rows }, () => 'train' as const),
+    }
+    const dsl: PipelineDSL = {
+      name: 'portable_methods_pipeline',
+      split: { id: 'split', type: 'KennardStone', params: { test_size: 0.3 } },
+      steps: [
+        { id: 'snv', type: 'StandardNormalVariate', params: {} },
+        { id: 'sg', type: 'SavitzkyGolay', params: { window_length: 11, polyorder: 2, deriv: 0 } },
+      ],
+      model: {
+        id: 'pls',
+        type: 'PLS',
+        params: { n_components: 2 },
+        sweeps: { n_components: { type: 'range', from: 2, to: 11, step: 2 } },
+      },
+    }
+
+    const run = await tryRunPortableLite(ds, dsl)
+    expect(run).toBeTruthy()
+    expect(run?.engine).toBe('nirs4all-lite-wasm')
+    expect(run?.variantCount).toBe(5)
+    expect((run?.model.dsl.model?.params.n_components)).toBe(expected!.selected.n_components)
+    expect(maxAbsDiff(run!.refit.predictions.map((row) => row.predicted), expected!.selected.predictions)).toBeLessThanOrEqual(
+      oracle.metadata.tolerances.predictions_abs,
+    )
+
+    const predicted = await predictPortableLite(run!.model, ds.X, ds.nSamples, ds.nFeatures)
+    const heldOut = expected!.split.testIndices.map((index) => predicted.values[index])
+    expect(maxAbsDiff(Array.from(heldOut), expected!.selected.predictions)).toBeLessThanOrEqual(
+      oracle.metadata.tolerances.predictions_abs,
+    )
   })
 })
