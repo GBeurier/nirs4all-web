@@ -43,7 +43,7 @@ const SUBCAT_LABEL: Record<string, string> = {
  * Left rail of the editor: the operator catalog in three buckets matching the
  * pipeline order — Split, Preprocessings, Models — as a searchable accordion.
  * Preprocessings sub-group by family; self-contained models (AOM/POP) carry an
- * "auto" badge so users don't stack redundant preprocessing/finetune on them.
+ * "auto" badge so users don't stack redundant preprocessing on them.
  * Styling echoes the nirs4all-formats demo (mono eyebrows, pill counts, glass).
  */
 export function NodePalette({ onAdd, taskType }: NodePaletteProps) {
@@ -97,7 +97,7 @@ export function NodePalette({ onAdd, taskType }: NodePaletteProps) {
         </span>
         <span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">{node.name}</span>
         {node.autonomous && (
-          <span title="Self-preprocessing & self-tuned — no preprocessing steps or finetune needed" className="flex shrink-0 items-center gap-0.5 rounded-full bg-brand-amber/12 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wide text-brand-amber">
+          <span title="Self-preprocessing — no preprocessing steps needed" className="flex shrink-0 items-center gap-0.5 rounded-full bg-brand-amber/12 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wide text-brand-amber">
             <Sparkles className="size-2.5" /> auto
           </span>
         )}

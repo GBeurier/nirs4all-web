@@ -1,15 +1,13 @@
 import { GitBranch, Settings2, SlidersHorizontal } from 'lucide-react'
-import type { FinetuneSpec, GeneratorMode, ParamSweep, PipelineDSL, PipelineStep, StepVariant, TaskType } from '@/engine/types'
+import type { GeneratorMode, ParamSweep, PipelineDSL, PipelineStep, StepVariant, TaskType } from '@/engine/types'
 import type { ParamValue } from '@/catalog/types'
 import { nodeByType } from '@/catalog/nodes'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs'
 import { ParamField } from './ParamField'
 import { ModelPicker } from './ModelPicker'
 import { SweepPopover } from './SweepPopover'
 import { StepVariantsEditor } from './StepVariantsEditor'
-import { FinetunePanel } from './FinetunePanel'
 import { iconByName } from './_helpers'
 import type { Selection } from './CanvasFlow'
 
@@ -23,10 +21,10 @@ export interface InspectorProps {
   onModelType: (type: string, params: Record<string, unknown>) => void
   onModelParam: (name: string, value: ParamValue) => void
   onModelSweep: (param: string, sweep: ParamSweep | undefined) => void
-  onModelFinetune: (finetune: FinetuneSpec | undefined) => void
   onSplitParam: (name: string, value: ParamValue) => void
   onCv: (patch: Partial<NonNullable<PipelineDSL['cv']>>) => void
   onContainerStepParam: (containerId: string, branchId: string, stepId: string, name: string, value: ParamValue) => void
+  onContainerStepSweep: (containerId: string, branchId: string, stepId: string, param: string, sweep: ParamSweep | undefined) => void
   onAddContainerBranch: (containerId: string) => void
   onRemoveContainerBranch: (containerId: string, branchId: string) => void
   onSetContainerMode: (containerId: string, mode: GeneratorMode) => void
@@ -80,7 +78,7 @@ function InspectorShell({ icon, eyebrow, title, children }: { icon: React.ReactN
 }
 
 /** Right rail of the editor: parameters for whatever node is selected on the canvas. */
-export function Inspector({ pipeline, taskType, selected, onStepParam, onStepSweep, onStepVariants, onModelType, onModelParam, onModelSweep, onModelFinetune, onSplitParam, onCv, onContainerStepParam, onAddContainerBranch, onRemoveContainerBranch, onSetContainerMode }: InspectorProps) {
+export function Inspector({ pipeline, taskType, selected, onStepParam, onStepSweep, onStepVariants, onModelType, onModelParam, onModelSweep, onSplitParam, onCv, onContainerStepParam, onContainerStepSweep, onAddContainerBranch, onRemoveContainerBranch, onSetContainerMode }: InspectorProps) {
   if (selected.kind === 'split') {
     const split = pipeline.split
     const def = split ? nodeByType(split.type) : undefined
@@ -241,7 +239,15 @@ export function Inspector({ pipeline, taskType, selected, onStepParam, onStepSwe
         {def.params.length > 0 ? (
           <div className="grid grid-cols-1 gap-3">
             {def.params.map((p) => (
-              <ParamField key={p.name} def={p} value={step.params[p.name] ?? p.default} onChange={(v) => onContainerStepParam(container.id, selected.branchId, selected.stepId, p.name, v)} />
+              <SweepableParamField
+                key={p.name}
+                step={step}
+                param={p}
+                value={step.params[p.name] ?? p.default}
+                numeric={p.type === 'int' || p.type === 'float'}
+                onParam={(v) => onContainerStepParam(container.id, selected.branchId, selected.stepId, p.name, v)}
+                onSweep={(sweep) => onContainerStepSweep(container.id, selected.branchId, selected.stepId, p.name, sweep)}
+              />
             ))}
           </div>
         ) : (
@@ -266,34 +272,25 @@ export function Inspector({ pipeline, taskType, selected, onStepParam, onStepSwe
     const Icon = iconByName(def?.icon ?? 'Boxes')
     return (
       <InspectorShell icon={<Icon className="size-4" />} eyebrow="Estimator" title={def?.name ?? model.type}>
-        <Tabs defaultValue="model" className="flex h-full flex-col">
-          <TabsList className="grid grid-cols-2">
-            <TabsTrigger value="model">Model</TabsTrigger>
-            <TabsTrigger value="tune" data-tune-tab>Tune</TabsTrigger>
-          </TabsList>
-          <TabsContent value="model" className="mt-3 space-y-3">
-            {def ? <p className="text-xs leading-relaxed text-muted-foreground">{def.description}</p> : null}
-            <ModelPicker
-              model={model}
-              taskType={taskType}
-              onChangeType={onModelType}
-              onChangeParam={onModelParam}
-              renderParam={(p, value) => (
-                <div className="flex items-end gap-1.5">
-                  <div className="min-w-0 flex-1">
-                    <ParamField def={p} value={value} onChange={(v) => onModelParam(p.name, v)} />
-                  </div>
-                  {p.type === 'int' || p.type === 'float' || p.type === 'select' ? (
-                    <SweepPopover paramKey={p.name} currentValue={value} sweep={model.sweeps?.[p.name]} onSweepChange={(sweep) => onModelSweep(p.name, sweep)} />
-                  ) : null}
+        <div className="space-y-3">
+          {def ? <p className="text-xs leading-relaxed text-muted-foreground">{def.description}</p> : null}
+          <ModelPicker
+            model={model}
+            taskType={taskType}
+            onChangeType={onModelType}
+            onChangeParam={onModelParam}
+            renderParam={(p, value) => (
+              <div className="flex items-end gap-1.5">
+                <div className="min-w-0 flex-1">
+                  <ParamField def={p} value={value} onChange={(v) => onModelParam(p.name, v)} />
                 </div>
-              )}
-            />
-          </TabsContent>
-          <TabsContent value="tune" className="mt-3">
-            <FinetunePanel model={model} finetune={pipeline.finetune} onChange={onModelFinetune} />
-          </TabsContent>
-        </Tabs>
+                {p.type === 'int' || p.type === 'float' || p.type === 'select' ? (
+                  <SweepPopover paramKey={p.name} currentValue={value} sweep={model.sweeps?.[p.name]} onSweepChange={(sweep) => onModelSweep(p.name, sweep)} />
+                ) : null}
+              </div>
+            )}
+          />
+        </div>
       </InspectorShell>
     )
   }

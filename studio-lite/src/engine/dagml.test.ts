@@ -9,7 +9,6 @@ import type { ContainerNode, PipelineDSL } from './types'
 //   PipelineDslParamGenerator (tag `kind`, snake_case): Or{param,values},
 //     Range{param,start,stop,step}, LogRange{param,start,stop,count}  (dsl.rs:194-225)
 //   PipelineDslVariantChoice { label, params }                        (dsl.rs:185-191)
-//   PipelineDslTuningSpec { n_trials, model_params, ... }             (dsl.rs:165-182)
 //   root: generation_strategy / max_variants / root_seed             (dsl.rs:39/41/47)
 
 function basePipeline(over: Partial<PipelineDSL> = {}): PipelineDSL {
@@ -71,49 +70,14 @@ describe('toCompatDsl generator DSL', () => {
     ])
   })
 
-  it('lowers finetune to REAL model param_generators, NOT a `tuning` block (#1)', () => {
-    // dag-ml only collects generation dims from `variants` + `param_generators`
-    // (dsl.rs:4501); a `tuning` block is metadata-only and would plan as 1 variant.
-    // So finetune must become `generators` on the model node that dag-ml expands.
-    const out = toCompatDsl(basePipeline({
-      finetune: { enabled: true, n_trials: 25, approach: 'grouped', eval_mode: 'best', params: [
-        { name: 'n_components', type: 'int', low: 2, high: 6 },
-        { name: 'scale', type: 'categorical', choices: ['x', 'y'] },
-      ] },
-    }))
-    const model = modelStep(out)
-    expect(model.tuning).toBeUndefined()
-    const gens = model.generators as Record<string, unknown>[]
-    expect(gens).toEqual([
-      { kind: 'range', param: 'n_components', start: 2, stop: 6, step: 1 },
-      { kind: 'or', param: 'scale', values: ['x', 'y'] },
-    ])
-  })
-
-  it('merges finetune generators AFTER the model\'s own sweeps (#1)', () => {
+  it('ignores legacy finetune fields; web search is explicit sweeps only', () => {
     const out = toCompatDsl(basePipeline({
       model: { id: 'm', type: 'PLS', params: {}, sweeps: { n_components: { type: 'or', choices: [5, 10] } } },
       finetune: { enabled: true, n_trials: 10, params: [{ name: 'scale', type: 'categorical', choices: ['a', 'b', 'c'] }] },
     }))
     const gens = modelStep(out).generators as Record<string, unknown>[]
-    expect(gens).toEqual([
-      { kind: 'or', param: 'n_components', values: [5, 10] },
-      { kind: 'or', param: 'scale', values: ['a', 'b', 'c'] },
-    ])
-  })
-
-  it('drops finetune params that cannot be lowered to a finite grid (#1)', () => {
-    // float w/o step and log_float w/o count have no discrete grid → dropped, not
-    // emitted as a generator (which would otherwise overstate / fail to expand).
-    const out = toCompatDsl(basePipeline({
-      finetune: { enabled: true, n_trials: 10, params: [
-        { name: 'alpha', type: 'float', low: 0, high: 1 },
-        { name: 'gamma', type: 'log_float', low: 0.001, high: 10 },
-        { name: 'n_components', type: 'int', low: 2, high: 4 },
-      ] },
-    }))
-    const gens = modelStep(out).generators as Record<string, unknown>[]
-    expect(gens).toEqual([{ kind: 'range', param: 'n_components', start: 2, stop: 4, step: 1 }])
+    expect(gens).toEqual([{ kind: 'or', param: 'n_components', values: [5, 10] }])
+    expect(modelStep(out).tuning).toBeUndefined()
   })
 
   it('emits DSL-level generation_strategy + max_variants (dsl.rs:39/41)', () => {
@@ -175,6 +139,20 @@ describe('toCompatDsl DAG containers', () => {
     expect(Object.keys(ct.concat_transform)).toEqual(['snv', 'd1'])
     expect(ct.concat_transform.snv).toEqual(['SNV'])
     expect(ct.concat_transform.d1).toEqual([{ preprocessing: 'SavitzkyGolay', params: { deriv: 1 } }])
+  })
+  it('keeps param sweeps inside branch container steps', () => {
+    const out = toCompatDsl(basePipeline({
+      containers: [branchC({
+        branches: [
+          { id: 'snv', steps: [{ id: 'a', type: 'StandardNormalVariate', params: {} }] },
+          { id: 'd1', steps: [{ id: 'b', type: 'SavitzkyGolay', params: { deriv: 1 }, sweeps: { deriv: { type: 'or', choices: [1, 2] } } }] },
+        ],
+      })],
+    })) as { pipeline: Record<string, unknown>[] }
+    const ct = out.pipeline.find((s) => 'concat_transform' in s) as { concat_transform: Record<string, unknown[]> }
+    expect(ct.concat_transform.d1).toEqual([
+      { preprocessing: 'SavitzkyGolay', params: { deriv: 1 }, generators: [{ kind: 'or', param: 'deriv', values: [1, 2] }] },
+    ])
   })
   it('lowers concat_transform + merge containers to concat_transform too (same fusion)', () => {
     for (const kind of ['concat_transform', 'merge'] as const) {
@@ -251,18 +229,7 @@ describe('countVariants (display-only mirror of dag-ml enumeration)', () => {
       generation: { strategy: 'zip' },
     }))).toBe(3)
   })
-  it('counts the REAL finetune grid (not n_trials) (#1)', () => {
-    // n_components int 2..6 step1 → 5 points; scale categorical x/y → 2; 5×2 = 10,
-    // regardless of n_trials=25.
-    expect(countVariants(basePipeline({
-      finetune: { enabled: true, n_trials: 25, params: [
-        { name: 'n_components', type: 'int', low: 2, high: 6 },
-        { name: 'scale', type: 'categorical', choices: ['x', 'y'] },
-      ] },
-    }))).toBe(5 * 2)
-  })
-  it('ignores finetune params that cannot be lowered (#1)', () => {
-    // a lone un-lowerable float (no step) contributes nothing → count stays 1.
+  it('does not count legacy finetune fields', () => {
     expect(countVariants(basePipeline({
       finetune: { enabled: true, n_trials: 25, params: [{ name: 'alpha', type: 'float', low: 0, high: 1 }] },
     }))).toBe(1)

@@ -2,6 +2,7 @@ import type { Mat } from './algo/linalg'
 import { type PlsModel, plsFit, plsPredict } from './algo/pls'
 import { LEGACY_PLS_MODELS, modelParamVector } from './methods/models'
 import { jsPreprocessor, libn4mPreprocessor } from './methods/preproc'
+import { loadMethodsWasm } from './nirs4all-lite'
 import type { ModelBackend } from './orchestrate'
 import { AOM_DEFAULT_BANK } from '@/catalog/types'
 
@@ -48,8 +49,7 @@ export const jsBackend: ModelBackend = {
  * `predictModel` path covers all of them.
  */
 export async function loadLibn4mBackend(): Promise<ModelBackend> {
-  const n4m = await import('./wasm/methods/index.js')
-  await n4m.loadModule()
+  const n4m = await loadMethodsWasm()
   return {
     id: 'libn4m-wasm',
     fit: (spec, X, Y, nComp) => {

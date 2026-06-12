@@ -268,8 +268,8 @@ export class DagMlEngine implements Engine {
     // --- dag-ml enumerates the variant set (cartesian/zip, max_variants-capped,
     // deterministic + fingerprinted). The host never expands variants itself; we
     // only read the materialized ExecutionPlan.variants[]. ---
-    // `hasGenerators` mirrors what the editor displays: any sweep/variant/finetune
-    // dimension that toCompatDsl lowered to a real param_generator/variants choice.
+    // `hasGenerators` mirrors what the editor displays: any sweep/variant dimension
+    // that toCompatDsl lowered to a real param_generator/variants choice.
     // It gates the planning_failed fallback below — silently collapsing a generated
     // sweep to a single base variant would skip the search the user configured.
     const hasGenerators = countVariants(dsl) > 1

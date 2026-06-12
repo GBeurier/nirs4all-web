@@ -4,6 +4,7 @@
 // dataset's partition: its test rows are held out of CV, the train rows feed the
 // CV fold builder. Predict-partition rows (if any) are left untouched. The
 // numerics never live here; this only marshals X/Y and rewrites partitions.
+import { loadMethodsWasm } from './nirs4all-lite'
 import type { MaterializedDataset, PipelineStep, Partition } from './types'
 
 export type SplitKind = 'KennardStone' | 'SPXY' | 'KMeans' | 'KBinsStratified'
@@ -25,8 +26,7 @@ const num = (v: unknown, d: number): number => {
 export async function applySplit(ds: MaterializedDataset, step: PipelineStep): Promise<MaterializedDataset> {
   const kind = step.type as SplitKind
   if (!SPLIT_KINDS.has(kind)) throw new Error(`Unknown split operator: ${kind}`)
-  const n4m = await import('./wasm/methods/index.js')
-  await n4m.loadModule()
+  const n4m = await loadMethodsWasm()
 
   // Address only the non-predict universe; map split rows back to original indices.
   const universe: number[] = []

@@ -528,14 +528,11 @@ export function CanvasFlow({
               onClick={() => onSelect({ kind: 'model' })}
               onRemove={onRemoveModel}
             />
-            {modelDef?.autonomous && (pipeline.steps.length > 0 || pipeline.finetune?.enabled) && (
+            {modelDef?.autonomous && pipeline.steps.length > 0 && (
               <div className="mt-1 flex items-start gap-1.5 rounded-lg border border-brand-amber/40 bg-brand-amber/5 px-2.5 py-1.5 text-[10px] leading-snug text-brand-amber">
                 <Sparkles className="mt-0.5 size-3 shrink-0" />
                 <span>
-                  {modelDef.name} screens preprocessing and tunes itself — the
-                  {pipeline.steps.length > 0 ? ' preprocessing steps' : ''}
-                  {pipeline.steps.length > 0 && pipeline.finetune?.enabled ? ' and' : ''}
-                  {pipeline.finetune?.enabled ? ' finetune' : ''} above are redundant.
+                  {modelDef.name} screens preprocessing internally; the preprocessing steps above are redundant.
                 </span>
               </div>
             )}

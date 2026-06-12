@@ -5,6 +5,7 @@
 // when a non-CSV file is uploaded — the CSV fast-path and the bundled sample never
 // pull it, keeping the initial bundle and the offline single-file build lean.
 import type { MaterializedDataset, Partition } from '@/engine/types'
+import { loadDataIoWasm } from '@/engine/nirs4all-lite'
 import { encodeTarget, inferTaskType } from './dataset'
 
 export interface DecodedFile {
@@ -55,13 +56,7 @@ type IoMod = typeof import('@/engine/wasm/io/nirs4all_io_wasm.js')
 let modsPromise: Promise<{ formats: FormatsMod; io: IoMod }> | null = null
 async function mods() {
   if (!modsPromise) {
-    modsPromise = (async () => {
-      const formats = await import('@/engine/wasm/formats/nirs4all_formats_wasm.js')
-      const io = await import('@/engine/wasm/io/nirs4all_io_wasm.js')
-      await formats.default()
-      await io.default()
-      return { formats, io }
-    })()
+    modsPromise = loadDataIoWasm()
   }
   return modsPromise
 }

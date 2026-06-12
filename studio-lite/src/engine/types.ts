@@ -39,11 +39,11 @@ export interface MaterializedDataset {
 // ---------------------------------------------------------------------------
 // Pipeline DSL (the internal, serializable representation; can grow to a graph)
 // ---------------------------------------------------------------------------
-// --- generators / finetune (all optional; existing flat pipelines stay valid) ---
-// These map 1:1 onto dag-ml's per-step `param_generators` + `variants`, the model
-// `tuning` spec, and the DSL-level `generation_strategy` / `max_variants`. Variant
-// expansion and selection happen in dag-ml (Rust → WASM); these types only carry
-// the user's intent to the compiler. See toCompatDsl in dagml.ts.
+// --- generators / sweeps (all optional; existing flat pipelines stay valid) ---
+// These map 1:1 onto dag-ml's per-step `param_generators` + `variants` and the
+// DSL-level `generation_strategy` / `max_variants`. Variant expansion and
+// selection happen in dag-ml (Rust → WASM); these types only carry the user's
+// intent to the compiler. See toCompatDsl in dagml.ts.
 export type SweepType = 'range' | 'log_range' | 'or';
 export interface ParamSweep {
   type: SweepType;
@@ -74,6 +74,8 @@ export interface FinetuneParam {
   count?: number;
   choices?: (string | number)[];
 }
+/** @deprecated Legacy import-only shape. normalizeImportedPipeline migrates this
+ *  to explicit model sweeps because the browser build does not ship Optuna. */
 export interface FinetuneSpec {
   enabled: boolean;
   n_trials: number;
@@ -172,7 +174,7 @@ export interface PipelineDSL {
    *  scored on the test partition (or train if none) with no CV / OOF / CV score
    *  node. When present, dag-ml builds the KFold fold_set and runs FIT_CV. */
   cv?: { folds: number; seed: number };
-  /** model hyperparameter search → dag-ml model `tuning` */
+  /** @deprecated Legacy import-only field; runtime ignores it. */
   finetune?: FinetuneSpec;
   /** DSL-level cartesian/zip expansion → `generation_strategy` / `max_variants` */
   generation?: { strategy: 'cartesian' | 'zip'; maxVariants?: number };

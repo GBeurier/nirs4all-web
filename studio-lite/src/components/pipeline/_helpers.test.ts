@@ -77,25 +77,25 @@ describe('normalizeImportedPipeline', () => {
     expect(p!.steps[0].sweeps).toBeUndefined()
   })
 
-  it('normalizes the legacy float_log finetune alias to log_float on import', () => {
+  it('migrates legacy float_log finetune params to model sweeps on import', () => {
     const p = normalizeImportedPipeline({
       steps: [],
       model: { type: 'PLS' },
       finetune: { enabled: true, n_trials: 30, params: [{ name: 'alpha', type: 'float_log', low: 1e-3, high: 100, count: 6 }] },
     })
     expect(p).not.toBeNull()
-    expect(p!.finetune!.enabled).toBe(true)
-    expect(p!.finetune!.n_trials).toBe(30)
-    expect(p!.finetune!.params[0]).toMatchObject({ name: 'alpha', type: 'log_float', low: 1e-3, high: 100, count: 6 })
+    expect(p!.finetune).toBeUndefined()
+    expect(p!.model!.sweeps?.alpha).toEqual({ type: 'log_range', from: 1e-3, to: 100, count: 6 })
   })
 
-  it('drops a finetune with no lowerable params', () => {
+  it('drops a legacy finetune with no lowerable params', () => {
     const p = normalizeImportedPipeline({
       steps: [],
       model: { type: 'PLS' },
       finetune: { enabled: true, params: [{ name: 'x', type: 'not-a-type' }] },
     })
     expect(p!.finetune).toBeUndefined()
+    expect(p!.model!.sweeps).toBeUndefined()
   })
 })
 
@@ -143,7 +143,7 @@ describe('pipelineWarnings (light validation pass)', () => {
 })
 
 describe('sanitizeAutonomousPipeline', () => {
-  it('strips external preprocessing, DAG containers and finetune for AOM/POP', () => {
+  it('strips external preprocessing and DAG containers for AOM/POP', () => {
     const p = sanitizeAutonomousPipeline({
       name: 'aom',
       steps: [{ id: 's1', type: 'StandardNormalVariate', params: {} }],

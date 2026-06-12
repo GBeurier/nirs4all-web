@@ -8,6 +8,7 @@
 //
 // Loaded on demand; if the provider is unavailable the caller proceeds with the
 // in-memory matrices and records the degraded status in lineage (never silent).
+import { loadDagMlDataWasm } from './nirs4all-lite'
 import type { MaterializedDataset } from './types'
 
 type DagMlDataMod = typeof import('@/engine/wasm/dagml-data/dag_ml_data_wasm.js')
@@ -15,11 +16,7 @@ type DagMlDataMod = typeof import('@/engine/wasm/dagml-data/dag_ml_data_wasm.js'
 let modPromise: Promise<DagMlDataMod> | null = null
 async function mod(): Promise<DagMlDataMod> {
   if (!modPromise) {
-    modPromise = (async () => {
-      const m = await import('@/engine/wasm/dagml-data/dag_ml_data_wasm.js')
-      await m.default()
-      return m
-    })()
+    modPromise = loadDagMlDataWasm()
   }
   return modPromise
 }

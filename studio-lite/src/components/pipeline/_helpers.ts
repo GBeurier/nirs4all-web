@@ -7,7 +7,6 @@ import type {
   ContainerType,
   FinetuneParam,
   FinetuneParamType,
-  FinetuneSpec,
   GeneratorMode,
   ParamSweep,
   PipelineBranch,
@@ -103,8 +102,8 @@ export function isAutonomousPipeline(dsl: PipelineDSL): boolean {
 }
 
 /** Autonomous models (AOM/POP) screen preprocessing internally. Keep split/CV
- *  and model params, but remove external preprocessing, feature-fusion DAG, and
- *  finetune search state that would otherwise be misleading in the editor. */
+ *  and model params, but remove external preprocessing and feature-fusion DAG
+ *  state that would otherwise be misleading in the editor. */
 export function sanitizeAutonomousPipeline(dsl: PipelineDSL): PipelineDSL {
   if (!isAutonomousPipeline(dsl)) return dsl
   return {
@@ -125,10 +124,10 @@ const cleanParams = (raw: unknown, type: string): Record<string, unknown> => {
   return { ...defaultParams(type), ...provided }
 }
 
-// --- generators / finetune on import ---------------------------------------
-// An imported pipeline can carry the optional sweep / variant / finetune intent
-// dag-ml expands; normalizeImportedPipeline must preserve it (not silently drop
-// it) so exported pipelines round-trip. Each is validated/normalized loosely:
+// --- generators / legacy tuning on import ----------------------------------
+// An imported pipeline can carry optional sweep / variant intent. Legacy
+// `finetune` specs are converted to explicit finite model sweeps because the
+// browser build does not ship Optuna. Each entry is validated loosely:
 // malformed entries are dropped, never fatal.
 
 const SWEEP_TYPES = new Set<SweepType>(['range', 'log_range', 'or'])
@@ -179,7 +178,7 @@ function parseVariants(raw: unknown): StepVariant[] | undefined {
 // api/pipeline_canonical.py) normalizes the single legacy alias `float_log` to
 // `log_float` over the canonical token set {int, float, categorical, log_float};
 // mirror that exactly on import so older exported pipelines hydrate to the token
-// the editor + the dag-ml lowering (finetuneSweep) understand.
+// the legacy-to-sweep migration understands.
 const FINETUNE_TYPE_ALIASES: Record<string, FinetuneParamType> = {
   float_log: 'log_float',
   log_float: 'log_float',
@@ -204,20 +203,38 @@ function parseFinetuneParam(raw: unknown): FinetuneParam | null {
   return out
 }
 
-/** Parse a finetune spec, dropping unlowerable params; undefined when disabled/empty. */
-function parseFinetune(raw: unknown): FinetuneSpec | undefined {
+function finetuneParamToSweep(p: FinetuneParam): ParamSweep | undefined {
+  if (p.type === 'categorical') {
+    const choices = p.choices ?? []
+    return choices.length > 0 ? { type: 'or', choices } : undefined
+  }
+  if (p.low === undefined || p.high === undefined || p.high < p.low) return undefined
+  if (p.type === 'log_float') {
+    return p.count !== undefined ? { type: 'log_range', from: p.low, to: p.high, count: p.count } : undefined
+  }
+  if (p.type === 'float') {
+    return p.step !== undefined && p.step > 0 ? { type: 'range', from: p.low, to: p.high, step: p.step } : undefined
+  }
+  return { type: 'range', from: p.low, to: p.high, step: p.step ?? 1 }
+}
+
+/** Parse a legacy finetune spec into explicit model sweeps. */
+function parseLegacyFinetuneSweeps(raw: unknown): Record<string, ParamSweep> | undefined {
   if (!raw || typeof raw !== 'object') return undefined
   const f = raw as Record<string, unknown>
   if (f.enabled === false) return undefined
   const params = Array.isArray(f.params) ? f.params.map(parseFinetuneParam).filter((p): p is FinetuneParam => p !== null) : []
-  if (params.length === 0) return undefined
-  return {
-    enabled: true,
-    n_trials: clampInt(f.n_trials, 1, 1000, 20),
-    approach: f.approach === 'individual' ? 'individual' : f.approach === 'grouped' ? 'grouped' : undefined,
-    eval_mode: f.eval_mode === 'mean' ? 'mean' : f.eval_mode === 'best' ? 'best' : undefined,
-    params,
+  const out: Record<string, ParamSweep> = {}
+  for (const p of params) {
+    const sweep = finetuneParamToSweep(p)
+    if (sweep) out[p.name] = sweep
   }
+  return Object.keys(out).length ? out : undefined
+}
+
+function mergeSweeps(...items: (Record<string, ParamSweep> | undefined)[]): Record<string, ParamSweep> | undefined {
+  const out = Object.assign({}, ...items.filter(Boolean))
+  return Object.keys(out).length ? out : undefined
 }
 
 /**
@@ -259,11 +276,13 @@ export function normalizeImportedPipeline(value: unknown): PipelineDSL | null {
   if (typeof m.type !== 'string') return null
   const modelDef = nodeByType(m.type)
   if (!modelDef || modelDef.category !== 'model') return null
+  const legacyFinetuneSweeps = parseLegacyFinetuneSweeps(v.finetune)
+  const modelSweeps = parseSweeps(m.sweeps)
   const model: PipelineStep = {
     id: typeof m.id === 'string' ? m.id : newStepId(m.type),
     type: m.type,
     params: cleanParams(m.params, m.type),
-    sweeps: parseSweeps(m.sweeps),
+    sweeps: mergeSweeps(legacyFinetuneSweeps, modelSweeps),
   }
 
   // optional split operator (a split-category catalog node); dropped if unknown.
@@ -326,17 +345,12 @@ export function normalizeImportedPipeline(value: unknown): PipelineDSL | null {
     const cvRaw = v.cv && typeof v.cv === 'object' ? (v.cv as Record<string, unknown>) : {}
     cv = { folds: clampInt(cvRaw.folds, 2, 10, 5), seed: clampInt(cvRaw.seed, -2147483648, 2147483647, 42) }
   }
-  // finetune (model `tuning` search space) — carried through with the legacy
-  // `float_log` → `log_float` type-alias normalization (nirs4all-studio 50077b5).
-  const finetune = parseFinetune(v.finetune)
-
   return {
     name: typeof v.name === 'string' && v.name.trim() ? v.name : 'Imported pipeline',
     split,
     steps,
     containers: containers.length ? containers : undefined,
     model,
-    finetune,
     cv,
   }
 }
@@ -352,8 +366,8 @@ export function normalizeImportedPipeline(value: unknown): PipelineDSL | null {
  */
 export function pipelineWarnings(dsl: PipelineDSL): string[] {
   const out: string[] = []
-  if (isAutonomousPipeline(dsl) && (dsl.steps.length > 0 || !!dsl.branch || (dsl.containers?.length ?? 0) > 0 || !!dsl.finetune)) {
-    out.push(`${nodeByType(dsl.model!.type)?.name ?? dsl.model!.type}: external preprocessing, DAG containers, and finetune are ignored because the model screens preprocessing internally.`)
+  if (isAutonomousPipeline(dsl) && (dsl.steps.length > 0 || !!dsl.branch || (dsl.containers?.length ?? 0) > 0)) {
+    out.push(`${nodeByType(dsl.model!.type)?.name ?? dsl.model!.type}: external preprocessing and DAG containers are ignored because the model screens preprocessing internally.`)
   }
   if (isAutonomousPipeline(dsl) && Array.isArray(dsl.model?.params.operator_bank) && dsl.model.params.operator_bank.includes(16)) {
     out.push(`${nodeByType(dsl.model!.type)?.name ?? dsl.model!.type}: Whittaker is ignored in browser AOM/POP runs because libn4m 0.98 stalls on wide spectra with that operator.`)

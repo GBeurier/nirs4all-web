@@ -23,13 +23,12 @@ describe('session persistence', () => {
     delete (globalThis as unknown as { localStorage?: MemStorage }).localStorage
   })
 
-  it('round-trips a pipeline carrying sweeps + finetune + the active sample', () => {
+  it('round-trips a pipeline carrying sweeps + the active sample', () => {
     const pipeline = {
       name: 'p',
       steps: [{ id: 's1', type: 'SavitzkyGolay', params: { window: 11 }, sweeps: { window: { type: 'or', choices: [7, 11, 15] } } }],
-      model: { id: 'm', type: 'PLS', params: { n_components: 10 } },
+      model: { id: 'm', type: 'PLS', params: { n_components: 10 }, sweeps: { n_components: { type: 'range', from: 2, to: 20, step: 2 } } },
       cv: { folds: 5, seed: 42 },
-      finetune: { enabled: true, n_trials: 0, params: [{ name: 'n_components', type: 'int', low: 2, high: 20 }] },
     } as never
     saveSession({ pipeline, model: null, sampleId: 'nir-reg' })
     const s = loadSession()

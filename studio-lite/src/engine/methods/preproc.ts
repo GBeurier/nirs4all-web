@@ -10,7 +10,8 @@
 import type { Mat } from '../algo/linalg'
 import { colMeans } from '../algo/linalg'
 import { type Transformer, makeTransformer, mscFromRef } from '../algo/preprocessing'
-import { ppCreate, ppDestroy, ppFit, ppGetState, ppSetState, ppTransform, type PpOperator } from '../wasm/methods/index.js'
+import { methodsWasm } from '../nirs4all-lite'
+import type { PpOperator } from '../wasm/methods/index.js'
 
 /** A transformer fitted on train, carrying its serializable state. */
 export interface FittedTransformer {
@@ -97,6 +98,7 @@ const EMPTY: Mat = { data: new Float64Array(0), rows: 0, cols: 0 }
 export const libn4mPreprocessor: Preprocessor = {
   id: 'libn4m',
   fit(type, params, train) {
+    const { ppCreate, ppDestroy, ppFit, ppGetState } = methodsWasm()
     const op = ppCreate(type, paramVector(type, params))
     try {
       ppFit(op, train.data, train.rows, train.cols) // no-op for stateless ops
@@ -107,6 +109,7 @@ export const libn4mPreprocessor: Preprocessor = {
     }
   },
   restore(type, params, state) {
+    const { ppCreate, ppDestroy, ppSetState } = methodsWasm()
     const op = ppCreate(type, paramVector(type, params))
     try {
       if (state.length) ppSetState(op, Float64Array.from(state))
@@ -121,8 +124,8 @@ export const libn4mPreprocessor: Preprocessor = {
 function wrap(op: PpOperator, state: number[]): FittedTransformer {
   return {
     state,
-    apply: (X: Mat): Mat => ({ data: ppTransform(op, X.data, X.rows, X.cols), rows: X.rows, cols: X.cols }),
-    free: () => ppDestroy(op),
+    apply: (X: Mat): Mat => ({ data: methodsWasm().ppTransform(op, X.data, X.rows, X.cols), rows: X.rows, cols: X.cols }),
+    free: () => methodsWasm().ppDestroy(op),
   }
 }
 

@@ -62,9 +62,9 @@ export interface NodeDef {
   /** stateful transforms must reuse fit-state on test/predict data */
   stateful?: boolean
   advanced?: boolean
-  /** self-contained models (e.g. AOM/POP) that screen preprocessing internally
-   *  AND tune themselves — adding preprocessing steps or a finetune in front of
-   *  them is redundant; the UI surfaces this so users don't duplicate work. */
+  /** self-contained models (e.g. AOM/POP) that screen preprocessing internally;
+   *  adding preprocessing steps in front of them is redundant, so the UI surfaces
+   *  this before users duplicate work. */
   autonomous?: boolean
   /** for `dag`-category structural operators: the container kind + generator mode
    *  it creates, and the nirs4all-studio CANONICAL flow node id it corresponds to

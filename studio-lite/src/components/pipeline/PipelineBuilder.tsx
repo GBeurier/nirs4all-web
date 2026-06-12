@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { Download, Sparkles, Upload } from 'lucide-react'
 import type { PipelineBuilderProps } from '@/components/contracts'
 import type { Preset, ParamValue } from '@/catalog/types'
-import type { ContainerNode, FinetuneSpec, GeneratorMode, ParamSweep, PipelineDSL, PipelineStep, StepVariant } from '@/engine/types'
+import type { ContainerNode, GeneratorMode, ParamSweep, PipelineDSL, PipelineStep, StepVariant } from '@/engine/types'
 import { countVariants } from '@/engine/dagml'
 import { PRESETS } from '@/catalog/presets'
 import { dagNodeFor, defaultParams, modelsForTask, nodeByType } from '@/catalog/nodes'
@@ -97,7 +97,7 @@ export function PipelineBuilder({ pipeline, taskType, datasetLabel, running, pro
   const setStepParam = (id: string, name: string, value: ParamValue) =>
     setSteps(pipeline.steps.map((s) => (s.id === id ? { ...s, params: { ...s.params, [name]: value } } : s)))
 
-  // generators / finetune mutators (write the optional DSL fields dag-ml expands)
+  // generators / sweep mutators (write the optional DSL fields dag-ml expands)
   const setStepSweep = (id: string, param: string, sweep: ParamSweep | undefined) =>
     setSteps(
       pipeline.steps.map((s) => {
@@ -140,7 +140,6 @@ export function PipelineBuilder({ pipeline, taskType, datasetLabel, running, pro
     update({ model: { id: newStepId(type), type, params: defaultParams(type) } })
     setSelected({ kind: 'model' })
   }
-  const setModelFinetune = (finetune: FinetuneSpec | undefined) => update({ finetune })
 
   // cross-validation (the SECOND split) is OPTIONAL ---------------------------
   const DEFAULT_CV = { folds: 5, seed: 42 }
@@ -201,6 +200,23 @@ export function PipelineBuilder({ pipeline, taskType, datasetLabel, running, pro
     patchContainer(containerId, (c) => ({
       ...c,
       branches: c.branches.map((b) => (b.id === branchId ? { ...b, steps: b.steps.map((s) => (s.id === stepId ? { ...s, params: { ...s.params, [name]: value } } : s)) } : b)),
+    }))
+  const setContainerStepSweep = (containerId: string, branchId: string, stepId: string, param: string, sweep: ParamSweep | undefined) =>
+    patchContainer(containerId, (c) => ({
+      ...c,
+      branches: c.branches.map((b) => {
+        if (b.id !== branchId) return b
+        return {
+          ...b,
+          steps: b.steps.map((s) => {
+            if (s.id !== stepId) return s
+            const sweeps = { ...(s.sweeps ?? {}) }
+            if (sweep) sweeps[param] = sweep
+            else delete sweeps[param]
+            return { ...s, sweeps: Object.keys(sweeps).length ? sweeps : undefined }
+          }),
+        }
+      }),
     }))
 
   // split operator (optional, at most one, applied before CV) ---------------
@@ -359,10 +375,10 @@ export function PipelineBuilder({ pipeline, taskType, datasetLabel, running, pro
             onModelType={setModelType}
             onModelParam={setModelParam}
             onModelSweep={setModelSweep}
-            onModelFinetune={setModelFinetune}
             onSplitParam={setSplitParam}
             onCv={setCv}
             onContainerStepParam={setContainerStepParam}
+            onContainerStepSweep={setContainerStepSweep}
             onAddContainerBranch={addContainerBranch}
             onRemoveContainerBranch={removeContainerBranch}
             onSetContainerMode={setContainerMode}
