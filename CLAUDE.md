@@ -75,5 +75,5 @@ GitHub Pages is built by `.github/workflows/deploy-pages.yml`, which builds `stu
 After the GitHub repository rename, the Pages URL should become:
 
 ```text
-https://gbeurier.github.io/nirs4all-web/
+https://web.nirs4all.org/
 ```

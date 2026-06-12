@@ -56,7 +56,7 @@ pkill -f "vite preview"
 After the GitHub repository rename, GitHub Pages should publish at:
 
 ```text
-https://gbeurier.github.io/nirs4all-web/
+https://web.nirs4all.org/
 ```
 
 The long-term canonical entry point should be linked from `nirs4all.org`.
