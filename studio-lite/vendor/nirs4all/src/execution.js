@@ -1,0 +1,281 @@
+import { loadMethodsWasm, loadPipelineDefinition } from './index.js';
+
+const KENNARD_STONE = new Set([
+  'nirs4all.operators.splitters.KennardStoneSplitter',
+  'nirs4all.operators.splitters.splitters.KennardStoneSplitter',
+]);
+
+const SNV = new Set([
+  'nirs4all.operators.transforms.SNV',
+  'nirs4all.operators.transforms.StandardNormalVariate',
+  'nirs4all.operators.transforms.scalers.StandardNormalVariate',
+]);
+
+const SAVGOL = new Set([
+  'nirs4all.operators.transforms.SavitzkyGolay',
+  'nirs4all.operators.transforms.nirs.SavitzkyGolay',
+]);
+
+const PLS = new Set([
+  'sklearn.cross_decomposition.PLSRegression',
+  'sklearn.cross_decomposition._pls.PLSRegression',
+]);
+
+export async function runPortablePipeline(source, dataset, options = {}) {
+  const definition = loadPipelineDefinition(source);
+  const methods = options.methods ?? await loadMethodsWasm();
+  if (typeof methods.loadModule === 'function') {
+    await methods.loadModule();
+  }
+
+  const input = coerceDataset(dataset);
+  const plan = parseExecutionPlan(definition);
+  const split = computeSplit(methods, plan.splitter, input);
+  const train = selectRows(input.X, input.rows, input.cols, split.trainIndices);
+  const test = selectRows(input.X, input.rows, input.cols, split.testIndices);
+  const yTrain = selectRows(input.y, input.rows, 1, split.trainIndices);
+  const yTest = selectRows(input.y, input.rows, 1, split.testIndices);
+
+  let XTrain = train;
+  let XTest = test;
+  const preprocessing = [];
+
+  for (const step of plan.preprocessing) {
+    const op = methods.ppCreate(step.type, step.params);
+    try {
+      methods.ppFit(op, XTrain.data, XTrain.rows, XTrain.cols);
+      XTrain = {
+        data: methods.ppTransform(op, XTrain.data, XTrain.rows, XTrain.cols),
+        rows: XTrain.rows,
+        cols: XTrain.cols,
+      };
+      XTest = {
+        data: methods.ppTransform(op, XTest.data, XTest.rows, XTest.cols),
+        rows: XTest.rows,
+        cols: XTest.cols,
+      };
+      preprocessing.push({ type: step.type, params: step.params });
+    } finally {
+      methods.ppDestroy(op);
+    }
+  }
+
+  const variants = plan.nComponents.map((nComponents) => {
+    const model = methods.fitPls(
+      { data: XTrain.data, rows: XTrain.rows, cols: XTrain.cols },
+      { data: yTrain.data, rows: yTrain.rows, cols: 1 },
+      nComponents,
+    );
+    const predicted = methods.predictPls(model, {
+      data: XTest.data,
+      rows: XTest.rows,
+      cols: XTest.cols,
+    });
+    const predictions = Array.from(predicted.data);
+    const targets = Array.from(yTest.data);
+    return {
+      n_components: nComponents,
+      rmse: rmse(predictions, targets),
+      predictions,
+    };
+  });
+
+  const selected = variants.reduce((best, item) => (item.rmse < best.rmse ? item : best), variants[0]);
+
+  return {
+    name: definition.name,
+    rows: input.rows,
+    cols: input.cols,
+    split,
+    preprocessing,
+    variants,
+    selected,
+    targets: Array.from(yTest.data),
+  };
+}
+
+export function parseExecutionPlan(source) {
+  const definition = source && Array.isArray(source.pipeline) ? source : loadPipelineDefinition(source);
+  let splitter = null;
+  const preprocessing = [];
+  let modelStep = null;
+
+  for (const step of definition.pipeline) {
+    if (!step || typeof step !== 'object' || Array.isArray(step)) {
+      throw new TypeError('Portable pipeline steps must be mapping objects.');
+    }
+
+    if (typeof step.class === 'string') {
+      if (KENNARD_STONE.has(step.class)) {
+        splitter = { type: 'KennardStone', params: step.params ?? {} };
+      } else if (SNV.has(step.class)) {
+        preprocessing.push({ type: 'StandardNormalVariate', params: [] });
+      } else if (SAVGOL.has(step.class)) {
+        preprocessing.push({ type: 'SavitzkyGolay', params: savgolParams(step.params ?? {}) });
+      } else {
+        throw new Error(`Portable execution does not support step class '${step.class}'.`);
+      }
+      continue;
+    }
+
+    if (step.model && typeof step.model === 'object') {
+      if (modelStep) {
+        throw new Error('Portable execution supports exactly one model step.');
+      }
+      modelStep = step;
+      continue;
+    }
+
+    throw new Error(`Portable execution does not support pipeline step: ${JSON.stringify(step)}`);
+  }
+
+  if (!modelStep) {
+    throw new Error('Portable execution requires a PLSRegression model step.');
+  }
+  const model = modelStep.model;
+  if (!PLS.has(model.class)) {
+    throw new Error(`Portable execution does not support model class '${model.class}'.`);
+  }
+
+  return {
+    splitter,
+    preprocessing,
+    nComponents: componentValues(modelStep),
+  };
+}
+
+function coerceDataset(dataset) {
+  if (!dataset || typeof dataset !== 'object') {
+    throw new TypeError('Portable execution requires a dataset object.');
+  }
+  const rows = Number(dataset.rows ?? dataset.n_samples ?? 0);
+  const cols = Number(dataset.cols ?? dataset.n_features ?? 0);
+  const X = flattenMatrix(dataset.X, rows, cols, 'X');
+  const y = flattenMatrix(dataset.y, rows, 1, 'y');
+  return { X, y, rows, cols };
+}
+
+function flattenMatrix(value, rows, cols, label) {
+  if (!Number.isInteger(rows) || rows <= 0 || !Number.isInteger(cols) || cols <= 0) {
+    throw new TypeError(`Dataset ${label} shape must provide positive integer rows/cols.`);
+  }
+  if (value instanceof Float64Array) {
+    if (value.length !== rows * cols) {
+      throw new RangeError(`Dataset ${label} length ${value.length} does not match ${rows}x${cols}.`);
+    }
+    return value;
+  }
+  if (Array.isArray(value) && Array.isArray(value[0])) {
+    const out = new Float64Array(rows * cols);
+    for (let r = 0; r < rows; r += 1) {
+      for (let c = 0; c < cols; c += 1) {
+        out[r * cols + c] = Number(value[r][c]);
+      }
+    }
+    return out;
+  }
+  if (Array.isArray(value) || ArrayBuffer.isView(value)) {
+    if (value.length !== rows * cols) {
+      throw new RangeError(`Dataset ${label} length ${value.length} does not match ${rows}x${cols}.`);
+    }
+    return Float64Array.from(value);
+  }
+  throw new TypeError(`Dataset ${label} must be a Float64Array, a flat array, or a nested row array.`);
+}
+
+function computeSplit(methods, splitter, input) {
+  if (!splitter) {
+    const indices = Array.from({ length: input.rows }, (_, i) => i);
+    return { kind: 'all', trainIndices: indices, testIndices: indices };
+  }
+  const splitOptions = { testSize: numberParam(splitter.params.test_size, 0.25) };
+  if (typeof methods.computeSplitIndices === 'function') {
+    const split = methods.computeSplitIndices(
+      'KennardStone',
+      { data: input.X, rows: input.rows, cols: input.cols },
+      null,
+      splitOptions,
+    );
+    return {
+      kind: 'KennardStone',
+      trainIndices: Array.from(split.trainIndices),
+      testIndices: Array.from(split.testIndices),
+    };
+  }
+  const mask = methods.computeSplit(
+    'KennardStone',
+    { data: input.X, rows: input.rows, cols: input.cols },
+    { data: input.y, rows: input.rows, cols: 1 },
+    splitOptions,
+  );
+  const trainIndices = [];
+  const testIndices = [];
+  for (let i = 0; i < mask.length; i += 1) {
+    if (mask[i]) testIndices.push(i);
+    else trainIndices.push(i);
+  }
+  return { kind: 'KennardStone', trainIndices, testIndices };
+}
+
+function selectRows(data, rows, cols, indices) {
+  const out = new Float64Array(indices.length * cols);
+  for (let r = 0; r < indices.length; r += 1) {
+    const source = indices[r];
+    if (source < 0 || source >= rows) {
+      throw new RangeError(`Row index ${source} is outside 0..${rows - 1}.`);
+    }
+    out.set(data.subarray(source * cols, source * cols + cols), r * cols);
+  }
+  return { data: out, rows: indices.length, cols };
+}
+
+function savgolParams(params) {
+  const delta = numberParam(params.delta, 1);
+  if (delta !== 1) {
+    throw new Error('Portable Savitzky-Golay execution currently supports delta=1 only.');
+  }
+  return [
+    numberParam(params.window_length ?? params.window, 11),
+    numberParam(params.polyorder, 2),
+    numberParam(params.deriv, 0),
+    // scipy.signal.savgol_filter, and therefore nirs4all Python, default to interp.
+    4,
+    0,
+  ];
+}
+
+function componentValues(step) {
+  if (Array.isArray(step._range_)) {
+    if (step.param !== 'n_components') {
+      throw new Error("Portable execution only supports _range_ sweeps over 'n_components'.");
+    }
+    const [start, stop, stride] = step._range_.map(Number);
+    if (![start, stop, stride].every(Number.isFinite) || stride <= 0) {
+      throw new Error('Invalid n_components _range_; expected [start, stop, positive_step].');
+    }
+    const values = [];
+    for (let value = start; value <= stop; value += stride) {
+      values.push(Math.round(value));
+    }
+    return values;
+  }
+  const params = step.model?.params ?? {};
+  return [Math.max(1, Math.round(numberParam(params.n_components, 2)))];
+}
+
+function numberParam(value, fallback) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function rmse(predictions, targets) {
+  if (predictions.length !== targets.length) {
+    throw new RangeError('Prediction/target length mismatch.');
+  }
+  let sum = 0;
+  for (let i = 0; i < predictions.length; i += 1) {
+    const diff = predictions[i] - targets[i];
+    sum += diff * diff;
+  }
+  return Math.sqrt(sum / predictions.length);
+}

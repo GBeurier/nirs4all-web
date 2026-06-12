@@ -124,6 +124,11 @@ export interface SplitOptions {
     /** KBinsStratified: 0 = uniform-width bins, 1 = quantile bins. */
     strategy?: number;
 }
+/** Ordered row indices returned by libn4m splitters. */
+export interface SplitIndices {
+    trainIndices: Int32Array;
+    testIndices: Int32Array;
+}
 /** Compute a single train/test split over the rows of X (and Y) via libn4m's
  * splitters, returning a `Uint8Array` mask of length n where 1 = test, 0 = train.
  *
@@ -137,6 +142,12 @@ export interface SplitOptions {
  * @param opts split options (testSize / seed / maxIter / nBins / strategy).
  */
 export declare function computeSplit(kind: SplitKind, X: Matrix, Y: Matrix | null, opts?: SplitOptions): Uint8Array;
+/** Compute a train/test split and return the ordered train/test indices from libn4m.
+ *
+ * Unlike {@link computeSplit}, this preserves splitter-specific ordering, which matters
+ * for strict parity with the native Python binding.
+ */
+export declare function computeSplitIndices(kind: SplitKind, X: Matrix, Y: Matrix | null, opts?: SplitOptions): SplitIndices;
 export declare class Model {
     private _data;
     private constructor();

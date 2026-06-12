@@ -14,6 +14,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "validate:catalog": "node scripts/validate-catalog.mjs",
+    "vendor:lite": "node scripts/sync-lite-shim.mjs",
+    "check:lite-shim": "node scripts/sync-lite-shim.mjs --check",
     "wasm": "bash scripts/build-wasm.sh"
   },
   "dependencies": {

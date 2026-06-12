@@ -92,6 +92,63 @@ export const loadMethods = () => importUpstream('methods');
 export const loadDagMl = () => importUpstream('dag_ml');
 export const loadDagMlData = () => importUpstream('dag_ml_data');
 
+let methodsPromise = null;
+let methodsModule = null;
+
+export async function loadMethodsWasm() {
+  if (!methodsPromise) {
+    methodsPromise = (async () => {
+      const mod = await loadMethods();
+      if (typeof mod.loadModule === 'function') {
+        await mod.loadModule();
+      }
+      methodsModule = mod;
+      return mod;
+    })();
+  }
+  return methodsPromise;
+}
+
+export function methodsWasm() {
+  if (!methodsModule) {
+    throw new Error('nirs4all methods WASM is not loaded; call loadMethodsWasm() first.');
+  }
+  return methodsModule;
+}
+
+function initializedWasmLoader(load, init) {
+  let promise = null;
+  return async () => {
+    if (!promise) {
+      promise = (async () => {
+        const mod = await load();
+        if (typeof init === 'function') {
+          await init(mod);
+        } else if (typeof mod.default === 'function') {
+          await mod.default();
+        }
+        return mod;
+      })();
+    }
+    return promise;
+  };
+}
+
+export const loadDagMlWasm = initializedWasmLoader(loadDagMl);
+export const loadDagMlDataWasm = initializedWasmLoader(loadDagMlData);
+export const loadDatasetsWasm = initializedWasmLoader(loadDatasets);
+
+export async function loadDataIoWasm() {
+  const [formatsMod, ioMod] = await Promise.all([
+    initializedFormatsWasm(),
+    initializedIoWasm(),
+  ]);
+  return { formats: formatsMod, io: ioMod };
+}
+
+const initializedFormatsWasm = initializedWasmLoader(loadFormats);
+const initializedIoWasm = initializedWasmLoader(loadIo);
+
 export async function loadPortableStack(keys = upstreams.map((item) => item.key)) {
   const loaded = {};
   for (const key of keys) {
@@ -219,3 +276,5 @@ function collectClasses(value, output) {
     }
   }
 }
+
+export { parseExecutionPlan, runPortablePipeline } from './execution.js';

@@ -38,6 +38,9 @@ export default defineConfig(({ mode }) => {
       ...(singlefile ? { rollupOptions: { output: { inlineDynamicImports: true } } } : {}),
     },
     assetsInclude: ['**/*.csv', '**/*.wasm'],
+    ssr: {
+      noExternal: ['nirs4all'],
+    },
     build: {
       target: 'es2022',
       outDir: singlefile ? 'dist-single' : 'dist',

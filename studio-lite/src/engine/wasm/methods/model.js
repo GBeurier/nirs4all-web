@@ -407,6 +407,57 @@ export function computeSplit(kind, X, Y, opts = {}) {
         M._free(maskBuf);
     }
 }
+/** Compute a train/test split and return the ordered train/test indices from libn4m.
+ *
+ * Unlike {@link computeSplit}, this preserves splitter-specific ordering, which matters
+ * for strict parity with the native Python binding.
+ */
+export function computeSplitIndices(kind, X, Y, opts = {}) {
+    const M = getModule();
+    const n = X.rows, p = X.cols;
+    const q = Y ? Y.cols : 1;
+    const testSize = opts.testSize ?? 0.25;
+    const seed = (opts.seed ?? 0) >>> 0;
+    let p0 = 0, p1 = 0;
+    if (kind === "KMeans")
+        p0 = opts.maxIter ?? 100;
+    if (kind === "KBinsStratified") {
+        p0 = opts.nBins ?? 5;
+        p1 = opts.strategy ?? 0;
+    }
+    const xBuf = _malloc_f64(M, n * p);
+    const yBuf = Y ? _malloc_f64(M, n * q) : { ptr: 0, len: 0 };
+    const trainBuf = M._malloc(n * 4);
+    const testBuf = M._malloc(n * 4);
+    const nTrainBuf = M._malloc(4);
+    const nTestBuf = M._malloc(4);
+    try {
+        _copy_in(M, X.data, xBuf.ptr);
+        if (Y)
+            _copy_in(M, Y.data, yBuf.ptr);
+        const status = M.ccall("n4m_wasm_split_indices", "number", ["number", "number", "number", "number", "number",
+            "number", "number", "number", "number", "number",
+            "number", "number", "number", "number"], [SPLIT_KIND_CODE[kind], testSize, seed, p0, p1,
+            xBuf.ptr, yBuf.ptr, n, p, q,
+            trainBuf, nTrainBuf, testBuf, nTestBuf]);
+        checkStatus(status);
+        const nTrain = M.HEAP32[nTrainBuf >> 2] ?? 0;
+        const nTest = M.HEAP32[nTestBuf >> 2] ?? 0;
+        return {
+            trainIndices: new Int32Array(M.HEAPU8.buffer, trainBuf, nTrain).slice(),
+            testIndices: new Int32Array(M.HEAPU8.buffer, testBuf, nTest).slice(),
+        };
+    }
+    finally {
+        M._free(xBuf.ptr);
+        if (yBuf.ptr !== 0)
+            M._free(yBuf.ptr);
+        M._free(trainBuf);
+        M._free(testBuf);
+        M._free(nTrainBuf);
+        M._free(nTestBuf);
+    }
+}
 /* Legacy class wrapper preserved for backwards compat with the
  * scaffold; not yet exposed via index.ts. */
 export class Model {
