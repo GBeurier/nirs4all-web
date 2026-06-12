@@ -1,5 +1,5 @@
 {
-  "name": "@nirs4all/nirs4all-datasets-wasm",
+  "name": "@nirs4all/datasets-wasm",
   "type": "module",
   "collaborators": [
     "Gregory Beurier <beurier@cirad.fr>"

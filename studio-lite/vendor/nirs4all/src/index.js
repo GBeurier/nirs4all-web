@@ -23,7 +23,7 @@ export const upstreams = Object.freeze([
   },
   {
     key: 'datasets',
-    candidates: ['@nirs4all/nirs4all-datasets-wasm'],
+    candidates: ['@nirs4all/datasets-wasm'],
     role: 'DOI-pinned NIRS dataset catalog',
   },
   {
@@ -205,8 +205,8 @@ function importUpstreamCandidate(candidate) {
       return import('nirs4all-formats-wasm');
     case 'nirs4all-io-wasm':
       return import('nirs4all-io-wasm');
-    case '@nirs4all/nirs4all-datasets-wasm':
-      return import('@nirs4all/nirs4all-datasets-wasm');
+    case '@nirs4all/datasets-wasm':
+      return import('@nirs4all/datasets-wasm');
     case '@nirs4all/methods-wasm':
       return import('@nirs4all/methods-wasm');
     default:

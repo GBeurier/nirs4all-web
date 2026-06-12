@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => {
         'dag-ml-wasm': path.resolve(__dirname, './src/engine/wasm/dagml/dag_ml_wasm.js'),
         'nirs4all-formats-wasm': path.resolve(__dirname, './src/engine/wasm/formats/nirs4all_formats_wasm.js'),
         'nirs4all-io-wasm': path.resolve(__dirname, './src/engine/wasm/io/nirs4all_io_wasm.js'),
-        '@nirs4all/nirs4all-datasets-wasm': path.resolve(
+        '@nirs4all/datasets-wasm': path.resolve(
           __dirname,
           './src/engine/wasm/datasets/nirs4all_datasets_wasm.js',
         ),

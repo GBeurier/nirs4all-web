@@ -42,7 +42,7 @@
     "nirs4all-io-wasm": {
       "optional": true
     },
-    "@nirs4all/nirs4all-datasets-wasm": {
+    "@nirs4all/datasets-wasm": {
       "optional": true
     },
     "dag-ml-wasm": {

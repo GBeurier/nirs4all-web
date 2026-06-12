@@ -23,7 +23,7 @@ describe('nirs4all-lite aggregate loaders', () => {
     const pkg = JSON.parse(readFileSync(new URL('./wasm/datasets/package.json', import.meta.url), 'utf8')) as { name: string }
 
     expect(datasets?.candidates).toContain(pkg.name)
-    expect(pkg.name).toBe('@nirs4all/nirs4all-datasets-wasm')
+    expect(pkg.name).toBe('@nirs4all/datasets-wasm')
   })
 
   it('re-exports the portable execution and initialized WASM loaders from nirs4all-lite', () => {
