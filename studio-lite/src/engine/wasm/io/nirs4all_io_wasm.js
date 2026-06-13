@@ -81,6 +81,27 @@ export function inferRecords(record_sets) {
 }
 
 /**
+ * Iterative, user-validatable dataset inference.
+ *
+ * Inputs mirror [`infer_dataset`] plus `options.confirmed` — an array of
+ * `{kind, target, value, status?}` locks the user has accepted/overridden,
+ * fed back so re-inference honours them. Returns a plain JS object
+ * `{plan, proposals, spec, valid, validation_errors}` where `proposals` is the
+ * list of still-open (and echoed confirmed) decisions to validate.
+ * @param {any} files
+ * @param {any} record_sets
+ * @param {any} options
+ * @returns {any}
+ */
+export function proposeDataset(files, record_sets, options) {
+    const ret = wasm.proposeDataset(files, record_sets, options);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
  * Normalize a spec/config JSON string into the canonical `DatasetSpec` JSON.
  * @param {string} spec_json
  * @returns {string}

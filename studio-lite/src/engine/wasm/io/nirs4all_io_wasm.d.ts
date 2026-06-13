@@ -43,6 +43,17 @@ export function inferFiles(files: any, options: any): any;
 export function inferRecords(record_sets: any): any;
 
 /**
+ * Iterative, user-validatable dataset inference.
+ *
+ * Inputs mirror [`infer_dataset`] plus `options.confirmed` — an array of
+ * `{kind, target, value, status?}` locks the user has accepted/overridden,
+ * fed back so re-inference honours them. Returns a plain JS object
+ * `{plan, proposals, spec, valid, validation_errors}` where `proposals` is the
+ * list of still-open (and echoed confirmed) decisions to validate.
+ */
+export function proposeDataset(files: any, record_sets: any, options: any): any;
+
+/**
  * Normalize a spec/config JSON string into the canonical `DatasetSpec` JSON.
  */
 export function to_spec(spec_json: string): string;
@@ -65,6 +76,7 @@ export interface InitOutput {
     readonly inferDataset: (a: any, b: any, c: any) => [number, number, number];
     readonly inferFiles: (a: any, b: any) => [number, number, number];
     readonly inferRecords: (a: any) => [number, number, number];
+    readonly proposeDataset: (a: any, b: any, c: any) => [number, number, number];
     readonly to_spec: (a: number, b: number) => [number, number, number, number];
     readonly validate: (a: number, b: number) => [number, number];
     readonly version: () => [number, number];
