@@ -60,3 +60,11 @@ https://web.nirs4all.org/
 ```
 
 The long-term canonical entry point should be linked from `nirs4all.org`.
+
+## License
+
+`nirs4all-web` is dual-licensed open-source — **`CeCILL-2.1 OR AGPL-3.0-or-later`** (your choice) —
+with an optional **commercial license** for closed-source / SaaS use. For any commercial use, contact
+<nirs4all-admin@cirad.fr>. See [`LICENSING.md`](LICENSING.md), the texts under [`LICENSES/`](LICENSES/),
+and [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). The re-exported native libraries it consumes
+carry their own licenses (see each project).
