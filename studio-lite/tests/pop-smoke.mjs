@@ -5,7 +5,7 @@
 // and editable on the AOM/POP model node (a checkbox-group of strict-linear
 // operator kinds). POP screens preprocessing internally and returns input-space
 // coeffs + intercept, so it is used WITHOUT preceding preproc steps. Exercises
-// n4m.fitPop (n4m_aom_per_component_select) end-to-end.
+// n4m.fitPop (n4m_model_selection_pop_pls_select) end-to-end.
 import { chromium } from 'playwright-core'
 
 const URL = process.env.SMOKE_URL || 'http://localhost:4345/'

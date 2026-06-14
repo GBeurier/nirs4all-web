@@ -1,5 +1,5 @@
 // Model dispatch helper for the libn4m backend. PLS / PLS-DA keep the legacy
-// fast-path (n4m_pls_fit_simple / n4m_pls_lda style coeffs via fitPls); every
+// fast-path (n4m_estimators_pls_fit / n4m_estimators_pls_lda_fit style coeffs via fitPls); every
 // other catalog model routes through the generic coeff dispatcher (fitModel).
 //
 // The positional `params` vector handed to fitModel MUST match the C

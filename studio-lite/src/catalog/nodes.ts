@@ -20,7 +20,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
     description: 'Standard Normal Variate — per-spectrum centering and scaling; removes multiplicative scatter and baseline shift.',
     icon: 'Waves',
     params: [],
-    n4m: { fit: null, transform: 'n4m_pp_snv_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_snv_transform' },
   },
   {
     id: 'preprocessing.scatter.msc',
@@ -31,7 +31,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
     description: 'Multiplicative Scatter Correction — regresses each spectrum onto a reference (mean of the training set) to remove scatter.',
     icon: 'Layers',
     params: [],
-    n4m: { fit: 'n4m_pp_msc_fit', transform: 'n4m_pp_msc_transform' },
+    n4m: { fit: 'n4m_transform_msc_fit', transform: 'n4m_transform_msc_transform' },
     stateful: true,
   },
   {
@@ -49,7 +49,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
         { value: 0, label: 'Smooth (0)' }, { value: 1, label: '1st deriv' }, { value: 2, label: '2nd deriv' },
       ] },
     ],
-    n4m: { fit: null, transform: 'n4m_pp_savgol_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_savitzky_golay_transform' },
   },
   {
     id: 'preprocessing.derivatives.first_derivative',
@@ -64,7 +64,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
         { value: 1, label: '1st' }, { value: 2, label: '2nd' },
       ] },
     ],
-    n4m: { fit: null, transform: 'n4m_pp_first_derivative_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_first_derivative_transform' },
   },
   {
     id: 'preprocessing.baselines.detrend',
@@ -77,7 +77,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
     params: [
       { name: 'degree', label: 'Degree', type: 'int', default: 1, min: 0, max: 4, help: 'Polynomial degree of the trend.' },
     ],
-    n4m: { fit: null, transform: 'n4m_pp_detrend_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_detrend_transform' },
   },
   // NOTE: a per-spectrum (row-wise) L2 Normalize node is intentionally not
   // shipped — libn4m's n4m_pp_normalize is column-wise/batch-dependent, which is
@@ -94,7 +94,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
     params: [
       { name: 'sigma', label: 'Sigma', type: 'float', default: 2, min: 0.5, max: 10, step: 0.5 },
     ],
-    n4m: { fit: null, transform: 'n4m_pp_gaussian_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_gaussian_transform' },
   },
 
   // ---- A2a: baseline correctors (stateless, shape-preserving) -------------
@@ -112,7 +112,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
       { name: 'p', label: 'asymmetry', type: 'float', default: 1e-2, min: 1e-4, max: 0.5, step: 1e-3 },
       { name: 'max_iter', label: 'max iter', type: 'int', default: 50, min: 1, max: 500 },
     ],
-    n4m: { fit: null, transform: 'n4m_pp_asls_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_asls_transform' },
   },
   {
     id: 'preprocessing.baseline.airpls',
@@ -127,7 +127,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
       { name: 'lam', label: 'λ (smoothness)', type: 'float', default: 1e6, min: 1, max: 1e9, step: 10 },
       { name: 'max_iter', label: 'max iter', type: 'int', default: 50, min: 1, max: 500 },
     ],
-    n4m: { fit: null, transform: 'n4m_pp_airpls_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_airpls_transform' },
   },
   {
     id: 'preprocessing.baseline.arpls',
@@ -142,7 +142,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
       { name: 'lam', label: 'λ (smoothness)', type: 'float', default: 1e5, min: 1, max: 1e9, step: 10 },
       { name: 'max_iter', label: 'max iter', type: 'int', default: 50, min: 1, max: 500 },
     ],
-    n4m: { fit: null, transform: 'n4m_pp_arpls_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_arpls_transform' },
   },
   {
     id: 'preprocessing.baseline.modpoly',
@@ -157,7 +157,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
       { name: 'polyorder', label: 'Poly order', type: 'int', default: 2, min: 0, max: 8 },
       { name: 'max_iter', label: 'max iter', type: 'int', default: 250, min: 1, max: 1000 },
     ],
-    n4m: { fit: null, transform: 'n4m_pp_modpoly_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_modpoly_transform' },
   },
   {
     id: 'preprocessing.baseline.imodpoly',
@@ -172,7 +172,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
       { name: 'polyorder', label: 'Poly order', type: 'int', default: 2, min: 0, max: 8 },
       { name: 'max_iter', label: 'max iter', type: 'int', default: 250, min: 1, max: 1000 },
     ],
-    n4m: { fit: null, transform: 'n4m_pp_imodpoly_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_imodpoly_transform' },
   },
   {
     id: 'preprocessing.baseline.snip',
@@ -186,7 +186,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
     params: [
       { name: 'max_half_window', label: 'max half-window', type: 'int', default: 20, min: 1, max: 200 },
     ],
-    n4m: { fit: null, transform: 'n4m_pp_snip_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_snip_transform' },
   },
   {
     id: 'preprocessing.baseline.rolling_ball',
@@ -201,7 +201,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
       { name: 'half_window', label: 'half-window', type: 'int', default: 20, min: 1, max: 200 },
       { name: 'smooth_half_window', label: 'smooth half-window', type: 'int', default: 0, min: 0, max: 100 },
     ],
-    n4m: { fit: null, transform: 'n4m_pp_rolling_ball_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_rolling_ball_transform' },
   },
   {
     id: 'preprocessing.baseline.iasls',
@@ -217,7 +217,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
       { name: 'p', label: 'asymmetry', type: 'float', default: 1e-2, min: 1e-4, max: 0.5, step: 1e-3 },
       { name: 'polyorder', label: 'Poly order', type: 'int', default: 2, min: 0, max: 8 },
     ],
-    n4m: { fit: null, transform: 'n4m_pp_iasls_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_iasls_transform' },
   },
   {
     id: 'preprocessing.baseline.beads',
@@ -233,7 +233,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
       { name: 'lam_1', label: 'λ₁ (1st diff)', type: 'float', default: 0.5, min: 1e-3, max: 100, step: 0.1 },
       { name: 'lam_2', label: 'λ₂ (2nd diff)', type: 'float', default: 0.5, min: 1e-3, max: 100, step: 0.1 },
     ],
-    n4m: { fit: null, transform: 'n4m_pp_beads_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_beads_transform' },
   },
 
   // ---- A2b: signal conversions (stateless) -------------------------------
@@ -249,7 +249,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
     params: [
       { name: 'is_percent', label: 'input is %', type: 'bool', default: false },
     ],
-    n4m: { fit: null, transform: 'n4m_pp_to_absorbance_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_to_absorbance_transform' },
   },
   {
     id: 'preprocessing.signal.from_absorbance',
@@ -263,7 +263,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
     params: [
       { name: 'is_percent', label: 'output is %', type: 'bool', default: false },
     ],
-    n4m: { fit: null, transform: 'n4m_pp_from_absorbance_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_from_absorbance_transform' },
   },
   {
     id: 'preprocessing.signal.percent_to_fraction',
@@ -275,7 +275,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
     icon: 'Sigma',
     advanced: true,
     params: [],
-    n4m: { fit: null, transform: 'n4m_pp_pct_to_frac_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_percent_to_fraction_transform' },
   },
   {
     id: 'preprocessing.signal.fraction_to_percent',
@@ -287,7 +287,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
     icon: 'Sigma',
     advanced: true,
     params: [],
-    n4m: { fit: null, transform: 'n4m_pp_frac_to_pct_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_fraction_to_percent_transform' },
   },
   {
     id: 'preprocessing.signal.kubelka_munk',
@@ -301,7 +301,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
     params: [
       { name: 'is_percent', label: 'input is %', type: 'bool', default: false },
     ],
-    n4m: { fit: null, transform: 'n4m_pp_kubelka_munk_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_kubelka_munk_transform' },
   },
 
   // ---- A2c: scatter / scaling / derivative (stateless) -------------------
@@ -317,7 +317,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
     params: [
       { name: 'k', label: 'MAD factor', type: 'float', default: 1.4826, min: 0.5, max: 3, step: 0.01 },
     ],
-    n4m: { fit: null, transform: 'n4m_pp_rnv_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_robust_snv_transform' },
   },
   {
     id: 'preprocessing.scatter.lsnv',
@@ -331,7 +331,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
     params: [
       { name: 'window', label: 'window (odd)', type: 'int', default: 11, min: 3, max: 101, step: 2 },
     ],
-    n4m: { fit: null, transform: 'n4m_pp_lsnv_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_local_snv_transform' },
   },
   {
     id: 'preprocessing.scaling.area',
@@ -347,7 +347,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
         { value: 0, label: 'sum' }, { value: 1, label: '|sum|' }, { value: 2, label: 'trapz' },
       ] },
     ],
-    n4m: { fit: null, transform: 'n4m_pp_area_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_area_normalization_transform' },
   },
   {
     id: 'preprocessing.derivatives.norris_williams',
@@ -365,7 +365,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
         { value: 1, label: '1st' }, { value: 2, label: '2nd' },
       ] },
     ],
-    n4m: { fit: null, transform: 'n4m_pp_norris_williams_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_norris_williams_transform' },
   },
   {
     id: 'preprocessing.signal.log',
@@ -377,7 +377,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
     icon: 'Sigma',
     advanced: true,
     params: [],
-    n4m: { fit: null, transform: 'n4m_pp_log_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_log_transform_transform' },
   },
   {
     id: 'preprocessing.filtering.wavelet_denoise',
@@ -394,7 +394,7 @@ export const PREPROCESSING_NODES: NodeDef[] = [
       ] },
       { name: 'level', label: 'level', type: 'int', default: 3, min: 1, max: 8 },
     ],
-    n4m: { fit: null, transform: 'n4m_pp_wavelet_denoise_transform' },
+    n4m: { fit: null, transform: 'n4m_transform_wavelet_denoise_transform' },
   },
 ]
 
@@ -410,7 +410,7 @@ export const MODEL_NODES: NodeDef[] = [
     params: [
       { name: 'n_components', label: 'Components', type: 'int', default: 10, min: 1, max: 40, help: 'Number of latent variables.' },
     ],
-    n4m: { fit: 'n4m_pls_fit_simple', predict: 'n4m_wasm_pls_predict_from_coeffs' },
+    n4m: { fit: 'n4m_estimators_pls_fit', predict: 'n4m_wasm_pls_predict_from_coeffs' },
   },
   {
     id: 'models.classification.pls_lda',
@@ -423,7 +423,7 @@ export const MODEL_NODES: NodeDef[] = [
     params: [
       { name: 'n_components', label: 'Components', type: 'int', default: 10, min: 1, max: 40, help: 'Number of latent variables.' },
     ],
-    n4m: { fit: 'n4m_pls_lda_fit', predict: 'n4m_wasm_pls_predict_from_coeffs' },
+    n4m: { fit: 'n4m_estimators_pls_lda_fit', predict: 'n4m_wasm_pls_predict_from_coeffs' },
   },
 
   {
@@ -440,7 +440,7 @@ export const MODEL_NODES: NodeDef[] = [
       { name: 'screen_folds', label: 'Screen CV folds', type: 'int', default: 5, min: 2, max: 10, help: 'Internal-CV fold count for the operator screen.' },
       { name: 'operator_bank', label: 'Operator bank', type: 'operators', default: AOM_DEFAULT_BANK, help: 'Strict-linear operators screened by the AOM selector. Picking fewer/different operators changes the fit.' },
     ],
-    n4m: { fit: 'n4m_aom_global_select', predict: 'n4m_wasm_model_predict_from_coeffs' },
+    n4m: { fit: 'n4m_model_selection_aom_pls_select', predict: 'n4m_wasm_model_predict_from_coeffs' },
     autonomous: true,
   },
 
@@ -458,7 +458,7 @@ export const MODEL_NODES: NodeDef[] = [
       { name: 'screen_folds', label: 'Screen CV folds', type: 'int', default: 5, min: 2, max: 10, help: 'Internal-CV fold count for the per-component operator screen.' },
       { name: 'operator_bank', label: 'Operator bank', type: 'operators', default: AOM_DEFAULT_BANK, help: 'Strict-linear operators the per-component selector may pick from.' },
     ],
-    n4m: { fit: 'n4m_aom_per_component_select', predict: 'n4m_wasm_model_predict_from_coeffs' },
+    n4m: { fit: 'n4m_model_selection_pop_pls_select', predict: 'n4m_wasm_model_predict_from_coeffs' },
     autonomous: true,
   },
 
@@ -517,7 +517,7 @@ export const MODEL_NODES: NodeDef[] = [
     params: [
       { name: 'lambda', label: 'λ (L2 penalty)', type: 'float', default: 1, min: 1e-6, max: 1e6, step: 0.1, help: 'Regularization strength.' },
     ],
-    n4m: { fit: 'n4m_ridge_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
+    n4m: { fit: 'n4m_estimators_ridge_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
   },
   {
     id: 'models.pls.ridge_pls',
@@ -532,7 +532,7 @@ export const MODEL_NODES: NodeDef[] = [
       { name: 'n_components', label: 'Components', type: 'int', default: 10, min: 1, max: 40, help: 'Number of latent variables.' },
       { name: 'ridge_lambda', label: 'λ (L2 penalty)', type: 'float', default: 1, min: 0, max: 1e6, step: 0.1 },
     ],
-    n4m: { fit: 'n4m_ridge_pls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
+    n4m: { fit: 'n4m_estimators_ridge_pls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
   },
   {
     id: 'models.pls.continuum',
@@ -547,7 +547,7 @@ export const MODEL_NODES: NodeDef[] = [
       { name: 'n_components', label: 'Components', type: 'int', default: 10, min: 1, max: 40, help: 'Number of latent variables.' },
       { name: 'tau', label: 'τ', type: 'float', default: 0.5, min: 0, max: 1, step: 0.05 },
     ],
-    n4m: { fit: 'n4m_continuum_regression_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
+    n4m: { fit: 'n4m_estimators_continuum_regression_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
   },
   {
     id: 'models.pls.robust_pls',
@@ -563,7 +563,7 @@ export const MODEL_NODES: NodeDef[] = [
       { name: 'huber_k', label: 'Huber k', type: 'float', default: 1.345, min: 0.5, max: 3, step: 0.05 },
       { name: 'max_irls_iter', label: 'IRLS iters', type: 'int', default: 5, min: 1, max: 50 },
     ],
-    n4m: { fit: 'n4m_robust_pls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
+    n4m: { fit: 'n4m_estimators_robust_pls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
   },
   {
     id: 'models.pls.cppls',
@@ -578,7 +578,7 @@ export const MODEL_NODES: NodeDef[] = [
       { name: 'n_components', label: 'Components', type: 'int', default: 10, min: 1, max: 40, help: 'Number of latent variables.' },
       { name: 'gamma', label: 'γ', type: 'float', default: 0.5, min: 0, max: 1, step: 0.05 },
     ],
-    n4m: { fit: 'n4m_cppls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
+    n4m: { fit: 'n4m_estimators_cppls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
   },
   {
     id: 'models.pls.sparse_simpls',
@@ -593,7 +593,7 @@ export const MODEL_NODES: NodeDef[] = [
       { name: 'n_components', label: 'Components', type: 'int', default: 10, min: 1, max: 40, help: 'Number of latent variables.' },
       { name: 'sparsity_lambda', label: 'sparsity λ', type: 'float', default: 0, min: 0, max: 10, step: 0.01 },
     ],
-    n4m: { fit: 'n4m_sparse_simpls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
+    n4m: { fit: 'n4m_estimators_sparse_simpls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
   },
   {
     id: 'models.pls.group_sparse_pls',
@@ -608,7 +608,7 @@ export const MODEL_NODES: NodeDef[] = [
       { name: 'n_components', label: 'Components', type: 'int', default: 10, min: 1, max: 40, help: 'Number of latent variables.' },
       { name: 'group_lambda', label: 'group λ', type: 'float', default: 0, min: 0, max: 10, step: 0.01 },
     ],
-    n4m: { fit: 'n4m_group_sparse_pls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
+    n4m: { fit: 'n4m_estimators_group_sparse_pls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
   },
   {
     id: 'models.pls.fused_sparse_pls',
@@ -624,7 +624,7 @@ export const MODEL_NODES: NodeDef[] = [
       { name: 'l1_lambda', label: 'L1 λ', type: 'float', default: 0, min: 0, max: 10, step: 0.01 },
       { name: 'fusion_lambda', label: 'fusion λ', type: 'float', default: 0, min: 0, max: 10, step: 0.01 },
     ],
-    n4m: { fit: 'n4m_fused_sparse_pls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
+    n4m: { fit: 'n4m_estimators_fused_sparse_pls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
   },
   {
     id: 'models.ensemble.bagging_pls',
@@ -640,7 +640,7 @@ export const MODEL_NODES: NodeDef[] = [
       { name: 'n_estimators', label: 'estimators', type: 'int', default: 10, min: 2, max: 100 },
       { name: 'seed', label: 'seed', type: 'int', default: 0, min: 0, max: 1e9 },
     ],
-    n4m: { fit: 'n4m_bagging_pls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
+    n4m: { fit: 'n4m_ensemble_bagging_pls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
   },
   {
     id: 'models.ensemble.boosting_pls',
@@ -656,7 +656,7 @@ export const MODEL_NODES: NodeDef[] = [
       { name: 'n_estimators', label: 'estimators', type: 'int', default: 10, min: 2, max: 100 },
       { name: 'learning_rate', label: 'learning rate', type: 'float', default: 0.1, min: 0.01, max: 1, step: 0.01 },
     ],
-    n4m: { fit: 'n4m_boosting_pls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
+    n4m: { fit: 'n4m_ensemble_boosting_pls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
   },
   {
     id: 'models.ensemble.random_subspace_pls',
@@ -673,7 +673,7 @@ export const MODEL_NODES: NodeDef[] = [
       { name: 'features_per_subspace', label: 'features/subspace', type: 'int', default: 50, min: 1, max: 5000 },
       { name: 'seed', label: 'seed', type: 'int', default: 0, min: 0, max: 1e9 },
     ],
-    n4m: { fit: 'n4m_random_subspace_pls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
+    n4m: { fit: 'n4m_ensemble_random_subspace_pls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
   },
 
   // ---- Tier B extension: additional coeff-triple fits (via n4m_wasm_model_fit) ----
@@ -689,7 +689,7 @@ export const MODEL_NODES: NodeDef[] = [
     params: [
       { name: 'n_components', label: 'Components', type: 'int', default: 10, min: 1, max: 40, help: 'Number of latent variables.' },
     ],
-    n4m: { fit: 'n4m_mir_pls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
+    n4m: { fit: 'n4m_estimators_mir_pls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
   },
   {
     id: 'models.pls.mb_pls',
@@ -703,7 +703,7 @@ export const MODEL_NODES: NodeDef[] = [
     params: [
       { name: 'n_components', label: 'Components', type: 'int', default: 10, min: 1, max: 40, help: 'Number of latent variables.' },
     ],
-    n4m: { fit: 'n4m_mb_pls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
+    n4m: { fit: 'n4m_estimators_mb_pls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
   },
   {
     id: 'models.pls.missing_aware_nipals',
@@ -717,7 +717,7 @@ export const MODEL_NODES: NodeDef[] = [
     params: [
       { name: 'n_components', label: 'Components', type: 'int', default: 10, min: 1, max: 40, help: 'Number of latent variables.' },
     ],
-    n4m: { fit: 'n4m_missing_aware_nipals_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
+    n4m: { fit: 'n4m_estimators_missing_aware_nipals_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
   },
 ]
 
@@ -735,7 +735,7 @@ export const SPLIT_NODES: NodeDef[] = [
     params: [
       { name: 'test_size', label: 'Test fraction', type: 'float', default: 0.25, min: 0.05, max: 0.6, step: 0.05, help: 'Fraction of samples held out as the test set.' },
     ],
-    n4m: { fit: 'n4m_split_kennard_stone_create', transform: 'n4m_split_kennard_stone_split' },
+    n4m: { fit: 'n4m_model_selection_kennard_stone_create', transform: 'n4m_model_selection_kennard_stone_split' },
   },
   {
     id: 'split.spxy',
@@ -747,7 +747,7 @@ export const SPLIT_NODES: NodeDef[] = [
     params: [
       { name: 'test_size', label: 'Test fraction', type: 'float', default: 0.25, min: 0.05, max: 0.6, step: 0.05, help: 'Fraction of samples held out as the test set.' },
     ],
-    n4m: { fit: 'n4m_split_spxy_create', transform: 'n4m_split_spxy_split' },
+    n4m: { fit: 'n4m_model_selection_spxy_create', transform: 'n4m_model_selection_spxy_split' },
   },
   {
     id: 'split.kmeans',
@@ -761,7 +761,7 @@ export const SPLIT_NODES: NodeDef[] = [
       { name: 'seed', label: 'Seed', type: 'int', default: 42, min: 0, max: 1e9, help: 'Random seed (k-means++ init).' },
       { name: 'max_iter', label: 'Max iter', type: 'int', default: 100, min: 1, max: 1000 },
     ],
-    n4m: { fit: 'n4m_split_kmeans_create', transform: 'n4m_split_kmeans_split' },
+    n4m: { fit: 'n4m_model_selection_kmeans_create', transform: 'n4m_model_selection_kmeans_split' },
   },
   {
     id: 'split.kbins_stratified',
@@ -778,7 +778,7 @@ export const SPLIT_NODES: NodeDef[] = [
         { value: 0, label: 'uniform' }, { value: 1, label: 'quantile' },
       ] },
     ],
-    n4m: { fit: 'n4m_split_kbins_stratified_create', transform: 'n4m_split_kbins_stratified_split' },
+    n4m: { fit: 'n4m_model_selection_kbins_stratified_create', transform: 'n4m_model_selection_kbins_stratified_split' },
   },
 ]
 

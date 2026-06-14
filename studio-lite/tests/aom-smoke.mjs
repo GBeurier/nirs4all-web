@@ -3,7 +3,7 @@
 // CV Scores render with an RMSE metric, the "by dag-ml" badge, and no console
 // errors. AOM screens preprocessing internally and returns input-space coeffs +
 // intercept, so it is used WITHOUT preceding preproc steps (default preset is
-// already empty-step). Exercises n4m.fitAom (n4m_aom_global_select) end-to-end.
+// already empty-step). Exercises n4m.fitAom (n4m_model_selection_aom_pls_select) end-to-end.
 import { chromium } from 'playwright-core'
 
 const URL = process.env.SMOKE_URL || 'http://localhost:4345/'
