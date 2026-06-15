@@ -1,19 +1,12 @@
 import type { MaterializedDataset } from '@/engine/types'
-import { buildDataset, encodeTarget, type RawFile } from './dataset'
-// Bundled at build time (?raw) so samples work offline, including the inlined
-// single-file build under file:// — no fetch, no separate assets.
-import xTrain from './sample/X_train.csv?raw'
-import yTrain from './sample/y_train.csv?raw'
-import metaTrain from './sample/metadata_train.csv?raw'
-import xTest from './sample/X_test.csv?raw'
-import yTest from './sample/y_test.csv?raw'
-import metaTest from './sample/metadata_test.csv?raw'
-import nirXTrain from './sample-nir/X_train.csv?raw'
-import nirYTrain from './sample-nir/y_train.csv?raw'
-import nirXTest from './sample-nir/X_test.csv?raw'
-import nirYTest from './sample-nir/y_test.csv?raw'
+import { buildDataset, type RawFile } from './dataset'
 
-export type SampleId = 'fruit' | 'nir-reg' | 'nir-clf'
+// The bundled demo datasets (real NIRS/FTIR corpora — see ./demo/SOURCES.md for
+// provenance + licences). Each is shipped as-is with its own train/test split.
+// The CSVs are loaded with a per-dataset dynamic import() so they CODE-SPLIT:
+// only the picked dataset's spectra download (anopheles alone is ~6.8 MB), and
+// they still inline into the offline single-file build.
+export type SampleId = 'corn' | 'beer' | 'meat' | 'anopheles'
 export interface SampleInfo {
   id: SampleId
   name: string
@@ -21,42 +14,69 @@ export interface SampleInfo {
   hint: string
 }
 export const SAMPLES: SampleInfo[] = [
-  { id: 'fruit', name: 'Fruit purée', task: 'regression', hint: 'tiny · protein' },
-  { id: 'nir-reg', name: 'NIR protein', task: 'regression', hint: '210 spectra · regression' },
-  { id: 'nir-clf', name: 'NIR protein', task: 'classification', hint: '210 spectra · 7 classes' },
+  { id: 'corn', name: 'Corn protein', task: 'regression', hint: '80 NIR spectra · protein' },
+  { id: 'beer', name: 'Beer extract', task: 'regression', hint: '60 NIR spectra · original extract' },
+  { id: 'meat', name: 'Meat species', task: 'classification', hint: '120 FTIR spectra · 3 classes' },
+  { id: 'anopheles', name: 'Anopheles oocyst', task: 'classification', hint: '333 NIR spectra · 2 classes' },
 ]
 
-const fruitFiles: RawFile[] = [
-  { name: 'X_train.csv', text: xTrain },
-  { name: 'y_train.csv', text: yTrain },
-  { name: 'metadata_train.csv', text: metaTrain },
-  { name: 'X_test.csv', text: xTest },
-  { name: 'y_test.csv', text: yTest },
-  { name: 'metadata_test.csv', text: metaTest },
-]
-const nirFiles: RawFile[] = [
-  { name: 'X_train.csv', text: nirXTrain },
-  { name: 'y_train.csv', text: nirYTrain },
-  { name: 'X_test.csv', text: nirXTest },
-  { name: 'y_test.csv', text: nirYTest },
-]
+interface DemoMeta {
+  /** display name passed to buildDataset */
+  name: string
+  /** human target label (overrides the raw Y header) */
+  targetName: string
+  /** lazy loader → the four RawFiles buildDataset consumes (X/Y train+test) */
+  load: () => Promise<RawFile[]>
+}
 
-export async function loadSampleDataset(id: SampleId = 'fruit'): Promise<MaterializedDataset> {
-  if (id === 'fruit') {
-    const ds = buildDataset(fruitFiles, 'Fruit purée (protein)')
-    ds.targetName = 'protein'
-    return ds
-  }
-  // NIR protein: the same real spectra, modelled either as regression (predict the
-  // protein value) or classification (predict the protein class).
-  const ds = buildDataset(nirFiles, id === 'nir-clf' ? 'NIR protein class' : 'NIR protein')
-  ds.targetName = 'protein'
-  const task = id === 'nir-clf' ? 'multiclass' : 'regression'
-  if (task !== ds.taskType) {
-    ds.taskType = task
-    const enc = encodeTarget(ds.yRaw ?? ds.y, ds.labelsRaw ?? Array.from(ds.y, String), task)
-    ds.y = enc.y
-    ds.classes = enc.classes
-  }
+const DEMOS: Record<SampleId, DemoMeta> = {
+  corn: {
+    name: 'Corn protein (NIR)',
+    targetName: 'protein',
+    load: async () => [
+      { name: 'Xtrain.csv', text: (await import('./demo/corn/Xtrain.csv?raw')).default },
+      { name: 'Ytrain.csv', text: (await import('./demo/corn/Ytrain.csv?raw')).default },
+      { name: 'Xtest.csv', text: (await import('./demo/corn/Xtest.csv?raw')).default },
+      { name: 'Ytest.csv', text: (await import('./demo/corn/Ytest.csv?raw')).default },
+    ],
+  },
+  beer: {
+    name: 'Beer extract (NIR)',
+    targetName: 'original_extract',
+    load: async () => [
+      { name: 'Xtrain.csv', text: (await import('./demo/beer/Xtrain.csv?raw')).default },
+      { name: 'Ytrain.csv', text: (await import('./demo/beer/Ytrain.csv?raw')).default },
+      { name: 'Xtest.csv', text: (await import('./demo/beer/Xtest.csv?raw')).default },
+      { name: 'Ytest.csv', text: (await import('./demo/beer/Ytest.csv?raw')).default },
+    ],
+  },
+  meat: {
+    name: 'Meat species (FTIR)',
+    targetName: 'meat_species',
+    load: async () => [
+      { name: 'Xtrain.csv', text: (await import('./demo/meat/Xtrain.csv?raw')).default },
+      { name: 'Ytrain.csv', text: (await import('./demo/meat/Ytrain.csv?raw')).default },
+      { name: 'Xtest.csv', text: (await import('./demo/meat/Xtest.csv?raw')).default },
+      { name: 'Ytest.csv', text: (await import('./demo/meat/Ytest.csv?raw')).default },
+    ],
+  },
+  anopheles: {
+    name: 'Anopheles oocyst (NIR)',
+    targetName: 'oocyst',
+    load: async () => [
+      { name: 'Xtrain.csv', text: (await import('./demo/anopheles/Xtrain.csv?raw')).default },
+      { name: 'Ytrain.csv', text: (await import('./demo/anopheles/Ytrain.csv?raw')).default },
+      { name: 'Xtest.csv', text: (await import('./demo/anopheles/Xtest.csv?raw')).default },
+      { name: 'Ytest.csv', text: (await import('./demo/anopheles/Ytest.csv?raw')).default },
+    ],
+  },
+}
+
+export async function loadSampleDataset(id: SampleId = 'corn'): Promise<MaterializedDataset> {
+  const meta = DEMOS[id]
+  // task type (regression vs binary/multiclass) is inferred from the integer-vs-float
+  // targets by buildDataset → inferTaskType, which is correct for all four corpora.
+  const ds = buildDataset(await meta.load(), meta.name)
+  ds.targetName = meta.targetName
   return ds
 }

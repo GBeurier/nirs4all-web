@@ -6,13 +6,13 @@
 // bundled-sample id is, so demo sessions restore in full and uploads are
 // re-dropped. Typed arrays in the fitted model round-trip via the n4a codec.
 import { nodeByType } from '@/catalog/nodes'
-import type { SampleId } from '@/data/samples'
+import { SAMPLES, type SampleId } from '@/data/samples'
 import type { PipelineDSL } from '@/engine/types'
 import { deserializeTyped, type LoadedModel, serializeTyped } from './n4a'
 
 const KEY = 'nirs4all-web:session:v1'
 const LEGACY_SESSION_KEYS = ['nirs4all-lite:session:v1']
-const SAMPLE_IDS: SampleId[] = ['fruit', 'nir-reg', 'nir-clf']
+const SAMPLE_IDS: SampleId[] = SAMPLES.map((s) => s.id)
 
 export interface Session {
   pipeline?: PipelineDSL

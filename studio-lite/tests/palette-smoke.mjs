@@ -16,7 +16,7 @@ const fail = (m) => { console.error('✗ ' + m); process.exitCode = 1 }
 
 try {
   await page.goto(URL, { waitUntil: 'load', timeout: 30000 })
-  await page.locator('button').filter({ hasText: /NIR protein/ }).first().click()
+  await page.locator('button').filter({ hasText: /Corn protein/ }).first().click()
   await page.waitForSelector('text=/samples ×/', { timeout: 30000 })
   await page.locator('[data-step="pipeline"]').click()
   await page.waitForSelector('text=/Run pipeline/i', { timeout: 15000 })
