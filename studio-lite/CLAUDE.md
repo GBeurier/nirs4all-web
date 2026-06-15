@@ -56,10 +56,13 @@ The suite covers the **core path** — `smoke` (load→run→results→predict w
 path) — plus one smoke per editor/feature surface added since: the full DAG bucket (`dag-ops`,
 `branch` feature-union, `generators` sweep), `split` / optional `cv-optional` / optional `no-model`
 sequencing, the AOM family (`aom`, `pop`), the extra catalog models (`new-models`, `new-models-ui`,
-`operators`), the `palette`, and `persistence` + `n4a-roundtrip` (session and `.n4a` bundle
-round-trips). `tests/aom-cassava-timing.mjs` is a one-off `fitAom` wall-time probe, **not** part of
-the gate (and is excluded by the `*smoke.mjs` glob). Each smoke is independent and reads the served
-app from `$SMOKE_URL`; `new-models-smoke.mjs` is self-contained and ignores it.
+`operators`), the broad model pack (`new-pack` engine-level + `new-pack-ui` for ECR / O2PLS /
+AOM-Ridge blender / AOM operator-PLS stack and the DataTwinning / SystematicCircular splits), the
+Explore playground (`explore` — preprocessing preview + client PCA), the `palette`, and `persistence`
++ `n4a-roundtrip` (session and `.n4a` bundle round-trips). `tests/aom-cassava-timing.mjs` is a one-off
+`fitAom` wall-time probe, **not** part of the gate (and is excluded by the `*smoke.mjs` glob). Each
+smoke is independent and reads the served app from `$SMOKE_URL`; `new-models-smoke.mjs` and
+`new-pack-smoke.mjs` are self-contained (load the staged WASM directly) and ignore it.
 
 **Green gate** = typecheck + test + validate:catalog + build + build:single + the full `tests/*smoke.mjs`
 suite all pass with no console errors.

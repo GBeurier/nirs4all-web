@@ -13,7 +13,7 @@ import { getModule } from "./ffi.js";
 export { loadModule, getModule, makeMatrixView, readArrayView } from "./ffi.js";
 export { Context } from "./context.js";
 export { Config } from "./config.js";
-export { Model, fitPls, predictPls, fitModel, predictModel, fitAom, fitPop, computeSplit, computeSplitIndices } from "./model.js";
+export { Model, fitPls, predictPls, fitModel, predictModel, fitAom, fitPop, fitAomRidge, fitAomStack, computeSplit, computeSplitIndices } from "./model.js";
 export { ppCreate, ppFit, ppTransform, ppGetState, ppSetState, ppDestroy, } from "./preprocessing.js";
 export { MethodResult } from "./methodResult.js";
 export { Status, Dtype, Algorithm, Solver, Deflation, Pls4allError, } from "./types.js";

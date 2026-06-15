@@ -10,41 +10,47 @@
 :root {
   --font-size: 15px;
 
-  /* Brand palette — teal-led, matching the studio's primary/accent.
-   * (cyan/indigo/amber survive only as chart-series hints; the UI chrome is
-   * teal + slate + semantic.) */
-  --brand-teal: #12a190;     /* primary  — hsl(173 80% 35%) */
-  --brand-teal-d: #1f7a70;   /* accent   — hsl(173 60% 30%) */
-  --brand-teal-l: #30e8d3;   /* light teal accent */
-  --brand-green: #16a249;    /* success  — hsl(142 76% 36%) */
-  --brand-amber: #f59f0a;    /* warning  — hsl(38 92% 50%) */
+  /* Brand palette — teal-led, matching the cross-site nirs4all family
+   * (nirs4all.org / formats / datasets all share these exact hex values:
+   * teal #0d9488, teal-d #0f766e, teal-l #2dd4bf). cyan/indigo survive only as
+   * chart-series hints; the UI chrome is teal + warm paper + semantic. */
+  --brand-teal: #0d9488;     /* primary  — family --teal */
+  --brand-teal-d: #0f766e;   /* accent   — family --teal-d */
+  --brand-teal-l: #2dd4bf;   /* light teal — family --teal-l */
+  --brand-green: #10b981;    /* success  — family --green */
+  --brand-amber: #d97706;    /* warning  — family --amber */
 
-  /* shadcn semantic tokens — light (studio "Teal/Cyan scientific palette") */
-  --background: #f8fafc;
-  --foreground: #0f1729;
-  --card: #ffffff;
-  --card-foreground: #0f1729;
+  /* Warm paper neutrals (family --paper / --border-warm) for section/empty bands. */
+  --paper: #faf7f0;
+  --paper-2: #f3efe5;
+  --border-warm: #e8e2d3;
+
+  /* shadcn semantic tokens — light (nirs4all family "warm paper + teal") */
+  --background: #faf7f0;       /* warm paper canvas (family --paper) */
+  --foreground: #0f172a;
+  --card: #ffffff;             /* white work surfaces */
+  --card-foreground: #0f172a;
   --popover: #ffffff;
-  --popover-foreground: #0f1729;
-  --primary: #12a190;
+  --popover-foreground: #0f172a;
+  --primary: #0d9488;
   --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f1729;
-  --muted: #eaf0f6;
-  --muted-foreground: #65758b;
-  --accent: #1f7a70;
+  --secondary: #f5f7fa;
+  --secondary-foreground: #0f172a;
+  --muted: #f5f7fa;
+  --muted-foreground: #64748b;
+  --accent: #0f766e;
   --accent-foreground: #ffffff;
-  --destructive: #dc2828;
+  --destructive: #e11d48;       /* family --rose */
   --destructive-foreground: #ffffff;
-  --success: #16a249;
-  --warning: #f59f0a;
-  --border: #e1e7ef;
+  --success: #10b981;
+  --warning: #d97706;
+  --border: #e2e8f0;
   --input: transparent;
-  --input-background: #f8fafc;
+  --input-background: #ffffff;
   --switch-background: #cbd5e1;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: #12a190;
+  --ring: #0d9488;
 
   /* Charts: a small multi-hue sequence for data-viz only (kept from lite —
    * the studio defines no chart tokens; recharts genuinely needs many colors). */
@@ -54,49 +60,55 @@
   --chart-4: #10b981;
   --chart-5: #d97706;
 
-  --radius: 0.75rem;
+  --radius: 1rem; /* 16px — family cards/panels (--radius-sm derives to ~12px) */
 
-  --sidebar: #f8fafc;
-  --sidebar-foreground: #1b294b;
-  --sidebar-primary: #12a190;
+  --sidebar: #f5f7fa;
+  --sidebar-foreground: #334155;
+  --sidebar-primary: #0d9488;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #eaf0f6;
-  --sidebar-accent-foreground: #0f1729;
-  --sidebar-border: #e1e7ef;
-  --sidebar-ring: #12a190;
+  --sidebar-accent: #eef2f7;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #0d9488;
 }
 
 .dark {
-  /* Dark scientific theme — ported from the studio's full .dark block. */
-  --background: #080c16;
-  --foreground: #f1f5f9;
-  --card: #0b111e;
-  --card-foreground: #f1f5f9;
-  --popover: #0e1525;
-  --popover-foreground: #f1f5f9;
-  --primary: #17cfb9;
-  --primary-foreground: #080c16;
-  --secondary: #191f2e;
+  /* Dark scientific theme — retuned to mirror the family's navy footer
+   * (datasets/org footer: #10233a → #0b1626 → #070e1a) with light-teal accents. */
+  --background: #0b1626;
+  --foreground: #eef4fb;
+  --card: #0f1d30;
+  --card-foreground: #eef4fb;
+  --popover: #102338;
+  --popover-foreground: #eef4fb;
+  --primary: #2dd4bf;
+  --primary-foreground: #061018;
+  --secondary: #16263b;
   --secondary-foreground: #dbe6f0;
-  --muted: #151b28;
-  --muted-foreground: #7588a3;
-  --accent: #248f82;
+  --muted: #13233a;
+  --muted-foreground: #8ba0bb;
+  --accent: #1ba391;
   --accent-foreground: #f8fafc;
-  --destructive: #dc2828;
+  --destructive: #f43f6a;
   --destructive-foreground: #ffffff;
-  --success: #1cca5b;
+  --success: #34d399;
   --warning: #f59f0a;
-  --border: #20283c;
-  --input: #1d2435;
-  --input-background: #0e1525;
+  --border: #1d2c44;
+  --input: #16263b;
+  --input-background: #102338;
   --switch-background: #334155;
-  --ring: #17cfb9;
+  --ring: #2dd4bf;
+
+  /* Warm-paper tokens map to deep navy surfaces in dark. */
+  --paper: #0b1626;
+  --paper-2: #0f1d30;
+  --border-warm: #1d2c44;
 
   /* Brand teal tracks the dark primary so teal accents stay legible. */
-  --brand-teal: #17cfb9;
-  --brand-teal-d: #248f82;
-  --brand-teal-l: #30e8d3;
-  --brand-green: #1cca5b;
+  --brand-teal: #2dd4bf;
+  --brand-teal-d: #14b8a6;
+  --brand-teal-l: #5eead4;
+  --brand-green: #34d399;
   --brand-amber: #f59f0a;
 
   --chart-1: #2dd4bf;
@@ -104,14 +116,14 @@
   --chart-3: #818cf8;
   --chart-4: #34d399;
   --chart-5: #fbbf24;
-  --sidebar: #090e1a;
+  --sidebar: #081320;
   --sidebar-foreground: #c9d9e8;
-  --sidebar-primary: #17cfb9;
-  --sidebar-primary-foreground: #080c16;
-  --sidebar-accent: #191f2e;
-  --sidebar-accent-foreground: #f1f5f9;
-  --sidebar-border: #1b2232;
-  --sidebar-ring: #17cfb9;
+  --sidebar-primary: #2dd4bf;
+  --sidebar-primary-foreground: #061018;
+  --sidebar-accent: #16263b;
+  --sidebar-accent-foreground: #eef4fb;
+  --sidebar-border: #16243a;
+  --sidebar-ring: #2dd4bf;
 }
 
 @theme inline {
@@ -153,6 +165,10 @@
   --color-brand-teal-l: var(--brand-teal-l);
   --color-brand-green: var(--brand-green);
   --color-brand-amber: var(--brand-amber);
+
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-border-warm: var(--border-warm);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -211,12 +227,17 @@
   to { background-position: 200% 0; }
 }
 
-/* Flat slate app background (the studio look): no warm paper, no dotted grain —
- * just the slate `--background` with a single very subtle teal glow up top. */
+/* Warm-paper app background — the nirs4all family "section-paper" look: the warm
+ * `--paper` canvas, a faint crossed 1px grid, and a single subtle teal glow up
+ * top. In dark mode `--paper` resolves to deep navy, so the same rule reads as a
+ * navy canvas with a teal glow. */
 .n4a-app-bg {
   background-color: var(--background);
   background-image:
-    radial-gradient(60rem 40rem at 50% -16%, color-mix(in oklab, var(--brand-teal) 8%, transparent), transparent 60%);
+    radial-gradient(60rem 40rem at 50% -16%, color-mix(in oklab, var(--brand-teal) 10%, transparent), transparent 60%),
+    linear-gradient(color-mix(in oklab, var(--foreground) 3.5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklab, var(--foreground) 3.5%, transparent) 1px, transparent 1px);
+  background-size: 100% 100%, 52px 52px, 52px 52px;
   background-attachment: fixed;
 }
 
@@ -259,7 +280,7 @@
 }
 .n4a-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 18px 40px -22px rgba(18, 161, 144, 0.32);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 18px 40px -22px rgba(13, 148, 136, 0.32);
   border-color: color-mix(in oklab, var(--brand-teal) 28%, var(--border));
 }
 .n4a-card::after {

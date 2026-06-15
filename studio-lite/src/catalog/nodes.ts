@@ -436,7 +436,7 @@ export const MODEL_NODES: NodeDef[] = [
     icon: 'Wand2',
     task: 'regression',
     params: [
-      { name: 'n_components', label: 'Max components', type: 'int', default: 10, min: 1, max: 40, help: 'Max latent variables for the internal SIMPLS fits.' },
+      { name: 'n_components', label: 'Max components', type: 'int', default: 15, min: 1, max: 40, help: 'Max latent variables for the internal SIMPLS fits.' },
       { name: 'screen_folds', label: 'Screen CV folds', type: 'int', default: 5, min: 2, max: 10, help: 'Internal-CV fold count for the operator screen.' },
       { name: 'operator_bank', label: 'Operator bank', type: 'operators', default: AOM_DEFAULT_BANK, help: 'Strict-linear operators screened by the AOM selector. Picking fewer/different operators changes the fit.' },
     ],
@@ -454,11 +454,55 @@ export const MODEL_NODES: NodeDef[] = [
     icon: 'Wand2',
     task: 'regression',
     params: [
-      { name: 'n_components', label: 'Max components', type: 'int', default: 10, min: 1, max: 40, help: 'Max latent variables; the screen picks an operator for each one.' },
+      { name: 'n_components', label: 'Max components', type: 'int', default: 15, min: 1, max: 40, help: 'Max latent variables; the screen picks an operator for each one.' },
       { name: 'screen_folds', label: 'Screen CV folds', type: 'int', default: 5, min: 2, max: 10, help: 'Internal-CV fold count for the per-component operator screen.' },
       { name: 'operator_bank', label: 'Operator bank', type: 'operators', default: AOM_DEFAULT_BANK, help: 'Strict-linear operators the per-component selector may pick from.' },
     ],
     n4m: { fit: 'n4m_model_selection_pop_pls_select', predict: 'n4m_wasm_model_predict_from_coeffs' },
+    autonomous: true,
+  },
+
+  {
+    id: 'models.ensemble.aom_ridge_blender',
+    type: 'AOMRidgeBlender',
+    name: 'AOM-Ridge blender',
+    category: 'model',
+    description:
+      'AOM Ridge simplex blender — builds a strict-linear chain bank, scores (chain, λ) Ridge candidates by out-of-fold CV, then non-negatively blends them and folds the result back into input-space coefficients. Screens preprocessing internally, so use it WITHOUT preceding preprocessing steps.',
+    icon: 'Wand2',
+    task: 'regression',
+    advanced: true,
+    params: [
+      { name: 'profile', label: 'Bank profile', type: 'select', default: 0, options: [
+        { value: 0, label: 'compact' }, { value: 1, label: 'wide' },
+      ], help: 'Strict-linear chain bank size screened by the blender.' },
+      { name: 'screen_folds', label: 'Screen CV folds', type: 'int', default: 5, min: 2, max: 10, help: 'Internal-CV folds for the out-of-fold Ridge scoring.' },
+      { name: 'regularizer', label: 'Blend regularizer', type: 'float', default: 0.01, min: 0, max: 10, step: 0.01, help: 'Shrinks the simplex blend weights toward uniform.' },
+    ],
+    n4m: { fit: 'n4m_ensemble_aom_ridge_blender_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
+    autonomous: true,
+  },
+
+  {
+    id: 'models.ensemble.aom_operator_pls_stack',
+    type: 'AOMOperatorPLSStack',
+    name: 'AOM PLS stack',
+    category: 'model',
+    description:
+      'AOM operator-PLS score stack with a Ridge head — fits a PLS score projector per strict-linear operator, concatenates the scores, CV-selects (components, α), refits the Ridge head and folds the stack into input-space coefficients. Single-target regression. Screens preprocessing internally, so use it WITHOUT preceding preprocessing steps.',
+    icon: 'Wand2',
+    task: 'regression',
+    advanced: true,
+    params: [
+      { name: 'profile', label: 'Bank profile', type: 'select', default: 0, options: [
+        { value: 0, label: 'compact' }, { value: 1, label: 'wide' },
+      ], help: 'Strict-linear operator bank size.' },
+      { name: 'screen_folds', label: 'Screen CV folds', type: 'int', default: 5, min: 2, max: 10, help: 'Internal-CV folds for the (components, α) screen.' },
+      { name: 'n_components', label: 'Max components', type: 'int', default: 15, min: 1, max: 40, help: 'Component-grid endpoint; the screen tries 1…this.' },
+      { name: 'std_penalty', label: 'Std penalty', type: 'float', default: 0, min: 0, max: 10, step: 0.05, help: 'Penalty on OOF-RMSE std in the selection criterion.' },
+      { name: 'gap_penalty', label: 'Gap penalty', type: 'float', default: 0, min: 0, max: 10, step: 0.05, help: 'Penalty on the (OOF − train) RMSE gap.' },
+    ],
+    n4m: { fit: 'n4m_ensemble_aom_operator_pls_stack_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
     autonomous: true,
   },
 
@@ -719,6 +763,37 @@ export const MODEL_NODES: NodeDef[] = [
     ],
     n4m: { fit: 'n4m_estimators_missing_aware_nipals_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
   },
+  {
+    id: 'models.pls.ecr',
+    type: 'ECR',
+    name: 'ECR',
+    category: 'model',
+    description: 'Elastic Component Regression — α interpolates between PCR (0) and PLS (1), returning an input-space coefficient triple.',
+    icon: 'GitBranch',
+    task: 'regression',
+    advanced: true,
+    params: [
+      { name: 'n_components', label: 'Components', type: 'int', default: 10, min: 1, max: 40, help: 'Number of latent components.' },
+      { name: 'alpha', label: 'α (PCR↔PLS)', type: 'float', default: 0.5, min: 0, max: 1, step: 0.05, help: '0 = PCR-like, 1 = PLS-like.' },
+    ],
+    n4m: { fit: 'n4m_estimators_ecr_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
+  },
+  {
+    id: 'models.pls.o2pls',
+    type: 'O2PLS',
+    name: 'O2PLS',
+    category: 'model',
+    description: 'Bidirectional orthogonal PLS (Trygg & Wold) — separates joint predictive variation from X- and Y-orthogonal variation, returning input-space coefficients.',
+    icon: 'GitBranch',
+    task: 'regression',
+    advanced: true,
+    params: [
+      { name: 'n_predictive', label: 'Predictive comps', type: 'int', default: 2, min: 1, max: 40, help: 'Joint predictive components.' },
+      { name: 'n_x_orthogonal', label: 'X-orthogonal comps', type: 'int', default: 1, min: 0, max: 40, help: 'X-orthogonal components removed.' },
+      { name: 'n_y_orthogonal', label: 'Y-orthogonal comps', type: 'int', default: 1, min: 0, max: 40, help: 'Y-orthogonal components removed.' },
+    ],
+    n4m: { fit: 'n4m_estimators_o2pls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
+  },
 ]
 
 // Split operators — a single train/test split applied BEFORE cross-validation,
@@ -779,6 +854,32 @@ export const SPLIT_NODES: NodeDef[] = [
       ] },
     ],
     n4m: { fit: 'n4m_model_selection_kbins_stratified_create', transform: 'n4m_model_selection_kbins_stratified_split' },
+  },
+  {
+    id: 'split.data_twinning',
+    type: 'DataTwinning',
+    name: 'SPlit (twinning)',
+    category: 'split',
+    description: 'SPlit / data twinning — deterministic X-space split that builds a statistically "twin" test set with balanced multivariate coverage of the training set.',
+    icon: 'Split',
+    params: [
+      { name: 'test_size', label: 'Test fraction', type: 'float', default: 0.25, min: 0.05, max: 0.6, step: 0.05, help: 'Fraction of samples held out as the test set.' },
+      { name: 'seed', label: 'Seed', type: 'int', default: 42, min: 0, max: 1e9 },
+    ],
+    n4m: { fit: 'n4m_model_selection_data_twinning_create', transform: 'n4m_model_selection_data_twinning_split' },
+  },
+  {
+    id: 'split.systematic_circular',
+    type: 'SystematicCircular',
+    name: 'Systematic circular',
+    category: 'split',
+    description: 'Systematic circular split on the target — walks the Y-ordered samples in a circular stride so the test set spans the full target range. Deterministic.',
+    icon: 'Split',
+    params: [
+      { name: 'test_size', label: 'Test fraction', type: 'float', default: 0.25, min: 0.05, max: 0.6, step: 0.05, help: 'Fraction of samples held out as the test set.' },
+      { name: 'seed', label: 'Seed', type: 'int', default: 42, min: 0, max: 1e9 },
+    ],
+    n4m: { fit: 'n4m_model_selection_systematic_circular_create', transform: 'n4m_model_selection_systematic_circular_split' },
   },
 ]
 

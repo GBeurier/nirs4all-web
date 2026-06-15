@@ -3,7 +3,6 @@ import {
   AlertTriangle,
   Cpu,
   Database,
-  FlaskConical,
   GitBranch,
   LineChart,
   Loader2,
@@ -14,6 +13,7 @@ import {
   Sun,
   Upload,
 } from 'lucide-react'
+import { BrandMark } from '@/app/components/BrandMark'
 import { DatasetConfigDialog, DatasetUpload, DatasetView } from '@/components/dataset'
 import { ExecutionLog, PipelineBuilder } from '@/components/pipeline'
 import { migrateLegacyBranch } from '@/components/pipeline/_helpers'
@@ -285,12 +285,10 @@ export default function App() {
       {/* ── top runtime bar ───────────────────────────────────────────── */}
       <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-border/70 bg-card/80 px-4 backdrop-blur supports-[backdrop-filter]:bg-card/65">
         <div className="flex items-center gap-2.5">
-          <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm shadow-brand-teal/30">
-            <FlaskConical className="size-4" />
-          </span>
+          <BrandMark className="size-8 shrink-0 rounded-[9px] shadow-sm shadow-brand-teal/30" />
           <div className="flex items-baseline gap-1.5">
             <span className="n4a-grad-text font-display text-lg font-bold tracking-tight">nirs4all</span>
-            <span className="rounded bg-accent px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-accent-foreground">
+            <span className="rounded-full border border-brand-teal/30 bg-brand-teal/10 px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-brand-teal-d">
               web
             </span>
           </div>
@@ -471,6 +469,25 @@ export default function App() {
           </div>
         </main>
       </div>
+
+      {/* ── footer — nirs4all family bar ────────────────────────────────── */}
+      <footer className="shrink-0 border-t border-border-warm bg-paper/80">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3.5">
+          <div className="flex items-center gap-2.5">
+            <BrandMark className="size-6 shrink-0 rounded-[7px]" />
+            <span className="text-xs text-muted-foreground">
+              <span className="font-display font-semibold text-foreground">nirs4all</span> · NIRS modelling in your browser ·
+              100% client-side WASM
+            </span>
+          </div>
+          <nav className="flex items-center gap-4 text-xs font-medium text-muted-foreground">
+            <a href="https://nirs4all.org" target="_blank" rel="noreferrer" className="transition-colors hover:text-brand-teal-d">nirs4all.org</a>
+            <a href="https://formats.nirs4all.org" target="_blank" rel="noreferrer" className="transition-colors hover:text-brand-teal-d">formats</a>
+            <a href="https://datasets.nirs4all.org" target="_blank" rel="noreferrer" className="transition-colors hover:text-brand-teal-d">datasets</a>
+            <a href="https://github.com/GBeurier/nirs4all" target="_blank" rel="noreferrer" className="transition-colors hover:text-brand-teal-d">GitHub</a>
+          </nav>
+        </div>
+      </footer>
     </div>
   )
 }

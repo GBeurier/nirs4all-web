@@ -7,10 +7,13 @@
 import { loadMethodsWasm } from './nirs4all-lite'
 import type { MaterializedDataset, PipelineStep, Partition } from './types'
 
-export type SplitKind = 'KennardStone' | 'SPXY' | 'KMeans' | 'KBinsStratified'
+export type SplitKind = 'KennardStone' | 'SPXY' | 'KMeans' | 'KBinsStratified' | 'DataTwinning' | 'SystematicCircular'
 
 /** The catalog `type` tokens that are split operators (engine dispatch + UI). */
-export const SPLIT_KINDS: ReadonlySet<string> = new Set(['KennardStone', 'SPXY', 'KMeans', 'KBinsStratified'])
+export const SPLIT_KINDS: ReadonlySet<string> = new Set(['KennardStone', 'SPXY', 'KMeans', 'KBinsStratified', 'DataTwinning', 'SystematicCircular'])
+
+/** Split kinds that split on Y (the target) rather than X. */
+const Y_SPLIT_KINDS: ReadonlySet<string> = new Set(['SPXY', 'KBinsStratified', 'SystematicCircular'])
 
 const num = (v: unknown, d: number): number => {
   const n = Number(v)
@@ -50,7 +53,7 @@ export async function applySplit(ds: MaterializedDataset, step: PipelineStep): P
     nBins: num(step.params.n_bins, 5),
     strategy: num(step.params.strategy, 0),
   }
-  const mask = n4m.computeSplit(kind, X, kind === 'SPXY' || kind === 'KBinsStratified' ? Y : null, opts)
+  const mask = n4m.computeSplit(kind, X, Y_SPLIT_KINDS.has(kind) ? Y : null, opts)
 
   const partitions: Partition[] = ds.partitions.slice()
   for (let i = 0; i < nu; i++) partitions[universe[i]] = mask[i] === 1 ? 'test' : 'train'

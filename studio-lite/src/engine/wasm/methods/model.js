@@ -38,7 +38,7 @@ export function fitPls(X, Y, n_components) {
         _copy_in(M, Y.data, yBuf.ptr);
         // Uses the public ABI helper (1.13+): raw double pointers
         // + ints, no matrix-view structs in the JS↔WASM boundary.
-        const status = M.ccall("n4m_pls_fit_simple", "number", ["number", "number", "number", "number", "number",
+        const status = M.ccall("n4m_estimators_pls_fit", "number", ["number", "number", "number", "number", "number",
             "number", "number", "number", "number", "number"], [xBuf.ptr, yBuf.ptr, n, p, q, n_components,
             coefsBuf.ptr, xmBuf.ptr, ymBuf.ptr, 0]);
         checkStatus(status);
@@ -214,7 +214,7 @@ export function predictModel(model, X_new) {
  * and fits SIMPLS on the winner, returning INPUT-SPACE coefficients so the model
  * predicts on RAW X — it is therefore used WITHOUT preceding preprocessing steps
  * (the screen does the preprocessing internally). Numerics are 100% libn4m
- * (`n4m_aom_global_select`); this only builds the bank + validation plan.
+ * (`n4m_model_selection_aom_pls_select`); this only builds the bank + validation plan.
  *
  * @param X row-major (n × p) input matrix.
  * @param Y row-major (n × q) target matrix.
@@ -277,7 +277,7 @@ export function fitAom(X, Y, maxComponents, nFolds = 5, seed = 0, operatorKinds 
 /** Fit POP-PLS (per-component operator-adaptive PLS) on (X, Y).
  *
  * Like AOM-PLS but picks one strict-linear operator PER latent component
- * (`n4m_aom_per_component_select`) rather than one for the whole model, then
+ * (`n4m_model_selection_pop_pls_select`) rather than one for the whole model, then
  * returns INPUT-SPACE coefficients so it predicts on RAW X via the same affine
  * intercept path — so it is used WITHOUT preceding preprocessing steps (the
  * screen does the preprocessing internally). Numerics are 100% libn4m; this
@@ -352,11 +352,112 @@ export function fitPop(X, Y, maxComponents, nFolds = 5, seed = 0, operatorKinds 
             M._free(opsPtr);
     }
 }
+/** Fit the AOM Ridge simplex blender (n4m_ensemble_aom_ridge_blender_fit): builds
+ *  a strict-linear chain bank internally, OOF-blends (chain, λ) Ridge candidates
+ *  over `cv` contiguous folds, and returns the weighted final INPUT-SPACE
+ *  coefficients + intercept — so it predicts on RAW X via the affine form
+ *  y = intercept + X.B (used WITHOUT preceding preprocessing). */
+export function fitAomRidge(X, Y, opts = {}) {
+    if (X.rows !== Y.rows)
+        throw new Error(`X.rows (${X.rows}) must equal Y.rows (${Y.rows})`);
+    const M = getModule();
+    const n = X.rows, p = X.cols, q = Y.cols;
+    const profile = opts.profile ?? 0;
+    const cv = opts.cv ?? 5;
+    const regularizer = opts.regularizer ?? 0.01;
+    const lambdas = opts.ridgeLambdas ?? [];
+    const xBuf = _malloc_f64(M, n * p);
+    const yBuf = _malloc_f64(M, n * q);
+    const coefsBuf = _malloc_f64(M, p * q);
+    const interBuf = _malloc_f64(M, q);
+    const lamBuf = lambdas.length > 0 ? _malloc_f64(M, lambdas.length) : { ptr: 0 };
+    try {
+        _copy_in(M, X.data, xBuf.ptr);
+        _copy_in(M, Y.data, yBuf.ptr);
+        if (lamBuf.ptr !== 0)
+            _copy_in(M, Float64Array.from(lambdas), lamBuf.ptr);
+        const status = M.ccall("n4m_wasm_aom_ridge_fit", "number", ["number", "number", "number", "number", "number",
+            "number", "number", "number", "number", "number",
+            "number", "number"], [xBuf.ptr, yBuf.ptr, n, p, q,
+            profile, cv, lamBuf.ptr, lambdas.length, regularizer,
+            coefsBuf.ptr, interBuf.ptr]);
+        checkStatus(status);
+        return {
+            coefficients: _read_out(M, coefsBuf.ptr, p * q),
+            xMean: new Float64Array(p),
+            yMean: new Float64Array(q),
+            intercept: _read_out(M, interBuf.ptr, q),
+            n_features: p,
+            n_targets: q,
+        };
+    }
+    finally {
+        M._free(xBuf.ptr);
+        M._free(yBuf.ptr);
+        M._free(coefsBuf.ptr);
+        M._free(interBuf.ptr);
+        if (lamBuf.ptr !== 0)
+            M._free(lamBuf.ptr);
+    }
+}
+/** Fit the AOM operator-PLS score stack with Ridge head
+ *  (n4m_ensemble_aom_operator_pls_stack_fit). SINGLE-TARGET only (Y must be
+ *  n × 1). Returns the stack folded into INPUT-SPACE coefficients + intercept,
+ *  so it predicts on RAW X via the affine form (used WITHOUT preprocessing). */
+export function fitAomStack(X, Y, opts = {}) {
+    if (X.rows !== Y.rows)
+        throw new Error(`X.rows (${X.rows}) must equal Y.rows (${Y.rows})`);
+    if (Y.cols !== 1)
+        throw new Error("fitAomStack is single-target: Y must have exactly 1 column");
+    const M = getModule();
+    const n = X.rows, p = X.cols, q = 1;
+    const profile = opts.profile ?? 0;
+    const cv = opts.cv ?? 5;
+    const maxComponents = opts.maxComponents ?? 15;
+    const stdPenalty = opts.stdPenalty ?? 0;
+    const gapPenalty = opts.gapPenalty ?? 0;
+    const alphas = opts.alphas ?? [];
+    const xBuf = _malloc_f64(M, n * p);
+    const yBuf = _malloc_f64(M, n * q);
+    const coefsBuf = _malloc_f64(M, p * q);
+    const interBuf = _malloc_f64(M, q);
+    const alphaBuf = alphas.length > 0 ? _malloc_f64(M, alphas.length) : { ptr: 0 };
+    try {
+        _copy_in(M, X.data, xBuf.ptr);
+        _copy_in(M, Y.data, yBuf.ptr);
+        if (alphaBuf.ptr !== 0)
+            _copy_in(M, Float64Array.from(alphas), alphaBuf.ptr);
+        const status = M.ccall("n4m_wasm_aom_stack_fit", "number", ["number", "number", "number", "number", "number",
+            "number", "number", "number", "number", "number",
+            "number", "number", "number", "number"], [xBuf.ptr, yBuf.ptr, n, p, q,
+            profile, cv, maxComponents, alphaBuf.ptr, alphas.length,
+            stdPenalty, gapPenalty, coefsBuf.ptr, interBuf.ptr]);
+        checkStatus(status);
+        return {
+            coefficients: _read_out(M, coefsBuf.ptr, p * q),
+            xMean: new Float64Array(p),
+            yMean: new Float64Array(q),
+            intercept: _read_out(M, interBuf.ptr, q),
+            n_features: p,
+            n_targets: q,
+        };
+    }
+    finally {
+        M._free(xBuf.ptr);
+        M._free(yBuf.ptr);
+        M._free(coefsBuf.ptr);
+        M._free(interBuf.ptr);
+        if (alphaBuf.ptr !== 0)
+            M._free(alphaBuf.ptr);
+    }
+}
 const SPLIT_KIND_CODE = {
     KennardStone: 0,
     SPXY: 1,
     KMeans: 2,
     KBinsStratified: 3,
+    DataTwinning: 4,
+    SystematicCircular: 5,
 };
 /** Compute a single train/test split over the rows of X (and Y) via libn4m's
  * splitters, returning a `Uint8Array` mask of length n where 1 = test, 0 = train.

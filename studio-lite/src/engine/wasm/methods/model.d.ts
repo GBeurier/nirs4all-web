@@ -65,7 +65,7 @@ export interface AomModel extends FittedModel {
  * and fits SIMPLS on the winner, returning INPUT-SPACE coefficients so the model
  * predicts on RAW X — it is therefore used WITHOUT preceding preprocessing steps
  * (the screen does the preprocessing internally). Numerics are 100% libn4m
- * (`n4m_aom_global_select`); this only builds the bank + validation plan.
+ * (`n4m_model_selection_aom_pls_select`); this only builds the bank + validation plan.
  *
  * @param X row-major (n × p) input matrix.
  * @param Y row-major (n × q) target matrix.
@@ -93,7 +93,7 @@ export interface PopModel extends FittedModel {
 /** Fit POP-PLS (per-component operator-adaptive PLS) on (X, Y).
  *
  * Like AOM-PLS but picks one strict-linear operator PER latent component
- * (`n4m_aom_per_component_select`) rather than one for the whole model, then
+ * (`n4m_model_selection_pop_pls_select`) rather than one for the whole model, then
  * returns INPUT-SPACE coefficients so it predicts on RAW X via the same affine
  * intercept path — so it is used WITHOUT preceding preprocessing steps (the
  * screen does the preprocessing internally). Numerics are 100% libn4m; this
@@ -109,8 +109,45 @@ export interface PopModel extends FittedModel {
  *   derivative / finite-difference) is screened.
  */
 export declare function fitPop(X: Matrix, Y: Matrix, maxComponents: number, nFolds?: number, seed?: number, operatorKinds?: number[]): PopModel;
+/** Options for the AOM Ridge simplex blender. */
+export interface AomRidgeOptions {
+    /** operator/chain bank profile: 0 = compact, 1 = wide (default 0). */
+    profile?: number;
+    /** internal CV folds for OOF Ridge scoring (default 5). */
+    cv?: number;
+    /** Ridge λ candidate grid; omit for a default log grid. */
+    ridgeLambdas?: number[];
+    /** non-negative shrinkage of the simplex blend toward uniform (default 0.01). */
+    regularizer?: number;
+}
+/** Fit the AOM Ridge simplex blender (n4m_ensemble_aom_ridge_blender_fit): builds
+ *  a strict-linear chain bank internally, OOF-blends (chain, λ) Ridge candidates
+ *  over `cv` contiguous folds, and returns the weighted final INPUT-SPACE
+ *  coefficients + intercept — so it predicts on RAW X via the affine form
+ *  y = intercept + X.B (used WITHOUT preceding preprocessing). */
+export declare function fitAomRidge(X: Matrix, Y: Matrix, opts?: AomRidgeOptions): FittedModel;
+/** Options for the AOM operator-PLS score stack (Ridge head). */
+export interface AomStackOptions {
+    /** operator bank profile: 0 = compact, 1 = wide (default 0). */
+    profile?: number;
+    /** internal CV folds for the (n_components, alpha) screen (default 5). */
+    cv?: number;
+    /** component grid endpoint — screens [1..maxComponents] (default 15). */
+    maxComponents?: number;
+    /** Ridge-head α grid; omit for a default log grid. */
+    alphas?: number[];
+    /** non-negative penalty on OOF-RMSE std in the selection criterion (default 0). */
+    stdPenalty?: number;
+    /** non-negative penalty on (mean_oof_rmse - mean_train_rmse) (default 0). */
+    gapPenalty?: number;
+}
+/** Fit the AOM operator-PLS score stack with Ridge head
+ *  (n4m_ensemble_aom_operator_pls_stack_fit). SINGLE-TARGET only (Y must be
+ *  n × 1). Returns the stack folded into INPUT-SPACE coefficients + intercept,
+ *  so it predicts on RAW X via the affine form (used WITHOUT preprocessing). */
+export declare function fitAomStack(X: Matrix, Y: Matrix, opts?: AomStackOptions): FittedModel;
 /** A train/test splitter kind for {@link computeSplit}. */
-export type SplitKind = "KennardStone" | "SPXY" | "KMeans" | "KBinsStratified";
+export type SplitKind = "KennardStone" | "SPXY" | "KMeans" | "KBinsStratified" | "DataTwinning" | "SystematicCircular";
 /** Options for {@link computeSplit}. `testSize` is a fraction in (0, 1). */
 export interface SplitOptions {
     /** test fraction in (0, 1); default 0.25. */
