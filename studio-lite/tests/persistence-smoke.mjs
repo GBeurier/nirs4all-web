@@ -16,8 +16,8 @@ page.on('pageerror', (e) => errors.push('PAGEERR: ' + e.message))
 
 try {
   await page.goto(URL, { waitUntil: 'load', timeout: 30000 })
-  // load a bundled sample (NIR protein regression)
-  await page.locator('button').filter({ hasText: /NIR protein/ }).first().click()
+  // load a bundled sample (Corn protein regression)
+  await page.locator('button').filter({ hasText: /Corn protein/ }).first().click()
   await page.waitForSelector('text=/samples ×/', { timeout: 30000 })
   const before = (await page.locator('text=/samples ×/').first().textContent())?.trim() || ''
   console.log(`✓ sample loaded → "${before}"`)

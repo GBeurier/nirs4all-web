@@ -35,8 +35,11 @@ export function applyPreview(ds: MaterializedDataset, op: PreviewOp): Float64Arr
   if (!op.type) return null
   try {
     const full: Mat = { data: ds.X, rows: ds.nSamples, cols: ds.nFeatures }
+    // Fit stateful ops (MSC) on the TRAIN rows only — exclude both test AND
+    // predict rows so the preview is leakage-honest; fall back to all rows if
+    // the dataset has no explicit train partition.
     const trainIdx: number[] = []
-    for (let i = 0; i < ds.nSamples; i++) if (ds.partitions[i] !== 'test') trainIdx.push(i)
+    for (let i = 0; i < ds.nSamples; i++) if (ds.partitions[i] === 'train') trainIdx.push(i)
     const train = trainIdx.length > 0 ? selectRows(full, trainIdx) : full
     return makeTransformer(op.type, op.params, train).apply(full).data
   } catch {
@@ -67,7 +70,7 @@ export function continuousColor(t: number): string {
 export interface SpectraLine { key: string; color: string }
 export interface SpectraMean { key: string; color: string; dash?: boolean; label: string }
 export interface SpectraChartModel {
-  rows: Record<string, number | number[]>[]
+  rows: Record<string, number | number[] | null>[]
   lines: SpectraLine[]
   /** dataKey of the [min,max] range band, if drawn */
   bandKey?: string
@@ -102,23 +105,35 @@ export function buildSpectraChart(
     for (let i = 0; i < active.length; i++) active[i] = (processed as Float64Array)[i] - orig[i]
   }
 
-  // per-wavelength min / max / mean over the filtered rows (active + original-for-both)
+  // per-wavelength min / max / mean over the filtered rows (active + original-for-both),
+  // skipping non-finite cells so missing values never poison the band/mean.
   const mn = new Float64Array(p).fill(Infinity)
   const mx = new Float64Array(p).fill(-Infinity)
   const mean = new Float64Array(p)
+  const cnt = new Int32Array(p)
   const omean = new Float64Array(p)
+  const ocnt = new Int32Array(p)
   const both = viewMode === 'both' && hasProc
   for (const r of idx) {
     const base = r * p
     for (let c = 0; c < p; c++) {
       const v = active[base + c]
-      if (v < mn[c]) mn[c] = v
-      if (v > mx[c]) mx[c] = v
-      mean[c] += v
-      if (both) omean[c] += orig[base + c]
+      if (Number.isFinite(v)) {
+        if (v < mn[c]) mn[c] = v
+        if (v > mx[c]) mx[c] = v
+        mean[c] += v
+        cnt[c]++
+      }
+      if (both) {
+        const ov = orig[base + c]
+        if (Number.isFinite(ov)) { omean[c] += ov; ocnt[c]++ }
+      }
     }
   }
-  for (let c = 0; c < p; c++) { mean[c] /= idx.length; if (both) omean[c] /= idx.length }
+  for (let c = 0; c < p; c++) {
+    mean[c] = cnt[c] > 0 ? mean[c] / cnt[c] : NaN
+    if (both) omean[c] = ocnt[c] > 0 ? omean[c] / ocnt[c] : NaN
+  }
 
   // subsample individual lines, colored by partition
   const step = Math.max(1, Math.ceil(idx.length / maxLines))
@@ -128,15 +143,19 @@ export function buildSpectraChart(
     drawn.push({ key: `l${drawn.length}`, color: PARTITION_COLOR[ds.partitions[r]] ?? PARTITION_COLOR.train, row: r })
   }
 
-  const rows: Record<string, number | number[]>[] = []
+  const rows: Record<string, number | number[] | null>[] = []
   for (let c = 0; c < p; c++) {
-    const row: Record<string, number | number[]> = {
+    const row: Record<string, number | number[] | null> = {
       x: axis[c] ?? c,
-      band: [mn[c], mx[c]],
-      mean: mean[c],
+      // null where no finite value exists → recharts renders a gap, not a spike
+      band: cnt[c] > 0 ? [mn[c], mx[c]] : null,
+      mean: cnt[c] > 0 ? mean[c] : null,
     }
-    if (both) row.omean = omean[c]
-    for (const d of drawn) row[d.key] = active[d.row * p + c]
+    if (both) row.omean = ocnt[c] > 0 ? omean[c] : null
+    for (const d of drawn) {
+      const v = active[d.row * p + c]
+      row[d.key] = Number.isFinite(v) ? v : null
+    }
     rows.push(row)
   }
 

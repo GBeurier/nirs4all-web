@@ -1,5 +1,5 @@
 // AOM smoke (task #13): build an AOM-PLS pipeline with NO preprocessing on the
-// NIR protein regression sample, run it via the served WASM stack, and confirm
+// Corn protein regression sample, run it via the served WASM stack, and confirm
 // CV Scores render with an RMSE metric, the "by dag-ml" badge, and no console
 // errors. AOM screens preprocessing internally and returns input-space coeffs +
 // intercept, so it is used WITHOUT preceding preproc steps (default preset is
@@ -26,10 +26,10 @@ try {
   await page.goto(URL, { waitUntil: 'load', timeout: 30000 })
   await page.waitForSelector('text=nirs4all', { timeout: 10000 })
 
-  // load the NIR protein regression sample
-  await page.locator('button').filter({ hasText: 'NIR protein' }).first().click()
+  // load the Corn protein regression sample
+  await page.locator('button').filter({ hasText: 'Corn protein' }).first().click()
   await page.waitForSelector('text=/samples ×/', { timeout: 20000 })
-  console.log('✓ NIR protein sample loaded')
+  console.log('✓ Corn protein sample loaded')
 
   // open the pipeline workbench (default regression preset has NO preproc steps)
   await page.locator('[data-step="pipeline"]').click()

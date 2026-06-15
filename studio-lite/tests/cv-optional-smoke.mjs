@@ -25,7 +25,7 @@ try {
   await page.goto(URL, { waitUntil: 'load', timeout: 30000 })
   await page.waitForSelector('text=nirs4all', { timeout: 10000 })
 
-  await page.locator('button').filter({ hasText: 'Fruit purée' }).first().click()
+  await page.locator('button').filter({ hasText: 'Corn protein' }).first().click()
   await page.waitForSelector('text=/samples ×/', { timeout: 20000 })
   console.log('✓ sample dataset loaded')
 

@@ -42,18 +42,27 @@ export function computePca(ds: MaterializedDataset, maxComp = 4, maxSamples = 20
   const n = usedIdx.length
   const comps = Math.min(maxComp, Math.max(1, Math.min(n - 1, p)))
 
-  // centered design Xc (n×p)
+  // centered design Xc (n×p). Non-finite cells are mean-imputed (deviation 0)
+  // so missing values cannot contaminate the column means, the Gram matrix, or
+  // the eigenvalues — a NaN anywhere would otherwise poison every score.
   const mean = new Float64Array(p)
+  const cnt = new Int32Array(p)
   for (const r of usedIdx) {
     const base = r * p
-    for (let c = 0; c < p; c++) mean[c] += ds.X[base + c]
+    for (let c = 0; c < p; c++) {
+      const v = ds.X[base + c]
+      if (Number.isFinite(v)) { mean[c] += v; cnt[c]++ }
+    }
   }
-  for (let c = 0; c < p; c++) mean[c] /= Math.max(1, n)
+  for (let c = 0; c < p; c++) mean[c] = cnt[c] > 0 ? mean[c] / cnt[c] : 0
   const Xc = new Float64Array(n * p)
   for (let i = 0; i < n; i++) {
     const base = usedIdx[i] * p
     const ob = i * p
-    for (let c = 0; c < p; c++) Xc[ob + c] = ds.X[base + c] - mean[c]
+    for (let c = 0; c < p; c++) {
+      const v = ds.X[base + c]
+      Xc[ob + c] = Number.isFinite(v) ? v - mean[c] : 0
+    }
   }
 
   // Gram K = Xc·Xcᵀ (n×n, symmetric PSD)

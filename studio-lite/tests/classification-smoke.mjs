@@ -1,4 +1,4 @@
-// Full classification vertical slice: load the NIR-classes sample → PLS-DA run →
+// Full classification vertical slice: load the Meat species sample → PLS-DA run →
 // results show Accuracy + a confusion matrix in the Residuals tab.
 import { chromium } from 'playwright-core'
 
@@ -19,8 +19,8 @@ const fail = (m) => {
 
 try {
   await page.goto(URL, { waitUntil: 'load', timeout: 30000 })
-  // the classification sample is the NIR button labelled "7 classes"
-  await page.locator('button').filter({ hasText: '7 classes' }).first().click()
+  // the classification sample is the 3-class "Meat species" button
+  await page.locator('button').filter({ hasText: 'Meat species' }).first().click()
   await page.waitForSelector('text=/samples ×/', { timeout: 20000 })
   console.log('✓ NIR classification sample loaded')
 
