@@ -7,7 +7,7 @@ import { chromium } from 'playwright-core'
 
 const APP_URL = process.env.SMOKE_URL || 'http://localhost:4355/'
 const EXE = process.env.CHROME || '/usr/bin/google-chrome'
-const FRUIT_XTEST = process.env.FRUIT_XTEST || new URL('../src/data/sample/X_test.csv', import.meta.url).pathname
+const FRUIT_XTEST = process.env.FRUIT_XTEST || new URL('../src/data/demo/corn/Xtest.csv', import.meta.url).pathname
 
 const browser = await chromium.launch({ executablePath: EXE, headless: true, args: ['--no-sandbox'] })
 const ctx = await browser.newContext({ acceptDownloads: true })
@@ -20,7 +20,7 @@ const fail = (m) => { console.error('✗ ' + m); process.exitCode = 1 }
 try {
   // 1. train a model
   await page.goto(APP_URL, { waitUntil: 'load', timeout: 30000 })
-  await page.locator('button').filter({ hasText: 'Fruit purée' }).first().click()
+  await page.locator('button').filter({ hasText: 'Corn protein' }).first().click()
   await page.waitForSelector('text=/samples ×/', { timeout: 20000 })
   await page.locator('[data-step="pipeline"]').click()
   await page.getByRole('button', { name: /Run pipeline/i }).click()

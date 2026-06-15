@@ -28,7 +28,7 @@ try {
   await page.waitForSelector('text=nirs4all', { timeout: 10000 })
 
   // 1. load the bundled sample dataset (a real <button>, not the dropzone div)
-  await page.locator('button').filter({ hasText: 'Fruit purée' }).first().click()
+  await page.locator('button').filter({ hasText: 'Corn protein' }).first().click()
   await page.waitForSelector('text=/samples ×/', { timeout: 20000 })
   console.log('✓ sample dataset loaded + Explore section rendered')
 
@@ -58,7 +58,7 @@ try {
   else console.log(`✓ ${svgCount} charts rendered`)
 
   // 5. predict on new spectra → histogram (open the Predict step, use the sample's test spectra)
-  const FRUIT_XTEST = process.env.FRUIT_XTEST || new URL('../src/data/sample/X_test.csv', import.meta.url).pathname
+  const FRUIT_XTEST = process.env.FRUIT_XTEST || new URL('../src/data/demo/corn/Xtest.csv', import.meta.url).pathname
   await page.locator('[data-step="predict"]').click()
   await page.waitForTimeout(300)
   await page.locator('input[type=file]').last().setInputFiles(FRUIT_XTEST)
