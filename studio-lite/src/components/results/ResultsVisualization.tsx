@@ -127,7 +127,7 @@ function ConfusionMatrix({ confusion }: { confusion: Confusion }) {
   if (labels.length === 0 || matrix.length === 0) return <EmptyChart message="No confusion matrix available." />
   const max = Math.max(1, ...matrix.flat())
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
+    <div className="rounded-xl border border-border bg-card p-4" data-confusion>
       <div className="overflow-x-auto">
         <table className="border-separate border-spacing-1">
           <thead>
@@ -181,6 +181,48 @@ function ConfusionMatrix({ confusion }: { confusion: Confusion }) {
         </table>
       </div>
       <p className="mt-3 text-xs text-muted-foreground">Rows = true class, columns = predicted class. Diagonal = correct.</p>
+    </div>
+  )
+}
+
+/** Per-class precision / recall / F1 / support — derived purely from the
+ *  already-computed confusion matrix (presentation arithmetic, no ML here). */
+function PerClassTable({ confusion }: { confusion: Confusion }) {
+  const { labels, matrix } = confusion
+  if (labels.length === 0 || matrix.length === 0) return null
+  const rows = labels.map((label, i) => {
+    const tp = matrix[i]?.[i] ?? 0
+    const support = (matrix[i] ?? []).reduce((a, v) => a + v, 0) // true count for class i
+    const predicted = matrix.reduce((a, r) => a + (r[i] ?? 0), 0) // predicted count for class i
+    const precision = predicted > 0 ? tp / predicted : 0
+    const recall = support > 0 ? tp / support : 0
+    const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0
+    return { label, precision, recall, f1, support }
+  })
+  return (
+    <div className="mt-4 overflow-x-auto rounded-xl border border-border bg-card p-4">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="text-xs uppercase tracking-wide text-muted-foreground">
+            <th className="px-2 py-1 text-left font-medium">Class</th>
+            <th className="px-2 py-1 text-right font-medium">Precision</th>
+            <th className="px-2 py-1 text-right font-medium">Recall</th>
+            <th className="px-2 py-1 text-right font-medium">F1</th>
+            <th className="px-2 py-1 text-right font-medium">Support</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.label} className="border-t border-border/60">
+              <td className="px-2 py-1 font-medium text-foreground">{r.label}</td>
+              <td className="px-2 py-1 text-right font-mono">{fmt(r.precision)}</td>
+              <td className="px-2 py-1 text-right font-mono">{fmt(r.recall)}</td>
+              <td className="px-2 py-1 text-right font-mono">{fmt(r.f1)}</td>
+              <td className="px-2 py-1 text-right font-mono text-muted-foreground">{r.support}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
@@ -244,40 +286,62 @@ export function ResultsVisualization(props: ResultsVisualizationProps) {
         </div>
       </div>
 
-      <Tabs defaultValue="parity">
-        <TabsList className="mb-5 h-auto flex-wrap gap-1 bg-muted p-1">
-          <TabsTrigger value="parity" className="gap-1.5">
-            <TrendingUp className="size-4" />
-            Predicted vs Actual
-          </TabsTrigger>
-          <TabsTrigger value="residuals" className="gap-1.5">
-            {isRegression ? <Activity className="size-4" /> : <Grid3x3 className="size-4" />}
-            {isRegression ? 'Residuals' : 'Confusion Matrix'}
-          </TabsTrigger>
-          <TabsTrigger value="folds" className="gap-1.5">
-            <BarChart3 className="size-4" />
-            Folds
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="parity">
-          <ParityChart score={score} />
-        </TabsContent>
-
-        <TabsContent value="residuals">
-          {isRegression ? (
+      {isRegression ? (
+        // Regression: parity + residuals + per-fold scores.
+        <Tabs defaultValue="parity">
+          <TabsList className="mb-5 h-auto flex-wrap gap-1 bg-muted p-1">
+            <TabsTrigger value="parity" className="gap-1.5">
+              <TrendingUp className="size-4" />
+              Predicted vs Actual
+            </TabsTrigger>
+            <TabsTrigger value="residuals" className="gap-1.5">
+              <Activity className="size-4" />
+              Residuals
+            </TabsTrigger>
+            <TabsTrigger value="folds" className="gap-1.5">
+              <BarChart3 className="size-4" />
+              Folds
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="parity">
+            <ParityChart score={score} />
+          </TabsContent>
+          <TabsContent value="residuals">
             <ResidualChart score={score} />
-          ) : score.confusion ? (
-            <ConfusionMatrix confusion={score.confusion} />
-          ) : (
-            <EmptyChart message="No confusion matrix for this score node." />
-          )}
-        </TabsContent>
-
-        <TabsContent value="folds">
-          <FoldsChart run={run} score={score} />
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+          <TabsContent value="folds">
+            <FoldsChart run={run} score={score} />
+          </TabsContent>
+        </Tabs>
+      ) : (
+        // Classification: confusion matrix + per-class metrics + per-fold scores.
+        // No parity / residual scatter — those are meaningless for class labels.
+        <Tabs defaultValue="confusion">
+          <TabsList className="mb-5 h-auto flex-wrap gap-1 bg-muted p-1">
+            <TabsTrigger value="confusion" className="gap-1.5">
+              <Grid3x3 className="size-4" />
+              Confusion Matrix
+            </TabsTrigger>
+            <TabsTrigger value="folds" className="gap-1.5">
+              <BarChart3 className="size-4" />
+              Folds
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="confusion">
+            {score.confusion ? (
+              <>
+                <ConfusionMatrix confusion={score.confusion} />
+                <PerClassTable confusion={score.confusion} />
+              </>
+            ) : (
+              <EmptyChart message="No confusion matrix for this score node." />
+            )}
+          </TabsContent>
+          <TabsContent value="folds">
+            <FoldsChart run={run} score={score} />
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   )
 }

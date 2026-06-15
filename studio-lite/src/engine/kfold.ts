@@ -30,6 +30,31 @@ export function buildFolds(ds: MaterializedDataset, k: number, seed: number): Fo
   }
 
   const kk = Math.max(2, Math.min(k, trainRows.length))
+
+  // Classification → stratified K-fold: distribute each class's shuffled rows
+  // round-robin across folds (staggered per class) so every fold keeps the class
+  // proportions. Mirrors the served DagMlEngine default (stratified_kfold_split).
+  if (ds.taskType !== 'regression') {
+    const byClass = new Map<string, number[]>()
+    for (const r of trainRows) {
+      const key = ds.classes?.[r] ?? String(Math.round(ds.y[r]))
+      const arr = byClass.get(key)
+      if (arr) arr.push(r)
+      else byClass.set(key, [r])
+    }
+    const valByFold: number[][] = Array.from({ length: kk }, () => [])
+    let classNo = 0
+    for (const rows of byClass.values()) {
+      const shuffled = shuffledIndices(rows.length, seed + classNo).map((i) => rows[i])
+      for (let i = 0; i < shuffled.length; i++) valByFold[(i + classNo) % kk].push(shuffled[i])
+      classNo++
+    }
+    return valByFold.map((valIdx, f) => {
+      const valSet = new Set(valIdx)
+      return { foldId: f + 1, valIdx, trainIdx: trainRows.filter((i) => !valSet.has(i)) }
+    })
+  }
+
   const order = shuffledIndices(trainRows.length, seed).map((i) => trainRows[i])
   const folds: Fold[] = []
   for (let f = 0; f < kk; f++) {

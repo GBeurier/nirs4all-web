@@ -203,11 +203,37 @@ export function mapAssembledToMaterialized(full: AssembledFull): MaterializedDat
     off += rows
   }
 
+  // per-sample metadata (explore-only): non-id columns nirs4all-io already parsed,
+  // aligned to X's row order (same partition iteration, same empty-block skip).
+  const metaSchema: string[] = []
+  for (const p of parts) {
+    for (const c of full.blocks[p].metadata?.columns ?? []) {
+      if (!ID_COL.test(c.name) && !metaSchema.includes(c.name)) metaSchema.push(c.name)
+    }
+  }
+  const metadata = metaSchema.length
+    ? metaSchema.map((nameCol) => {
+        const vals: (number | string | null)[] = []
+        for (const p of parts) {
+          const b = full.blocks[p]
+          const xm = b.x?.[0]
+          if (!xm || xm.n_rows === 0) continue
+          const col = (b.metadata?.columns ?? []).find((c) => c.name === nameCol)
+          for (let r = 0; r < xm.n_rows; r++) vals.push(col ? col.values[r] ?? null : null)
+        }
+        const nonNull = vals.filter((v): v is number | string => v !== null)
+        const numeric = nonNull.length > 0 && nonNull.every((v) => Number.isFinite(Number(v)))
+        return numeric
+          ? { name: nameCol, kind: 'numeric' as const, values: vals.map((v) => (v === null ? null : Number(v))) }
+          : { name: nameCol, kind: 'categorical' as const, values: vals.map((v) => (v === null ? null : String(v))) }
+      })
+    : undefined
+
   // targetless spectra are allowed (explore / predict-only); the engine refuses
   // to train without targets, so an all-NaN y never silently produces a model.
   const taskType = inferTaskType(Array.from(yRaw), labelsRaw)
   const { y, classes } = encodeTarget(yRaw, labelsRaw, taskType)
-  return { X, nSamples, nFeatures, axis, axisUnit, y, yRaw, labelsRaw, targetName, taskType, classes, sampleIds, partitions }
+  return { X, nSamples, nFeatures, axis, axisUnit, y, yRaw, labelsRaw, targetName, taskType, classes, sampleIds, partitions, metadata }
 }
 
 /**
