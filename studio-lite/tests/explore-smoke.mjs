@@ -51,6 +51,18 @@ try {
   await page.getByRole('button', { name: 'Partition', exact: true }).click()
   await page.waitForTimeout(150)
 
+  // switch to the 3D WebGL view — a <canvas> should mount (gated on >=3 PCs)
+  const toggle3d = page.getByRole('button', { name: '3D', exact: true })
+  if (await toggle3d.count()) {
+    await toggle3d.first().click()
+    await page.waitForTimeout(600)
+    const canvases = await page.locator('canvas').count()
+    if (canvases >= 1) console.log(`✓ 3D WebGL view mounted a canvas (${canvases})`)
+    else fail('expected a <canvas> after switching to the 3D view')
+  } else {
+    console.log('• 3D toggle not offered (fewer than 3 PCs) — skipping 3D check')
+  }
+
   await page.screenshot({ path: '/tmp/n4a_explore_smoke.png', fullPage: true })
 
   if (errors.length) fail('console errors:\n  ' + errors.join('\n  '))

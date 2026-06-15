@@ -959,6 +959,18 @@ export const DAG_NODES: NodeDef[] = [
   },
 ]
 
+// Regression-default models that ALSO classify via one-hot Y + argmax (like
+// PLS-DA), verified multi-target-capable against the staged libn4m WASM. Excludes
+// PLS (PLS-DA is its dedicated classifier), PLSCanonical / PLSSVD / RobustPLS
+// (libn4m rejects a multi-column Y for them) and AOMOperatorPLSStack (single-target).
+const CLASSIFIABLE_MODEL_TYPES = new Set<string>([
+  'PCR', 'Ridge', 'RidgePLS', 'ContinuumRegression', 'CPPLS',
+  'SparseSIMPLS', 'GroupSparsePLS', 'FusedSparsePLS', 'MIRPLS', 'MBPLS',
+  'MissingAwareNIPALS', 'ECR', 'O2PLS', 'BaggingPLS', 'BoostingPLS',
+  'RandomSubspacePLS', 'AOMPLS', 'POPPLS', 'AOMRidgeBlender',
+])
+for (const m of MODEL_NODES) if (CLASSIFIABLE_MODEL_TYPES.has(m.type)) m.classifiable = true
+
 export const ALL_NODES: NodeDef[] = [...PREPROCESSING_NODES, ...MODEL_NODES, ...SPLIT_NODES, ...DAG_NODES]
 
 const BY_TYPE = new Map(ALL_NODES.map((n) => [n.type, n]))
@@ -966,7 +978,10 @@ export function nodeByType(type: string): NodeDef | undefined {
   return BY_TYPE.get(type)
 }
 export function modelsForTask(task: 'regression' | 'binary' | 'multiclass'): NodeDef[] {
-  return MODEL_NODES.filter((m) => m.task === 'any' || m.task === task || (task === 'multiclass' && m.task === 'binary'))
+  // Regression keeps only regression/any models. Classification adds PLS-DA (task
+  // 'binary') plus every `classifiable` regression model (one-hot Y + argmax).
+  if (task === 'regression') return MODEL_NODES.filter((m) => m.task === 'any' || m.task === 'regression')
+  return MODEL_NODES.filter((m) => m.task === 'any' || m.task === task || (task === 'multiclass' && m.task === 'binary') || m.classifiable)
 }
 /** default params object for a node type */
 export function defaultParams(type: string): Record<string, unknown> {

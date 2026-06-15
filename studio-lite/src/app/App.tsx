@@ -662,6 +662,18 @@ function StepPanel(props: StepPanelProps) {
   if (step === 'dataset') {
     return (
       <Panel title="Dataset" subtitle="Drop spectra or load a sample — decoded and inferred locally by nirs4all-formats + nirs4all-io." icon={Upload}>
+        <div className="mb-5 flex items-start gap-3 rounded-2xl border border-brand-teal/20 bg-brand-teal/[0.06] p-4">
+          <BrandMark className="mt-0.5 size-7 shrink-0 rounded-lg" />
+          <p className="text-sm leading-relaxed text-foreground/90">
+            <span className="font-display font-semibold text-foreground">nirs4all-web</span> is the browser
+            prototype of <span className="font-medium">nirs4all-studio</span> — the whole NIRS modelling loop
+            (explore → pipeline → cross-validate → predict) running 100% client-side. It runs on{' '}
+            <span className="font-semibold text-brand-teal-d">DAG-ML</span> (Directed Acyclic Graph ML), the
+            future cross-language engine written in <span className="font-semibold">Rust</span> for the nirs4all
+            ecosystem, compiled to WebAssembly here alongside the <span className="font-mono text-[0.85em]">libn4m</span>{' '}
+            numerical core. Nothing you load ever leaves your browser.
+          </p>
+        </div>
         <DatasetUpload onDataset={props.onDataset} onLoadSample={props.onLoadSample} onImportModel={props.onImportModel} busy={props.busy} error={props.error} />
       </Panel>
     )

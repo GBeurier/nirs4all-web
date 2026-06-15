@@ -68,6 +68,10 @@ export interface NodeDef {
    *  adding preprocessing steps in front of them is redundant, so the UI surfaces
    *  this before users duplicate work. */
   autonomous?: boolean
+  /** a regression-default model that can ALSO classify via one-hot Y + argmax
+   *  (exactly like PLS-DA) — surfaced in the classification model picker without
+   *  changing its regression `task`. Verified multi-target-capable in libn4m. */
+  classifiable?: boolean
   /** for `dag`-category structural operators: the container kind + generator mode
    *  it creates, and the nirs4all-studio CANONICAL flow node id it corresponds to
    *  (e.g. branch.parallel, merge.sources, container.concat_transform,
