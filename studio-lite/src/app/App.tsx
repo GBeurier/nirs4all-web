@@ -114,7 +114,7 @@ export default function App() {
       setBusy(true)
       setError(null)
       try {
-        const sid = sample ?? 'fruit'
+        const sid = sample ?? 'corn'
         const sampleName = SAMPLES.find((s) => s.id === sid)?.name ?? sid
         adoptDataset(await loadSampleDataset(sample), { sourceName: sampleName, sourceKind: 'sample' })
         setSampleId(sid) // remember which bundled sample, for session restore

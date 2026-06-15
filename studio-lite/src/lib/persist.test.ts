@@ -30,10 +30,10 @@ describe('session persistence', () => {
       model: { id: 'm', type: 'PLS', params: { n_components: 10 }, sweeps: { n_components: { type: 'range', from: 2, to: 20, step: 2 } } },
       cv: { folds: 5, seed: 42 },
     } as never
-    saveSession({ pipeline, model: null, sampleId: 'nir-reg' })
+    saveSession({ pipeline, model: null, sampleId: 'beer' })
     const s = loadSession()
     expect(s.pipeline).toEqual(pipeline)
-    expect(s.sampleId).toBe('nir-reg')
+    expect(s.sampleId).toBe('beer')
   })
 
   it('round-trips a pipeline with a split node and an OPTIONAL (omitted) model', () => {
@@ -44,7 +44,7 @@ describe('session persistence', () => {
       // model intentionally omitted — preprocessing-only is now valid
       cv: { folds: 5, seed: 42 },
     } as never
-    saveSession({ pipeline, sampleId: 'fruit' })
+    saveSession({ pipeline, sampleId: 'corn' })
     const s = loadSession()
     expect(s.pipeline).toEqual(pipeline)
     expect((s.pipeline as { split?: { type: string } }).split?.type).toBe('KennardStone')
@@ -53,7 +53,7 @@ describe('session persistence', () => {
 
   it('discards a pipeline whose split references an unknown split operator', () => {
     const pipeline = { name: 'p', split: { id: 'sp', type: 'GhostSplit', params: {} }, steps: [], model: { id: 'm', type: 'PLS', params: {} }, cv: { folds: 5, seed: 42 } } as never
-    saveSession({ pipeline, sampleId: 'fruit' })
+    saveSession({ pipeline, sampleId: 'corn' })
     expect(loadSession().pipeline).toBeUndefined()
   })
 
@@ -77,10 +77,10 @@ describe('session persistence', () => {
 
   it('discards a stale pipeline that references an operator no longer in the catalog', () => {
     const pipeline = { name: 'p', steps: [{ id: 's', type: 'GhostOperator', params: {} }], model: { id: 'm', type: 'PLS', params: {} }, cv: { folds: 5, seed: 42 } } as never
-    saveSession({ pipeline, sampleId: 'fruit' })
+    saveSession({ pipeline, sampleId: 'corn' })
     const s = loadSession()
     expect(s.pipeline).toBeUndefined() // invalid → dropped, App falls back to the default
-    expect(s.sampleId).toBe('fruit') // the valid parts survive
+    expect(s.sampleId).toBe('corn') // the valid parts survive
   })
 
   it('drops a malformed persisted model rather than trusting it into Predict', () => {
@@ -90,8 +90,8 @@ describe('session persistence', () => {
 
   it('returns {} for an empty, cleared, or corrupt store (never throws)', () => {
     expect(loadSession()).toEqual({})
-    saveSession({ sampleId: 'fruit' })
-    expect(loadSession().sampleId).toBe('fruit')
+    saveSession({ sampleId: 'corn' })
+    expect(loadSession().sampleId).toBe('corn')
     clearSession()
     expect(loadSession()).toEqual({})
     ;(globalThis as unknown as { localStorage: MemStorage }).localStorage.setItem('nirs4all-lite:session:v1', '{not json')
@@ -101,9 +101,9 @@ describe('session persistence', () => {
   it('loads a legacy nirs4all-lite session key after the nirs4all-web rename', () => {
     const legacy = {
       pipeline: { name: 'p', steps: [], model: { id: 'm', type: 'PLS', params: {} }, cv: { folds: 5, seed: 42 } },
-      sampleId: 'fruit',
+      sampleId: 'corn',
     }
     ;(globalThis as unknown as { localStorage: MemStorage }).localStorage.setItem('nirs4all-lite:session:v1', JSON.stringify(legacy))
-    expect(loadSession().sampleId).toBe('fruit')
+    expect(loadSession().sampleId).toBe('corn')
   })
 })

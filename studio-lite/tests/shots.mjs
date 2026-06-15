@@ -6,7 +6,7 @@ const p = await b.newPage()
 await p.setViewportSize({ width: 1280, height: 1400 })
 await p.goto(URL, { waitUntil: 'load' })
 // NIR regression
-await p.locator('button').filter({ hasText: 'NIR protein' }).first().click()
+await p.locator('button').filter({ hasText: 'Corn protein' }).first().click()
 await p.waitForSelector('text=/samples ×/')
 await p.locator('button').filter({ hasText: /Run pipeline/i }).first().click()
 await p.waitForSelector('text=/CV Scores/', { timeout: 60000 })
