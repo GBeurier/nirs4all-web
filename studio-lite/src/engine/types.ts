@@ -32,6 +32,11 @@ export interface MaterializedDataset {
   sampleIds: string[];
   /** per-sample partition assignment, length nSamples */
   partitions: Partition[];
+  /** optional per-sample metadata columns (from an uploaded metadata file).
+   *  Explore-only — never enters X/y, the model path, or the dag-ml-data ABI;
+   *  used for colouring/inspection. Each column's `values` has length nSamples,
+   *  in the same train-then-test row order as X. */
+  metadata?: { name: string; kind: 'numeric' | 'categorical'; values: (number | string | null)[] }[];
   /** optional externally-defined folds (else the engine builds KFold from cv.folds) */
   folds?: { foldId: number; valSampleIds: string[] }[];
 }

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import {
   Area,
   Bar,
@@ -29,6 +29,7 @@ import { Button } from '@/app/components/ui/button'
 import { Card } from '@/app/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs'
 import { CHART, histogram } from './_helpers'
+import { buildFolds } from '@/engine/kfold'
 import { computePca } from './pca'
 import {
   applyPreview,
@@ -372,9 +373,17 @@ export function DatasetView({ ds, summary, onOpenConfig }: DatasetViewProps) {
   )
 }
 
-type ColorBy = 'target' | 'partition'
+type ColorBy = 'fold' | 'target' | 'partition' | 'metadata'
+type PcaView = '2d' | '3d'
 
-/** Lazily-computed client PCA scatter (only when the PCA tab is active). */
+// 3D scatter is a pure-WebGL2 renderer with zero runtime deps; lazy-load it so it
+// stays out of the initial bundle and only fetches when the user enters 3D.
+const ScatterWebGL3D = lazy(() => import('./scatter3d/ScatterWebGL3D'))
+
+const MUTED_COLOR = 'var(--muted-foreground)'
+
+/** Lazily-computed client PCA scatter (2D recharts / 3D WebGL), with colour-by
+ *  fold / Y-or-class / partition / metadata. Only runs when the PCA tab is active. */
 function PcaPanel({
   ds,
   active,
@@ -388,7 +397,12 @@ function PcaPanel({
 }) {
   const [px, setPx] = useState(0)
   const [py, setPy] = useState(1)
-  const [colorBy, setColorBy] = useState<ColorBy>('target')
+  const [pz, setPz] = useState(2)
+  const [colorBy, setColorBy] = useState<ColorBy>('fold') // default: colour by CV fold
+  const [viewMode, setViewMode] = useState<PcaView>('2d') // 2D recharts is the default (keeps it light)
+  const [foldCount, setFoldCount] = useState(5)
+  const metaCols = ds.metadata ?? []
+  const [metaCol, setMetaCol] = useState<string>(metaCols[0]?.name ?? '')
 
   const pca = useMemo(() => (active ? computePca(ds, 4) : null), [ds, active])
 
@@ -404,6 +418,31 @@ function PcaPanel({
     return [lo, hi] as const
   }, [ds, isReg])
 
+  // row → CV fold index (folds cover the TRAIN partition only; test/predict → none).
+  const foldOf = useMemo(() => {
+    const m = new Map<number, number>()
+    if (active) buildFolds(ds, foldCount, 42).forEach((f, fi) => f.valIdx.forEach((r) => m.set(r, fi)))
+    return m
+  }, [ds, foldCount, active])
+
+  const metaColumn = metaCols.find((c) => c.name === metaCol)
+  const metaInfo = useMemo(() => {
+    if (!metaColumn) return null
+    if (metaColumn.kind === 'numeric') {
+      let lo = Infinity
+      let hi = -Infinity
+      for (const v of metaColumn.values) {
+        if (typeof v === 'number' && Number.isFinite(v)) {
+          if (v < lo) lo = v
+          if (v > hi) hi = v
+        }
+      }
+      return { numeric: true as const, lo, hi }
+    }
+    const vocab = Array.from(new Set(metaColumn.values.filter((v): v is string => v != null))).sort()
+    return { numeric: false as const, vocab }
+  }, [metaColumn])
+
   if (!pca || pca.nComp < 1) {
     return <p className="py-12 text-center text-sm text-muted-foreground">Computing principal components…</p>
   }
@@ -413,18 +452,41 @@ function PcaPanel({
 
   const a = Math.min(px, pca.nComp - 1)
   const b = Math.min(py, pca.nComp - 1)
-  const colorOf = (row: number, classIdx: number): string => {
-    if (colorBy === 'partition') return PARTITION_COLOR[ds.partitions[row]] ?? PARTITION_COLOR.train
-    if (isReg) {
-      const [lo, hi] = yRange
-      const t = hi > lo ? (ds.y[row] - lo) / (hi - lo) : 0.5
-      return continuousColor(t)
+  const c = Math.min(pz, pca.nComp - 1)
+  const has3d = pca.nComp >= 3
+  const is3d = viewMode === '3d' && has3d
+
+  const colorOf = (row: number): string => {
+    switch (colorBy) {
+      case 'partition':
+        return PARTITION_COLOR[ds.partitions[row]] ?? PARTITION_COLOR.train
+      case 'fold': {
+        const f = foldOf.get(row)
+        return f === undefined ? MUTED_COLOR : CLASS_PALETTE[f % CLASS_PALETTE.length]
+      }
+      case 'metadata': {
+        if (!metaColumn || !metaInfo) return MUTED_COLOR
+        const v = metaColumn.values[row]
+        if (v == null) return MUTED_COLOR
+        if (metaInfo.numeric) {
+          const t = metaInfo.hi > metaInfo.lo ? (Number(v) - metaInfo.lo) / (metaInfo.hi - metaInfo.lo) : 0.5
+          return continuousColor(t)
+        }
+        const idx = metaInfo.vocab.indexOf(String(v))
+        return idx >= 0 ? CLASS_PALETTE[idx % CLASS_PALETTE.length] : MUTED_COLOR
+      }
+      default: // target
+        if (isReg) {
+          const [lo, hi] = yRange
+          const t = hi > lo ? (ds.y[row] - lo) / (hi - lo) : 0.5
+          return continuousColor(t)
+        }
+        return CLASS_PALETTE[Math.round(ds.y[row]) % CLASS_PALETTE.length]
     }
-    return CLASS_PALETTE[classIdx % CLASS_PALETTE.length]
   }
   const pts = pca.scores.map((s, i) => {
     const row = pca.usedIdx[i]
-    return { x: s[a], y: s[b], color: colorOf(row, Math.round(ds.y[row])), row }
+    return { x: s[a], y: s[b], z: has3d ? s[c] : 0, color: colorOf(row), row }
   })
   const filtered = filter === 'all' ? pts : pts.filter((p) => ds.partitions[p.row] === filter)
 
@@ -433,13 +495,29 @@ function PcaPanel({
   const cumulative = pca.explained.slice(0, pca.nComp).reduce((s, e) => s + e, 0)
 
   const colorOptions: { value: ColorBy; label: string }[] = [
+    { value: 'fold', label: 'Fold' },
     { value: 'target', label: isReg ? 'Y value' : 'Class' },
     { value: 'partition', label: 'Partition' },
+    ...(metaCols.length ? [{ value: 'metadata' as const, label: 'Metadata' }] : []),
   ]
+
+  const selectCls =
+    'h-7 rounded-full border border-border bg-card px-3 text-xs font-medium text-foreground outline-none focus:border-brand-teal/50'
 
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center gap-x-5 gap-y-2">
+        {has3d && (
+          <label className="flex items-center gap-2">
+            <FieldLabel>View</FieldLabel>
+            <Segmented
+              value={viewMode}
+              onChange={setViewMode}
+              options={[{ value: '2d', label: '2D' }, { value: '3d', label: '3D' }]}
+              ariaLabel="View mode"
+            />
+          </label>
+        )}
         <label className="flex items-center gap-2">
           <FieldLabel>X</FieldLabel>
           <Segmented value={String(a)} onChange={(v) => setPx(Number(v))} options={pcOptions} ariaLabel="X component" />
@@ -448,47 +526,82 @@ function PcaPanel({
           <FieldLabel>Y</FieldLabel>
           <Segmented value={String(b)} onChange={(v) => setPy(Number(v))} options={pcOptions} ariaLabel="Y component" />
         </label>
+        {is3d && (
+          <label className="flex items-center gap-2">
+            <FieldLabel>Z</FieldLabel>
+            <Segmented value={String(c)} onChange={(v) => setPz(Number(v))} options={pcOptions} ariaLabel="Z component" />
+          </label>
+        )}
         <label className="flex items-center gap-2">
           <FieldLabel>Colour</FieldLabel>
           <Segmented value={colorBy} onChange={setColorBy} options={colorOptions} ariaLabel="Colour by" />
         </label>
+        {colorBy === 'fold' && (
+          <label className="flex items-center gap-2">
+            <FieldLabel>Folds</FieldLabel>
+            <select value={String(foldCount)} onChange={(e) => setFoldCount(Number(e.target.value))} aria-label="Fold count" className={selectCls}>
+              {[3, 5, 10].map((k) => <option key={k} value={k}>{k}</option>)}
+            </select>
+          </label>
+        )}
+        {colorBy === 'metadata' && metaCols.length > 0 && (
+          <label className="flex items-center gap-2">
+            <FieldLabel>Column</FieldLabel>
+            <select value={metaCol} onChange={(e) => setMetaCol(e.target.value)} aria-label="Metadata column" className={selectCls}>
+              {metaCols.map((cc) => <option key={cc.name} value={cc.name}>{cc.name}</option>)}
+            </select>
+          </label>
+        )}
       </div>
 
-      <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-        <RScatterChart margin={{ top: 8, right: 16, bottom: 18, left: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-          <XAxis
-            type="number"
-            dataKey="x"
-            tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
-            stroke="var(--border)"
-            label={{ value: `PC${a + 1} (${ev(a)})`, position: 'insideBottom', offset: -8, fontSize: 12, fill: 'var(--muted-foreground)' }}
+      {is3d ? (
+        <Suspense fallback={<div className="flex items-center justify-center text-sm text-muted-foreground" style={{ height: CHART_HEIGHT }}>Loading 3D view…</div>}>
+          <ScatterWebGL3D
+            points={filtered.map((p) => [p.x, p.y, p.z] as [number, number, number])}
+            colors={filtered.map((p) => p.color)}
+            axisLabels={[`PC${a + 1}`, `PC${b + 1}`, `PC${c + 1}`]}
+            height={CHART_HEIGHT}
           />
-          <YAxis
-            type="number"
-            dataKey="y"
-            tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
-            stroke="var(--border)"
-            width={48}
-            label={{ value: `PC${b + 1} (${ev(b)})`, angle: -90, position: 'insideLeft', fontSize: 12, fill: 'var(--muted-foreground)' }}
-          />
-          <Tooltip
-            cursor={{ strokeDasharray: '3 3' }}
-            contentStyle={{ borderRadius: 12, border: '1px solid var(--border)', fontSize: 12 }}
-            formatter={(v: number) => fmt(v)}
-          />
-          <Scatter data={filtered} isAnimationActive={false}>
-            {filtered.map((p, i) => (
-              <Cell key={i} fill={p.color} fillOpacity={0.78} />
-            ))}
-          </Scatter>
-        </RScatterChart>
-      </ResponsiveContainer>
+        </Suspense>
+      ) : (
+        <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+          <RScatterChart margin={{ top: 8, right: 16, bottom: 18, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+            <XAxis
+              type="number"
+              dataKey="x"
+              tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
+              stroke="var(--border)"
+              label={{ value: `PC${a + 1} (${ev(a)})`, position: 'insideBottom', offset: -8, fontSize: 12, fill: 'var(--muted-foreground)' }}
+            />
+            <YAxis
+              type="number"
+              dataKey="y"
+              tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
+              stroke="var(--border)"
+              width={48}
+              label={{ value: `PC${b + 1} (${ev(b)})`, angle: -90, position: 'insideLeft', fontSize: 12, fill: 'var(--muted-foreground)' }}
+            />
+            <Tooltip
+              cursor={{ strokeDasharray: '3 3' }}
+              contentStyle={{ borderRadius: 12, border: '1px solid var(--border)', fontSize: 12 }}
+              formatter={(v: number) => fmt(v)}
+            />
+            <Scatter data={filtered} isAnimationActive={false}>
+              {filtered.map((p, i) => (
+                <Cell key={i} fill={p.color} fillOpacity={0.78} />
+              ))}
+            </Scatter>
+          </RScatterChart>
+        </ResponsiveContainer>
+      )}
 
       <p className="mt-2 text-xs text-muted-foreground">
         Top {pca.nComp} PCs explain <span className="font-mono text-foreground">{(cumulative * 100).toFixed(1)}%</span> of variance
         {pca.usedIdx.length < ds.nSamples ? ` · computed on a ${pca.usedIdx.length}-sample subset` : ''}.
+        {colorBy === 'fold' ? ' Colour: CV fold (train rows; test/predict shown muted).' : ''}
         {colorBy === 'target' && isReg ? ' Colour: teal (low) → amber (high) Y.' : ''}
+        {is3d ? ' Drag to rotate, scroll to zoom.' : ''}
       </p>
     </div>
   )

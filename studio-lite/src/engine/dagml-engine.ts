@@ -5,7 +5,7 @@
 // The refit (full-train) model is fit directly with libn4m. Falls back to the
 // JS-orchestrated path on any error.
 import { loadLibn4mBackend } from './backends'
-import { activeOrGenerator, compileWithDagMl, countVariants, dagMlAvailable, expandGeneratorVariants, hasUnsupportedGenerator, loadDagMl, toCompatDsl } from './dagml'
+import { activeOrGenerator, compileWithDagMl, dagMlAvailable, expandGeneratorVariants, hasUnsupportedGenerator, loadDagMl, toCompatDsl } from './dagml'
 import { materializeViaProvider } from './dagml-data'
 import { applySplit, SPLIT_KINDS } from './split'
 import type { Fold } from './kfold'
@@ -21,7 +21,7 @@ import {
   scoreNode,
   trainAndPredict,
 } from './orchestrate'
-import type { Engine, FittedPipeline, MaterializedDataset, PipelineDSL, PredRow, PredictResult, RunOptions, RunResult } from './types'
+import type { Engine, FittedPipeline, MaterializedDataset, ParamSweep, PipelineDSL, PredRow, PredictResult, RunOptions, RunResult } from './types'
 
 const MODEL_CONTROLLER = 'controller:model'
 
@@ -100,6 +100,80 @@ function variantLabel(variant: VariantPlan): string {
     }
   }
   return parts.length ? parts.join(' · ') : variant.variant_id.replace(/^variant:/, '')
+}
+
+/** Materialize a single-param sweep to its concrete value list. */
+function sweepValues(sweep: ParamSweep): (number | string | boolean)[] {
+  if (sweep.type === 'or') return sweep.choices ?? []
+  const { from, to } = sweep
+  if (from === undefined || to === undefined) return []
+  if (sweep.type === 'log_range') {
+    const count = Math.max(2, sweep.count ?? 5)
+    if (from <= 0 || to <= 0) return []
+    const ratio = Math.pow(to / from, 1 / (count - 1))
+    return Array.from({ length: count }, (_, i) => Number((from * Math.pow(ratio, i)).toPrecision(6)))
+  }
+  const step = sweep.step && sweep.step > 0 ? sweep.step : 1
+  const vals: number[] = []
+  for (let v = from; v <= to + 1e-9; v += step) vals.push(Number(v.toFixed(10)))
+  return vals
+}
+
+/**
+ * Host-side enumeration of the per-param sweep grid for a MULTI-NODE pipeline
+ * (preprocessing + model), which dag-ml's in-browser scheduler can't plan (no
+ * per-node controller registered). Mirrors dag-ml's cartesian/zip + max_variants
+ * semantics, and keys each variant's param_overrides by the SAME compat node_ids
+ * effectiveDsl/variantLabel use — so the rest of the variant machinery (effective
+ * DSL, labels, dag-ml selection) is unchanged. Model-only pipelines still go
+ * through dag-ml's own build_execution_plan_json. Returns the base variant when
+ * there are no sweeps.
+ */
+function expandSweepVariants(dsl: PipelineDSL): VariantPlan[] {
+  const { stepIds, modelId } = compatNodeIds(dsl)
+  type Dim = { nodeId: string; param: string; values: (number | string | boolean)[] }
+  const dims: Dim[] = []
+  const collect = (sweeps: Record<string, ParamSweep> | undefined, nodeId: string) => {
+    if (!sweeps) return
+    for (const [param, sweep] of Object.entries(sweeps)) {
+      const values = sweepValues(sweep)
+      if (values.length > 1) dims.push({ nodeId, param, values })
+    }
+  }
+  dsl.steps.forEach((s, i) => collect(s.sweeps, stepIds[i]))
+  if (dsl.model) collect(dsl.model.sweeps, modelId)
+  if (dims.length === 0) return [{ variant_id: 'variant:base', choices: {}, fingerprint: 'base' }]
+
+  const cap = Math.max(1, dsl.generation?.maxVariants ?? 64)
+  let combos: number[][]
+  if (dsl.generation?.strategy === 'zip') {
+    const len = Math.max(...dims.map((d) => d.values.length))
+    combos = []
+    for (let i = 0; i < len && combos.length < cap; i++) combos.push(dims.map((d) => Math.min(i, d.values.length - 1)))
+  } else {
+    let acc: number[][] = [[]]
+    for (const d of dims) {
+      const next: number[][] = []
+      for (const c of acc) {
+        for (let vi = 0; vi < d.values.length; vi++) {
+          if (next.length >= cap) break
+          next.push([...c, vi])
+        }
+      }
+      acc = next
+    }
+    combos = acc.slice(0, cap)
+  }
+
+  return combos.map((combo, vi) => {
+    const choices: Record<string, VariantChoice> = {}
+    combo.forEach((valIdx, di) => {
+      const d = dims[di]
+      const value = d.values[valIdx]
+      choices[`dim${di}`] = { label: `${d.param}=${value}`, param_overrides: [{ node_id: d.nodeId, params: { [d.param]: value } }] }
+    })
+    return { variant_id: `variant:${vi}`, choices, fingerprint: `sweep:${vi}` }
+  })
 }
 
 export class DagMlEngine implements Engine {
@@ -268,11 +342,6 @@ export class DagMlEngine implements Engine {
     // --- dag-ml enumerates the variant set (cartesian/zip, max_variants-capped,
     // deterministic + fingerprinted). The host never expands variants itself; we
     // only read the materialized ExecutionPlan.variants[]. ---
-    // `hasGenerators` mirrors what the editor displays: any sweep/variant dimension
-    // that toCompatDsl lowered to a real param_generator/variants choice.
-    // It gates the planning_failed fallback below — silently collapsing a generated
-    // sweep to a single base variant would skip the search the user configured.
-    const hasGenerators = countVariants(dsl) > 1
     const baseVariant: VariantPlan = { variant_id: 'variant:base', choices: {}, fingerprint: 'base' }
     // A multi-node graph (preprocessing steps and/or fusion DAG containers) is NOT
     // schedulable by dag-ml's WASM scheduler in-browser (no per-node controller),
@@ -282,9 +351,15 @@ export class DagMlEngine implements Engine {
     // scheduler is reserved for model-only (single-node) graphs, which it runs cleanly.
     const multiNodeGraph = dsl.steps.length > 0 || (dsl.containers?.some((c) => c.container !== 'generator' && c.branches.length >= 2) ?? false) || !!dsl.branch
     let variants: VariantPlan[]
-    if (multiNodeGraph && !hasGenerators) {
-      variants = [baseVariant]
+    if (multiNodeGraph) {
+      // dag-ml can't plan a multi-node graph in-browser (no per-node controller is
+      // registered for the preprocessing transform nodes), so enumerate the
+      // per-param sweep grid host-side; each variant runs through the leakage-honest
+      // libn4m chain over dag-ml's folds below. (Generator-OR alternatives are
+      // already folded into `steps` by run() before we reach here.)
+      variants = expandSweepVariants(dsl)
     } else {
+      // Model-only graph: dag-ml enumerates the variant set and the scheduler runs it.
       try {
         const plan = JSON.parse(
           dagml.build_execution_plan_json('plan:n4a', JSON.stringify(graph), JSON.stringify(campaign), JSON.stringify(modelManifest())),
@@ -296,15 +371,10 @@ export class DagMlEngine implements Engine {
         if (/max_variants|exceed/i.test(msg)) {
           throw new Error('Too many variants for the configured cap — lower a sweep range or raise the variant cap.')
         }
-        // planning_failed (multi-node graph: dag-ml can't yet schedule per-node
-        // preprocessing without a per-node provider). The single-base fallback is
-        // only honest when there is NOTHING to expand: collapsing a real sweep to one
-        // variant would silently drop the search. With generators present, surface a
-        // clear guard instead.
+        // A model-only graph always has the model controller registered, so a
+        // planning failure here is unexpected; fall back to the base variant rather
+        // than dropping a configured search or throwing a raw stack.
         if (/no controller registered|planning failed|planning_failed/i.test(msg)) {
-          if (hasGenerators) {
-            throw new Error('Variant sweeps need a model-only pipeline for now — multi-node preprocessing sweeps are not schedulable yet. Move the sweep onto the model, or remove preprocessing steps.')
-          }
           variants = [baseVariant]
         } else {
           throw err
@@ -416,22 +486,34 @@ export class DagMlEngine implements Engine {
     // dag-ml's, numerics stay libn4m) — the same orchestration the scheduler's
     // catch-block fallback uses, chosen up front so we never hit the legacy-PLS hang.
     const runChainOverFolds = () => {
-      const base = variants[0]
-      const baseFoldRows = foldRowsByVariant.get(base.variant_id)!
       const prebuilt: Fold[] = [...foldByDagId.entries()].map(([, v], i) => ({ foldId: i + 1, trainIdx: v.trainIdx, valIdx: v.valIdx }))
-      for (let i = 0; i < folds.length; i++) {
-        if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError')
-        // same convention as the scheduler path: announce the STARTING fold,
-        // pct reflects the folds already completed.
-        onP?.({ phase: 'fit_cv', pct: 12 + Math.round((64 * i) / folds.length), message: `fold ${i + 1}/${folds.length}` })
-        const f = prebuilt[i]
-        const { pred } = trainAndPredict(ds, baseDslByVariant.get(base.variant_id) ?? dsl, backend, f.trainIdx, f.valIdx)
-        baseFoldRows[i].push(...decodeRows(ds, classNames, classIdx, pred, f.valIdx))
+      const total = Math.max(1, variants.length * folds.length)
+      let done = 0
+      // Loop EVERY variant over the SAME fold set, bucketing OOF per variant_id so
+      // each variant is scored over exactly the validation rows (≈ nSamples), once.
+      for (let vIdx = 0; vIdx < variants.length; vIdx++) {
+        const variant = variants[vIdx]
+        const vDsl = baseDslByVariant.get(variant.variant_id) ?? dsl
+        const buckets = foldRowsByVariant.get(variant.variant_id)!
+        for (let i = 0; i < folds.length; i++) {
+          if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError')
+          // announce the STARTING task; pct reflects work already completed.
+          const label = multiVariant
+            ? `fold ${i + 1}/${folds.length} · variant ${vIdx + 1}/${variants.length}`
+            : `fold ${i + 1}/${folds.length}`
+          onP?.({ phase: 'fit_cv', pct: Math.min(76, 12 + Math.round((64 * done) / total)), message: label })
+          const f = prebuilt[i]
+          const { pred } = trainAndPredict(ds, vDsl, backend, f.trainIdx, f.valIdx)
+          buckets[i].push(...decodeRows(ds, classNames, classIdx, pred, f.valIdx))
+          done++
+        }
       }
     }
-    if (multiNodeGraph && !multiVariant) {
-      // proven libn4m-chain path for single-variant multi-node pipelines (incl. our
-      // generator-OR candidates, which append a preprocessing alternative to steps).
+    if (multiNodeGraph) {
+      // Multi-node pipelines aren't schedulable by dag-ml's WASM scheduler in-browser
+      // (no per-node controller); run the host-enumerated variants through the
+      // leakage-honest libn4m chain over dag-ml's folds. Covers single- AND
+      // multi-variant sweeps (and generator-OR candidates folded into steps).
       runChainOverFolds()
       nodeResults = []
     } else {
@@ -444,12 +526,8 @@ export class DagMlEngine implements Engine {
         // in a dag-ml runtime_validation error — normalize it back to a clean
         // AbortError so the UI suppresses it (App.tsx) instead of showing a fault.
         if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError')
-        // The scheduler can't run this graph. The libn4m-chain fallback only knows
-        // how to run ONE variant over the folds; for a real multi-variant sweep that
-        // would silently drop every non-base variant, so re-throw instead of mis-
-        // bucketing. (In practice the planning guard above already fired for
-        // generators + multi-node graphs, so this path is the single-base case.)
-        if (multiVariant) throw err
+        // Model-only scheduler failed unexpectedly: fall back to the libn4m chain,
+        // which loops every variant over the folds (no variant is dropped).
         runChainOverFolds()
         nodeResults = []
       }
