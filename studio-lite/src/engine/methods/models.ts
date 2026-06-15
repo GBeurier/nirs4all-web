@@ -52,6 +52,12 @@ export function modelParamVector(type: string, p: Record<string, unknown>): numb
     case 'MBPLS':
     case 'MissingAwareNIPALS':
       return []
+    // ECR (alpha interpolates PCR↔PLS) — single double param.
+    case 'ECR':
+      return [num(p.alpha, 0.5)]
+    // O2PLS — three component counts (NOT n_components): predictive / X-orth / Y-orth.
+    case 'O2PLS':
+      return [num(p.n_predictive, 2), num(p.n_x_orthogonal, 1), num(p.n_y_orthogonal, 1)]
     default:
       return []
   }

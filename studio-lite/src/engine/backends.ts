@@ -72,6 +72,25 @@ export async function loadLibn4mBackend(): Promise<ModelBackend> {
         const folds = Math.max(2, Math.round(Number(spec.params.screen_folds ?? 5)))
         return n4m.fitPop(Xm, Ym, nComp, folds, 0, operatorBank(spec.params.operator_bank))
       }
+      // AOM-Ridge blender / AOM operator-PLS stack — own bridges (input-space
+      // coeffs + intercept, predict on RAW X via predictModel). They screen
+      // preprocessing internally, like AOM-PLS / POP-PLS.
+      if (spec.type === 'AOMRidgeBlender') {
+        return n4m.fitAomRidge(Xm, Ym, {
+          profile: Math.round(Number(spec.params.profile ?? 0)),
+          cv: Math.max(2, Math.round(Number(spec.params.screen_folds ?? 5))),
+          regularizer: Number(spec.params.regularizer ?? 0.01),
+        })
+      }
+      if (spec.type === 'AOMOperatorPLSStack') {
+        return n4m.fitAomStack(Xm, Ym, {
+          profile: Math.round(Number(spec.params.profile ?? 0)),
+          cv: Math.max(2, Math.round(Number(spec.params.screen_folds ?? 5))),
+          maxComponents: Math.max(1, Math.round(Number(spec.params.n_components ?? 15))),
+          stdPenalty: Number(spec.params.std_penalty ?? 0),
+          gapPenalty: Number(spec.params.gap_penalty ?? 0),
+        })
+      }
       return n4m.fitModel(spec.type, Xm, Ym, nComp, modelParamVector(spec.type, spec.params))
     },
     predict: (model, X) => {
