@@ -33,8 +33,10 @@ export const AOM_OPERATOR_KINDS: { value: number; label: string }[] = [
   { value: 17, label: 'FCK' },
 ]
 
-/** Default AOM/POP operator bank (matches the libn4m default screen set). */
-export const AOM_DEFAULT_BANK: number[] = [0, 7, 8, 9, 15]
+/** Default AOM/POP operator bank. Identity + the strict-linear derivative /
+ *  detrend family the libn4m AOM screen accepts, now including Norris–Williams
+ *  (10) and FCK (17) so the default screen spans the full shipped kind set. */
+export const AOM_DEFAULT_BANK: number[] = [0, 7, 8, 9, 10, 15, 17]
 
 /**
  * One node = one exported nirs4all-methods operator. The `type` token is what the
