@@ -95,6 +95,8 @@ interface Block {
   yNum: number[]
   yLabels: string[]
   ids: string[]
+  /** raw (string) per-row values of each non-id metadata column, length == X rows */
+  meta: { name: string; values: string[] }[]
 }
 
 function buildBlock(files: RawFile[], partition: Partition): Block | null {
@@ -117,13 +119,21 @@ function buildBlock(files: RawFile[], partition: Partition): Block | null {
   }
 
   let ids = dataRows.map((_, i) => `${partition}-${i}`)
+  let meta: { name: string; values: string[] }[] = []
   const metaFile = files.find((f) => isMeta(f.name))
   if (metaFile) {
     const mc = parseCsv(metaFile.text)
     const idCol = mc.header.findIndex((h) => /id|sample|name/i.test(h))
-    if (idCol >= 0 && mc.raw.length === dataRows.length) ids = mc.raw.map((r, i) => r[idCol] || `${partition}-${i}`)
+    // Only trust the metadata file if it aligns 1:1 with the spectra rows.
+    if (mc.raw.length === dataRows.length) {
+      if (idCol >= 0) ids = mc.raw.map((r, i) => r[idCol] || `${partition}-${i}`)
+      meta = mc.header
+        .map((h, c) => ({ name: h || `col${c + 1}`, idx: c }))
+        .filter(({ idx }) => idx !== idCol)
+        .map(({ name, idx }) => ({ name, values: mc.raw.map((r) => r[idx] ?? '') }))
+    }
   }
-  return { X: dataRows, axis, axisUnit: unit, yNum, yLabels, ids }
+  return { X: dataRows, axis, axisUnit: unit, yNum, yLabels, ids, meta }
 }
 
 export function buildDataset(files: RawFile[], name = 'Uploaded dataset'): MaterializedDataset {
@@ -164,6 +174,29 @@ export function buildDataset(files: RawFile[], name = 'Uploaded dataset'): Mater
   const taskType = inferTaskType(Array.from(yRaw), labelsRaw)
   const { y, classes } = encodeTarget(yRaw, labelsRaw, taskType)
 
+  // Per-sample metadata (explore-only): the train block's columns define the
+  // schema; concatenate each column's values block-by-block in the SAME row order
+  // as X/y (null where a block lacks the column), then classify numeric vs
+  // categorical from the non-null cells.
+  const schema = train.meta.map((c) => c.name)
+  const metadata = schema.length
+    ? schema.map((nameCol) => {
+        const raw: (string | null)[] = []
+        for (const b of blocks) {
+          const col = b.meta.find((c) => c.name === nameCol)
+          for (let i = 0; i < b.X.length; i++) {
+            const v = col?.values[i]
+            raw.push(v === undefined || v === '' ? null : v)
+          }
+        }
+        const nonNull = raw.filter((v): v is string => v !== null)
+        const numeric = nonNull.length > 0 && nonNull.every((v) => Number.isFinite(Number(v)))
+        return numeric
+          ? { name: nameCol, kind: 'numeric' as const, values: raw.map((v) => (v === null ? null : Number(v))) }
+          : { name: nameCol, kind: 'categorical' as const, values: raw.map((v) => (v === null ? null : String(v))) }
+      })
+    : undefined
+
   return {
     X,
     nSamples,
@@ -178,6 +211,7 @@ export function buildDataset(files: RawFile[], name = 'Uploaded dataset'): Mater
     classes,
     sampleIds,
     partitions,
+    metadata,
   }
 }
 

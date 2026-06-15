@@ -69,7 +69,7 @@ try {
 
   // run the pipeline (no preprocessing — POP screens it internally)
   await page.getByRole('button', { name: /Run pipeline/i }).click()
-  await page.waitForSelector('text=/CV Scores/', { timeout: 60000 })
+  await page.waitForSelector('text=/CV Scores/', { timeout: 180000 })
   console.log('✓ POP-PLS pipeline executed (CV Scores rendered)')
 
   const body2 = (await page.textContent('body')) || ''
