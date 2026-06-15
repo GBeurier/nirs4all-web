@@ -286,12 +286,35 @@ function savgolParams(params) {
   }
   return [
     numberParam(params.window_length ?? params.window, 11),
-    numberParam(params.polyorder, 2),
+    numberParam(params.polyorder, 3),
     numberParam(params.deriv, 0),
     // scipy.signal.savgol_filter, and therefore nirs4all Python, default to interp.
-    4,
-    0,
+    savgolMode(params.mode ?? 'interp'),
+    numberParam(params.cval, 0),
   ];
+}
+
+const SAVGOL_MODES = new Map([
+  ['mirror', 0],
+  ['constant', 1],
+  ['nearest', 2],
+  ['wrap', 3],
+  ['interp', 4],
+]);
+
+function savgolMode(value) {
+  if (typeof value === 'string') {
+    const mode = SAVGOL_MODES.get(value.toLowerCase());
+    if (mode != null) {
+      return mode;
+    }
+    throw new Error(`Unsupported Savitzky-Golay mode: ${value}`);
+  }
+  const mode = Number(value);
+  if (Number.isInteger(mode) && mode >= 0 && mode <= 4) {
+    return mode;
+  }
+  throw new Error(`Unsupported Savitzky-Golay mode: ${value}`);
 }
 
 function componentValues(step) {

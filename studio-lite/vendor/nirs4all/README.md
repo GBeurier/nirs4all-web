@@ -16,3 +16,7 @@ PLS component sweeps to `@nirs4all/methods-wasm`:
 - `predictPortablePipeline(result, dataset)` replays the recorded preprocessing
   chain and predicts with that serialized model through the same methods WASM
   backend.
+
+Savitzky-Golay defaults to `mode: "interp"` for full nirs4all parity and
+preserves explicit methods-backed modes (`mirror`, `constant`, `nearest`,
+`wrap`, `interp`) plus `cval` in the serialized preprocessing chain.
