@@ -4,6 +4,7 @@
 // still streams, and Cancel works. Messages are correlated by a per-call job id;
 // a rejected job whose error was an AbortError is rebuilt as a DOMException so the
 // app's existing cancel handling (App.tsx) behaves identically to the in-thread engine.
+import { type RtError, RtErrorException } from './rt'
 import type {
   Engine,
   FittedPipeline,
@@ -17,7 +18,7 @@ import type {
 type OutMsg =
   | { type: 'progress'; id: string; progress: Parameters<NonNullable<RunOptions['onProgress']>>[0] }
   | { type: 'result'; id: string; result: unknown }
-  | { type: 'error'; id: string; name: string; message: string }
+  | { type: 'error'; id: string; name: string; message: string; rtError?: RtError }
 
 export class WorkerEngine implements Engine {
   readonly name = 'nirs4all-wasm-worker'
@@ -62,6 +63,10 @@ export class WorkerEngine implements Engine {
         finish(() => {
           this.dispose(worker)
           if (m.type === 'result') resolve(m.result as T)
+          // Preserve the typed RtError across the worker boundary (B-018): a strict
+          // (allowFallback:false) refusal in the worker is rebuilt as an
+          // RtErrorException so the main thread keeps the typed error path.
+          else if (m.rtError) reject(new RtErrorException(m.rtError))
           else reject(m.name === 'AbortError' ? new DOMException(m.message, 'AbortError') : new Error(m.message))
         })
       }
@@ -104,7 +109,9 @@ export class WorkerEngine implements Engine {
   }
 
   run(ds: MaterializedDataset, dsl: PipelineDSL, opts: RunOptions = {}): Promise<RunResult> {
-    return this.call<RunResult>({ type: 'run', ds, dsl }, opts)
+    // allowFallback is a plain flag → forward it into the worker payload (onProgress/
+    // signal stay main-thread). Omitted ⇒ default fallback behavior in the engine.
+    return this.call<RunResult>({ type: 'run', ds, dsl, allowFallback: opts.allowFallback }, opts)
   }
 
   predict(model: FittedPipeline, Xnew: Float64Array, nSamples: number, nFeatures: number): Promise<PredictResult> {

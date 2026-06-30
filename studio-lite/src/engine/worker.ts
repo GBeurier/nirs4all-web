@@ -6,13 +6,14 @@
 // AbortSignal is bridged to a per-job AbortController.
 /// <reference lib="webworker" />
 import { MainEngine } from './main-engine'
+import { isRtErrorException } from './rt'
 import type { RunOptions } from './types'
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope
 const engine = new MainEngine({ mainThread: false, useDagMl: ctx.location?.protocol !== 'blob:' })
 const controllers = new Map<string, AbortController>()
 
-interface RunMsg { type: 'run'; id: string; ds: Parameters<MainEngine['run']>[0]; dsl: Parameters<MainEngine['run']>[1] }
+interface RunMsg { type: 'run'; id: string; ds: Parameters<MainEngine['run']>[0]; dsl: Parameters<MainEngine['run']>[1]; allowFallback?: boolean }
 interface PredictMsg { type: 'predict'; id: string; model: Parameters<MainEngine['predict']>[0]; Xnew: Float64Array; nSamples: number; nFeatures: number }
 interface CancelMsg { type: 'cancel'; id: string }
 type InMsg = RunMsg | PredictMsg | CancelMsg
@@ -31,6 +32,7 @@ async function handle(msg: InMsg): Promise<void> {
   const opts: RunOptions = {
     signal: ctrl.signal,
     onProgress: (progress) => ctx.postMessage({ type: 'progress', id: msg.id, progress }),
+    allowFallback: msg.type === 'run' ? msg.allowFallback : undefined,
   }
   try {
     const result =
@@ -41,8 +43,9 @@ async function handle(msg: InMsg): Promise<void> {
   } catch (e) {
     const err = e instanceof Error ? e : new Error(String(e))
     // forward name so the client can rebuild an AbortError DOMException (App.tsx
-    // suppresses those) rather than surfacing a cancel as a hard error.
-    ctx.postMessage({ type: 'error', id: msg.id, name: err.name, message: err.message })
+    // suppresses those) rather than surfacing a cancel as a hard error; forward the
+    // typed RtError (B-018) so a strict-mode refusal keeps its cause across the boundary.
+    ctx.postMessage({ type: 'error', id: msg.id, name: err.name, message: err.message, rtError: isRtErrorException(e) ? e.rtError : undefined })
   } finally {
     controllers.delete(msg.id)
   }

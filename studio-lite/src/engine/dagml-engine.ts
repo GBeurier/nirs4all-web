@@ -21,6 +21,7 @@ import {
   scoreNode,
   trainAndPredict,
 } from './orchestrate'
+import { type RtError, RtErrorException, rtErrorFromUnknown } from './rt'
 import type { Engine, FittedPipeline, MaterializedDataset, ParamSweep, PipelineDSL, PredRow, PredictResult, RunOptions, RunResult } from './types'
 
 const MODEL_CONTROLLER = 'controller:model'
@@ -220,6 +221,12 @@ export class DagMlEngine implements Engine {
   private async runViaDagMl(ds: MaterializedDataset, dsl: PipelineDSL, opts: RunOptions, backend: ModelBackend): Promise<RunResult> {
     const { onProgress: onP, signal } = opts
     const task = ds.taskType
+    // B-018: collect typed runtime diagnostics. Any degrade from the native dag-ml
+    // scheduler to the libn4m fold chain records an RtError here (and flips
+    // `schedulerFallback`) so the returned RunResult is never a silent "success".
+    // With `opts.allowFallback === false` the engine throws instead of degrading.
+    const diagnostics: RtError[] = []
+    let schedulerFallback = false
 
     // --- dag-ml-data: materialize X/y through the provider (the data-contract layer)
     // FIRST, so the run — and the class vocabulary below — is derived from the exact
@@ -373,8 +380,17 @@ export class DagMlEngine implements Engine {
         }
         // A model-only graph always has the model controller registered, so a
         // planning failure here is unexpected; fall back to the base variant rather
-        // than dropping a configured search or throwing a raw stack.
+        // than dropping a configured search or throwing a raw stack — but record it
+        // (B-018) since the configured variant search is silently dropped otherwise.
         if (/no controller registered|planning failed|planning_failed/i.test(msg)) {
+          const rtError = rtErrorFromUnknown('run', err, {
+            cause: 'unsupported_shape',
+            message: 'dag-ml could not plan the variant search; ran the base variant only.',
+            mitigation: 'The configured sweep was skipped. Simplify the model parameters, or report this graph shape as unschedulable.',
+            detail: msg,
+          })
+          if (opts.allowFallback === false) throw new RtErrorException(rtError)
+          diagnostics.push(rtError)
           variants = [baseVariant]
         } else {
           throw err
@@ -526,8 +542,20 @@ export class DagMlEngine implements Engine {
         // in a dag-ml runtime_validation error — normalize it back to a clean
         // AbortError so the UI suppresses it (App.tsx) instead of showing a fault.
         if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError')
-        // Model-only scheduler failed unexpectedly: fall back to the libn4m chain,
-        // which loops every variant over the folds (no variant is dropped).
+        // Model-only scheduler failed unexpectedly. Historically this degraded to the
+        // libn4m chain SILENTLY — the run still reported "executed by dag-ml". B-018:
+        // make the degrade explicit. In strict mode (allowFallback === false) throw a
+        // typed RtErrorException; otherwise record an RtError diagnostic + flip
+        // schedulerFallback so the result is not misrepresented as a native run, then
+        // fall back to the libn4m chain (loops every variant over the folds — no
+        // variant is dropped).
+        const rtError = rtErrorFromUnknown('run', err, {
+          mitigation: 'Cross-validation re-ran through the libn4m chain over dag-ml folds — results are valid, but the dag-ml scheduler did not run this phase. Use a model-only pipeline to keep the native scheduler path.',
+          detail: 'dag-ml execute_campaign_phase_json failed; degraded to the libn4m fold chain.',
+        })
+        if (opts.allowFallback === false) throw new RtErrorException(rtError)
+        diagnostics.push(rtError)
+        schedulerFallback = true
         runChainOverFolds()
         nodeResults = []
       }
@@ -615,11 +643,12 @@ export class DagMlEngine implements Engine {
       seed: cv.seed,
       engine: 'dag-ml-wasm + libn4m',
       scoreMetric,
-      lineage: { engine: 'dag-ml-wasm', compiled: true, executed: true, phase: multiVariant ? 'FIT_CV+SELECT' : 'FIT_CV', variantCount: variants.length, selectedVariant: winner.variant.variant_id, folds: folds.length, version: dagml.dag_ml_version(), dataProvider },
+      lineage: { engine: 'dag-ml-wasm', compiled: true, executed: true, schedulerFallback: schedulerFallback || undefined, phase: multiVariant ? 'FIT_CV+SELECT' : 'FIT_CV', variantCount: variants.length, selectedVariant: winner.variant.variant_id, folds: folds.length, version: dagml.dag_ml_version(), dataProvider },
       model: fitted,
       createdAt: new Date().toISOString(),
       variantCount: variants.length,
       variants: variantSummaries,
+      ...(diagnostics.length ? { diagnostics } : {}),
     }
   }
 
