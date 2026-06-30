@@ -277,6 +277,9 @@ export default function App() {
   const runEngineLabel = lineage?.executed ? 'executed by dag-ml' : lineage?.compiled ? 'compiled by dag-ml' : null
   const dataServed = lineage?.dataProvider?.status === 'materialized' ? lineage.dataProvider : null
   const dataFallback = lineage?.dataProvider && lineage.dataProvider.status !== 'materialized' ? lineage.dataProvider : null
+  // B-018: the dag-ml scheduler degraded to the libn4m fold chain — surface it (the
+  // run still produced valid scores, but it is not a clean native execution).
+  const schedulerFallback = lineage?.schedulerFallback ? selectedRun?.diagnostics?.[0] ?? true : null
 
   return (
     <div className="flex min-h-screen flex-col n4a-app-bg">
@@ -331,6 +334,18 @@ export default function App() {
           {!running && runEngineLabel && (
             <span className="hidden items-center gap-1.5 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs font-medium text-muted-foreground sm:flex">
               <Cpu className="size-3.5" /> {runEngineLabel}
+            </span>
+          )}
+          {!running && schedulerFallback && (
+            <span
+              className="hidden items-center gap-1.5 rounded-full border border-brand-amber/40 bg-brand-amber/5 px-2.5 py-1 text-xs font-medium text-brand-amber lg:flex"
+              title={
+                typeof schedulerFallback === 'object'
+                  ? `${schedulerFallback.message}${schedulerFallback.mitigation ? ` — ${schedulerFallback.mitigation}` : ''}`
+                  : 'dag-ml scheduler unavailable — ran the libn4m fold chain over dag-ml folds.'
+              }
+            >
+              <Cpu className="size-3.5" /> CV: libn4m fallback
             </span>
           )}
           <button

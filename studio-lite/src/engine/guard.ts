@@ -5,6 +5,7 @@
 // Worker-backed engines run heavy screens in the background so the UI stays
 // cancellable. Only a main-thread fallback must refuse heavy AOM/POP work before
 // libn4m starts; otherwise the browser cannot repaint or handle Cancel.
+import { RtErrorException, makeRtError } from './rt'
 import type { MaterializedDataset, PipelineDSL, RunProgress } from './types'
 import { AOM_DEFAULT_BANK } from '@/catalog/types'
 
@@ -42,10 +43,21 @@ export function assertAomBudget(
 
   const human = `${nTrain}×${ds.nFeatures}, screening ${bank} operators × ${folds} inner folds × ${nComp} components, ${outerFits} outer fit${outerFits === 1 ? '' : 's'}`
   if (opts.mainThread && cost > MAIN_THREAD_REFUSE_COST) {
-    throw new Error(
-      `This ${model.type} screen is too large for the offline single-file build (${human}). ` +
-        `AOM/POP would run on the browser UI thread, so Cancel cannot interrupt it. ` +
-        `Use the served build for worker-backed execution, or reduce rows, features, Screen CV folds, the operator bank, or components.`,
+    // Refuse before libn4m starts. Surface a typed RtError (B-018) — an
+    // unsupported_capability (cancellable background compute) for this environment —
+    // while keeping the message identical so existing UI / tests are unaffected.
+    const mitigation = 'Use the served build for worker-backed execution, or reduce rows, features, Screen CV folds, the operator bank, or components.'
+    throw new RtErrorException(
+      makeRtError({
+        verb: 'run',
+        cause: 'unsupported_capability',
+        unsupported_capability: 'cancellable_background_compute',
+        message:
+          `This ${model.type} screen is too large for the offline single-file build (${human}). ` +
+          `AOM/POP would run on the browser UI thread, so Cancel cannot interrupt it. ` +
+          mitigation,
+        mitigation,
+      }),
     )
   }
   onProgress?.({

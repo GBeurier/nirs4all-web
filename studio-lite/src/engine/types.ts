@@ -4,6 +4,8 @@
 // is dag-ml-wasm (driving libn4m); a JS stub implements the same interface to
 // unblock the UI until the Rust execution binding lands.
 
+import type { RtError } from './rt';
+
 export type TaskType = 'regression' | 'binary' | 'multiclass';
 export type Partition = 'train' | 'test' | 'predict';
 
@@ -256,6 +258,10 @@ export interface RunResult {
   variantCount?: number;
   /** per-variant CV scores; the winner dag-ml's selection picked has `selected: true` */
   variants?: { variantId: string; label: string; metrics: Metrics; selected: boolean }[];
+  /** typed runtime diagnostics (B-018) — e.g. "ran the libn4m fold chain because the
+   *  dag-ml scheduler failed". Present only when the engine degraded; a clean dag-ml
+   *  run omits it. Lets runtime consumers tell a fallback from a native execution. */
+  diagnostics?: RtError[];
 }
 
 // ---------------------------------------------------------------------------
@@ -276,6 +282,11 @@ export interface RunLogEntry {
 export interface RunOptions {
   onProgress?: (p: RunProgress) => void;
   signal?: AbortSignal;
+  /** When the dag-ml/WASM scheduler can't run a shape, the engine degrades to the
+   *  libn4m fold chain. Default (`true`/omitted) keeps that fallback but records a
+   *  typed `RtError` on `RunResult.diagnostics`; `false` is the strict, no-silent-
+   *  fallback mode — the engine throws an `RtErrorException` instead (B-018). */
+  allowFallback?: boolean;
 }
 export interface PredictResult {
   values: Float64Array;

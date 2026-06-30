@@ -13,6 +13,11 @@ export interface DagMlLineage {
   compiled: boolean
   /** true when dag-ml's scheduler actually executed the phase (not just compiled) */
   executed?: boolean
+  /** true when the dag-ml scheduler failed and the run degraded to the libn4m fold
+   *  chain over dag-ml's folds (B-018). The folds/selection are still dag-ml's, but
+   *  the SCHEDULER did not run — so the result is not a clean native execution.
+   *  Paired with one or more `RunResult.diagnostics` entries. */
+  schedulerFallback?: boolean
   graph?: unknown
   nodeCount?: number
   error?: string
