@@ -4,9 +4,10 @@ import { isRtErrorException, makeRtError, RtErrorException, rtErrorFromUnknown }
 import type { MaterializedDataset, PipelineDSL } from './types'
 
 describe('makeRtError', () => {
-  it('stamps schema_version and carries the contract fields', () => {
+  it('carries the contract fields and stamps NO schema_version (that is an RtResult field, not RtError)', () => {
     const e = makeRtError({ verb: 'run', cause: 'unsupported_capability', message: 'nope', unsupported_capability: 'foo', mitigation: 'do bar' })
-    expect(e).toEqual({ schema_version: 1, verb: 'run', cause: 'unsupported_capability', message: 'nope', unsupported_capability: 'foo', mitigation: 'do bar' })
+    expect(e).toEqual({ verb: 'run', cause: 'unsupported_capability', message: 'nope', unsupported_capability: 'foo', mitigation: 'do bar' })
+    expect('schema_version' in e).toBe(false)
   })
 })
 
