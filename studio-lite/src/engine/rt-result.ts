@@ -3,6 +3,7 @@ import type { Metrics, PredRow, RunResult, ScoreNode } from './types'
 
 export type RtExecutionBackend = 'local-python' | 'wasm-local' | 'cluster'
 export type RtPredictionPartition = 'train' | 'validation' | 'test' | 'final'
+export type RtPredictionArrayWire = number[] | number[][] | null
 
 export interface RtMetricReportWire {
   prediction_id?: string | null
@@ -24,8 +25,9 @@ export interface RtPredictionBlockWire {
   variant_id: string | null
   model_name: string
   sample_indices: number[]
-  y_true: number[]
-  y_pred: number[]
+  y_true: RtPredictionArrayWire
+  y_pred: RtPredictionArrayWire
+  y_proba: RtPredictionArrayWire
   scores: Record<string, number>
   metric: string
   task_type: string
@@ -191,6 +193,7 @@ export function runResultToRtResultEnvelope(run: RunResult, opts: RtResultOption
       sample_indices: rowIndices(score.predictions, sampleIndex),
       y_true: score.predictions.map((row) => row.actual),
       y_pred: score.predictions.map((row) => row.predicted),
+      y_proba: null,
       scores: finiteMetrics(score.metrics),
       metric: String(run.scoreMetric),
       task_type: run.taskType,

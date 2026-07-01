@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "contract": "nirs4all.runtime-fixture-shape",
+  "python_source": "nirs4all.pipeline.dagml.rt",
+  "rt_result": {
+    "required_keys": ["schema_version", "run_id", "plan_id", "selection", "reports", "predictions", "manifest"],
+    "optional_keys": ["artifacts", "diagnostics"],
+    "manifest_keys": ["engine", "fingerprints", "capabilities", "portable_level", "files"],
+    "prediction_keys": ["partition", "fold_id", "variant_id", "model_name", "sample_indices", "y_true", "y_pred", "y_proba", "scores", "metric", "task_type"],
+    "report_required_keys": ["producer_node", "partition", "level", "row_count", "target_width", "metrics"],
+    "report_optional_keys": ["prediction_id", "variant_id", "variant_label", "fold_id", "target_names"]
+  },
+  "rt_error": {
+    "required_keys": ["verb", "cause", "message"],
+    "optional_keys": ["mitigation", "unsupported_capability", "portable_level"]
+  }
+}
