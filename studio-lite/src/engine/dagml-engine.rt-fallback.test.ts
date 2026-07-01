@@ -1,13 +1,12 @@
 // FORCED-FAILURE coverage for the B-018 RtError runtime diagnostics (RT_spec §RT-003).
 //
-// The happy path (a clean dag-ml run surfaces NO fallback) is asserted end-to-end by
-// tests/rt-fallback-smoke.mjs in a real browser. The *negative* half — that a dag-ml
-// scheduler/planning failure degrades LOUDLY (a typed RtError, not a silent success) —
-// can only be proven by FORCING the WASM coordinator to fail, which the served smoke
-// cannot do deterministically without a product test-hook. So it is pinned here at the
-// engine layer: we substitute the dag-ml module with a synthetic one whose
+// The served browser half is asserted end-to-end by tests/rt-fallback-smoke.mjs:
+// a clean dag-ml run surfaces NO fallback, and a loopback-only worker fault hook
+// forces a scheduler failure through the real served worker. This node test keeps
+// the engine-layer negative cases fast and deterministic, including variant planning:
+// we substitute the dag-ml module with a synthetic one whose
 // `execute_campaign_phase_json` / `build_execution_plan_json` throw on demand, and drive
-// the REAL `DagMlEngine.runViaDagMl` fallback bookkeeping (no product code is changed).
+// the REAL `DagMlEngine.runViaDagMl` fallback bookkeeping.
 //
 // Two invariants, at BOTH degrade sites (scheduler + variant planning), in BOTH modes:
 //   • default (allowFallback omitted/true): the run STILL completes with valid CV/refit
