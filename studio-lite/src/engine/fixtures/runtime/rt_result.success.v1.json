@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "run_id": "run:web-rt-success",
+  "plan_id": "plan:web-rt-golden",
+  "selection": {
+    "selected_variant": "variant:base"
+  },
+  "reports": [
+    {
+      "prediction_id": "pred:model:compat.0:base:avg",
+      "variant_id": null,
+      "producer_node": "model:compat.0",
+      "partition": "validation",
+      "fold_id": "avg",
+      "level": "sample",
+      "row_count": 4,
+      "target_width": 1,
+      "target_names": ["moisture"],
+      "metrics": {
+        "rmse": 0,
+        "r2": 1,
+        "mae": 0
+      }
+    },
+    {
+      "prediction_id": "pred:model:compat.0:base:fold-1",
+      "variant_id": null,
+      "producer_node": "model:compat.0",
+      "partition": "validation",
+      "fold_id": "fold-1",
+      "level": "sample",
+      "row_count": 2,
+      "target_width": 1,
+      "target_names": ["moisture"],
+      "metrics": {
+        "rmse": 0,
+        "r2": 1,
+        "mae": 0
+      }
+    },
+    {
+      "prediction_id": "pred:model:compat.0:base:fold-2",
+      "variant_id": null,
+      "producer_node": "model:compat.0",
+      "partition": "validation",
+      "fold_id": "fold-2",
+      "level": "sample",
+      "row_count": 2,
+      "target_width": 1,
+      "target_names": ["moisture"],
+      "metrics": {
+        "rmse": 0,
+        "r2": 1,
+        "mae": 0
+      }
+    },
+    {
+      "prediction_id": "pred:model:compat.0:base:final",
+      "variant_id": null,
+      "producer_node": "model:compat.0",
+      "partition": "test",
+      "fold_id": "final",
+      "level": "sample",
+      "row_count": 2,
+      "target_width": 1,
+      "target_names": ["moisture"],
+      "metrics": {
+        "rmse": 0,
+        "r2": 1,
+        "mae": 0
+      }
+    }
+  ],
+  "predictions": [
+    {
+      "partition": "validation",
+      "fold_id": "avg",
+      "variant_id": null,
+      "model_name": "rt-golden-pls",
+      "sample_indices": [0, 1, 2, 3],
+      "y_true": [1, 2, 3, 4],
+      "y_pred": [1, 2, 3, 4],
+      "scores": {
+        "rmse": 0,
+        "r2": 1,
+        "mae": 0
+      },
+      "metric": "rmse",
+      "task_type": "regression"
+    },
+    {
+      "partition": "validation",
+      "fold_id": "fold-1",
+      "variant_id": null,
+      "model_name": "rt-golden-pls",
+      "sample_indices": [0, 1],
+      "y_true": [1, 2],
+      "y_pred": [1, 2],
+      "scores": {
+        "rmse": 0,
+        "r2": 1,
+        "mae": 0
+      },
+      "metric": "rmse",
+      "task_type": "regression"
+    },
+    {
+      "partition": "validation",
+      "fold_id": "fold-2",
+      "variant_id": null,
+      "model_name": "rt-golden-pls",
+      "sample_indices": [2, 3],
+      "y_true": [3, 4],
+      "y_pred": [3, 4],
+      "scores": {
+        "rmse": 0,
+        "r2": 1,
+        "mae": 0
+      },
+      "metric": "rmse",
+      "task_type": "regression"
+    },
+    {
+      "partition": "test",
+      "fold_id": "final",
+      "variant_id": null,
+      "model_name": "rt-golden-pls",
+      "sample_indices": [4, 5],
+      "y_true": [5, 6],
+      "y_pred": [5, 6],
+      "scores": {
+        "rmse": 0,
+        "r2": 1,
+        "mae": 0
+      },
+      "metric": "rmse",
+      "task_type": "regression"
+    }
+  ],
+  "manifest": {
+    "engine": "dag-ml-wasm + libn4m",
+    "fingerprints": {
+      "run_id": "run:web-rt-success",
+      "plan_id": "plan:web-rt-golden",
+      "schema": "sch",
+      "plan": "pln",
+      "relation": null
+    },
+    "capabilities": {
+      "execution_backend": "wasm-local",
+      "task_type": "regression",
+      "score_metric": "rmse",
+      "allow_fallback": true,
+      "scheduler_fallback": false,
+      "diagnostics": 0
+    },
+    "portable_level": null,
+    "files": {}
+  }
+}
