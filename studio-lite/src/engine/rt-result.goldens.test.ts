@@ -8,7 +8,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { isRtErrorException, makeRtError, rtErrorToWire, RtErrorException } from './rt'
+import { isRtErrorException, makeRtError, rtErrorFromUnknown, rtErrorToWire, RtErrorException, type RtError } from './rt'
 import { runResultToRtResultEnvelope, type RtResultWire } from './rt-result'
 import type { FittedPipeline, PipelineDSL, PredRow, RunResult, ScoreNode } from './types'
 
@@ -61,6 +61,19 @@ function readSiblingRuntimeFixtureShape(): { path: string; shape: RuntimeFixture
   for (const rel of candidates) {
     const found = findSibling(rel)
     if (found) return { path: found, shape: JSON.parse(readFileSync(found, 'utf8')) as RuntimeFixtureShape }
+  }
+  return null
+}
+
+function readSiblingRuntimeFixture(name: string): { path: string; fixture: Record<string, any> } | null {
+  const candidates = [
+    path.join('nirs4all', 'tests', 'integration', 'parity', 'fixtures', 'runtime', name),
+    path.join('_worktrees', 'INT-nirs4all', 'tests', 'integration', 'parity', 'fixtures', 'runtime', name),
+    path.join('_worktrees', 'W43-nirs4all-rt-goldens', 'tests', 'integration', 'parity', 'fixtures', 'runtime', name),
+  ]
+  for (const rel of candidates) {
+    const found = findSibling(rel)
+    if (found) return { path: found, fixture: JSON.parse(readFileSync(found, 'utf8')) }
   }
   return null
 }
@@ -135,7 +148,19 @@ function strictRefusalRtError() {
   })
 }
 
-function goldenRun(opts: { id: string; schedulerFallback?: boolean; diagnostics?: ReturnType<typeof schedulerFallbackRtError>[] }): RunResult {
+function unsupportedShapeRtError() {
+  return rtErrorFromUnknown(
+    'run',
+    new Error("engine='dag-ml' does not support this pipeline shape: branch duplication merge predictions is not covered"),
+    {
+      cause: 'unsupported_shape',
+      mitigation: "run this shape on engine='legacy', or rewrite it into a dag-ml-covered shape (see the dag-ml coverage matrix).",
+      detail: 'Python unsupported-shape golden fixture parity.',
+    },
+  )
+}
+
+function goldenRun(opts: { id: string; schedulerFallback?: boolean; diagnostics?: RtError[] }): RunResult {
   return {
     id: opts.id,
     pipelineName: 'rt-golden-pls',
@@ -267,6 +292,22 @@ describe('RtResult Web goldens', () => {
     }
   })
 
+  it('keeps shared RtError fixtures byte-aligned with Python when that checkout is present', () => {
+    const sharedFixtures = [
+      'rt_error.scheduler_fallback.v1.json',
+      'rt_error.strict_scheduler_refusal.v1.json',
+      'rt_error.unsupported_shape.v1.json',
+    ]
+    let checked = 0
+    for (const name of sharedFixtures) {
+      const sibling = readSiblingRuntimeFixture(name)
+      if (!sibling) continue
+      expect(readFixture(name)).toEqual(sibling.fixture)
+      checked += 1
+    }
+    if (!checked) console.warn('[rt-result.goldens] Python runtime fixtures not reachable — local shape/schema checks still ran.')
+  })
+
   it('projects a clean Web RunResult to the shared RtResult success envelope', () => {
     const envelope = runResultToRtResultEnvelope(goldenRun({ id: 'run:web-rt-success' }), { planId: PLAN_ID })
 
@@ -289,6 +330,21 @@ describe('RtResult Web goldens', () => {
     expect(envelope.diagnostics?.[0]).toEqual(readFixture('rt_error.scheduler_fallback.v1.json'))
     expect(envelope).toEqual(readFixture('rt_result.scheduler_fallback.v1.json'))
     expect(envelope.manifest.capabilities).toMatchObject({ allow_fallback: true, scheduler_fallback: true, diagnostics: 1 })
+    assertRtResultWireShape(envelope)
+  })
+
+  it('projects unsupported-shape diagnostics through RtResult using the Python RtError fixture', () => {
+    const envelope = runResultToRtResultEnvelope(
+      goldenRun({
+        id: 'run:web-rt-unsupported-shape',
+        diagnostics: [unsupportedShapeRtError()],
+      }),
+      { planId: PLAN_ID },
+    )
+
+    expect(envelope.diagnostics?.[0]).toEqual(readFixture('rt_error.unsupported_shape.v1.json'))
+    expect(envelope.manifest.capabilities).toMatchObject({ allow_fallback: true, scheduler_fallback: false, diagnostics: 1 })
+    expect('detail' in envelope.diagnostics![0]).toBe(false)
     assertRtResultWireShape(envelope)
   })
 
