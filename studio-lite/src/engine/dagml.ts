@@ -45,6 +45,56 @@ export async function loadDagMl(): Promise<DagMlMod> {
 export const dagMlAvailable = () => typeof location === 'undefined' || location.protocol !== 'file:'
 const canUse = dagMlAvailable
 
+type DagMlRtSmokeFaultKind = 'planning' | 'scheduler'
+type DagMlRtSmokeMessage = {
+  type?: string
+  failPlanning?: boolean | string | null
+  failScheduler?: boolean | string | null
+}
+
+const RT_SMOKE_CHANNEL = 'n4a:rt-fallback-smoke:v1'
+const rtSmokeFaults: Record<DagMlRtSmokeFaultKind, string | null> = { planning: null, scheduler: null }
+
+function isLoopbackHost(hostname: string | undefined): boolean {
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]' || hostname === '::1' || hostname?.endsWith('.localhost') === true
+}
+
+function rtSmokeHooksEnabled(): boolean {
+  const loc = (globalThis as typeof globalThis & { location?: Location }).location
+  return isLoopbackHost(loc?.hostname)
+}
+
+function rtSmokeMessage(value: boolean | string | null | undefined, fallback: string): string | null {
+  if (value === true) return fallback
+  if (typeof value === 'string' && value.trim()) return value
+  return null
+}
+
+if (rtSmokeHooksEnabled() && typeof BroadcastChannel !== 'undefined') {
+  const channel = new BroadcastChannel(RT_SMOKE_CHANNEL)
+  channel.onmessage = (ev: MessageEvent<unknown>) => {
+    const msg = ev.data as DagMlRtSmokeMessage | null
+    if (!msg || typeof msg !== 'object') return
+    if (msg.type === 'n4a-rt-smoke:clear') {
+      rtSmokeFaults.planning = null
+      rtSmokeFaults.scheduler = null
+      return
+    }
+    if (msg.type !== 'n4a-rt-smoke:set') return
+    if ('failPlanning' in msg) {
+      rtSmokeFaults.planning = rtSmokeMessage(msg.failPlanning, 'no controller registered for forced rt-fallback smoke')
+    }
+    if ('failScheduler' in msg) {
+      rtSmokeFaults.scheduler = rtSmokeMessage(msg.failScheduler, 'forced scheduler failure for rt-fallback smoke')
+    }
+  }
+}
+
+export function dagMlRtSmokeForcedFailure(kind: DagMlRtSmokeFaultKind): Error | null {
+  const message = rtSmokeHooksEnabled() ? rtSmokeFaults[kind] : null
+  return message ? new Error(message) : null
+}
+
 // --- generator DSL emission -------------------------------------------------
 // Field names below are emitted to match dag-ml's PipelineDslParamGenerator /
 // PipelineDslVariantChoice exactly (dag-ml/crates/dag-ml-core/src/dsl.rs):
