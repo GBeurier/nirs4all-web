@@ -6,6 +6,7 @@
 //      fault hook. A forced scheduler failure must either return a loud fallback
 //      RunResult with typed RtError diagnostics, or, with allowFallback:false, return
 //      a typed RtErrorException across the worker protocol.
+import { readFileSync } from 'node:fs'
 import { chromium } from 'playwright-core'
 
 const APP_URL = process.env.SMOKE_URL || 'http://localhost:4317/'
@@ -13,6 +14,7 @@ const EXE = process.env.CHROME || '/usr/bin/google-chrome'
 const FALLBACK_CHIP = 'CV: libn4m fallback'
 const RT_SMOKE_CHANNEL = 'n4a:rt-fallback-smoke:v1'
 const SCHEDULER_FAILURE = 'forced scheduler failure for served rt-fallback smoke'
+const PYTHON_RUNTIME_SHAPE = JSON.parse(readFileSync(new URL('../src/engine/fixtures/runtime/python_rt_fixture_shape.v1.json', import.meta.url), 'utf8'))
 
 const browser = await chromium.launch({ executablePath: EXE, headless: true, args: ['--no-sandbox'] })
 const page = await browser.newPage()
@@ -28,6 +30,58 @@ function fail(msg) {
 }
 
 const isFile = String(APP_URL).startsWith('file:')
+
+const sorted = (values) => [...values].sort()
+
+function assertKeys(label, value, required, optional = []) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    fail(`${label} is not an object: ${JSON.stringify(value)}`)
+    return
+  }
+  const allowed = new Set([...required, ...optional])
+  for (const key of Object.keys(value)) {
+    if (!allowed.has(key)) fail(`${label} has non-Python runtime key "${key}"`)
+  }
+  for (const key of required) {
+    if (value[key] === undefined) fail(`${label} missing required Python runtime key "${key}"`)
+  }
+}
+
+function assertRtErrorWire(label, value) {
+  assertKeys(label, value, PYTHON_RUNTIME_SHAPE.rt_error.required_keys, PYTHON_RUNTIME_SHAPE.rt_error.optional_keys)
+  if (value && typeof value === 'object') {
+    if ('detail' in value) fail(`${label} leaked in-memory detail across the worker boundary`)
+    if ('schema_version' in value) fail(`${label} incorrectly carries schema_version`)
+  }
+}
+
+function assertRtResultWire(label, value, { expectedDiagnostics }) {
+  assertKeys(label, value, PYTHON_RUNTIME_SHAPE.rt_result.required_keys, PYTHON_RUNTIME_SHAPE.rt_result.optional_keys)
+  if (!value || typeof value !== 'object') return
+  if (value.schema_version === 1) console.log(`✓ ${label} keeps schema_version=1`)
+  else fail(`${label} did not keep schema_version=1: ${JSON.stringify(value?.schema_version)}`)
+
+  if (sorted(Object.keys(value.manifest || {})).join('|') === sorted(PYTHON_RUNTIME_SHAPE.rt_result.manifest_keys).join('|')) {
+    console.log(`✓ ${label} manifest keys match the Python runtime fixture`)
+  } else {
+    fail(`${label} manifest keys diverged: ${JSON.stringify(Object.keys(value.manifest || {}))}`)
+  }
+
+  for (const [i, report] of (value.reports || []).entries()) {
+    assertKeys(`${label}.reports[${i}]`, report, PYTHON_RUNTIME_SHAPE.rt_result.report_required_keys, PYTHON_RUNTIME_SHAPE.rt_result.report_optional_keys)
+  }
+  for (const [i, prediction] of (value.predictions || []).entries()) {
+    const keys = sorted(Object.keys(prediction || {}))
+    if (keys.join('|') !== sorted(PYTHON_RUNTIME_SHAPE.rt_result.prediction_keys).join('|')) {
+      fail(`${label}.predictions[${i}] keys diverged: ${JSON.stringify(keys)}`)
+    }
+  }
+
+  const diagnostics = value.diagnostics || []
+  if (diagnostics.length === expectedDiagnostics) console.log(`✓ ${label} carries ${expectedDiagnostics} wire diagnostic(s)`)
+  else fail(`${label} diagnostics count ${diagnostics.length}, expected ${expectedDiagnostics}`)
+  for (const [i, diagnostic] of diagnostics.entries()) assertRtErrorWire(`${label}.diagnostics[${i}]`, diagnostic)
+}
 
 async function findServedWorkerUrl() {
   const base = new URL(APP_URL)
@@ -100,6 +154,7 @@ async function runWorkerFault(workerUrl, { allowFallback } = {}) {
             if (msg.type === 'progress') return
             if (msg.type === 'result') {
               const result = msg.result
+              const rtResult = msg.rtResult || null
               const lineage = result.lineage || {}
               const diagnostics = result.diagnostics || []
               const diag = diagnostics[0] || null
@@ -111,6 +166,7 @@ async function runWorkerFault(workerUrl, { allowFallback } = {}) {
                 score: result.cv?.metrics?.[result.scoreMetric],
                 schedulerFallback: Boolean(lineage.schedulerFallback),
                 diagnosticsCount: diagnostics.length,
+                rtResult,
                 diagnostic: diag
                   ? {
                       verb: diag.verb,
@@ -129,20 +185,13 @@ async function runWorkerFault(workerUrl, { allowFallback } = {}) {
                 error: {
                   name: msg.name,
                   message: msg.message,
-                  rtError: msg.rtError
-                    ? {
-                        verb: msg.rtError.verb,
-                        cause: msg.rtError.cause,
-                        message: msg.rtError.message,
-                        mitigation: msg.rtError.mitigation,
-                      }
-                    : null,
+                  rtError: msg.rtError || null,
                 },
               })
             }
           })
           worker.addEventListener('error', (ev) => finish({ ok: false, error: { name: 'WorkerError', message: ev.message || 'worker failed' } }))
-          setTimeout(() => worker.postMessage({ type: 'run', id, ds: makeDataset(), dsl, allowFallback: allowFallbackArg }), 150)
+          setTimeout(() => worker.postMessage({ type: 'run', id, ds: makeDataset(), dsl, allowFallback: allowFallbackArg, includeRtResult: true }), 150)
         })
       } finally {
         clearInterval(interval)
@@ -199,6 +248,13 @@ try {
       } else {
         fail(`unexpected fallback diagnostics: ${JSON.stringify(fallback.diagnostic)}`)
       }
+      assertRtResultWire('forced fallback worker RtResult', fallback.rtResult, { expectedDiagnostics: 1 })
+      const rtDiagnostic = fallback.rtResult?.diagnostics?.[0]
+      if (rtDiagnostic?.verb === 'run' && rtDiagnostic?.cause === 'runtime_error' && rtDiagnostic?.message?.includes(SCHEDULER_FAILURE)) {
+        console.log('✓ worker RtResult diagnostic preserves RtError verb/cause/message')
+      } else {
+        fail(`worker RtResult diagnostic lost typed error fields: ${JSON.stringify(rtDiagnostic)}`)
+      }
 
       if (fallback.diagnostic?.message?.includes(SCHEDULER_FAILURE) && /libn4m chain/i.test(fallback.diagnostic?.mitigation || '')) {
         console.log('✓ RtError message and mitigation describe the scheduler fallback')
@@ -217,6 +273,7 @@ try {
       strict.error?.rtError?.message?.includes(SCHEDULER_FAILURE)
     ) {
       console.log('✓ allowFallback:false returns a typed RtErrorException across the served worker')
+      assertRtErrorWire('strict worker RtError', strict.error.rtError)
     } else {
       fail(`allowFallback:false did not return typed RtErrorException: ${JSON.stringify(strict.error)}`)
     }
