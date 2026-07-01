@@ -8,6 +8,9 @@
       name="description"
       content="A single-page, full-WASM demonstrator of the nirs4all ecosystem: upload spectra, build a pipeline, run cross-validated PLS / PLS-DA with dag-ml + libn4m, and predict — entirely in your browser, no install, nothing uploaded."
     />
+    <link rel="canonical" href="https://web.nirs4all.org/" />
+    <link rel="sitemap" type="application/xml" title="Sitemap" href="https://web.nirs4all.org/sitemap.xml" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <link rel="icon" type="image/svg+xml" href="./brand/icon.svg" />
     <link rel="icon" href="./brand/favicon.ico" />
     <link rel="apple-touch-icon" href="./brand/icon-180.png" />
@@ -23,6 +26,19 @@
     <meta name="twitter:description" content="Upload spectra → pipeline → run (dag-ml + libn4m WASM) → results → predict. 100% in-browser." />
     <meta name="twitter:image" content="https://web.nirs4all.org/brand/og.png" />
     <meta name="theme-color" content="#FF6400" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "nirs4all-web",
+      "url": "https://web.nirs4all.org/",
+      "applicationCategory": "ScienceApplication",
+      "operatingSystem": "Web",
+      "description": "Full-WASM NIRS modelling workbench for browser-based spectra upload, pipeline execution, validation, and prediction.",
+      "softwareHelp": "https://github.com/GBeurier/nirs4all-web",
+      "isPartOf": {"@type": "WebSite", "name": "nirs4all", "url": "https://nirs4all.org/"}
+    }
+    </script>
     <style>
       html,
       body {
@@ -37,6 +53,13 @@
 
   <body>
     <div id="root"></div>
+    <noscript>
+      <main>
+        <h1>nirs4all-web</h1>
+        <p>Browser-based NIRS modelling with local spectra upload, pipeline building, cross-validated PLS and PLS-DA, results review, and prediction. JavaScript is required to run the WebAssembly workbench.</p>
+        <p><a href="https://github.com/GBeurier/nirs4all-web">Source code</a> · <a href="https://nirs4all.org/open-source-nirs-tools.html">Open source NIRS tools</a></p>
+      </main>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
       <!-- GoatCounter privacy-friendly analytics (no cookies) -->
     <script data-goatcounter="https://nirs4all.goatcounter.com/count" data-goatcounter-settings='{"path": "/web"}' async src="//gc.zgo.at/count.js"></script>

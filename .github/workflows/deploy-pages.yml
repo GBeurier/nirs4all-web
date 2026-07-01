@@ -36,6 +36,10 @@ jobs:
           cache-dependency-path: studio-lite/package-lock.json
       - run: npm ci
       - run: npm run build
+      - name: Finalize Pages metadata
+        run: |
+          printf 'web.nirs4all.org\n' > dist/CNAME
+          touch dist/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
