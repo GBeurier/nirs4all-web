@@ -5,7 +5,7 @@
 // The refit (full-train) model is fit directly with libn4m. Falls back to the
 // JS-orchestrated path on any error.
 import { loadLibn4mBackend } from './backends'
-import { activeOrGenerator, compileWithDagMl, dagMlAvailable, expandGeneratorVariants, hasUnsupportedGenerator, loadDagMl, toCompatDsl } from './dagml'
+import { activeOrGenerator, compileWithDagMl, dagMlAvailable, dagMlRtSmokeForcedFailure, expandGeneratorVariants, hasUnsupportedGenerator, loadDagMl, toCompatDsl } from './dagml'
 import { materializeViaProvider } from './dagml-data'
 import { applySplit, SPLIT_KINDS } from './split'
 import type { Fold } from './kfold'
@@ -368,6 +368,8 @@ export class DagMlEngine implements Engine {
     } else {
       // Model-only graph: dag-ml enumerates the variant set and the scheduler runs it.
       try {
+        const forcedPlanningFailure = dagMlRtSmokeForcedFailure('planning')
+        if (forcedPlanningFailure) throw forcedPlanningFailure
         const plan = JSON.parse(
           dagml.build_execution_plan_json('plan:n4a', JSON.stringify(graph), JSON.stringify(campaign), JSON.stringify(modelManifest())),
         ) as { variants: VariantPlan[] }
@@ -534,6 +536,8 @@ export class DagMlEngine implements Engine {
       nodeResults = []
     } else {
       try {
+        const forcedSchedulerFailure = dagMlRtSmokeForcedFailure('scheduler')
+        if (forcedSchedulerFailure) throw forcedSchedulerFailure
         nodeResults = JSON.parse(
           dagml.execute_campaign_phase_json('plan:n4a', JSON.stringify(graph), JSON.stringify(campaign), JSON.stringify(modelManifest()), 'run:n4a', cv.seed >>> 0, 'FIT_CV', invoke),
         )
