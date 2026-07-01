@@ -154,7 +154,7 @@
       "execution_backend": "wasm-local",
       "task_type": "regression",
       "score_metric": "rmse",
-      "allow_fallback": true,
+      "allow_fallback": false,
       "scheduler_fallback": false,
       "diagnostics": 0
     },

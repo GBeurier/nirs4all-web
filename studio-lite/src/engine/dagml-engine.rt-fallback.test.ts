@@ -9,10 +9,10 @@
 // the REAL `DagMlEngine.runViaDagMl` fallback bookkeeping.
 //
 // Two invariants, at BOTH degrade sites (scheduler + variant planning), in BOTH modes:
-//   • default (allowFallback omitted/true): the run STILL completes with valid CV/refit
+//   • opt-in (allowFallback:true): the run STILL completes with valid CV/refit
 //     scores AND records a typed `RtError` on `RunResult.diagnostics`, flipping
 //     `lineage.schedulerFallback` — never a silent "executed by dag-ml".
-//   • strict  (allowFallback:false): the engine THROWS a typed `RtErrorException`
+//   • strict  (allowFallback omitted/false): the engine THROWS a typed `RtErrorException`
 //     instead of degrading — no misleading RunResult is returned at all.
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { isRtErrorException, RtErrorException } from './rt'
@@ -133,14 +133,14 @@ const modelOnlyPipeline = (): PipelineDSL =>
   ({ name: 'rt-fallback', steps: [], model: { id: 'm', type: 'PLS', params: { n_components: 2 } }, cv: { folds: 2, seed: 7 } }) as unknown as PipelineDSL
 
 beforeEach(() => {
-  // default: the historically-silent scheduler degrade; planning succeeds.
+  // Start each test with scheduler failure enabled; planning succeeds unless overridden.
   ctrl.failPlanning = false
   ctrl.failScheduler = true
 })
 
 describe('DagMlEngine — scheduler fallback surfaces a typed RtError (B-018)', () => {
-  it('default mode: records a diagnostic + flips schedulerFallback, and STILL returns valid CV scores', async () => {
-    const res = await new DagMlEngine().run(regressionDataset(), modelOnlyPipeline())
+  it('explicit allowFallback:true records a diagnostic + flips schedulerFallback, and STILL returns valid CV scores', async () => {
+    const res = await new DagMlEngine().run(regressionDataset(), modelOnlyPipeline(), { allowFallback: true })
 
     // the run completed with real scores — this is a loud degrade, not a hidden failure
     expect(res.cv).toBeDefined()
@@ -161,10 +161,13 @@ describe('DagMlEngine — scheduler fallback surfaces a typed RtError (B-018)', 
     expect(d.detail).toBeDefined() // in-memory debug aid, stripped on the wire
   })
 
-  it('strict mode (allowFallback:false): THROWS a typed RtErrorException instead of degrading', async () => {
+  it.each([
+    ['omitted allowFallback', undefined],
+    ['allowFallback:false', { allowFallback: false }],
+  ] as const)('strict mode (%s): THROWS a typed RtErrorException instead of degrading', async (_label, opts) => {
     let caught: unknown
     try {
-      await new DagMlEngine().run(regressionDataset(), modelOnlyPipeline(), { allowFallback: false })
+      await new DagMlEngine().run(regressionDataset(), modelOnlyPipeline(), opts)
     } catch (e) {
       caught = e
     }
@@ -177,10 +180,10 @@ describe('DagMlEngine — scheduler fallback surfaces a typed RtError (B-018)', 
 })
 
 describe('DagMlEngine — variant-planning fallback surfaces a typed RtError (B-018)', () => {
-  it('default mode: a planning failure records an unsupported_shape diagnostic (search not silently dropped)', async () => {
+  it('explicit allowFallback:true records an unsupported_shape diagnostic (search not silently dropped)', async () => {
     ctrl.failPlanning = true
     ctrl.failScheduler = false // isolate the planning site: let the scheduler run cleanly
-    const res = await new DagMlEngine().run(regressionDataset(), modelOnlyPipeline())
+    const res = await new DagMlEngine().run(regressionDataset(), modelOnlyPipeline(), { allowFallback: true })
 
     expect(res.cv).toBeDefined() // still ran (on the base variant)
     const lineage = res.lineage as { schedulerFallback?: boolean }
@@ -194,12 +197,15 @@ describe('DagMlEngine — variant-planning fallback surfaces a typed RtError (B-
     expect(d.mitigation).toMatch(/sweep was skipped/i)
   })
 
-  it('strict mode (allowFallback:false): a planning failure THROWS an unsupported_shape RtErrorException', async () => {
+  it.each([
+    ['omitted allowFallback', undefined],
+    ['allowFallback:false', { allowFallback: false }],
+  ] as const)('strict mode (%s): a planning failure THROWS an unsupported_shape RtErrorException', async (_label, opts) => {
     ctrl.failPlanning = true
     ctrl.failScheduler = false
     let caught: unknown
     try {
-      await new DagMlEngine().run(regressionDataset(), modelOnlyPipeline(), { allowFallback: false })
+      await new DagMlEngine().run(regressionDataset(), modelOnlyPipeline(), opts)
     } catch (e) {
       caught = e
     }

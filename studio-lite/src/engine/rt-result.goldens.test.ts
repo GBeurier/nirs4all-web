@@ -313,7 +313,7 @@ describe('RtResult Web goldens', () => {
 
     expect(envelope).toEqual(readFixture('rt_result.success.v1.json'))
     expect('diagnostics' in envelope).toBe(false)
-    expect(envelope.manifest.capabilities).toMatchObject({ allow_fallback: true, scheduler_fallback: false, diagnostics: 0 })
+    expect(envelope.manifest.capabilities).toMatchObject({ allow_fallback: false, scheduler_fallback: false, diagnostics: 0 })
     assertRtResultWireShape(envelope)
   })
 
@@ -324,7 +324,7 @@ describe('RtResult Web goldens', () => {
         schedulerFallback: true,
         diagnostics: [schedulerFallbackRtError()],
       }),
-      { planId: PLAN_ID },
+      { planId: PLAN_ID, allowFallback: true },
     )
 
     expect(envelope.diagnostics?.[0]).toEqual(readFixture('rt_error.scheduler_fallback.v1.json'))
@@ -339,7 +339,7 @@ describe('RtResult Web goldens', () => {
         id: 'run:web-rt-unsupported-shape',
         diagnostics: [unsupportedShapeRtError()],
       }),
-      { planId: PLAN_ID },
+      { planId: PLAN_ID, allowFallback: true },
     )
 
     expect(envelope.diagnostics?.[0]).toEqual(readFixture('rt_error.unsupported_shape.v1.json'))

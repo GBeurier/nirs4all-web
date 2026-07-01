@@ -224,7 +224,7 @@ export class DagMlEngine implements Engine {
     // B-018: collect typed runtime diagnostics. Any degrade from the native dag-ml
     // scheduler to the libn4m fold chain records an RtError here (and flips
     // `schedulerFallback`) so the returned RunResult is never a silent "success".
-    // With `opts.allowFallback === false` the engine throws instead of degrading.
+    // Fallback is opt-in: omitted/false throws instead of degrading.
     const diagnostics: RtError[] = []
     let schedulerFallback = false
 
@@ -391,7 +391,7 @@ export class DagMlEngine implements Engine {
             mitigation: 'The configured sweep was skipped. Simplify the model parameters, or report this graph shape as unschedulable.',
             detail: msg,
           })
-          if (opts.allowFallback === false) throw new RtErrorException(rtError)
+          if (opts.allowFallback !== true) throw new RtErrorException(rtError)
           diagnostics.push(rtError)
           variants = [baseVariant]
         } else {
@@ -548,7 +548,7 @@ export class DagMlEngine implements Engine {
         if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError')
         // Model-only scheduler failed unexpectedly. Historically this degraded to the
         // libn4m chain SILENTLY — the run still reported "executed by dag-ml". B-018:
-        // make the degrade explicit. In strict mode (allowFallback === false) throw a
+        // make the degrade explicit. In strict mode (allowFallback omitted/false) throw a
         // typed RtErrorException; otherwise record an RtError diagnostic + flip
         // schedulerFallback so the result is not misrepresented as a native run, then
         // fall back to the libn4m chain (loops every variant over the folds — no
@@ -557,7 +557,7 @@ export class DagMlEngine implements Engine {
           mitigation: 'Cross-validation re-ran through the libn4m chain over dag-ml folds — results are valid, but the dag-ml scheduler did not run this phase. Use a model-only pipeline to keep the native scheduler path.',
           detail: 'dag-ml execute_campaign_phase_json failed; degraded to the libn4m fold chain.',
         })
-        if (opts.allowFallback === false) throw new RtErrorException(rtError)
+        if (opts.allowFallback !== true) throw new RtErrorException(rtError)
         diagnostics.push(rtError)
         schedulerFallback = true
         runChainOverFolds()

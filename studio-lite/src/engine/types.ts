@@ -283,9 +283,9 @@ export interface RunOptions {
   onProgress?: (p: RunProgress) => void;
   signal?: AbortSignal;
   /** When the dag-ml/WASM scheduler can't run a shape, the engine degrades to the
-   *  libn4m fold chain. Default (`true`/omitted) keeps that fallback but records a
-   *  typed `RtError` on `RunResult.diagnostics`; `false` is the strict, no-silent-
-   *  fallback mode — the engine throws an `RtErrorException` instead (B-018). */
+   *  libn4m fold chain only when explicitly allowed. Default (`false`/omitted)
+   *  is strict and throws an `RtErrorException`; `true` records a typed `RtError`
+   *  on `RunResult.diagnostics` and returns the diagnosed fallback result (B-018). */
   allowFallback?: boolean;
 }
 export interface PredictResult {
