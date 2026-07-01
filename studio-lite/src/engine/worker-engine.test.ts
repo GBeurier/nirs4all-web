@@ -64,7 +64,7 @@ describe('WorkerEngine', () => {
     expect(fake.messages).toHaveLength(1)
   })
 
-  // B-018: a strict (allowFallback:false) refusal in the worker is posted back as a
+  // B-018: a strict (allowFallback omitted/false) refusal in the worker is posted back as a
   // plain error message carrying the typed `rtError`. The main-thread facade must
   // rebuild it into an `RtErrorException` so consumers keep the typed `cause` path —
   // NOT a generic Error (which would lose why the runtime refused) and NOT an

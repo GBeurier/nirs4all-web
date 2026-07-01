@@ -65,7 +65,7 @@ export class WorkerEngine implements Engine {
           this.dispose(worker)
           if (m.type === 'result') resolve(m.result as T)
           // Preserve the typed RtError across the worker boundary (B-018): a strict
-          // (allowFallback:false) refusal in the worker is rebuilt as an
+          // (allowFallback omitted/false) refusal in the worker is rebuilt as an
           // RtErrorException so the main thread keeps the typed error path.
           else if (m.rtError) reject(new RtErrorException(m.rtError))
           else reject(m.name === 'AbortError' ? new DOMException(m.message, 'AbortError') : new Error(m.message))
@@ -110,7 +110,7 @@ export class WorkerEngine implements Engine {
   }
 
   run(ds: MaterializedDataset, dsl: PipelineDSL, opts: RunOptions = {}): Promise<RunResult> {
-    // allowFallback is a plain flag → forward it into the worker payload (onProgress/
+    // allowFallback is a plain opt-in flag → forward it into the worker payload (onProgress/
     // signal stay main-thread). The worker always emits a neutral RtResult envelope
     // beside the UI RunResult; callers do not opt into runtime contract telemetry.
     return this.call<RunResult>({ type: 'run', ds, dsl, allowFallback: opts.allowFallback }, opts)

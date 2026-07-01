@@ -220,7 +220,7 @@ export function runResultToRtResultEnvelope(run: RunResult, opts: RtResultOption
         execution_backend: opts.executionBackend ?? 'wasm-local',
         task_type: run.taskType,
         score_metric: run.scoreMetric,
-        allow_fallback: opts.allowFallback ?? true,
+        allow_fallback: opts.allowFallback === true,
         scheduler_fallback: schedulerFallback,
         diagnostics: run.diagnostics?.length ?? 0,
       },

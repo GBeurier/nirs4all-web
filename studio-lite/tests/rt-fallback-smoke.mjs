@@ -4,9 +4,8 @@
 //   1. A clean UI run must stay silent: native dag-ml badge present, fallback chip absent.
 //   2. The real served module worker is driven directly with a loopback-only runtime
 //      fault hook. A forced scheduler failure must either return a loud fallback
-//      RunResult plus the default RtResult envelope with typed RtError diagnostics,
-//      or, with allowFallback:false, return a typed RtErrorException across the
-//      worker protocol.
+//      RunResult when allowFallback:true is sent, or return a typed
+//      RtErrorException across the worker protocol when fallback is omitted/false.
 import { readFileSync } from 'node:fs'
 import { chromium } from 'playwright-core'
 
@@ -234,7 +233,22 @@ try {
     const workerUrl = await findServedWorkerUrl()
     console.log(`✓ found served engine worker (${new URL(workerUrl).pathname})`)
 
-    const fallback = await runWorkerFault(workerUrl)
+    const strictDefault = await runWorkerFault(workerUrl)
+    if (strictDefault.ok) {
+      fail(`omitted allowFallback unexpectedly returned a RunResult: ${JSON.stringify(strictDefault)}`)
+    } else if (
+      strictDefault.error?.name === 'RtErrorException' &&
+      strictDefault.error?.rtError?.verb === 'run' &&
+      strictDefault.error?.rtError?.cause === 'runtime_error' &&
+      strictDefault.error?.rtError?.message?.includes(SCHEDULER_FAILURE)
+    ) {
+      console.log('✓ omitted allowFallback returns a typed RtErrorException across the served worker')
+      assertRtErrorWire('default-strict worker RtError', strictDefault.error.rtError)
+    } else {
+      fail(`omitted allowFallback did not return typed RtErrorException: ${JSON.stringify(strictDefault.error)}`)
+    }
+
+    const fallback = await runWorkerFault(workerUrl, { allowFallback: true })
     if (!fallback.ok) {
       fail(`forced scheduler fallback run failed: ${JSON.stringify(fallback.error)}`)
     } else {
