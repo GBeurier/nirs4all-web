@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "smoke": "node scripts/run-smokes.mjs",
     "validate:catalog": "node scripts/validate-catalog.mjs",
     "vendor:lite": "node scripts/sync-lite-shim.mjs",
     "check:lite-shim": "node scripts/sync-lite-shim.mjs --check",
