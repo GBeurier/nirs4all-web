@@ -1,16 +1,18 @@
-// B-018 runtime-fallback smoke: a clean dag-ml run must be SILENT — it executes natively and
-// surfaces NO `RtError` fallback diagnostic. This is the browser/WASM half the node vitest env
-// can't reach (the typed envelope + projection are unit-tested in src/engine/rt*.test.ts; here we
-// assert the end-to-end invariant that the served dag-ml path doesn't spuriously degrade).
+// B-018 runtime-fallback smoke.
 //
-// Invariant on the happy path (served build): the "by dag-ml" badge is present (native execution)
-// AND the amber "CV: libn4m fallback" chip is ABSENT (no `lineage.schedulerFallback`, no
-// `RunResult.diagnostics`). Guards against the engine regressing to an always-on or silent fallback.
+// Served browser coverage has two parts:
+//   1. A clean UI run must stay silent: native dag-ml badge present, fallback chip absent.
+//   2. The real served module worker is driven directly with a loopback-only runtime
+//      fault hook. A forced scheduler failure must either return a loud fallback
+//      RunResult with typed RtError diagnostics, or, with allowFallback:false, return
+//      a typed RtErrorException across the worker protocol.
 import { chromium } from 'playwright-core'
 
 const APP_URL = process.env.SMOKE_URL || 'http://localhost:4317/'
 const EXE = process.env.CHROME || '/usr/bin/google-chrome'
 const FALLBACK_CHIP = 'CV: libn4m fallback'
+const RT_SMOKE_CHANNEL = 'n4a:rt-fallback-smoke:v1'
+const SCHEDULER_FAILURE = 'forced scheduler failure for served rt-fallback smoke'
 
 const browser = await chromium.launch({ executablePath: EXE, headless: true, args: ['--no-sandbox'] })
 const page = await browser.newPage()
@@ -27,6 +29,132 @@ function fail(msg) {
 
 const isFile = String(APP_URL).startsWith('file:')
 
+async function findServedWorkerUrl() {
+  const base = new URL(APP_URL)
+  const htmlRes = await fetch(base)
+  if (!htmlRes.ok) throw new Error(`could not fetch app html (${htmlRes.status})`)
+  const html = await htmlRes.text()
+  const scripts = [...html.matchAll(/<script[^>]+src=["']([^"']+)["']/g)].map((m) => new URL(m[1], base).href)
+  for (const scriptUrl of scripts) {
+    const res = await fetch(scriptUrl)
+    if (!res.ok) continue
+    const js = await res.text()
+    const direct = js.match(/["'`](worker-[A-Za-z0-9_-]+\.js)["'`]/)
+    if (direct) return new URL(direct[1], scriptUrl).href
+    const nested = js.match(/["'`](assets\/worker-[A-Za-z0-9_-]+\.js)["'`]/)
+    if (nested) return new URL(nested[1], base).href
+  }
+  throw new Error(`could not find worker asset in ${scripts.length} entry script(s)`)
+}
+
+async function runWorkerFault(workerUrl, { allowFallback } = {}) {
+  return page.evaluate(
+    async ({ workerUrl: workerUrlArg, channelName, schedulerFailure, allowFallback: allowFallbackArg }) => {
+      const makeDataset = () => {
+        const nSamples = 8
+        const nFeatures = 4
+        const X = new Float64Array(nSamples * nFeatures)
+        const y = new Float64Array(nSamples)
+        for (let i = 0; i < nSamples; i++) {
+          y[i] = 1 + i * 0.55 + (i % 2) * 0.15
+          for (let j = 0; j < nFeatures; j++) X[i * nFeatures + j] = (i + 1) * (j + 2) + j * 0.25 + (i % 3) * 0.1
+        }
+        return {
+          X,
+          y,
+          nSamples,
+          nFeatures,
+          axis: [1100, 1200, 1300, 1400],
+          axisUnit: 'nm',
+          targetName: 'protein',
+          taskType: 'regression',
+          sampleIds: Array.from({ length: nSamples }, (_, i) => `rt-${i}`),
+          partitions: Array.from({ length: nSamples }, () => 'train'),
+        }
+      }
+
+      const dsl = {
+        name: 'rt-fallback-smoke',
+        steps: [],
+        model: { id: 'pls', type: 'PLS', params: { n_components: 2 } },
+        cv: { folds: 2, seed: 13 },
+      }
+
+      const channel = new BroadcastChannel(channelName)
+      const setFault = () => channel.postMessage({ type: 'n4a-rt-smoke:set', failPlanning: null, failScheduler: schedulerFailure })
+      setFault()
+      const interval = setInterval(setFault, 25)
+      const worker = new Worker(workerUrlArg, { type: 'module' })
+
+      try {
+        return await new Promise((resolve) => {
+          const id = `rt-smoke-${Date.now()}-${Math.random().toString(36).slice(2)}`
+          const finish = (value) => {
+            clearTimeout(timeout)
+            resolve(value)
+          }
+          const timeout = setTimeout(() => finish({ ok: false, error: { name: 'TimeoutError', message: 'served worker fault run timed out' } }), 90000)
+          worker.addEventListener('message', (ev) => {
+            const msg = ev.data
+            if (!msg || msg.id !== id) return
+            if (msg.type === 'progress') return
+            if (msg.type === 'result') {
+              const result = msg.result
+              const lineage = result.lineage || {}
+              const diagnostics = result.diagnostics || []
+              const diag = diagnostics[0] || null
+              finish({
+                ok: true,
+                engine: result.engine,
+                hasCv: Boolean(result.cv),
+                scoreMetric: result.scoreMetric,
+                score: result.cv?.metrics?.[result.scoreMetric],
+                schedulerFallback: Boolean(lineage.schedulerFallback),
+                diagnosticsCount: diagnostics.length,
+                diagnostic: diag
+                  ? {
+                      verb: diag.verb,
+                      cause: diag.cause,
+                      message: diag.message,
+                      mitigation: diag.mitigation,
+                      hasDetail: Object.prototype.hasOwnProperty.call(diag, 'detail'),
+                    }
+                  : null,
+              })
+              return
+            }
+            if (msg.type === 'error') {
+              finish({
+                ok: false,
+                error: {
+                  name: msg.name,
+                  message: msg.message,
+                  rtError: msg.rtError
+                    ? {
+                        verb: msg.rtError.verb,
+                        cause: msg.rtError.cause,
+                        message: msg.rtError.message,
+                        mitigation: msg.rtError.mitigation,
+                      }
+                    : null,
+                },
+              })
+            }
+          })
+          worker.addEventListener('error', (ev) => finish({ ok: false, error: { name: 'WorkerError', message: ev.message || 'worker failed' } }))
+          setTimeout(() => worker.postMessage({ type: 'run', id, ds: makeDataset(), dsl, allowFallback: allowFallbackArg }), 150)
+        })
+      } finally {
+        clearInterval(interval)
+        channel.postMessage({ type: 'n4a-rt-smoke:clear' })
+        channel.close()
+        worker.terminate()
+      }
+    },
+    { workerUrl, channelName: RT_SMOKE_CHANNEL, schedulerFailure: SCHEDULER_FAILURE, allowFallback },
+  )
+}
+
 try {
   await page.goto(APP_URL, { waitUntil: 'load', timeout: 30000 })
   await page.waitForSelector('text=nirs4all', { timeout: 10000 })
@@ -37,7 +165,7 @@ try {
   await page.locator('[data-step="pipeline"]').click()
   await page.getByRole('button', { name: /Run pipeline/i }).click()
   await page.waitForSelector('text=/CV Scores/', { timeout: 45000 })
-  console.log('✓ pipeline executed, results rendered')
+  console.log('✓ clean UI pipeline executed, results rendered')
 
   const body = (await page.textContent('body')) || ''
 
@@ -51,6 +179,48 @@ try {
   const chipCount = await page.locator(`text=${FALLBACK_CHIP}`).count()
   if (chipCount === 0) console.log('✓ no spurious fallback chip on a clean run (B-018 silent happy path)')
   else fail(`fallback chip "${FALLBACK_CHIP}" surfaced on a clean run (expected absent)`)
+
+  if (!isFile) {
+    const workerUrl = await findServedWorkerUrl()
+    console.log(`✓ found served engine worker (${new URL(workerUrl).pathname})`)
+
+    const fallback = await runWorkerFault(workerUrl)
+    if (!fallback.ok) {
+      fail(`forced scheduler fallback run failed: ${JSON.stringify(fallback.error)}`)
+    } else {
+      if (fallback.hasCv && Number.isFinite(fallback.score)) console.log(`✓ forced scheduler fallback returned finite ${fallback.scoreMetric}`)
+      else fail(`forced scheduler fallback did not return finite CV score: ${JSON.stringify(fallback)}`)
+
+      if (fallback.schedulerFallback) console.log('✓ forced scheduler failure flipped lineage.schedulerFallback')
+      else fail(`forced scheduler fallback missing lineage.schedulerFallback: ${JSON.stringify(fallback)}`)
+
+      if (fallback.diagnosticsCount === 1 && fallback.diagnostic?.verb === 'run' && fallback.diagnostic?.cause === 'runtime_error') {
+        console.log('✓ fallback RunResult carries one typed RtError diagnostic')
+      } else {
+        fail(`unexpected fallback diagnostics: ${JSON.stringify(fallback.diagnostic)}`)
+      }
+
+      if (fallback.diagnostic?.message?.includes(SCHEDULER_FAILURE) && /libn4m chain/i.test(fallback.diagnostic?.mitigation || '')) {
+        console.log('✓ RtError message and mitigation describe the scheduler fallback')
+      } else {
+        fail(`fallback diagnostic did not preserve message/mitigation: ${JSON.stringify(fallback.diagnostic)}`)
+      }
+    }
+
+    const strict = await runWorkerFault(workerUrl, { allowFallback: false })
+    if (strict.ok) {
+      fail(`allowFallback:false unexpectedly returned a RunResult: ${JSON.stringify(strict)}`)
+    } else if (
+      strict.error?.name === 'RtErrorException' &&
+      strict.error?.rtError?.verb === 'run' &&
+      strict.error?.rtError?.cause === 'runtime_error' &&
+      strict.error?.rtError?.message?.includes(SCHEDULER_FAILURE)
+    ) {
+      console.log('✓ allowFallback:false returns a typed RtErrorException across the served worker')
+    } else {
+      fail(`allowFallback:false did not return typed RtErrorException: ${JSON.stringify(strict.error)}`)
+    }
+  }
 
   if (errors.length) {
     console.error(`✗ ${errors.length} console error(s):`)
