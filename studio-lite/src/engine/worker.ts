@@ -6,14 +6,15 @@
 // AbortSignal is bridged to a per-job AbortController.
 /// <reference lib="webworker" />
 import { MainEngine } from './main-engine'
-import { isRtErrorException } from './rt'
+import { isRtErrorException, rtErrorToWire } from './rt'
+import { runResultToRtResultEnvelope } from './rt-result'
 import type { RunOptions } from './types'
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope
 const engine = new MainEngine({ mainThread: false, useDagMl: ctx.location?.protocol !== 'blob:' })
 const controllers = new Map<string, AbortController>()
 
-interface RunMsg { type: 'run'; id: string; ds: Parameters<MainEngine['run']>[0]; dsl: Parameters<MainEngine['run']>[1]; allowFallback?: boolean }
+interface RunMsg { type: 'run'; id: string; ds: Parameters<MainEngine['run']>[0]; dsl: Parameters<MainEngine['run']>[1]; allowFallback?: boolean; includeRtResult?: boolean }
 interface PredictMsg { type: 'predict'; id: string; model: Parameters<MainEngine['predict']>[0]; Xnew: Float64Array; nSamples: number; nFeatures: number }
 interface CancelMsg { type: 'cancel'; id: string }
 type InMsg = RunMsg | PredictMsg | CancelMsg
@@ -35,17 +36,24 @@ async function handle(msg: InMsg): Promise<void> {
     allowFallback: msg.type === 'run' ? msg.allowFallback : undefined,
   }
   try {
-    const result =
-      msg.type === 'run'
-        ? await engine.run(msg.ds, msg.dsl, opts)
-        : await engine.predict(msg.model, msg.Xnew, msg.nSamples, msg.nFeatures)
-    ctx.postMessage({ type: 'result', id: msg.id, result })
+    if (msg.type === 'run') {
+      const result = await engine.run(msg.ds, msg.dsl, opts)
+      ctx.postMessage({
+        type: 'result',
+        id: msg.id,
+        result,
+        ...(msg.includeRtResult ? { rtResult: runResultToRtResultEnvelope(result, { allowFallback: msg.allowFallback ?? true }) } : {}),
+      })
+    } else {
+      const result = await engine.predict(msg.model, msg.Xnew, msg.nSamples, msg.nFeatures)
+      ctx.postMessage({ type: 'result', id: msg.id, result })
+    }
   } catch (e) {
     const err = e instanceof Error ? e : new Error(String(e))
     // forward name so the client can rebuild an AbortError DOMException (App.tsx
     // suppresses those) rather than surfacing a cancel as a hard error; forward the
     // typed RtError (B-018) so a strict-mode refusal keeps its cause across the boundary.
-    ctx.postMessage({ type: 'error', id: msg.id, name: err.name, message: err.message, rtError: isRtErrorException(e) ? e.rtError : undefined })
+    ctx.postMessage({ type: 'error', id: msg.id, name: err.name, message: err.message, rtError: isRtErrorException(e) ? rtErrorToWire(e.rtError) : undefined })
   } finally {
     controllers.delete(msg.id)
   }
