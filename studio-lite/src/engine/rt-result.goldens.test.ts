@@ -14,9 +14,26 @@ import type { FittedPipeline, PipelineDSL, PredRow, RunResult, ScoreNode } from 
 
 const PLAN_ID = 'plan:web-rt-golden'
 
+type RuntimeFixtureShape = {
+  rt_result: {
+    required_keys: string[]
+    optional_keys: string[]
+    manifest_keys: string[]
+    prediction_keys: string[]
+    report_required_keys: string[]
+    report_optional_keys: string[]
+  }
+  rt_error: {
+    required_keys: string[]
+    optional_keys: string[]
+  }
+}
+
 function readFixture(name: string): unknown {
   return JSON.parse(readFileSync(new URL(`./fixtures/runtime/${name}`, import.meta.url), 'utf8'))
 }
+
+const PYTHON_RUNTIME_SHAPE = readFixture('python_rt_fixture_shape.v1.json') as RuntimeFixtureShape
 
 function findSibling(rel: string): string | null {
   let dir = process.cwd()
@@ -32,6 +49,35 @@ function findSibling(rel: string): string | null {
 function readSiblingJson(rel: string): Record<string, any> | null {
   const found = findSibling(rel)
   return found ? JSON.parse(readFileSync(found, 'utf8')) : null
+}
+
+function readSiblingRuntimeFixtureShape(): { path: string; shape: RuntimeFixtureShape } | null {
+  const candidates = [
+    path.join('nirs4all', 'tests', 'integration', 'parity', 'fixtures', 'runtime', 'python_rt_fixture_shape.v1.json'),
+    path.join('nirs4all', 'docs', 'contracts', 'runtime', 'python_rt_fixture_shape.v1.json'),
+    path.join('_worktrees', 'W43-nirs4all-rt-goldens', 'tests', 'integration', 'parity', 'fixtures', 'runtime', 'python_rt_fixture_shape.v1.json'),
+    path.join('_worktrees', 'W43-nirs4all-rt-goldens', 'docs', 'contracts', 'runtime', 'python_rt_fixture_shape.v1.json'),
+  ]
+  for (const rel of candidates) {
+    const found = findSibling(rel)
+    if (found) return { path: found, shape: JSON.parse(readFileSync(found, 'utf8')) as RuntimeFixtureShape }
+  }
+  return null
+}
+
+const sorted = (values: readonly string[]): string[] => [...values].sort()
+
+const allowedKeys = (required: readonly string[], optional: readonly string[]): Set<string> =>
+  new Set([...required, ...optional])
+
+function assertRequiredAndAllowedKeys(
+  value: Record<string, unknown>,
+  required: readonly string[],
+  optional: readonly string[],
+): void {
+  const allowed = allowedKeys(required, optional)
+  for (const key of Object.keys(value)) expect(allowed.has(key)).toBe(true)
+  for (const key of required) expect(value[key]).toBeDefined()
 }
 
 const row = (sampleId: string, value: number): PredRow => ({
@@ -130,6 +176,7 @@ function goldenRun(opts: { id: string; schedulerFallback?: boolean; diagnostics?
 }
 
 function assertRtErrorWireShape(value: Record<string, unknown>): void {
+  assertRequiredAndAllowedKeys(value, PYTHON_RUNTIME_SHAPE.rt_error.required_keys, PYTHON_RUNTIME_SHAPE.rt_error.optional_keys)
   const schema = readSiblingJson(path.join('nirs4all-ecosystem', 'docs', 'contracts', 'runtime', 'rt_error.v1.schema.json'))
   if (!schema) return
   const allowed = new Set(Object.keys(schema.properties))
@@ -142,6 +189,23 @@ function assertRtErrorWireShape(value: Record<string, unknown>): void {
 }
 
 function assertRtResultWireShape(value: RtResultWire): void {
+  assertRequiredAndAllowedKeys(
+    value as unknown as Record<string, unknown>,
+    PYTHON_RUNTIME_SHAPE.rt_result.required_keys,
+    PYTHON_RUNTIME_SHAPE.rt_result.optional_keys,
+  )
+  expect(sorted(Object.keys(value.manifest))).toEqual(sorted(PYTHON_RUNTIME_SHAPE.rt_result.manifest_keys))
+  for (const report of value.reports) {
+    assertRequiredAndAllowedKeys(
+      report as unknown as Record<string, unknown>,
+      PYTHON_RUNTIME_SHAPE.rt_result.report_required_keys,
+      PYTHON_RUNTIME_SHAPE.rt_result.report_optional_keys,
+    )
+  }
+  for (const prediction of value.predictions) {
+    expect(sorted(Object.keys(prediction))).toEqual(sorted(PYTHON_RUNTIME_SHAPE.rt_result.prediction_keys))
+  }
+
   const schema = readSiblingJson(path.join('nirs4all-ecosystem', 'docs', 'contracts', 'runtime', 'rt_result.v1.schema.json'))
   if (schema) {
     const allowed = new Set(Object.keys(schema.properties))
@@ -170,6 +234,39 @@ function assertRtResultWireShape(value: RtResultWire): void {
 }
 
 describe('RtResult Web goldens', () => {
+  it('publishes a Python-compatible runtime fixture shape for cross-language consumers', () => {
+    expect(sorted([...PYTHON_RUNTIME_SHAPE.rt_result.required_keys, ...PYTHON_RUNTIME_SHAPE.rt_result.optional_keys])).toEqual(
+      sorted(['schema_version', 'run_id', 'plan_id', 'selection', 'reports', 'predictions', 'manifest', 'artifacts', 'diagnostics']),
+    )
+    expect(sorted(PYTHON_RUNTIME_SHAPE.rt_result.prediction_keys)).toEqual(
+      sorted(['partition', 'fold_id', 'variant_id', 'model_name', 'sample_indices', 'y_true', 'y_pred', 'y_proba', 'scores', 'metric', 'task_type']),
+    )
+    expect(sorted([...PYTHON_RUNTIME_SHAPE.rt_error.required_keys, ...PYTHON_RUNTIME_SHAPE.rt_error.optional_keys])).toEqual(
+      sorted(['verb', 'cause', 'message', 'mitigation', 'unsupported_capability', 'portable_level']),
+    )
+
+    const sibling = readSiblingRuntimeFixtureShape()
+    if (sibling) {
+      expect(PYTHON_RUNTIME_SHAPE.rt_result).toEqual(sibling.shape.rt_result)
+      expect(PYTHON_RUNTIME_SHAPE.rt_error).toEqual(sibling.shape.rt_error)
+    }
+
+    const rtResultSchema = readSiblingJson(path.join('nirs4all-ecosystem', 'docs', 'contracts', 'runtime', 'rt_result.v1.schema.json'))
+    if (rtResultSchema) {
+      expect(sorted(rtResultSchema.required as string[])).toEqual(sorted(PYTHON_RUNTIME_SHAPE.rt_result.required_keys))
+      expect(sorted(Object.keys(rtResultSchema.properties))).toEqual(
+        sorted([...PYTHON_RUNTIME_SHAPE.rt_result.required_keys, ...PYTHON_RUNTIME_SHAPE.rt_result.optional_keys]),
+      )
+      expect(sorted(Object.keys(rtResultSchema.properties.manifest.properties))).toEqual(sorted(PYTHON_RUNTIME_SHAPE.rt_result.manifest_keys))
+    }
+
+    const rtErrorSchema = readSiblingJson(path.join('nirs4all-ecosystem', 'docs', 'contracts', 'runtime', 'rt_error.v1.schema.json'))
+    if (rtErrorSchema) {
+      expect(sorted(rtErrorSchema.required as string[])).toEqual(sorted(PYTHON_RUNTIME_SHAPE.rt_error.required_keys))
+      expect(sorted(Object.keys(rtErrorSchema.properties))).toEqual(sorted([...PYTHON_RUNTIME_SHAPE.rt_error.required_keys, ...PYTHON_RUNTIME_SHAPE.rt_error.optional_keys]))
+    }
+  })
+
   it('projects a clean Web RunResult to the shared RtResult success envelope', () => {
     const envelope = runResultToRtResultEnvelope(goldenRun({ id: 'run:web-rt-success' }), { planId: PLAN_ID })
 
