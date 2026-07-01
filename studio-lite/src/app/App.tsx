@@ -25,6 +25,7 @@ import { loadSampleDataset, SAMPLES, type SampleId } from '@/data/samples'
 import { type LoadedModel, parseN4a } from '@/lib/n4a'
 import { applyTheme, loadSession, loadTheme, saveSession, type Theme } from '@/lib/persist'
 import { cn } from '@/app/components/ui/utils'
+import { formatRuntimeErrorForUi } from '@/app/runtimeErrors'
 import type { Analysis } from '@/data/wasm-io'
 import type { DagMlLineage } from '@/engine/dagml'
 import type { MaterializedDataset, PipelineDSL, Partition, RunLogEntry, RunProgress, RunResult, ScoreNode, TaskType } from '@/engine/types'
@@ -120,7 +121,7 @@ export default function App() {
         setSampleId(sid) // remember which bundled sample, for session restore
         setAnalysis(null)
       } catch (e) {
-        setError(e instanceof Error ? e.message : String(e))
+        setError(formatRuntimeErrorForUi(e))
       } finally {
         setBusy(false)
       }
@@ -159,7 +160,7 @@ export default function App() {
       setLoadedModel(loaded)
       setStep('predict') // a saved model goes straight to scoring new spectra
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      setError(formatRuntimeErrorForUi(e))
       setStep('dataset')
     }
   }, [])
@@ -238,7 +239,7 @@ export default function App() {
       setSelectedScore(result.cv ?? result.refit) // refit-only run has no CV node
       setStep('results')
     } catch (e) {
-      if (token === runTokenRef.current && !(e instanceof DOMException && e.name === 'AbortError')) setError(e instanceof Error ? e.message : String(e))
+      if (token === runTokenRef.current && !(e instanceof DOMException && e.name === 'AbortError')) setError(formatRuntimeErrorForUi(e))
     } finally {
       // only the latest run owns the run-scoped UI state
       if (token === runTokenRef.current) {
@@ -548,7 +549,7 @@ function ErrorBanner({ error }: { error: string | null }) {
   return (
     <div className="mb-4 flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-      <span>{error}</span>
+      <span className="whitespace-pre-line">{error}</span>
     </div>
   )
 }
