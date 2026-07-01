@@ -80,6 +80,7 @@
       "sample_indices": [0, 1, 2, 3],
       "y_true": [1, 2, 3, 4],
       "y_pred": [1, 2, 3, 4],
+      "y_proba": null,
       "scores": {
         "rmse": 0,
         "r2": 1,
@@ -96,6 +97,7 @@
       "sample_indices": [0, 1],
       "y_true": [1, 2],
       "y_pred": [1, 2],
+      "y_proba": null,
       "scores": {
         "rmse": 0,
         "r2": 1,
@@ -112,6 +114,7 @@
       "sample_indices": [2, 3],
       "y_true": [3, 4],
       "y_pred": [3, 4],
+      "y_proba": null,
       "scores": {
         "rmse": 0,
         "r2": 1,
@@ -128,6 +131,7 @@
       "sample_indices": [4, 5],
       "y_true": [5, 6],
       "y_pred": [5, 6],
+      "y_proba": null,
       "scores": {
         "rmse": 0,
         "r2": 1,
