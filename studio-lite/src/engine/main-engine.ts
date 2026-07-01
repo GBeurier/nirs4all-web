@@ -9,6 +9,7 @@ import { activeOrGenerator, dagMlAvailable, expandGeneratorVariants, hasUnsuppor
 import { assertAomBudget } from './guard'
 import { backendIdOf, predictPipeline, runGeneratorOr, runPipeline } from './orchestrate'
 import { isPortableLiteModel, predictPortableLite, tryRunPortableLite } from './portable-lite'
+import { makeRtError, RtErrorException } from './rt'
 import type { Engine, FittedPipeline, MaterializedDataset, PipelineDSL, PredictResult, RunOptions, RunResult } from './types'
 
 interface MainEngineOptions {
@@ -37,6 +38,14 @@ export class MainEngine implements Engine {
     const portable = await tryRunPortableLite(ds, dsl, opts)
     if (portable) return portable
     if (useDagMl) return this.dagml.run(ds, dsl, opts) // dag-ml executes; libn4m numerics
+    if (this.useDagMlEngine) {
+      throw new RtErrorException(makeRtError({
+        verb: 'run',
+        cause: 'unavailable_backend',
+        message: 'dag-ml WASM is unavailable; refusing to run the browser/WASM path through the direct compatibility runner.',
+        mitigation: 'Use the explicit single-file/offline engine path (useDagMl:false), or serve the app over HTTP(S) with the staged dag-ml WASM assets.',
+      }))
+    }
     // Offline single-file: dag-ml scheduling is intentionally disabled under
     // file://, but vite-plugin-singlefile inlines libn4m's WASM. Use it when
     // available so catalog models such as AOM/POP do not fall back to slow or

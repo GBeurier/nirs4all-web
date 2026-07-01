@@ -42,7 +42,7 @@ async function handle(msg: InMsg): Promise<void> {
         type: 'result',
         id: msg.id,
         result,
-        ...(msg.includeRtResult ? { rtResult: runResultToRtResultEnvelope(result, { allowFallback: msg.allowFallback ?? true }) } : {}),
+        rtResult: runResultToRtResultEnvelope(result, { allowFallback: msg.allowFallback ?? true }),
       })
     } else {
       const result = await engine.predict(msg.model, msg.Xnew, msg.nSamples, msg.nFeatures)
