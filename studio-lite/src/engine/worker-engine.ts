@@ -111,7 +111,8 @@ export class WorkerEngine implements Engine {
 
   run(ds: MaterializedDataset, dsl: PipelineDSL, opts: RunOptions = {}): Promise<RunResult> {
     // allowFallback is a plain flag → forward it into the worker payload (onProgress/
-    // signal stay main-thread). Omitted ⇒ default fallback behavior in the engine.
+    // signal stay main-thread). The worker always emits a neutral RtResult envelope
+    // beside the UI RunResult; callers do not opt into runtime contract telemetry.
     return this.call<RunResult>({ type: 'run', ds, dsl, allowFallback: opts.allowFallback }, opts)
   }
 

@@ -4,8 +4,9 @@
 //   1. A clean UI run must stay silent: native dag-ml badge present, fallback chip absent.
 //   2. The real served module worker is driven directly with a loopback-only runtime
 //      fault hook. A forced scheduler failure must either return a loud fallback
-//      RunResult with typed RtError diagnostics, or, with allowFallback:false, return
-//      a typed RtErrorException across the worker protocol.
+//      RunResult plus the default RtResult envelope with typed RtError diagnostics,
+//      or, with allowFallback:false, return a typed RtErrorException across the
+//      worker protocol.
 import { readFileSync } from 'node:fs'
 import { chromium } from 'playwright-core'
 
@@ -191,7 +192,7 @@ async function runWorkerFault(workerUrl, { allowFallback } = {}) {
             }
           })
           worker.addEventListener('error', (ev) => finish({ ok: false, error: { name: 'WorkerError', message: ev.message || 'worker failed' } }))
-          setTimeout(() => worker.postMessage({ type: 'run', id, ds: makeDataset(), dsl, allowFallback: allowFallbackArg, includeRtResult: true }), 150)
+          setTimeout(() => worker.postMessage({ type: 'run', id, ds: makeDataset(), dsl, allowFallback: allowFallbackArg }), 150)
         })
       } finally {
         clearInterval(interval)
