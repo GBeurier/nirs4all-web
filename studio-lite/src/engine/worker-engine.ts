@@ -5,6 +5,7 @@
 // a rejected job whose error was an AbortError is rebuilt as a DOMException so the
 // app's existing cancel handling (App.tsx) behaves identically to the in-thread engine.
 import { type RtError, RtErrorException } from './rt'
+import type { RtResultWire } from './rt-result'
 import type {
   Engine,
   FittedPipeline,
@@ -17,7 +18,7 @@ import type {
 
 type OutMsg =
   | { type: 'progress'; id: string; progress: Parameters<NonNullable<RunOptions['onProgress']>>[0] }
-  | { type: 'result'; id: string; result: unknown }
+  | { type: 'result'; id: string; result: unknown; rtResult?: RtResultWire }
   | { type: 'error'; id: string; name: string; message: string; rtError?: RtError }
 
 export class WorkerEngine implements Engine {
