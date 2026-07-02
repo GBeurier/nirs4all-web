@@ -12,6 +12,19 @@ const SRC_ROOT = fileURLToPath(new URL('..', import.meta.url))
 const APP_ROOT = fileURLToPath(new URL('../..', import.meta.url))
 
 const EXCLUDED_DIRS = new Set(['wasm'])
+const REMOTE_URL = /^(https?:)?\/\//
+const RUNTIME_LINK_RELS = new Set([
+  'apple-touch-icon',
+  'dns-prefetch',
+  'icon',
+  'manifest',
+  'modulepreload',
+  'preconnect',
+  'prefetch',
+  'preload',
+  'prerender',
+  'stylesheet',
+])
 
 function walkSources(dir: string, out: { app: string[]; scripts: string[] }): void {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -45,6 +58,11 @@ const FORBIDDEN: { pattern: RegExp; why: string }[] = [
   { pattern: /https?:\/\/(localhost|127\.0\.0\.1|\[::1\])/, why: 'no hardcoded local server origin' },
 ]
 
+function getAttribute(tag: string, name: string): string | null {
+  const match = new RegExp(`\\b${name}=["']([^"']+)["']`, 'i').exec(tag)
+  return match?.[1] ?? null
+}
+
 describe('client-side-only contract', () => {
   it('keeps app sources free of server-backend and Node-runtime assumptions', () => {
     const sources = { app: [] as string[], scripts: [] as string[] }
@@ -67,12 +85,26 @@ describe('client-side-only contract', () => {
     expect(violations, violations.join('\n')).toEqual([])
   })
 
-  it('does not load third-party runtime scripts or stylesheet imports', () => {
+  it('does not load third-party runtime resources', () => {
     const indexHtml = readFileSync(join(APP_ROOT, 'index.html'), 'utf8')
     const remoteScripts = [...indexHtml.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/gi)]
       .map((match) => match[1])
-      .filter((src) => /^(https?:)?\/\//.test(src))
+      .filter((src) => REMOTE_URL.test(src))
     expect(remoteScripts, 'index.html must not load third-party runtime scripts').toEqual([])
+
+    const remoteRuntimeLinks = [...indexHtml.matchAll(/<link\b[^>]*>/gi)]
+      .map((match) => match[0])
+      .flatMap((tag) => {
+        const href = getAttribute(tag, 'href')
+        if (!href || !REMOTE_URL.test(href)) return []
+        const rel = getAttribute(tag, 'rel')
+        const rels = rel?.split(/\s+/).map((item) => item.toLowerCase()).filter(Boolean) ?? []
+        return rels.some((item) => RUNTIME_LINK_RELS.has(item)) ? [`${rel ?? '(missing rel)'} — ${href}`] : []
+      })
+    expect(
+      remoteRuntimeLinks,
+      'index.html must not load or preconnect third-party runtime resources via <link>',
+    ).toEqual([])
 
     const cssDir = join(SRC_ROOT, 'styles')
     const cssFiles = readdirSync(cssDir)
@@ -82,7 +114,7 @@ describe('client-side-only contract', () => {
     for (const file of cssFiles) {
       const text = readFileSync(file, 'utf8')
       for (const match of text.matchAll(/@import\s+(?:url\()?['"]?([^'")\s]+)['"]?\)?/gi)) {
-        if (/^(https?:)?\/\//.test(match[1])) {
+        if (REMOTE_URL.test(match[1])) {
           remoteImports.push(`${relative(SRC_ROOT, file)} — ${match[1]}`)
         }
       }
