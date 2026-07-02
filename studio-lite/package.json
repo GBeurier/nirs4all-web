@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:client-only": "vitest run --config vitest.config.ts src/app/client-side-only.test.ts",
     "test:watch": "vitest",
     "smoke": "node scripts/run-smokes.mjs",
     "validate:catalog": "node scripts/validate-catalog.mjs",

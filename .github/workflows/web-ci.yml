@@ -1,0 +1,43 @@
+name: web-ci
+
+on:
+  push:
+    branches: [main, rc/v1-full-refactor]
+    paths:
+      - 'studio-lite/**'
+      - '.github/actions/nirs4all-ui-sibling/**'
+      - '.github/workflows/web-ci.yml'
+  pull_request:
+    branches: [main, rc/v1-full-refactor]
+    paths:
+      - 'studio-lite/**'
+      - '.github/actions/nirs4all-ui-sibling/**'
+      - '.github/workflows/web-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  studio-lite:
+    name: studio-lite client-only gate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: studio-lite
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: studio-lite/package-lock.json
+      - name: Provide nirs4all-ui sibling
+        uses: ./.github/actions/nirs4all-ui-sibling
+
+      - run: npm ci
+      - name: Client-side-only contract
+        run: npm run test:client-only
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run build
