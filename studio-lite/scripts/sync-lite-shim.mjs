@@ -7,9 +7,17 @@ import { fileURLToPath } from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = resolve(here, '..')
-const lite = resolve(root, '..', '..', 'nirs4all-lite', 'bindings', 'wasm')
 const vendor = resolve(root, 'vendor', 'nirs4all')
 const check = process.argv.includes('--check')
+const required = process.env.NIRS4ALL_LITE_SHIM_REQUIRED === '1'
+
+const liteCandidates = [
+  process.env.NIRS4ALL_LITE_SHIM_ROOT,
+  resolve(root, '..', '..', 'nirs4all-lite', 'bindings', 'wasm'),
+  resolve(root, '..', '..', 'RC-v1-nirs4all-core', 'bindings', 'wasm'),
+].filter(Boolean)
+
+const lite = liteCandidates.find((candidate) => existsSync(candidate))
 
 const files = [
   'package.json',
@@ -20,9 +28,9 @@ const files = [
   'src/execution.js',
 ]
 
-if (!existsSync(lite)) {
-  const msg = `nirs4all-lite shim not found at ${lite}`
-  if (process.env.NIRS4ALL_LITE_SHIM_REQUIRED === '1') {
+if (!lite) {
+  const msg = `nirs4all-lite shim not found. Tried: ${liteCandidates.join(', ')}`
+  if (required) {
     throw new Error(msg)
   }
   console.warn(`[sync-lite-shim] ${msg}; skipping.`)

@@ -9,13 +9,17 @@
       "default": "./src/index.js"
     }
   },
+  "types": "./src/index.d.ts",
   "files": [
     "src",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "test": "node --test tests/*.test.js"
+    "test": "npm run test:js && npm run typecheck",
+    "test:js": "node --test tests/*.test.js",
+    "test:v1-surface": "node --test tests/index.test.js tests/execution.test.js && npm run typecheck",
+    "typecheck": "tsc --project tsconfig.typecheck.json"
   },
   "license": "(CECILL-2.1 OR AGPL-3.0-or-later)",
   "repository": {
@@ -31,6 +35,17 @@
   ],
   "dependencies": {
     "yaml": "^2.9.0"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  },
+  "peerDependencies": {
+    "@nirs4all/datasets-wasm": "*",
+    "@nirs4all/methods-wasm": "*",
+    "dag-ml-data-wasm": "*",
+    "dag-ml-wasm": "*",
+    "nirs4all-formats-wasm": "*",
+    "nirs4all-io-wasm": "*"
   },
   "peerDependenciesMeta": {
     "@nirs4all/methods-wasm": {

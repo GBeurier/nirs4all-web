@@ -1,14 +1,17 @@
 name: Deploy nirs4all-web to GitHub Pages
 
 # Builds the nirs4all-web/studio-lite single-page WASM app and publishes it to
-# GitHub Pages (https://gbeurier.github.io/nirs4all-web/). The WASM packages are
-# vendored in the repo, so the build is just `npm ci && npm run build`.
+# GitHub Pages (https://web.nirs4all.org/). The WASM packages are vendored in
+# the repo, and deployment is blocked by the same client-only/runtime gates used
+# by the RC branch.
 
 on:
   push:
     branches: [main]
     paths:
       - 'studio-lite/**'
+      - '.github/actions/nirs4all-ui-sibling/**'
+      - '.github/actions/nirs4all-core-sibling/**'
       - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
 
@@ -36,9 +39,21 @@ jobs:
           cache-dependency-path: studio-lite/package-lock.json
       - name: Provide nirs4all-ui sibling
         uses: ./.github/actions/nirs4all-ui-sibling
+      - name: Provide nirs4all-core sibling
+        uses: ./.github/actions/nirs4all-core-sibling
 
       - run: npm ci
+      - name: Client-side-only contract
+        run: npm run test:client-only
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run validate:catalog
+      - name: Vendored nirs4all-core shim is current
+        run: NIRS4ALL_LITE_SHIM_REQUIRED=1 npm run check:lite-shim
+      - run: npm run build:single
       - run: npm run build
+      - name: Browser smoke
+        run: npm run smoke -- rt-fallback
       - name: Finalize Pages metadata
         run: |
           printf 'web.nirs4all.org\n' > dist/CNAME
