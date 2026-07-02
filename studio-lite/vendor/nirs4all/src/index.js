@@ -177,7 +177,7 @@ export function loadPipelineDefinition(source) {
   const unsupported = portableClassNames(definition).filter((name) => !portableOperatorSet.has(name));
   if (unsupported.length > 0) {
     throw new Error(
-      `Pipeline uses operators outside the current nirs4all-lite portable subset: ${[...new Set(unsupported)].join(', ')}`,
+      `Pipeline uses operators outside the current nirs4all-core portable subset: ${[...new Set(unsupported)].join(', ')}`,
     );
   }
 
