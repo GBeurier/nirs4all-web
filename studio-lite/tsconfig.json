@@ -18,7 +18,13 @@
     "noFallthroughCasesInSwitch": true,
     "allowJs": true,
     "baseUrl": ".",
-    "paths": { "@/*": ["./src/*"] },
+    "paths": {
+      "nirs4all-ui": ["../../nirs4all-ui/src/index.ts"],
+      "nirs4all-ui/score": ["../../nirs4all-ui/src/score/index.ts"],
+      "nirs4all-ui/runtime": ["../../nirs4all-ui/src/runtime/index.ts"],
+      "nirs4all-ui/components": ["../../nirs4all-ui/src/components/index.ts"],
+      "@/*": ["./src/*"]
+    },
     "types": ["vite/client", "node"]
   },
   "include": ["src", "scripts"],

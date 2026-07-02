@@ -26,6 +26,7 @@ import { type LoadedModel, parseN4a } from '@/lib/n4a'
 import { applyTheme, loadSession, loadTheme, saveSession, type Theme } from '@/lib/persist'
 import { cn } from '@/app/components/ui/utils'
 import { formatRuntimeErrorForUi } from '@/app/runtimeErrors'
+import { RuntimeEngineBadge } from 'nirs4all-ui/components'
 import type { Analysis } from '@/data/wasm-io'
 import type { DagMlLineage } from '@/engine/dagml'
 import type { MaterializedDataset, PipelineDSL, Partition, RunLogEntry, RunProgress, RunResult, ScoreNode, TaskType } from '@/engine/types'
@@ -275,7 +276,6 @@ export default function App() {
   }
 
   const lineage = selectedRun?.lineage as DagMlLineage | undefined
-  const runEngineLabel = lineage?.executed ? 'executed by dag-ml' : lineage?.compiled ? 'compiled by dag-ml' : null
   const dataServed = lineage?.dataProvider?.status === 'materialized' ? lineage.dataProvider : null
   const dataFallback = lineage?.dataProvider && lineage.dataProvider.status !== 'materialized' ? lineage.dataProvider : null
   // B-018: the dag-ml scheduler degraded to the libn4m fold chain — surface it (the
@@ -332,10 +332,12 @@ export default function App() {
               <Database className="size-3.5" /> data: in-memory fallback
             </span>
           )}
-          {!running && runEngineLabel && (
-            <span className="hidden items-center gap-1.5 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs font-medium text-muted-foreground sm:flex">
-              <Cpu className="size-3.5" /> {runEngineLabel}
-            </span>
+          {!running && (
+            <RuntimeEngineBadge
+              lineage={lineage}
+              icon={<Cpu className="size-3.5" />}
+              className="hidden items-center gap-1.5 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs font-medium text-muted-foreground sm:flex"
+            />
           )}
           {!running && schedulerFallback && (
             <span
