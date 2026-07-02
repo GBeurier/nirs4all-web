@@ -21,6 +21,11 @@ type OutMsg =
   | { type: 'result'; id: string; result: unknown; rtResult?: RtResultWire }
   | { type: 'error'; id: string; name: string; message: string; rtError?: RtError }
 
+const attachRtResult = <T>(result: unknown, rtResult?: RtResultWire): T => {
+  if (!rtResult || typeof result !== 'object' || result === null || Array.isArray(result)) return result as T
+  return { ...(result as Record<string, unknown>), rtResult } as T
+}
+
 export class WorkerEngine implements Engine {
   readonly name = 'nirs4all-wasm-worker'
   private worker: Worker | null = null
@@ -63,7 +68,7 @@ export class WorkerEngine implements Engine {
         }
         finish(() => {
           this.dispose(worker)
-          if (m.type === 'result') resolve(m.result as T)
+          if (m.type === 'result') resolve(attachRtResult<T>(m.result, m.rtResult))
           // Preserve the typed RtError across the worker boundary (B-018): a strict
           // (allowFallback omitted/false) refusal in the worker is rebuilt as an
           // RtErrorException so the main thread keeps the typed error path.
@@ -112,7 +117,7 @@ export class WorkerEngine implements Engine {
   run(ds: MaterializedDataset, dsl: PipelineDSL, opts: RunOptions = {}): Promise<RunResult> {
     // allowFallback is a plain opt-in flag → forward it into the worker payload (onProgress/
     // signal stay main-thread). The worker always emits a neutral RtResult envelope
-    // beside the UI RunResult; callers do not opt into runtime contract telemetry.
+    // beside the UI RunResult, and the facade attaches it for export/parity consumers.
     return this.call<RunResult>({ type: 'run', ds, dsl, allowFallback: opts.allowFallback }, opts)
   }
 

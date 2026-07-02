@@ -5,6 +5,7 @@
 // unblock the UI until the Rust execution binding lands.
 
 import type { RtError } from './rt';
+import type { RtResultWire } from './rt-result';
 
 export type TaskType = 'regression' | 'binary' | 'multiclass';
 export type Partition = 'train' | 'test' | 'predict';
@@ -262,6 +263,8 @@ export interface RunResult {
    *  dag-ml scheduler failed". Present only when the engine degraded; a clean dag-ml
    *  run omits it. Lets runtime consumers tell a fallback from a native execution. */
   diagnostics?: RtError[];
+  /** neutral runtime-result wire envelope emitted by the worker for export/parity consumers */
+  rtResult?: RtResultWire;
 }
 
 // ---------------------------------------------------------------------------

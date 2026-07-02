@@ -317,6 +317,15 @@ describe('RtResult Web goldens', () => {
     assertRtResultWireShape(envelope)
   })
 
+  it('allows the shared RtResult envelope to be carried on a Web RunResult', () => {
+    const run = goldenRun({ id: 'run:web-rt-success' })
+    const envelope = runResultToRtResultEnvelope(run, { planId: PLAN_ID })
+    const carried: RunResult = { ...run, rtResult: envelope }
+
+    expect(carried.rtResult).toEqual(readFixture('rt_result.success.v1.json'))
+    assertRtResultWireShape(carried.rtResult!)
+  })
+
   it('projects scheduler fallback metadata and strips RtError detail on the wire', () => {
     const envelope = runResultToRtResultEnvelope(
       goldenRun({

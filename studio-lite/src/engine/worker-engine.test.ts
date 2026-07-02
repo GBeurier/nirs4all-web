@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { isRtErrorException, makeRtError, RtErrorException } from './rt'
+import type { RtResultWire } from './rt-result'
 import { WorkerEngine } from './worker-engine'
 import type { MaterializedDataset, PipelineDSL } from './types'
 
@@ -35,6 +36,22 @@ const dsl = {
   model: { id: 'm', type: 'PLS', params: { n_components: 1 } },
 } as PipelineDSL
 
+const rtResult: RtResultWire = {
+  schema_version: 1,
+  run_id: 'run-ok',
+  plan_id: null,
+  selection: null,
+  reports: [],
+  predictions: [],
+  manifest: {
+    engine: 'dag-ml-wasm + libn4m',
+    fingerprints: {},
+    capabilities: { execution_backend: 'wasm-local' },
+    portable_level: null,
+    files: {},
+  },
+}
+
 describe('WorkerEngine', () => {
   it('terminates a completed worker so the next run starts with fresh WASM state', async () => {
     const fake = new FakeWorker()
@@ -48,6 +65,21 @@ describe('WorkerEngine', () => {
     )
 
     await expect(run).resolves.toEqual({ id: 'ok' })
+    expect(fake.terminated).toBe(true)
+  })
+
+  it('attaches a worker runtime result payload to the resolved RunResult', async () => {
+    const fake = new FakeWorker()
+    const engine = new WorkerEngine(() => fake as unknown as Worker)
+
+    const run = engine.run(ds, dsl)
+    fake.dispatchEvent(
+      new MessageEvent('message', {
+        data: { type: 'result', id: 'job-1', result: { id: 'ok' }, rtResult },
+      }),
+    )
+
+    await expect(run).resolves.toEqual({ id: 'ok', rtResult })
     expect(fake.terminated).toBe(true)
   })
 
