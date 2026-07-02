@@ -15,6 +15,10 @@ vendored `nirs4all` aggregate or broader cross-validated workflows through `dag-
 inspect results, predict on new spectra, and export a reusable `.n4a` bundle.
 All data stays in the browser.
 
+Part of the [open-source NIRS tools](https://nirs4all.org/open-source-nirs-tools.html)
+ecosystem: file readers, datasets, methods, browser modelling, reproducible pipelines,
+papers, benchmarks, and release dashboards for near-infrared spectroscopy.
+
 This repository used to be named `nirs4all-lite`. The name is being freed for the canonical
 multi-language aggregate distribution of the low-level stack.
 
