@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest'
 // glue (vendor output under src/engine/wasm/) fetches its own same-origin
 // static assets, so it is excluded from the scan.
 const SRC_ROOT = fileURLToPath(new URL('..', import.meta.url))
+const APP_ROOT = fileURLToPath(new URL('../..', import.meta.url))
 
 const EXCLUDED_DIRS = new Set(['wasm'])
 
@@ -64,5 +65,28 @@ describe('client-side-only contract', () => {
     }
 
     expect(violations, violations.join('\n')).toEqual([])
+  })
+
+  it('does not load third-party runtime scripts or stylesheet imports', () => {
+    const indexHtml = readFileSync(join(APP_ROOT, 'index.html'), 'utf8')
+    const remoteScripts = [...indexHtml.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/gi)]
+      .map((match) => match[1])
+      .filter((src) => /^(https?:)?\/\//.test(src))
+    expect(remoteScripts, 'index.html must not load third-party runtime scripts').toEqual([])
+
+    const cssDir = join(SRC_ROOT, 'styles')
+    const cssFiles = readdirSync(cssDir)
+      .filter((name) => name.endsWith('.css'))
+      .map((name) => join(cssDir, name))
+    const remoteImports: string[] = []
+    for (const file of cssFiles) {
+      const text = readFileSync(file, 'utf8')
+      for (const match of text.matchAll(/@import\s+(?:url\()?['"]?([^'")\s]+)['"]?\)?/gi)) {
+        if (/^(https?:)?\/\//.test(match[1])) {
+          remoteImports.push(`${relative(SRC_ROOT, file)} — ${match[1]}`)
+        }
+      }
+    }
+    expect(remoteImports, 'CSS must not pull third-party runtime resources').toEqual([])
   })
 })
