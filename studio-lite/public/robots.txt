@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://web.nirs4all.org/sitemap.xml
