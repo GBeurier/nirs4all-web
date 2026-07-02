@@ -8,11 +8,17 @@ import { fileURLToPath } from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = join(here, '..')
+const requireMethodsAbi = process.env.NIRS4ALL_METHODS_ABI_REQUIRED === '1'
+const requireStudioRegistry = process.env.NIRS4ALL_STUDIO_REGISTRY_REQUIRED === '1'
 // candidate locations for the upstream ABI symbol snapshot
 const abiCandidates = [
+  process.env.NIRS4ALL_METHODS_ABI_LINUX,
   join(root, '../../nirs4all-methods/cpp/abi/expected_symbols_linux.txt'),
+  join(root, '../../RC-v1-methods/cpp/abi/expected_symbols_linux.txt'),
+  process.env.NIRS4ALL_METHODS_ABI_MACOS,
   join(root, '../../nirs4all-methods/cpp/abi/expected_symbols_macos.txt'),
-]
+  join(root, '../../RC-v1-methods/cpp/abi/expected_symbols_macos.txt'),
+].filter(Boolean)
 
 let abiText = ''
 for (const p of abiCandidates) {
@@ -23,7 +29,11 @@ for (const p of abiCandidates) {
   }
 }
 if (!abiText.trim()) {
-  console.warn('⚠ catalog validator: upstream nirs4all-methods ABI snapshot not found — skipping (run in the ecosystem tree to enforce).')
+  const msg = 'upstream nirs4all-methods ABI snapshot not found'
+  if (requireMethodsAbi) {
+    throw new Error(msg)
+  }
+  console.warn(`⚠ catalog validator: ${msg} — skipping (run in the ecosystem tree to enforce).`)
   process.exit(0)
 }
 const exported = new Set(abiText.split(/\s+/).filter((s) => s.startsWith('n4m_')))
@@ -60,8 +70,24 @@ if (/\bOPLS\b/.test(nodesSrc) && /type:\s*'OPLS'/.test(nodesSrc)) {
 // if the studio repo isn't in the tree (e.g. CI without the sibling checkout).
 const referenced = [...new Set([...nodesSrc.matchAll(/studioNodeType:\s*'([a-z_.]+)'/g)].map((x) => x[1]))]
 let studioFlowIds = null
+const studioRegistryCandidates = [
+  process.env.NIRS4ALL_STUDIO_NODE_REFERENCE,
+  join(root, '../../nirs4all-studio/src/data/nodes/generated/node-reference.json'),
+  join(root, '../../RC-v1-studio/src/data/nodes/generated/node-reference.json'),
+].filter(Boolean)
 try {
-  const reg = JSON.parse(readFileSync(join(root, '../../nirs4all-studio/src/data/nodes/generated/node-reference.json'), 'utf8'))
+  const registryPath = studioRegistryCandidates.find((candidate) => {
+    try {
+      readFileSync(candidate, 'utf8')
+      return true
+    } catch {
+      return false
+    }
+  })
+  if (!registryPath) {
+    throw new Error(`nirs4all-studio canonical registry not found. Tried: ${studioRegistryCandidates.join(', ')}`)
+  }
+  const reg = JSON.parse(readFileSync(registryPath, 'utf8'))
   const nodes = Array.isArray(reg) ? reg : (reg.nodes ?? Object.values(reg.definitions ?? reg))
   studioFlowIds = new Set(
     (Array.isArray(nodes) ? nodes : Object.values(nodes))
@@ -69,6 +95,9 @@ try {
       .map((n) => n.id ?? n.name),
   )
 } catch {
+  if (requireStudioRegistry) {
+    throw new Error('nirs4all-studio canonical registry not found')
+  }
   /* optional — canonical registry absent */
 }
 if (studioFlowIds && studioFlowIds.size) {
@@ -80,6 +109,9 @@ if (studioFlowIds && studioFlowIds.size) {
   }
   console.log(`✓ DAG operators ↔ nirs4all-studio canonical registry in sync (${referenced.length} ops: ${referenced.join(', ')}).`)
 } else {
+  if (requireStudioRegistry) {
+    throw new Error('nirs4all-studio canonical registry did not expose flow/utility ids')
+  }
   console.warn('⚠ catalog validator: nirs4all-studio canonical registry not found — skipping DAG flow-id check.')
 }
 
