@@ -1,3 +1,4 @@
+import { getMetricDefinition, isLowerBetter } from 'nirs4all-ui/score'
 import type { Metrics, TaskType } from '@/engine/types'
 
 export function fmt(v: number | undefined | null, digits = 3): string {
@@ -6,23 +7,26 @@ export function fmt(v: number | undefined | null, digits = 3): string {
   return v.toFixed(digits)
 }
 
+// Metric vocabulary (labels, abbreviations, direction) comes from the shared
+// nirs4all-ui/score catalog so Web and Studio agree on it; only the compact
+// number formatting above stays a Web display policy.
+
+function metricLabel(key: keyof Metrics & string): string {
+  return getMetricDefinition(key)?.label ?? key.toUpperCase()
+}
+
+function metricAbbreviation(key: keyof Metrics & string): string {
+  return getMetricDefinition(key)?.abbreviation ?? key.toUpperCase()
+}
+
 /** The headline metric + its label for a task type (drives the ranking display). */
 export function primaryMetric(task: TaskType): { key: keyof Metrics; label: string; higherIsBetter: boolean } {
-  return task === 'regression'
-    ? { key: 'rmse', label: 'RMSE', higherIsBetter: false }
-    : { key: 'accuracy', label: 'Accuracy', higherIsBetter: true }
+  const key = task === 'regression' ? 'rmse' : 'accuracy'
+  return { key, label: metricLabel(key), higherIsBetter: !isLowerBetter(key) }
 }
 
 /** Ordered metric chips to display for a task type. */
 export function metricChips(task: TaskType): { key: keyof Metrics; label: string }[] {
-  return task === 'regression'
-    ? [
-        { key: 'rmse', label: 'RMSE' },
-        { key: 'r2', label: 'R²' },
-        { key: 'mae', label: 'MAE' },
-      ]
-    : [
-        { key: 'accuracy', label: 'Acc' },
-        { key: 'f1', label: 'F1' },
-      ]
+  const keys: (keyof Metrics & string)[] = task === 'regression' ? ['rmse', 'r2', 'mae'] : ['accuracy', 'f1']
+  return keys.map((key) => ({ key, label: metricAbbreviation(key) }))
 }

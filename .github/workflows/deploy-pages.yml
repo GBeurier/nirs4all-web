@@ -34,6 +34,9 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: studio-lite/package-lock.json
+      - name: Provide nirs4all-ui sibling
+        uses: ./.github/actions/nirs4all-ui-sibling
+
       - run: npm ci
       - run: npm run build
       - name: Finalize Pages metadata

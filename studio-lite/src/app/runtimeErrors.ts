@@ -1,20 +1,16 @@
+import { formatRuntimeRefusalText } from 'nirs4all-ui/runtime'
 import { isRtErrorException, type RtError } from '@/engine/rt'
 
-function formatToken(value: string | null | undefined): string {
-  if (!value) return ''
-  return value
-    .split(/[-_\s]+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')
-}
-
+/** Render the typed rt_error.v1 envelope through the shared nirs4all-ui
+ *  refusal formatter, so Studio and Web present refusals identically. */
 function formatRtError(error: RtError): string {
-  const title = `${formatToken(error.verb)} refused: ${formatToken(error.cause)}`
-  const lines = [title, error.message]
-  if (error.mitigation) lines.push(`Mitigation: ${error.mitigation}`)
-  if (error.unsupported_capability) lines.push(`Missing capability: ${formatToken(error.unsupported_capability)}`)
-  return lines.join('\n')
+  return formatRuntimeRefusalText({
+    verb: error.verb,
+    cause: error.cause,
+    message: error.message,
+    mitigation: error.mitigation ?? null,
+    unsupportedCapability: error.unsupported_capability ?? null,
+  })
 }
 
 export function formatRuntimeErrorForUi(error: unknown): string {
