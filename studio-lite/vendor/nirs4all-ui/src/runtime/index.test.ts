@@ -16,7 +16,6 @@ describe("nirs4all-ui/runtime barrel", () => {
     expect(typeof runtimeFoundation.buildRuntimeResultStatusView).toBe("function");
     expect(typeof runtimeFoundation.getRuntimeResultEmptyMessage).toBe("function");
     expect(typeof runtimeFoundation.buildRuntimeEngineStatus).toBe("function");
-    expect(typeof runtimeFoundation.formatRuntimeEngineTitle).toBe("function");
     expect(typeof runtimeFoundation.normalizeRuntimeDiagnostics).toBe("function");
     expect(typeof runtimeFoundation.buildRuntimeNativeResultsAffordance).toBe("function");
     expect(typeof runtimeFoundation.runtimeEngineLabel).toBe("function");
