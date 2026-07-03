@@ -53,6 +53,8 @@ jobs:
       - run: npm run typecheck
       - run: npm run test
       - run: NIRS4ALL_METHODS_ABI_REQUIRED=1 NIRS4ALL_STUDIO_REGISTRY_REQUIRED=1 npm run validate:catalog
+      - name: Vendored nirs4all-ui shim is current
+        run: NIRS4ALL_UI_SHIM_REQUIRED=1 npm run check:ui-shim
       - name: Vendored nirs4all-core shim is current
         run: NIRS4ALL_LITE_SHIM_REQUIRED=1 npm run check:lite-shim
       - run: npm run build:single
