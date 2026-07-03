@@ -12,9 +12,12 @@ const check = process.argv.includes('--check')
 const required = process.env.NIRS4ALL_LITE_SHIM_REQUIRED === '1'
 
 const liteCandidates = [
+  process.env.NIRS4ALL_CORE_WASM_DIR,
   process.env.NIRS4ALL_LITE_SHIM_ROOT,
-  resolve(root, '..', '..', 'nirs4all-lite', 'bindings', 'wasm'),
+  resolve(root, '..', '..', 'nirs4all-core', 'bindings', 'wasm'),
+  resolve(root, '..', '..', '_worktrees', 'RC-v1-nirs4all-core', 'bindings', 'wasm'),
   resolve(root, '..', '..', 'RC-v1-nirs4all-core', 'bindings', 'wasm'),
+  resolve(root, '..', '..', 'nirs4all-lite', 'bindings', 'wasm'),
 ].filter(Boolean)
 
 const lite = liteCandidates.find((candidate) => existsSync(candidate))
@@ -29,13 +32,15 @@ const files = [
 ]
 
 if (!lite) {
-  const msg = `nirs4all-lite shim not found. Tried: ${liteCandidates.join(', ')}`
+  const msg = `nirs4all-core/lite shim not found. Tried: ${liteCandidates.join(', ')}`
   if (required) {
     throw new Error(msg)
   }
   console.warn(`[sync-lite-shim] ${msg}; skipping.`)
   process.exit(0)
 }
+
+console.log(`[sync-lite-shim] source ${relative(root, lite)}`)
 
 let drift = false
 

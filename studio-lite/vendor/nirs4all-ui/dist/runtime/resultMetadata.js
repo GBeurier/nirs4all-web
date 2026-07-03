@@ -104,14 +104,12 @@ function normalizeRuntimeDiagnostic(raw, index) {
     const cause = readStringField(record, ["cause", "code"]);
     const verb = readStringField(record, ["verb", "operation"]);
     const mitigation = readStringField(record, ["mitigation", "hint", "suggestion"]);
-    const unsupportedCapability = readStringField(record, ["unsupported_capability", "unsupportedCapability"]);
     return {
         id: `${index}-${cause ?? "diagnostic"}-${message.slice(0, 32)}`,
         verb,
         cause,
         message,
         mitigation,
-        unsupportedCapability,
         tone: resolveDiagnosticTone(record),
     };
 }
@@ -167,27 +165,6 @@ export function formatRuntimeTokenLabel(value) {
         return partLower.charAt(0).toUpperCase() + partLower.slice(1);
     })
         .join(" ");
-}
-/**
- * Format a runtime refusal (an rt_error.v1 envelope normalized to a
- * `RuntimeDiagnosticItem`) as the shared multi-line message hosts show when a
- * strict-mode run is refused (banner, execution log, toast):
- *
- *   `<Verb> refused: <Cause>`
- *   `<message>`
- *   `Mitigation: <mitigation>`              (when present)
- *   `Missing capability: <Capability>`      (when present)
- */
-export function formatRuntimeRefusalText(item) {
-    const lines = [
-        `${formatRuntimeTokenLabel(item.verb)} refused: ${formatRuntimeTokenLabel(item.cause)}`,
-        item.message,
-    ];
-    if (item.mitigation)
-        lines.push(`Mitigation: ${item.mitigation}`);
-    if (item.unsupportedCapability)
-        lines.push(`Missing capability: ${formatRuntimeTokenLabel(item.unsupportedCapability)}`);
-    return lines.join("\n");
 }
 function resolveRuntimeEngineTone(engine, isFallback) {
     if (isFallback)
@@ -265,18 +242,6 @@ export function buildRuntimeEngineStatus(source) {
         tone: resolveRuntimeEngineTone(engine, isFallback),
         diagnostics,
     };
-}
-export function formatRuntimeEngineTitle(status) {
-    if (!status)
-        return null;
-    const lines = [
-        status.engineLabel ? `Engine: ${status.engineLabel}` : null,
-        status.detailLabel,
-        status.diagnostics.length > 0
-            ? `${status.diagnostics.length} diagnostic${status.diagnostics.length === 1 ? "" : "s"}`
-            : null,
-    ].filter((line) => Boolean(line));
-    return lines.length > 0 ? lines.join("\n") : null;
 }
 function formatNativeArtifactCount(count) {
     if (count == null)
