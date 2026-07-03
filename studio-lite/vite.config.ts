@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { viteSingleFile } from 'vite-plugin-singlefile'
 
 // Two build modes:
-//  - default      → static site (lazy-loaded WASM), the primary nirs4all.org deliverable
+//  - default      → static site (lazy-loaded WASM), the primary web.nirs4all.org deliverable
 //  - `singlefile` → inline JS+CSS into one HTML (WASM is inlined by scripts/make-standalone.mjs);
 //                   `base: './'` keeps asset URLs relative so the file opens under file://
 export default defineConfig(({ mode }) => {
