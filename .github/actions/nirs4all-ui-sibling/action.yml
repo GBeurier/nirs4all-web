@@ -24,3 +24,5 @@ runs:
         else
           echo "nirs4all-ui sibling: no GitHub ref provided; using default branch @ $(git -C "$sibling" rev-parse HEAD)"
         fi
+        npm --prefix "$sibling" ci
+        npm --prefix "$sibling" run build
