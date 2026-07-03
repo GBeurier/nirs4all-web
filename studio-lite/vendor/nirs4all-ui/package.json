@@ -4,6 +4,10 @@
   "description": "Shared React UI components and pure view-model helpers for nirs4all apps.",
   "type": "module",
   "license": "(CECILL-2.1 OR AGPL-3.0-or-later)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GBeurier/nirs4all-ui.git"
+  },
   "private": false,
   "sideEffects": false,
   "files": [
@@ -32,8 +36,12 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "ci": "npm run prepublishOnly && npm run pack:smoke",
+    "pack:smoke": "npm pack --dry-run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
+    "prepack": "npm run build",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build",
     "test:watch": "vitest"
   },
   "peerDependencies": {

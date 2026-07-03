@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildRuntimeEngineStatus,
   buildRuntimeNativeResultsAffordance,
+  formatRuntimeEngineTitle,
   formatRuntimeTokenLabel,
   normalizeRuntimeDiagnostics,
 } from "./resultMetadata.js";
@@ -41,6 +42,7 @@ describe("runtime result metadata foundation", () => {
         cause: "unsupported_shape",
         message: "dag-ml does not support this pipeline shape",
         mitigation: "Run on engine='legacy'.",
+        unsupportedCapability: null,
         tone: "warning",
       }],
     });
@@ -138,5 +140,16 @@ describe("runtime result metadata foundation", () => {
       disabled: true,
       disabledReason: "Native result artifacts are not attached for this run.",
     });
+  });
+
+  it("formats runtime engine title text from shared status metadata", () => {
+    const status = buildRuntimeEngineStatus({
+      engine: "legacy",
+      engine_requested: "dag-ml",
+      diagnostics: [{ message: "scheduler degraded" }],
+    });
+
+    expect(formatRuntimeEngineTitle(status)).toBe("Engine: Legacy\nRequested DAG-ML\n1 diagnostic");
+    expect(formatRuntimeEngineTitle(null)).toBeNull();
   });
 });
