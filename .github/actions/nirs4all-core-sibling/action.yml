@@ -1,18 +1,17 @@
 name: Provide nirs4all-core sibling
 description: >-
-  Clones GBeurier/nirs4all-lite next to the workspace so the vendored
+  Clones GBeurier/nirs4all-core next to the workspace so the vendored
   nirs4all-core JavaScript/WASM shim can be checked against its canonical
-  source. The current Web RC branch maps to the core RC branch because the
-  repository rename is still pending.
+  source.
 runs:
   using: composite
   steps:
     - name: Clone nirs4all-core source next to the workspace
       shell: bash
       run: |
-        sibling="$GITHUB_WORKSPACE/../nirs4all-lite"
+        sibling="$GITHUB_WORKSPACE/../nirs4all-core"
         rm -rf "$sibling"
-        git clone --depth 1 https://github.com/GBeurier/nirs4all-lite.git "$sibling"
+        git clone --depth 1 https://github.com/GBeurier/nirs4all-core.git "$sibling"
 
         requested="${NIRS4ALL_CORE_REF:-}"
         current="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
@@ -20,7 +19,7 @@ runs:
         if [ -n "$requested" ]; then
           ref="$requested"
         elif [ "$current" = "rc/v1-full-refactor" ] || [ "$base" = "rc/v1-full-refactor" ]; then
-          ref="rc/v1-full-refactor-core"
+          ref="rc/v1-full-refactor"
         elif [ "$current" = "main" ] || [ "$base" = "main" ]; then
           ref="main"
         else
