@@ -19,15 +19,15 @@ Part of the [open-source NIRS tools](https://nirs4all.org/open-source-nirs-tools
 ecosystem: file readers, datasets, methods, browser modelling, reproducible pipelines,
 papers, benchmarks, and release dashboards for near-infrared spectroscopy.
 
-This repository used to be named `nirs4all-lite`. The name is being freed for the canonical
-multi-language aggregate distribution of the low-level stack.
+This repository used to be named `nirs4all-lite`. The standalone browser client now lives under
+`nirs4all-web`, while the canonical multi-language aggregate target is `nirs4all-core`.
 
 ## What Lives Here
 
 - `studio-lite/`: active React/Vite app and the GitHub Pages deliverable.
 - `.github/workflows/deploy-pages.yml`: builds `studio-lite/` and publishes the static app.
 - staged WASM packages under `studio-lite/src/engine/wasm/`, consumed from upstream sibling repos.
-- `studio-lite/vendor/nirs4all/`: vendored `nirs4all-lite` JavaScript/WASM aggregate used by the
+- `studio-lite/vendor/nirs4all/`: vendored `nirs4all-core` JavaScript/WASM aggregate used by the
   browser runtime and checked for drift with `npm run check:lite-shim`.
 
 There is no Python backend and no new numerical implementation here. Parser, dataset, DAG, and
