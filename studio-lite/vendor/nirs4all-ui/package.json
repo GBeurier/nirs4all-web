@@ -4,6 +4,7 @@
   "description": "Shared React UI components and pure view-model helpers for nirs4all apps.",
   "type": "module",
   "license": "(CECILL-2.1 OR AGPL-3.0-or-later)",
+  "homepage": "https://gbeurier.github.io/nirs4all-ui/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/GBeurier/nirs4all-ui.git"
