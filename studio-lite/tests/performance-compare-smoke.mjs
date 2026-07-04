@@ -14,7 +14,7 @@ const pythonLedger = {
 }
 
 const runtimeLedger = {
-  schema_version: 'n4a.e2e.studio_web_runtime_perf/v1',
+  schema_version: 'n4a.e2e.web_runtime_perf/v1',
   status: 'failed',
   app_url: APP_URL,
   source: FAMILY_FILE,
@@ -25,8 +25,8 @@ const runtimeLedger = {
     dag_ml: null,
   },
   studio: {
-    status: 'not_executed_prod_hold',
-    reason: 'nirs4all-studio production release is intentionally held in this batch; add a dedicated Studio runtime entrypoint before treating this as Studio coverage.',
+    included_in_gate: false,
+    reason: 'nirs4all-studio production release is outside this Web-only performance gate; add a dedicated Studio runtime entrypoint before treating this as Studio coverage.',
   },
   console_errors: [],
 }
@@ -98,7 +98,7 @@ async function writeEvidence() {
   if (!ARTIFACTS_DIR) return
   await mkdir(ARTIFACTS_DIR, { recursive: true })
   await writeFile(join(ARTIFACTS_DIR, 'python-vs-dagml.json'), JSON.stringify(pythonLedger, null, 2) + '\n')
-  await writeFile(join(ARTIFACTS_DIR, 'studio-web-runtime.json'), JSON.stringify(runtimeLedger, null, 2) + '\n')
+  await writeFile(join(ARTIFACTS_DIR, 'web-runtime.json'), JSON.stringify(runtimeLedger, null, 2) + '\n')
 }
 
 let browser
@@ -143,7 +143,7 @@ try {
     throw new Error(`${errors.length} console error(s): ${errors.slice(0, 4).join(' | ')}`)
   }
 
-  runtimeLedger.status = 'passed_web_with_studio_hold'
+  runtimeLedger.status = 'passed'
   console.log(`✓ Python legacy/dag-ml parity ledger passed (${family.performance.verdict})`)
   console.log(`✓ Web dag-ml WASM run executed ${observedDagMl.cv_predictions} CV predictions in ${runtimeLedger.web.pipeline_run_seconds.toFixed(3)}s`)
 } catch (error) {
