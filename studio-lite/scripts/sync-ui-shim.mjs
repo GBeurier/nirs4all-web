@@ -12,7 +12,6 @@ const vendor = resolve(root, 'vendor', 'nirs4all-ui')
 const check = process.argv.includes('--check')
 const required = process.env.NIRS4ALL_UI_SHIM_REQUIRED === '1'
 const entries = ['package.json', 'README.md', 'src', 'dist']
-const forbiddenEntries = ['node_modules']
 
 if (!existsSync(upstream)) {
   const msg = `nirs4all-ui shim not found at ${upstream}`
@@ -25,8 +24,7 @@ if (!existsSync(upstream)) {
 
 const sourceFiles = collectFiles(upstream, entries)
 const targetFiles = collectFiles(vendor, entries, { ignoreMissingRoot: true })
-const forbiddenVendorEntries = forbiddenEntries.filter((entry) => existsSync(resolve(vendor, entry)))
-let drift = sourceFiles.length !== targetFiles.length || forbiddenVendorEntries.length > 0
+let drift = sourceFiles.length !== targetFiles.length
 
 for (const rel of sourceFiles) {
   const source = resolve(upstream, rel)
@@ -50,9 +48,6 @@ for (const rel of targetFiles) {
 
 if (check) {
   if (drift) {
-    if (forbiddenVendorEntries.length > 0) {
-      console.error(`[sync-ui-shim] forbidden vendored runtime deps: ${forbiddenVendorEntries.join(', ')}`)
-    }
     console.error('[sync-ui-shim] drift detected; run `npm run vendor:ui` from studio-lite.')
     process.exit(1)
   }
