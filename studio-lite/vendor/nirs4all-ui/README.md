@@ -53,8 +53,10 @@ npm run site:build
 `site/src/App.tsx` renders reusable React components separately from the
 runtime and score helper inventories. `site/public/` intentionally carries the
 Pages publication files (`logo.svg`, `favicon.svg`, `robots.txt`,
-`sitemap.xml`, `CNAME`, and `site.webmanifest`), while the package brand kit
-remains available through `assets/brand` and the `nirs4all-ui/assets/*` export.
-The default Pages base is `/` for `ui.nirs4all.org`; set
-`NIRS4ALL_UI_BASE=/nirs4all-ui/` when intentionally building for the GitHub
-project-page path.
+`sitemap.xml`, and `site.webmanifest`). The site build also copies the package
+brand kit to namespaced GitHub Pages URLs under `assets/brand/nirs4all-ui/`;
+the npm package keeps the same files available under `assets/brand` through the
+`nirs4all-ui/assets/*` export. The default Pages base is `/nirs4all-ui/` for
+the GitHub project-page path; set
+`NIRS4ALL_UI_BASE=/` and add a `CNAME` only when switching to a dedicated
+subdomain such as `ui.nirs4all.org`.
