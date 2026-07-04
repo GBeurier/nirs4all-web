@@ -15,7 +15,7 @@ UI surfaces.
 | --- | --- | --- |
 | `score` | `nirs4all-ui/score` | Metric-key normalization, metric catalog helpers, direction-aware score parsing, comparison, and formatting. |
 | `runtime` | `nirs4all-ui/runtime` | Runtime/result status display tokens, busy-state predicates, progress projection, engine metadata summaries, diagnostics, and native-result affordances. |
-| `components` | `nirs4all-ui/components` | Stateless React components that render shared runtime and result UI affordances. |
+| `components` | `nirs4all-ui/components` | Stateless React components that render shared runtime, diagnostic, and metric affordances. |
 
 The root export also exposes namespace barrels:
 
@@ -28,7 +28,7 @@ Prefer domain imports when a consumer only needs one area:
 ```ts
 import { canonicalMetricKey, formatMetricValue } from "nirs4all-ui/score";
 import { buildRuntimeResultStatusView } from "nirs4all-ui/runtime";
-import { RuntimeEngineBadge } from "nirs4all-ui/components";
+import { MetricValueBadge, RuntimeEngineBadge } from "nirs4all-ui/components";
 ```
 
 ## Development
@@ -53,5 +53,8 @@ npm run site:build
 `site/src/App.tsx` renders reusable React components separately from the
 runtime and score helper inventories. `site/public/` intentionally carries the
 Pages publication files (`logo.svg`, `favicon.svg`, `robots.txt`,
-`sitemap.xml`, and `site.webmanifest`), while the package brand kit remains
-available through `assets/brand` and the `nirs4all-ui/assets/*` export.
+`sitemap.xml`, `CNAME`, and `site.webmanifest`), while the package brand kit
+remains available through `assets/brand` and the `nirs4all-ui/assets/*` export.
+The default Pages base is `/` for `ui.nirs4all.org`; set
+`NIRS4ALL_UI_BASE=/nirs4all-ui/` when intentionally building for the GitHub
+project-page path.
