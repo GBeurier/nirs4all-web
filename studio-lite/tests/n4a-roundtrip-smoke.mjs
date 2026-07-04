@@ -2,12 +2,30 @@
 // app fresh → import the .n4a → predict on new spectra. Proves a saved model can be
 // re-used later with no dataset and no retraining (the "broader usage" path).
 import { tmpdir } from 'node:os'
+import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { chromium } from 'playwright-core'
 
 const APP_URL = process.env.SMOKE_URL || 'http://localhost:4355/'
 const EXE = process.env.CHROME || '/usr/bin/google-chrome'
 const FRUIT_XTEST = process.env.FRUIT_XTEST || new URL('../src/data/demo/corn/Xtest.csv', import.meta.url).pathname
+const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || ''
+
+const evidence = {
+  schema_version: 'n4a.web.predict_artifact_smoke/v1',
+  status: 'failed',
+  app_url: APP_URL,
+  exported_model_bundle: null,
+  prediction_chart_count: 0,
+  console_errors: [],
+}
+
+async function writeEvidence() {
+  if (!ARTIFACTS_DIR) return
+  await mkdir(ARTIFACTS_DIR, { recursive: true })
+  evidence.console_errors = errors
+  await writeFile(join(ARTIFACTS_DIR, 'predict-artifact-smoke.json'), JSON.stringify(evidence, null, 2) + '\n')
+}
 
 const browser = await chromium.launch({ executablePath: EXE, headless: true, args: ['--no-sandbox'] })
 const ctx = await browser.newContext({ acceptDownloads: true })
@@ -35,6 +53,7 @@ try {
   ]).then(([d]) => d)
   const n4aPath = join(tmpdir(), 'roundtrip.n4a')
   await dl.saveAs(n4aPath)
+  evidence.exported_model_bundle = dl.suggestedFilename()
   console.log(`✓ exported .n4a → ${dl.suggestedFilename()}`)
   if (!/\.n4a$/.test(dl.suggestedFilename())) fail('exported file is not a .n4a')
 
@@ -60,15 +79,20 @@ try {
   await page.locator('input[type=file][accept*="csv"]').last().setInputFiles(FRUIT_XTEST)
   await page.waitForTimeout(1500)
   const charts = await page.locator('svg.recharts-surface').count()
+  evidence.prediction_chart_count = charts
   if (charts >= 1) console.log(`✓ imported model predicted (${charts} chart) — round-trip complete`)
   else fail('imported model did not produce a prediction histogram')
 
   if (errors.length) fail(`${errors.length} console error(s): ${errors.slice(0, 4).join(' | ')}`)
-  else console.log('✓ no JS console errors')
+  else {
+    evidence.status = 'passed'
+    console.log('✓ no JS console errors')
+  }
 } catch (e) {
   fail(e instanceof Error ? e.message : String(e))
   for (const er of errors.slice(0, 6)) console.error('   console: ' + er)
 } finally {
+  await writeEvidence()
   await browser.close()
 }
 console.log(process.exitCode ? 'N4A-ROUNDTRIP SMOKE FAILED' : 'N4A-ROUNDTRIP SMOKE PASSED')
