@@ -104,7 +104,7 @@ try {
     throw new Error(`${errors.length} console error(s): ${errors.slice(0, 4).join(' | ')}`)
   }
 
-  runtimeLedger.status = 'passed'
+  runtimeLedger.status = 'passed_web_with_studio_hold'
   console.log(`✓ Python legacy/dag-ml parity ledger passed (${family.performance.verdict})`)
   console.log(`✓ Web dag-ml WASM run rendered CV Scores in ${runtimeLedger.web.pipeline_run_seconds.toFixed(3)}s`)
 } catch (error) {
