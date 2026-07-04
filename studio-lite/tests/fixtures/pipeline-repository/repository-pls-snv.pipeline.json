@@ -1,0 +1,21 @@
+{
+  "name": "Pipeline repository roundtrip",
+  "steps": [
+    {
+      "id": "repo-snv",
+      "type": "StandardNormalVariate",
+      "params": {}
+    }
+  ],
+  "model": {
+    "id": "repo-pls",
+    "type": "PLS",
+    "params": {
+      "n_components": 2
+    }
+  },
+  "cv": {
+    "folds": 4,
+    "seed": 4242
+  }
+}
