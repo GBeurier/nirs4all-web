@@ -19,9 +19,10 @@ const runtimeLedger = {
   app_url: APP_URL,
   source: FAMILY_FILE,
   web: {
-    backend: 'dag-ml-wasm',
+    backend: null,
     pipeline_run_seconds: null,
     rendered_cv_scores: false,
+    dag_ml: null,
   },
   studio: {
     status: 'not_executed_prod_hold',
@@ -62,6 +63,37 @@ function validateFamily(value) {
   return family
 }
 
+function assertDagMlRun(value) {
+  const run = assertRecord(value, 'window.__n4aLastRun')
+  if (run.engine !== 'dag-ml-wasm + libn4m') throw new Error(`web run engine must be dag-ml-wasm + libn4m, got ${JSON.stringify(run.engine)}`)
+  const lineage = assertRecord(run.lineage, 'web run lineage')
+  if (lineage.engine !== 'dag-ml-wasm') throw new Error(`web lineage engine must be dag-ml-wasm, got ${JSON.stringify(lineage.engine)}`)
+  if (lineage.compiled !== true) throw new Error('web dag-ml lineage must report compiled=true')
+  if (lineage.executed !== true) throw new Error('web dag-ml lineage must report executed=true')
+  if (lineage.schedulerFallback) throw new Error('web dag-ml run used schedulerFallback')
+  if (Array.isArray(run.diagnostics) && run.diagnostics.length > 0) throw new Error(`web dag-ml run reported diagnostics: ${JSON.stringify(run.diagnostics.slice(0, 3))}`)
+  const cv = assertRecord(run.cv, 'web run cv')
+  const predictions = Array.isArray(cv.predictions) ? cv.predictions : []
+  if (predictions.length === 0) throw new Error('web dag-ml run produced no CV predictions')
+  const variantCount = assertNumber(run.variantCount, 'web run variantCount')
+  if (variantCount < 1) throw new Error(`web run variantCount must be >= 1, got ${variantCount}`)
+  return {
+    backend: run.engine,
+    lineage: {
+      engine: lineage.engine,
+      compiled: lineage.compiled,
+      executed: lineage.executed,
+      schedulerFallback: Boolean(lineage.schedulerFallback),
+      phase: lineage.phase ?? null,
+      variantCount: lineage.variantCount ?? null,
+      folds: lineage.folds ?? null,
+      dataProviderStatus: lineage.dataProvider?.status ?? null,
+    },
+    cv_predictions: predictions.length,
+    variantCount,
+  }
+}
+
 async function writeEvidence() {
   if (!ARTIFACTS_DIR) return
   await mkdir(ARTIFACTS_DIR, { recursive: true })
@@ -98,6 +130,13 @@ try {
   await page.waitForSelector('text=/CV Scores/', { timeout: 60000 })
   runtimeLedger.web.pipeline_run_seconds = (performance.now() - start) / 1000
   runtimeLedger.web.rendered_cv_scores = true
+  const observedDagMl = assertDagMlRun(await page.evaluate(() => window.__n4aLastRun))
+  runtimeLedger.web.backend = observedDagMl.backend
+  runtimeLedger.web.dag_ml = observedDagMl
+
+  if (!/by dag-ml/i.test((await page.textContent('body')) || '')) {
+    throw new Error('expected a visible "by dag-ml" badge after the Web run')
+  }
 
   if (errors.length) {
     runtimeLedger.console_errors = errors.slice(0, 10)
@@ -106,7 +145,7 @@ try {
 
   runtimeLedger.status = 'passed_web_with_studio_hold'
   console.log(`✓ Python legacy/dag-ml parity ledger passed (${family.performance.verdict})`)
-  console.log(`✓ Web dag-ml WASM run rendered CV Scores in ${runtimeLedger.web.pipeline_run_seconds.toFixed(3)}s`)
+  console.log(`✓ Web dag-ml WASM run executed ${observedDagMl.cv_predictions} CV predictions in ${runtimeLedger.web.pipeline_run_seconds.toFixed(3)}s`)
 } catch (error) {
   fail(error instanceof Error ? error.message : String(error))
 } finally {
