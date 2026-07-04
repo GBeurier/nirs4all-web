@@ -12,9 +12,10 @@ staged WASM packages from the low-level stack:
 nirs4all-formats -> nirs4all-io -> dag-ml-data -> dag-ml -> nirs4all-methods/libn4m
 ```
 
-This repository used to be named `nirs4all-lite`. The `lite` name is now reserved for the canonical
-multi-language aggregate distribution. Do not add distribution packaging, R/MATLAB/Python bindings,
-or release-factory logic here; those belong in the new `nirs4all-lite` repository.
+This repository used to be named `nirs4all-lite`. The `lite` name is now only a legacy
+compatibility alias during the `nirs4all-core` cutover. Do not add distribution packaging,
+R/MATLAB/Python bindings, or release-factory logic here; those belong in the
+`nirs4all-core` repository.
 
 The cardinal ecosystem rule still applies: **never reimplement NIRS parsing, dataset assembly, DAG
 execution, or numerical methods here.** Fixes belong upstream in `../nirs4all-formats`,
