@@ -20,6 +20,7 @@ import { migrateLegacyBranch } from '@/components/pipeline/_helpers'
 import { PredictionPanel, ResultsList, ResultsVisualization } from '@/components/results'
 import { defaultPipeline } from '@/catalog/build'
 import { engine } from '@/engine/client'
+import { rtResultEnvelopeToDisplayRunResult, type RtResultWire } from '@/engine/rt-result'
 import { type DatasetSummary, reencodeTarget, summarize } from '@/data/dataset'
 import { loadSampleDataset, SAMPLES, type SampleId } from '@/data/samples'
 import { type LoadedModel, parseN4a } from '@/lib/n4a'
@@ -33,6 +34,15 @@ import type { MaterializedDataset, PipelineDSL, Partition, RunLogEntry, RunProgr
 
 type StepId = 'dataset' | 'explore' | 'pipeline' | 'results' | 'predict'
 type DatasetSourceKind = 'upload' | 'sample'
+
+declare global {
+  interface Window {
+    __n4aE2E?: {
+      importRtResult: (wire: RtResultWire) => { runId: string; selectedScoreId: string; scoreCount: number }
+    }
+    __n4aLastRun?: RunResult
+  }
+}
 
 interface DatasetSessionInfo {
   name: string
@@ -256,6 +266,26 @@ export default function App() {
   const onSelect = useCallback((run: RunResult, score: ScoreNode) => {
     setSelectedRunId(run.id)
     setSelectedScore(score)
+  }, [])
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('n4a_e2e') !== '1') return
+    window.__n4aE2E = {
+      importRtResult: (wire: RtResultWire) => {
+        const run = rtResultEnvelopeToDisplayRunResult(wire)
+        const score = run.cv ?? run.refit
+        setRuns([run])
+        setSelectedRunId(run.id)
+        setSelectedScore(score)
+        setStep('results')
+        setError(null)
+        return { runId: run.id, selectedScoreId: score.id, scoreCount: 1 + (run.cv ? 1 : 0) + run.folds.length }
+      },
+    }
+    window.dispatchEvent(new Event('n4a:e2e-ready'))
+    return () => {
+      delete window.__n4aE2E
+    }
   }, [])
 
   const selectedRun = runs.find((r) => r.id === selectedRunId) ?? null

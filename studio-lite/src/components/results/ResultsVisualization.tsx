@@ -260,7 +260,7 @@ export function ResultsVisualization(props: ResultsVisualizationProps) {
   const primary = primaryValue(run.taskType, score.metrics)
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+    <div className="rounded-2xl border border-border bg-card p-6 shadow-sm" data-testid="n4a-results-visualization">
       {/* Title + selected score + metric chips */}
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">

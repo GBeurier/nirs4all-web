@@ -2,19 +2,20 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { chromium } from 'playwright-core'
 
-const URL = process.env.SMOKE_URL || 'http://localhost:4345/'
+const APP_URL = process.env.SMOKE_URL || 'http://localhost:4345/'
 const EXE = process.env.CHROME || '/usr/bin/google-chrome'
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || ''
 const RESULT_FILE = process.env.RT_RESULT || (ARTIFACTS_DIR ? join(ARTIFACTS_DIR, 'predictions.rt_result.json') : '')
 
-const PANEL_IDS = ['summary', 'reports', 'predictions', 'manifest']
+const PANEL_IDS = ['n4a-results-list', 'n4a-results-visualization']
 const evidence = {
   schema_version: 'n4a.web.converted_predictions_render/v1',
   status: 'failed',
-  render_mode: 'client-side served app contract panel',
-  app_url: URL,
+  render_mode: 'client-side served app React results components',
+  app_url: APP_URL,
   rt_result_file: RESULT_FILE,
   panels: [],
+  hydrated_run: null,
   report_count: 0,
   prediction_count: 0,
   total_prediction_rows: 0,
@@ -128,6 +129,12 @@ function validateRtResult(value) {
   }
 }
 
+function withE2EFlag(rawUrl) {
+  const url = new URL(rawUrl)
+  url.searchParams.set('n4a_e2e', '1')
+  return url.toString()
+}
+
 await mkdir(ARTIFACTS_DIR || '/tmp', { recursive: true })
 
 let browser
@@ -149,98 +156,24 @@ try {
   })
   page.on('pageerror', (error) => errors.push('PAGEERR: ' + error.message))
 
-  await page.goto(URL, { waitUntil: 'load', timeout: 30000 })
+  const appUrl = withE2EFlag(APP_URL)
+  evidence.app_url = appUrl
+  await page.goto(appUrl, { waitUntil: 'load', timeout: 30000 })
   await page.waitForSelector('text=nirs4all', { timeout: 10000 })
 
-  await page.evaluate(
-    ({ panels, summary: renderedSummary }) => {
-      const existing = document.querySelector('[data-testid="converted-predictions-panels"]')
-      if (existing) existing.remove()
+  await page.waitForFunction(() => typeof window.__n4aE2E?.importRtResult === 'function', { timeout: 10000 })
+  evidence.hydrated_run = await page.evaluate((payload) => window.__n4aE2E.importRtResult(payload), rtResult)
 
-      const root = document.createElement('section')
-      root.dataset.testid = 'converted-predictions-panels'
-      Object.assign(root.style, {
-        margin: '24px auto',
-        maxWidth: '1040px',
-        padding: '20px',
-        border: '1px solid #cbd5e1',
-        borderRadius: '8px',
-        background: '#ffffff',
-        color: '#111827',
-        fontFamily: 'Inter, system-ui, sans-serif',
-      })
+  await page.waitForSelector('[data-testid="n4a-results-list"]', { timeout: 10000 })
+  await page.waitForSelector('[data-testid="n4a-results-visualization"]', { timeout: 10000 })
+  await page.getByText(summary.predictions[0]?.model_name || summary.run_id || 'Imported RtResult').first().waitFor({ timeout: 10000 })
+  await page.getByText(/Predicted vs Actual|Confusion Matrix/).first().waitFor({ timeout: 10000 })
 
-      const title = document.createElement('h2')
-      title.textContent = 'Converted prediction result panels'
-      title.style.margin = '0 0 12px'
-      title.style.fontSize = '24px'
-      root.appendChild(title)
+  const injectedPanels = await page.locator('[data-testid="converted-predictions-panels"]').count()
+  if (injectedPanels !== 0) throw new Error('converted prediction smoke rendered injected panels instead of product components')
 
-      const grid = document.createElement('div')
-      Object.assign(grid.style, {
-        display: 'grid',
-        gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-        gap: '12px',
-      })
-
-      const panelPayloads = {
-        summary: [
-          ['Run', renderedSummary.run_id || 'none'],
-          ['Plan', renderedSummary.plan_id || 'none'],
-          ['Selected variant', renderedSummary.selected_variant || 'none'],
-        ],
-        reports: renderedSummary.reports.map((report) => [
-          report.producer_node,
-          `${report.partition} ${report.row_count} rows ${report.metric_names.join(', ')}`,
-        ]),
-        predictions: renderedSummary.predictions.map((prediction) => [
-          prediction.model_name,
-          `${prediction.partition} ${prediction.rows} rows ${prediction.metric} ${prediction.score_names.join(', ')}`,
-        ]),
-        manifest: [
-          ['Engine', renderedSummary.manifest.engine],
-          ['Portable level', renderedSummary.manifest.portable_level || 'none'],
-          ['Files', renderedSummary.manifest.file_keys.join(', ') || 'none'],
-        ],
-      }
-
-      for (const id of panels) {
-        const card = document.createElement('article')
-        card.dataset.testid = `converted-panel-${id}`
-        Object.assign(card.style, {
-          minHeight: '120px',
-          padding: '14px',
-          border: '1px solid #e5e7eb',
-          borderRadius: '8px',
-          background: '#f8fafc',
-        })
-        const heading = document.createElement('h3')
-        heading.textContent = id[0].toUpperCase() + id.slice(1)
-        heading.style.margin = '0 0 8px'
-        heading.style.fontSize = '16px'
-        card.appendChild(heading)
-        const list = document.createElement('dl')
-        list.style.margin = '0'
-        for (const [label, value] of panelPayloads[id] || []) {
-          const term = document.createElement('dt')
-          term.textContent = String(label)
-          term.style.fontWeight = '700'
-          term.style.marginTop = '8px'
-          const description = document.createElement('dd')
-          description.textContent = String(value)
-          description.style.margin = '2px 0 0'
-          card.append(term, description)
-        }
-        grid.appendChild(card)
-      }
-      root.appendChild(grid)
-      document.body.appendChild(root)
-    },
-    { panels: PANEL_IDS, summary },
-  )
-
-  const renderedPanels = await page.locator('[data-testid^="converted-panel-"]').evaluateAll((nodes) =>
-    nodes.map((node) => node.getAttribute('data-testid')?.replace('converted-panel-', '')).filter(Boolean),
+  const renderedPanels = await page.locator('[data-testid^="n4a-results-"]').evaluateAll((nodes) =>
+    nodes.map((node) => node.getAttribute('data-testid')).filter(Boolean),
   )
   evidence.panels = renderedPanels
   for (const panel of PANEL_IDS) {
@@ -256,7 +189,7 @@ try {
   await page.screenshot({ path: screenshot, fullPage: true })
   evidence.screenshot = screenshot
   evidence.status = 'passed'
-  console.log(`✓ rendered ${renderedPanels.length} converted prediction panel(s) from ${RESULT_FILE}`)
+  console.log(`✓ rendered converted predictions through ${renderedPanels.join(', ')} from ${RESULT_FILE}`)
 } catch (error) {
   fail(error instanceof Error ? error.message : String(error))
 } finally {
