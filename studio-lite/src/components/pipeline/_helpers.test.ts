@@ -97,6 +97,47 @@ describe('normalizeImportedPipeline', () => {
     expect(p!.finetune).toBeUndefined()
     expect(p!.model!.sweeps).toBeUndefined()
   })
+
+  it('lowers a papers/repository best-pipeline handoff into an executable Web DSL', () => {
+    const p = normalizeImportedPipeline({
+      scenario: 'e2e-python-reopen-paper-repository-refit',
+      refit: { force_best_refit: true, executed: true, status: 'passed' },
+      repository_handoff: {
+        descriptor: { id: 'paper_pls_nirs_refit', name: 'Paper PLS NIRS refit handoff' },
+        reopened_recipe: {
+          name: 'paper repository refit parity smoke',
+          pipeline: [
+            { class: 'nirs4all.operators.transforms.StandardNormalVariate', params: {} },
+            {
+              model: {
+                class: 'sklearn.cross_decomposition.PLSRegression',
+                params: { n_components: 5 },
+              },
+              name: 'PLS_repository_refit',
+            },
+          ],
+        },
+      },
+    })
+    expect(p).not.toBeNull()
+    expect(p!.name).toBe('Paper PLS NIRS refit handoff')
+    expect(p!.steps).toEqual([{ id: 'repo-standardnormalvariate-1', type: 'StandardNormalVariate', params: {}, sweeps: undefined, variants: undefined }])
+    expect(p!.model).toMatchObject({ id: 'repo-pls-2', type: 'PLS', params: { n_components: 5 } })
+    expect(p!.cv).toEqual({ folds: 5, seed: 42 })
+  })
+
+  it('rejects unsupported repository handoff classes instead of silently dropping them', () => {
+    expect(
+      normalizeImportedPipeline({
+        refit: { force_best_refit: true },
+        repository_handoff: {
+          reopened_recipe: {
+            pipeline: [{ class: 'nirs4all.operators.transforms.UnknownTransform', params: {} }, { model: { class: 'sklearn.cross_decomposition.PLSRegression' } }],
+          },
+        },
+      }),
+    ).toBeNull()
+  })
 })
 
 describe('pipelineWarnings (light validation pass)', () => {
