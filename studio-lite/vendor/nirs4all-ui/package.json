@@ -39,8 +39,9 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "ci": "npm run prepublishOnly && npm run pack:smoke",
+    "ci": "npm run prepublishOnly && npm run pack:smoke && npm run smoke:react-consumers",
     "pack:smoke": "npm pack --dry-run",
+    "smoke:react-consumers": "node scripts/smoke-react-consumers.mjs",
     "site:build": "vite build --config site/vite.config.ts",
     "site:dev": "vite --config site/vite.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
