@@ -17,6 +17,7 @@
     "smoke": "node scripts/run-smokes.mjs",
     "smoke:predict-artifact": "node scripts/run-smokes.mjs n4a-roundtrip",
     "smoke:pipeline-repository": "node scripts/run-smokes.mjs pipeline-repository",
+    "smoke:repository-best-pipeline": "node scripts/run-smokes.mjs repository-best-pipeline",
     "smoke:converted-predictions": "node scripts/run-smokes.mjs converted-predictions-render",
     "smoke:performance-compare": "node scripts/run-smokes.mjs performance-compare",
     "smoke:shared-ui-contract": "vitest run --config vitest.config.ts src/app/shared-ui-contract.test.ts",

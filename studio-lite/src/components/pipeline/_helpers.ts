@@ -237,6 +237,76 @@ function mergeSweeps(...items: (Record<string, ParamSweep> | undefined)[]): Reco
   return Object.keys(out).length ? out : undefined
 }
 
+const repositoryPreprocessingTypes: Record<string, string> = {
+  'nirs4all.operators.transforms.StandardNormalVariate': 'StandardNormalVariate',
+  'nirs4all.operators.transforms.SavitzkyGolay': 'SavitzkyGolay',
+}
+
+const repositoryModelTypes: Record<string, string> = {
+  'sklearn.cross_decomposition.PLSRegression': 'PLS',
+}
+
+const asRecord = (value: unknown): Record<string, unknown> | null => {
+  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null
+}
+
+function cleanRecordParams(value: unknown): Record<string, unknown> {
+  const record = asRecord(value)
+  return record ? { ...record } : {}
+}
+
+function stableRepoImportId(type: string, index: number): string {
+  return `repo-${type.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-${index + 1}`
+}
+
+function repositoryBestPipelineToDsl(value: Record<string, unknown>): Record<string, unknown> | null {
+  const handoff = asRecord(value.repository_handoff)
+  const recipe = asRecord(handoff?.reopened_recipe)
+  const pipeline = recipe?.pipeline
+  if (!Array.isArray(pipeline)) return null
+
+  const refit = asRecord(value.refit)
+  if (refit && refit.force_best_refit !== true) return null
+
+  const steps: Record<string, unknown>[] = []
+  let model: Record<string, unknown> | null = null
+
+  for (let index = 0; index < pipeline.length; index += 1) {
+    const raw = asRecord(pipeline[index])
+    if (!raw) return null
+
+    if (typeof raw.class === 'string') {
+      const type = repositoryPreprocessingTypes[raw.class]
+      if (!type) return null
+      steps.push({ id: stableRepoImportId(type, index), type, params: cleanRecordParams(raw.params) })
+      continue
+    }
+
+    const modelRecord = asRecord(raw.model)
+    if (modelRecord && typeof modelRecord.class === 'string') {
+      const type = repositoryModelTypes[modelRecord.class]
+      if (!type || model) return null
+      model = {
+        id: stableRepoImportId(type, index),
+        type,
+        params: cleanRecordParams(modelRecord.params),
+      }
+      continue
+    }
+
+    return null
+  }
+
+  if (!model) return null
+  const descriptor = asRecord(handoff?.descriptor)
+  return {
+    name: typeof descriptor?.name === 'string' && descriptor.name.trim() ? descriptor.name : typeof recipe?.name === 'string' ? recipe.name : 'Repository best pipeline',
+    steps,
+    model,
+    cv: { folds: 5, seed: 42 },
+  }
+}
+
 /**
  * Validate + normalize an imported pipeline payload against the catalog. Unknown
  * node types, malformed steps, or a model invalid for the catalog are rejected
@@ -246,6 +316,8 @@ function mergeSweeps(...items: (Record<string, ParamSweep> | undefined)[]): Reco
 export function normalizeImportedPipeline(value: unknown): PipelineDSL | null {
   if (typeof value !== 'object' || value === null) return null
   const v = value as Record<string, unknown>
+  const repositoryBestPipeline = repositoryBestPipelineToDsl(v)
+  if (repositoryBestPipeline) return normalizeImportedPipeline(repositoryBestPipeline)
   if (!Array.isArray(v.steps)) return null
   if (typeof v.model !== 'object' || v.model === null) return null
 
