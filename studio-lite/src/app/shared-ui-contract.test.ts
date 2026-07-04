@@ -1,5 +1,4 @@
-import React from 'react'
-import { renderToStaticMarkup } from 'react-dom/server'
+import type { ReactElement } from 'react'
 import { describe, expect, it } from 'vitest'
 import { RuntimeEngineBadge } from 'nirs4all-ui/components'
 import { getMetricDefinition, isLowerBetter } from 'nirs4all-ui/score'
@@ -33,10 +32,14 @@ describe('shared nirs4all-ui contract', () => {
   it('renders the runtime engine badge from nirs4all-ui/components', () => {
     const lineage = { compiled: true, executed: true }
     const label = runtimeEngineLabel(lineage)
-    const html = renderToStaticMarkup(React.createElement(RuntimeEngineBadge, { lineage, className: 'shared-runtime' }))
+    const element = RuntimeEngineBadge({ lineage, className: 'shared-runtime' }) as ReactElement<{
+      className: string
+      children: unknown
+    }>
 
     expect(label).toBe('executed by dag-ml')
-    expect(html).toContain('class="shared-runtime"')
-    expect(html).toContain(label)
+    expect(element.type).toBe('span')
+    expect(element.props.className).toBe('shared-runtime')
+    expect(JSON.stringify(element.props.children)).toContain(label)
   })
 })
