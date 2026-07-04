@@ -40,3 +40,18 @@ npm test
 ```
 
 `npm run build` emits ESM JavaScript and declaration files under `dist/`.
+
+## GitHub Pages showcase
+
+The single-page component and helper catalogue lives under `site/`.
+
+```bash
+npm run site:dev
+npm run site:build
+```
+
+`site/src/App.tsx` renders reusable React components separately from the
+runtime and score helper inventories. `site/public/` intentionally carries the
+Pages publication files (`logo.svg`, `favicon.svg`, `robots.txt`,
+`sitemap.xml`, and `site.webmanifest`), while the package brand kit remains
+available through `assets/brand` and the `nirs4all-ui/assets/*` export.

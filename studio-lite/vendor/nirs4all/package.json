@@ -1,6 +1,6 @@
 {
   "name": "nirs4all",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Portable nirs4all aggregate binding for JavaScript and WASM",
   "type": "module",
   "exports": {
@@ -24,7 +24,7 @@
   "license": "(CECILL-2.1 OR AGPL-3.0-or-later)",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/GBeurier/nirs4all-lite.git",
+    "url": "git+https://github.com/GBeurier/nirs4all-core.git",
     "directory": "bindings/wasm"
   },
   "keywords": [
@@ -44,17 +44,17 @@
     "@nirs4all/methods-wasm": "*",
     "dag-ml-data-wasm": "*",
     "dag-ml-wasm": "*",
-    "nirs4all-formats-wasm": "*",
-    "nirs4all-io-wasm": "*"
+    "@nirs4all/formats-wasm": "*",
+    "@nirs4all/io-wasm": "*"
   },
   "peerDependenciesMeta": {
     "@nirs4all/methods-wasm": {
       "optional": true
     },
-    "nirs4all-formats-wasm": {
+    "@nirs4all/formats-wasm": {
       "optional": true
     },
-    "nirs4all-io-wasm": {
+    "@nirs4all/io-wasm": {
       "optional": true
     },
     "@nirs4all/datasets-wasm": {

@@ -13,12 +13,12 @@ export const upstreams = Object.freeze([
   },
   {
     key: 'formats',
-    candidates: ['nirs4all-formats-wasm'],
+    candidates: ['@nirs4all/formats-wasm'],
     role: 'Spectroscopy/NIRS vendor file readers',
   },
   {
     key: 'io',
-    candidates: ['nirs4all-io-wasm'],
+    candidates: ['@nirs4all/io-wasm'],
     role: 'Dataset assembly bridge',
   },
   {
@@ -201,10 +201,10 @@ function importUpstreamCandidate(candidate) {
       return import('dag-ml-wasm');
     case 'dag-ml-data-wasm':
       return import('dag-ml-data-wasm');
-    case 'nirs4all-formats-wasm':
-      return import('nirs4all-formats-wasm');
-    case 'nirs4all-io-wasm':
-      return import('nirs4all-io-wasm');
+    case '@nirs4all/formats-wasm':
+      return import('@nirs4all/formats-wasm');
+    case '@nirs4all/io-wasm':
+      return import('@nirs4all/io-wasm');
     case '@nirs4all/datasets-wasm':
       return import('@nirs4all/datasets-wasm');
     case '@nirs4all/methods-wasm':

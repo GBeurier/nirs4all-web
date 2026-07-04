@@ -1,6 +1,6 @@
 {
   "name": "nirs4all-ui",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Shared React UI components and pure view-model helpers for nirs4all apps.",
   "type": "module",
   "license": "(CECILL-2.1 OR AGPL-3.0-or-later)",
@@ -11,6 +11,7 @@
   "private": false,
   "sideEffects": false,
   "files": [
+    "assets",
     "dist",
     "README.md"
   ],
@@ -32,12 +33,15 @@
     "./components": {
       "types": "./dist/components/index.d.ts",
       "import": "./dist/components/index.js"
-    }
+    },
+    "./assets/*": "./assets/*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "ci": "npm run prepublishOnly && npm run pack:smoke",
     "pack:smoke": "npm pack --dry-run",
+    "site:build": "vite build --config site/vite.config.ts",
+    "site:dev": "vite --config site/vite.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "prepack": "npm run build",
@@ -53,6 +57,7 @@
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "typescript": "^5.8.3",
+    "vite": "^7.3.6",
     "vitest": "^3.2.4"
   }
 }
