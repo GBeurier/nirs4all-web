@@ -9,7 +9,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { isRtErrorException, makeRtError, rtErrorFromUnknown, rtErrorToWire, RtErrorException, type RtError } from './rt'
-import { runResultToRtResultEnvelope, type RtResultWire } from './rt-result'
+import { rtResultEnvelopeToDisplayRunResult, runResultToRtResultEnvelope, type RtResultWire } from './rt-result'
 import type { FittedPipeline, PipelineDSL, PredRow, RunResult, ScoreNode } from './types'
 
 const PLAN_ID = 'plan:web-rt-golden'
@@ -324,6 +324,24 @@ describe('RtResult Web goldens', () => {
 
     expect(carried.rtResult).toEqual(readFixture('rt_result.success.v1.json'))
     assertRtResultWireShape(carried.rtResult!)
+  })
+
+  it('rehydrates a shared RtResult envelope into the Web results display shape', () => {
+    const envelope = readFixture('rt_result.success.v1.json') as RtResultWire
+
+    const run = rtResultEnvelopeToDisplayRunResult(envelope)
+
+    expect(run.id).toBe('run:web-rt-success')
+    expect(run.pipelineName).toBe('rt-golden-pls')
+    expect(run.taskType).toBe('regression')
+    expect(run.targetName).toBe('moisture')
+    expect(run.cv?.name).toBe('CV Scores')
+    expect(run.folds).toHaveLength(2)
+    expect(run.refit.name).toBe('Refit test')
+    expect(run.cv?.predictions).toHaveLength(4)
+    expect(run.refit.predictions[0]).toMatchObject({ sampleId: 'sample:4', actual: 5, predicted: 5, residual: 0 })
+    expect(run.model.dsl.model?.type).toBe('RtResultImported')
+    expect(run.rtResult).toEqual(envelope)
   })
 
   it('projects scheduler fallback metadata and strips RtError detail on the wire', () => {

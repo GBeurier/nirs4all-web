@@ -291,7 +291,7 @@ export function ResultsList(props: ResultsListProps) {
   const ordered = [...runs].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="n4a-results-list">
       {ordered.map((run) => (
         <RunCard
           key={run.id}

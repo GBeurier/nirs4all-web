@@ -1,5 +1,5 @@
 import { rtErrorToWire, type RtErrorWire } from './rt'
-import type { Metrics, PredRow, RunResult, ScoreNode } from './types'
+import type { FittedPipeline, Metrics, PipelineDSL, PredRow, RunResult, ScoreKind, ScoreNode, TaskType } from './types'
 
 export type RtExecutionBackend = 'local-python' | 'wasm-local' | 'cluster'
 export type RtPredictionPartition = 'train' | 'validation' | 'test' | 'final'
@@ -228,5 +228,155 @@ export function runResultToRtResultEnvelope(run: RunResult, opts: RtResultOption
       files: {},
     },
     ...(run.diagnostics?.length ? { diagnostics: run.diagnostics.map(rtErrorToWire) } : {}),
+  }
+}
+
+const TASK_TYPES = new Set<TaskType>(['regression', 'binary', 'multiclass'])
+const METRIC_KEYS = new Set<keyof Metrics>(['rmse', 'r2', 'mae', 'accuracy', 'f1', 'n'])
+
+const predictionKey = (block: RtPredictionBlockWire): string =>
+  `${block.partition}:${block.fold_id ?? 'none'}:${block.variant_id ?? 'base'}`
+
+const reportKey = (report: RtMetricReportWire): string =>
+  `${report.partition}:${report.fold_id ?? 'none'}:${report.variant_id ?? 'base'}`
+
+const asTaskType = (value: string): TaskType => {
+  if (TASK_TYPES.has(value as TaskType)) return value as TaskType
+  throw new Error(`unsupported rt_result task_type ${JSON.stringify(value)}`)
+}
+
+const asMetricKey = (value: string, taskType: TaskType): keyof Metrics => {
+  if (METRIC_KEYS.has(value as keyof Metrics) && value !== 'n') return value as keyof Metrics
+  return taskType === 'regression' ? 'rmse' : 'accuracy'
+}
+
+const firstFinite = (value: unknown, label: string): number => {
+  const candidate = Array.isArray(value) ? value[0] : value
+  if (typeof candidate !== 'number' || !Number.isFinite(candidate)) {
+    throw new Error(`${label} must contain finite numeric values for Web result rendering`)
+  }
+  return candidate
+}
+
+const scoreKindOf = (block: RtPredictionBlockWire): ScoreKind => {
+  if (block.fold_id === 'avg') return 'cv'
+  if (block.fold_id && block.fold_id !== 'final') return 'fold'
+  return 'refit'
+}
+
+const scoreNameOf = (block: RtPredictionBlockWire, kind: ScoreKind): string => {
+  if (kind === 'cv') return 'CV Scores'
+  if (kind === 'fold') return String(block.fold_id ?? 'Fold').replace(/^fold[-_]?/i, 'Fold ')
+  return block.partition === 'test' ? 'Refit test' : 'Refit'
+}
+
+const scoreNodeFromRtPrediction = (
+  block: RtPredictionBlockWire,
+  report: RtMetricReportWire | undefined,
+): ScoreNode => {
+  if (!Array.isArray(block.y_pred)) throw new Error(`rt_result prediction ${predictionKey(block)} has no y_pred array`)
+  if (!Array.isArray(block.y_true)) throw new Error(`rt_result prediction ${predictionKey(block)} has no y_true array`)
+  if (block.sample_indices.length !== block.y_pred.length || block.sample_indices.length !== block.y_true.length) {
+    throw new Error(`rt_result prediction ${predictionKey(block)} row counts do not match`)
+  }
+  const metrics: Metrics = { ...(report?.metrics ?? {}), ...block.scores, n: block.sample_indices.length }
+  const predictions = block.sample_indices.map((sampleIndex, index) => {
+    const actual = firstFinite(block.y_true?.[index], `y_true[${index}]`)
+    const predicted = firstFinite(block.y_pred?.[index], `y_pred[${index}]`)
+    return {
+      sampleId: `sample:${sampleIndex}`,
+      actual,
+      predicted,
+      residual: actual - predicted,
+    }
+  })
+  const kind = scoreKindOf(block)
+  return {
+    id: block.fold_id ? String(block.fold_id) : `score:${block.partition}`,
+    name: scoreNameOf(block, kind),
+    kind,
+    metrics,
+    predictions,
+    status: 'completed',
+  }
+}
+
+/**
+ * Rehydrate a neutral RtResult envelope into Web's display-oriented RunResult.
+ *
+ * This does not invent a new execution path: it is used by import/smoke flows to
+ * render externally-produced predictions through the same React results
+ * components as a normal browser run.
+ */
+export function rtResultEnvelopeToDisplayRunResult(wire: RtResultWire): RunResult {
+  if (wire.schema_version !== 1) throw new Error(`unsupported rt_result schema_version ${JSON.stringify(wire.schema_version)}`)
+  if (!wire.predictions.length) throw new Error('rt_result must contain at least one prediction block')
+
+  const reports = new Map(wire.reports.map((report) => [reportKey(report), report]))
+  const scoreNodes = wire.predictions.map((block) => scoreNodeFromRtPrediction(block, reports.get(predictionKey(block))))
+  const refit = scoreNodes.find((node) => node.kind === 'refit') ?? scoreNodes[scoreNodes.length - 1]
+  const cv = scoreNodes.find((node) => node.kind === 'cv')
+  const folds = scoreNodes.filter((node) => node.kind === 'fold')
+  const firstPrediction = wire.predictions[0]
+  const taskType = asTaskType(firstPrediction.task_type)
+  for (const block of wire.predictions) {
+    if (asTaskType(block.task_type) !== taskType) throw new Error('rt_result mixes task_type values')
+  }
+
+  const pipelineName = firstPrediction.model_name || wire.run_id || 'Imported RtResult'
+  const dsl: PipelineDSL = {
+    name: pipelineName,
+    steps: [],
+    model: {
+      id: 'rt-result-imported-model',
+      type: 'RtResultImported',
+      params: { engine: wire.manifest.engine, plan_id: wire.plan_id },
+    },
+    ...(cv ? { cv: { folds: Math.max(1, folds.length), seed: 0 } } : {}),
+  }
+  const model: FittedPipeline = {
+    dsl,
+    taskType,
+    nFeatures: 0,
+    state: { importedRtResult: true, engine: wire.manifest.engine },
+  }
+  const variantIds = [...new Set(wire.predictions.map((block) => block.variant_id).filter((id): id is string => typeof id === 'string' && id.length > 0))]
+
+  return {
+    id: wire.run_id ?? `rt-result:${Date.now()}`,
+    pipelineName,
+    taskType,
+    targetName: wire.reports[0]?.target_names?.[0] ?? 'target',
+    refit,
+    ...(cv ? { cv } : {}),
+    folds,
+    seed: 0,
+    engine: wire.manifest.engine,
+    scoreMetric: asMetricKey(firstPrediction.metric, taskType),
+    lineage: {
+      engine: wire.manifest.engine,
+      planId: wire.plan_id,
+      selectedVariant: wire.selection?.selected_variant ?? undefined,
+      dataProvider: {
+        layer: 'rt-result',
+        status: 'materialized',
+        fingerprints: wire.manifest.fingerprints,
+      },
+      importedRtResult: true,
+    },
+    model,
+    createdAt: new Date().toISOString(),
+    variantCount: variantIds.length || undefined,
+    variants:
+      variantIds.length > 1
+        ? variantIds.map((variantId) => ({
+            variantId,
+            label: variantId,
+            metrics: cv?.metrics ?? refit.metrics,
+            selected: variantId === wire.selection?.selected_variant,
+          }))
+        : undefined,
+    diagnostics: wire.diagnostics,
+    rtResult: wire,
   }
 }
