@@ -22,6 +22,10 @@
     "typecheck": "tsc --project tsconfig.typecheck.json"
   },
   "license": "(CECILL-2.1 OR AGPL-3.0-or-later)",
+  "homepage": "https://nirs4all-core.readthedocs.io/en/latest/",
+  "bugs": {
+    "url": "https://github.com/GBeurier/nirs4all-core/issues"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/GBeurier/nirs4all-core.git",
