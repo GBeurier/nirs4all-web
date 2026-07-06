@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: CECILL-2.1
 //
 // Thin ccall/cwrap wrappers around the Emscripten module.
-import { Status, Pls4allError } from "./types.js";
+import { Status, N4mError } from "./types.js";
 let _module = null;
 /** Load and cache the Emscripten module. Call once at app startup. */
 export async function loadModule() {
@@ -17,7 +17,7 @@ export async function loadModule() {
 }
 export function getModule() {
     if (_module === null) {
-        throw new Error("@nirs4all/methods-wasm not loaded — call await loadModule() first.");
+        throw new Error("@nirs4all/methods not loaded — call await loadModule() first.");
     }
     return _module;
 }
@@ -37,9 +37,9 @@ export function checkStatus(status, ctxPtr = 0) {
         if (cstr !== 0)
             msg = m.UTF8ToString(cstr);
     }
-    throw new Pls4allError(status, msg);
+    throw new N4mError(status, msg);
 }
-// ---- n4m_matrix_view_t layout (mirrors cpp/include/pls4all/p4a.h) -------
+// ---- n4m_matrix_view_t layout (mirrors cpp/include/n4m/n4m.h) -----------
 //
 // struct {
 //     void*    data;       // 4 bytes (WASM is 32-bit; offset 0)

@@ -6,7 +6,7 @@ export class Context {
     constructor(ptr) {
         this._ptr = ptr;
     }
-    /** Create a new context. Throws Pls4allError on failure. */
+    /** Create a new context. Throws N4mError on failure. */
     static create() {
         const m = getModule();
         const out = m._malloc(4);

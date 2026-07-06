@@ -11,7 +11,7 @@ application lives in `nirs4all-web`; this directory is for the reusable
 JavaScript/WASM binding and package metadata.
 
 The portable execution API delegates Kennard-Stone, SNV, Savitzky-Golay, and
-PLS component sweeps to `@nirs4all/methods-wasm`:
+PLS component sweeps to `@nirs4all/methods`:
 
 - `runPortablePipeline(source, dataset)` parses the shared nirs4all JSON/YAML
   syntax, executes the portable subset, and returns parity-checkable split,

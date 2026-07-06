@@ -30,7 +30,7 @@ export var Dtype;
     Dtype[Dtype["I32"] = 3] = "I32";
     Dtype[Dtype["I64"] = 4] = "I64";
 })(Dtype || (Dtype = {}));
-/** Mirror of n4m_algorithm_t. Values must match cpp/include/pls4all/p4a.h. */
+/** Mirror of n4m_algorithm_t. Values must match cpp/include/n4m/n4m.h. */
 export var Algorithm;
 (function (Algorithm) {
     Algorithm[Algorithm["PLS_REGRESSION"] = 0] = "PLS_REGRESSION";
@@ -66,10 +66,11 @@ export var Deflation;
     Deflation[Deflation["XY"] = 3] = "XY";
     Deflation[Deflation["ORTHOGONAL"] = 4] = "ORTHOGONAL";
 })(Deflation || (Deflation = {}));
-export class Pls4allError extends Error {
+export class N4mError extends Error {
     status;
     constructor(status, message) {
-        super(`pls4all error ${status}: ${message}`);
+        super(`n4m error ${status}: ${message}`);
+        this.name = "N4mError";
         this.status = status;
     }
 }

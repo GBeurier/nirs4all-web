@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: CECILL-2.1
 //
-// Public TypeScript API for the @nirs4all/methods-wasm binding — a
+// Public TypeScript API for the @nirs4all/methods binding — a
 // non-idiomatic function library over libn4m (raw typed arrays in/out). See
 // INPUT_CONTRACT.md and examples/consume.mjs.
 //
 // Example:
-//   import * as n4m from "@nirs4all/methods-wasm";
+//   import * as n4m from "@nirs4all/methods";
 //   await n4m.loadModule();
 //   const model = n4m.fitPls({ data: X, rows, cols }, { data: y, rows, cols: 1 }, 3);
 //   const preds = n4m.predictPls(model, { data: X, rows, cols });
@@ -16,7 +16,7 @@ export { Config } from "./config.js";
 export { Model, fitPls, predictPls, fitModel, predictModel, fitAom, fitPop, fitAomRidge, fitAomStack, computeSplit, computeSplitIndices } from "./model.js";
 export { ppCreate, ppFit, ppTransform, ppGetState, ppSetState, ppDestroy, } from "./preprocessing.js";
 export { MethodResult } from "./methodResult.js";
-export { Status, Dtype, Algorithm, Solver, Deflation, Pls4allError, } from "./types.js";
+export { Status, Dtype, Algorithm, Solver, Deflation, N4mError, } from "./types.js";
 /** ABI / project version reported by the loaded WASM module. */
 export function version() {
     const m = getModule();

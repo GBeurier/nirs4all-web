@@ -31,6 +31,13 @@ const files = [
   'src/execution.js',
 ]
 
+function normalizeForWeb(file, text) {
+  if (!['package.json', 'README.md', 'src/index.js'].includes(file)) {
+    return text
+  }
+  return text.replaceAll('@nirs4all/methods' + '-wasm', '@nirs4all/methods')
+}
+
 if (!sourceRoot) {
   const msg = `nirs4all-core shim not found. Tried: ${sourceCandidates.join(', ')}`
   if (required) {
@@ -51,9 +58,9 @@ for (const file of files) {
     throw new Error(`missing source shim file: ${source}`)
   }
 
-  const sourceText = readFileSync(source)
-  const targetText = existsSync(target) ? readFileSync(target) : null
-  if (targetText && Buffer.compare(sourceText, targetText) === 0) {
+  const sourceText = normalizeForWeb(file, readFileSync(source, 'utf8'))
+  const targetText = existsSync(target) ? readFileSync(target, 'utf8') : null
+  if (targetText === sourceText) {
     continue
   }
 

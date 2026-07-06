@@ -28,7 +28,7 @@ export const upstreams = Object.freeze([
   },
   {
     key: 'methods',
-    candidates: ['@nirs4all/methods-wasm'],
+    candidates: ['@nirs4all/methods'],
     role: 'Portable C ABI PLS/NIRS numerical engine',
   },
 ]);
@@ -213,8 +213,8 @@ function importUpstreamCandidate(candidate) {
       return import('@nirs4all/datasets-wasm');
     case '@nirs4all/nirs4all-datasets-wasm':
       return import('@nirs4all/nirs4all-datasets-wasm');
-    case '@nirs4all/methods-wasm':
-      return import('@nirs4all/methods-wasm');
+    case '@nirs4all/methods':
+      return import('@nirs4all/methods');
     default:
       return import(candidate);
   }
