@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // SPDX-License-Identifier: CECILL-2.1
 
-import { cpSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs'
+import { copyFileSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
 import { dirname, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -22,7 +23,7 @@ if (!existsSync(upstream)) {
   process.exit(0)
 }
 
-const sourceFiles = collectFiles(upstream, entries)
+const sourceFiles = collectSourceFiles(upstream)
 const targetFiles = collectFiles(vendor, entries, { ignoreMissingRoot: true })
 let drift = sourceFiles.length !== targetFiles.length
 
@@ -62,11 +63,37 @@ if (!drift) {
 
 rmSync(vendor, { recursive: true, force: true })
 mkdirSync(vendor, { recursive: true })
+for (const rel of sourceFiles) {
+  const source = resolve(upstream, rel)
+  const target = resolve(vendor, rel)
+  mkdirSync(dirname(target), { recursive: true })
+  copyFileSync(source, target)
+}
 for (const entry of entries) {
-  const source = resolve(upstream, entry)
-  const target = resolve(vendor, entry)
-  cpSync(source, target, { recursive: true })
-  console.log(`[sync-ui-shim] updated ${relative(root, target)}`)
+  console.log(`[sync-ui-shim] updated ${relative(root, resolve(vendor, entry))}`)
+}
+
+function collectSourceFiles(base) {
+  return [
+    ...walk(resolve(base, 'package.json'), 'package.json'),
+    ...walk(resolve(base, 'README.md'), 'README.md'),
+    ...collectTrackedSrcFiles(base),
+    ...walk(resolve(base, 'dist'), 'dist'),
+  ].sort()
+}
+
+function collectTrackedSrcFiles(base) {
+  try {
+    return execFileSync('git', ['-C', base, 'ls-files', '-z', '--', 'src'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+      .split('\0')
+      .filter((rel) => rel && existsSync(resolve(base, rel)))
+      .sort()
+  } catch {
+    return walk(resolve(base, 'src'), 'src')
+  }
 }
 
 function collectFiles(base, items, options = {}) {
