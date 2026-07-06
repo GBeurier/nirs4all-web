@@ -34,9 +34,18 @@ build_pack() {  # <crate-dir> <out-name>
   fi
 }
 
+set_package_name() {  # <out-name> <package-name>
+  local name="$1" package_name="$2" package_json="$OUT/$name/package.json"
+  if [ -f "$package_json" ]; then
+    node -e "const fs=require('fs'); const p=process.argv[1]; const name=process.argv[2]; const pkg=JSON.parse(fs.readFileSync(p, 'utf8')); pkg.name=name; fs.writeFileSync(p, JSON.stringify(pkg, null, 2) + '\n');" "$package_json" "$package_name"
+  fi
+}
+
 mkdir -p "$OUT"
 build_pack "$ECO/nirs4all-formats/bindings/wasm" formats
+set_package_name formats "@nirs4all/formats-wasm"
 build_pack "$ECO/nirs4all-io/bindings/wasm" io
+set_package_name io "@nirs4all/io-wasm"
 
 echo "▶ staging methods (@nirs4all/methods-wasm prebuilt dist)"
 METHODS="$ECO/nirs4all-methods/bindings/js/dist"
