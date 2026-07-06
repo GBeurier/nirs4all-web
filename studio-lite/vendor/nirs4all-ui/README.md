@@ -61,3 +61,8 @@ the npm package keeps the same files available under `assets/brand` through the
 the GitHub project-page path; set
 `NIRS4ALL_UI_BASE=/` and add a `CNAME` only when switching to a dedicated
 subdomain such as `ui.nirs4all.org`.
+
+`site/src/App.test.tsx` is the focused hardening check for the showcase: it
+verifies that every public React component export appears in the page and that
+the mirrored brand/logo, crawler metadata, manifest, and canonical URLs stay in
+sync with the packaged asset set.
