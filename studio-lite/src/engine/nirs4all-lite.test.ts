@@ -8,19 +8,22 @@ import {
   runPortablePipeline,
   upstreams,
 } from './nirs4all-lite'
-import { predictPortableLite, tryRunPortableLite } from './portable-lite'
-import type { MaterializedDataset, PipelineDSL } from './types'
+import { isPortableLiteModel, predictPortableLite, tryRunPortableLite } from './portable-lite'
+import type { FittedPipeline, MaterializedDataset, PipelineDSL } from './types'
 
-const liteRoot = new URL('../../../../nirs4all-lite/', import.meta.url)
-const oracleUrl = new URL('tests/parity/expected/portable_python_oracle.json', liteRoot)
-const fixtureDir = new URL('tests/parity/fixtures/', liteRoot)
+const coreRoot = new URL('../../../../nirs4all-core/', import.meta.url)
+const legacyLiteRoot = new URL('../../../../nirs4all-lite/', import.meta.url)
+const oraclePath = 'tests/parity/expected/portable_python_oracle.json'
+const fixtureRoot = existsSync(new URL(oraclePath, coreRoot)) ? coreRoot : legacyLiteRoot
+const oracleUrl = new URL(oraclePath, fixtureRoot)
+const fixtureDir = new URL('tests/parity/fixtures/', fixtureRoot)
 
 function maxAbsDiff(actual: number[], expected: number[]): number {
   expect(actual.length).toBe(expected.length)
   return actual.reduce((max, value, index) => Math.max(max, Math.abs(value - expected[index])), 0)
 }
 
-describe('nirs4all-lite aggregate loaders', () => {
+describe('nirs4all-core aggregate loaders', () => {
   it('keeps the datasets upstream candidate aligned with the vendored WASM package', () => {
     const datasets = upstreams.find((item) => item.key === 'datasets')
     const pkg = JSON.parse(readFileSync(new URL('./wasm/datasets/package.json', import.meta.url), 'utf8')) as { name: string }
@@ -29,7 +32,7 @@ describe('nirs4all-lite aggregate loaders', () => {
     expect(pkg.name).toBe('@nirs4all/datasets-wasm')
   })
 
-  it('re-exports the portable execution and initialized WASM loaders from nirs4all-lite', () => {
+  it('re-exports the portable execution and initialized WASM loaders from the portable aggregate', () => {
     expect(typeof parseExecutionPlan).toBe('function')
     expect(typeof runPortablePipeline).toBe('function')
     expect(typeof predictPortablePipeline).toBe('function')
@@ -48,7 +51,7 @@ describe('nirs4all-lite aggregate loaders', () => {
     )
   })
 
-  it('executes the shared portable oracle through the vendored nirs4all-lite aggregate', async () => {
+  it('executes the shared portable oracle through the vendored aggregate', async () => {
     if (!existsSync(oracleUrl)) return
     const oracle = JSON.parse(readFileSync(oracleUrl, 'utf8')) as {
       metadata: { tolerances: { targets_abs: number; rmse_abs: number; predictions_abs: number } }
@@ -126,7 +129,8 @@ describe('nirs4all-lite aggregate loaders', () => {
 
     const run = await tryRunPortableLite(ds, dsl)
     expect(run).toBeTruthy()
-    expect(run?.engine).toBe('nirs4all-lite-wasm')
+    expect(run?.engine).toBe('nirs4all-core-wasm')
+    expect(isPortableLiteModel(run!.model)).toBe(true)
     expect(run?.variantCount).toBe(5)
     expect((run?.model.dsl.model?.params.n_components)).toBe(expected!.selected.n_components)
     expect(maxAbsDiff(run!.refit.predictions.map((row) => row.predicted), expected!.selected.predictions)).toBeLessThanOrEqual(
@@ -136,6 +140,17 @@ describe('nirs4all-lite aggregate loaders', () => {
     const predicted = await predictPortableLite(run!.model, ds.X, ds.nSamples, ds.nFeatures)
     const heldOut = expected!.split.testIndices.map((index) => predicted.values[index])
     expect(maxAbsDiff(Array.from(heldOut), expected!.selected.predictions)).toBeLessThanOrEqual(
+      oracle.metadata.tolerances.predictions_abs,
+    )
+
+    const legacyModel = {
+      ...run!.model,
+      state: { ...(run!.model.state as Record<string, unknown>), backendId: 'nirs4all-lite-wasm' },
+    } as FittedPipeline
+    expect(isPortableLiteModel(legacyModel)).toBe(true)
+    const legacyPredicted = await predictPortableLite(legacyModel, ds.X, ds.nSamples, ds.nFeatures)
+    const legacyHeldOut = expected!.split.testIndices.map((index) => legacyPredicted.values[index])
+    expect(maxAbsDiff(Array.from(legacyHeldOut), expected!.selected.predictions)).toBeLessThanOrEqual(
       oracle.metadata.tolerances.predictions_abs,
     )
   })

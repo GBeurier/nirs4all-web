@@ -53,6 +53,16 @@ describe('.n4a typed-array codec', () => {
     expect(Array.from(loadedPred.data)).toEqual(Array.from(origPred.data))
   })
 
+  it('accepts core and legacy portable aggregate bundle formats', () => {
+    const run = tinyRun()
+    for (const format of ['nirs4all-core/n4a', 'nirs4all-lite/n4a']) {
+      const bundle = { ...buildN4aBundle(run), format }
+      const loaded = parseN4a(serializeTyped(bundle))
+      expect(loaded.name).toBe(run.pipelineName)
+      expect(loaded.model.nFeatures).toBe(run.model.nFeatures)
+    }
+  })
+
   it('rejects a non-n4a payload', () => {
     expect(() => parseN4a('{"hello":1}')).toThrow()
     expect(() => parseN4a('not json')).toThrow()
