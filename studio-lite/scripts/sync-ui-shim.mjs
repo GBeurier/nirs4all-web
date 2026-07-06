@@ -104,7 +104,7 @@ function collectFiles(base, items, options = {}) {
   return items.flatMap((item) => walk(resolve(base, item), item, options)).sort()
 }
 
-function walk(absPath, relPath, options) {
+function walk(absPath, relPath, options = {}) {
   if (!existsSync(absPath)) {
     if (options.ignoreMissingRoot) return []
     throw new Error(`missing source shim entry: ${absPath}`)
