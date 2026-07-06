@@ -85,7 +85,7 @@ Remaining deepening:
   `validate_contracts.py` green gate; this repo ran fmt + clippy on the change).
 
 Also: a fully editable `DatasetSpec` form (today: inferred spec + evidence + live schema validation +
-target/task/split edits); offline webfont vendoring; continued visual polish.
+target/task/split edits); continued visual polish.
 
 ## Verification
 

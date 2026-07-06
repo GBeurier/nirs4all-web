@@ -64,13 +64,13 @@ pkill -f "vite preview"
 
 ## Deployment
 
-After the GitHub repository rename, GitHub Pages should publish at:
+GitHub Pages publishes at:
 
 ```text
 https://web.nirs4all.org/
 ```
 
-The long-term canonical entry point should be linked from `nirs4all.org`.
+The canonical browser entry point is linked from `nirs4all.org`.
 
 ## License
 
