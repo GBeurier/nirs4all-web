@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // SPDX-License-Identifier: CECILL-2.1
 
-import { copyFileSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs'
+import { copyFileSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 import { dirname, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -12,8 +12,9 @@ const upstream = resolve(root, '..', '..', 'nirs4all-ui')
 const vendor = resolve(root, 'vendor', 'nirs4all-ui')
 const check = process.argv.includes('--check')
 const required = process.env.NIRS4ALL_UI_SHIM_REQUIRED === '1'
-const entries = ['package.json', 'README.md', 'src', 'dist']
+const entries = ['package.json', 'README.md', 'src', 'dist', 'assets']
 const sourceEntries = entries.filter((entry) => entry !== 'dist' || existsSync(resolve(upstream, 'dist')))
+const trackedSourceFiles = collectTrackedSourceFiles(upstream)
 
 if (!existsSync(upstream)) {
   const msg = `nirs4all-ui shim not found at ${upstream}`
@@ -35,7 +36,7 @@ for (const rel of sourceFiles) {
     drift = true
     continue
   }
-  const sourceText = readFileSync(source)
+  const sourceText = readSourceFile(source, rel)
   const targetText = readFileSync(target)
   if (Buffer.compare(sourceText, targetText) !== 0) {
     drift = true
@@ -68,7 +69,11 @@ for (const rel of sourceFiles) {
   const source = resolve(upstream, rel)
   const target = resolve(vendor, rel)
   mkdirSync(dirname(target), { recursive: true })
-  copyFileSync(source, target)
+  if (rel.startsWith('dist/')) {
+    copyFileSync(source, target)
+  } else {
+    writeFileSync(target, readSourceFile(source, rel))
+  }
 }
 for (const entry of entries) {
   console.log(`[sync-ui-shim] updated ${relative(root, resolve(vendor, entry))}`)
@@ -76,16 +81,14 @@ for (const entry of entries) {
 
 function collectSourceFiles(base) {
   return [
-    ...walk(resolve(base, 'package.json'), 'package.json'),
-    ...walk(resolve(base, 'README.md'), 'README.md'),
-    ...collectTrackedSrcFiles(base),
+    ...trackedSourceFiles,
     ...(sourceEntries.includes('dist') ? walk(resolve(base, 'dist'), 'dist') : []),
   ].sort()
 }
 
-function collectTrackedSrcFiles(base) {
+function collectTrackedSourceFiles(base) {
   try {
-    return execFileSync('git', ['-C', base, 'ls-files', '-z', '--', 'src'], {
+    return execFileSync('git', ['-C', base, 'ls-tree', '-r', '-z', '--name-only', 'HEAD', '--', 'package.json', 'README.md', 'src', 'assets'], {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'ignore'],
     })
@@ -93,7 +96,23 @@ function collectTrackedSrcFiles(base) {
       .filter((rel) => rel && existsSync(resolve(base, rel)))
       .sort()
   } catch {
-    return walk(resolve(base, 'src'), 'src')
+    return [
+      ...walk(resolve(base, 'package.json'), 'package.json'),
+      ...walk(resolve(base, 'README.md'), 'README.md'),
+      ...walk(resolve(base, 'src'), 'src'),
+      ...(sourceEntries.includes('assets') ? walk(resolve(base, 'assets'), 'assets') : []),
+    ].sort()
+  }
+}
+
+function readSourceFile(absPath, relPath) {
+  if (relPath.startsWith('dist/')) return readFileSync(absPath)
+  try {
+    return execFileSync('git', ['-C', upstream, 'show', `HEAD:${relPath}`], {
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+  } catch {
+    return readFileSync(absPath)
   }
 }
 

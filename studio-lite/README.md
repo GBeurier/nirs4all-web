@@ -45,6 +45,21 @@ Five real WASM surfaces participate: **formats** (decode), **io** (inference), *
 cross-validation), and **libn4m** (the PLS numerics), all reached through the vendored
 `nirs4all` aggregate where possible.
 
+## Custom app host
+
+`studio-lite` also serves as the reference for a **client-side custom host** that composes:
+
+- `nirs4all` (vendored from `../../nirs4all-core/bindings/wasm`) for browser-safe runtime loaders
+  and the portable execution subset;
+- `nirs4all-ui` (vendored from `../../nirs4all-ui`) for reusable components, pure view-model
+  helpers, and shared brand assets.
+
+The contract is pinned by `src/app/custom-app-host.contract.test.ts`,
+`src/app/shared-ui-contract.test.ts`, and `src/app/client-side-only.test.ts`. The vendored package
+sync scripts (`npm run vendor:core`, `npm run vendor:ui`) are part of that contract: they must keep
+the runtime surface, UI subpath exports, and UI assets available without introducing any backend
+dependency.
+
 - **Engine contract** (`src/engine/types.ts`): one `Engine` interface (`run`, `predict`) with a
   pluggable `ModelBackend` (`orchestrate.ts`). `MainEngine` first routes the strict portable subset
   (`KennardStone`, `StandardNormalVariate`, `SavitzkyGolay`, `PLS`, `n_components` range sweep, no

@@ -24,3 +24,10 @@ PLS component sweeps to `@nirs4all/methods-wasm`:
 Savitzky-Golay defaults to `mode: "interp"` for full nirs4all parity and
 preserves explicit methods-backed modes (`mirror`, `constant`, `nearest`,
 `wrap`, `interp`) plus `cval` in the serialized preprocessing chain.
+
+For a browser-only custom host, pair this package with `nirs4all-ui`: keep
+runtime loading and portable execution in `nirs4all`, and consume shared React
+components / view-model helpers / brand assets from `nirs4all-ui`. The
+reference composition lives in `../../nirs4all-web/studio-lite`, whose contract
+tests exercise `runPortablePipeline()` / `predictPortablePipeline()` together
+with the shared UI package in a no-backend environment.
