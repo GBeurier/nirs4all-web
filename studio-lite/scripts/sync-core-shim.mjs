@@ -9,17 +9,15 @@ const here = dirname(fileURLToPath(import.meta.url))
 const root = resolve(here, '..')
 const vendor = resolve(root, 'vendor', 'nirs4all')
 const check = process.argv.includes('--check')
-const required = process.env.NIRS4ALL_CORE_SHIM_REQUIRED === '1' || process.env.NIRS4ALL_LITE_SHIM_REQUIRED === '1'
+const required = process.env.NIRS4ALL_CORE_SHIM_REQUIRED === '1'
 const logPrefix = '[sync-core-shim]'
 
 const sourceCandidates = [
   process.env.NIRS4ALL_CORE_WASM_DIR,
   process.env.NIRS4ALL_CORE_SHIM_ROOT,
-  process.env.NIRS4ALL_LITE_SHIM_ROOT,
   resolve(root, '..', '..', 'nirs4all-core', 'bindings', 'wasm'),
   resolve(root, '..', '..', '_worktrees', 'RC-v1-nirs4all-core', 'bindings', 'wasm'),
   resolve(root, '..', '..', 'RC-v1-nirs4all-core', 'bindings', 'wasm'),
-  resolve(root, '..', '..', 'nirs4all-lite', 'bindings', 'wasm'),
 ].filter(Boolean)
 
 const sourceRoot = sourceCandidates.find((candidate) => existsSync(candidate))

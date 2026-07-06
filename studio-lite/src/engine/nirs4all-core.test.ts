@@ -7,16 +7,14 @@ import {
   predictPortablePipeline,
   runPortablePipeline,
   upstreams,
-} from './nirs4all-lite'
-import { isPortableLiteModel, predictPortableLite, tryRunPortableLite } from './portable-lite'
+} from './nirs4all-core'
+import { isPortableCoreModel, predictPortableCore, tryRunPortableCore } from './portable-core'
 import type { FittedPipeline, MaterializedDataset, PipelineDSL } from './types'
 
 const coreRoot = new URL('../../../../nirs4all-core/', import.meta.url)
-const legacyLiteRoot = new URL('../../../../nirs4all-lite/', import.meta.url)
 const oraclePath = 'tests/parity/expected/portable_python_oracle.json'
-const fixtureRoot = existsSync(new URL(oraclePath, coreRoot)) ? coreRoot : legacyLiteRoot
-const oracleUrl = new URL(oraclePath, fixtureRoot)
-const fixtureDir = new URL('tests/parity/fixtures/', fixtureRoot)
+const oracleUrl = new URL(oraclePath, coreRoot)
+const fixtureDir = new URL('tests/parity/fixtures/', coreRoot)
 
 function maxAbsDiff(actual: number[], expected: number[]): number {
   expect(actual.length).toBe(expected.length)
@@ -24,6 +22,19 @@ function maxAbsDiff(actual: number[], expected: number[]): number {
 }
 
 describe('nirs4all-core aggregate loaders', () => {
+  it('uses core names for the vendored aggregate sync path', () => {
+    const pkg = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8')) as { scripts: Record<string, string> }
+    const syncScript = readFileSync(new URL('../../scripts/sync-core-shim.mjs', import.meta.url), 'utf8')
+
+    expect(pkg.scripts['vendor:core']).toBe('node scripts/sync-core-shim.mjs')
+    expect(pkg.scripts['check:core-shim']).toBe('node scripts/sync-core-shim.mjs --check')
+    expect(Object.keys(pkg.scripts).filter((name) => name.includes('lite'))).toEqual([])
+    expect(Object.values(pkg.scripts).filter((script) => /sync-lite|vendor:lite|check:lite/.test(script))).toEqual([])
+    expect(existsSync(new URL('../../scripts/sync-core-shim.mjs', import.meta.url))).toBe(true)
+    expect(existsSync(new URL('../../scripts/sync-lite-shim.mjs', import.meta.url))).toBe(false)
+    expect(syncScript).not.toMatch(/NIRS4ALL_LITE|nirs4all-lite|sync-lite/)
+  })
+
   it('keeps the datasets upstream candidate aligned with the vendored WASM package', () => {
     const datasets = upstreams.find((item) => item.key === 'datasets')
     const pkg = JSON.parse(readFileSync(new URL('./wasm/datasets/package.json', import.meta.url), 'utf8')) as { name: string }
@@ -127,17 +138,17 @@ describe('nirs4all-core aggregate loaders', () => {
       },
     }
 
-    const run = await tryRunPortableLite(ds, dsl)
+    const run = await tryRunPortableCore(ds, dsl)
     expect(run).toBeTruthy()
     expect(run?.engine).toBe('nirs4all-core-wasm')
-    expect(isPortableLiteModel(run!.model)).toBe(true)
+    expect(isPortableCoreModel(run!.model)).toBe(true)
     expect(run?.variantCount).toBe(5)
     expect((run?.model.dsl.model?.params.n_components)).toBe(expected!.selected.n_components)
     expect(maxAbsDiff(run!.refit.predictions.map((row) => row.predicted), expected!.selected.predictions)).toBeLessThanOrEqual(
       oracle.metadata.tolerances.predictions_abs,
     )
 
-    const predicted = await predictPortableLite(run!.model, ds.X, ds.nSamples, ds.nFeatures)
+    const predicted = await predictPortableCore(run!.model, ds.X, ds.nSamples, ds.nFeatures)
     const heldOut = expected!.split.testIndices.map((index) => predicted.values[index])
     expect(maxAbsDiff(Array.from(heldOut), expected!.selected.predictions)).toBeLessThanOrEqual(
       oracle.metadata.tolerances.predictions_abs,
@@ -147,11 +158,43 @@ describe('nirs4all-core aggregate loaders', () => {
       ...run!.model,
       state: { ...(run!.model.state as Record<string, unknown>), backendId: 'nirs4all-lite-wasm' },
     } as FittedPipeline
-    expect(isPortableLiteModel(legacyModel)).toBe(true)
-    const legacyPredicted = await predictPortableLite(legacyModel, ds.X, ds.nSamples, ds.nFeatures)
+    expect(isPortableCoreModel(legacyModel)).toBe(true)
+    const legacyPredicted = await predictPortableCore(legacyModel, ds.X, ds.nSamples, ds.nFeatures)
     const legacyHeldOut = expected!.split.testIndices.map((index) => legacyPredicted.values[index])
     expect(maxAbsDiff(Array.from(legacyHeldOut), expected!.selected.predictions)).toBeLessThanOrEqual(
       oracle.metadata.tolerances.predictions_abs,
     )
+  })
+
+  it('rejects lossy n_components coercions before running the portable core path', async () => {
+    const ds: MaterializedDataset = {
+      X: Float64Array.from([1, 2, 3, 4, 5, 6, 7, 8]),
+      y: Float64Array.from([1, 2, 3, 4]),
+      nSamples: 4,
+      nFeatures: 2,
+      axis: [0, 1],
+      axisUnit: 'index',
+      targetName: 'target',
+      taskType: 'regression',
+      sampleIds: ['s0', 's1', 's2', 's3'],
+      partitions: ['train', 'train', 'train', 'train'],
+    }
+
+    await expect(tryRunPortableCore(ds, {
+      name: 'fractional_component',
+      steps: [],
+      model: { id: 'pls', type: 'PLS', params: { n_components: 1.5 } },
+    })).rejects.toThrow(/n_components must be an integer/)
+
+    await expect(tryRunPortableCore(ds, {
+      name: 'fractional_component_range',
+      steps: [],
+      model: {
+        id: 'pls',
+        type: 'PLS',
+        params: { n_components: 2 },
+        sweeps: { n_components: { type: 'range', from: 1.5, to: 3, step: 1 } },
+      },
+    })).rejects.toThrow(/n_components range start must be an integer/)
   })
 })

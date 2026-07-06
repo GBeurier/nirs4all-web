@@ -4,7 +4,7 @@
 // dataset's partition: its test rows are held out of CV, the train rows feed the
 // CV fold builder. Predict-partition rows (if any) are left untouched. The
 // numerics never live here; this only marshals X/Y and rewrites partitions.
-import { loadMethodsWasm } from './nirs4all-lite'
+import { loadMethodsWasm } from './nirs4all-core'
 import type { MaterializedDataset, PipelineStep, Partition } from './types'
 
 export type SplitKind = 'KennardStone' | 'SPXY' | 'KMeans' | 'KBinsStratified' | 'DataTwinning' | 'SystematicCircular'

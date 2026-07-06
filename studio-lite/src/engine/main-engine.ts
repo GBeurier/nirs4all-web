@@ -8,7 +8,7 @@ import { DagMlEngine } from './dagml-engine'
 import { activeOrGenerator, dagMlAvailable, expandGeneratorVariants, hasUnsupportedGenerator } from './dagml'
 import { assertAomBudget } from './guard'
 import { backendIdOf, predictPipeline, runGeneratorOr, runPipeline } from './orchestrate'
-import { isPortableLiteModel, predictPortableLite, tryRunPortableLite } from './portable-lite'
+import { isPortableCoreModel, predictPortableCore, tryRunPortableCore } from './portable-core'
 import { makeRtError, RtErrorException } from './rt'
 import type { Engine, FittedPipeline, MaterializedDataset, PipelineDSL, PredictResult, RunOptions, RunResult } from './types'
 
@@ -35,7 +35,7 @@ export class MainEngine implements Engine {
     // Warn (or refuse) an oversized operator-adaptive screen before any compute,
     // so a heavy AOM/POP run is never silent (it runs in a worker, cancellable).
     assertAomBudget(ds, dsl, opts.onProgress, { mainThread: this.mainThread })
-    const portable = await tryRunPortableLite(ds, dsl, opts)
+    const portable = await tryRunPortableCore(ds, dsl, opts)
     if (portable) return portable
     if (useDagMl) return this.dagml.run(ds, dsl, opts) // dag-ml executes; libn4m numerics
     if (this.useDagMlEngine) {
@@ -82,8 +82,8 @@ export class MainEngine implements Engine {
   }
 
   async predict(model: FittedPipeline, Xnew: Float64Array, nSamples: number, nFeatures: number): Promise<PredictResult> {
-    if (isPortableLiteModel(model)) {
-      return predictPortableLite(model, Xnew, nSamples, nFeatures)
+    if (isPortableCoreModel(model)) {
+      return predictPortableCore(model, Xnew, nSamples, nFeatures)
     }
     // A libn4m-fitted model MUST predict with libn4m — the model blob shape and the
     // preprocessing math differ from the JS backend, so never coerce it through JS.

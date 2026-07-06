@@ -23,10 +23,8 @@
     "smoke:shared-ui-contract": "vitest run --config vitest.config.ts src/app/shared-ui-contract.test.ts",
     "smoke:artifacts": "node scripts/run-smokes.mjs n4a-roundtrip pipeline-repository",
     "validate:catalog": "node scripts/validate-catalog.mjs",
-    "vendor:core": "node scripts/sync-lite-shim.mjs",
-    "vendor:lite": "node -e \"console.warn('vendor:lite is deprecated; use vendor:core')\" && npm run vendor:core",
-    "check:core-shim": "node scripts/sync-lite-shim.mjs --check",
-    "check:lite-shim": "node -e \"console.warn('check:lite-shim is deprecated; use check:core-shim')\" && npm run check:core-shim",
+    "vendor:core": "node scripts/sync-core-shim.mjs",
+    "check:core-shim": "node scripts/sync-core-shim.mjs --check",
     "vendor:ui": "node scripts/sync-ui-shim.mjs",
     "check:ui-shim": "node scripts/sync-ui-shim.mjs --check",
     "wasm": "bash scripts/build-wasm.sh"

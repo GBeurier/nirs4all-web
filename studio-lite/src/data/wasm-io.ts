@@ -5,7 +5,7 @@
 // when a non-CSV file is uploaded — the CSV fast-path and the bundled sample never
 // pull it, keeping the initial bundle and the offline single-file build lean.
 import type { MaterializedDataset, Partition } from '@/engine/types'
-import { loadDataIoWasm } from '@/engine/nirs4all-lite'
+import { loadDataIoWasm } from '@/engine/nirs4all-core'
 import { encodeTarget, inferTaskType } from './dataset'
 
 export interface DecodedFile {
