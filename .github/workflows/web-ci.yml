@@ -56,7 +56,7 @@ jobs:
       - name: Vendored nirs4all-ui shim is current
         run: NIRS4ALL_UI_SHIM_REQUIRED=1 npm run check:ui-shim
       - name: Vendored nirs4all-core shim is current
-        run: NIRS4ALL_LITE_SHIM_REQUIRED=1 npm run check:lite-shim
+        run: NIRS4ALL_CORE_SHIM_REQUIRED=1 npm run check:core-shim
       - run: npm run build:single
       - run: npm run build
       - name: Browser smoke
