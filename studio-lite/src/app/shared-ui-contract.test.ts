@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from 'node:fs'
 import type { ReactElement } from 'react'
 import { describe, expect, it } from 'vitest'
 import { RuntimeEngineBadge } from 'nirs4all-ui/components'
@@ -41,5 +42,15 @@ describe('shared nirs4all-ui contract', () => {
     expect(element.type).toBe('span')
     expect(element.props.className).toBe('shared-runtime')
     expect(JSON.stringify(element.props.children)).toContain(label)
+  })
+
+  it('keeps shared nirs4all-ui asset exports available to custom hosts', () => {
+    const packageJson = JSON.parse(
+      readFileSync(new URL('../../vendor/nirs4all-ui/package.json', import.meta.url), 'utf8'),
+    ) as { exports?: Record<string, string | { import?: string; types?: string }> }
+
+    expect(packageJson.exports?.['./assets/*']).toBe('./assets/*')
+    expect(existsSync(new URL('../../vendor/nirs4all-ui/assets/brand/icon.svg', import.meta.url))).toBe(true)
+    expect(existsSync(new URL('../../vendor/nirs4all-ui/assets/brand/horizontal.svg', import.meta.url))).toBe(true)
   })
 })
