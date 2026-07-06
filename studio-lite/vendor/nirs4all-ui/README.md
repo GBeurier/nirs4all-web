@@ -15,18 +15,20 @@ UI surfaces.
 | --- | --- | --- |
 | `score` | `nirs4all-ui/score` | Metric-key normalization, metric catalog helpers, direction-aware score parsing, comparison, and formatting. |
 | `runtime` | `nirs4all-ui/runtime` | Runtime/result status display tokens, busy-state predicates, progress projection, engine metadata summaries, diagnostics, and native-result affordances. |
+| `dataset` | `nirs4all-ui/dataset` | Dataset preview contracts, counts, split summaries, spectral ranges, task labels, badges, and stats. |
 | `components` | `nirs4all-ui/components` | Stateless React components that render shared runtime, diagnostic, and metric affordances. |
 
 The root export also exposes namespace barrels:
 
 ```ts
-import { runtime, score } from "nirs4all-ui";
+import { dataset, runtime, score } from "nirs4all-ui";
 ```
 
 Prefer domain imports when a consumer only needs one area:
 
 ```ts
 import { canonicalMetricKey, formatMetricValue } from "nirs4all-ui/score";
+import { buildDatasetPreview } from "nirs4all-ui/dataset";
 import { buildRuntimeResultStatusView } from "nirs4all-ui/runtime";
 import { MetricValueBadge, RuntimeEngineBadge } from "nirs4all-ui/components";
 ```
