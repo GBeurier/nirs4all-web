@@ -13,6 +13,7 @@ const vendor = resolve(root, 'vendor', 'nirs4all-ui')
 const check = process.argv.includes('--check')
 const required = process.env.NIRS4ALL_UI_SHIM_REQUIRED === '1'
 const entries = ['package.json', 'README.md', 'src', 'dist']
+const sourceEntries = entries.filter((entry) => entry !== 'dist' || existsSync(resolve(upstream, 'dist')))
 
 if (!existsSync(upstream)) {
   const msg = `nirs4all-ui shim not found at ${upstream}`
@@ -24,7 +25,7 @@ if (!existsSync(upstream)) {
 }
 
 const sourceFiles = collectSourceFiles(upstream)
-const targetFiles = collectFiles(vendor, entries, { ignoreMissingRoot: true })
+const targetFiles = collectFiles(vendor, sourceEntries, { ignoreMissingRoot: true })
 let drift = sourceFiles.length !== targetFiles.length
 
 for (const rel of sourceFiles) {
@@ -78,7 +79,7 @@ function collectSourceFiles(base) {
     ...walk(resolve(base, 'package.json'), 'package.json'),
     ...walk(resolve(base, 'README.md'), 'README.md'),
     ...collectTrackedSrcFiles(base),
-    ...walk(resolve(base, 'dist'), 'dist'),
+    ...(sourceEntries.includes('dist') ? walk(resolve(base, 'dist'), 'dist') : []),
   ].sort()
 }
 
