@@ -2,7 +2,7 @@ import type { Mat } from './algo/linalg'
 import { type PlsModel, plsFit, plsPredict } from './algo/pls'
 import { LEGACY_PLS_MODELS, modelParamVector } from './methods/models'
 import { jsPreprocessor, libn4mPreprocessor } from './methods/preproc'
-import { loadMethodsWasm } from './nirs4all-lite'
+import { loadMethodsWasm } from './nirs4all-core'
 import type { ModelBackend } from './orchestrate'
 import { AOM_DEFAULT_BANK } from '@/catalog/types'
 

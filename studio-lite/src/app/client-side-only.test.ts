@@ -56,6 +56,7 @@ const FORBIDDEN: { pattern: RegExp; why: string }[] = [
   { pattern: /\brequire\s*\(/, why: 'no CJS require in browser sources' },
   { pattern: /['"`]\/api\//, why: 'no backend API routes' },
   { pattern: /https?:\/\/(localhost|127\.0\.0\.1|\[::1\])/, why: 'no hardcoded local server origin' },
+  { pattern: /from\s+['"][^'"]*(?:nirs4all-lite|portable-lite)[^'"]*['"]/, why: 'runtime package shims use nirs4all-core names' },
 ]
 
 function getAttribute(tag: string, name: string): string | null {

@@ -1,13 +1,14 @@
-import { predictPortablePipeline, runPortablePipeline } from './nirs4all-lite'
+import { predictPortablePipeline, runPortablePipeline } from './nirs4all-core'
 import { scoreNode } from './orchestrate'
-import type { PortablePlsModel } from './nirs4all-lite'
+import type { PortablePlsModel } from './nirs4all-core'
 import type { FittedPipeline, MaterializedDataset, PipelineDSL, PipelineStep, PredictResult, PredRow, RunOptions, RunResult } from './types'
 
 const BACKEND_ID = 'nirs4all-core-wasm'
+// Read compatibility for models/session bundles produced before the core rename.
 const LEGACY_BACKEND_IDS = ['nirs4all-lite-wasm']
 const PORTABLE_BACKEND_IDS = [BACKEND_ID, ...LEGACY_BACKEND_IDS]
 
-interface PortableLiteState {
+interface PortableCoreState {
   backendId: string
   source: Record<string, unknown>
   result: {
@@ -16,12 +17,12 @@ interface PortableLiteState {
   }
 }
 
-export function isPortableLiteModel(model: FittedPipeline): boolean {
+export function isPortableCoreModel(model: FittedPipeline): boolean {
   const backendId = (model.state as { backendId?: unknown } | null | undefined)?.backendId
   return typeof backendId === 'string' && PORTABLE_BACKEND_IDS.includes(backendId)
 }
 
-export async function tryRunPortableLite(ds: MaterializedDataset, dsl: PipelineDSL, opts: RunOptions = {}): Promise<RunResult | null> {
+export async function tryRunPortableCore(ds: MaterializedDataset, dsl: PipelineDSL, opts: RunOptions = {}): Promise<RunResult | null> {
   const source = toPortableSource(ds, dsl)
   if (!source) return null
 
@@ -58,7 +59,7 @@ export async function tryRunPortableLite(ds: MaterializedDataset, dsl: PipelineD
         preprocessing: result.preprocessing,
         model: result.model,
       },
-    } as PortableLiteState,
+    } as PortableCoreState,
   }
   opts.onProgress?.({ phase: 'done', pct: 100 })
   return {
@@ -87,8 +88,8 @@ export async function tryRunPortableLite(ds: MaterializedDataset, dsl: PipelineD
   }
 }
 
-export async function predictPortableLite(model: FittedPipeline, Xnew: Float64Array, nSamples: number, nFeatures: number): Promise<PredictResult> {
-  const state = model.state as PortableLiteState
+export async function predictPortableCore(model: FittedPipeline, Xnew: Float64Array, nSamples: number, nFeatures: number): Promise<PredictResult> {
+  const state = model.state as PortableCoreState
   const predicted = await predictPortablePipeline(state.result, {
     X: Xnew,
     rows: nSamples,
@@ -130,10 +131,14 @@ function toPortableSource(ds: MaterializedDataset, dsl: PipelineDSL): Record<str
   const sweep = dsl.model.sweeps?.n_components
   if (sweep) {
     if (sweep.type !== 'range' || sweep.from === undefined || sweep.to === undefined) return null
-    const step = sweep.step ?? 1
-    if (!Number.isFinite(sweep.from) || !Number.isFinite(sweep.to) || !Number.isFinite(step) || step <= 0 || sweep.from > sweep.to) return null
+    const start = integerValue(sweep.from, undefined, 'n_components range start')
+    const stop = integerValue(sweep.to, undefined, 'n_components range stop')
+    const step = integerValue(sweep.step ?? 1, undefined, 'n_components range step')
+    if (start < 1 || stop < 1) throw new RangeError('n_components range start and stop must be >= 1.')
+    if (step < 1) throw new RangeError('n_components range step must be >= 1.')
+    if (start > stop) throw new RangeError('n_components range start must be <= stop.')
     modelStep.param = 'n_components'
-    modelStep._range_ = [Math.round(sweep.from), Math.round(sweep.to), Math.round(step)]
+    modelStep._range_ = [start, stop, step]
   }
   pipeline.push(modelStep)
   return { name: dsl.name, pipeline }
@@ -157,8 +162,16 @@ function hasFeatureContainers(dsl: PipelineDSL): boolean {
 }
 
 function componentValue(model: PipelineStep): number {
-  const value = Number(model.params.n_components ?? 2)
-  return Math.max(1, Math.round(Number.isFinite(value) ? value : 2))
+  return integerValue(model.params.n_components ?? 2, undefined, 'n_components')
+}
+
+function integerValue(value: unknown, fallback: number | undefined, label: string): number {
+  const raw = value ?? fallback
+  const number = typeof raw === 'number' ? raw : typeof raw === 'string' && raw.trim() !== '' ? Number(raw) : NaN
+  if (!Number.isFinite(number)) throw new TypeError(`${label} must be numeric.`)
+  if (!Number.isInteger(number)) throw new RangeError(`${label} must be an integer.`)
+  if (number < 1) throw new RangeError(`${label} must be >= 1.`)
+  return number
 }
 
 function selectedDsl(dsl: PipelineDSL, nComponents: number): PipelineDSL {

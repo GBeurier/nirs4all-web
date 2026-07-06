@@ -8,7 +8,7 @@
 //
 // Loaded on demand; if the provider is unavailable the caller proceeds with the
 // in-memory matrices and records the degraded status in lineage (never silent).
-import { loadDagMlDataWasm } from './nirs4all-lite'
+import { loadDagMlDataWasm } from './nirs4all-core'
 import type { MaterializedDataset } from './types'
 
 type DagMlDataMod = typeof import('@/engine/wasm/dagml-data/dag_ml_data_wasm.js')

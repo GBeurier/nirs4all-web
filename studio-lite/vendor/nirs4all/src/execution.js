@@ -238,7 +238,7 @@ function computeSplit(methods, splitter, input) {
     const indices = Array.from({ length: input.rows }, (_, i) => i);
     return { kind: 'all', trainIndices: indices, testIndices: indices };
   }
-  const splitOptions = { testSize: numberParam(splitter.params.test_size, 0.25) };
+  const splitOptions = { testSize: numberParam(splitter.params.test_size, 0.25, 'test_size') };
   if (typeof methods.computeSplitIndices === 'function') {
     const split = methods.computeSplitIndices(
       'KennardStone',
@@ -280,17 +280,17 @@ function selectRows(data, rows, cols, indices) {
 }
 
 function savgolParams(params) {
-  const delta = numberParam(params.delta, 1);
-  if (delta !== 1) {
+  const delta = numberParam(params.delta, 1, 'delta');
+  if (Math.abs(delta - 1) > Number.EPSILON) {
     throw new Error('Portable Savitzky-Golay execution currently supports delta=1 only.');
   }
   return [
-    numberParam(params.window_length ?? params.window, 11),
-    numberParam(params.polyorder, 3),
-    numberParam(params.deriv, 0),
+    integerParam(params.window_length ?? params.window, 11, 'window_length', { min: 1 }),
+    integerParam(params.polyorder, 3, 'polyorder', { min: 0 }),
+    integerParam(params.deriv, 0, 'deriv', { min: 0 }),
     // scipy.signal.savgol_filter, and therefore nirs4all Python, default to interp.
     savgolMode(params.mode ?? 'interp'),
-    numberParam(params.cval, 0),
+    numberParam(params.cval, 0, 'cval'),
   ];
 }
 
@@ -322,23 +322,52 @@ function componentValues(step) {
     if (step.param !== 'n_components') {
       throw new Error("Portable execution only supports _range_ sweeps over 'n_components'.");
     }
-    const [start, stop, stride] = step._range_.map(Number);
-    if (![start, stop, stride].every(Number.isFinite) || stride <= 0 || start > stop) {
+    if (step._range_.length !== 3) {
       throw new Error('Invalid n_components _range_; expected [start, stop, positive_step].');
+    }
+    const start = integerParam(step._range_[0], undefined, 'n_components range start', { min: 1 });
+    const stop = integerParam(step._range_[1], undefined, 'n_components range stop', { min: 1 });
+    const stride = integerParam(step._range_[2], undefined, 'n_components range step', { min: 1 });
+    if (start > stop) {
+      throw new Error('Invalid n_components _range_; start must be <= stop.');
     }
     const values = [];
     for (let value = start; value <= stop; value += stride) {
-      values.push(Math.round(value));
+      values.push(value);
     }
     return values;
   }
   const params = step.model?.params ?? {};
-  return [Math.max(1, Math.round(numberParam(params.n_components, 2)))];
+  return [integerParam(params.n_components, 2, 'n_components', { min: 1 })];
 }
 
-function numberParam(value, fallback) {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : fallback;
+function numberParam(value, fallback, label) {
+  if (value == null) {
+    return fallback;
+  }
+  let n;
+  if (typeof value === 'number') {
+    n = value;
+  } else if (typeof value === 'string' && value.trim() !== '') {
+    n = Number(value);
+  } else {
+    throw new TypeError(`${label} must be numeric.`);
+  }
+  if (!Number.isFinite(n)) {
+    throw new RangeError(`${label} must be finite.`);
+  }
+  return n;
+}
+
+function integerParam(value, fallback, label, options = {}) {
+  const n = numberParam(value, fallback, label);
+  if (!Number.isInteger(n)) {
+    throw new RangeError(`${label} must be an integer.`);
+  }
+  if (options.min != null && n < options.min) {
+    throw new RangeError(`${label} must be >= ${options.min}.`);
+  }
+  return n;
 }
 
 function rmse(predictions, targets) {

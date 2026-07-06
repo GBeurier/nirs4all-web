@@ -4,7 +4,7 @@
 // and its SequentialScheduler runs FIT_CV in-browser (see dagml-engine.ts), invoking
 // a JS controller that runs the numerics via libn4m. This module is the lighter
 // compile/validate entry (used for the badge + as a fallback probe).
-import { loadDagMlWasm } from './nirs4all-lite'
+import { loadDagMlWasm } from './nirs4all-core'
 import type { ContainerNode, ParamSweep, PipelineDSL, PipelineStep, StepVariant } from './types'
 
 export interface DagMlLineage {

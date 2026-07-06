@@ -12,9 +12,9 @@ vi.mock('./dagml', async (importOriginal) => {
   return { ...actual, dagMlAvailable: () => false }
 })
 
-vi.mock('./portable-lite', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('./portable-lite')>()
-  return { ...actual, tryRunPortableLite: async () => null }
+vi.mock('./portable-core', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./portable-core')>()
+  return { ...actual, tryRunPortableCore: async () => null }
 })
 
 vi.mock('./backends', async (importOriginal) => {

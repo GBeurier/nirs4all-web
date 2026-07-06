@@ -10,7 +10,7 @@
 import type { Mat } from '../algo/linalg'
 import { colMeans } from '../algo/linalg'
 import { type Transformer, makeTransformer, mscFromRef } from '../algo/preprocessing'
-import { methodsWasm } from '../nirs4all-lite'
+import { methodsWasm } from '../nirs4all-core'
 import type { PpOperator } from '../wasm/methods/index.js'
 
 /** A transformer fitted on train, carrying its serializable state. */
