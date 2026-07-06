@@ -3,10 +3,12 @@ import { scoreNode } from './orchestrate'
 import type { PortablePlsModel } from './nirs4all-lite'
 import type { FittedPipeline, MaterializedDataset, PipelineDSL, PipelineStep, PredictResult, PredRow, RunOptions, RunResult } from './types'
 
-const BACKEND_ID = 'nirs4all-lite-wasm'
+const BACKEND_ID = 'nirs4all-core-wasm'
+const LEGACY_BACKEND_IDS = ['nirs4all-lite-wasm']
+const PORTABLE_BACKEND_IDS = [BACKEND_ID, ...LEGACY_BACKEND_IDS]
 
 interface PortableLiteState {
-  backendId: typeof BACKEND_ID
+  backendId: string
   source: Record<string, unknown>
   result: {
     preprocessing: { type: string; params: number[] }[]
@@ -15,14 +17,15 @@ interface PortableLiteState {
 }
 
 export function isPortableLiteModel(model: FittedPipeline): boolean {
-  return (model.state as { backendId?: string }).backendId === BACKEND_ID
+  const backendId = (model.state as { backendId?: unknown } | null | undefined)?.backendId
+  return typeof backendId === 'string' && PORTABLE_BACKEND_IDS.includes(backendId)
 }
 
 export async function tryRunPortableLite(ds: MaterializedDataset, dsl: PipelineDSL, opts: RunOptions = {}): Promise<RunResult | null> {
   const source = toPortableSource(ds, dsl)
   if (!source) return null
 
-  opts.onProgress?.({ phase: 'preprocess', pct: 3, message: 'running nirs4all-lite portable pipeline' })
+  opts.onProgress?.({ phase: 'preprocess', pct: 3, message: 'running nirs4all-core portable pipeline' })
   const result = await runPortablePipeline(source, {
     X: ds.X,
     y: ds.y,
@@ -31,7 +34,7 @@ export async function tryRunPortableLite(ds: MaterializedDataset, dsl: PipelineD
   })
   const scoreIdx = result.split.testIndices
   if (result.selected.predictions.length !== scoreIdx.length) {
-    throw new Error('nirs4all-lite returned a prediction vector that does not match the scored split.')
+    throw new Error('nirs4all-core returned a prediction vector that does not match the scored split.')
   }
   const refitRows: PredRow[] = scoreIdx.map((row, i) => {
     const actual = ds.y[row]

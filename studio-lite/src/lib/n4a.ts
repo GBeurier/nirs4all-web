@@ -6,7 +6,7 @@
 import type { FittedPipeline, Metrics, RunResult, TaskType } from '@/engine/types'
 
 export const N4A_FORMAT = 'nirs4all-web/n4a'
-const LEGACY_N4A_FORMATS = ['nirs4all-lite/n4a']
+const COMPATIBLE_N4A_FORMATS = ['nirs4all-core/n4a', 'nirs4all-lite/n4a']
 export const N4A_VERSION = 1
 
 export interface N4aBundle {
@@ -84,7 +84,7 @@ export function parseN4a(text: string): LoadedModel {
     throw new Error('Not valid JSON — expected a nirs4all-web .n4a bundle.')
   }
   const format = String(bundle?.format ?? '')
-  const supported = format.startsWith(N4A_FORMAT) || LEGACY_N4A_FORMATS.some((f) => format.startsWith(f))
+  const supported = format.startsWith(N4A_FORMAT) || COMPATIBLE_N4A_FORMATS.some((f) => format.startsWith(f))
   if (!bundle || typeof bundle !== 'object' || !supported) {
     throw new Error('Not a nirs4all-web .n4a bundle (missing format tag).')
   }
