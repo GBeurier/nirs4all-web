@@ -43,6 +43,23 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(pkg.name).toBe('@nirs4all/datasets-wasm')
   })
 
+  it('resolves methods through the V1 @nirs4all/methods package name', () => {
+    const methods = upstreams.find((item) => item.key === 'methods')
+    const viteConfig = readFileSync(new URL('../../vite.config.ts', import.meta.url), 'utf8')
+    const vitestConfig = readFileSync(new URL('../../vitest.config.ts', import.meta.url), 'utf8')
+    const vendorPkg = JSON.parse(readFileSync(new URL('../../vendor/nirs4all/package.json', import.meta.url), 'utf8')) as {
+      peerDependencies: Record<string, string>
+      peerDependenciesMeta: Record<string, unknown>
+    }
+
+    expect(methods?.candidates).toEqual(['@nirs4all/methods'])
+    expect(viteConfig).toContain("'@nirs4all/methods':")
+    expect(vitestConfig).toContain("'@nirs4all/methods':")
+    expect(vendorPkg.peerDependencies['@nirs4all/methods']).toBe('*')
+    expect(vendorPkg.peerDependenciesMeta['@nirs4all/methods']).toBeTruthy()
+    expect(viteConfig + vitestConfig + JSON.stringify(methods) + JSON.stringify(vendorPkg)).not.toContain('@nirs4all/methods' + '-wasm')
+  })
+
   it('re-exports the portable execution and initialized WASM loaders from the portable aggregate', () => {
     expect(typeof parseExecutionPlan).toBe('function')
     expect(typeof runPortablePipeline).toBe('function')

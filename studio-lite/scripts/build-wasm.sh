@@ -3,7 +3,7 @@
 #
 #   formats  : nirs4all-formats (vendor-format decode, ~58 families)   [wasm-pack --target web]
 #   io       : nirs4all-io      (dataset inference + DatasetSpec)       [wasm-pack --target web]
-#   methods  : @nirs4all/methods-wasm (libn4m PLS engine)              [prebuilt dist, copied]
+#   methods  : @nirs4all/methods (libn4m PLS engine)                   [prebuilt dist, copied]
 #   dag-ml*  : dag-ml + dag-ml-data execution                          [WS1 — execute_* exports pending]
 #
 # Toolchain is not on the default PATH here; we add nvm node, cargo, and emsdk.
@@ -47,7 +47,7 @@ set_package_name formats "@nirs4all/formats-wasm"
 build_pack "$ECO/nirs4all-io/bindings/wasm" io
 set_package_name io "@nirs4all/io-wasm"
 
-echo "▶ staging methods (@nirs4all/methods-wasm prebuilt dist)"
+echo "▶ staging methods (@nirs4all/methods V1 prebuilt dist)"
 METHODS="$ECO/nirs4all-methods/bindings/js/dist"
 if [ -d "$METHODS" ]; then
   mkdir -p "$OUT/methods"

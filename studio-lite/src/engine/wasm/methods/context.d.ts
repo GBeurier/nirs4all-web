@@ -2,7 +2,7 @@
 export declare class Context {
     private _ptr;
     private constructor();
-    /** Create a new context. Throws Pls4allError on failure. */
+    /** Create a new context. Throws N4mError on failure. */
     static create(): Context;
     /** Returns the raw `n4m_context_t*` pointer (handle). */
     get handle(): number;

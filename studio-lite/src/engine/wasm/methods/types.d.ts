@@ -1,4 +1,4 @@
-/** Float row-major or column-major matrix view passed to pls4all. */
+/** Float row-major matrix view passed to nirs4all-methods. */
 export interface Matrix {
     /** Row-major data buffer. Length must be `rows * cols`. */
     data: Float64Array;
@@ -34,7 +34,7 @@ export declare enum Dtype {
     I32 = 3,
     I64 = 4
 }
-/** Mirror of n4m_algorithm_t. Values must match cpp/include/pls4all/p4a.h. */
+/** Mirror of n4m_algorithm_t. Values must match cpp/include/n4m/n4m.h. */
 export declare enum Algorithm {
     PLS_REGRESSION = 0,
     PLS_CANONICAL = 1,
@@ -67,7 +67,7 @@ export declare enum Deflation {
     XY = 3,
     ORTHOGONAL = 4
 }
-export declare class Pls4allError extends Error {
+export declare class N4mError extends Error {
     readonly status: number;
     constructor(status: number, message: string);
 }

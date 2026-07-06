@@ -103,7 +103,7 @@ Load-bearing concepts (require reading several files):
   leakage-honest pipeline runner (preprocessing fit on the train fold only; OOF joined by
   `sampleId`, never row order; test partition held out of CV; refuses to train without targets),
   parameterized by a `ModelBackend`. `src/engine/backends.ts` provides two: `jsBackend` (NIPALS in
-  `algo/pls.ts`) and the real `libn4m` backend (`@nirs4all/methods-wasm`, C++→WASM, staged in
+  `algo/pls.ts`) and the real `libn4m` backend (`@nirs4all/methods`, C++→WASM, staged in
   `src/engine/wasm/methods/`). `MainEngine` (`src/engine/main-engine.ts`) prefers libn4m and **falls
   back to the JS backend under `file://`** (the single-file build can't fetch the emscripten
   `n4m.wasm`). `StubEngine` = JS-backend engine kept for unit tests / fallback.

@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => {
         // worker. Listed before '@' so the exact match wins. The served/dev build
         // keeps client.ts, which uses a module worker.
         ...(singlefile ? { '@/engine/client': path.resolve(__dirname, './src/engine/client.singlefile.ts') } : {}),
-        '@nirs4all/methods-wasm': path.resolve(__dirname, './src/engine/wasm/methods/index.js'),
+        '@nirs4all/methods': path.resolve(__dirname, './src/engine/wasm/methods/index.js'),
         '@nirs4all/formats-wasm': path.resolve(__dirname, './src/engine/wasm/formats/nirs4all_formats_wasm.js'),
         '@nirs4all/io-wasm': path.resolve(__dirname, './src/engine/wasm/io/nirs4all_io_wasm.js'),
         'dag-ml-data-wasm': path.resolve(__dirname, './src/engine/wasm/dagml-data/dag_ml_data_wasm.js'),

@@ -1,6 +1,6 @@
 // Preprocessing is a BACKEND capability — the numerics live in libn4m (C++ → WASM),
 // not in TypeScript. `libn4mPreprocessor` drives the generic operator dispatcher
-// (@nirs4all/methods-wasm ppCreate/ppFit/ppTransform/ppGetState/ppSetState); the
+// (@nirs4all/methods ppCreate/ppFit/ppTransform/ppGetState/ppSetState); the
 // fitted state (e.g. the MSC reference spectrum) round-trips as plain doubles so a
 // saved model (.n4a) can re-apply it for predict-later without retraining.
 //

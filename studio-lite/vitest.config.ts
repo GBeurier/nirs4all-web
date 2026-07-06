@@ -5,7 +5,7 @@ import path from 'node:path'
 export default defineConfig({
   resolve: {
     alias: {
-      '@nirs4all/methods-wasm': path.resolve(__dirname, './src/engine/wasm/methods/index.js'),
+      '@nirs4all/methods': path.resolve(__dirname, './src/engine/wasm/methods/index.js'),
       '@nirs4all/datasets-wasm': path.resolve(__dirname, './src/engine/wasm/datasets/nirs4all_datasets_wasm.js'),
       '@nirs4all/formats-wasm': path.resolve(__dirname, './src/engine/wasm/formats/nirs4all_formats_wasm.js'),
       '@nirs4all/io-wasm': path.resolve(__dirname, './src/engine/wasm/io/nirs4all_io_wasm.js'),

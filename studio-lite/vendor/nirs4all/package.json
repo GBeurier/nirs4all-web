@@ -1,6 +1,6 @@
 {
   "name": "nirs4all",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Portable nirs4all aggregate binding for JavaScript and WASM",
   "type": "module",
   "exports": {
@@ -47,7 +47,7 @@
     "@nirs4all/datasets-wasm": "*",
     "@nirs4all/formats-wasm": "*",
     "@nirs4all/io-wasm": "*",
-    "@nirs4all/methods-wasm": "*",
+    "@nirs4all/methods": "*",
     "@nirs4all/nirs4all-datasets-wasm": "*",
     "dag-ml-data-wasm": "*",
     "dag-ml-wasm": "*",
@@ -64,7 +64,7 @@
     "@nirs4all/io-wasm": {
       "optional": true
     },
-    "@nirs4all/methods-wasm": {
+    "@nirs4all/methods": {
       "optional": true
     },
     "@nirs4all/nirs4all-datasets-wasm": {
