@@ -45,11 +45,14 @@
   },
   "peerDependencies": {
     "@nirs4all/datasets-wasm": "*",
-    "@nirs4all/methods-wasm": "*",
     "dag-ml-data-wasm": "*",
     "dag-ml-wasm": "*",
     "@nirs4all/formats-wasm": "*",
-    "@nirs4all/io-wasm": "*"
+    "@nirs4all/io-wasm": "*",
+    "@nirs4all/methods-wasm": "*",
+    "@nirs4all/nirs4all-datasets-wasm": "*",
+    "nirs4all-formats-wasm": "*",
+    "nirs4all-io-wasm": "*"
   },
   "peerDependenciesMeta": {
     "@nirs4all/methods-wasm": {
@@ -62,6 +65,15 @@
       "optional": true
     },
     "@nirs4all/datasets-wasm": {
+      "optional": true
+    },
+    "@nirs4all/nirs4all-datasets-wasm": {
+      "optional": true
+    },
+    "nirs4all-formats-wasm": {
+      "optional": true
+    },
+    "nirs4all-io-wasm": {
       "optional": true
     },
     "dag-ml-wasm": {
