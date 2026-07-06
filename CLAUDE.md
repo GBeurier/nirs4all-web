@@ -73,7 +73,7 @@ this app.
 GitHub Pages is built by `.github/workflows/deploy-pages.yml`, which builds `studio-lite/`
 (`npm ci && npm run build`, Node 22) and publishes `studio-lite/dist`.
 
-After the GitHub repository rename, the Pages URL should become:
+The live Pages URL is:
 
 ```text
 https://web.nirs4all.org/

@@ -164,6 +164,7 @@ Load-bearing concepts (require reading several files):
 - Smoke selectors depend on exact strings: `"Run pipeline"`, `"CV Scores"`, the
   `"{n} samples × {n} wavelengths"` badge, the sample-button text (`Fruit purée`, `NIR protein`,
   `7 classes`), and `"compiled by dag-ml"`. Don't rename these without updating `tests/*.mjs`.
-- Webfonts come from a Google Fonts `@import` (served); offline falls back to the system stack.
+- Fonts are defined in `src/styles/fonts.css` as local/system stacks only; do not reintroduce remote
+  font imports.
 - Reuse upstream — shadcn primitives under `src/app/components/ui/` and the brand theme in
   `src/styles/theme.css` mirror nirs4all-studio / nirs4all.org. Don't reimplement NIRS/IO/ML here.
