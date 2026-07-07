@@ -63,6 +63,9 @@ dependency.
 `examples/custom-app-host/` is a copy-out template for custom client-side hosts. It imports only the
 public `nirs4all` and `nirs4all-ui` package surfaces and is pinned by
 `src/app/custom-app-host-template.contract.test.ts`.
+After publishing, `npm run smoke:published-custom-host` installs pinned npm packages in a clean
+temporary directory and verifies that the public `nirs4all` + `nirs4all-ui` custom-host imports work
+without the local vendors.
 
 - **Engine contract** (`src/engine/types.ts`): one `Engine` interface (`run`, `predict`) with a
   pluggable `ModelBackend` (`orchestrate.ts`). `MainEngine` first routes the strict portable subset
