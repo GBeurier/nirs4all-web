@@ -22,6 +22,7 @@
     "smoke:performance-compare": "node scripts/run-smokes.mjs performance-compare",
     "smoke:shared-ui-contract": "vitest run --config vitest.config.ts src/app/shared-ui-contract.test.ts",
     "smoke:custom-app-host": "vitest run --config vitest.config.ts src/app/custom-app-host.contract.test.ts",
+    "smoke:custom-app-host-template": "vitest run --config vitest.config.ts src/app/custom-app-host-template.contract.test.ts",
     "smoke:artifacts": "node scripts/run-smokes.mjs n4a-roundtrip pipeline-repository",
     "validate:catalog": "node scripts/validate-catalog.mjs",
     "vendor:core": "node scripts/sync-core-shim.mjs",
