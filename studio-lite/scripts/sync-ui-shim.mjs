@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = resolve(here, '..')
-const upstream = resolve(root, '..', '..', 'nirs4all-ui')
+const upstream = resolve(process.env.NIRS4ALL_UI_SHIM_ROOT || resolve(root, '..', '..', 'nirs4all-ui'))
 const vendor = resolve(root, 'vendor', 'nirs4all-ui')
 const check = process.argv.includes('--check')
 const required = process.env.NIRS4ALL_UI_SHIM_REQUIRED === '1'
