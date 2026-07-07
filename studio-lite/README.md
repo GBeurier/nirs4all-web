@@ -60,6 +60,10 @@ sync scripts (`npm run vendor:core`, `npm run vendor:ui`) are part of that contr
 the runtime surface, UI subpath exports, and UI assets available without introducing any backend
 dependency.
 
+`examples/custom-app-host/` is a copy-out template for custom client-side hosts. It imports only the
+public `nirs4all` and `nirs4all-ui` package surfaces and is pinned by
+`src/app/custom-app-host-template.contract.test.ts`.
+
 - **Engine contract** (`src/engine/types.ts`): one `Engine` interface (`run`, `predict`) with a
   pluggable `ModelBackend` (`orchestrate.ts`). `MainEngine` first routes the strict portable subset
   (`KennardStone`, `StandardNormalVariate`, `SavitzkyGolay`, `PLS`, `n_components` range sweep, no

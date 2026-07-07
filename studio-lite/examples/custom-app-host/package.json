@@ -1,0 +1,26 @@
+{
+  "name": "nirs4all-custom-app-host-example",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "test": "vitest run --config vitest.config.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "nirs4all": "file:../../vendor/nirs4all",
+    "nirs4all-ui": "file:../../vendor/nirs4all-ui",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.18",
+    "@types/react-dom": "18.3.5",
+    "@vitejs/plugin-react": "4.7.0",
+    "typescript": "5.6.3",
+    "vite": "6.4.3",
+    "vitest": "3.2.6"
+  }
+}
