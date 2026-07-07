@@ -53,6 +53,44 @@ export const runtimeSurfaces = Object.freeze([
   'matlab_octave',
 ]);
 
+export const runtimeContracts = Object.freeze([
+  Object.freeze({
+    surface: 'python',
+    pipelineExecution: 'parity-validated',
+    pipelineEntrypoint: 'run_portable_pipeline',
+    serializedModelPredict: false,
+    predictEntrypoint: null,
+  }),
+  Object.freeze({
+    surface: 'r',
+    pipelineExecution: 'parity-validated',
+    pipelineEntrypoint: 'nirs4all_run_portable_pipeline',
+    serializedModelPredict: false,
+    predictEntrypoint: null,
+  }),
+  Object.freeze({
+    surface: 'javascript_wasm',
+    pipelineExecution: 'parity-validated',
+    pipelineEntrypoint: 'runPortablePipeline',
+    serializedModelPredict: true,
+    predictEntrypoint: 'predictPortablePipeline',
+  }),
+  Object.freeze({
+    surface: 'rust',
+    pipelineExecution: 'parity-validated',
+    pipelineEntrypoint: 'run_portable_pipeline_with_library',
+    serializedModelPredict: false,
+    predictEntrypoint: null,
+  }),
+  Object.freeze({
+    surface: 'matlab_octave',
+    pipelineExecution: 'parity-validated',
+    pipelineEntrypoint: 'runPortablePipeline',
+    serializedModelPredict: false,
+    predictEntrypoint: null,
+  }),
+]);
+
 const parityRuntime = Object.freeze(Object.fromEntries(
   runtimeSurfaces.map((surface) => [surface, 'parity-validated']),
 ));
@@ -154,6 +192,7 @@ export function capabilityManifest() {
     schema: 'nirs4all-core.capabilities.v1',
     aggregate: 'nirs4all-core',
     runtimeSurfaces,
+    runtimeContracts,
     portableOperatorClasses,
     controllers: controllerCapabilities,
   });

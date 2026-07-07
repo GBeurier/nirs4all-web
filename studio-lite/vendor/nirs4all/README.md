@@ -26,10 +26,12 @@ preserves explicit methods-backed modes (`mirror`, `constant`, `nearest`,
 `wrap`, `interp`) plus `cval` in the serialized preprocessing chain.
 
 Custom app hosts can inspect `capabilityManifest()`, `controllerCapabilities`,
-and `runtimeSurfaces` before rendering graph nodes or selecting a runtime. The
-manifest schema is `nirs4all-core.capabilities.v1`; it exposes the stable V1
-controller IDs for Kennard-Stone, SNV, Savitzky-Golay, PLS regression, and the
-portable methods pipeline, with parameter lists matching the executable parser.
+`runtimeSurfaces`, and `runtimeContracts` before rendering graph nodes or
+selecting a runtime. The manifest schema is `nirs4all-core.capabilities.v1`; it
+exposes the stable V1 controller IDs for Kennard-Stone, SNV, Savitzky-Golay,
+PLS regression, and the portable methods pipeline, with parameter lists
+matching the executable parser. `runtimeContracts` also makes explicit that
+standalone serialized-model prediction is currently a WASM-only contract.
 
 For a browser-only custom host, pair this package with `nirs4all-ui`: keep
 runtime loading and portable execution in `nirs4all`, and consume shared React

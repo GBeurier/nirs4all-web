@@ -8,6 +8,7 @@ import {
   parseExecutionPlan,
   predictPortablePipeline,
   runPortablePipeline,
+  runtimeContracts,
   runtimeSurfaces,
   upstreams,
 } from './nirs4all-core'
@@ -67,6 +68,7 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(typeof capabilityManifest).toBe('function')
     expect(Array.isArray(controllerCapabilities)).toBe(true)
     expect(Array.isArray(runtimeSurfaces)).toBe(true)
+    expect(Array.isArray(runtimeContracts)).toBe(true)
     expect(typeof parseExecutionPlan).toBe('function')
     expect(typeof runPortablePipeline).toBe('function')
     expect(typeof predictPortablePipeline).toBe('function')
@@ -79,6 +81,14 @@ describe('nirs4all-core aggregate loaders', () => {
 
     expect(manifest.schema).toBe('nirs4all-core.capabilities.v1')
     expect(manifest.runtimeSurfaces).toEqual(['python', 'r', 'javascript_wasm', 'rust', 'matlab_octave'])
+    expect(manifest.runtimeContracts).toEqual(runtimeContracts)
+    expect(manifest.runtimeContracts.map((item) => item.surface)).toEqual(manifest.runtimeSurfaces)
+    expect(manifest.runtimeContracts.filter((item) => item.serializedModelPredict).map((item) => item.surface)).toEqual([
+      'javascript_wasm',
+    ])
+    expect(manifest.runtimeContracts.find((item) => item.surface === 'javascript_wasm')?.predictEntrypoint).toBe(
+      'predictPortablePipeline',
+    )
     expect(manifest.controllers.map((item) => item.id)).toEqual([
       'split.kennard_stone',
       'preprocess.snv',

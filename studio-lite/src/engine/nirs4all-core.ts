@@ -12,6 +12,7 @@ import {
   portableClassNames,
   predictPortablePipeline,
   runPortablePipeline,
+  runtimeContracts,
   runtimeSurfaces,
   upstreams,
 } from 'nirs4all'
@@ -24,6 +25,7 @@ export {
   portableClassNames,
   predictPortablePipeline,
   runPortablePipeline,
+  runtimeContracts,
   runtimeSurfaces,
   upstreams,
 }
@@ -40,6 +42,7 @@ export type {
   PortableExecutionResult,
   PortablePlsModel,
   PortablePredictionResult,
+  RuntimeContract,
   RuntimeSurface,
 } from 'nirs4all'
 

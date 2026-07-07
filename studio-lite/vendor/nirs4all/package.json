@@ -1,6 +1,6 @@
 {
   "name": "nirs4all",
-  "version": "0.2.11",
+  "version": "0.2.12",
   "description": "Portable nirs4all aggregate binding for JavaScript and WASM",
   "type": "module",
   "exports": {

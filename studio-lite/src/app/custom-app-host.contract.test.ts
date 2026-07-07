@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { DatasetPreviewCard, MetricValueBadge, RuntimeEngineBadge } from 'nirs4all-ui/components'
 import { buildDatasetPreview } from 'nirs4all-ui/dataset'
 import { buildRuntimeEngineStatus, runtimeEngineLabel } from 'nirs4all-ui/runtime'
-import { capabilityManifest, controllerCapabilities, runtimeSurfaces } from '@/engine/nirs4all-core'
+import { capabilityManifest, controllerCapabilities, runtimeContracts, runtimeSurfaces } from '@/engine/nirs4all-core'
 import { isPortableCoreModel, predictPortableCore, tryRunPortableCore } from '@/engine/portable-core'
 import type { MaterializedDataset, PipelineDSL } from '@/engine/types'
 
@@ -41,6 +41,14 @@ describe('custom app host contract', () => {
       'pipeline.portable_methods',
     ])
     expect(manifest.runtimeSurfaces).toEqual(runtimeSurfaces)
+    expect(manifest.runtimeContracts).toEqual(runtimeContracts)
+    expect(runtimeContracts.map((item) => item.surface)).toEqual(runtimeSurfaces)
+    expect(runtimeContracts.filter((item) => item.serializedModelPredict).map((item) => item.surface)).toEqual([
+      'javascript_wasm',
+    ])
+    expect(runtimeContracts.find((item) => item.surface === 'javascript_wasm')?.predictEntrypoint).toBe(
+      'predictPortablePipeline',
+    )
     expect(manifest.controllers).toEqual(controllerCapabilities)
     expect(runtimeSurfaces).toContain('javascript_wasm')
     expect(controllerCapabilities.find((item) => item.id === 'pipeline.portable_methods')?.composes).toEqual([
@@ -142,6 +150,18 @@ describe('custom app host contract', () => {
           prediction_rows: heldOut.length,
           max_abs_delta: maxAbsDiff(Array.from(heldOut), expected!.selected.predictions),
           tolerance: oracle.metadata.tolerances.predictions_abs,
+        }, null, 2),
+      )
+      writeFileSync(
+        join(artifactsDir, 'custom-host-runtime-contracts.json'),
+        JSON.stringify({
+          status: 'passed',
+          schema: manifest.schema,
+          runtime_surfaces: runtimeSurfaces,
+          serialized_model_predict_surfaces: runtimeContracts
+            .filter((item) => item.serializedModelPredict)
+            .map((item) => item.surface),
+          wasm_predict_entrypoint: runtimeContracts.find((item) => item.surface === 'javascript_wasm')?.predictEntrypoint,
         }, null, 2),
       )
       writeFileSync(
