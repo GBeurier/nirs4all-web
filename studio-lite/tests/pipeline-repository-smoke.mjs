@@ -40,6 +40,8 @@ const evidence = {
   repository_dataset_id_non_demo_sample: false,
   repository_descriptor_sha256: null,
   repository_descriptor_verified: false,
+  repository_dataset_file_hashes: [],
+  repository_dataset_files_sha256: null,
   repository_pipeline_artifact: null,
   repository_pipeline_bytes: null,
   repository_pipeline_sha256: null,
@@ -47,6 +49,8 @@ const evidence = {
   client_only_oracle_probe: null,
   provider_runtime_assertions: null,
   provider_runtime_comparison: null,
+  python_open_pipeline: null,
+  python_rerun_pipeline: null,
   python_oracle: null,
   python_oracle_comparison: null,
   imported_python_oracle_comparison: null,
@@ -298,6 +302,7 @@ function compareFoldAssignments(reference, actual) {
 
 const PYTHON_ORACLE_SCRIPT = String.raw`
 import csv
+import hashlib
 import json
 import math
 import platform
@@ -313,7 +318,10 @@ from nirs4all.operators.transforms import StandardNormalVariate
 fixture_dir = Path(sys.argv[1])
 pipeline_path = Path(sys.argv[2])
 folds = json.loads(sys.argv[3])
-pipeline = json.loads(pipeline_path.read_text(encoding="utf-8"))
+pipeline_bytes = pipeline_path.read_bytes()
+pipeline_text = pipeline_bytes.decode("utf-8")
+pipeline = json.loads(pipeline_text)
+descriptor_sha256 = hashlib.sha256(pipeline_bytes).hexdigest()
 
 raw_x = np.loadtxt(fixture_dir / "repository_X_train.csv", delimiter=",", dtype=np.float64)
 axis = raw_x[0].astype(float).tolist()
@@ -350,6 +358,24 @@ for fold in folds:
 if seen_validation != set(range(X.shape[0])):
     raise AssertionError(f"fold coverage mismatch: {sorted(seen_validation)}")
 
+dataset_file_hashes = []
+for name in ("repository_X_train.csv", "repository_y_train.csv", "repository_metadata.csv"):
+    data = (fixture_dir / name).read_bytes()
+    dataset_file_hashes.append({
+        "file": name,
+        "bytes": len(data),
+        "sha256": hashlib.sha256(data).hexdigest(),
+    })
+dataset_files_sha256 = hashlib.sha256(
+    json.dumps(
+        [[item["file"], item["bytes"], item["sha256"]] for item in dataset_file_hashes],
+        separators=(",", ":"),
+    ).encode("utf-8")
+).hexdigest()
+fold_assignment_sha256 = hashlib.sha256(
+    json.dumps([fold["sample_ids"] for fold in folds], separators=(",", ":")).encode("utf-8")
+).hexdigest()
+
 predictions_by_index = {}
 for train_idx, val_idx in fold_indices:
     transform = StandardNormalVariate()
@@ -363,14 +389,34 @@ for train_idx, val_idx in fold_indices:
 
 predicted = np.asarray([predictions_by_index[index] for index in range(X.shape[0])], dtype=np.float64)
 residual = predicted - y
+rmse = float(math.sqrt(mean_squared_error(y, predicted)))
 payload = {
     "status": "available",
     "source": "full Python nirs4all StandardNormalVariate + sklearn.cross_decomposition.PLSRegression over dag-ml emitted folds",
     "python": platform.python_version(),
+    "open_pipeline": {
+        "status": "passed",
+        "pipeline_reopened": True,
+        "descriptor_sha256": descriptor_sha256,
+        "step_count": len(pipeline.get("steps", [])),
+        "model": model.get("type"),
+        "cv_folds": n_splits,
+    },
+    "rerun_pipeline": {
+        "status": "passed",
+        "executed": True,
+        "prediction_rows": int(predicted.shape[0]),
+        "finite_predictions": bool(np.isfinite(predicted).all()),
+        "rmse": rmse,
+        "dataset_files_sha256": dataset_files_sha256,
+        "fold_assignment_sha256": fold_assignment_sha256,
+    },
     "dataset": {
         "rows": int(X.shape[0]),
         "cols": int(X.shape[1]),
         "axis": axis,
+        "dataset_file_hashes": dataset_file_hashes,
+        "dataset_files_sha256": dataset_files_sha256,
         "sample_id_source": "studio-lite-csv-builder-synthetic-train-index",
         "sample_ids_sha256": __import__("hashlib").sha256(json.dumps(sample_ids, separators=(",", ":")).encode("utf-8")).hexdigest(),
         "metadata_sample_ids_sha256": __import__("hashlib").sha256(json.dumps(metadata_sample_ids, separators=(",", ":")).encode("utf-8")).hexdigest(),
@@ -386,7 +432,7 @@ payload = {
     "cv": {
         "metrics": {
             "n": int(y.shape[0]),
-            "rmse": float(math.sqrt(mean_squared_error(y, predicted))),
+            "rmse": rmse,
             "mae": float(mean_absolute_error(y, predicted)),
             "r2": float(r2_score(y, predicted)),
         },
@@ -509,6 +555,17 @@ async function loadRepositoryFixture() {
   const datasetFiles = (manifest.dataset_files ?? []).map((file) => join(FIXTURE_DIR, file))
   if (datasetFiles.length === 0) throw new Error('repository manifest has no dataset_files')
   evidence.uploaded_dataset_files = manifest.dataset_files
+  const datasetFileHashes = []
+  for (let index = 0; index < datasetFiles.length; index += 1) {
+    const hashed = await sha256File(datasetFiles[index])
+    datasetFileHashes.push({
+      file: manifest.dataset_files[index],
+      bytes: hashed.bytes,
+      sha256: hashed.sha256,
+    })
+  }
+  evidence.repository_dataset_file_hashes = datasetFileHashes
+  evidence.repository_dataset_files_sha256 = sha256Text(JSON.stringify(datasetFileHashes.map((item) => [item.file, item.bytes, item.sha256])))
   return { manifest, pipelinePath, datasetFiles }
 }
 
@@ -591,6 +648,32 @@ try {
       }`,
     )
   }
+  const openedPipeline = evidence.python_oracle.open_pipeline ?? null
+  const rerunPipeline = evidence.python_oracle.rerun_pipeline ?? null
+  evidence.python_open_pipeline = {
+    ...(openedPipeline ?? {}),
+    repository_pipeline_id: evidence.repository_pipeline_id,
+    repository_dataset_id: evidence.repository_dataset_id,
+    descriptor_hash_match: openedPipeline?.descriptor_sha256 === evidence.repository_descriptor_sha256,
+  }
+  if (evidence.python_open_pipeline.status !== 'passed') throw new Error('Python did not report a passed repository descriptor open')
+  if (!evidence.python_open_pipeline.pipeline_reopened) throw new Error('Python did not reopen the repository pipeline descriptor')
+  if (!evidence.python_open_pipeline.descriptor_hash_match) throw new Error('Python descriptor hash does not match the repository manifest')
+  evidence.python_rerun_pipeline = {
+    ...(rerunPipeline ?? {}),
+    repository_pipeline_id: evidence.repository_pipeline_id,
+    repository_dataset_id: evidence.repository_dataset_id,
+    dataset_hash_match: rerunPipeline?.dataset_files_sha256 === evidence.repository_dataset_files_sha256,
+    python_fold_assignment_sha256: rerunPipeline?.fold_assignment_sha256,
+    fold_assignment_sha256: originalFolds.assignment_sha256,
+    fold_assignment_hash_match: rerunPipeline?.fold_assignment_sha256 === originalFolds.assignment_sha256,
+  }
+  if (evidence.python_rerun_pipeline.status !== 'passed') throw new Error('Python did not report a passed pipeline rerun')
+  if (!evidence.python_rerun_pipeline.executed) throw new Error('Python did not execute the repository pipeline rerun')
+  if (!evidence.python_rerun_pipeline.finite_predictions) throw new Error('Python repository rerun did not produce finite predictions')
+  if (!evidence.python_rerun_pipeline.dataset_hash_match) throw new Error('Python repository rerun dataset hash does not match the uploaded files')
+  if (!evidence.python_rerun_pipeline.fold_assignment_hash_match) throw new Error('Python repository rerun fold hash does not match dag-ml emitted folds')
+  if (!(evidence.python_rerun_pipeline.prediction_rows > 0)) throw new Error('Python repository rerun did not produce prediction rows')
   evidence.python_oracle_comparison = comparePythonOracle(originalPredictions, evidence.python_oracle)
   console.log(`✓ Web/WASM CV predictions match Python oracle (max Δ ${evidence.python_oracle_comparison.max_abs_delta})`)
 
