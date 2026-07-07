@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { existsSync, readFileSync } from 'node:fs'
 import {
+  capabilityManifest,
+  controllerCapabilities,
   loadDatasetsWasm,
   loadMethodsWasm,
   parseExecutionPlan,
   predictPortablePipeline,
   runPortablePipeline,
+  runtimeSurfaces,
   upstreams,
 } from './nirs4all-core'
 import { isPortableCoreModel, predictPortableCore, tryRunPortableCore } from './portable-core'
@@ -61,11 +64,36 @@ describe('nirs4all-core aggregate loaders', () => {
   })
 
   it('re-exports the portable execution and initialized WASM loaders from the portable aggregate', () => {
+    expect(typeof capabilityManifest).toBe('function')
+    expect(Array.isArray(controllerCapabilities)).toBe(true)
+    expect(Array.isArray(runtimeSurfaces)).toBe(true)
     expect(typeof parseExecutionPlan).toBe('function')
     expect(typeof runPortablePipeline).toBe('function')
     expect(typeof predictPortablePipeline).toBe('function')
     expect(typeof loadMethodsWasm).toBe('function')
     expect(typeof loadDatasetsWasm).toBe('function')
+  })
+
+  it('vendors the nirs4all-core capability manifest for custom app hosts', () => {
+    const manifest = capabilityManifest()
+
+    expect(manifest.schema).toBe('nirs4all-core.capabilities.v1')
+    expect(manifest.runtimeSurfaces).toEqual(['python', 'r', 'javascript_wasm', 'rust', 'matlab_octave'])
+    expect(manifest.controllers.map((item) => item.id)).toEqual([
+      'split.kennard_stone',
+      'preprocess.snv',
+      'preprocess.savgol',
+      'model.pls_regression',
+      'pipeline.portable_methods',
+    ])
+    expect(manifest.controllers).toEqual(controllerCapabilities)
+    expect(manifest.controllers.every((item) => item.domain === 'methods')).toBe(true)
+    expect(manifest.controllers.flatMap((item) => item.operatorClasses).sort()).toEqual(
+      [...manifest.portableOperatorClasses].sort(),
+    )
+    expect(manifest.controllers[0].runtime.javascript_wasm).toBe('parity-validated')
+    expect(manifest.controllers[1].parameters).toEqual([])
+    expect(manifest.controllers[3].parameters).toEqual(['n_components', '_range_'])
   })
 
   it('loads the vendored datasets WASM artifact', async () => {

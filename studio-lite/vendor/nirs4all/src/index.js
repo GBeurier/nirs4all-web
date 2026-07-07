@@ -45,6 +45,120 @@ export const portableOperatorClasses = Object.freeze([
   'sklearn.cross_decomposition._pls.PLSRegression',
 ]);
 
+export const runtimeSurfaces = Object.freeze([
+  'python',
+  'r',
+  'javascript_wasm',
+  'rust',
+  'matlab_octave',
+]);
+
+const parityRuntime = Object.freeze(Object.fromEntries(
+  runtimeSurfaces.map((surface) => [surface, 'parity-validated']),
+));
+
+export const controllerCapabilities = Object.freeze([
+  Object.freeze({
+    id: 'split.kennard_stone',
+    kind: 'splitter',
+    domain: 'methods',
+    label: 'Kennard-Stone split',
+    operatorClasses: Object.freeze([
+      'nirs4all.operators.splitters.KennardStoneSplitter',
+      'nirs4all.operators.splitters.splitters.KennardStoneSplitter',
+    ]),
+    ports: Object.freeze({
+      inputs: Object.freeze(['X']),
+      outputs: Object.freeze(['train_indices', 'test_indices']),
+    }),
+    parameters: Object.freeze(['test_size']),
+    runtime: parityRuntime,
+    executionPath: 'portable_pipeline',
+  }),
+  Object.freeze({
+    id: 'preprocess.snv',
+    kind: 'transform',
+    domain: 'methods',
+    label: 'Standard normal variate',
+    operatorClasses: Object.freeze([
+      'nirs4all.operators.transforms.SNV',
+      'nirs4all.operators.transforms.StandardNormalVariate',
+      'nirs4all.operators.transforms.scalers.StandardNormalVariate',
+    ]),
+    ports: Object.freeze({
+      inputs: Object.freeze(['X']),
+      outputs: Object.freeze(['X_transformed']),
+    }),
+    parameters: Object.freeze([]),
+    runtime: parityRuntime,
+    executionPath: 'portable_pipeline',
+  }),
+  Object.freeze({
+    id: 'preprocess.savgol',
+    kind: 'transform',
+    domain: 'methods',
+    label: 'Savitzky-Golay',
+    operatorClasses: Object.freeze([
+      'nirs4all.operators.transforms.SavitzkyGolay',
+      'nirs4all.operators.transforms.nirs.SavitzkyGolay',
+    ]),
+    ports: Object.freeze({
+      inputs: Object.freeze(['X']),
+      outputs: Object.freeze(['X_transformed']),
+    }),
+    parameters: Object.freeze(['window_length', 'polyorder', 'deriv', 'mode', 'cval']),
+    runtime: parityRuntime,
+    executionPath: 'portable_pipeline',
+  }),
+  Object.freeze({
+    id: 'model.pls_regression',
+    kind: 'model',
+    domain: 'methods',
+    label: 'PLS regression',
+    operatorClasses: Object.freeze([
+      'sklearn.cross_decomposition.PLSRegression',
+      'sklearn.cross_decomposition._pls.PLSRegression',
+    ]),
+    ports: Object.freeze({
+      inputs: Object.freeze(['X', 'y']),
+      outputs: Object.freeze(['predictions', 'model']),
+    }),
+    parameters: Object.freeze(['n_components', '_range_']),
+    runtime: parityRuntime,
+    executionPath: 'portable_pipeline',
+  }),
+  Object.freeze({
+    id: 'pipeline.portable_methods',
+    kind: 'pipeline',
+    domain: 'methods',
+    label: 'Portable methods pipeline',
+    operatorClasses: Object.freeze([]),
+    ports: Object.freeze({
+      inputs: Object.freeze(['pipeline', 'dataset']),
+      outputs: Object.freeze(['execution_result', 'predictions', 'model']),
+    }),
+    parameters: Object.freeze([]),
+    runtime: parityRuntime,
+    executionPath: 'run_portable_pipeline',
+    composes: Object.freeze([
+      'split.kennard_stone',
+      'preprocess.snv',
+      'preprocess.savgol',
+      'model.pls_regression',
+    ]),
+  }),
+]);
+
+export function capabilityManifest() {
+  return clone({
+    schema: 'nirs4all-core.capabilities.v1',
+    aggregate: 'nirs4all-core',
+    runtimeSurfaces,
+    portableOperatorClasses,
+    controllers: controllerCapabilities,
+  });
+}
+
 const portableOperatorSet = new Set(portableOperatorClasses);
 
 const upstreamByKey = new Map(upstreams.map((item) => [item.key, item]));
