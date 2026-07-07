@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { DatasetPreviewCard, MetricValueBadge, RuntimeEngineBadge } from 'nirs4all-ui/components'
 import { buildDatasetPreview } from 'nirs4all-ui/dataset'
 import { buildRuntimeEngineStatus, runtimeEngineLabel } from 'nirs4all-ui/runtime'
+import { capabilityManifest, controllerCapabilities, runtimeSurfaces } from '@/engine/nirs4all-core'
 import { isPortableCoreModel, predictPortableCore, tryRunPortableCore } from '@/engine/portable-core'
 import type { MaterializedDataset, PipelineDSL } from '@/engine/types'
 
@@ -30,6 +31,25 @@ describe('custom app host contract', () => {
     }
     const expected = oracle.cases.find((item) => item.name === 'portable_methods_pipeline')
     expect(expected).toBeTruthy()
+    const manifest = capabilityManifest()
+    expect(manifest.schema).toBe('nirs4all-core.capabilities.v1')
+    expect(manifest.controllers.map((item) => item.id)).toEqual([
+      'split.kennard_stone',
+      'preprocess.snv',
+      'preprocess.savgol',
+      'model.pls_regression',
+      'pipeline.portable_methods',
+    ])
+    expect(manifest.runtimeSurfaces).toEqual(runtimeSurfaces)
+    expect(manifest.controllers).toEqual(controllerCapabilities)
+    expect(runtimeSurfaces).toContain('javascript_wasm')
+    expect(controllerCapabilities.find((item) => item.id === 'pipeline.portable_methods')?.composes).toEqual([
+      'split.kennard_stone',
+      'preprocess.snv',
+      'preprocess.savgol',
+      'model.pls_regression',
+    ])
+    expect(controllerCapabilities.find((item) => item.id === 'pipeline.portable_methods')?.runtime.javascript_wasm).toBe('parity-validated')
 
     const dataset: MaterializedDataset = {
       X: Float64Array.from(oracle.dataset.X),
@@ -85,6 +105,7 @@ describe('custom app host contract', () => {
     const engineStatus = buildRuntimeEngineStatus({ engine: run!.engine, requestedEngine: 'nirs4all-core-wasm' })
     expect(engineStatus?.badgeLabel.toLowerCase()).toContain('nirs4all core wasm')
     expect(runtimeEngineLabel({ compiled: true, executed: true })).toBe('executed by dag-ml')
+    expect(manifest.controllers.find((item) => item.id === 'pipeline.portable_methods')?.executionPath).toBe('run_portable_pipeline')
 
     const datasetCard = DatasetPreviewCard({ view: preview, className: 'custom-host-dataset' }) as ReactElement<{ className: string }>
     const engineBadge = RuntimeEngineBadge({ status: engineStatus, className: 'custom-host-engine' }) as ReactElement<{ className: string }>

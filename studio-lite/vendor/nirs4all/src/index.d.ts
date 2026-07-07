@@ -16,6 +16,33 @@ export interface PipelineDefinition {
   pipeline: unknown[];
 }
 
+export type RuntimeSurface = 'python' | 'r' | 'javascript_wasm' | 'rust' | 'matlab_octave';
+export type CapabilityLevel = 'metadata' | 'plan' | 'execute-local' | 'execute-remote' | 'parity-validated';
+
+export interface ControllerCapability {
+  id: string;
+  kind: 'splitter' | 'transform' | 'model' | 'pipeline';
+  domain: Upstream['key'];
+  label: string;
+  operatorClasses: readonly string[];
+  ports: {
+    inputs: readonly string[];
+    outputs: readonly string[];
+  };
+  parameters: readonly string[];
+  runtime: Readonly<Record<RuntimeSurface, CapabilityLevel>>;
+  executionPath: 'portable_pipeline' | 'run_portable_pipeline';
+  composes?: readonly string[];
+}
+
+export interface CapabilityManifest {
+  schema: 'nirs4all-core.capabilities.v1';
+  aggregate: 'nirs4all-core';
+  runtimeSurfaces: readonly RuntimeSurface[];
+  portableOperatorClasses: readonly string[];
+  controllers: readonly ControllerCapability[];
+}
+
 export interface PortableMatrixDataset {
   X: Float64Array | number[] | readonly number[] | readonly (readonly number[])[];
   y: Float64Array | number[] | readonly number[] | readonly (readonly number[])[];
@@ -68,6 +95,9 @@ export interface PortablePredictionResult {
 
 export const upstreams: readonly Upstream[];
 export const portableOperatorClasses: readonly string[];
+export const runtimeSurfaces: readonly RuntimeSurface[];
+export const controllerCapabilities: readonly ControllerCapability[];
+export function capabilityManifest(): CapabilityManifest;
 
 export function upstream(name: string): Upstream | null;
 export function importUpstream(name: string): Promise<unknown>;
