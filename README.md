@@ -28,7 +28,7 @@ This repository used to be named `nirs4all-lite`. The standalone browser client 
 - `.github/workflows/deploy-pages.yml`: builds `studio-lite/` and publishes the static app.
 - staged WASM packages under `studio-lite/src/engine/wasm/`, consumed from upstream sibling repos.
 - `studio-lite/vendor/nirs4all/`: vendored `nirs4all-core` JavaScript/WASM aggregate used by the
-  browser runtime and checked for drift with `npm run check:lite-shim`.
+  browser runtime and checked for drift with `npm run check:core-shim`.
 
 There is no Python backend and no new numerical implementation here. Parser, dataset, DAG, and
 chemometric fixes belong upstream in `nirs4all-formats`, `nirs4all-io`, `dag-ml`,
