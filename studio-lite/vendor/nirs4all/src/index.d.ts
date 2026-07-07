@@ -19,6 +19,14 @@ export interface PipelineDefinition {
 export type RuntimeSurface = 'python' | 'r' | 'javascript_wasm' | 'rust' | 'matlab_octave';
 export type CapabilityLevel = 'metadata' | 'plan' | 'execute-local' | 'execute-remote' | 'parity-validated';
 
+export interface RuntimeContract {
+  surface: RuntimeSurface;
+  pipelineExecution: CapabilityLevel;
+  pipelineEntrypoint: string;
+  serializedModelPredict: boolean;
+  predictEntrypoint: string | null;
+}
+
 export interface ControllerCapability {
   id: string;
   kind: 'splitter' | 'transform' | 'model' | 'pipeline';
@@ -39,6 +47,7 @@ export interface CapabilityManifest {
   schema: 'nirs4all-core.capabilities.v1';
   aggregate: 'nirs4all-core';
   runtimeSurfaces: readonly RuntimeSurface[];
+  runtimeContracts: readonly RuntimeContract[];
   portableOperatorClasses: readonly string[];
   controllers: readonly ControllerCapability[];
 }
@@ -96,6 +105,7 @@ export interface PortablePredictionResult {
 export const upstreams: readonly Upstream[];
 export const portableOperatorClasses: readonly string[];
 export const runtimeSurfaces: readonly RuntimeSurface[];
+export const runtimeContracts: readonly RuntimeContract[];
 export const controllerCapabilities: readonly ControllerCapability[];
 export function capabilityManifest(): CapabilityManifest;
 
