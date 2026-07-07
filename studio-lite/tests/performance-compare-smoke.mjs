@@ -110,6 +110,7 @@ try {
   pythonLedger.parity = family.parity
   pythonLedger.performance = family.performance
   pythonLedger.runs = family.runs
+  pythonLedger.python_open_pipeline = family.python_open_pipeline
 
   browser = await chromium.launch({ executablePath: EXE, headless: true, args: ['--no-sandbox'] })
   const page = await browser.newPage()
