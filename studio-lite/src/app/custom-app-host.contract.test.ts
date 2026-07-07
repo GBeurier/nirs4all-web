@@ -172,6 +172,8 @@ describe('custom app host contract', () => {
           engine_badge: engineBadge.type,
           metric_badge: metricBadge.type,
           dataset_title: preview?.title,
+          selected_pipeline_id: dsl.name,
+          prediction_count: heldOut.length,
           engine_label: engineStatus?.badgeLabel,
         }, null, 2),
       )
