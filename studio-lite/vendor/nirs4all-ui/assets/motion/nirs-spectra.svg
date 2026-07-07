@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 180" role="img" aria-labelledby="n4-motion-title">
+  <title id="n4-motion-title">Animated NIRS spectra motif</title>
+  <defs>
+    <linearGradient id="n4-motion-gradient" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#0f766e"/>
+      <stop offset=".45" stop-color="#06b6d4"/>
+      <stop offset="1" stop-color="#10b981"/>
+    </linearGradient>
+    <filter id="n4-motion-glow" x="-20%" y="-40%" width="140%" height="180%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="720" height="180" rx="18" fill="#faf7f0"/>
+  <path d="M36 98C72 48 102 48 138 98s66 50 102 0 66-50 102 0 66 50 102 0 66-50 102 0 66 50 138-16" fill="none" stroke="url(#n4-motion-gradient)" stroke-width="8" stroke-linecap="round" filter="url(#n4-motion-glow)">
+    <animate attributeName="stroke-dasharray" values="16 24;32 12;16 24" dur="10s" repeatCount="indefinite"/>
+  </path>
+  <path d="M36 124C84 104 126 104 174 124s90 20 138 0 90-20 138 0 96 24 234-28" fill="none" stroke="#4f46e5" stroke-width="4" stroke-linecap="round" opacity=".62">
+    <animate attributeName="opacity" values=".38;.78;.38" dur="8s" repeatCount="indefinite"/>
+  </path>
+  <circle cx="602" cy="82" r="7" fill="#10b981">
+    <animate attributeName="cx" values="602;646;602" dur="7s" repeatCount="indefinite"/>
+  </circle>
+</svg>

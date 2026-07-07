@@ -1,7 +1,7 @@
 {
   "name": "nirs4all-ui",
-  "version": "0.1.5",
-  "description": "Shared React UI components and pure view-model helpers for nirs4all apps.",
+  "version": "0.1.6",
+  "description": "Shared React UI components, visual assets, and pure view-model helpers for nirs4all apps.",
   "type": "module",
   "license": "(CECILL-2.1 OR AGPL-3.0-or-later)",
   "homepage": "https://gbeurier.github.io/nirs4all-ui/",
@@ -10,7 +10,9 @@
     "url": "git+https://github.com/GBeurier/nirs4all-ui.git"
   },
   "private": false,
-  "sideEffects": false,
+  "sideEffects": [
+    "**/*.css"
+  ],
   "files": [
     "assets",
     "dist",
@@ -43,9 +45,18 @@
       "types": "./dist/components/index.d.ts",
       "import": "./dist/components/index.js"
     },
+    "./brand": {
+      "types": "./dist/brand/index.d.ts",
+      "import": "./dist/brand/index.js"
+    },
+    "./styles": {
+      "types": "./dist/styles/index.d.ts",
+      "import": "./dist/styles/index.js"
+    },
     "./assets/*": "./assets/*"
   },
   "scripts": {
+    "brand:generate": "node scripts/generate-brand-assets.mjs",
     "build": "tsc -p tsconfig.build.json",
     "ci": "npm run prepublishOnly && npm run pack:smoke && npm run smoke:react-consumers",
     "pack:smoke": "npm pack --dry-run",
