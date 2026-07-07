@@ -94,16 +94,16 @@ describe('session persistence', () => {
     expect(loadSession().sampleId).toBe('corn')
     clearSession()
     expect(loadSession()).toEqual({})
-    ;(globalThis as unknown as { localStorage: MemStorage }).localStorage.setItem('nirs4all-lite:session:v1', '{not json')
+    ;(globalThis as unknown as { localStorage: MemStorage }).localStorage.setItem('nirs4all-web:session:v1', '{not json')
     expect(loadSession()).toEqual({})
   })
 
-  it('loads a legacy nirs4all-lite session key after the nirs4all-web rename', () => {
-    const legacy = {
+  it('ignores the retired nirs4all-lite session key', () => {
+    const retired = {
       pipeline: { name: 'p', steps: [], model: { id: 'm', type: 'PLS', params: {} }, cv: { folds: 5, seed: 42 } },
       sampleId: 'corn',
     }
-    ;(globalThis as unknown as { localStorage: MemStorage }).localStorage.setItem('nirs4all-lite:session:v1', JSON.stringify(legacy))
-    expect(loadSession().sampleId).toBe('corn')
+    ;(globalThis as unknown as { localStorage: MemStorage }).localStorage.setItem('nirs4all-lite:session:v1', JSON.stringify(retired))
+    expect(loadSession()).toEqual({})
   })
 })

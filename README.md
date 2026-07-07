@@ -20,7 +20,8 @@ ecosystem: file readers, datasets, methods, browser modelling, reproducible pipe
 papers, benchmarks, and release dashboards for near-infrared spectroscopy.
 
 This repository used to be named `nirs4all-lite`. The standalone browser client now lives under
-`nirs4all-web`, while the canonical multi-language aggregate target is `nirs4all-core`.
+`nirs4all-web`; the old `lite` name is retired rather than kept as a public compatibility alias.
+The canonical multi-language aggregate target is `nirs4all-core`.
 
 ## What Lives Here
 

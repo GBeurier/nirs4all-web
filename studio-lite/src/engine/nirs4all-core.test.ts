@@ -209,16 +209,11 @@ describe('nirs4all-core aggregate loaders', () => {
       oracle.metadata.tolerances.predictions_abs,
     )
 
-    const legacyModel = {
+    const retiredModel = {
       ...run!.model,
       state: { ...(run!.model.state as Record<string, unknown>), backendId: 'nirs4all-lite-wasm' },
     } as FittedPipeline
-    expect(isPortableCoreModel(legacyModel)).toBe(true)
-    const legacyPredicted = await predictPortableCore(legacyModel, ds.X, ds.nSamples, ds.nFeatures)
-    const legacyHeldOut = expected!.split.testIndices.map((index) => legacyPredicted.values[index])
-    expect(maxAbsDiff(Array.from(legacyHeldOut), expected!.selected.predictions)).toBeLessThanOrEqual(
-      oracle.metadata.tolerances.predictions_abs,
-    )
+    expect(isPortableCoreModel(retiredModel)).toBe(false)
   })
 
   it('rejects lossy n_components coercions before running the portable core path', async () => {
