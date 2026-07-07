@@ -6,7 +6,7 @@
 import type { FittedPipeline, Metrics, RunResult, TaskType } from '@/engine/types'
 
 export const N4A_FORMAT = 'nirs4all-web/n4a'
-const COMPATIBLE_N4A_FORMATS = ['nirs4all-core/n4a', 'nirs4all-lite/n4a']
+const COMPATIBLE_N4A_FORMATS = ['nirs4all-core/n4a']
 export const N4A_VERSION = 1
 
 export interface N4aBundle {

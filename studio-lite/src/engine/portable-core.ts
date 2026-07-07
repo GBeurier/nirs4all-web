@@ -4,9 +4,6 @@ import type { PortablePlsModel } from './nirs4all-core'
 import type { FittedPipeline, MaterializedDataset, PipelineDSL, PipelineStep, PredictResult, PredRow, RunOptions, RunResult } from './types'
 
 const BACKEND_ID = 'nirs4all-core-wasm'
-// Read compatibility for models/session bundles produced before the core rename.
-const LEGACY_BACKEND_IDS = ['nirs4all-lite-wasm']
-const PORTABLE_BACKEND_IDS = [BACKEND_ID, ...LEGACY_BACKEND_IDS]
 
 interface PortableCoreState {
   backendId: string
@@ -19,7 +16,7 @@ interface PortableCoreState {
 
 export function isPortableCoreModel(model: FittedPipeline): boolean {
   const backendId = (model.state as { backendId?: unknown } | null | undefined)?.backendId
-  return typeof backendId === 'string' && PORTABLE_BACKEND_IDS.includes(backendId)
+  return backendId === BACKEND_ID
 }
 
 export async function tryRunPortableCore(ds: MaterializedDataset, dsl: PipelineDSL, opts: RunOptions = {}): Promise<RunResult | null> {
