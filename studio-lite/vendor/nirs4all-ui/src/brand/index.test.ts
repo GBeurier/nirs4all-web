@@ -44,10 +44,18 @@ describe("nirs4all-ui/brand", () => {
     const horizontal = generateNirs4allBrandSvg("nirs4all-core");
     const icon = generateNirs4allBrandSvg("nirs4all-ui", { variant: "icon", animated: true });
     const stacked = generateNirs4allBrandSvg("nirs4all-providers", { variant: "stacked", dark: true });
+    const animatedHorizontal = generateNirs4allBrandSvg("nirs4all-core", {
+      variant: "horizontal",
+      animated: true,
+    });
 
     expect(horizontal).toContain("nirs4all-core");
     expect(horizontal).toContain("Portable aggregate runtime");
     expect(icon).toContain("repeatCount=\"indefinite\"");
+    expect(icon).toContain("id=\"nirs4all-ui-icon-wave\"");
+    expect(icon).toContain("stroke-dasharray=\"42 38\"");
+    expect(icon).not.toContain("href=\"#icon-wave\"");
+    expect(animatedHorizontal).toContain("id=\"nirs4all-core-horizontal-wave\"");
     expect(stacked).toContain("#ffffff");
   });
 });

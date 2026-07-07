@@ -6,7 +6,7 @@ import path from 'node:path'
 
 const versions = {
   nirs4all: process.env.N4A_PUBLISHED_NIRS4ALL_VERSION || '0.2.13',
-  ui: process.env.N4A_PUBLISHED_NIRS4ALL_UI_VERSION || '0.1.6',
+  ui: process.env.N4A_PUBLISHED_NIRS4ALL_UI_VERSION || '0.1.7',
   react: process.env.N4A_PUBLISHED_REACT_VERSION || '18.3.1',
   reactDom: process.env.N4A_PUBLISHED_REACT_DOM_VERSION || '18.3.1',
 }

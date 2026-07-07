@@ -186,14 +186,15 @@ function buildIconSvg(brand: Nirs4allBrandDefinition, options: GenerateNirs4allB
   const titleId = `${brand.id}-icon-title`;
   const textColor = options.dark ? "#ffffff" : brand.palette.dark;
   const surface = options.dark ? brand.palette.dark : brand.palette.surface;
-  const animation = options.animated ? waveAnimation("icon-wave") : "";
+  const waveId = `${brand.id}-icon-wave`;
+  const waveDash = options.animated ? ' stroke-dasharray="42 38"' : "";
+  const animation = options.animated ? waveAnimation() : "";
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="${titleId}">
   <title id="${titleId}">${title}</title>
   <rect width="128" height="128" rx="24" fill="${surface}"/>
   <path d="M20 78C31 45 44 44 58 70s26 25 50-20" fill="none" stroke="${brand.palette.primary}" stroke-width="9" stroke-linecap="round"/>
-  <path id="icon-wave" d="M20 90C36 74 48 74 64 89s29 17 44-4" fill="none" stroke="${brand.palette.secondary}" stroke-width="5" stroke-linecap="round" opacity=".82"/>
-  ${animation}
+  <path id="${waveId}" d="M20 90C36 74 48 74 64 89s29 17 44-4" fill="none" stroke="${brand.palette.secondary}" stroke-width="5" stroke-linecap="round" opacity=".82"${waveDash}>${animation}</path>
   <circle cx="98" cy="39" r="10" fill="${brand.palette.accent}"/>
   <text x="64" y="112" fill="${textColor}" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">${escapeXml(brand.shortName)}</text>
 </svg>`;
@@ -208,7 +209,9 @@ function buildHorizontalSvg(
   const textColor = options.dark ? "#ffffff" : brand.palette.dark;
   const mutedColor = options.dark ? "#cbd5e1" : "#475569";
   const surface = options.dark ? brand.palette.dark : brand.palette.surface;
-  const animation = options.animated ? waveAnimation("horizontal-wave") : "";
+  const waveId = `${brand.id}-horizontal-wave`;
+  const waveDash = options.animated ? ' stroke-dasharray="42 38"' : "";
+  const animation = options.animated ? waveAnimation() : "";
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 132" role="img" aria-labelledby="${titleId}">
   <title id="${titleId}">${title}</title>
@@ -216,8 +219,7 @@ function buildHorizontalSvg(
   <g transform="translate(24 18)">
     <rect width="96" height="96" rx="20" fill="${brand.palette.primary}" opacity=".12"/>
     <path d="M14 58C25 28 37 28 49 54s24 26 40-15" fill="none" stroke="${brand.palette.primary}" stroke-width="8" stroke-linecap="round"/>
-    <path id="horizontal-wave" d="M14 72C29 58 39 59 53 72s25 14 37-2" fill="none" stroke="${brand.palette.secondary}" stroke-width="5" stroke-linecap="round"/>
-    ${animation}
+    <path id="${waveId}" d="M14 72C29 58 39 59 53 72s25 14 37-2" fill="none" stroke="${brand.palette.secondary}" stroke-width="5" stroke-linecap="round"${waveDash}>${animation}</path>
     <circle cx="78" cy="28" r="8" fill="${brand.palette.accent}"/>
   </g>
   <text x="146" y="61" fill="${textColor}" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="800">${escapeXml(brand.name)}</text>
@@ -231,7 +233,9 @@ function buildStackedSvg(brand: Nirs4allBrandDefinition, options: GenerateNirs4a
   const textColor = options.dark ? "#ffffff" : brand.palette.dark;
   const mutedColor = options.dark ? "#cbd5e1" : "#475569";
   const surface = options.dark ? brand.palette.dark : brand.palette.surface;
-  const animation = options.animated ? waveAnimation("stacked-wave") : "";
+  const waveId = `${brand.id}-stacked-wave`;
+  const waveDash = options.animated ? ' stroke-dasharray="54 42"' : "";
+  const animation = options.animated ? waveAnimation() : "";
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 236" role="img" aria-labelledby="${titleId}">
   <title id="${titleId}">${title}</title>
@@ -239,8 +243,7 @@ function buildStackedSvg(brand: Nirs4allBrandDefinition, options: GenerateNirs4a
   <g transform="translate(80 26)">
     <rect width="120" height="120" rx="28" fill="${brand.palette.primary}" opacity=".12"/>
     <path d="M18 73C32 36 47 35 64 68s32 33 56-18" fill="none" stroke="${brand.palette.primary}" stroke-width="10" stroke-linecap="round"/>
-    <path id="stacked-wave" d="M18 91C37 72 51 74 68 91s35 18 52-3" fill="none" stroke="${brand.palette.secondary}" stroke-width="6" stroke-linecap="round"/>
-    ${animation}
+    <path id="${waveId}" d="M18 91C37 72 51 74 68 91s35 18 52-3" fill="none" stroke="${brand.palette.secondary}" stroke-width="6" stroke-linecap="round"${waveDash}>${animation}</path>
     <circle cx="96" cy="38" r="10" fill="${brand.palette.accent}"/>
   </g>
   <text x="140" y="178" fill="${textColor}" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800" text-anchor="middle">${escapeXml(brand.name)}</text>
@@ -248,8 +251,8 @@ function buildStackedSvg(brand: Nirs4allBrandDefinition, options: GenerateNirs4a
 </svg>`;
 }
 
-function waveAnimation(targetId: string): string {
-  return `<animate href="#${targetId}" attributeName="stroke-dashoffset" values="0;-80" dur="9s" repeatCount="indefinite"/>`;
+function waveAnimation(): string {
+  return `<animate attributeName="stroke-dashoffset" values="0;-80" dur="9s" repeatCount="indefinite"/>`;
 }
 
 function escapeXml(value: string): string {
