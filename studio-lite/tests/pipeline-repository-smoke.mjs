@@ -46,6 +46,7 @@ const evidence = {
   repository_pipeline_bytes: null,
   repository_pipeline_sha256: null,
   repository_pipeline_shape: null,
+  repository_forced_best_refit: null,
   client_only_oracle_probe: null,
   provider_runtime_assertions: null,
   provider_runtime_comparison: null,
@@ -185,6 +186,70 @@ function assertRepositoryPipelineShape(value) {
     model_type: value.model.type ?? null,
     cv_folds: value.cv.folds,
     cv_seed: value.cv.seed ?? null,
+  }
+}
+
+function assertForcedBestRefitDescriptor(value, manifest, descriptorHash, pipelineHash) {
+  if (!value || typeof value !== 'object') throw new Error('forced best-refit descriptor is not an object')
+  if (value.schema_version !== 'n4a.repository.forced_best_refit.v1') {
+    throw new Error(`forced best-refit schema mismatch: ${value.schema_version}`)
+  }
+  if (value.source_repo !== 'GBeurier/nirs4all-repository') {
+    throw new Error(`forced best-refit source_repo mismatch: ${value.source_repo}`)
+  }
+  if (value.force_best_refit !== true) throw new Error('forced best-refit descriptor does not declare force_best_refit=true')
+  if (value.repository_id !== manifest.repository_id) {
+    throw new Error(`forced best-refit repository_id mismatch: ${value.repository_id} != ${manifest.repository_id}`)
+  }
+  if (value.pipeline_id !== manifest.pipeline_id) {
+    throw new Error(`forced best-refit pipeline_id mismatch: ${value.pipeline_id} != ${manifest.pipeline_id}`)
+  }
+  if (value.selected_pipeline_id !== manifest.pipeline_id) {
+    throw new Error(`forced best-refit selected_pipeline_id mismatch: ${value.selected_pipeline_id} != ${manifest.pipeline_id}`)
+  }
+
+  const selection = value.selection && typeof value.selection === 'object' ? value.selection : {}
+  if (selection.status !== 'passed') throw new Error(`forced best-refit selection status mismatch: ${selection.status}`)
+  if (selection.score_metric !== 'rmse') throw new Error(`forced best-refit metric mismatch: ${selection.score_metric}`)
+  if (selection.selected_rank !== 1) throw new Error(`forced best-refit selected rank mismatch: ${selection.selected_rank}`)
+
+  const recipe = value.recipe && typeof value.recipe === 'object' ? value.recipe : {}
+  if (recipe.path !== manifest.pipeline_file) throw new Error(`forced best-refit recipe path mismatch: ${recipe.path}`)
+  if (recipe.sha256 !== pipelineHash.sha256) {
+    throw new Error(`forced best-refit recipe sha mismatch: ${recipe.sha256} != ${pipelineHash.sha256}`)
+  }
+
+  const dataset = value.dataset && typeof value.dataset === 'object' ? value.dataset : {}
+  if (dataset.id !== manifest.dataset_id) throw new Error(`forced best-refit dataset id mismatch: ${dataset.id}`)
+  if (JSON.stringify(dataset.files) !== JSON.stringify(manifest.dataset_files)) {
+    throw new Error('forced best-refit dataset file list mismatch')
+  }
+
+  return {
+    status: 'passed',
+    schema_version: value.schema_version,
+    source_repo: value.source_repo,
+    fixture_mode: value.fixture_mode ?? null,
+    repository_id: value.repository_id,
+    repository_id_matches_manifest: value.repository_id === manifest.repository_id,
+    force_best_refit: value.force_best_refit,
+    pipeline_id: value.pipeline_id,
+    selected_pipeline_id: value.selected_pipeline_id,
+    selected_pipeline_id_matches_repository: value.selected_pipeline_id === manifest.pipeline_id,
+    selection_status: selection.status,
+    selection_strategy: selection.strategy ?? null,
+    score_metric: selection.score_metric,
+    score_scope: selection.score_scope ?? null,
+    selected_rank: selection.selected_rank,
+    descriptor_file: manifest.forced_best_refit_descriptor_file,
+    descriptor_sha256: descriptorHash.sha256,
+    descriptor_sha256_verified: descriptorHash.sha256 === manifest.forced_best_refit_descriptor_sha256,
+    recipe_file: recipe.path,
+    recipe_sha256: recipe.sha256,
+    recipe_sha256_verified: recipe.sha256 === pipelineHash.sha256,
+    dataset_id: dataset.id,
+    dataset_id_matches_manifest: dataset.id === manifest.dataset_id,
+    dataset_files: dataset.files,
   }
 }
 
@@ -552,6 +617,21 @@ async function loadRepositoryFixture() {
 
   const pipeline = await readJson(pipelinePath)
   evidence.repository_pipeline_shape = assertRepositoryPipelineShape(pipeline)
+  if (!manifest.forced_best_refit_descriptor_file) throw new Error('repository manifest has no forced_best_refit_descriptor_file')
+  const forcedBestRefitPath = join(FIXTURE_DIR, manifest.forced_best_refit_descriptor_file)
+  const forcedBestRefitHash = await sha256File(forcedBestRefitPath)
+  if (forcedBestRefitHash.bytes <= 0) throw new Error('forced best-refit descriptor is empty')
+  if (forcedBestRefitHash.sha256 !== manifest.forced_best_refit_descriptor_sha256) {
+    throw new Error(
+      `forced best-refit descriptor sha256 mismatch: manifest ${manifest.forced_best_refit_descriptor_sha256} != actual ${forcedBestRefitHash.sha256}`,
+    )
+  }
+  evidence.repository_forced_best_refit = assertForcedBestRefitDescriptor(
+    await readJson(forcedBestRefitPath),
+    manifest,
+    forcedBestRefitHash,
+    pipelineHash,
+  )
   const datasetFiles = (manifest.dataset_files ?? []).map((file) => join(FIXTURE_DIR, file))
   if (datasetFiles.length === 0) throw new Error('repository manifest has no dataset_files')
   evidence.uploaded_dataset_files = manifest.dataset_files

@@ -9,5 +9,7 @@
   ],
   "pipeline_id": "n4a-web-repository-pls-snv-v1",
   "pipeline_file": "repository-pls-snv.pipeline.json",
-  "descriptor_sha256": "03dfc33b63b121f57733f19d6ab3c58f4b918ba39bd56f9af145740245df9440"
+  "descriptor_sha256": "03dfc33b63b121f57733f19d6ab3c58f4b918ba39bd56f9af145740245df9440",
+  "forced_best_refit_descriptor_file": "repository-forced-best-refit.n4a.json",
+  "forced_best_refit_descriptor_sha256": "2d8b02669a0aac4cd48cbd8200df5c39d569b0a72d33119f4b98814eecb88dcd"
 }
