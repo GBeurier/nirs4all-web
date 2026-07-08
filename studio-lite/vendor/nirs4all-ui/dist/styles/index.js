@@ -13,6 +13,20 @@ export const NIRS4ALL_STYLE_ASSETS = [
         description: "Default NIRS4ALL design tokens, surface classes, badges, grids, and runtime affordances.",
     },
     {
+        id: "dataset-builder",
+        kind: "css",
+        path: "assets/datasetBuilder.css",
+        packageExport: "nirs4all-ui/assets/datasetBuilder.css",
+        description: "Default multimodal DatasetBuilder wizard layout and role-mapping utility classes.",
+    },
+    {
+        id: "quality-lab-theme",
+        kind: "css",
+        path: "assets/theme.css",
+        packageExport: "nirs4all-ui/assets/theme.css",
+        description: "Shared lab/quality app theme tokens used by quality-oriented custom hosts.",
+    },
+    {
         id: "spectra-motion",
         kind: "svg-motion",
         path: "assets/motion/nirs-spectra.svg",

@@ -4,7 +4,7 @@
  * Static CSS and motion files are shipped under `assets/`; this module exposes
  * typed paths and token names without importing CSS at runtime.
  */
-export type Nirs4allStyleAssetId = "default-theme" | "spectra-motion";
+export type Nirs4allStyleAssetId = "default-theme" | "dataset-builder" | "quality-lab-theme" | "spectra-motion";
 export type Nirs4allStyleAssetKind = "css" | "svg-motion";
 export interface Nirs4allStyleAsset {
     id: Nirs4allStyleAssetId;
@@ -19,6 +19,18 @@ export declare const NIRS4ALL_STYLE_ASSETS: readonly [{
     readonly path: "assets/styles/nirs4all-default.css";
     readonly packageExport: "nirs4all-ui/assets/styles/nirs4all-default.css";
     readonly description: "Default NIRS4ALL design tokens, surface classes, badges, grids, and runtime affordances.";
+}, {
+    readonly id: "dataset-builder";
+    readonly kind: "css";
+    readonly path: "assets/datasetBuilder.css";
+    readonly packageExport: "nirs4all-ui/assets/datasetBuilder.css";
+    readonly description: "Default multimodal DatasetBuilder wizard layout and role-mapping utility classes.";
+}, {
+    readonly id: "quality-lab-theme";
+    readonly kind: "css";
+    readonly path: "assets/theme.css";
+    readonly packageExport: "nirs4all-ui/assets/theme.css";
+    readonly description: "Shared lab/quality app theme tokens used by quality-oriented custom hosts.";
 }, {
     readonly id: "spectra-motion";
     readonly kind: "svg-motion";
