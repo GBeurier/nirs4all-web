@@ -1,0 +1,132 @@
+/* nirs4all shared visual theme — the canonical "teal system".
+ *
+ * One source of truth for every nirs4all front-end (studio, web, quali-nirs4all,
+ * datasets/formats sites) so they look like one product. Light tokens are the
+ * verbatim palette from nirs4all-org; dark tokens are derived from the site's
+ * navy showcase (`.section-dark`). Framework-agnostic plain CSS: it defines
+ * custom properties + a few base rules + the signature brand motifs. Tailwind
+ * hosts additionally bridge these tokens to utilities via `@theme inline`.
+ *
+ * Fonts (load once in the host <head>, they degrade to system fonts offline):
+ *   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Brand ramp (verbatim from nirs4all-org) */
+  --teal: #0d9488; --teal-d: #0f766e; --teal-l: #2dd4bf;
+  --cyan: #06b6d4; --cyan-d: #0891b2;
+  --indigo: #4f46e5; --indigo-d: #4338ca;
+  --green: #10b981; --amber: #d97706; --rose: #e11d48;
+
+  /* nirs4all-ui package logo accents (logo/badges only, not chrome) */
+  --ui-blue: #2563eb; --ui-red: #e9362d;
+
+  /* Warm-paper light surfaces (verbatim) */
+  --paper: #faf7f0; --paper-2: #f3efe5;
+  --bg: #ffffff; --bg-alt: #f5f7fa; --bg-grid: #f7f5ef; --bg-code: #0b1220;
+  --surface: #ffffff; --border: #e2e8f0; --border-warm: #e8e2d3;
+  --text: #0f172a; --text-2: #475569; --text-3: #64748b;
+
+  /* Semantic aliases (studio-lite-compatible) */
+  --primary: var(--teal); --primary-hover: var(--teal-d);
+  --success: var(--green); --warning: var(--amber); --destructive: var(--rose);
+  --chart-1: var(--teal); --chart-2: var(--cyan); --chart-3: var(--indigo);
+  --chart-4: var(--green); --chart-5: var(--amber);
+
+  /* Elevation + shape (verbatim) */
+  --shadow: 0 4px 16px -4px rgba(17,24,39,.08), 0 2px 4px -2px rgba(17,24,39,.04);
+  --shadow-lg: 0 20px 40px -12px rgba(17,24,39,.10);
+  --shadow-warm: 0 18px 38px -14px rgba(120,85,30,.16), 0 3px 8px -4px rgba(120,85,30,.10);
+  --radius: 16px; --radius-sm: 10px;
+
+  /* Type (verbatim) */
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --display: 'IBM Plex Sans', 'Inter', -apple-system, system-ui, sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+  --grid-size: 52px;
+}
+
+/* Dark — derived from the site's navy showcase + code surface */
+:root[data-theme="dark"], .theme-dark {
+  color-scheme: dark;
+  --paper: #0b1626; --paper-2: #0d1a2c;
+  --bg: #0b1220; --bg-alt: #0d1a2c; --bg-grid: #0d1a2c; --bg-code: #070e1a;
+  --surface: #10233a; --border: rgba(255,255,255,.10); --border-warm: rgba(255,255,255,.08);
+  --text: rgba(255,255,255,.92); --text-2: rgba(255,255,255,.66); --text-3: rgba(255,255,255,.48);
+  --teal: #2dd4bf; --teal-d: #5eead4;
+  --shadow: 0 4px 16px -4px rgba(0,0,0,.5);
+  --shadow-lg: 0 30px 60px -20px rgba(0,0,0,.6);
+}
+
+/* --- Base --- */
+a { color: var(--teal); text-decoration: none; transition: color .2s; }
+a:hover { color: var(--teal-d); }
+code, pre { font-family: var(--mono); }
+::selection { background: rgba(13,148,136,.18); }
+
+/* --- Signature motifs --- */
+
+/* teal→cyan→green gradient text (headings emphasis) */
+.n4-gradient-text {
+  background: linear-gradient(120deg, var(--teal-d) 0%, var(--cyan) 60%, var(--green) 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+/* the warm-paper app canvas with a faint spectral grid + top teal glow */
+.n4-app-bg {
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(ellipse 90% 45% at 50% -8%, rgba(13,148,136,.07), transparent 70%),
+    linear-gradient(rgba(20,50,48,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20,50,48,.03) 1px, transparent 1px);
+  background-size: 100% 100%, var(--grid-size) var(--grid-size), var(--grid-size) var(--grid-size);
+  background-attachment: fixed;
+}
+
+/* warm-paper section with grid ruling */
+.section-paper {
+  background: var(--paper);
+  background-image:
+    linear-gradient(rgba(20,50,48,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20,50,48,.035) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+  border-top: 1px solid var(--border-warm); border-bottom: 1px solid var(--border-warm);
+}
+
+/* soft aurora blobs */
+.section-aurora { position: relative; overflow: hidden; background: #fcfdff; }
+.section-aurora::before {
+  content: ''; position: absolute; inset: -20%; pointer-events: none; filter: blur(20px);
+  background:
+    radial-gradient(ellipse 40% 35% at 15% 20%, rgba(13,148,136,.22), transparent 70%),
+    radial-gradient(ellipse 35% 30% at 85% 30%, rgba(6,182,212,.18), transparent 70%),
+    radial-gradient(ellipse 45% 35% at 50% 95%, rgba(16,185,129,.14), transparent 72%),
+    radial-gradient(ellipse 25% 25% at 90% 85%, rgba(217,119,6,.12), transparent 75%);
+}
+
+/* dark navy showcase */
+.section-dark {
+  color: rgba(255,255,255,.88); position: relative; overflow: hidden;
+  background: radial-gradient(ellipse 120% 80% at 50% -10%, #10233a 0%, #0b1626 55%, #070e1a 100%);
+}
+
+/* dotted spectrum grid */
+.n4-dots {
+  background-image: radial-gradient(rgba(20,50,48,.09) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+}
+
+/* spectra wave (pair with an inline SVG polyline + glowing end-dot) */
+.spectrum-line { fill: none; stroke: var(--teal); stroke-linecap: round; stroke-linejoin: round; }
+.wave-dot { fill: currentColor; filter: drop-shadow(0 0 6px currentColor); }
+
+/* an animated wavelength strip (thin teal→light-teal gradient bar) */
+@keyframes n4-strip { 0% { background-position: 0 0; } 100% { background-position: 200% 0; } }
+.n4-spectrum-strip {
+  height: 3px; border-radius: 3px;
+  background: linear-gradient(90deg, var(--teal-d), var(--teal-l), var(--cyan), var(--teal-l), var(--teal-d));
+  background-size: 200% 100%; animation: n4-strip 14s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) { .n4-spectrum-strip { animation: none; } }
