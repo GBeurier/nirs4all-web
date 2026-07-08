@@ -1,0 +1,29 @@
+{
+  "schema_version": "n4a.repository.forced_best_refit.v1",
+  "source_repo": "GBeurier/nirs4all-repository",
+  "fixture_mode": "repository-contract-fixture",
+  "repository_id": "n4a-web-smoke-repository",
+  "pipeline_id": "n4a-web-repository-pls-snv-v1",
+  "selected_pipeline_id": "n4a-web-repository-pls-snv-v1",
+  "force_best_refit": true,
+  "selection": {
+    "status": "passed",
+    "strategy": "fixture_selected_best",
+    "score_metric": "rmse",
+    "score_scope": "cv",
+    "selected_rank": 1
+  },
+  "recipe": {
+    "path": "repository-pls-snv.pipeline.json",
+    "format": "n4a.web.pipeline_dsl.v1",
+    "sha256": "03dfc33b63b121f57733f19d6ab3c58f4b918ba39bd56f9af145740245df9440"
+  },
+  "dataset": {
+    "id": "lab-transfer-corn-protein-2026-07",
+    "files": [
+      "repository_X_train.csv",
+      "repository_y_train.csv",
+      "repository_metadata.csv"
+    ]
+  }
+}
