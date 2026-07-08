@@ -58,6 +58,26 @@ describe('custom app host contract', () => {
       'model.pls_regression',
     ])
     expect(controllerCapabilities.find((item) => item.id === 'pipeline.portable_methods')?.runtime.javascript_wasm).toBe('parity-validated')
+    const serializedModelPredictSurfaces = runtimeContracts
+      .filter((item) => item.serializedModelPredict)
+      .map((item) => item.surface)
+    const wasmPredictEntrypoint = runtimeContracts.find((item) => item.surface === 'javascript_wasm')?.predictEntrypoint
+    const expectedSerializedModelPredictSurfaces = ['javascript_wasm']
+    const expectedWasmPredictEntrypoint = 'predictPortablePipeline'
+    const runtimeContractChecks = {
+      serialized_predict_surface_count_absolute_delta: Math.abs(
+        serializedModelPredictSurfaces.length - expectedSerializedModelPredictSurfaces.length,
+      ),
+      serialized_predict_surface_count_tolerance: 0,
+      wasm_predict_entrypoint_absolute_delta: wasmPredictEntrypoint === expectedWasmPredictEntrypoint ? 0 : 1,
+      wasm_predict_entrypoint_tolerance: 0,
+    }
+    expect(runtimeContractChecks).toEqual({
+      serialized_predict_surface_count_absolute_delta: 0,
+      serialized_predict_surface_count_tolerance: 0,
+      wasm_predict_entrypoint_absolute_delta: 0,
+      wasm_predict_entrypoint_tolerance: 0,
+    })
 
     const dataset: MaterializedDataset = {
       X: Float64Array.from(oracle.dataset.X),
@@ -158,10 +178,9 @@ describe('custom app host contract', () => {
           status: 'passed',
           schema: manifest.schema,
           runtime_surfaces: runtimeSurfaces,
-          serialized_model_predict_surfaces: runtimeContracts
-            .filter((item) => item.serializedModelPredict)
-            .map((item) => item.surface),
-          wasm_predict_entrypoint: runtimeContracts.find((item) => item.surface === 'javascript_wasm')?.predictEntrypoint,
+          serialized_model_predict_surfaces: serializedModelPredictSurfaces,
+          wasm_predict_entrypoint: wasmPredictEntrypoint,
+          runtime_contract_checks: runtimeContractChecks,
         }, null, 2),
       )
       writeFileSync(
