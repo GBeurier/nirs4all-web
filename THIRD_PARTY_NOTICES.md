@@ -26,6 +26,6 @@ For the exhaustive, version-pinned dependency tree and its licenses, run:
 npx license-checker --summary      # from studio-lite/
 ```
 
-The client consumes the nirs4all WASM/lite stack; the re-exported native libraries carry their own licenses (see each project).
+The client consumes the nirs4all WASM/core stack; the re-exported native libraries carry their own licenses (see each project).
 
 License-family texts are bundled under [`LICENSES/`](LICENSES/): MIT, Apache-2.0, BSD-3-Clause.

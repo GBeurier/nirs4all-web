@@ -142,12 +142,12 @@ function variantsForStep(variants: StepVariant[] | undefined): object[] {
   return variants.map((v) => ({ label: v.label, params: { ...v.params } }))
 }
 
-// Map the studio-lite pipeline to dag-ml's nirs4all-compat DSL (accepted by the
+// Map the browser pipeline to dag-ml's nirs4all-compat DSL (accepted by the
 // compatibility importer: bare "SNV"/"MSC", {preprocessing,params}, {model,params}),
 // now carrying per-step `generators`/`variants` and DSL-level
 // `generation_strategy`/`max_variants`/`root_seed` so dag-ml expands the cartesian
 // product of variants itself.
-/** Lower one studio-lite preprocessing step to its nirs4all-compat pipeline entry
+/** Lower one browser preprocessing step to its nirs4all-compat pipeline entry
  *  (bare "SNV"/"MSC" sugar, else `{preprocessing,params,generators?,variants?}`). */
 function compatStepEntry(s: PipelineStep): unknown {
   const generators = generatorsForStep(s)

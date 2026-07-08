@@ -429,7 +429,7 @@ export function normalizeImportedPipeline(value: unknown): PipelineDSL | null {
 
 /**
  * A light, pre-run validation pass — soft *warnings* (never blocking) for the
- * structurally-possible mistakes lite's fixed-slot editor can't prevent by
+ * structurally-possible mistakes the browser app's fixed-slot editor can't prevent by
  * construction (model-last / split-before-model are already guaranteed by the
  * canvas layout, so they need no rule). A trimmed subset of nirs4all-studio's
  * validation engine: STEP_EMPTY_BRANCHES, an empty/degenerate generator, and a
