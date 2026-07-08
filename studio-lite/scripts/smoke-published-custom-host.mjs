@@ -5,8 +5,9 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 
 const versions = {
-  nirs4all: process.env.N4A_PUBLISHED_NIRS4ALL_VERSION || '0.3.3',
-  ui: process.env.N4A_PUBLISHED_NIRS4ALL_UI_VERSION || '0.1.7',
+  nirs4all: process.env.N4A_PUBLISHED_NIRS4ALL_VERSION || '0.3.7',
+  ui: process.env.N4A_PUBLISHED_NIRS4ALL_UI_VERSION || '0.1.8',
+  methods: process.env.N4A_PUBLISHED_METHODS_VERSION || '1.0.8',
   react: process.env.N4A_PUBLISHED_REACT_VERSION || '18.3.1',
   reactDom: process.env.N4A_PUBLISHED_REACT_DOM_VERSION || '18.3.1',
   vite: process.env.N4A_PUBLISHED_VITE_VERSION || '6.4.3',
@@ -62,6 +63,53 @@ if (typeof runPortablePipeline !== 'function' || typeof predictPortablePipeline 
   throw new Error('published nirs4all does not expose portable run/predict entrypoints')
 }
 
+const demoDataset = {
+  X: Array.from({ length: 48 }, (_, index) => {
+    const row = Math.floor(index / 4)
+    const col = index % 4
+    return 0.2 * row + 0.03 * col + Math.sin((row + col) / 5)
+  }),
+  y: Array.from({ length: 12 }, (_, row) => 0.5 + row * 0.12 + Math.cos(row / 4) * 0.05),
+  rows: 12,
+  cols: 4,
+}
+
+const demoPipeline = {
+  name: 'published-custom-host-pls-demo',
+  pipeline: [
+    {
+      class: 'nirs4all.operators.splitters.KennardStoneSplitter',
+      params: { test_size: 0.25 },
+    },
+    {
+      class: 'nirs4all.operators.transforms.StandardNormalVariate',
+      params: {},
+    },
+    {
+      model: {
+        class: 'sklearn.cross_decomposition.PLSRegression',
+        params: { n_components: 2 },
+      },
+    },
+  ],
+}
+
+const execution = await runPortablePipeline(demoPipeline, demoDataset)
+const predictions = await predictPortablePipeline(execution, {
+  X: demoDataset.X,
+  rows: demoDataset.rows,
+  cols: demoDataset.cols,
+})
+if (!execution?.selected || !Number.isFinite(execution.selected.rmse)) {
+  throw new Error('published nirs4all runPortablePipeline did not return a finite selected RMSE')
+}
+if (predictions?.rows !== demoDataset.rows || predictions?.cols !== 1) {
+  throw new Error('published nirs4all predictPortablePipeline returned unexpected dimensions')
+}
+if (!Array.isArray(predictions.data) || predictions.data.some((value) => !Number.isFinite(value))) {
+  throw new Error('published nirs4all predictPortablePipeline returned non-finite predictions')
+}
+
 const dataset = buildDatasetPreview({
   id: 'published-custom-host',
   name: 'Published custom host dataset',
@@ -98,6 +146,12 @@ console.log(JSON.stringify({
   engine: engineStatus.badgeLabel,
   runEntrypoint: typeof runPortablePipeline,
   predictEntrypoint: typeof predictPortablePipeline,
+  portablePipelineExecuted: true,
+  selectedRmse: execution.selected.rmse,
+  selectedPredictionCount: execution.selected.predictions.length,
+  predictionRows: predictions.rows,
+  predictionCols: predictions.cols,
+  finitePredictions: predictions.data.every((value) => Number.isFinite(value)),
 }))
 `
 
@@ -238,6 +292,7 @@ try {
     dependencies: {
       nirs4all: versions.nirs4all,
       'nirs4all-ui': versions.ui,
+      '@nirs4all/methods': versions.methods,
       react: versions.react,
       'react-dom': versions.reactDom,
     },
@@ -283,6 +338,8 @@ try {
       public_imports_only: publicImportsOnly,
       nirs4all_version: versions.nirs4all,
       nirs4all_ui_version: versions.ui,
+      nirs4all_methods_version: versions.methods,
+      upstream_methods_installed: true,
       react_version: versions.react,
       vite_version: versions.vite,
       controller_count: smokeResult.controllers,
@@ -291,8 +348,15 @@ try {
       engine_label: smokeResult.engine,
       run_entrypoint: smokeResult.runEntrypoint,
       predict_entrypoint: smokeResult.predictEntrypoint,
+      portable_pipeline_executed: smokeResult.portablePipelineExecuted,
+      selected_rmse: smokeResult.selectedRmse,
+      selected_prediction_count: smokeResult.selectedPredictionCount,
+      prediction_rows: smokeResult.predictionRows,
+      prediction_cols: smokeResult.predictionCols,
+      finite_predictions: smokeResult.finitePredictions,
       dist_index_exists: await pathExists(path.join(distDir, 'index.html')),
       dist_asset_count: distFiles.filter((file) => file.startsWith('assets/')).length,
+      dist_wasm_asset_count: distFiles.filter((file) => file.endsWith('.wasm')).length,
       dist_files: distFiles,
     }, null, 2))
   }
