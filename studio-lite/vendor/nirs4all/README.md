@@ -2,9 +2,10 @@
 
 npm package name: `nirs4all`
 
-The canonical source repository is `nirs4all-core`; the npm publication keeps
-the bare `nirs4all` name because the lite->core rename applies only to the
-Python distribution.
+The canonical source repository is `nirs4all-core`; the npm publication uses
+the bare `nirs4all` name as the JavaScript/WASM aggregate surface. Python alone
+uses the `nirs4all-core` distribution name to avoid colliding with the full
+modelling library.
 
 This package is the runtime surface that `nirs4all-web` should consume. The web
 application lives in `nirs4all-web`; this directory is for the reusable
