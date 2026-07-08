@@ -1,6 +1,7 @@
 // Consume the paper/repository handoff artifact emitted by the Python + Papers
-// e2e lane, import it into the client-only Web/WASM app, and execute it over an
-// alternative non-demo dataset fixture.
+// e2e lane, import it into the client-only Web/WASM app, and execute it over a
+// browser-uploadable repository dataset (the Python-exported original dataset in
+// the cross-language E2E, or the local alternative fixture when run standalone).
 import { execFile } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises'
@@ -15,6 +16,8 @@ const APP_URL = process.env.SMOKE_URL || 'http://localhost:4355/'
 const EXE = process.env.CHROME || '/usr/bin/google-chrome'
 const TEST_DIR = dirname(fileURLToPath(import.meta.url))
 const FIXTURE_DIR = join(TEST_DIR, 'fixtures', 'pipeline-repository')
+const DATASET_DIR = process.env.N4A_REPOSITORY_DATASET_DIR || FIXTURE_DIR
+const DATASET_EXPECTED_BADGE = process.env.N4A_REPOSITORY_DATASET_EXPECTED_BADGE || '20 samples × 6 wavelengths'
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || join(tmpdir(), 'n4a-web-repository-best-pipeline-smoke')
 const WORKSPACE_ROOT = resolve(TEST_DIR, '..', '..', '..')
 const NIRS4ALL_PYTHON_SRC = join(WORKSPACE_ROOT, 'nirs4all')
@@ -32,7 +35,9 @@ const evidence = {
   repository_best_pipeline_bytes: null,
   repository_best_pipeline_sha256: null,
   repository_best_pipeline_shape: null,
+  uploaded_dataset_dir: DATASET_DIR,
   uploaded_dataset_files: ['repository_X_train.csv', 'repository_y_train.csv', 'repository_metadata.csv'],
+  uploaded_dataset_expected_badge: DATASET_EXPECTED_BADGE,
   dataset_badge: null,
   imported_pipeline_name: null,
   imported_pipeline_shape: null,
@@ -144,11 +149,11 @@ function assertRepositoryBestPipelineShape(payload) {
 }
 
 async function loadDatasetAndOpenPipeline() {
-  await page.locator('input[type=file][accept*=".csv"]').first().setInputFiles(evidence.uploaded_dataset_files.map((file) => join(FIXTURE_DIR, file)))
+  await page.locator('input[type=file][accept*=".csv"]').first().setInputFiles(evidence.uploaded_dataset_files.map((file) => join(DATASET_DIR, file)))
   await page.waitForSelector('text=/samples ×/', { timeout: 20000 })
   evidence.dataset_badge = ((await page.locator('text=/samples ×/').first().textContent()) || '').trim()
-  if (!evidence.dataset_badge || !/20 samples × 6 wavelengths/.test(evidence.dataset_badge)) {
-    throw new Error(`repository dataset did not render the expected non-sample badge: ${evidence.dataset_badge}`)
+  if (!evidence.dataset_badge || !evidence.dataset_badge.includes(DATASET_EXPECTED_BADGE)) {
+    throw new Error(`repository dataset did not render the expected badge ${JSON.stringify(DATASET_EXPECTED_BADGE)}: ${evidence.dataset_badge}`)
   }
   await page.locator('[data-step="pipeline"]').click()
 }
@@ -265,10 +270,20 @@ X = raw_x[1:].astype(np.float64)
 y = np.loadtxt(fixture_dir / "repository_y_train.csv", delimiter=",", skiprows=1, dtype=np.float64)
 with (fixture_dir / "repository_metadata.csv").open(newline="", encoding="utf-8") as handle:
     metadata_sample_ids = [row["sample_id"] for row in csv.DictReader(handle)]
-sample_ids = [f"train-{index}" for index in range(X.shape[0])]
+synthetic_sample_ids = [f"train-{index}" for index in range(X.shape[0])]
 
 if X.shape[0] != y.shape[0] or len(metadata_sample_ids) != y.shape[0]:
     raise AssertionError(f"fixture row mismatch: X={X.shape[0]} y={y.shape[0]} metadata_ids={len(metadata_sample_ids)}")
+fold_sample_ids = {sample_id for fold in folds for sample_id in fold["sample_ids"]}
+if fold_sample_ids <= set(metadata_sample_ids):
+    sample_ids = metadata_sample_ids
+    sample_id_source = "metadata.sample_id"
+elif fold_sample_ids <= set(synthetic_sample_ids):
+    sample_ids = synthetic_sample_ids
+    sample_id_source = "studio-lite-csv-builder-synthetic-train-index"
+else:
+    missing = sorted(fold_sample_ids - set(metadata_sample_ids) - set(synthetic_sample_ids))
+    raise AssertionError(f"fold sample ids do not match metadata or synthetic ids: {missing[:10]}")
 index_by_sample_id = {sample_id: index for index, sample_id in enumerate(sample_ids)}
 fold_indices = []
 seen_validation = set()
@@ -308,7 +323,7 @@ payload = {
         "rows": int(X.shape[0]),
         "cols": int(X.shape[1]),
         "axis": axis,
-        "sample_id_source": "studio-lite-csv-builder-synthetic-train-index",
+        "sample_id_source": sample_id_source,
         "sample_ids_sha256": __import__("hashlib").sha256(json.dumps(sample_ids, separators=(",", ":")).encode("utf-8")).hexdigest(),
         "metadata_sample_ids_sha256": __import__("hashlib").sha256(json.dumps(metadata_sample_ids, separators=(",", ":")).encode("utf-8")).hexdigest(),
     },
@@ -349,7 +364,7 @@ async function computePythonOracle(foldAssignments) {
   const attempted = []
   for (const executable of candidates) {
     try {
-      const { stdout, stderr } = await execFileAsync(executable, ['-c', PYTHON_ORACLE_SCRIPT, FIXTURE_DIR, REPOSITORY_BEST_PIPELINE_PATH, JSON.stringify(foldAssignments)], {
+      const { stdout, stderr } = await execFileAsync(executable, ['-c', PYTHON_ORACLE_SCRIPT, DATASET_DIR, REPOSITORY_BEST_PIPELINE_PATH, JSON.stringify(foldAssignments)], {
         cwd: WORKSPACE_ROOT,
         timeout: 20000,
         maxBuffer: 4 * 1024 * 1024,
@@ -437,7 +452,7 @@ try {
   await loadDatasetAndOpenPipeline()
   await importRepositoryBestPipeline()
   console.log(`✓ repository-best-pipeline descriptor imported (${evidence.repository_best_pipeline_shape.pipeline_id})`)
-  console.log(`✓ uploaded alternative dataset → "${evidence.dataset_badge}"`)
+  console.log(`✓ uploaded repository dataset → "${evidence.dataset_badge}"`)
 
   await page.getByRole('button', { name: /Run pipeline/i }).click()
   await page.waitForSelector('text=/CV Scores/', { timeout: 45000 })
