@@ -5,7 +5,11 @@
  * typed paths and token names without importing CSS at runtime.
  */
 
-export type Nirs4allStyleAssetId = "default-theme" | "spectra-motion";
+export type Nirs4allStyleAssetId =
+  | "default-theme"
+  | "dataset-builder"
+  | "quality-lab-theme"
+  | "spectra-motion";
 
 export type Nirs4allStyleAssetKind = "css" | "svg-motion";
 
@@ -24,6 +28,20 @@ export const NIRS4ALL_STYLE_ASSETS = [
     path: "assets/styles/nirs4all-default.css",
     packageExport: "nirs4all-ui/assets/styles/nirs4all-default.css",
     description: "Default NIRS4ALL design tokens, surface classes, badges, grids, and runtime affordances.",
+  },
+  {
+    id: "dataset-builder",
+    kind: "css",
+    path: "assets/datasetBuilder.css",
+    packageExport: "nirs4all-ui/assets/datasetBuilder.css",
+    description: "Default multimodal DatasetBuilder wizard layout and role-mapping utility classes.",
+  },
+  {
+    id: "quality-lab-theme",
+    kind: "css",
+    path: "assets/theme.css",
+    packageExport: "nirs4all-ui/assets/theme.css",
+    description: "Shared lab/quality app theme tokens used by quality-oriented custom hosts.",
   },
   {
     id: "spectra-motion",

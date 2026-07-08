@@ -17,17 +17,30 @@ describe("nirs4all-ui/styles", () => {
   it("declares shipped style and motion assets", () => {
     expect(NIRS4ALL_STYLE_ASSETS.map((asset) => asset.id)).toEqual([
       "default-theme",
+      "dataset-builder",
+      "quality-lab-theme",
       "spectra-motion",
     ]);
     expect(getNirs4allStyleAsset("default-theme").packageExport)
       .toBe("nirs4all-ui/assets/styles/nirs4all-default.css");
+    expect(getNirs4allStyleAsset("dataset-builder").packageExport)
+      .toBe("nirs4all-ui/assets/datasetBuilder.css");
+    expect(getNirs4allStyleAsset("quality-lab-theme").packageExport)
+      .toBe("nirs4all-ui/assets/theme.css");
   });
 
   it("keeps declared visual assets present and usable", () => {
+    const markers = {
+      "default-theme": "--n4-color-primary",
+      "dataset-builder": ".dsb",
+      "quality-lab-theme": "--success",
+      "spectra-motion": "<svg",
+    } as const;
+
     for (const asset of NIRS4ALL_STYLE_ASSETS) {
       const content = readFileSync(resolve(repositoryRoot, asset.path), "utf8");
       expect(content.length).toBeGreaterThan(200);
-      expect(content).toContain(asset.kind === "css" ? "--n4-color-primary" : "<svg");
+      expect(content).toContain(markers[asset.id]);
     }
   });
 
