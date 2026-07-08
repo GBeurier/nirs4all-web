@@ -34,11 +34,13 @@ import type { MaterializedDataset, PipelineDSL, Partition, RunLogEntry, RunProgr
 
 type StepId = 'dataset' | 'explore' | 'pipeline' | 'results' | 'predict'
 type DatasetSourceKind = 'upload' | 'sample'
+type E2EDatasetPayload = Omit<MaterializedDataset, 'X' | 'y'> & { X: number[]; y: number[] }
 
 declare global {
   interface Window {
     __n4aE2E?: {
       importRtResult: (wire: RtResultWire) => { runId: string; selectedScoreId: string; scoreCount: number }
+      runDatasetPipeline: (payload: { dataset: E2EDatasetPayload; pipeline: PipelineDSL }) => Promise<{ runId: string; selectedScoreId: string; scoreCount: number; engine: string; refitRows: number; cvRows: number }>
     }
     __n4aLastRun?: RunResult
   }
@@ -281,12 +283,64 @@ export default function App() {
         setError(null)
         return { runId: run.id, selectedScoreId: score.id, scoreCount: 1 + (run.cv ? 1 : 0) + run.folds.length }
       },
+      runDatasetPipeline: async ({ dataset: payload, pipeline: rawPipeline }) => {
+        const ds: MaterializedDataset = {
+          ...payload,
+          X: Float64Array.from(payload.X),
+          y: Float64Array.from(payload.y),
+        }
+        const dsl = migrateLegacyBranch(rawPipeline)
+        abortRef.current?.abort()
+        abortRef.current = null
+        runTokenRef.current++
+        adoptDataset(ds, { keepPipeline: true, sourceName: 'E2E oracle dataset', sourceKind: 'upload' })
+        setPipeline(dsl)
+        setStep('pipeline')
+        setRunning(true)
+        setError(null)
+        const firstProgress: RunProgress = { phase: 'preprocess', pct: 0, message: 'starting E2E analysis' }
+        setProgress(firstProgress)
+        setRunLog([{ ts: Date.now(), phase: firstProgress.phase, pct: firstProgress.pct, message: firstProgress.message }])
+        const ctrl = new AbortController()
+        abortRef.current = ctrl
+        const token = ++runTokenRef.current
+        try {
+          const result = await engine.run(ds, dsl, {
+            signal: ctrl.signal,
+            onProgress: (p) => {
+              setProgress(p)
+              setRunLog((prev) => [...prev.slice(-499), { ts: Date.now(), phase: p.phase, pct: Math.round(p.pct), message: p.message }])
+            },
+          })
+          if (token !== runTokenRef.current) throw new DOMException('Run superseded', 'AbortError')
+          window.__n4aLastRun = result
+          const score = result.cv ?? result.refit
+          setRuns([result])
+          setSelectedRunId(result.id)
+          setSelectedScore(score)
+          setStep('results')
+          return {
+            runId: result.id,
+            selectedScoreId: score.id,
+            scoreCount: 1 + (result.cv ? 1 : 0) + result.folds.length,
+            engine: result.engine,
+            refitRows: result.refit.predictions.length,
+            cvRows: result.cv?.predictions.length ?? 0,
+          }
+        } finally {
+          if (token === runTokenRef.current) {
+            setRunning(false)
+            setProgress(null)
+          }
+          if (abortRef.current === ctrl) abortRef.current = null
+        }
+      },
     }
     window.dispatchEvent(new Event('n4a:e2e-ready'))
     return () => {
       delete window.__n4aE2E
     }
-  }, [])
+  }, [adoptDataset])
 
   const selectedRun = runs.find((r) => r.id === selectedRunId) ?? null
 
