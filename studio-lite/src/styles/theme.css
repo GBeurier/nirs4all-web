@@ -52,8 +52,8 @@
   --font-weight-normal: 400;
   --ring: #0d9488;
 
-  /* Charts: a small multi-hue sequence for data-viz only (kept from lite —
-   * the studio defines no chart tokens; recharts genuinely needs many colors). */
+  /* Charts: a small multi-hue sequence for data-viz only; the shared theme
+   * defines no chart tokens, and recharts genuinely needs many colors. */
   --chart-1: #0d9488;
   --chart-2: #06b6d4;
   --chart-3: #4f46e5;

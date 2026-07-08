@@ -1,4 +1,4 @@
-# nirs4all-web · studio-lite
+# nirs4all-web · browser app
 
 A **single-page, full-WASM "mini nirs4all-studio"** — a public demonstrator that runs the whole
 NIRS modelling loop **in the browser, no Python**: upload spectra → explore & configure the dataset
@@ -47,7 +47,7 @@ cross-validation), and **libn4m** (the PLS numerics), all reached through the ve
 
 ## Custom app host
 
-`studio-lite` also serves as the reference for a **client-side custom host** that composes:
+The browser app also serves as the reference for a **client-side custom host** that composes:
 
 - `nirs4all` (vendored from `../../nirs4all-core/bindings/wasm`) for browser-safe runtime loaders
   and the portable execution subset;
