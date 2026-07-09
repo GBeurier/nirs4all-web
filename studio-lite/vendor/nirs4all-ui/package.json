@@ -65,6 +65,7 @@
   },
   "scripts": {
     "brand:generate": "node scripts/generate-brand-assets.mjs",
+    "brand:check": "node scripts/generate-brand-assets.mjs --check",
     "build": "tsc -p tsconfig.build.json",
     "ci": "npm run prepublishOnly && npm run pack:smoke && npm run smoke:react-consumers",
     "pack:smoke": "npm pack --dry-run",
