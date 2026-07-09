@@ -5,7 +5,7 @@ This is a minimal client-side-only host that composes:
 - `nirs4all` for the browser/WASM aggregate runtime surface.
 - `nirs4all-ui` for reusable React components, pure view-model helpers, and brand assets.
 
-It is intentionally separate from the `studio-lite` app shell. The example does not import `@/engine/*`, app routing, state stores, or Studio/Web component internals.
+It is intentionally separate from the full nirs4all-web app shell. The example does not import `@/engine/*`, app routing, state stores, or Studio/Web component internals.
 
 ## Run Locally
 
