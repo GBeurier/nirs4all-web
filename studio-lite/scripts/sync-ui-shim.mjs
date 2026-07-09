@@ -107,13 +107,26 @@ function collectTrackedSourceFiles(base) {
 
 function readSourceFile(absPath, relPath) {
   if (relPath.startsWith('dist/')) return readFileSync(absPath)
+  let content
   try {
-    return execFileSync('git', ['-C', upstream, 'show', `HEAD:${relPath}`], {
+    content = execFileSync('git', ['-C', upstream, 'show', `HEAD:${relPath}`], {
       stdio: ['ignore', 'pipe', 'ignore'],
     })
   } catch {
-    return readFileSync(absPath)
+    content = readFileSync(absPath)
   }
+  return normalizeForWeb(relPath, content)
+}
+
+function normalizeForWeb(relPath, content) {
+  if (relPath !== 'package.json') return content
+  const pkg = JSON.parse(content.toString('utf8'))
+  if (pkg.scripts?.prepare === 'npm run build' && pkg.scripts.prepack === undefined) {
+    pkg.scripts = Object.fromEntries(
+      Object.entries(pkg.scripts).map(([key, value]) => [key === 'prepare' ? 'prepack' : key, value]),
+    )
+  }
+  return Buffer.from(`${JSON.stringify(pkg, null, 2)}\n`)
 }
 
 function collectFiles(base, items, options = {}) {
