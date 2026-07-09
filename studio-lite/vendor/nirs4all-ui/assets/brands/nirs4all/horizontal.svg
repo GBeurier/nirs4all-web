@@ -2,10 +2,10 @@
   <title id="nirs4all-horizontal-title">NIRS4ALL</title>
   <rect width="520" height="132" rx="22" fill="#ffffff"/>
   <g transform="translate(24 18)">
-    <rect width="96" height="96" rx="20" fill="#0d9488" opacity=".12"/>
-    <path d="M14 58C25 28 37 28 49 54s24 26 40-15" fill="none" stroke="#0d9488" stroke-width="8" stroke-linecap="round"/>
-    <path d="M14 72C29 58 39 59 53 72s25 14 37-2" fill="none" stroke="#06b6d4" stroke-width="5" stroke-linecap="round"/>
-    <circle cx="78" cy="28" r="8" fill="#10b981"/>
+    <rect width="96" height="96" rx="20" fill="#058E96" opacity=".12"/>
+    <path d="M14 58C25 28 37 28 49 54s24 26 40-15" fill="none" stroke="#058E96" stroke-width="8" stroke-linecap="round"/>
+    <path d="M14 72C29 58 39 59 53 72s25 14 37-2" fill="none" stroke="#00A5D2" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="78" cy="28" r="8" fill="#E9362D"/>
   </g>
   <text x="146" y="61" fill="#0f172a" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="800">NIRS4ALL</text>
   <text x="146" y="92" fill="#475569" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600">Ecosystem umbrella</text>

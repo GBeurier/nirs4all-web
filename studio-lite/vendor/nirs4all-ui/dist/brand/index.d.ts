@@ -44,9 +44,9 @@ export declare const NIRS4ALL_BRANDS: readonly [{
     readonly role: "Ecosystem umbrella";
     readonly description: "Shared identity for NIRS4ALL applications, docs, releases, and custom hosts.";
     readonly palette: {
-        readonly primary: "#0d9488";
-        readonly secondary: "#06b6d4";
-        readonly accent: "#10b981";
+        readonly primary: "#058E96";
+        readonly secondary: "#00A5D2";
+        readonly accent: "#E9362D";
         readonly dark: "#0f172a";
         readonly surface: "#ffffff";
     };
@@ -59,14 +59,14 @@ export declare const NIRS4ALL_BRANDS: readonly [{
 }, {
     readonly id: "nirs4all-core";
     readonly name: "nirs4all-core";
-    readonly shortName: "core";
+    readonly shortName: "n4o";
     readonly packageName: "nirs4all";
     readonly role: "Portable aggregate runtime";
     readonly description: "Low-level aggregate used by native, Python, R, WASM, Rust, MATLAB, and custom hosts.";
     readonly palette: {
-        readonly primary: "#0d9488";
-        readonly secondary: "#0891b2";
-        readonly accent: "#4f46e5";
+        readonly primary: "#E9362D";
+        readonly secondary: "#058E96";
+        readonly accent: "#E9362D";
         readonly dark: "#10233a";
         readonly surface: "#ffffff";
     };
@@ -79,14 +79,14 @@ export declare const NIRS4ALL_BRANDS: readonly [{
 }, {
     readonly id: "nirs4all-ui";
     readonly name: "nirs4all-ui";
-    readonly shortName: "ui";
+    readonly shortName: "n4u";
     readonly packageName: "nirs4all-ui";
     readonly role: "Reusable visual system";
     readonly description: "Shared React components, visual tokens, brand assets, and app-host UI contracts.";
     readonly palette: {
         readonly primary: "#2563eb";
-        readonly secondary: "#06b6d4";
-        readonly accent: "#e9362d";
+        readonly secondary: "#058E96";
+        readonly accent: "#E9362D";
         readonly dark: "#172554";
         readonly surface: "#ffffff";
     };
@@ -99,14 +99,14 @@ export declare const NIRS4ALL_BRANDS: readonly [{
 }, {
     readonly id: "nirs4all-providers";
     readonly name: "nirs4all-providers";
-    readonly shortName: "providers";
+    readonly shortName: "n4v";
     readonly packageName: "nirs4all-providers";
     readonly role: "Soft-import provider bridge";
     readonly description: "Optional provider clients for datasets, repositories, archives, and publication surfaces.";
     readonly palette: {
-        readonly primary: "#7c3aed";
-        readonly secondary: "#0d9488";
-        readonly accent: "#f59e0b";
+        readonly primary: "#D946EF";
+        readonly secondary: "#058E96";
+        readonly accent: "#E9362D";
         readonly dark: "#2e1065";
         readonly surface: "#ffffff";
     };

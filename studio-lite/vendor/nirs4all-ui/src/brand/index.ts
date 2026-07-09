@@ -47,10 +47,13 @@ export interface GenerateNirs4allBrandSvgOptions {
   animated?: boolean;
 }
 
+const NIRS4ALL_TEAL = "#058E96";
+const NIRS4ALL_RED = "#E9362D";
+
 const SHARED_TEAL_PALETTE = {
-  primary: "#0d9488",
-  secondary: "#06b6d4",
-  accent: "#10b981",
+  primary: NIRS4ALL_TEAL,
+  secondary: "#00A5D2",
+  accent: NIRS4ALL_RED,
   dark: "#0f172a",
   surface: "#ffffff",
 } as const satisfies Nirs4allBrandPalette;
@@ -74,14 +77,14 @@ export const NIRS4ALL_BRANDS = [
   {
     id: "nirs4all-core",
     name: "nirs4all-core",
-    shortName: "core",
+    shortName: "n4o",
     packageName: "nirs4all",
     role: "Portable aggregate runtime",
     description: "Low-level aggregate used by native, Python, R, WASM, Rust, MATLAB, and custom hosts.",
     palette: {
-      primary: "#0d9488",
-      secondary: "#0891b2",
-      accent: "#4f46e5",
+      primary: NIRS4ALL_RED,
+      secondary: NIRS4ALL_TEAL,
+      accent: NIRS4ALL_RED,
       dark: "#10233a",
       surface: "#ffffff",
     },
@@ -95,14 +98,14 @@ export const NIRS4ALL_BRANDS = [
   {
     id: "nirs4all-ui",
     name: "nirs4all-ui",
-    shortName: "ui",
+    shortName: "n4u",
     packageName: "nirs4all-ui",
     role: "Reusable visual system",
     description: "Shared React components, visual tokens, brand assets, and app-host UI contracts.",
     palette: {
       primary: "#2563eb",
-      secondary: "#06b6d4",
-      accent: "#e9362d",
+      secondary: NIRS4ALL_TEAL,
+      accent: NIRS4ALL_RED,
       dark: "#172554",
       surface: "#ffffff",
     },
@@ -116,14 +119,14 @@ export const NIRS4ALL_BRANDS = [
   {
     id: "nirs4all-providers",
     name: "nirs4all-providers",
-    shortName: "providers",
+    shortName: "n4v",
     packageName: "nirs4all-providers",
     role: "Soft-import provider bridge",
     description: "Optional provider clients for datasets, repositories, archives, and publication surfaces.",
     palette: {
-      primary: "#7c3aed",
-      secondary: "#0d9488",
-      accent: "#f59e0b",
+      primary: "#D946EF",
+      secondary: NIRS4ALL_TEAL,
+      accent: NIRS4ALL_RED,
       dark: "#2e1065",
       surface: "#ffffff",
     },
