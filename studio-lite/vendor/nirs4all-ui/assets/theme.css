@@ -29,7 +29,7 @@
   --surface: #ffffff; --border: #e2e8f0; --border-warm: #e8e2d3;
   --text: #0f172a; --text-2: #475569; --text-3: #64748b;
 
-  /* Semantic aliases (studio-lite-compatible) */
+  /* Semantic aliases shared by Studio/Web hosts */
   --primary: var(--teal); --primary-hover: var(--teal-d);
   --success: var(--green); --warning: var(--amber); --destructive: var(--rose);
   --chart-1: var(--teal); --chart-2: var(--cyan); --chart-3: var(--indigo);
