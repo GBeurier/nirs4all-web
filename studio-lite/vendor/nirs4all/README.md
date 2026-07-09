@@ -37,6 +37,6 @@ standalone serialized-model prediction is currently a WASM-only contract.
 For a browser-only custom host, pair this package with `nirs4all-ui`: keep
 runtime loading and portable execution in `nirs4all`, and consume shared React
 components / view-model helpers / brand assets from `nirs4all-ui`. The
-reference composition lives in `../../nirs4all-web/studio-lite`, whose contract
+reference composition lives in the `nirs4all-web` browser app, whose contract
 tests exercise `runPortablePipeline()` / `predictPortablePipeline()` together
 with the shared UI package in a no-backend environment.
