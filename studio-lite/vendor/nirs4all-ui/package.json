@@ -73,7 +73,7 @@
     "site:dev": "vite --config site/vite.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "prepack": "npm run build",
+    "prepare": "npm run build",
     "prepublishOnly": "npm run typecheck && npm test && npm run build",
     "test:watch": "vitest"
   },
