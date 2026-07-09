@@ -1,6 +1,6 @@
 name: Deploy nirs4all-web to GitHub Pages
 
-# Builds the nirs4all-web/studio-lite single-page WASM app and publishes it to
+# Builds the nirs4all-web single-page WASM app from studio-lite/ and publishes it to
 # GitHub Pages (https://web.nirs4all.org/). The WASM packages are vendored in
 # the repo, and deployment is blocked by the same client-only/runtime gates used
 # by the RC branch.

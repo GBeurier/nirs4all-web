@@ -25,8 +25,8 @@ artifacts.
 
 ## What Lives Here
 
-- `studio-lite/`: active React/Vite app and the GitHub Pages deliverable.
-- `.github/workflows/deploy-pages.yml`: builds `studio-lite/` and publishes the static app.
+- `studio-lite/`: current source directory for the nirs4all-web React/Vite app and GitHub Pages deliverable.
+- `.github/workflows/deploy-pages.yml`: builds the nirs4all-web app from `studio-lite/` and publishes the static app.
 - staged WASM packages under `studio-lite/src/engine/wasm/`, consumed from upstream sibling repos.
 - `studio-lite/vendor/nirs4all/`: vendored `nirs4all-core` JavaScript/WASM aggregate used by the
   browser runtime and checked for drift with `npm run check:core-shim`.
