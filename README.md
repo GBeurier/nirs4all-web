@@ -19,9 +19,9 @@ Part of the [open-source NIRS tools](https://nirs4all.org/open-source-nirs-tools
 ecosystem: file readers, datasets, methods, browser modelling, reproducible pipelines,
 papers, benchmarks, and release dashboards for near-infrared spectroscopy.
 
-This repository used to be named `nirs4all-lite`. The standalone browser client now lives under
-`nirs4all-web`; the old `lite` name is retired rather than kept as a public compatibility alias.
-The canonical multi-language aggregate target is `nirs4all-core`.
+The canonical multi-language aggregate target is `nirs4all-core`; this repository is only the
+client-side Web/WASM product surface and does not publish aggregate bindings or release-factory
+artifacts.
 
 ## What Lives Here
 
