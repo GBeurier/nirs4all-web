@@ -2,7 +2,7 @@
   <title id="nirs4all-ui-icon-title">nirs4all-ui</title>
   <rect width="128" height="128" rx="24" fill="#ffffff"/>
   <path d="M20 78C31 45 44 44 58 70s26 25 50-20" fill="none" stroke="#2563eb" stroke-width="9" stroke-linecap="round"/>
-  <path d="M20 90C36 74 48 74 64 89s29 17 44-4" fill="none" stroke="#06b6d4" stroke-width="5" stroke-linecap="round" opacity=".82"/>
-  <circle cx="98" cy="39" r="10" fill="#e9362d"/>
-  <text x="64" y="112" fill="#172554" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">ui</text>
+  <path d="M20 90C36 74 48 74 64 89s29 17 44-4" fill="none" stroke="#058E96" stroke-width="5" stroke-linecap="round" opacity=".82"/>
+  <circle cx="98" cy="39" r="10" fill="#E9362D"/>
+  <text x="64" y="112" fill="#172554" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">n4u</text>
 </svg>

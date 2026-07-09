@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="nirs4all-providers-icon-title">
   <title id="nirs4all-providers-icon-title">nirs4all-providers</title>
   <rect width="128" height="128" rx="24" fill="#ffffff"/>
-  <path d="M20 78C31 45 44 44 58 70s26 25 50-20" fill="none" stroke="#7c3aed" stroke-width="9" stroke-linecap="round"/>
-  <path d="M20 90C36 74 48 74 64 89s29 17 44-4" fill="none" stroke="#0d9488" stroke-width="5" stroke-linecap="round" opacity=".82"/>
-  <circle cx="98" cy="39" r="10" fill="#f59e0b"/>
-  <text x="64" y="112" fill="#2e1065" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">providers</text>
+  <path d="M20 78C31 45 44 44 58 70s26 25 50-20" fill="none" stroke="#D946EF" stroke-width="9" stroke-linecap="round"/>
+  <path d="M20 90C36 74 48 74 64 89s29 17 44-4" fill="none" stroke="#058E96" stroke-width="5" stroke-linecap="round" opacity=".82"/>
+  <circle cx="98" cy="39" r="10" fill="#E9362D"/>
+  <text x="64" y="112" fill="#2e1065" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">n4v</text>
 </svg>
