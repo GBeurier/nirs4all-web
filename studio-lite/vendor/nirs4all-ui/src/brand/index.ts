@@ -10,7 +10,8 @@ export type Nirs4allBrandId =
   | "nirs4all"
   | "nirs4all-core"
   | "nirs4all-ui"
-  | "nirs4all-providers";
+  | "nirs4all-providers"
+  | "nirs4all-quality";
 
 export type Nirs4allBrandVariant = "icon" | "horizontal" | "stacked";
 
@@ -136,6 +137,27 @@ export const NIRS4ALL_BRANDS = [
       stacked: "assets/brands/nirs4all-providers/stacked.svg",
     },
     tags: ["providers", "datasets", "repository"],
+  },
+  {
+    id: "nirs4all-quality",
+    name: "nirs4all-quality",
+    shortName: "n4q",
+    packageName: "nirs4all-quality",
+    role: "Quality/lab custom host",
+    description: "Reusable quality-control brand for lab workflows built on nirs4all-ui/lab contracts.",
+    palette: {
+      primary: "#4F46E5",
+      secondary: NIRS4ALL_TEAL,
+      accent: NIRS4ALL_RED,
+      dark: "#1e1b4b",
+      surface: "#ffffff",
+    },
+    assets: {
+      icon: "assets/brands/nirs4all-quality/icon.svg",
+      horizontal: "assets/brands/nirs4all-quality/horizontal.svg",
+      stacked: "assets/brands/nirs4all-quality/stacked.svg",
+    },
+    tags: ["quality", "lab", "custom-host"],
   },
 ] as const satisfies readonly Nirs4allBrandDefinition[];
 

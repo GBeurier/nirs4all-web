@@ -48,10 +48,12 @@ describe("nirs4all-ui/brand", () => {
       "nirs4all-core",
       "nirs4all-ui",
       "nirs4all-providers",
+      "nirs4all-quality",
     ]);
     expect(isNirs4allBrandId("nirs4all-core")).toBe(true);
     expect(isNirs4allBrandId("unknown")).toBe(false);
     expect(getNirs4allBrandDefinition("nirs4all-ui").role).toBe("Reusable visual system");
+    expect(getNirs4allBrandDefinition("nirs4all-quality").tags).toContain("lab");
   });
 
   it("keeps every declared brand asset present in the package", () => {

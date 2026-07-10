@@ -5,7 +5,7 @@
  * Hosts can use the asset paths for packaged files or generate inline SVG
  * strings when they need app-local marks.
  */
-export type Nirs4allBrandId = "nirs4all" | "nirs4all-core" | "nirs4all-ui" | "nirs4all-providers";
+export type Nirs4allBrandId = "nirs4all" | "nirs4all-core" | "nirs4all-ui" | "nirs4all-providers" | "nirs4all-quality";
 export type Nirs4allBrandVariant = "icon" | "horizontal" | "stacked";
 export interface Nirs4allBrandPalette {
     primary: string;
@@ -116,6 +116,26 @@ export declare const NIRS4ALL_BRANDS: readonly [{
         readonly stacked: "assets/brands/nirs4all-providers/stacked.svg";
     };
     readonly tags: readonly ["providers", "datasets", "repository"];
+}, {
+    readonly id: "nirs4all-quality";
+    readonly name: "nirs4all-quality";
+    readonly shortName: "n4q";
+    readonly packageName: "nirs4all-quality";
+    readonly role: "Quality/lab custom host";
+    readonly description: "Reusable quality-control brand for lab workflows built on nirs4all-ui/lab contracts.";
+    readonly palette: {
+        readonly primary: "#4F46E5";
+        readonly secondary: "#058E96";
+        readonly accent: "#E9362D";
+        readonly dark: "#1e1b4b";
+        readonly surface: "#ffffff";
+    };
+    readonly assets: {
+        readonly icon: "assets/brands/nirs4all-quality/icon.svg";
+        readonly horizontal: "assets/brands/nirs4all-quality/horizontal.svg";
+        readonly stacked: "assets/brands/nirs4all-quality/stacked.svg";
+    };
+    readonly tags: readonly ["quality", "lab", "custom-host"];
 }];
 export declare function isNirs4allBrandId(value: string): value is Nirs4allBrandId;
 export declare function getNirs4allBrandDefinition(id: Nirs4allBrandId): Nirs4allBrandDefinition;
