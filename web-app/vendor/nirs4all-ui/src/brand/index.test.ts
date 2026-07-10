@@ -33,7 +33,7 @@ interface GeneratorBrand {
 }
 
 function readGeneratorBrands(): GeneratorBrand[] {
-  const source = readFileSync(generatorPath, "utf8");
+  const source = readFileSync(generatorPath, "utf8").replace(/\r\n?/g, "\n");
   const match = source.match(/const brands = (\[[\s\S]*?\]);\n\nfunction escapeXml/);
   if (!match?.[1]) {
     throw new Error("Unable to locate brand definitions in generate-brand-assets.mjs");
