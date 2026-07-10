@@ -9,3 +9,4 @@ Current brands:
 - `nirs4all-core`: Portable aggregate runtime
 - `nirs4all-ui`: Reusable visual system
 - `nirs4all-providers`: Soft-import provider bridge
+- `nirs4all-quality`: Quality/lab custom host

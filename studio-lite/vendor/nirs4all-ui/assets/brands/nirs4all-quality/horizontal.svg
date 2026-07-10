@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 132" role="img" aria-labelledby="nirs4all-quality-horizontal-title">
+  <title id="nirs4all-quality-horizontal-title">nirs4all-quality</title>
+  <rect width="520" height="132" rx="22" fill="#ffffff"/>
+  <g transform="translate(24 18)">
+    <rect width="96" height="96" rx="20" fill="#4F46E5" opacity=".12"/>
+    <path d="M14 58C25 28 37 28 49 54s24 26 40-15" fill="none" stroke="#4F46E5" stroke-width="8" stroke-linecap="round"/>
+    <path d="M14 72C29 58 39 59 53 72s25 14 37-2" fill="none" stroke="#058E96" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="78" cy="28" r="8" fill="#E9362D"/>
+  </g>
+  <text x="146" y="61" fill="#1e1b4b" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="800">nirs4all-quality</text>
+  <text x="146" y="92" fill="#475569" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="600">Quality/lab custom host</text>
+</svg>
