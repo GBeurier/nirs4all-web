@@ -55,7 +55,7 @@ type VariantChoice = { label: string; value?: unknown; param_overrides: ParamOve
 type VariantPlan = { variant_id: string; choices: Record<string, VariantChoice>; fingerprint: string; seed?: number }
 
 /**
- * Map a studio-lite element (a preprocessing step, by index, or the model) to the
+ * Map a web-app element (a preprocessing step, by index, or the model) to the
  * compat node_id dag-ml mints for it. dag-ml's compat importer mints one id per
  * operator step from a SINGLE `node_counter` (dsl.rs `next_node_id` / 2486–2490),
  * advancing it for EVERY operator step — including bare string sugar like `"SNV"`

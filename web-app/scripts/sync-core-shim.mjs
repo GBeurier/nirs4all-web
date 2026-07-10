@@ -76,7 +76,7 @@ for (const file of files) {
 }
 
 if (check && drift) {
-  console.error(`${logPrefix} run \`npm run vendor:core\` from studio-lite.`)
+  console.error(`${logPrefix} run \`npm run vendor:core\` from web-app.`)
   process.exit(1)
 }
 

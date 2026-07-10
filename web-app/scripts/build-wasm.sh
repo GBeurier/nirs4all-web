@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build/stage the WebAssembly packages studio-lite consumes into src/engine/wasm/.
+# Build/stage the WebAssembly packages web-app consumes into src/engine/wasm/.
 #
 #   formats  : nirs4all-formats (vendor-format decode, ~58 families)   [wasm-pack --target web]
 #   io       : nirs4all-io      (dataset inference + DatasetSpec)       [wasm-pack --target web]

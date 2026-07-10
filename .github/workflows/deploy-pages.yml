@@ -1,6 +1,6 @@
 name: Deploy nirs4all-web to GitHub Pages
 
-# Builds the nirs4all-web single-page WASM app from studio-lite/ and publishes it to
+# Builds the nirs4all-web single-page WASM app from web-app/ and publishes it to
 # GitHub Pages (https://web.nirs4all.org/). The WASM packages are vendored in
 # the repo, and deployment is blocked by the same client-only/runtime gates used
 # by the RC branch.
@@ -9,7 +9,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'studio-lite/**'
+      - 'web-app/**'
       - '.github/actions/nirs4all-ui-sibling/**'
       - '.github/actions/nirs4all-core-sibling/**'
       - '.github/actions/nirs4all-studio-sibling/**'
@@ -31,14 +31,14 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: studio-lite
+        working-directory: web-app
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: studio-lite/package-lock.json
+          cache-dependency-path: web-app/package-lock.json
       - name: Provide nirs4all-ui sibling
         uses: ./.github/actions/nirs4all-ui-sibling
       - name: Provide nirs4all-core sibling
@@ -69,7 +69,7 @@ jobs:
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
-          path: studio-lite/dist
+          path: web-app/dist
 
   deploy:
     needs: build

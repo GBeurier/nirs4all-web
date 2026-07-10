@@ -23,7 +23,7 @@ It is a standalone browser client built on the npm/Node ecosystem (Vite + React 
 For the exhaustive, version-pinned dependency tree and its licenses, run:
 
 ```
-npx license-checker --summary      # from studio-lite/
+npx license-checker --summary      # from web-app/
 ```
 
 The client consumes the nirs4all WASM/core stack; the re-exported native libraries carry their own licenses (see each project).
