@@ -51,7 +51,7 @@ for (const rel of targetFiles) {
 
 if (check) {
   if (drift) {
-    console.error('[sync-ui-shim] drift detected; run `npm run vendor:ui` from studio-lite.')
+    console.error('[sync-ui-shim] drift detected; run `npm run vendor:ui` from web-app.')
     process.exit(1)
   }
   console.log('[sync-ui-shim] vendor/nirs4all-ui is up to date.')

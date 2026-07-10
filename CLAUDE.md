@@ -24,17 +24,17 @@ execution, or numerical methods here.** Fixes belong upstream in `../nirs4all-fo
 
 | Directory | Role | Authoritative doc |
 | --- | --- | --- |
-| `studio-lite/` | Active browser/WASM app and GitHub Pages deliverable. Upload -> explore/configure -> build pipeline -> run CV/refit -> results -> predict -> export. | `studio-lite/CLAUDE.md` |
+| `web-app/` | Active browser/WASM app and GitHub Pages deliverable. Upload -> explore/configure -> build pipeline -> run CV/refit -> results -> predict -> export. | `web-app/CLAUDE.md` |
 
 The older `single-page-WASM/` prototype has been removed from the working tree. Do not revive it
-unless explicitly asked; new browser work belongs in `studio-lite/`.
+unless explicitly asked; new browser work belongs in `web-app/`.
 
 ## Build / Test / Run
 
-Read `studio-lite/CLAUDE.md` before changing app code. The short command set is:
+Read `web-app/CLAUDE.md` before changing app code. The short command set is:
 
 ```bash
-cd studio-lite
+cd web-app
 export PATH="$HOME/.nvm/versions/node/v22.21.1/bin:$HOME/.cargo/bin:$PATH"
 npm install
 npm run typecheck
@@ -69,8 +69,8 @@ this app.
 
 ## Deployment
 
-GitHub Pages is built by `.github/workflows/deploy-pages.yml`, which builds `studio-lite/`
-(`npm ci && npm run build`, Node 22) and publishes `studio-lite/dist`.
+GitHub Pages is built by `.github/workflows/deploy-pages.yml`, which builds `web-app/`
+(`npm ci && npm run build`, Node 22) and publishes `web-app/dist`.
 
 The live Pages URL is:
 

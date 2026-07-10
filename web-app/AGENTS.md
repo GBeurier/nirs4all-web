@@ -34,7 +34,7 @@ Write focused Vitest tests next to the code they cover with the `.test.ts` suffi
 
 ## Commit & Pull Request Guidelines
 
-Recent history uses concise conventional-style commits such as `fix(studio-lite): ...`, `feat(studio-lite): ...`, and `perf(studio-lite): ...`. Keep commits scoped and imperative. PRs should include a short summary, linked issue or context, validation commands run, and screenshots or recordings for visible UI changes. Call out catalog, WASM, engine contract, or smoke-test-impacting changes explicitly.
+Recent history uses concise conventional-style commits such as `fix(web-app): ...`, `feat(web-app): ...`, and `perf(web-app): ...`. Keep commits scoped and imperative. PRs should include a short summary, linked issue or context, validation commands run, and screenshots or recordings for visible UI changes. Call out catalog, WASM, engine contract, or smoke-test-impacting changes explicitly.
 
 ## Agent-Specific Instructions
 

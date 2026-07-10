@@ -1,7 +1,7 @@
 # dependencies & build output
 **/node_modules/
-studio-lite/dist/
-studio-lite/dist-single/
+web-app/dist/
+web-app/dist-single/
 single-page-WASM/dist/
 single-page-WASM/pkg/
 *.log

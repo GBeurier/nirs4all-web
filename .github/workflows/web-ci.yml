@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, rc/v1-full-refactor]
     paths:
-      - 'studio-lite/**'
+      - 'web-app/**'
       - '.github/actions/nirs4all-ui-sibling/**'
       - '.github/actions/nirs4all-core-sibling/**'
       - '.github/actions/nirs4all-studio-sibling/**'
@@ -13,7 +13,7 @@ on:
   pull_request:
     branches: [main, rc/v1-full-refactor]
     paths:
-      - 'studio-lite/**'
+      - 'web-app/**'
       - '.github/actions/nirs4all-ui-sibling/**'
       - '.github/actions/nirs4all-core-sibling/**'
       - '.github/actions/nirs4all-studio-sibling/**'
@@ -25,19 +25,19 @@ permissions:
   contents: read
 
 jobs:
-  studio-lite:
+  web-app:
     name: nirs4all-web client-only gate
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: studio-lite
+        working-directory: web-app
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: studio-lite/package-lock.json
+          cache-dependency-path: web-app/package-lock.json
       - name: Provide nirs4all-ui sibling
         uses: ./.github/actions/nirs4all-ui-sibling
       - name: Provide nirs4all-core sibling

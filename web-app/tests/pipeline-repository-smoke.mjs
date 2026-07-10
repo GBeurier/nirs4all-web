@@ -427,7 +427,7 @@ if fold_sample_ids <= set(metadata_sample_ids):
     sample_id_source = "metadata.sample_id"
 elif fold_sample_ids <= set(synthetic_sample_ids):
     sample_ids = synthetic_sample_ids
-    sample_id_source = "studio-lite-csv-builder-synthetic-train-index"
+    sample_id_source = "web-app-csv-builder-synthetic-train-index"
 else:
     missing = sorted(fold_sample_ids - set(metadata_sample_ids) - set(synthetic_sample_ids))
     raise AssertionError(f"fold sample ids do not match metadata or synthetic ids: {missing[:10]}")

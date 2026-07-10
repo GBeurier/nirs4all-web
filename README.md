@@ -25,10 +25,10 @@ artifacts.
 
 ## What Lives Here
 
-- `studio-lite/`: current source directory for the nirs4all-web React/Vite app and GitHub Pages deliverable.
-- `.github/workflows/deploy-pages.yml`: builds the nirs4all-web app from `studio-lite/` and publishes the static app.
-- staged WASM packages under `studio-lite/src/engine/wasm/`, consumed from upstream sibling repos.
-- `studio-lite/vendor/nirs4all/`: vendored `nirs4all-core` JavaScript/WASM aggregate used by the
+- `web-app/`: current source directory for the nirs4all-web React/Vite app and GitHub Pages deliverable.
+- `.github/workflows/deploy-pages.yml`: builds the nirs4all-web app from `web-app/` and publishes the static app.
+- staged WASM packages under `web-app/src/engine/wasm/`, consumed from upstream sibling repos.
+- `web-app/vendor/nirs4all/`: vendored `nirs4all-core` JavaScript/WASM aggregate used by the
   browser runtime and checked for drift with `npm run check:core-shim`.
 
 There is no Python backend and no new numerical implementation here. Parser, dataset, DAG, and
@@ -38,7 +38,7 @@ chemometric fixes belong upstream in `nirs4all-formats`, `nirs4all-io`, `dag-ml`
 ## Run
 
 ```bash
-cd studio-lite
+cd web-app
 export PATH="$HOME/.nvm/versions/node/v22.21.1/bin:$HOME/.cargo/bin:$PATH"
 npm install
 npm run dev

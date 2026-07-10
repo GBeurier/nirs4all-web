@@ -10,7 +10,7 @@ import type { Selection } from './CanvasFlow'
 
 // The FOLDABLE-TREE editor for DAG containers. Ports nirs4all-studio's
 // PipelineTree/TreeNode interaction model (a collapsible, indented sub-tree per
-// container) trimmed to studio-lite's scope. A container node renders a header +
+// container) trimmed to web-app's scope. A container node renders a header +
 // a chevron that folds/unfolds its nested branches; each branch is an indented
 // lane holding a preprocessing sub-chain. Branch / Concat-transform / Merge fuse
 // features column-wise; Generator (OR / Cartesian) expands variants.

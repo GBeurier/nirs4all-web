@@ -1,6 +1,6 @@
 name: Provide nirs4all-ui sibling
 description: >-
-  Clones GBeurier/nirs4all-ui next to the workspace so studio-lite can verify
+  Clones GBeurier/nirs4all-ui next to the workspace so web-app can verify
   its vendored `vendor/nirs4all-ui` shim against the canonical source. Requires
   the branch matching the current ref when a ref is known, so RC branches cannot
   silently validate against nirs4all-ui@main.

@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VG_STRATEGY: "npm_package_json"
-      VG_MANIFEST: "studio-lite/package.json"
+      VG_MANIFEST: "web-app/package.json"
       VG_ATTR: ""
       VG_TAG_PREFIX: "v"
     steps:
