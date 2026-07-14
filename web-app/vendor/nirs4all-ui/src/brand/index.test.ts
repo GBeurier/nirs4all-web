@@ -1,113 +1,96 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import vm from "node:vm";
 
 import { describe, expect, it } from "vitest";
 
 import {
   NIRS4ALL_BRANDS,
-  generateNirs4allBrandSvg,
   getNirs4allBrandAssetPath,
   getNirs4allBrandDefinition,
+  getNirs4allBrandRasterPath,
   isNirs4allBrandId,
   listNirs4allBrands,
+  type Nirs4allBrandRaster,
+  type Nirs4allBrandVariant,
 } from "./index.js";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const generatorPath = resolve(repositoryRoot, "scripts/generate-brand-assets.mjs");
 
-interface GeneratorBrand {
-  id: string;
-  name: string;
-  shortName: string;
-  role: string;
-  palette: {
-    primary: string;
-    secondary: string;
-    accent: string;
-    dark: string;
-    surface: string;
-  };
-}
+const EXPECTED_IDS = [
+  "nirs4all",
+  "nirs4all-core",
+  "nirs4all-ui",
+  "nirs4all-studio",
+  "nirs4all-web",
+  "nirs4all-formats",
+  "nirs4all-io",
+  "nirs4all-methods",
+  "nirs4all-datasets",
+  "nirs4all-providers",
+  "nirs4all-benchmarks",
+  "nirs4all-repository",
+  "nirs4all-tools",
+  "nirs4all-papers",
+  "nirs4all-device",
+  "nirs4all-cluster",
+  "nirs4all-quality",
+  "dag-ml",
+  "dag-ml-data",
+];
 
-function readGeneratorBrands(): GeneratorBrand[] {
-  const source = readFileSync(generatorPath, "utf8").replace(/\r\n?/g, "\n");
-  const match = source.match(/const brands = (\[[\s\S]*?\]);\n\nfunction escapeXml/);
-  if (!match?.[1]) {
-    throw new Error("Unable to locate brand definitions in generate-brand-assets.mjs");
+const VARIANTS: readonly Nirs4allBrandVariant[] = ["icon", "horizontal", "horizontal-dark", "stacked", "stacked-dark"];
+const RASTERS: readonly Nirs4allBrandRaster[] = ["favicon", "icon-32", "icon-180", "icon-256", "icon-512", "og"];
+
+function generatorAccents(): Map<string, string> {
+  const source = readFileSync(generatorPath, "utf8");
+  const map = new Map<string, string>();
+  const pattern = /\{ id: "([^"]+)", accent: "(#[0-9A-Fa-f]{6})"/g;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(source)) !== null) {
+    map.set(match[1] as string, (match[2] as string).toLowerCase());
   }
-  return vm.runInNewContext(`(${match[1]})`) as GeneratorBrand[];
+  return map;
 }
 
 describe("nirs4all-ui/brand", () => {
-  it("publishes the expected reusable brand definitions", () => {
-    expect(listNirs4allBrands().map((brand) => brand.id)).toEqual([
-      "nirs4all",
-      "nirs4all-core",
-      "nirs4all-ui",
-      "nirs4all-providers",
-      "nirs4all-quality",
-    ]);
-    expect(isNirs4allBrandId("nirs4all-core")).toBe(true);
+  it("publishes the full ecosystem brand manifest", () => {
+    expect(listNirs4allBrands().map((brand) => brand.id)).toEqual(EXPECTED_IDS);
+    expect(isNirs4allBrandId("nirs4all-studio")).toBe(true);
     expect(isNirs4allBrandId("unknown")).toBe(false);
-    expect(getNirs4allBrandDefinition("nirs4all-ui").role).toBe("Reusable visual system");
+    expect(getNirs4allBrandDefinition("nirs4all-ui").role).toBe("Shared visual system");
     expect(getNirs4allBrandDefinition("nirs4all-quality").tags).toContain("lab");
   });
 
-  it("keeps every declared brand asset present in the package", () => {
+  it("vendors every declared brand's real SVG marks", () => {
     for (const brand of NIRS4ALL_BRANDS) {
-      for (const variant of ["icon", "horizontal", "stacked"] as const) {
+      for (const variant of VARIANTS) {
         const path = getNirs4allBrandAssetPath(brand, variant);
-        const asset = readFileSync(resolve(repositoryRoot, path), "utf8");
         expect(path).toBe(`assets/brands/${brand.id}/${variant}.svg`);
-        expect(asset).toContain("<svg");
-        expect(asset).toContain(brand.name);
+        const svg = readFileSync(resolve(repositoryRoot, path), "utf8");
+        expect(svg).toContain("<svg");
+      }
+      const icon = readFileSync(resolve(repositoryRoot, getNirs4allBrandAssetPath(brand, "icon")), "utf8");
+      expect(icon.toLowerCase()).toContain(brand.accent.toLowerCase());
+
+      for (const raster of RASTERS) {
+        const rasterPath = getNirs4allBrandRasterPath(brand, raster);
+        expect(statSync(resolve(repositoryRoot, rasterPath)).size).toBeGreaterThan(0);
       }
     }
   });
 
-  it("keeps generated brand assets and mirrored definitions in sync", () => {
-    execFileSync(process.execPath, [generatorPath, "--check"], {
-      cwd: repositoryRoot,
-      stdio: "pipe",
-    });
-
-    const generatorBrands = readGeneratorBrands();
-    expect(generatorBrands.map((brand) => brand.id)).toEqual(NIRS4ALL_BRANDS.map((brand) => brand.id));
-
-    for (const generatorBrand of generatorBrands) {
-      if (!isNirs4allBrandId(generatorBrand.id)) {
-        throw new Error(`Unknown generator brand id: ${generatorBrand.id}`);
-      }
-      const packageBrand = getNirs4allBrandDefinition(generatorBrand.id);
-      expect({
-        id: packageBrand.id,
-        name: packageBrand.name,
-        shortName: packageBrand.shortName,
-        role: packageBrand.role,
-        palette: packageBrand.palette,
-      }).toEqual(generatorBrand);
+  it("keeps the manifest and the vendoring script in sync", () => {
+    const accents = generatorAccents();
+    expect([...accents.keys()]).toEqual(EXPECTED_IDS);
+    for (const brand of NIRS4ALL_BRANDS) {
+      expect(accents.get(brand.id)).toBe(brand.accent.toLowerCase());
     }
   });
 
-  it("generates deterministic inline svg marks", () => {
-    const horizontal = generateNirs4allBrandSvg("nirs4all-core");
-    const icon = generateNirs4allBrandSvg("nirs4all-ui", { variant: "icon", animated: true });
-    const stacked = generateNirs4allBrandSvg("nirs4all-providers", { variant: "stacked", dark: true });
-    const animatedHorizontal = generateNirs4allBrandSvg("nirs4all-core", {
-      variant: "horizontal",
-      animated: true,
-    });
-
-    expect(horizontal).toContain("nirs4all-core");
-    expect(horizontal).toContain("Portable aggregate runtime");
-    expect(icon).toContain("repeatCount=\"indefinite\"");
-    expect(icon).toContain("id=\"nirs4all-ui-icon-wave\"");
-    expect(icon).toContain("stroke-dasharray=\"42 38\"");
-    expect(icon).not.toContain("href=\"#icon-wave\"");
-    expect(animatedHorizontal).toContain("id=\"nirs4all-core-horizontal-wave\"");
-    expect(stacked).toContain("#ffffff");
+  it("passes the vendored-kit verification", () => {
+    execFileSync(process.execPath, [generatorPath, "--check"], { cwd: repositoryRoot, stdio: "pipe" });
   });
 });

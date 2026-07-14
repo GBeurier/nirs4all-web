@@ -115,10 +115,18 @@ export class WorkerEngine implements Engine {
   }
 
   run(ds: MaterializedDataset, dsl: PipelineDSL, opts: RunOptions = {}): Promise<RunResult> {
-    // allowFallback is a plain opt-in flag → forward it into the worker payload (onProgress/
-    // signal stay main-thread). The worker always emits a neutral RtResult envelope
-    // beside the UI RunResult, and the facade attaches it for export/parity consumers.
-    return this.call<RunResult>({ type: 'run', ds, dsl, allowFallback: opts.allowFallback }, opts)
+    // Plain serializable flags/options are forwarded into the worker payload
+    // (onProgress/signal stay main-thread, and function publishers cannot cross
+    // postMessage). The worker always emits a neutral RtResult envelope beside
+    // the UI RunResult, and the facade attaches it for export/parity consumers.
+    return this.call<RunResult>({
+      type: 'run',
+      ds,
+      dsl,
+      allowFallback: opts.allowFallback,
+      robustnessEvidencePublicationHandoff: opts.robustnessEvidencePublicationHandoff,
+      robustnessEvidenceSidecar: opts.robustnessEvidenceSidecar,
+    }, opts)
   }
 
   predict(model: FittedPipeline, Xnew: Float64Array, nSamples: number, nFeatures: number): Promise<PredictResult> {

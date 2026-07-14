@@ -88,10 +88,15 @@ function collectSourceFiles(base) {
 
 function collectTrackedSourceFiles(base) {
   try {
-    return execFileSync('git', ['-C', base, 'ls-tree', '-r', '-z', '--name-only', 'HEAD', '--', 'package.json', 'README.md', 'src', 'assets'], {
+    const tracked = execFileSync('git', ['-C', base, 'ls-files', '-z', '--', 'package.json', 'README.md', 'src', 'assets'], {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'ignore'],
     })
+    const untracked = execFileSync('git', ['-C', base, 'ls-files', '-z', '--others', '--exclude-standard', '--', 'package.json', 'README.md', 'src', 'assets'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+    return `${tracked}\0${untracked}`
       .split('\0')
       .filter((rel) => rel && existsSync(resolve(base, rel)))
       .sort()
@@ -107,15 +112,7 @@ function collectTrackedSourceFiles(base) {
 
 function readSourceFile(absPath, relPath) {
   if (relPath.startsWith('dist/')) return readFileSync(absPath)
-  let content
-  try {
-    content = execFileSync('git', ['-C', upstream, 'show', `HEAD:${relPath}`], {
-      stdio: ['ignore', 'pipe', 'ignore'],
-    })
-  } catch {
-    content = readFileSync(absPath)
-  }
-  return normalizeForWeb(relPath, content)
+  return normalizeForWeb(relPath, readFileSync(absPath))
 }
 
 function normalizeForWeb(relPath, content) {

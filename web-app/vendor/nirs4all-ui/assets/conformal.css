@@ -1,0 +1,323 @@
+/* nirs4all-ui — default styles for the nested conformal prediction tree.
+ *
+ * The component (`nirs4all-ui/components` → ConformalPredictionTree) renders an
+ * HTML `<details>` tree with inline-SVG nesting glyphs; data colors (band
+ * shades, prediction/covered/missed markers) are set inline, so this stylesheet
+ * themes only the chrome: tier/sample cards, chevrons, chips, legend, and the
+ * per-coverage level rows. It reads the shared nirs4all design tokens when
+ * present (load `nirs4all-default.css` or `theme.css`) and degrades to hardcoded
+ * fallbacks otherwise.
+ *
+ * Consumed as `nirs4all-ui/assets/conformal.css`.
+ */
+
+.n4conf-tree {
+  --n4conf-surface: var(--n4-color-surface, #ffffff);
+  --n4conf-surface-alt: var(--n4-color-bg-alt, #f8fafc);
+  --n4conf-border: var(--n4-color-border, #e2e8f0);
+  --n4conf-text: var(--n4-color-text, #0f172a);
+  --n4conf-muted: var(--n4-color-muted, #64748b);
+  --n4conf-success: var(--n4-color-success, #059669);
+  --n4conf-warning: var(--n4-color-warning, #d97706);
+  --n4conf-danger: var(--n4-color-danger, #e11d48);
+  --n4conf-neutral: var(--n4-color-muted, #64748b);
+  --n4conf-accent: var(--n4-color-primary, #0d9488);
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: var(--n4-font-sans, "Inter", -apple-system, system-ui, sans-serif);
+  color: var(--n4conf-text);
+  font-size: 13px;
+}
+
+/* tone → accent color (used by tiers, chips, guarantee) */
+.n4conf-tree [data-tone="success"] { --n4conf-tone: var(--n4conf-success); }
+.n4conf-tree [data-tone="warning"] { --n4conf-tone: var(--n4conf-warning); }
+.n4conf-tree [data-tone="danger"]  { --n4conf-tone: var(--n4conf-danger); }
+.n4conf-tree [data-tone="neutral"],
+.n4conf-tree [data-tone="muted"]   { --n4conf-tone: var(--n4conf-neutral); }
+.n4conf-tree [data-tone="error"]   { --n4conf-tone: var(--n4conf-danger); }
+
+/* ---- guarantee header ---- */
+.n4conf-guarantee {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--n4conf-border);
+  border-left: 3px solid var(--n4conf-tone, var(--n4conf-accent));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--n4conf-tone, var(--n4conf-accent)) 5%, var(--n4conf-surface));
+}
+.n4conf-guarantee-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--n4conf-tone, var(--n4conf-accent));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--n4conf-tone, var(--n4conf-accent)) 22%, transparent);
+  flex: none;
+}
+.n4conf-guarantee-label {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.n4conf-guarantee-meta {
+  font-family: var(--n4-font-mono, "JetBrains Mono", monospace);
+  font-size: 11px;
+  color: var(--n4conf-muted);
+  margin-left: auto;
+}
+
+/* ---- legend ---- */
+.n4conf-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  padding: 0 2px;
+  font-size: 11px;
+  color: var(--n4conf-muted);
+}
+.n4conf-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.n4conf-legend-ramp {
+  gap: 2px;
+}
+.n4conf-legend-ramp-label {
+  margin-left: 4px;
+  font-family: var(--n4-font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+}
+.n4conf-swatch {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+}
+.n4conf-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1.5px var(--n4conf-surface);
+}
+.n4conf-diamond {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  transform: rotate(45deg);
+  box-shadow: 0 0 0 1.5px var(--n4conf-surface);
+}
+
+/* ---- tier ---- */
+.n4conf-tier {
+  border: 1px solid var(--n4conf-border);
+  border-left: 3px solid var(--n4conf-tone, var(--n4conf-neutral));
+  border-radius: 8px;
+  background: var(--n4conf-surface);
+  overflow: hidden;
+}
+.n4conf-tier-summary,
+.n4conf-sample-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.n4conf-tier-summary::-webkit-details-marker,
+.n4conf-sample-summary::-webkit-details-marker { display: none; }
+.n4conf-tier-summary:hover {
+  background: color-mix(in srgb, var(--n4conf-tone, var(--n4conf-accent)) 6%, transparent);
+}
+.n4conf-chevron {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-right: 1.6px solid var(--n4conf-muted);
+  border-bottom: 1.6px solid var(--n4conf-muted);
+  transform: rotate(-45deg);
+  transition: transform 140ms ease;
+  margin-right: 1px;
+}
+details[open] > .n4conf-tier-summary > .n4conf-chevron,
+details[open] > .n4conf-sample-summary > .n4conf-chevron {
+  transform: rotate(45deg);
+}
+.n4conf-tier-label {
+  font-weight: 700;
+  color: var(--n4conf-tone, var(--n4conf-text));
+}
+.n4conf-tier-desc {
+  color: var(--n4conf-muted);
+  font-size: 11.5px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.n4conf-tier-stats {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex: none;
+}
+.n4conf-badge {
+  font-family: var(--n4-font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--n4conf-tone, var(--n4conf-neutral));
+  border-radius: 999px;
+  padding: 1px 8px;
+  min-width: 20px;
+  text-align: center;
+}
+.n4conf-share {
+  font-family: var(--n4-font-mono, monospace);
+  font-size: 11px;
+  color: var(--n4conf-muted);
+}
+.n4conf-meanwidth {
+  font-family: var(--n4-font-mono, monospace);
+  font-size: 10.5px;
+  color: var(--n4conf-muted);
+}
+
+/* ---- sample node ---- */
+.n4conf-samples {
+  display: flex;
+  flex-direction: column;
+  padding: 2px 8px 8px 18px;
+  gap: 2px;
+}
+.n4conf-sample {
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+.n4conf-sample[open] {
+  border-color: var(--n4conf-border);
+  background: var(--n4conf-surface-alt);
+}
+.n4conf-sample-summary {
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+.n4conf-sample-summary:hover {
+  background: color-mix(in srgb, var(--n4conf-accent) 7%, transparent);
+}
+.n4conf-sample-id {
+  font-family: var(--n4-font-mono, monospace);
+  font-size: 11.5px;
+  font-weight: 600;
+  min-width: 44px;
+}
+.n4conf-sample-pred {
+  font-family: var(--n4-font-mono, monospace);
+  font-size: 11px;
+  color: var(--n4conf-muted);
+  min-width: 64px;
+}
+.n4conf-glyph {
+  flex: none;
+  border: 1px solid var(--n4conf-border);
+  border-radius: 4px;
+  background: var(--n4conf-surface);
+}
+.n4conf-chip {
+  margin-left: auto;
+  flex: none;
+  font-family: var(--n4-font-mono, monospace);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: var(--n4conf-tone, var(--n4conf-neutral));
+  background: color-mix(in srgb, var(--n4conf-tone, var(--n4conf-neutral)) 14%, transparent);
+}
+
+/* ---- per-coverage level rows ---- */
+.n4conf-levels {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 2px 8px 8px 26px;
+}
+.n4conf-level {
+  display: grid;
+  grid-template-columns: 40px 62px minmax(120px, 1fr) 84px 58px 16px;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+.n4conf-level[data-covered="yes"] { background: color-mix(in srgb, var(--n4conf-success) 9%, transparent); }
+.n4conf-level[data-covered="no"]  { background: color-mix(in srgb, var(--n4conf-danger) 9%, transparent); }
+.n4conf-level-cov {
+  font-family: var(--n4-font-mono, monospace);
+  font-weight: 700;
+}
+.n4conf-level-qhat,
+.n4conf-level-range,
+.n4conf-level-width {
+  font-family: var(--n4-font-mono, monospace);
+  color: var(--n4conf-muted);
+  font-variant-numeric: tabular-nums;
+}
+.n4conf-level-range { color: var(--n4conf-text); }
+.n4conf-level-bar {
+  position: relative;
+  height: 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--n4conf-muted) 16%, transparent);
+  overflow: hidden;
+}
+.n4conf-level-bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+}
+.n4conf-level-width { text-align: right; }
+.n4conf-level-mark {
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
+.n4conf-level-mark[data-covered="yes"] { color: var(--n4conf-success); }
+.n4conf-level-mark[data-covered="no"]  { color: var(--n4conf-danger); }
+
+.n4conf-more {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--n4conf-muted);
+  font-style: italic;
+}
+
+/* ---- dark surfaces (when design tokens are not loaded) ---- */
+:root[data-theme="dark"] .n4conf-tree,
+.n4-theme-dark .n4conf-tree {
+  --n4conf-surface: var(--n4-color-surface, #1e1e1d);
+  --n4conf-surface-alt: var(--n4-color-bg-alt, #232322);
+  --n4conf-border: var(--n4-color-border, rgba(255, 255, 255, 0.14));
+  --n4conf-text: var(--n4-color-text, rgba(255, 255, 255, 0.92));
+  --n4conf-muted: var(--n4-color-muted, rgba(255, 255, 255, 0.62));
+  --n4conf-success: var(--n4-color-success, #34d399);
+  --n4conf-warning: var(--n4-color-warning, #fbbf24);
+  --n4conf-danger: var(--n4-color-danger, #fb7185);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .n4conf-chevron,
+  .n4viz-conf-band { transition: none; }
+}

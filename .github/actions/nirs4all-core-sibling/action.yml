@@ -13,22 +13,14 @@ runs:
         rm -rf "$sibling"
         git clone --depth 1 https://github.com/GBeurier/nirs4all-core.git "$sibling"
 
-        requested="${NIRS4ALL_CORE_REF:-}"
-        current="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
-        base="${GITHUB_BASE_REF:-}"
-        if [ -n "$requested" ]; then
-          ref="$requested"
-        elif [ "$current" = "rc/v1-full-refactor" ] || [ "$base" = "rc/v1-full-refactor" ]; then
-          ref="rc/v1-full-refactor"
-        elif [ "$current" = "main" ] || [ "$base" = "main" ]; then
-          ref="main"
+        ref="${NIRS4ALL_CORE_REF:-${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}}"
+        if [ -n "$ref" ]; then
+          git -C "$sibling" fetch --depth 1 origin "$ref" || {
+            echo "nirs4all-core sibling: missing required ref '$ref' upstream" >&2
+            exit 1
+          }
+          git -C "$sibling" checkout --detach FETCH_HEAD
+          echo "nirs4all-core sibling: using ref $ref @ $(git -C "$sibling" rev-parse HEAD)"
         else
-          ref="$current"
+          echo "nirs4all-core sibling: no GitHub ref provided; using default branch @ $(git -C "$sibling" rev-parse HEAD)"
         fi
-
-        git -C "$sibling" fetch --depth 1 origin "$ref" || {
-          echo "nirs4all-core sibling: missing required ref '$ref' upstream" >&2
-          exit 1
-        }
-        git -C "$sibling" checkout --detach FETCH_HEAD
-        echo "nirs4all-core sibling: using ref $ref @ $(git -C "$sibling" rev-parse HEAD)"

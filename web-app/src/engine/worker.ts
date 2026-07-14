@@ -8,13 +8,26 @@
 import { MainEngine } from './main-engine'
 import { isRtErrorException, rtErrorToWire } from './rt'
 import { runResultToRtResultEnvelope } from './rt-result'
-import type { RunOptions } from './types'
+import type {
+  NativeRobustnessEvidencePublicationHandoff,
+  RobustnessEvidenceSidecarOptions,
+  RunOptions,
+} from './types'
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope
 const engine = new MainEngine({ mainThread: false, useDagMl: ctx.location?.protocol !== 'blob:' })
 const controllers = new Map<string, AbortController>()
 
-interface RunMsg { type: 'run'; id: string; ds: Parameters<MainEngine['run']>[0]; dsl: Parameters<MainEngine['run']>[1]; allowFallback?: boolean; includeRtResult?: boolean }
+interface RunMsg {
+  type: 'run'
+  id: string
+  ds: Parameters<MainEngine['run']>[0]
+  dsl: Parameters<MainEngine['run']>[1]
+  allowFallback?: boolean
+  includeRtResult?: boolean
+  robustnessEvidencePublicationHandoff?: NativeRobustnessEvidencePublicationHandoff
+  robustnessEvidenceSidecar?: RobustnessEvidenceSidecarOptions
+}
 interface PredictMsg { type: 'predict'; id: string; model: Parameters<MainEngine['predict']>[0]; Xnew: Float64Array; nSamples: number; nFeatures: number }
 interface CancelMsg { type: 'cancel'; id: string }
 type InMsg = RunMsg | PredictMsg | CancelMsg
@@ -34,6 +47,8 @@ async function handle(msg: InMsg): Promise<void> {
     signal: ctrl.signal,
     onProgress: (progress) => ctx.postMessage({ type: 'progress', id: msg.id, progress }),
     allowFallback: msg.type === 'run' ? msg.allowFallback : undefined,
+    robustnessEvidencePublicationHandoff: msg.type === 'run' ? msg.robustnessEvidencePublicationHandoff : undefined,
+    robustnessEvidenceSidecar: msg.type === 'run' ? msg.robustnessEvidenceSidecar : undefined,
   }
   try {
     if (msg.type === 'run') {
