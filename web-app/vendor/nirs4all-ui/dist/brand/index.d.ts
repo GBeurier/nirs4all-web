@@ -1,145 +1,43 @@
 /**
- * Shared NIRS4ALL brand definitions and deterministic SVG generators.
+ * The canonical NIRS4ALL ecosystem brand manifest.
  *
- * This module is pure TypeScript: no DOM, no React, no filesystem access.
- * Hosts can use the asset paths for packaged files or generate inline SVG
- * strings when they need app-local marks.
+ * `nirs4all-ui` is the single home of the shared brand kit: the real,
+ * designer-made SVG marks for every ecosystem project live under
+ * `assets/brands/<id>/` and are vendored here verbatim from the flagship
+ * (`nirs4all-org`). Each project has its own distinct mark (a colored squircle
+ * tile with a white NIRS spectrum + peak dot and a project wordmark); the
+ * shared red accent (`#E9362D`) and teal master (`#058E96`) are constant.
+ *
+ * This module is pure TypeScript: no DOM, no React, no filesystem. It exposes
+ * the manifest and stable asset paths; consumers load the SVG files themselves.
  */
-export type Nirs4allBrandId = "nirs4all" | "nirs4all-core" | "nirs4all-ui" | "nirs4all-providers" | "nirs4all-quality";
-export type Nirs4allBrandVariant = "icon" | "horizontal" | "stacked";
+export type Nirs4allBrandId = "nirs4all" | "nirs4all-core" | "nirs4all-ui" | "nirs4all-studio" | "nirs4all-web" | "nirs4all-formats" | "nirs4all-io" | "nirs4all-methods" | "nirs4all-datasets" | "nirs4all-providers" | "nirs4all-benchmarks" | "nirs4all-repository" | "nirs4all-tools" | "nirs4all-papers" | "nirs4all-device" | "nirs4all-cluster" | "nirs4all-quality" | "dag-ml" | "dag-ml-data";
+export type Nirs4allBrandVariant = "icon" | "horizontal" | "horizontal-dark" | "stacked" | "stacked-dark";
+/** Raster assets shipped alongside the SVG marks for every brand. */
+export type Nirs4allBrandRaster = "favicon" | "icon-32" | "icon-180" | "icon-256" | "icon-512" | "og";
 export interface Nirs4allBrandPalette {
+    /** the brand's tile accent color */
     primary: string;
-    secondary: string;
+    /** the constant NIRS4ALL red accent (the "4" and the peak dot) */
     accent: string;
-    dark: string;
-    surface: string;
-}
-export interface Nirs4allBrandAssets {
-    icon: string;
-    horizontal: string;
-    stacked: string;
+    /** the flagship teal master token */
+    master: string;
 }
 export interface Nirs4allBrandDefinition {
     id: Nirs4allBrandId;
     name: string;
-    shortName: string;
-    packageName: string;
     role: string;
-    description: string;
+    /** primary accent color of the mark (the squircle tile fill) */
+    accent: string;
     palette: Nirs4allBrandPalette;
-    assets: Nirs4allBrandAssets;
     tags: readonly string[];
 }
-export interface GenerateNirs4allBrandSvgOptions {
-    variant?: Nirs4allBrandVariant;
-    title?: string;
-    dark?: boolean;
-    animated?: boolean;
-}
-export declare const NIRS4ALL_BRANDS: readonly [{
-    readonly id: "nirs4all";
-    readonly name: "NIRS4ALL";
-    readonly shortName: "n4a";
-    readonly packageName: "nirs4all";
-    readonly role: "Ecosystem umbrella";
-    readonly description: "Shared identity for NIRS4ALL applications, docs, releases, and custom hosts.";
-    readonly palette: {
-        readonly primary: "#058E96";
-        readonly secondary: "#00A5D2";
-        readonly accent: "#E9362D";
-        readonly dark: "#0f172a";
-        readonly surface: "#ffffff";
-    };
-    readonly assets: {
-        readonly icon: "assets/brands/nirs4all/icon.svg";
-        readonly horizontal: "assets/brands/nirs4all/horizontal.svg";
-        readonly stacked: "assets/brands/nirs4all/stacked.svg";
-    };
-    readonly tags: readonly ["ecosystem", "docs", "custom-host"];
-}, {
-    readonly id: "nirs4all-core";
-    readonly name: "nirs4all-core";
-    readonly shortName: "n4o";
-    readonly packageName: "nirs4all";
-    readonly role: "Portable aggregate runtime";
-    readonly description: "Low-level aggregate used by native, Python, R, WASM, Rust, MATLAB, and custom hosts.";
-    readonly palette: {
-        readonly primary: "#E9362D";
-        readonly secondary: "#058E96";
-        readonly accent: "#E9362D";
-        readonly dark: "#10233a";
-        readonly surface: "#ffffff";
-    };
-    readonly assets: {
-        readonly icon: "assets/brands/nirs4all-core/icon.svg";
-        readonly horizontal: "assets/brands/nirs4all-core/horizontal.svg";
-        readonly stacked: "assets/brands/nirs4all-core/stacked.svg";
-    };
-    readonly tags: readonly ["core", "runtime", "bindings"];
-}, {
-    readonly id: "nirs4all-ui";
-    readonly name: "nirs4all-ui";
-    readonly shortName: "n4u";
-    readonly packageName: "nirs4all-ui";
-    readonly role: "Reusable visual system";
-    readonly description: "Shared React components, visual tokens, brand assets, and app-host UI contracts.";
-    readonly palette: {
-        readonly primary: "#2563eb";
-        readonly secondary: "#058E96";
-        readonly accent: "#E9362D";
-        readonly dark: "#172554";
-        readonly surface: "#ffffff";
-    };
-    readonly assets: {
-        readonly icon: "assets/brands/nirs4all-ui/icon.svg";
-        readonly horizontal: "assets/brands/nirs4all-ui/horizontal.svg";
-        readonly stacked: "assets/brands/nirs4all-ui/stacked.svg";
-    };
-    readonly tags: readonly ["ui", "studio", "web"];
-}, {
-    readonly id: "nirs4all-providers";
-    readonly name: "nirs4all-providers";
-    readonly shortName: "n4v";
-    readonly packageName: "nirs4all-providers";
-    readonly role: "Soft-import provider bridge";
-    readonly description: "Optional provider clients for datasets, repositories, archives, and publication surfaces.";
-    readonly palette: {
-        readonly primary: "#D946EF";
-        readonly secondary: "#058E96";
-        readonly accent: "#E9362D";
-        readonly dark: "#2e1065";
-        readonly surface: "#ffffff";
-    };
-    readonly assets: {
-        readonly icon: "assets/brands/nirs4all-providers/icon.svg";
-        readonly horizontal: "assets/brands/nirs4all-providers/horizontal.svg";
-        readonly stacked: "assets/brands/nirs4all-providers/stacked.svg";
-    };
-    readonly tags: readonly ["providers", "datasets", "repository"];
-}, {
-    readonly id: "nirs4all-quality";
-    readonly name: "nirs4all-quality";
-    readonly shortName: "n4q";
-    readonly packageName: "nirs4all-quality";
-    readonly role: "Quality/lab custom host";
-    readonly description: "Reusable quality-control brand for lab workflows built on nirs4all-ui/lab contracts.";
-    readonly palette: {
-        readonly primary: "#4F46E5";
-        readonly secondary: "#058E96";
-        readonly accent: "#E9362D";
-        readonly dark: "#1e1b4b";
-        readonly surface: "#ffffff";
-    };
-    readonly assets: {
-        readonly icon: "assets/brands/nirs4all-quality/icon.svg";
-        readonly horizontal: "assets/brands/nirs4all-quality/horizontal.svg";
-        readonly stacked: "assets/brands/nirs4all-quality/stacked.svg";
-    };
-    readonly tags: readonly ["quality", "lab", "custom-host"];
-}];
+export declare const NIRS4ALL_BRANDS: readonly Nirs4allBrandDefinition[];
 export declare function isNirs4allBrandId(value: string): value is Nirs4allBrandId;
 export declare function getNirs4allBrandDefinition(id: Nirs4allBrandId): Nirs4allBrandDefinition;
 export declare function listNirs4allBrands(): readonly Nirs4allBrandDefinition[];
+/** Package-relative path to a vendored SVG mark, e.g. `assets/brands/nirs4all-studio/horizontal.svg`. */
 export declare function getNirs4allBrandAssetPath(brand: Nirs4allBrandId | Nirs4allBrandDefinition, variant: Nirs4allBrandVariant): string;
-export declare function generateNirs4allBrandSvg(brand: Nirs4allBrandId | Nirs4allBrandDefinition, options?: GenerateNirs4allBrandSvgOptions): string;
+/** Package-relative path to a vendored raster asset, e.g. `assets/brands/nirs4all-studio/favicon.ico`. */
+export declare function getNirs4allBrandRasterPath(brand: Nirs4allBrandId | Nirs4allBrandDefinition, raster: Nirs4allBrandRaster): string;
 //# sourceMappingURL=index.d.ts.map

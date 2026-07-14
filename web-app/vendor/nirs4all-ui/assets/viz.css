@@ -1,0 +1,152 @@
+/* nirs4all-ui — default styles for the reusable `viz` scientific charts.
+ *
+ * The chart components set data colors (bars, dots, cells, lines, node cards)
+ * inline as SVG attributes; this stylesheet only themes the elements that are
+ * left to CSS on purpose: axes, gridlines, connectors, and text. It reads the
+ * shared nirs4all design tokens when present (load `nirs4all-default.css` or
+ * `theme.css`) and degrades to hardcoded fallbacks otherwise.
+ *
+ * Consumed as `nirs4all-ui/assets/viz.css`.
+ */
+
+.n4viz {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  font-family: var(--n4-font-sans, "Inter", -apple-system, system-ui, sans-serif);
+}
+
+/* structural strokes (never set inline by the components) */
+.n4viz-grid {
+  stroke: var(--n4-color-border, #e2e8f0);
+  stroke-width: 1;
+}
+
+.n4viz-axis {
+  stroke: var(--n4-color-muted, #94a3b8);
+  stroke-opacity: 0.55;
+  stroke-width: 1;
+}
+
+.n4viz-edge {
+  stroke: var(--n4-color-border, #cbd5e1);
+  stroke-width: 1.5;
+}
+
+/* text roles */
+.n4viz-tick {
+  font-family: var(--n4-font-mono, "JetBrains Mono", monospace);
+  font-size: 10px;
+  fill: var(--n4-color-muted, #64748b);
+}
+
+.n4viz-axis-label {
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--n4-color-muted, #64748b);
+}
+
+.n4viz-badge {
+  font-family: var(--n4-font-mono, "JetBrains Mono", monospace);
+  font-size: 11px;
+  font-weight: 700;
+  fill: var(--n4-color-text, #0f172a);
+}
+
+.n4viz-cell-value {
+  font-family: var(--n4-font-mono, "JetBrains Mono", monospace);
+  font-size: 11px;
+  fill: var(--n4-color-text, #0f172a);
+}
+
+.n4viz-cell-value-strong {
+  fill: #ffffff;
+}
+
+.n4viz-legend-label {
+  font-size: 10px;
+  fill: var(--n4-color-muted, #64748b);
+}
+
+/* score-summary tiles */
+.n4viz-stat-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  fill: var(--n4-color-muted, #64748b);
+}
+
+.n4viz-stat-value {
+  font-family: var(--n4-font-mono, "JetBrains Mono", monospace);
+  font-size: 20px;
+  font-weight: 700;
+  fill: var(--n4-color-text, #0f172a);
+}
+
+.n4viz-stat-delta {
+  font-family: var(--n4-font-mono, "JetBrains Mono", monospace);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* pipeline node text */
+.n4viz-node-label {
+  font-size: 13px;
+  font-weight: 650;
+  fill: var(--n4-color-text, #0f172a);
+}
+
+.n4viz-node-detail {
+  font-size: 10px;
+  fill: var(--n4-color-muted, #64748b);
+}
+
+.n4viz-node-metric-value {
+  font-family: var(--n4-font-mono, "JetBrains Mono", monospace);
+  font-size: 10px;
+  font-weight: 700;
+  fill: var(--n4-color-text, #0f172a);
+}
+
+.n4viz-line-mean {
+  filter: drop-shadow(0 1px 2px rgba(13, 148, 136, 0.35));
+}
+
+/* conformal interval strip */
+.n4viz-conf-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  fill: var(--n4-color-text, #0f172a);
+}
+.n4viz-conf-readout {
+  font-family: var(--n4-font-mono, "JetBrains Mono", monospace);
+  font-size: 10.5px;
+  font-weight: 700;
+  fill: var(--n4-color-muted, #64748b);
+}
+.n4viz-conf-empty {
+  font-size: 12px;
+  fill: var(--n4-color-muted, #94a3b8);
+}
+.n4viz-conf-band {
+  transition: opacity 120ms ease;
+}
+/* outline the guarantee (target) band so it reads out of the nested stack */
+.n4viz-conf-band--target {
+  stroke: color-mix(in srgb, var(--n4-color-text, #0f172a) 26%, transparent);
+  stroke-width: 1;
+}
+.n4viz-conf-point {
+  stroke-linecap: round;
+}
+
+/* standalone dark fallback (when design tokens are not loaded) */
+:root[data-theme="dark"] .n4viz,
+.n4-theme-dark .n4viz {
+  --n4-color-border: rgba(255, 255, 255, 0.14);
+  --n4-color-muted: rgba(255, 255, 255, 0.62);
+  --n4-color-text: rgba(255, 255, 255, 0.92);
+}

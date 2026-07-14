@@ -1,0 +1,6 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+export function PredictionCard({ sampleId, predicted, unit, interval, targetLabel, meta, formatValue, children, className, headerClassName, sampleIdClassName, targetClassName, valueClassName, unitClassName, intervalClassName, metaListClassName, metaRowClassName, metaLabelClassName, metaValueClassName, }) {
+    const rows = meta ?? [];
+    return (_jsxs("article", { className: className, "data-sample-id": sampleId, children: [_jsxs("header", { className: headerClassName, children: [_jsx("span", { className: sampleIdClassName, children: sampleId }), targetLabel ? _jsx("span", { className: targetClassName, children: targetLabel }) : null] }), _jsxs("p", { children: [_jsx("strong", { className: valueClassName, children: formatValue ? formatValue(predicted) : predicted }), unit ? _jsx("span", { className: unitClassName, children: unit }) : null, interval ? _jsx("span", { className: intervalClassName, children: interval }) : null] }), rows.length > 0 ? (_jsx("dl", { className: metaListClassName, children: rows.map((row) => (_jsxs("div", { className: metaRowClassName, children: [_jsx("dt", { className: metaLabelClassName, children: row.label }), _jsx("dd", { className: metaValueClassName, children: row.value })] }, row.label))) })) : null, children] }));
+}
+//# sourceMappingURL=PredictionCard.js.map

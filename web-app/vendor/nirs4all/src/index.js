@@ -91,6 +91,83 @@ export const runtimeContracts = Object.freeze([
   }),
 ]);
 
+export const requiredKeywordRegistryEntries = Object.freeze([
+  'run.tuning',
+  'run.tuning.engine',
+  'run.tuning.space',
+  'run.tuning.force_params',
+  'run.tuning.score_data',
+  'run.tuning.score_data.conformal_calibration',
+  'predict.coverage',
+  'predict.all_predictions',
+  'robustness.scenarios.kind',
+  'robustness.scenarios.severity',
+  'robustness.scenarios.distribution',
+  'robustness.X',
+  'robustness.predictor',
+  'robustness.predictor_bundle',
+]);
+
+export const artifactContracts = Object.freeze([
+  Object.freeze({
+    id: 'conformal.calibrated_result',
+    schema: 'nirs4all.dagml.conformal_store.v1',
+    producer: 'full-python-nirs4all',
+    consumerLevel: Object.freeze(Object.fromEntries(runtimeSurfaces.map((surface) => [surface, 'metadata']))),
+    pythonSurface: 'nirs4all.calibrate / nirs4all.predict_calibrated / nirs4all.load_calibrated_result',
+    portableClaim: 'not-exposed-in-nirs4all-core',
+    optionalPayloadFields: Object.freeze([
+      'conformal_guarantee_status',
+      'calibration_replay_source',
+      'tuning_calibration_source',
+    ]),
+    requiredRegistryEntries: Object.freeze([]),
+  }),
+  Object.freeze({
+    id: 'robustness.summary',
+    schema: 'https://nirs4all.org/schemas/robustness-summary/v1',
+    producer: 'full-python-nirs4all',
+    consumerLevel: Object.freeze(Object.fromEntries(runtimeSurfaces.map((surface) => [surface, 'metadata']))),
+    pythonSurface: 'nirs4all.RobustnessReport.summary_artifact / nirs4all.robustness_summary_schema_json',
+    portableClaim: 'summary-json-contract-only',
+    optionalPayloadFields: Object.freeze(['conformal_guarantee_status', 'spectral_replay']),
+    requiredRegistryEntries: Object.freeze([]),
+  }),
+  Object.freeze({
+    id: 'tuning.summary',
+    schema: 'https://nirs4all.org/schemas/tuning-summary/v1',
+    producer: 'full-python-nirs4all',
+    consumerLevel: Object.freeze(Object.fromEntries(runtimeSurfaces.map((surface) => [surface, 'metadata']))),
+    pythonSurface: 'nirs4all.TuningResult.summary_artifact / nirs4all.tuning_summary_schema_json',
+    portableClaim: 'summary-json-contract-only',
+    optionalPayloadFields: Object.freeze(['sampler', 'pruner', 'seed', 'persistence', 'trials[*].diagnostics']),
+    requiredRegistryEntries: Object.freeze([]),
+  }),
+  Object.freeze({
+    id: 'tuning.ordered_search_space',
+    schema: 'https://nirs4all.org/schemas/tuning-ordered-search-space/v1',
+    producer: 'full-python-nirs4all',
+    consumerLevel: Object.freeze(Object.fromEntries(runtimeSurfaces.map((surface) => [surface, 'metadata']))),
+    pythonSurface: 'nirs4all.inspect_tuning_space / nirs4all.NativeTuning.inspect_space / nirs4all.tuning_space_schema_json / nirs4all CLI tuning-space',
+    portableClaim: 'search-space-json-contract-only',
+    optionalPayloadFields: Object.freeze([]),
+    requiredRegistryEntries: Object.freeze(['run.tuning.space', 'run.tuning.force_params']),
+  }),
+  Object.freeze({
+    id: 'keyword.registry',
+    schema: 'nirs4all.keyword_registry.v1',
+    producer: 'full-python-nirs4all',
+    consumerLevel: Object.freeze(Object.fromEntries(runtimeSurfaces.map((surface) => [surface, 'metadata']))),
+    pythonSurface: 'nirs4all.get_keyword_registry / nirs4all.keyword_registry_json / nirs4all.keyword_registry_schema_json / nirs4all.TUNING_OPTIMIZER_PERSISTENCE_KEYS / nirs4all.ROBUSTNESS_SCENARIO_KINDS / nirs4all.ROBUSTNESS_STOCHASTIC_SCENARIO_KINDS / nirs4all.ROBUSTNESS_SCENARIO_DISTRIBUTIONS / nirs4all.ROBUSTNESS_MODES / nirs4all.ROBUSTNESS_EXECUTABLE_MODES',
+    portableClaim: 'registry-json-contract-only',
+    optionalPayloadFields: Object.freeze([]),
+    publishedConstants: Object.freeze({
+      ROBUSTNESS_SCENARIO_DISTRIBUTIONS: Object.freeze(['normal', 'uniform']),
+    }),
+    requiredRegistryEntries: requiredKeywordRegistryEntries,
+  }),
+]);
+
 const parityRuntime = Object.freeze(Object.fromEntries(
   runtimeSurfaces.map((surface) => [surface, 'parity-validated']),
 ));
@@ -193,6 +270,7 @@ export function capabilityManifest() {
     aggregate: 'nirs4all-core',
     runtimeSurfaces,
     runtimeContracts,
+    artifactContracts,
     portableOperatorClasses,
     controllers: controllerCapabilities,
   });

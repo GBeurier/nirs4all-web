@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { isRtErrorException, type RtErrorException } from './rt'
-import type { MaterializedDataset, PipelineDSL, RunResult } from './types'
+import type { MaterializedDataset, NativeRobustnessEvidencePublicationHandoff, PipelineDSL, RunResult } from './types'
 
 const ctrl = vi.hoisted(() => ({
   loadLibn4mBackend: vi.fn(),
@@ -45,6 +45,19 @@ const dsl: PipelineDSL = {
   steps: [],
   model: { id: 'pls', type: 'PLS', params: { n_components: 1 } },
   cv: { folds: 2, seed: 7 },
+}
+
+const handoff: NativeRobustnessEvidencePublicationHandoff = {
+  kind: 'robustness_evidence_publication_handoff',
+  requested: true,
+  destination: 'result_metadata.robustness_evidence',
+  failClosed: true,
+  alignmentStrategies: ['sample_indices'],
+  publishedFields: [
+    'prediction_arrays.X',
+    'result_metadata.robustness_evidence.X',
+    'result_metadata.robustness_evidence.predictor_bundle',
+  ],
 }
 
 const directRun = (): RunResult => ({
@@ -100,5 +113,28 @@ describe('MainEngine runtime V1 browser cutover', () => {
     })
     expect(ctrl.loadLibn4mBackend).toHaveBeenCalledTimes(1)
     expect(ctrl.runPipeline).toHaveBeenCalledTimes(1)
+  })
+
+  it('resolves serializable sidecar options in MainEngine direct mode', async () => {
+    const { MainEngine } = await import('./main-engine')
+
+    const result = await new MainEngine({ mainThread: true, useDagMl: false }).run(ds, dsl, {
+      robustnessEvidencePublicationHandoff: handoff,
+      robustnessEvidenceSidecar: {
+        kind: 'indexeddb',
+        dbName: 'n4a-test',
+        storeName: 'arrays',
+      },
+    })
+
+    expect(result.robustnessEvidencePublicationTrace).toMatchObject({
+      kind: 'robustness_evidence_publication_trace',
+      publisher: 'nirs4all-web.host-sidecar',
+      status: 'failed',
+      requested: true,
+      destination: 'result_metadata.robustness_evidence',
+      reason: 'IndexedDB is unavailable in this runtime',
+      missing: handoff.publishedFields,
+    })
   })
 })

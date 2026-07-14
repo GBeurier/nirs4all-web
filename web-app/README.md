@@ -79,6 +79,28 @@ without the local vendors.
   backend. Orchestration is leakage-honest (preprocessing fit-on-train, OOF-by-`sampleId`) and
   refuses to train without targets. The Rust execution binding lives in
   `dag-ml/crates/dag-ml-wasm` (`execute_campaign_phase_json` + a `JsRuntimeController`).
+- **Native robustness handoff** (`RunOptions.robustnessEvidencePublicationHandoff`): browser/WASM
+  runs can receive the same Studio/native spectral/OOD replay publication request used by cluster
+  submitters. By default this app is client-side only and has no persistent prediction-array sidecar
+  store, so `MainEngine` records a fail-closed `RunResult.robustnessEvidencePublicationTrace` with
+  `status: "unsupported_runtime"`, the requested fields still listed as missing, and runtime counts
+  for the in-memory dataset/predictions/model. Hosts that provide a real browser sidecar store can
+  pass `RunOptions.robustnessEvidencePublisher`; the engine then reports `status: "published"` only
+  when the publisher returns every requested field, `status: "incomplete"` when fields remain
+  missing, and `status: "failed"` when the publisher throws. The built-in app still does not claim
+  that `prediction_arrays.X`, `result_metadata.robustness_evidence.X`, or
+  `result_metadata.robustness_evidence.predictor_bundle` were published unless such a host-sidecar
+  publisher is explicitly supplied. The same handoff can carry the Studio/Python keyword ids
+  (`predict.save_to_workspace`, `predict.workspace_metadata`, `predict.workspace_result_metadata`),
+  required effects, and `conformalArtifactPolicy="prediction_publisher_does_not_persist_conformal_artifacts"`;
+  Web preserves those fields as metadata and does not mint conformal guarantees. `src/engine/robustness-evidence-sidecar.ts` provides
+  a browser-sidecar publisher and an IndexedDB store factory for hosts that want to persist the
+  row-aligned `X` matrix and a `.n4a` predictor bundle locally; it is opt-in and must run in the same
+  runtime context as `MainEngine`. `MainEngine` also accepts the serializable
+  `RunOptions.robustnessEvidenceSidecar = { kind: "indexeddb" }` option directly and resolves it to
+  the same publisher. Served builds that run through `WorkerEngine` cannot send a function publisher
+  through `postMessage`; pass `robustnessEvidenceSidecar` instead, and the worker will create the
+  IndexedDB publisher in its own context.
 - **Node catalog** (`src/catalog/`): one entry per *exported* nirs4all-methods operator, carrying the
   real libn4m ABI symbols. `npm run validate:catalog` fails CI if any symbol isn't exported upstream
   (e.g. OPLS is intentionally excluded). **Adding a method = add one catalog entry** (+ a dispatch

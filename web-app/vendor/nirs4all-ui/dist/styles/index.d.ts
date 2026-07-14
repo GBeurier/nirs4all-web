@@ -4,7 +4,7 @@
  * Static CSS and motion files are shipped under `assets/`; this module exposes
  * typed paths and token names without importing CSS at runtime.
  */
-export type Nirs4allStyleAssetId = "default-theme" | "dataset-builder" | "quality-lab-theme" | "spectra-motion";
+export type Nirs4allStyleAssetId = "default-theme" | "dataset-builder" | "viz-charts" | "conformal-tree" | "quality-lab-theme" | "spectra-motion";
 export type Nirs4allStyleAssetKind = "css" | "svg-motion";
 export interface Nirs4allStyleAsset {
     id: Nirs4allStyleAssetId;
@@ -25,6 +25,18 @@ export declare const NIRS4ALL_STYLE_ASSETS: readonly [{
     readonly path: "assets/datasetBuilder.css";
     readonly packageExport: "nirs4all-ui/assets/datasetBuilder.css";
     readonly description: "Default multimodal DatasetBuilder wizard layout and role-mapping utility classes.";
+}, {
+    readonly id: "viz-charts";
+    readonly kind: "css";
+    readonly path: "assets/viz.css";
+    readonly packageExport: "nirs4all-ui/assets/viz.css";
+    readonly description: "Default axis, gridline, connector, and text styling for the reusable viz scientific charts.";
+}, {
+    readonly id: "conformal-tree";
+    readonly kind: "css";
+    readonly path: "assets/conformal.css";
+    readonly packageExport: "nirs4all-ui/assets/conformal.css";
+    readonly description: "Default chrome for the nested conformal prediction tree: tier/sample cards, chevrons, chips, legend, and per-coverage level rows.";
 }, {
     readonly id: "quality-lab-theme";
     readonly kind: "css";

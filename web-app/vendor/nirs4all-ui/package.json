@@ -37,6 +37,22 @@
       "types": "./dist/runtime/index.d.ts",
       "import": "./dist/runtime/index.js"
     },
+    "./conformal": {
+      "types": "./dist/conformal/index.d.ts",
+      "import": "./dist/conformal/index.js"
+    },
+    "./robustness": {
+      "types": "./dist/robustness/index.d.ts",
+      "import": "./dist/robustness/index.js"
+    },
+    "./keywordRegistry": {
+      "types": "./dist/keywordRegistry/index.d.ts",
+      "import": "./dist/keywordRegistry/index.js"
+    },
+    "./tuning": {
+      "types": "./dist/tuning/index.d.ts",
+      "import": "./dist/tuning/index.js"
+    },
     "./dataset": {
       "types": "./dist/dataset/index.d.ts",
       "import": "./dist/dataset/index.js"
@@ -44,6 +60,14 @@
     "./components": {
       "types": "./dist/components/index.d.ts",
       "import": "./dist/components/index.js"
+    },
+    "./viz": {
+      "types": "./dist/viz/index.d.ts",
+      "import": "./dist/viz/index.js"
+    },
+    "./dag": {
+      "types": "./dist/dag/index.d.ts",
+      "import": "./dist/dag/index.js"
     },
     "./brand": {
       "types": "./dist/brand/index.d.ts",
@@ -66,6 +90,7 @@
   "scripts": {
     "brand:generate": "node scripts/generate-brand-assets.mjs",
     "brand:check": "node scripts/generate-brand-assets.mjs --check",
+    "brand:sync": "node scripts/sync-ecosystem-brands.mjs",
     "build": "tsc -p tsconfig.build.json",
     "ci": "npm run prepublishOnly && npm run pack:smoke && npm run smoke:react-consumers",
     "pack:smoke": "npm pack --dry-run",

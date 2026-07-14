@@ -1,4 +1,5 @@
 import {
+  artifactContracts,
   capabilityManifest,
   controllerCapabilities,
   loadDagMlDataWasm as loadDagMlDataWasmRaw,
@@ -11,6 +12,7 @@ import {
   parseExecutionPlan,
   portableClassNames,
   predictPortablePipeline,
+  requiredKeywordRegistryEntries,
   runPortablePipeline,
   runtimeContracts,
   runtimeSurfaces,
@@ -18,12 +20,14 @@ import {
 } from 'nirs4all'
 
 export {
+  artifactContracts,
   capabilityManifest,
   controllerCapabilities,
   loadPipelineDefinition,
   parseExecutionPlan,
   portableClassNames,
   predictPortablePipeline,
+  requiredKeywordRegistryEntries,
   runPortablePipeline,
   runtimeContracts,
   runtimeSurfaces,
@@ -37,6 +41,7 @@ export type DatasetsMod = typeof import('./wasm/datasets/nirs4all_datasets_wasm.
 export type FormatsMod = typeof import('./wasm/formats/nirs4all_formats_wasm.js')
 export type IoMod = typeof import('./wasm/io/nirs4all_io_wasm.js')
 export type {
+  ArtifactContract,
   CapabilityManifest,
   ControllerCapability,
   PortableExecutionResult,
