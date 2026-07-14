@@ -265,6 +265,74 @@ export interface RunResult {
   diagnostics?: RtError[];
   /** neutral runtime-result wire envelope emitted by the worker for export/parity consumers */
   rtResult?: RtResultWire;
+  /** Native robustness evidence publication trace. In browser/WASM this is
+   *  fail-closed unless a future persistent prediction-array store is added. */
+  robustnessEvidencePublicationTrace?: RobustnessEvidencePublicationTrace;
+}
+
+export interface NativeRobustnessEvidencePublicationHandoff {
+  kind: 'robustness_evidence_publication_handoff';
+  requested: boolean;
+  destination: 'result_metadata.robustness_evidence' | string;
+  failClosed: boolean;
+  keywordIds?: string[];
+  requiredEffects?: string[];
+  conformalArtifactPolicy?: 'prediction_publisher_does_not_persist_conformal_artifacts' | string;
+  alignmentStrategies: Array<'sample_indices' | 'full_dataset_length' | 'unique_metadata_identity' | 'relation_manifest_identity'>;
+  publishedFields: [
+    'prediction_arrays.X',
+    'result_metadata.robustness_evidence.X',
+    'result_metadata.robustness_evidence.predictor_bundle',
+  ];
+}
+
+export interface RobustnessEvidencePublicationTrace {
+  kind: 'robustness_evidence_publication_trace';
+  publisher: 'nirs4all-web.wasm-local' | string;
+  status: 'unsupported_runtime' | 'published' | 'incomplete' | 'failed';
+  requested: boolean;
+  destination: string;
+  failClosed: boolean;
+  alignmentStrategies: string[];
+  publishedFields: string[];
+  published: Record<string, unknown>;
+  missing: string[];
+  reason?: string;
+  runtimeEvidence?: RobustnessEvidenceRuntimeEvidence;
+  metadata?: Record<string, unknown>;
+}
+
+export interface RobustnessEvidenceRuntimeEvidence {
+  datasetRows: number;
+  datasetFeatures: number;
+  refitPredictionCount: number;
+  cvPredictionCount: number;
+  hasInMemoryModel: boolean;
+}
+
+export interface RobustnessEvidencePublisherInput {
+  dataset: MaterializedDataset;
+  handoff: NativeRobustnessEvidencePublicationHandoff;
+  result: RunResult;
+  runtimeEvidence: RobustnessEvidenceRuntimeEvidence;
+}
+
+export interface RobustnessEvidencePublisherResult {
+  publisher?: string;
+  published: Record<string, unknown>;
+  missing?: string[];
+  reason?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export type RobustnessEvidencePublisher = (
+  input: RobustnessEvidencePublisherInput
+) => RobustnessEvidencePublisherResult | Promise<RobustnessEvidencePublisherResult>;
+
+export interface RobustnessEvidenceSidecarOptions {
+  kind: 'indexeddb';
+  dbName?: string;
+  storeName?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -290,6 +358,19 @@ export interface RunOptions {
    *  is strict and throws an `RtErrorException`; `true` records a typed `RtError`
    *  on `RunResult.diagnostics` and returns the diagnosed fallback result (B-018). */
   allowFallback?: boolean;
+  /** Optional Studio/native handoff asking the runtime to publish spectral/OOD
+   *  replay evidence. Browser/WASM currently records a fail-closed trace because
+   *  it has in-memory results but no persistent prediction-array sidecar store
+   *  unless a host-sidecar publisher is provided below. */
+  robustnessEvidencePublicationHandoff?: NativeRobustnessEvidencePublicationHandoff;
+  /** Optional host-sidecar publisher for browser runtimes that do provide a real
+   *  persistent prediction-array store. When omitted, the engine keeps the
+   *  existing fail-closed `unsupported_runtime` trace. */
+  robustnessEvidencePublisher?: RobustnessEvidencePublisher;
+  /** Serializable sidecar request for WorkerEngine. Unlike
+   *  `robustnessEvidencePublisher`, this can cross `postMessage`; the worker then
+   *  creates the concrete publisher in its own runtime context. */
+  robustnessEvidenceSidecar?: RobustnessEvidenceSidecarOptions;
 }
 export interface PredictResult {
   values: Float64Array;

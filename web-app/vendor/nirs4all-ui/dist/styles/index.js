@@ -20,6 +20,20 @@ export const NIRS4ALL_STYLE_ASSETS = [
         description: "Default multimodal DatasetBuilder wizard layout and role-mapping utility classes.",
     },
     {
+        id: "viz-charts",
+        kind: "css",
+        path: "assets/viz.css",
+        packageExport: "nirs4all-ui/assets/viz.css",
+        description: "Default axis, gridline, connector, and text styling for the reusable viz scientific charts.",
+    },
+    {
+        id: "conformal-tree",
+        kind: "css",
+        path: "assets/conformal.css",
+        packageExport: "nirs4all-ui/assets/conformal.css",
+        description: "Default chrome for the nested conformal prediction tree: tier/sample cards, chevrons, chips, legend, and per-coverage level rows.",
+    },
+    {
         id: "quality-lab-theme",
         kind: "css",
         path: "assets/theme.css",

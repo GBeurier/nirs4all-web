@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { existsSync, readFileSync } from 'node:fs'
 import {
+  artifactContracts,
   capabilityManifest,
   controllerCapabilities,
   loadDatasetsWasm,
   loadMethodsWasm,
   parseExecutionPlan,
   predictPortablePipeline,
+  requiredKeywordRegistryEntries,
   runPortablePipeline,
   runtimeContracts,
   runtimeSurfaces,
@@ -19,6 +21,23 @@ const coreRoot = new URL('../../../../nirs4all-core/', import.meta.url)
 const oraclePath = 'tests/parity/expected/portable_python_oracle.json'
 const oracleUrl = new URL(oraclePath, coreRoot)
 const fixtureDir = new URL('tests/parity/fixtures/', coreRoot)
+
+const EXPECTED_REQUIRED_KEYWORD_REGISTRY_ENTRIES = [
+  'run.tuning',
+  'run.tuning.engine',
+  'run.tuning.space',
+  'run.tuning.force_params',
+  'run.tuning.score_data',
+  'run.tuning.score_data.conformal_calibration',
+  'predict.coverage',
+  'predict.all_predictions',
+  'robustness.scenarios.kind',
+  'robustness.scenarios.severity',
+  'robustness.scenarios.distribution',
+  'robustness.X',
+  'robustness.predictor',
+  'robustness.predictor_bundle',
+]
 
 function maxAbsDiff(actual: number[], expected: number[]): number {
   expect(actual.length).toBe(expected.length)
@@ -69,9 +88,11 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(Array.isArray(controllerCapabilities)).toBe(true)
     expect(Array.isArray(runtimeSurfaces)).toBe(true)
     expect(Array.isArray(runtimeContracts)).toBe(true)
+    expect(Array.isArray(artifactContracts)).toBe(true)
     expect(typeof parseExecutionPlan).toBe('function')
     expect(typeof runPortablePipeline).toBe('function')
     expect(typeof predictPortablePipeline).toBe('function')
+    expect(Array.isArray(requiredKeywordRegistryEntries)).toBe(true)
     expect(typeof loadMethodsWasm).toBe('function')
     expect(typeof loadDatasetsWasm).toBe('function')
   })
@@ -82,6 +103,56 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(manifest.schema).toBe('nirs4all-core.capabilities.v1')
     expect(manifest.runtimeSurfaces).toEqual(['python', 'r', 'javascript_wasm', 'rust', 'matlab_octave'])
     expect(manifest.runtimeContracts).toEqual(runtimeContracts)
+    expect(manifest.artifactContracts).toEqual(artifactContracts)
+    expect(manifest.artifactContracts.map((item) => item.id)).toEqual([
+      'conformal.calibrated_result',
+      'robustness.summary',
+      'tuning.summary',
+      'tuning.ordered_search_space',
+      'keyword.registry',
+    ])
+    expect(manifest.artifactContracts.find((item) => item.id === 'robustness.summary')?.optionalPayloadFields).toEqual([
+      'conformal_guarantee_status',
+      'spectral_replay',
+    ])
+    expect(manifest.artifactContracts.find((item) => item.id === 'tuning.summary')?.optionalPayloadFields).toEqual([
+      'sampler',
+      'pruner',
+      'seed',
+      'persistence',
+      'trials[*].diagnostics',
+    ])
+    expect(manifest.artifactContracts.find((item) => item.id === 'tuning.ordered_search_space')).toMatchObject({
+      schema: 'https://nirs4all.org/schemas/tuning-ordered-search-space/v1',
+      portableClaim: 'search-space-json-contract-only',
+      requiredRegistryEntries: ['run.tuning.space', 'run.tuning.force_params'],
+    })
+    expect(
+      manifest.artifactContracts.find((item) => item.id === 'tuning.ordered_search_space')?.pythonSurface,
+    ).toContain('inspect_tuning_space')
+    expect(requiredKeywordRegistryEntries).toEqual(EXPECTED_REQUIRED_KEYWORD_REGISTRY_ENTRIES)
+    expect(manifest.artifactContracts.find((item) => item.id === 'keyword.registry')?.requiredRegistryEntries).toEqual(
+      requiredKeywordRegistryEntries,
+    )
+    expect(manifest.artifactContracts.find((item) => item.id === 'keyword.registry')?.pythonSurface).toContain(
+      'TUNING_OPTIMIZER_PERSISTENCE_KEYS',
+    )
+    expect(manifest.artifactContracts.find((item) => item.id === 'keyword.registry')?.pythonSurface).toContain(
+      'ROBUSTNESS_SCENARIO_KINDS',
+    )
+    expect(manifest.artifactContracts.find((item) => item.id === 'keyword.registry')?.pythonSurface).toContain(
+      'ROBUSTNESS_SCENARIO_DISTRIBUTIONS',
+    )
+    expect(manifest.artifactContracts.find((item) => item.id === 'keyword.registry')?.pythonSurface).toContain(
+      'ROBUSTNESS_MODES',
+    )
+    expect(manifest.artifactContracts.find((item) => item.id === 'keyword.registry')?.pythonSurface).toContain(
+      'ROBUSTNESS_EXECUTABLE_MODES',
+    )
+    expect(manifest.artifactContracts.find((item) => item.id === 'keyword.registry')?.publishedConstants).toEqual({
+      ROBUSTNESS_SCENARIO_DISTRIBUTIONS: ['normal', 'uniform'],
+    })
+    expect(manifest.artifactContracts.every((item) => item.consumerLevel.javascript_wasm === 'metadata')).toBe(true)
     expect(manifest.runtimeContracts.map((item) => item.surface)).toEqual(manifest.runtimeSurfaces)
     expect(manifest.runtimeContracts.filter((item) => item.serializedModelPredict).map((item) => item.surface)).toEqual([
       'javascript_wasm',

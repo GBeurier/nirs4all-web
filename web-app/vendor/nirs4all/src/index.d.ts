@@ -27,6 +27,18 @@ export interface RuntimeContract {
   predictEntrypoint: string | null;
 }
 
+export interface ArtifactContract {
+  id: 'conformal.calibrated_result' | 'robustness.summary' | 'tuning.summary' | 'tuning.ordered_search_space' | 'keyword.registry';
+  schema: string;
+  producer: 'full-python-nirs4all';
+  consumerLevel: Readonly<Record<RuntimeSurface, 'metadata'>>;
+  pythonSurface: string;
+  portableClaim: 'not-exposed-in-nirs4all-core' | 'summary-json-contract-only' | 'search-space-json-contract-only' | 'registry-json-contract-only';
+  optionalPayloadFields: readonly string[];
+  publishedConstants?: Readonly<Record<string, readonly string[]>>;
+  requiredRegistryEntries: readonly string[];
+}
+
 export interface ControllerCapability {
   id: string;
   kind: 'splitter' | 'transform' | 'model' | 'pipeline';
@@ -48,6 +60,7 @@ export interface CapabilityManifest {
   aggregate: 'nirs4all-core';
   runtimeSurfaces: readonly RuntimeSurface[];
   runtimeContracts: readonly RuntimeContract[];
+  artifactContracts: readonly ArtifactContract[];
   portableOperatorClasses: readonly string[];
   controllers: readonly ControllerCapability[];
 }
@@ -106,6 +119,8 @@ export const upstreams: readonly Upstream[];
 export const portableOperatorClasses: readonly string[];
 export const runtimeSurfaces: readonly RuntimeSurface[];
 export const runtimeContracts: readonly RuntimeContract[];
+export const requiredKeywordRegistryEntries: readonly string[];
+export const artifactContracts: readonly ArtifactContract[];
 export const controllerCapabilities: readonly ControllerCapability[];
 export function capabilityManifest(): CapabilityManifest;
 

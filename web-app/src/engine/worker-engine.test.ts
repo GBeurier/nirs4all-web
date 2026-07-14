@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { isRtErrorException, makeRtError, RtErrorException } from './rt'
 import type { RtResultWire } from './rt-result'
 import { WorkerEngine } from './worker-engine'
-import type { MaterializedDataset, PipelineDSL } from './types'
+import type { MaterializedDataset, NativeRobustnessEvidencePublicationHandoff, PipelineDSL } from './types'
 
 class FakeWorker extends EventTarget {
   terminated = false
@@ -35,6 +35,19 @@ const dsl = {
   steps: [],
   model: { id: 'm', type: 'PLS', params: { n_components: 1 } },
 } as PipelineDSL
+
+const handoff: NativeRobustnessEvidencePublicationHandoff = {
+  kind: 'robustness_evidence_publication_handoff',
+  requested: true,
+  destination: 'result_metadata.robustness_evidence',
+  failClosed: true,
+  alignmentStrategies: ['sample_indices'],
+  publishedFields: [
+    'prediction_arrays.X',
+    'result_metadata.robustness_evidence.X',
+    'result_metadata.robustness_evidence.predictor_bundle',
+  ],
+}
 
 const rtResult: RtResultWire = {
   schema_version: 1,
@@ -81,6 +94,41 @@ describe('WorkerEngine', () => {
 
     await expect(run).resolves.toEqual({ id: 'ok', rtResult })
     expect(fake.terminated).toBe(true)
+  })
+
+  it('forwards serializable robustness handoff and sidecar options to the worker', async () => {
+    const fake = new FakeWorker()
+    const engine = new WorkerEngine(() => fake as unknown as Worker)
+
+    const run = engine.run(ds, dsl, {
+      robustnessEvidencePublicationHandoff: handoff,
+      robustnessEvidencePublisher: () => ({
+        published: {},
+      }),
+      robustnessEvidenceSidecar: {
+        kind: 'indexeddb',
+        dbName: 'n4a-test',
+        storeName: 'arrays',
+      },
+    })
+    fake.dispatchEvent(
+      new MessageEvent('message', {
+        data: { type: 'result', id: 'job-1', result: { id: 'ok' } },
+      }),
+    )
+
+    await expect(run).resolves.toEqual({ id: 'ok' })
+    expect(fake.messages[0]).toMatchObject({
+      type: 'run',
+      id: 'job-1',
+      robustnessEvidencePublicationHandoff: handoff,
+      robustnessEvidenceSidecar: {
+        kind: 'indexeddb',
+        dbName: 'n4a-test',
+        storeName: 'arrays',
+      },
+    })
+    expect(fake.messages[0]).not.toHaveProperty('robustnessEvidencePublisher')
   })
 
   it('terminates the worker on abort so synchronous WASM work can be cancelled', async () => {

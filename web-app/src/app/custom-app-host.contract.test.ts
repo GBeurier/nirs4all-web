@@ -5,7 +5,14 @@ import { describe, expect, it } from 'vitest'
 import { DatasetPreviewCard, MetricValueBadge, RuntimeEngineBadge } from 'nirs4all-ui/components'
 import { buildDatasetPreview } from 'nirs4all-ui/dataset'
 import { buildRuntimeEngineStatus, runtimeEngineLabel } from 'nirs4all-ui/runtime'
-import { capabilityManifest, controllerCapabilities, runtimeContracts, runtimeSurfaces } from '@/engine/nirs4all-core'
+import {
+  artifactContracts,
+  capabilityManifest,
+  controllerCapabilities,
+  requiredKeywordRegistryEntries,
+  runtimeContracts,
+  runtimeSurfaces,
+} from '@/engine/nirs4all-core'
 import { isPortableCoreModel, predictPortableCore, tryRunPortableCore } from '@/engine/portable-core'
 import type { MaterializedDataset, PipelineDSL } from '@/engine/types'
 
@@ -42,6 +49,53 @@ describe('custom app host contract', () => {
     ])
     expect(manifest.runtimeSurfaces).toEqual(runtimeSurfaces)
     expect(manifest.runtimeContracts).toEqual(runtimeContracts)
+    expect(manifest.artifactContracts).toEqual(artifactContracts)
+    expect(artifactContracts.map((item) => item.id)).toEqual([
+      'conformal.calibrated_result',
+      'robustness.summary',
+      'tuning.summary',
+      'tuning.ordered_search_space',
+      'keyword.registry',
+    ])
+    expect(artifactContracts.find((item) => item.id === 'robustness.summary')?.optionalPayloadFields).toEqual([
+      'conformal_guarantee_status',
+      'spectral_replay',
+    ])
+    expect(artifactContracts.find((item) => item.id === 'tuning.summary')?.optionalPayloadFields).toEqual([
+      'sampler',
+      'pruner',
+      'seed',
+      'persistence',
+      'trials[*].diagnostics',
+    ])
+    expect(artifactContracts.find((item) => item.id === 'tuning.ordered_search_space')).toMatchObject({
+      schema: 'https://nirs4all.org/schemas/tuning-ordered-search-space/v1',
+      portableClaim: 'search-space-json-contract-only',
+      requiredRegistryEntries: ['run.tuning.space', 'run.tuning.force_params'],
+    })
+    expect(requiredKeywordRegistryEntries).toEqual([
+      'run.tuning',
+      'run.tuning.engine',
+      'run.tuning.space',
+      'run.tuning.force_params',
+      'run.tuning.score_data',
+      'run.tuning.score_data.conformal_calibration',
+      'predict.coverage',
+      'predict.all_predictions',
+      'robustness.scenarios.kind',
+      'robustness.scenarios.severity',
+      'robustness.scenarios.distribution',
+      'robustness.X',
+      'robustness.predictor',
+      'robustness.predictor_bundle',
+    ])
+    expect(artifactContracts.find((item) => item.id === 'keyword.registry')?.requiredRegistryEntries).toEqual(
+      requiredKeywordRegistryEntries,
+    )
+    expect(artifactContracts.find((item) => item.id === 'keyword.registry')?.publishedConstants).toEqual({
+      ROBUSTNESS_SCENARIO_DISTRIBUTIONS: ['normal', 'uniform'],
+    })
+    expect(artifactContracts.every((item) => item.consumerLevel.javascript_wasm === 'metadata')).toBe(true)
     expect(runtimeContracts.map((item) => item.surface)).toEqual(runtimeSurfaces)
     expect(runtimeContracts.filter((item) => item.serializedModelPredict).map((item) => item.surface)).toEqual([
       'javascript_wasm',

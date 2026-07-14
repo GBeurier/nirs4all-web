@@ -9,6 +9,8 @@ import { activeOrGenerator, dagMlAvailable, expandGeneratorVariants, hasUnsuppor
 import { assertAomBudget } from './guard'
 import { backendIdOf, predictPipeline, runGeneratorOr, runPipeline } from './orchestrate'
 import { isPortableCoreModel, predictPortableCore, tryRunPortableCore } from './portable-core'
+import { withWasmRobustnessEvidencePublicationTrace } from './robustness-evidence'
+import { createRobustnessEvidencePublisherFromSidecar } from './robustness-evidence-sidecar'
 import { makeRtError, RtErrorException } from './rt'
 import type { Engine, FittedPipeline, MaterializedDataset, PipelineDSL, PredictResult, RunOptions, RunResult } from './types'
 
@@ -32,12 +34,29 @@ export class MainEngine implements Engine {
 
   async run(ds: MaterializedDataset, dsl: PipelineDSL, opts: RunOptions = {}): Promise<RunResult> {
     const useDagMl = this.useDagMlEngine && dagMlAvailable()
+    const robustnessEvidencePublisher = opts.robustnessEvidencePublisher
+      ?? createRobustnessEvidencePublisherFromSidecar(opts.robustnessEvidenceSidecar)
     // Warn (or refuse) an oversized operator-adaptive screen before any compute,
     // so a heavy AOM/POP run is never silent (it runs in a worker, cancellable).
     assertAomBudget(ds, dsl, opts.onProgress, { mainThread: this.mainThread })
     const portable = await tryRunPortableCore(ds, dsl, opts)
-    if (portable) return portable
-    if (useDagMl) return this.dagml.run(ds, dsl, opts) // dag-ml executes; libn4m numerics
+    if (portable) {
+      return withWasmRobustnessEvidencePublicationTrace(
+        portable,
+        ds,
+        opts.robustnessEvidencePublicationHandoff,
+        robustnessEvidencePublisher,
+      )
+    }
+    if (useDagMl) {
+      const result = await this.dagml.run(ds, dsl, opts) // dag-ml executes; libn4m numerics
+      return withWasmRobustnessEvidencePublicationTrace(
+        result,
+        ds,
+        opts.robustnessEvidencePublicationHandoff,
+        robustnessEvidencePublisher,
+      )
+    }
     if (this.useDagMlEngine) {
       throw new RtErrorException(makeRtError({
         verb: 'run',
@@ -69,7 +88,7 @@ export class MainEngine implements Engine {
     if (activeOrGenerator(dsl)) {
       const minimize = ds.taskType === 'regression'
       const metric: RunResult['scoreMetric'] = minimize ? 'rmse' : 'accuracy'
-      return runGeneratorOr(
+      const result = await runGeneratorOr(
         dsl,
         expandGeneratorVariants(dsl),
         metric,
@@ -77,8 +96,20 @@ export class MainEngine implements Engine {
         (candidate) => runPipeline(ds, candidate, opts, backend),
         async (ranked) => ranked.reduce((best, r) => ((minimize ? r.metric < best.metric : r.metric > best.metric) ? r : best)).id,
       )
+      return withWasmRobustnessEvidencePublicationTrace(
+        result,
+        ds,
+        opts.robustnessEvidencePublicationHandoff,
+        robustnessEvidencePublisher,
+      )
     }
-    return runPipeline(ds, dsl, opts, backend)
+    const result = await runPipeline(ds, dsl, opts, backend)
+    return withWasmRobustnessEvidencePublicationTrace(
+      result,
+      ds,
+      opts.robustnessEvidencePublicationHandoff,
+      robustnessEvidencePublisher,
+    )
   }
 
   async predict(model: FittedPipeline, Xnew: Float64Array, nSamples: number, nFeatures: number): Promise<PredictResult> {
