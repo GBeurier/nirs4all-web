@@ -4,7 +4,7 @@
  * Static CSS and motion files are shipped under `assets/`; this module exposes
  * typed paths and token names without importing CSS at runtime.
  */
-export type Nirs4allStyleAssetId = "default-theme" | "dataset-builder" | "viz-charts" | "conformal-tree" | "quality-lab-theme" | "spectra-motion";
+export type Nirs4allStyleAssetId = "default-theme" | "dataset-builder" | "viz-charts" | "chains-explorer" | "conformal-tree" | "quality-lab-theme" | "spectra-motion";
 export type Nirs4allStyleAssetKind = "css" | "svg-motion";
 export interface Nirs4allStyleAsset {
     id: Nirs4allStyleAssetId;
@@ -31,6 +31,12 @@ export declare const NIRS4ALL_STYLE_ASSETS: readonly [{
     readonly path: "assets/viz.css";
     readonly packageExport: "nirs4all-ui/assets/viz.css";
     readonly description: "Default axis, gridline, connector, and text styling for the reusable viz scientific charts.";
+}, {
+    readonly id: "chains-explorer";
+    readonly kind: "css";
+    readonly path: "assets/chains.css";
+    readonly packageExport: "nirs4all-ui/assets/chains.css";
+    readonly description: "Default axis/gridline/baseline chart styling plus explorer chrome (toolbar, filter chips, panels) for the chain-effect explorer.";
 }, {
     readonly id: "conformal-tree";
     readonly kind: "css";

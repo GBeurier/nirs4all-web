@@ -25,6 +25,7 @@ spectra motion asset.
 | `dataset` | `nirs4all-ui/dataset` | Dataset preview contracts, counts, split summaries, spectral ranges, task labels, badges, and stats. |
 | `components` | `nirs4all-ui/components` | Stateless React components that render shared runtime, diagnostic, and metric affordances. |
 | `dag` | `nirs4all-ui/dag` | Interactive compiled-DAG explorer (layered layout, pan/zoom, culling/LOD, collapsible clusters) plus the pure engine and a `fromCompiledGraph` adapter for a serialized DAG-ML graph/plan. |
+| `chains` | `nirs4all-ui/chains` | Chain-effect explorer over a corpus of scored pipelines: per-node influence ranking, position (early/mid/late) and predecessor×successor order effects, and with/without distribution shift, with per-dataset rank/z normalization. Pure engine + charts + interactive explorer, plus a `parseChainEffectAnalysis` adapter for the serialized `dag-ml` artifact. |
 | `lab` | `nirs4all-ui/lab` | Quality/lab decision, sample lifecycle, health, model report, worklist, and budget display contracts plus presentational components. |
 | `datasetBuilder` | `nirs4all-ui/datasetBuilder` | Multisource dataset-builder wizard components and pure dataset-config helpers. |
 | `brand` | `nirs4all-ui/brand` | Ecosystem brand definitions, stable asset paths, palettes, and deterministic SVG generators. |
@@ -34,7 +35,7 @@ spectra motion asset.
 The root export also exposes namespace barrels:
 
 ```ts
-import { brand, conformal, dag, dataset, datasetBuilder, keywordRegistry, lab, robustness, runtime, score, styles, tuning } from "nirs4all-ui";
+import { brand, chains, conformal, dag, dataset, datasetBuilder, keywordRegistry, lab, robustness, runtime, score, styles, tuning } from "nirs4all-ui";
 ```
 
 Prefer domain imports when a consumer only needs one area:
@@ -49,6 +50,7 @@ import { createKeywordRegistryFieldViews, createKeywordRegistryWorkspacePredicti
 import { createTuningSearchSpacePreview, createTuningStudySummary, createTuningSummaryCard, createTuningTrialRows, parseOrderedTuningSearchSpaceArtifact, parseTuningResultArtifact, parseTuningSummaryArtifact } from "nirs4all-ui/tuning";
 import { DatasetBuilder } from "nirs4all-ui/datasetBuilder";
 import { DagGraphView, fromCompiledGraph } from "nirs4all-ui/dag";
+import { ChainExplorer, fromScoredChains, parseChainEffectAnalysis } from "nirs4all-ui/chains";
 import { DecisionBadge } from "nirs4all-ui/lab";
 import { generateNirs4allBrandSvg } from "nirs4all-ui/brand";
 import { getNirs4allStyleAsset } from "nirs4all-ui/styles";

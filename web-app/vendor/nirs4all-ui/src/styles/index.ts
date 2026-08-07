@@ -9,6 +9,7 @@ export type Nirs4allStyleAssetId =
   | "default-theme"
   | "dataset-builder"
   | "viz-charts"
+  | "chains-explorer"
   | "conformal-tree"
   | "quality-lab-theme"
   | "spectra-motion";
@@ -44,6 +45,13 @@ export const NIRS4ALL_STYLE_ASSETS = [
     path: "assets/viz.css",
     packageExport: "nirs4all-ui/assets/viz.css",
     description: "Default axis, gridline, connector, and text styling for the reusable viz scientific charts.",
+  },
+  {
+    id: "chains-explorer",
+    kind: "css",
+    path: "assets/chains.css",
+    packageExport: "nirs4all-ui/assets/chains.css",
+    description: "Default axis/gridline/baseline chart styling plus explorer chrome (toolbar, filter chips, panels) for the chain-effect explorer.",
   },
   {
     id: "conformal-tree",
