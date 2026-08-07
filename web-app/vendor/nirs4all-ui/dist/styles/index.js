@@ -27,6 +27,13 @@ export const NIRS4ALL_STYLE_ASSETS = [
         description: "Default axis, gridline, connector, and text styling for the reusable viz scientific charts.",
     },
     {
+        id: "chains-explorer",
+        kind: "css",
+        path: "assets/chains.css",
+        packageExport: "nirs4all-ui/assets/chains.css",
+        description: "Default axis/gridline/baseline chart styling plus explorer chrome (toolbar, filter chips, panels) for the chain-effect explorer.",
+    },
+    {
         id: "conformal-tree",
         kind: "css",
         path: "assets/conformal.css",
