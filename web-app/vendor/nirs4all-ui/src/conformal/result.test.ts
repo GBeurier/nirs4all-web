@@ -9,6 +9,7 @@ import {
   createConformalMetricRow,
   createConformalMetricRows,
   createConformalPredictionRows,
+  createConformalPredictionRowsFromDagMlPresentation,
   formatCalibrationReplaySource,
   formatConformalCoverage,
   formatTuningCalibrationSource,
@@ -18,8 +19,10 @@ import {
   isCalibratedRunResultArtifact,
   isCalibrationReplaySource,
   isConformalMetricSet,
+  isDagMlConformalPresentationV1,
   isTuningCalibrationSource,
   parseCalibratedRunResultArtifact,
+  parseDagMlConformalPresentationV1,
   parseConformalMetricSet,
 } from "./result.js";
 
@@ -108,7 +111,64 @@ const conformalMetric = {
   version: 1,
 } as const;
 
+const dagMlPresentation = {
+  binding_id: "prediction:main",
+  calibration_fingerprint: "a".repeat(64),
+  intervals: [{ coverage: 0.8, lower: [0, 1], qhat: 0.5, upper: [1, 2] }],
+  package_fingerprint: "b".repeat(64),
+  point_predictions: [0.5, 1.5],
+  presentation_fingerprint: "c".repeat(64),
+  replay_outcome_fingerprint: "d".repeat(64),
+  sample_ids: ["pred-a", "pred-b"],
+  schema_version: 1,
+  target_name: "protein",
+} as const;
+
 describe("conformal calibrated result view-model helpers", () => {
+  it("accepts the DAG-ML presentation contract without recalculating intervals", () => {
+    expect(isDagMlConformalPresentationV1(dagMlPresentation)).toBe(true);
+    const presentation = parseDagMlConformalPresentationV1(dagMlPresentation);
+
+    expect(createConformalPredictionRowsFromDagMlPresentation(presentation)).toEqual([
+      {
+        index: 0,
+        intervals: [{
+          coverage: 0.8,
+          coverageLabel: "80%",
+          lower: 0,
+          lowerLabel: "0.0000",
+          upper: 1,
+          upperLabel: "1.0000",
+          width: 1,
+          widthLabel: "1.0000",
+        }],
+        sampleId: "pred-a",
+        yPred: 0.5,
+        yPredLabel: "0.5000",
+      },
+      expect.objectContaining({
+        index: 1,
+        sampleId: "pred-b",
+        yPred: 1.5,
+      }),
+    ]);
+  });
+
+  it("refuses ambiguous or unbounded DAG-ML presentation data", () => {
+    expect(() => createConformalPredictionRowsFromDagMlPresentation(parseDagMlConformalPresentationV1({
+      ...dagMlPresentation,
+      intervals: [{ coverage: 0.8, lower: [null, null], qhat: null, upper: [null, null] }],
+    }))).toThrow("unbounded interval");
+    expect(() => parseDagMlConformalPresentationV1({
+      ...dagMlPresentation,
+      sample_ids: ["pred-a", "pred-a"],
+    })).toThrow("validated DAG-ML conformal presentation");
+    expect(() => parseDagMlConformalPresentationV1({
+      ...dagMlPresentation,
+      intervals: [{ coverage: 0.8, lower: [0.6, 1], qhat: 0.5, upper: [1, 2] }],
+    })).toThrow("validated DAG-ML conformal presentation");
+  });
+
   it("validates the public CalibratedRunResult.to_dict payload shape", () => {
     expect(isCalibratedRunResultArtifact(calibratedResult)).toBe(true);
     expect(parseCalibratedRunResultArtifact(calibratedResult).sample_ids).toEqual(["pred-a", "pred-b"]);

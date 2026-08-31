@@ -12,6 +12,8 @@ describe("nirs4all-ui/conformal barrel", () => {
     expect(typeof conformalFoundation.createConformalIntervalSummaryRows).toBe("function");
     expect(typeof conformalFoundation.createConformalMetricRows).toBe("function");
     expect(typeof conformalFoundation.createConformalPredictionRows).toBe("function");
+    expect(typeof conformalFoundation.parseDagMlConformalPresentationV1).toBe("function");
+    expect(typeof conformalFoundation.createConformalPredictionRowsFromDagMlPresentation).toBe("function");
     expect(conformalFoundation.formatConformalCoverage(0.8)).toBe("80%");
   });
 });

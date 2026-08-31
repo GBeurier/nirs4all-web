@@ -74,6 +74,39 @@ export interface CalibratedRunResultArtifact {
     sample_ids: string[];
     version: 1;
 }
+/**
+ * One interval column emitted by DAG-ML's validated conformal presentation.
+ *
+ * This is deliberately a display contract: its bounds have already been
+ * validated and materialized by DAG-ML.  The shared UI must never use it to
+ * calibrate, widen, narrow, or otherwise derive intervals.
+ */
+export interface DagMlConformalPresentationIntervalV1 {
+    coverage: number;
+    lower: Array<number | null>;
+    qhat: number | null;
+    upper: Array<number | null>;
+}
+/**
+ * Strict presentation projection emitted by
+ * ``dag_ml.build_conformal_presentation_v1``.
+ *
+ * The package/replay/calibration fingerprints and exact sample order make the
+ * payload safe to attach to a host prediction table without interpreting the
+ * training or calibration state in JavaScript.
+ */
+export interface DagMlConformalPresentationV1 {
+    binding_id: string;
+    calibration_fingerprint: string;
+    intervals: DagMlConformalPresentationIntervalV1[];
+    package_fingerprint: string;
+    point_predictions: number[];
+    presentation_fingerprint: string;
+    replay_outcome_fingerprint: string;
+    sample_ids: string[];
+    schema_version: 1;
+    target_name: string;
+}
 export interface ConformalIntervalSummaryRow {
     coverage: number;
     coverageLabel: string;
@@ -161,8 +194,11 @@ export declare function isConformalGuaranteeStatus(value: unknown): value is Con
 export declare function isConformalIntervalRecord(value: unknown): value is ConformalIntervalRecord;
 export declare function isCalibratedPredictionBlock(value: unknown): value is CalibratedPredictionBlock;
 export declare function isCalibratedRunResultArtifact(value: unknown): value is CalibratedRunResultArtifact;
+export declare function isDagMlConformalPresentationV1(value: unknown): value is DagMlConformalPresentationV1;
 export declare function isConformalMetricSet(value: unknown): value is ConformalMetricSet;
 export declare function parseCalibratedRunResultArtifact(value: unknown): CalibratedRunResultArtifact;
+/** Parse the closed, DAG-ML-owned conformal presentation wire contract. */
+export declare function parseDagMlConformalPresentationV1(value: unknown): DagMlConformalPresentationV1;
 export declare function parseConformalMetricSet(value: unknown): ConformalMetricSet;
 export declare function getConformalGuaranteeStatus(artifact: CalibratedRunResultArtifact): ConformalGuaranteeStatus | null;
 export declare function getCalibrationReplaySource(artifact: CalibratedRunResultArtifact): CalibrationReplaySource | null;
@@ -174,6 +210,13 @@ export declare function createConformalGuaranteeView(status: ConformalGuaranteeS
 export declare function createConformalGuaranteeViewForArtifact(artifact: CalibratedRunResultArtifact): ConformalGuaranteeView;
 export declare function createConformalIntervalSummaryRows(artifact: CalibratedRunResultArtifact): ConformalIntervalSummaryRow[];
 export declare function createConformalPredictionRows(artifact: CalibratedRunResultArtifact): ConformalPredictionRow[];
+/**
+ * Attach already-materialized DAG-ML intervals to their exact prediction
+ * identities.  This conversion is intentionally lossless: it preserves the
+ * producer's sample and interval ordering and refuses an unbounded cell that
+ * the current table view cannot truthfully render.
+ */
+export declare function createConformalPredictionRowsFromDagMlPresentation(presentation: DagMlConformalPresentationV1): ConformalPredictionRow[];
 export declare function createConformalCoverageOptions(artifact: CalibratedRunResultArtifact): ConformalCoverageOption[];
 export declare function createConformalCoverageStrip(options: readonly ConformalCoverageOption[], intervals?: readonly ConformalIntervalSummaryRow[]): ConformalCoverageStripSegment[];
 export declare function createConformalMetricRow(metric: ConformalMetricSet): ConformalMetricRow;
