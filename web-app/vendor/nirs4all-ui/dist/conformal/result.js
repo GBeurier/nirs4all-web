@@ -14,6 +14,9 @@ function isNumberArray(value) {
 function isStringArray(value) {
     return Array.isArray(value) && value.every((item) => typeof item === "string");
 }
+function isSha256Fingerprint(value) {
+    return typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
+}
 function isOptionalString(value) {
     return value === undefined || typeof value === "string";
 }
@@ -87,6 +90,53 @@ export function isCalibratedRunResultArtifact(value) {
         && (value.sample_ids.length === 0 || value.sample_ids.length === value.prediction.y_pred.length)
         && value.version === 1);
 }
+export function isDagMlConformalPresentationV1(value) {
+    if (!isRecord(value)
+        || typeof value.binding_id !== "string"
+        || value.binding_id.length === 0
+        || !isSha256Fingerprint(value.calibration_fingerprint)
+        || !Array.isArray(value.intervals)
+        || !isSha256Fingerprint(value.package_fingerprint)
+        || !isNumberArray(value.point_predictions)
+        || !isSha256Fingerprint(value.presentation_fingerprint)
+        || !isSha256Fingerprint(value.replay_outcome_fingerprint)
+        || !isStringArray(value.sample_ids)
+        || value.sample_ids.length !== value.point_predictions.length
+        || value.sample_ids.some((sampleId) => sampleId.length === 0)
+        || new Set(value.sample_ids).size !== value.sample_ids.length
+        || value.schema_version !== 1
+        || typeof value.target_name !== "string"
+        || value.target_name.length === 0) {
+        return false;
+    }
+    const pointPredictions = value.point_predictions;
+    const intervals = value.intervals;
+    const seenCoverages = new Set();
+    return intervals.every((interval) => {
+        if (!isRecord(interval)
+            || !isFiniteNumber(interval.coverage)
+            || interval.coverage <= 0
+            || interval.coverage >= 1
+            || seenCoverages.has(interval.coverage)
+            || !Array.isArray(interval.lower)
+            || !Array.isArray(interval.upper)
+            || interval.lower.length !== pointPredictions.length
+            || interval.upper.length !== pointPredictions.length
+            || !(interval.qhat === null || isFiniteNumber(interval.qhat))) {
+            return false;
+        }
+        const lowerBounds = interval.lower;
+        const upperBounds = interval.upper;
+        seenCoverages.add(interval.coverage);
+        return lowerBounds.every((lower, index) => {
+            const upper = upperBounds[index];
+            const point = pointPredictions[index];
+            if (lower === null || upper === null)
+                return lower === null && upper === null;
+            return isFiniteNumber(point) && isFiniteNumber(lower) && isFiniteNumber(upper) && lower <= point && point <= upper;
+        });
+    });
+}
 export function isConformalMetricSet(value) {
     return (isRecord(value)
         && isFiniteNumber(value.coverage)
@@ -115,6 +165,13 @@ export function isConformalMetricSet(value) {
 export function parseCalibratedRunResultArtifact(value) {
     if (!isCalibratedRunResultArtifact(value)) {
         throw new TypeError("Expected a nirs4all CalibratedRunResult.to_dict() payload.");
+    }
+    return value;
+}
+/** Parse the closed, DAG-ML-owned conformal presentation wire contract. */
+export function parseDagMlConformalPresentationV1(value) {
+    if (!isDagMlConformalPresentationV1(value)) {
+        throw new TypeError("Expected a validated DAG-ML conformal presentation v1 payload.");
     }
     return value;
 }
@@ -265,6 +322,44 @@ export function createConformalPredictionRows(artifact) {
             };
         }),
         sampleId: artifact.sample_ids[index] ?? null,
+        yPred,
+        yPredLabel: formatMetricValue(yPred),
+    }));
+}
+/**
+ * Attach already-materialized DAG-ML intervals to their exact prediction
+ * identities.  This conversion is intentionally lossless: it preserves the
+ * producer's sample and interval ordering and refuses an unbounded cell that
+ * the current table view cannot truthfully render.
+ */
+export function createConformalPredictionRowsFromDagMlPresentation(presentation) {
+    const finiteIntervals = presentation.intervals.map((interval) => {
+        if (interval.qhat === null || interval.lower.some(value => value === null) || interval.upper.some(value => value === null)) {
+            throw new TypeError("DAG-ML conformal presentation contains an unbounded interval that this table view cannot render.");
+        }
+        return interval;
+    });
+    return presentation.point_predictions.map((yPred, index) => ({
+        index,
+        intervals: finiteIntervals.map((interval) => {
+            const lower = interval.lower[index];
+            const upper = interval.upper[index];
+            if (lower === undefined || upper === undefined) {
+                throw new TypeError("DAG-ML conformal presentation interval cardinality does not match point predictions.");
+            }
+            const width = upper - lower;
+            return {
+                coverage: interval.coverage,
+                coverageLabel: formatConformalCoverage(interval.coverage),
+                lower,
+                lowerLabel: formatMetricValue(lower),
+                upper,
+                upperLabel: formatMetricValue(upper),
+                width,
+                widthLabel: formatMetricValue(width),
+            };
+        }),
+        sampleId: presentation.sample_ids[index] ?? null,
         yPred,
         yPredLabel: formatMetricValue(yPred),
     }));
