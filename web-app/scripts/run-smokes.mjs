@@ -10,14 +10,15 @@
 // recipe is racy from WSL (fixed sleep vs. server warm-up), runs every smoke against the
 // UNC-path Windows `node` if the PATH isn't fixed first, and leaks the preview process on
 // failure. This script waits on real readiness, pins the CHROME executable, and guarantees
-// teardown. It does NOT build — run `npm run build` first (served build under `dist/`).
+// teardown. It does NOT build. The selected output must carry the runtime-profile
+// manifest; that exact profile is forwarded to every smoke.
 //
 // Usage:
 //   npm run build && node scripts/run-smokes.mjs           # whole suite
-//   node scripts/run-smokes.mjs rt-fallback smoke          # only matching names
+//   node scripts/run-smokes.mjs --out-dir dist-strict --profile strict-wasm rt-fallback
 //   PORT=4345 CHROME=/usr/bin/google-chrome node scripts/run-smokes.mjs
 import { spawn } from 'node:child_process'
-import { readdirSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -30,7 +31,54 @@ const APP_URL = `http://${HOST}:${PORT}/`
 const CHROME = process.env.CHROME || '/usr/bin/google-chrome'
 const READY_TIMEOUT_MS = Number(process.env.READY_TIMEOUT_MS || 30000)
 
-const filters = process.argv.slice(2)
+const args = process.argv.slice(2)
+const filters = []
+let outDirArg = process.env.SMOKE_OUT_DIR || 'dist'
+let expectedProfile = process.env.SMOKE_WEB_PROFILE || ''
+for (let i = 0; i < args.length; i++) {
+  if (args[i] === '--out-dir') {
+    outDirArg = args[++i] || ''
+  } else if (args[i] === '--profile') {
+    expectedProfile = args[++i] || ''
+  } else {
+    filters.push(args[i])
+  }
+}
+
+const outDir = path.resolve(root, outDirArg)
+const relativeOutDir = path.relative(root, outDir)
+if (!outDirArg || !relativeOutDir || relativeOutDir.startsWith('..') || path.isAbsolute(relativeOutDir)) {
+  console.error(`✗ smoke outDir must stay inside ${root}: ${JSON.stringify(outDirArg)}`)
+  process.exit(2)
+}
+
+let profileManifest
+try {
+  profileManifest = JSON.parse(readFileSync(path.join(outDir, 'nirs4all-web-profile.v1.json'), 'utf8'))
+} catch (error) {
+  console.error(`✗ missing or malformed runtime profile manifest in ${outDir}: ${error instanceof Error ? error.message : String(error)}`)
+  process.exit(2)
+}
+const strictProfile = profileManifest.profile === 'strict-wasm'
+const expectedManifest = {
+  contract: 'nirs4all.web-runtime-profile.v1',
+  profile: profileManifest.profile,
+  nativeWasmRequired: strictProfile,
+  jsBackendFallback: strictProfile ? 'forbid' : 'allow-explicit-offline',
+  providerMatrixFallback: strictProfile ? 'forbid' : 'allow-diagnosed',
+  schedulerFallback: strictProfile ? 'forbid' : 'allow-explicit',
+  remoteComputeProvider: 'forbid',
+}
+if (!['strict-wasm', 'transitional'].includes(profileManifest.profile) || JSON.stringify(profileManifest) !== JSON.stringify(expectedManifest)) {
+  console.error(`✗ unsupported runtime profile manifest in ${outDir}: ${JSON.stringify(profileManifest)}`)
+  process.exit(2)
+}
+if (expectedProfile && expectedProfile !== profileManifest.profile) {
+  console.error(`✗ requested smoke profile ${expectedProfile} but ${outDirArg} contains ${profileManifest.profile}`)
+  process.exit(2)
+}
+expectedProfile = profileManifest.profile
+
 const smokes = readdirSync(testsDir)
   .filter((f) => f.endsWith('smoke.mjs')) // the *-timing probe is excluded by the glob (CLAUDE.md)
   .filter((f) => filters.length === 0 || filters.some((q) => f.includes(q)))
@@ -52,7 +100,7 @@ let previewExited = null
 function startPreview() {
   // `detached` so we can signal the whole process group (vite spawns children); `--host`
   // pins the interface so readiness polling and the smokes address the same origin.
-  const child = spawn('npm', ['run', 'preview', '--', '--port', String(PORT), '--strictPort', '--host', HOST], {
+  const child = spawn('npm', ['run', 'preview', '--', '--outDir', outDir, '--port', String(PORT), '--strictPort', '--host', HOST], {
     cwd: root,
     detached: true,
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -96,7 +144,13 @@ function runSmoke(file) {
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [path.join(testsDir, file)], {
       cwd: root,
-      env: { ...process.env, SMOKE_URL: APP_URL, CHROME },
+      env: {
+        ...process.env,
+        SMOKE_URL: APP_URL,
+        SMOKE_OUT_DIR: outDir,
+        SMOKE_WEB_PROFILE: expectedProfile,
+        CHROME,
+      },
       stdio: 'inherit',
     })
     child.on('exit', (code) => resolve(code ?? 1))
@@ -113,7 +167,7 @@ try {
     if (tail.length) console.error('  preview output:\n' + tail.map((l) => '    ' + l).join('\n'))
     process.exitCode = 2
   } else {
-    console.log(`▶ preview ready at ${APP_URL} — running ${smokes.length} smoke(s) (CHROME=${CHROME})\n`)
+    console.log(`▶ preview ready at ${APP_URL} — profile=${expectedProfile}, outDir=${outDirArg}, running ${smokes.length} smoke(s) (CHROME=${CHROME})\n`)
     for (const file of smokes) {
       console.log(`──────── ${file} ────────`)
       const code = await runSmoke(file)

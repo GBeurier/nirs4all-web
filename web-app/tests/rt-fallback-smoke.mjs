@@ -3,9 +3,9 @@
 // Served browser coverage has two parts:
 //   1. A clean UI run must stay silent: native dag-ml badge present, fallback chip absent.
 //   2. The real served module worker is driven directly with a loopback-only runtime
-//      fault hook. A forced scheduler failure must either return a loud fallback
-//      RunResult when allowFallback:true is sent, or return a typed
-//      RtErrorException across the worker protocol when fallback is omitted/false.
+//      fault hook. The strict-wasm product rejects allowFallback:true itself;
+//      the explicit transitional profile keeps the historical loud fallback.
+//      Omitted/false always fail closed at the scheduler fault.
 import { readFileSync } from 'node:fs'
 import { chromium } from 'playwright-core'
 
@@ -14,7 +14,12 @@ const EXE = process.env.CHROME || '/usr/bin/google-chrome'
 const FALLBACK_CHIP = 'CV: libn4m fallback'
 const RT_SMOKE_CHANNEL = 'n4a:rt-fallback-smoke:v1'
 const SCHEDULER_FAILURE = 'forced scheduler failure for served rt-fallback smoke'
+const EXPECTED_PROFILE = process.env.SMOKE_WEB_PROFILE
 const PYTHON_RUNTIME_SHAPE = JSON.parse(readFileSync(new URL('../src/engine/fixtures/runtime/python_rt_fixture_shape.v1.json', import.meta.url), 'utf8'))
+
+if (!['strict-wasm', 'transitional'].includes(EXPECTED_PROFILE)) {
+  throw new Error(`SMOKE_WEB_PROFILE must explicitly select strict-wasm or transitional, got ${JSON.stringify(EXPECTED_PROFILE)}`)
+}
 
 const browser = await chromium.launch({ executablePath: EXE, headless: true, args: ['--no-sandbox'] })
 const page = await browser.newPage()
@@ -208,6 +213,27 @@ try {
   await page.goto(APP_URL, { waitUntil: 'load', timeout: 30000 })
   await page.waitForSelector('text=nirs4all', { timeout: 10000 })
 
+  const servedProfile = await page.evaluate(async () => {
+    const response = await fetch(new URL('nirs4all-web-profile.v1.json', location.href))
+    if (!response.ok) throw new Error(`profile manifest HTTP ${response.status}`)
+    return response.json()
+  })
+  const strictProfile = EXPECTED_PROFILE === 'strict-wasm'
+  const expectedManifest = {
+    contract: 'nirs4all.web-runtime-profile.v1',
+    profile: EXPECTED_PROFILE,
+    nativeWasmRequired: strictProfile,
+    jsBackendFallback: strictProfile ? 'forbid' : 'allow-explicit-offline',
+    providerMatrixFallback: strictProfile ? 'forbid' : 'allow-diagnosed',
+    schedulerFallback: strictProfile ? 'forbid' : 'allow-explicit',
+    remoteComputeProvider: 'forbid',
+  }
+  if (JSON.stringify(servedProfile) === JSON.stringify(expectedManifest)) {
+    console.log(`✓ served artifact declares the explicit ${EXPECTED_PROFILE} profile`)
+  } else {
+    fail(`served profile mismatch: expected ${EXPECTED_PROFILE}, got ${JSON.stringify(servedProfile)}`)
+  }
+
   // load the bundled regression sample, then run the default pipeline
   await page.locator('button').filter({ hasText: 'Corn protein' }).first().click()
   await page.waitForSelector('text=/samples ×/', { timeout: 20000 })
@@ -248,33 +274,46 @@ try {
       fail(`omitted allowFallback did not return typed RtErrorException: ${JSON.stringify(strictDefault.error)}`)
     }
 
-    const fallback = await runWorkerFault(workerUrl, { allowFallback: true })
-    if (!fallback.ok) {
-      fail(`forced scheduler fallback run failed: ${JSON.stringify(fallback.error)}`)
+    const fallbackRequest = await runWorkerFault(workerUrl, { allowFallback: true })
+    if (EXPECTED_PROFILE === 'strict-wasm') {
+      if (
+        !fallbackRequest.ok &&
+        fallbackRequest.error?.name === 'RtErrorException' &&
+        fallbackRequest.error?.rtError?.verb === 'run' &&
+        fallbackRequest.error?.rtError?.cause === 'invalid_request' &&
+        /strict Web profile forbids runtime fallback/i.test(fallbackRequest.error?.rtError?.message || '')
+      ) {
+        console.log('✓ strict-wasm rejects allowFallback:true before attempting a scheduler degrade')
+        assertRtErrorWire('strict profile fallback-request RtError', fallbackRequest.error.rtError)
+      } else {
+        fail(`strict-wasm did not reject allowFallback:true as invalid_request: ${JSON.stringify(fallbackRequest)}`)
+      }
+    } else if (!fallbackRequest.ok) {
+      fail(`transitional forced scheduler fallback run failed: ${JSON.stringify(fallbackRequest.error)}`)
     } else {
-      if (fallback.hasCv && Number.isFinite(fallback.score)) console.log(`✓ forced scheduler fallback returned finite ${fallback.scoreMetric}`)
-      else fail(`forced scheduler fallback did not return finite CV score: ${JSON.stringify(fallback)}`)
+      if (fallbackRequest.hasCv && Number.isFinite(fallbackRequest.score)) console.log(`✓ transitional scheduler fallback returned finite ${fallbackRequest.scoreMetric}`)
+      else fail(`transitional scheduler fallback did not return finite CV score: ${JSON.stringify(fallbackRequest)}`)
 
-      if (fallback.schedulerFallback) console.log('✓ forced scheduler failure flipped lineage.schedulerFallback')
-      else fail(`forced scheduler fallback missing lineage.schedulerFallback: ${JSON.stringify(fallback)}`)
+      if (fallbackRequest.schedulerFallback) console.log('✓ transitional scheduler failure flipped lineage.schedulerFallback')
+      else fail(`transitional fallback missing lineage.schedulerFallback: ${JSON.stringify(fallbackRequest)}`)
 
-      if (fallback.diagnosticsCount === 1 && fallback.diagnostic?.verb === 'run' && fallback.diagnostic?.cause === 'runtime_error') {
-        console.log('✓ fallback RunResult carries one typed RtError diagnostic')
+      if (fallbackRequest.diagnosticsCount === 1 && fallbackRequest.diagnostic?.verb === 'run' && fallbackRequest.diagnostic?.cause === 'runtime_error') {
+        console.log('✓ transitional fallback RunResult carries one typed RtError diagnostic')
       } else {
-        fail(`unexpected fallback diagnostics: ${JSON.stringify(fallback.diagnostic)}`)
+        fail(`unexpected transitional fallback diagnostics: ${JSON.stringify(fallbackRequest.diagnostic)}`)
       }
-      assertRtResultWire('forced fallback worker RtResult', fallback.rtResult, { expectedDiagnostics: 1 })
-      const rtDiagnostic = fallback.rtResult?.diagnostics?.[0]
+      assertRtResultWire('transitional fallback worker RtResult', fallbackRequest.rtResult, { expectedDiagnostics: 1 })
+      const rtDiagnostic = fallbackRequest.rtResult?.diagnostics?.[0]
       if (rtDiagnostic?.verb === 'run' && rtDiagnostic?.cause === 'runtime_error' && rtDiagnostic?.message?.includes(SCHEDULER_FAILURE)) {
-        console.log('✓ worker RtResult diagnostic preserves RtError verb/cause/message')
+        console.log('✓ transitional worker RtResult diagnostic preserves RtError verb/cause/message')
       } else {
-        fail(`worker RtResult diagnostic lost typed error fields: ${JSON.stringify(rtDiagnostic)}`)
+        fail(`transitional worker RtResult diagnostic lost typed error fields: ${JSON.stringify(rtDiagnostic)}`)
       }
 
-      if (fallback.diagnostic?.message?.includes(SCHEDULER_FAILURE) && /libn4m chain/i.test(fallback.diagnostic?.mitigation || '')) {
-        console.log('✓ RtError message and mitigation describe the scheduler fallback')
+      if (fallbackRequest.diagnostic?.message?.includes(SCHEDULER_FAILURE) && /libn4m chain/i.test(fallbackRequest.diagnostic?.mitigation || '')) {
+        console.log('✓ transitional RtError message and mitigation describe the scheduler fallback')
       } else {
-        fail(`fallback diagnostic did not preserve message/mitigation: ${JSON.stringify(fallback.diagnostic)}`)
+        fail(`transitional fallback diagnostic did not preserve message/mitigation: ${JSON.stringify(fallbackRequest.diagnostic)}`)
       }
     }
 

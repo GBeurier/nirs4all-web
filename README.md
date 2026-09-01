@@ -53,6 +53,8 @@ npm run test:strict-profile
 npm run validate:catalog
 npm run build
 npm run build:single
+npm run smoke:rt-fallback:strict
+npm run smoke:rt-fallback:transitional
 ```
 
 `npm run build` is the deployed `strict-wasm` product profile: native/WASM
@@ -61,14 +63,24 @@ compute fallbacks fail closed. Development/test and `build:single` remain the
 explicit transitional compatibility profile; `npm run build:transitional`
 produces that served profile for migration diagnostics.
 
+The two `rt-fallback` browser gates build and serve distinct output directories.
+The strict gate proves that `allowFallback:true` is rejected; the transitional
+gate proves the historical, diagnosed scheduler fallback remains available.
+
 Browser smokes need a local Chromium:
 
 ```bash
 export CHROME=${CHROME:-/usr/bin/google-chrome}
-nohup npm run preview -- --port 4345 --strictPort >/tmp/n4a-web-preview.log 2>&1 & sleep 4
-for t in tests/*smoke.mjs; do SMOKE_URL="http://localhost:4345/" node "$t" || break; done
-pkill -f "vite preview"
+npm run build
+npm run smoke -- rt-fallback
 ```
+
+The full `npm run smoke` inventory is broader than WEB-001. In particular,
+`converted-predictions-render` and `performance-compare` require generated
+cross-runtime artifacts, while `repository-best-pipeline` requires its Python
+handoff/oracle. Dataset smokes may additionally use `SPC_DIR` or `AMYLOSE_DIR`.
+Those prerequisite-bearing gates are reported separately; they are not skipped
+or treated as evidence for the two self-contained profile smokes above.
 
 ## Deployment
 
