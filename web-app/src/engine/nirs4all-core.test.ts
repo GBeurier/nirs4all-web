@@ -4,10 +4,12 @@ import {
   artifactContracts,
   capabilityManifest,
   controllerCapabilities,
+  loadArchiveV2Native,
   loadDatasetsWasm,
   loadMethodsWasm,
   parseExecutionPlan,
   predictPortablePipeline,
+  replayMethodsArchiveV2,
   requiredKeywordRegistryEntries,
   runPortablePipeline,
   runtimeContracts,
@@ -90,6 +92,8 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(typeof parseExecutionPlan).toBe('function')
     expect(typeof runPortablePipeline).toBe('function')
     expect(typeof predictPortablePipeline).toBe('function')
+    expect(typeof loadArchiveV2Native).toBe('function')
+    expect(typeof replayMethodsArchiveV2).toBe('function')
     expect(Array.isArray(requiredKeywordRegistryEntries)).toBe(true)
     expect(typeof loadMethodsWasm).toBe('function')
     expect(typeof loadDatasetsWasm).toBe('function')

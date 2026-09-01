@@ -1,6 +1,6 @@
 {
   "name": "nirs4all",
-  "version": "0.3.11",
+  "version": "0.3.22",
   "description": "Portable nirs4all aggregate binding for JavaScript and WASM",
   "type": "module",
   "exports": {
@@ -12,13 +12,17 @@
   "types": "./src/index.d.ts",
   "files": [
     "src",
+    "native",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "test": "npm run test:js && npm run typecheck",
+    "build:native": "wasm-pack build ../wasm-native --target web --out-dir ../wasm/native --release",
+    "prepack": "npm run build:native && node scripts/prepare-native-package.mjs",
+    "test": "npm run build:native && npm run test:js && npm run typecheck",
     "test:js": "node --test tests/*.test.js",
-    "test:v1-surface": "node --test tests/index.test.js tests/execution.test.js && npm run typecheck",
+    "qualify:archive-v2": "node scripts/qualify-archive-v2.mjs",
+    "test:v1-surface": "npm run build:native && node --test tests/index.test.js tests/execution.test.js tests/archive-v2.test.js && npm run typecheck",
     "typecheck": "tsc --project tsconfig.typecheck.json"
   },
   "license": "(CECILL-2.1 OR AGPL-3.0-or-later)",

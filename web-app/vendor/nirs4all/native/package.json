@@ -1,0 +1,21 @@
+{
+  "name": "nirs4all-core-wasm-native",
+  "type": "module",
+  "description": "Native Archive V2 validation bridge for nirs4all-core WASM",
+  "version": "0.3.22",
+  "license": "CECILL-2.1 OR AGPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GBeurier/nirs4all-core"
+  },
+  "files": [
+    "nirs4all_core_wasm_native_bg.wasm",
+    "nirs4all_core_wasm_native.js",
+    "nirs4all_core_wasm_native.d.ts"
+  ],
+  "main": "nirs4all_core_wasm_native.js",
+  "types": "nirs4all_core_wasm_native.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

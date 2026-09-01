@@ -23,7 +23,7 @@ import { engine } from '@/engine/client'
 import { rtResultEnvelopeToDisplayRunResult, type RtResultWire } from '@/engine/rt-result'
 import { type DatasetSummary, reencodeTarget, summarize } from '@/data/dataset'
 import { loadSampleDataset, SAMPLES, type SampleId } from '@/data/samples'
-import { type LoadedModel, parseN4a } from '@/lib/n4a'
+import { type LoadedModel, parseN4aFile } from '@/lib/n4a'
 import { applyTheme, loadSession, loadTheme, saveSession, type Theme } from '@/lib/persist'
 import { cn } from '@/app/components/ui/utils'
 import { formatRuntimeErrorForUi } from '@/app/runtimeErrors'
@@ -169,7 +169,7 @@ export default function App() {
   const onImportModel = useCallback(async (file: File) => {
     setError(null)
     try {
-      const loaded = parseN4a(await file.text())
+      const loaded = await parseN4aFile(file)
       setLoadedModel(loaded)
       setStep('predict') // a saved model goes straight to scoring new spectra
     } catch (e) {

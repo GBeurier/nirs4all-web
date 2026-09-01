@@ -9,6 +9,16 @@ export interface UpstreamProxy {
   import(): Promise<unknown>;
 }
 
+export interface LocalImplementationRegistry {
+  register_loss(lossReference: unknown, implementation: unknown): unknown;
+  register_metric(metricReference: unknown, implementation: unknown): unknown;
+  bind_training_loss(nodeTask: unknown, roleIndex?: number): unknown;
+}
+
+export interface LocalImplementationRegistryModule<T extends LocalImplementationRegistry = LocalImplementationRegistry> {
+  LocalImplementationRegistry: new () => T;
+}
+
 export interface PipelineDefinition {
   name: string;
   description: string;
@@ -115,6 +125,33 @@ export interface PortablePredictionResult {
   cols: number;
 }
 
+export interface ArchiveV2ReplayDataset {
+  X: Float64Array | readonly number[] | readonly (readonly number[])[];
+  rows?: number;
+  cols?: number;
+  n_samples?: number;
+  n_features?: number;
+  sampleIds?: readonly string[];
+  sample_ids?: readonly string[];
+}
+
+export interface ArchiveV2ReplayResult {
+  schema: 'nirs4all.core.archive-v2-replay.v1';
+  engine: 'nirs4all-methods-wasm';
+  fallback: false;
+  archiveId: string;
+  archiveSha256: string;
+  artifactId: string;
+  bindingId: string;
+  nodeId: string;
+  portName: string;
+  sampleIds: readonly string[];
+  targetNames: readonly string[];
+  data: readonly number[];
+  rows: number;
+  cols: number;
+}
+
 export const upstreams: readonly Upstream[];
 export const portableOperatorClasses: readonly string[];
 export const runtimeSurfaces: readonly RuntimeSurface[];
@@ -132,6 +169,9 @@ export function loadDatasets(): Promise<unknown>;
 export function loadMethods(): Promise<unknown>;
 export function loadDagMl(): Promise<unknown>;
 export function loadDagMlData(): Promise<unknown>;
+export function localImplementationRegistry<T extends LocalImplementationRegistry = LocalImplementationRegistry>(
+  dagMlModule?: LocalImplementationRegistryModule<T> | null,
+): Promise<T>;
 export function loadPortableStack(keys?: readonly string[]): Promise<Record<string, unknown>>;
 export function loadMethodsWasm(): Promise<unknown>;
 export function methodsWasm(): unknown;
@@ -164,3 +204,8 @@ export function predictPortablePipeline(
   dataset: Omit<PortableMatrixDataset, 'y'>,
   options?: { methods?: unknown },
 ): Promise<PortablePredictionResult>;
+export function loadArchiveV2Native(): Promise<unknown>;
+export function replayMethodsArchiveV2(
+  archiveBytes: ArrayBuffer | ArrayBufferView,
+  dataset: ArchiveV2ReplayDataset,
+): Promise<ArchiveV2ReplayResult>;

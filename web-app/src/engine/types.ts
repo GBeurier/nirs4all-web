@@ -375,6 +375,14 @@ export interface RunOptions {
 export interface PredictResult {
   values: Float64Array;
   labels?: string[];
+  /** Matrix metadata is present for canonical Archive V2 multi-target replay. */
+  rows?: number;
+  cols?: number;
+  sampleIds?: string[];
+  targetNames?: string[];
+  engine?: 'nirs4all-methods-wasm';
+  fallback?: false;
+  archiveSha256?: string;
 }
 export interface Engine {
   readonly name: string;
