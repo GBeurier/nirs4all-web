@@ -17,10 +17,8 @@ import {
 import { isPortableCoreModel, predictPortableCore, tryRunPortableCore } from './portable-core'
 import type { FittedPipeline, MaterializedDataset, PipelineDSL } from './types'
 
-const coreRoot = new URL('../../../../nirs4all-core/', import.meta.url)
-const oraclePath = 'tests/parity/expected/portable_python_oracle.json'
-const oracleUrl = new URL(oraclePath, coreRoot)
-const fixtureDir = new URL('tests/parity/fixtures/', coreRoot)
+const oracleUrl = new URL('./fixtures/core-parity/portable_python_oracle.json', import.meta.url)
+const fixtureDir = new URL('./fixtures/core-parity/', import.meta.url)
 
 const EXPECTED_REQUIRED_KEYWORD_REGISTRY_ENTRIES = [
   'run.tuning',
@@ -189,7 +187,7 @@ describe('nirs4all-core aggregate loaders', () => {
   })
 
   it('executes the shared portable oracle through the vendored aggregate', async () => {
-    if (!existsSync(oracleUrl)) return
+    expect(existsSync(oracleUrl)).toBe(true)
     const oracle = JSON.parse(readFileSync(oracleUrl, 'utf8')) as {
       metadata: { tolerances: { targets_abs: number; rmse_abs: number; predictions_abs: number } }
       dataset: { X: number[]; y: number[]; rows: number; cols: number }
@@ -224,7 +222,7 @@ describe('nirs4all-core aggregate loaders', () => {
   })
 
   it('runs the web portable subset through the vendored aggregate and predicts from the fitted model', async () => {
-    if (!existsSync(oracleUrl)) return
+    expect(existsSync(oracleUrl)).toBe(true)
     const oracle = JSON.parse(readFileSync(oracleUrl, 'utf8')) as {
       metadata: { tolerances: { predictions_abs: number } }
       dataset: { X: number[]; y: number[]; rows: number; cols: number }
