@@ -16,8 +16,7 @@ import {
 import { isPortableCoreModel, predictPortableCore, tryRunPortableCore } from '@/engine/portable-core'
 import type { MaterializedDataset, PipelineDSL } from '@/engine/types'
 
-const coreRoot = new URL('../../../../nirs4all-core/', import.meta.url)
-const oracleUrl = new URL('tests/parity/expected/portable_python_oracle.json', coreRoot)
+const oracleUrl = new URL('../engine/fixtures/core-parity/portable_python_oracle.json', import.meta.url)
 
 function maxAbsDiff(actual: number[], expected: number[]): number {
   expect(actual.length).toBe(expected.length)
