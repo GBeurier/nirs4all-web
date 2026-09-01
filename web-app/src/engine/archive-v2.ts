@@ -125,12 +125,10 @@ export async function predictArchiveV2(
   rows: number,
   cols: number,
 ): Promise<PredictResult> {
-  const sampleIds = Array.from({ length: rows }, (_, index) => `sample.${index}`)
   const result = await replayMethodsArchiveV2(model.state.archiveBytes, {
     X,
     rows,
     cols,
-    sampleIds,
   })
   if (result.schema !== 'nirs4all.core.archive-v2-replay.v1'
     || result.engine !== 'nirs4all-methods-wasm'

@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { plsFit, plsPredict, type PlsModel } from '@/engine/algo/pls'
+import { MAX_ARCHIVE_V2_BYTES } from '@/engine/archive-v2'
 import type { FittedPipeline, RunResult, ScoreNode } from '@/engine/types'
-import { buildN4aBundle, deserializeTyped, parseN4a, serializeTyped } from './n4a'
+import { buildN4aBundle, deserializeTyped, parseN4a, parseN4aFile, serializeTyped } from './n4a'
 
 const emptyScore = (id: string): ScoreNode => ({ id, name: id, kind: 'cv', metrics: { rmse: 1, r2: 0.5, n: 3 }, predictions: [], status: 'completed' })
 
@@ -71,4 +72,15 @@ describe('.n4a typed-array codec', () => {
     expect(() => parseN4a('{"hello":1}')).toThrow()
     expect(() => parseN4a('not json')).toThrow()
   })
+
+  it.each([0, -1, MAX_ARCHIVE_V2_BYTES + 1, Number.MAX_SAFE_INTEGER + 1, Number.NaN])(
+    'refuses an invalid file size %s before materializing the File',
+    async (size) => {
+      const arrayBuffer = vi.fn(async () => new ArrayBuffer(0))
+      const file = { name: 'bounded.n4a', size, arrayBuffer } as unknown as File
+
+      await expect(parseN4aFile(file)).rejects.toThrow(/empty or exceeds the canonical Core byte budget/)
+      expect(arrayBuffer).not.toHaveBeenCalled()
+    },
+  )
 })
