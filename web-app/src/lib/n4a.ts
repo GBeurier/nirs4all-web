@@ -4,7 +4,7 @@
 // as nirs4all's .n4a bundles, scoped to this demo. It is JSON (with typed arrays
 // encoded losslessly), so it stays diff-able and works offline.
 import type { FittedPipeline, Metrics, RunResult, TaskType } from '@/engine/types'
-import { importArchiveV2Model } from '@/engine/archive-v2'
+import { importArchiveV2Model, MAX_ARCHIVE_V2_BYTES } from '@/engine/archive-v2'
 
 export const N4A_FORMAT = 'nirs4all-web/n4a'
 const COMPATIBLE_N4A_FORMATS = ['nirs4all-core/n4a']
@@ -82,6 +82,9 @@ export interface LoadedModel {
  * members or reconstructs an estimator in JavaScript.
  */
 export async function parseN4aFile(file: File): Promise<LoadedModel> {
+  if (!Number.isSafeInteger(file.size) || file.size <= 0 || file.size > MAX_ARCHIVE_V2_BYTES) {
+    throw new RangeError('The .n4a file is empty or exceeds the canonical Core byte budget.')
+  }
   const bytes = new Uint8Array(await file.arrayBuffer())
   const first = bytes.find((value) => ![0x09, 0x0a, 0x0d, 0x20].includes(value))
   if (first === 0x7b) {

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
-import { importArchiveV2Model, isArchiveV2Model } from './archive-v2'
+import { importArchiveV2Model, isArchiveV2Model, predictArchiveV2 } from './archive-v2'
 import { MainEngine } from './main-engine'
 import { loadArchiveV2Native, loadMethodsWasm, replayMethodsArchiveV2 } from './nirs4all-core'
 
@@ -92,5 +92,33 @@ describe('canonical Archive V2 Web consumer', () => {
     await expect(
       new MainEngine({ profile: 'strict-wasm' }).predict(imported.model, Float64Array.from([1, 2, 3]), 1, 3),
     ).rejects.toThrow(/expects 2 features; received 3/)
+  })
+
+  it('validates oversized rows before constructing host sample IDs', async () => {
+    const imported = await importArchiveV2Model(readFileSync(fixtureUrl))
+    const originalArrayFrom = Array.from
+    const oversizedRows = new Set([4097, 500_000_000])
+    let prematureAllocations = 0
+    Array.from = function guardedArrayFrom(arrayLike: ArrayLike<unknown> | Iterable<unknown>, ...args: unknown[]) {
+      const length = !Array.isArray(arrayLike) && typeof arrayLike === 'object' && arrayLike !== null
+        ? (arrayLike as ArrayLike<unknown>).length
+        : undefined
+      if (length !== undefined && oversizedRows.has(length)) {
+        prematureAllocations += 1
+        throw new Error('sample IDs allocated before canonical shape validation')
+      }
+      return Reflect.apply(originalArrayFrom, Array, [arrayLike, ...args])
+    } as typeof Array.from
+
+    try {
+      for (const rows of oversizedRows) {
+        await expect(
+          predictArchiveV2(imported.model, new Float64Array(0), rows, 1),
+        ).rejects.toThrow(/bounded WASM matrix contract/)
+      }
+      expect(prematureAllocations).toBe(0)
+    } finally {
+      Array.from = originalArrayFrom
+    }
   })
 })
