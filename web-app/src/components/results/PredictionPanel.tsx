@@ -16,6 +16,7 @@ import {
 
 import type { PredictionPanelProps } from '@/components/contracts'
 import type { Confusion, Metrics, PredictResult, PredRow } from '@/engine/types'
+import { isArchiveV2Model } from '@/engine/archive-v2'
 import { parseSpectraCsv } from '@/data/dataset'
 import { classificationMetrics, regressionMetrics } from '@/engine/metrics'
 import { fmt } from '@/lib/format'
@@ -119,7 +120,8 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
   const [yBusy, setYBusy] = useState(false)
   const [yCells, setYCells] = useState<string[] | null>(null)
   const isRegression = model.taskType === 'regression'
-  const nFeatures = model.nFeatures
+  const archiveV2 = isArchiveV2Model(model)
+  const nFeatures = archiveV2 ? null : model.nFeatures
 
   function resetY() {
     setYCells(null)
@@ -141,13 +143,14 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
       const rows = parsed.rows
       if (rows.length === 0) throw new Error('No data rows found in the file.')
       const cols = rows[0].length
+      const replayFeatures = nFeatures ?? cols
       // Mechanism 1: an extra trailing column (nFeatures + 1) is interpreted as the reference Y.
-      const hasAutoY = cols === nFeatures + 1
-      if (cols !== nFeatures && !hasAutoY) {
+      const hasAutoY = nFeatures !== null && cols === nFeatures + 1
+      if (nFeatures !== null && cols !== nFeatures && !hasAutoY) {
         throw new Error(`Column count mismatch: the file has ${cols} columns but the model expects ${nFeatures} features${cols === nFeatures + 2 ? '' : ' (or ' + (nFeatures + 1) + ' with a trailing Y column)'}.`)
       }
       const nSamples = rows.length
-      const X = new Float64Array(nSamples * nFeatures)
+      const X = new Float64Array(nSamples * replayFeatures)
       const autoY: string[] | null = hasAutoY ? new Array(nSamples) : null
       // raw string cells aligned to the data rows — offset by 1 when parseSpectraCsv stripped a wavelength header row
       const pcForRaw = hasAutoY ? parseCsv(text) : null
@@ -156,18 +159,18 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
       for (let i = 0; i < nSamples; i++) {
         const row = rows[i]
         if (row.length !== cols) throw new Error(`Row ${i + 1} has ${row.length} columns, expected ${cols}.`)
-        for (let j = 0; j < nFeatures; j++) {
+        for (let j = 0; j < replayFeatures; j++) {
           const v = row[j]
           if (!Number.isFinite(v)) throw new Error(`Non-numeric value at row ${i + 1}, column ${j + 1}.`)
-          X[i * nFeatures + j] = v
+          X[i * replayFeatures + j] = v
         }
         if (autoY) {
           // prefer the raw string (preserves class labels); rawOffset accounts for a stripped wavelength row
-          const raw = rawCells?.[i + rawOffset]?.[nFeatures]
-          autoY[i] = (raw ?? String(row[nFeatures])).trim()
+          const raw = rawCells?.[i + rawOffset]?.[replayFeatures]
+          autoY[i] = (raw ?? String(row[replayFeatures])).trim()
         }
       }
-      const result = await engine.predict(model, X, nSamples, nFeatures)
+      const result = await engine.predict(model, X, nSamples, replayFeatures)
       setPred({ result, nSamples, autoY })
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
@@ -215,10 +218,13 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
   // The active Y source: a manually-dropped reference (Mechanism 2) wins over the auto-detected column (Mechanism 1).
   const activeY = yCells ?? pred?.autoY ?? null
   const ySource: 'manual' | 'auto' | null = yCells ? 'manual' : pred?.autoY ? 'auto' : null
+  const predictionCols = pred?.result.cols ?? 1
+  const multiTarget = predictionCols > 1
+  const targetNames = pred?.result.targetNames ?? []
 
   // Reactively compute external-validation scores whenever predictions + valid Y are both ready.
   const validation = useMemo((): { metrics: Metrics; confusion?: Confusion; rows: PredRow[]; error: string | null } | null => {
-    if (!pred || !activeY) return null
+    if (!pred || !activeY || multiTarget) return null
     const { rows, error: rowsError } = buildRows(pred.result, activeY, isRegression, model.classes)
     if (rowsError) return { metrics: { n: 0 }, rows: [], error: rowsError }
     if (isRegression) {
@@ -226,14 +232,20 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
     }
     const { metrics, confusion } = classificationMetrics(rows, model.classes ?? [])
     return { metrics, confusion, rows, error: null }
-  }, [pred, activeY, isRegression, model.classes])
+  }, [pred, activeY, multiTarget, isRegression, model.classes])
 
-  const values = pred ? Array.from(pred.result.values) : []
+  const values = pred
+    ? Array.from({ length: pred.nSamples }, (_, row) => pred.result.values[row * predictionCols])
+    : []
   const labels = pred?.result.labels
   const chartData = isRegression
     ? histogram(values, 20).map((b) => ({ name: b.label, count: b.count }))
     : classCounts(labels ?? [], model.classes).map((c) => ({ name: c.label, count: c.count }))
-  const tableRows = values.slice(0, 15).map((v, i) => ({ index: i + 1, value: v, label: labels?.[i] }))
+  const tableRows = Array.from({ length: Math.min(pred?.nSamples ?? 0, 15) }, (_, row) => ({
+    index: row + 1,
+    values: Array.from({ length: predictionCols }, (_, col) => pred!.result.values[row * predictionCols + col]),
+    label: labels?.[row],
+  }))
 
   return (
     <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
@@ -245,8 +257,10 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
           <div>
             <h3 className="text-base font-semibold text-foreground">Predict on new spectra</h3>
             <p className="text-xs text-muted-foreground">
-              Model: <span className="font-medium text-foreground">{sourceName}</span> · expects{' '}
-              <span className="font-mono">{nFeatures}</span> wavelengths · {model.taskType}
+              Model: <span className="font-medium text-foreground">{sourceName}</span> ·{' '}
+              {nFeatures === null
+                ? 'feature count validated from the Archive V2 model at replay'
+                : <><span className="font-mono">{nFeatures}</span> wavelengths</>} · {model.taskType}
             </p>
           </div>
         </div>
@@ -296,11 +310,14 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
         </span>
         <p className="text-sm font-semibold text-foreground">{busy ? 'Predicting…' : 'Drop new spectra here'}</p>
         <p className="text-xs text-muted-foreground">
-          or <span className="font-medium text-brand-teal">browse</span> — CSV, {nFeatures} columns (one spectrum per row)
+          or <span className="font-medium text-brand-teal">browse</span> — CSV,{' '}
+          {nFeatures === null ? 'numeric feature columns validated by the archive' : `${nFeatures} columns`} (one spectrum per row)
         </p>
-        <p className="text-[11px] text-muted-foreground/80">
-          Tip: add a trailing column ({nFeatures + 1} total) and it is read as reference Y values.
-        </p>
+        {nFeatures !== null && (
+          <p className="text-[11px] text-muted-foreground/80">
+            Tip: add a trailing column ({nFeatures + 1} total) and it is read as reference Y values.
+          </p>
+        )}
         <input ref={inputRef} type="file" accept=".csv,.tsv,.txt,text/csv" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleFile(f) }} />
       </div>
 
@@ -321,6 +338,11 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
         <div className="space-y-5">
           <div className="text-xs text-muted-foreground">
             {pred.nSamples} sample{pred.nSamples === 1 ? '' : 's'} predicted.
+            {multiTarget && (
+              <span className="ml-1 text-brand-teal">
+                Canonical Archive V2 replay: {predictionCols} targets ({targetNames.join(', ')}), no fallback.
+              </span>
+            )}
             {ySource === 'auto' && (
               <span className="ml-1 inline-flex items-center gap-1 text-brand-teal">
                 <CheckCircle2 className="size-3.5" /> Last column interpreted as Y / reference values.
@@ -328,7 +350,11 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
             )}
           </div>
           <div className="rounded-xl border border-border p-4">
-            <h4 className="mb-3 text-sm font-medium text-foreground">{isRegression ? 'Predicted value distribution' : 'Predicted class counts'}</h4>
+            <h4 className="mb-3 text-sm font-medium text-foreground">
+              {isRegression
+                ? `Predicted value distribution${multiTarget ? ` — ${targetNames[0] ?? 'target 1'}` : ''}`
+                : 'Predicted class counts'}
+            </h4>
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={chartData} margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
@@ -345,20 +371,25 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
               <thead>
                 <tr className="border-b border-border text-left text-xs text-muted-foreground">
                   <th className="px-4 py-2 font-medium">#</th>
-                  <th className="px-4 py-2 font-medium">{isRegression ? 'Predicted value' : 'Predicted class'}</th>
+                  {multiTarget
+                    ? targetNames.map((name) => <th key={name} className="px-4 py-2 font-medium">{name}</th>)
+                    : <th className="px-4 py-2 font-medium">{isRegression ? 'Predicted value' : 'Predicted class'}</th>}
                 </tr>
               </thead>
               <tbody>
                 {tableRows.map((r) => (
                   <tr key={r.index} className={cn('border-b border-border/50 last:border-0')}>
                     <td className="px-4 py-1.5 font-mono text-xs text-muted-foreground">{r.index}</td>
-                    <td className="px-4 py-1.5 font-mono">{isRegression ? fmt(r.value) : (r.label ?? fmt(r.value))}</td>
+                    {multiTarget
+                      ? r.values.map((value, col) => <td key={targetNames[col] ?? col} className="px-4 py-1.5 font-mono">{fmt(value)}</td>)
+                      : <td className="px-4 py-1.5 font-mono">{isRegression ? fmt(r.values[0]) : (r.label ?? fmt(r.values[0]))}</td>}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
+          {!multiTarget && <>
           {/* Mechanism 2 — dedicated reference-Y drop zone (only meaningful once predictions exist) */}
           <div
             role="button"
@@ -423,6 +454,7 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
               nSamples={pred.nSamples}
             />
           )}
+          </>}
         </div>
       )}
     </div>

@@ -4,6 +4,7 @@
 // still prefers the inlined libn4m WASM backend; pure-JS NIPALS is only a final
 // fallback for legacy PLS-family runs in the explicit transitional profile.
 import { jsBackend, loadLibn4mBackend } from './backends'
+import { isArchiveV2Model, predictArchiveV2 } from './archive-v2'
 import { DagMlEngine } from './dagml-engine'
 import { activeOrGenerator, dagMlAvailable, expandGeneratorVariants, hasUnsupportedGenerator } from './dagml'
 import { assertAomBudget } from './guard'
@@ -136,6 +137,12 @@ export class MainEngine implements Engine {
   }
 
   async predict(model: FittedPipeline, Xnew: Float64Array, nSamples: number, nFeatures: number): Promise<PredictResult> {
+    if (isArchiveV2Model(model)) {
+      // Archive replay is always native and fail-closed in both product
+      // profiles. Transitional mode never substitutes a JS model or two
+      // independent mono-target fits for the canonical multi-target N4MM.
+      return predictArchiveV2(model, Xnew, nSamples, nFeatures)
+    }
     if (isPortableCoreModel(model)) {
       return predictPortableCore(model, Xnew, nSamples, nFeatures)
     }

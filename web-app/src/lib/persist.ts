@@ -7,6 +7,7 @@
 // re-dropped. Typed arrays in the fitted model round-trip via the n4a codec.
 import { nodeByType } from '@/catalog/nodes'
 import { SAMPLES, type SampleId } from '@/data/samples'
+import { isArchiveV2Model } from '@/engine/archive-v2'
 import type { PipelineDSL } from '@/engine/types'
 import { deserializeTyped, type LoadedModel, serializeTyped } from './n4a'
 
@@ -74,6 +75,9 @@ function validModel(m: unknown): LoadedModel | undefined {
   if (!m || typeof m !== 'object') return undefined
   const lm = m as LoadedModel
   const fp = lm.model
+  // Archive bytes are deliberately session-only: localStorage is neither a
+  // bounded binary artifact store nor an authority for portable archives.
+  if (isArchiveV2Model(fp)) return undefined
   if (!fp || typeof fp !== 'object' || !fp.dsl || !fp.state || typeof fp.nFeatures !== 'number') return undefined
   return lm
 }
@@ -96,7 +100,8 @@ export function loadSession(): Session {
 /** Persist the session. Best-effort: storage errors (quota, disabled) are ignored. */
 export function saveSession(s: Session): void {
   try {
-    localStorage.setItem(KEY, serializeTyped(s))
+    const model = s.model && isArchiveV2Model(s.model.model) ? null : s.model
+    localStorage.setItem(KEY, serializeTyped({ ...s, model }))
   } catch {
     /* non-fatal */
   }

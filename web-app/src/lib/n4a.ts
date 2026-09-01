@@ -4,6 +4,7 @@
 // as nirs4all's .n4a bundles, scoped to this demo. It is JSON (with typed arrays
 // encoded losslessly), so it stays diff-able and works offline.
 import type { FittedPipeline, Metrics, RunResult, TaskType } from '@/engine/types'
+import { importArchiveV2Model } from '@/engine/archive-v2'
 
 export const N4A_FORMAT = 'nirs4all-web/n4a'
 const COMPATIBLE_N4A_FORMATS = ['nirs4all-core/n4a']
@@ -73,6 +74,20 @@ export interface LoadedModel {
   taskType: TaskType
   targetName: string
   metrics?: { cv?: Metrics; refit?: Metrics }
+}
+
+/**
+ * Import either the legacy Web JSON bundle or the canonical binary Archive V2.
+ * Binary archives are validated by Core Rust/WASM; this module never opens ZIP
+ * members or reconstructs an estimator in JavaScript.
+ */
+export async function parseN4aFile(file: File): Promise<LoadedModel> {
+  const bytes = new Uint8Array(await file.arrayBuffer())
+  const first = bytes.find((value) => ![0x09, 0x0a, 0x0d, 0x20].includes(value))
+  if (first === 0x7b) {
+    return parseN4a(new TextDecoder().decode(bytes))
+  }
+  return importArchiveV2Model(bytes, file.name)
 }
 
 /** Parse + validate a .n4a bundle into a model ready for Predict. Throws on invalid. */

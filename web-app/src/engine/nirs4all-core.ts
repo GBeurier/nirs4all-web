@@ -7,11 +7,13 @@ import {
   loadDataIoWasm as loadDataIoWasmRaw,
   loadDatasetsWasm as loadDatasetsWasmRaw,
   loadMethodsWasm as loadMethodsWasmRaw,
+  loadArchiveV2Native as loadArchiveV2NativeRaw,
   loadPipelineDefinition,
   methodsWasm as methodsWasmRaw,
   parseExecutionPlan,
   portableClassNames,
   predictPortablePipeline,
+  replayMethodsArchiveV2 as replayMethodsArchiveV2Raw,
   requiredKeywordRegistryEntries,
   runPortablePipeline,
   runtimeContracts,
@@ -41,6 +43,8 @@ export type DatasetsMod = typeof import('./wasm/datasets/nirs4all_datasets_wasm.
 export type FormatsMod = typeof import('./wasm/formats/nirs4all_formats_wasm.js')
 export type IoMod = typeof import('./wasm/io/nirs4all_io_wasm.js')
 export type {
+  ArchiveV2ReplayDataset,
+  ArchiveV2ReplayResult,
   ArtifactContract,
   CapabilityManifest,
   ControllerCapability,
@@ -50,6 +54,9 @@ export type {
   RuntimeContract,
   RuntimeSurface,
 } from 'nirs4all'
+
+export const loadArchiveV2Native = loadArchiveV2NativeRaw as () => Promise<unknown>
+export const replayMethodsArchiveV2 = replayMethodsArchiveV2Raw
 
 export const loadMethodsWasm = loadMethodsWasmRaw as () => Promise<MethodsWasmMod>
 export const methodsWasm = methodsWasmRaw as () => MethodsWasmMod

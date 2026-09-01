@@ -323,6 +323,26 @@ export const loadMethods = () => importUpstream('methods');
 export const loadDagMl = () => importUpstream('dag_ml');
 export const loadDagMlData = () => importUpstream('dag_ml_data');
 
+export async function localImplementationRegistry(dagMlModule = null) {
+  const module = dagMlModule ?? await loadDagMl();
+  const Registry = module?.LocalImplementationRegistry;
+  if (typeof Registry !== 'function') {
+    throw new TypeError(
+      'The loaded dag-ml-wasm binding does not expose LocalImplementationRegistry; upgrade dag-ml-wasm.',
+    );
+  }
+  const registry = new Registry();
+  const missing = ['register_loss', 'register_metric', 'bind_training_loss'].filter(
+    (name) => typeof registry?.[name] !== 'function',
+  );
+  if (missing.length > 0) {
+    throw new TypeError(
+      `The loaded dag-ml-wasm LocalImplementationRegistry does not expose ${missing.join(', ')}; upgrade dag-ml-wasm.`,
+    );
+  }
+  return registry;
+}
+
 let methodsPromise = null;
 let methodsModule = null;
 
@@ -509,3 +529,4 @@ function collectClasses(value, output) {
 }
 
 export { parseExecutionPlan, predictPortablePipeline, runPortablePipeline } from './execution.js';
+export { loadArchiveV2Native, replayMethodsArchiveV2 } from './archive-v2.js';
