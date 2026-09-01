@@ -16,12 +16,21 @@ locally; nothing is uploaded.
 ```bash
 npm install
 npm run dev            # dev server
-npm run build          # static site → dist/ (primary, lazy-loaded WASM)
+npm run build          # strict-wasm static product → dist/ (primary, lazy-loaded WASM)
+npm run build:transitional # explicit served compatibility build → dist-transitional/
 npm run build:single   # single offline HTML → dist-single/index.html (opens via file://)
 npm run test           # vitest: engine numerics + data assembly
+npm run test:strict-profile # strict positive/negative runtime gate
 npm run typecheck      # tsc --noEmit
 npm run validate:catalog   # fail if a node claims a non-exported libn4m ABI symbol
 ```
+
+The `strict-wasm` product profile fails closed if native/WASM execution, the
+`dag-ml-data` provider, or the native scheduler cannot serve the request. It
+also rejects JavaScript model prediction and `allowFallback:true`. The
+development/test and single-file profiles intentionally retain the explicit
+transitional path while migration is in progress; neither profile permits a
+remote compute provider.
 
 Runtime browser smoke (uses a local Chromium): `node tests/smoke.mjs` (set `SMOKE_URL` /
 `CHROME`). Both the served build and the `file://` single-file build pass it.

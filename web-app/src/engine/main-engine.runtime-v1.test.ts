@@ -5,6 +5,7 @@ import type { MaterializedDataset, NativeRobustnessEvidencePublicationHandoff, P
 const ctrl = vi.hoisted(() => ({
   loadLibn4mBackend: vi.fn(),
   runPipeline: vi.fn(),
+  predictPipeline: vi.fn(),
 }))
 
 vi.mock('./dagml', async (importOriginal) => {
@@ -24,7 +25,7 @@ vi.mock('./backends', async (importOriginal) => {
 
 vi.mock('./orchestrate', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./orchestrate')>()
-  return { ...actual, runPipeline: ctrl.runPipeline }
+  return { ...actual, runPipeline: ctrl.runPipeline, predictPipeline: ctrl.predictPipeline }
 })
 
 const ds: MaterializedDataset = {
@@ -79,6 +80,8 @@ beforeEach(() => {
   ctrl.loadLibn4mBackend.mockResolvedValue({ id: 'libn4m-wasm' })
   ctrl.runPipeline.mockReset()
   ctrl.runPipeline.mockResolvedValue(directRun())
+  ctrl.predictPipeline.mockReset()
+  ctrl.predictPipeline.mockResolvedValue({ predictions: new Float64Array([1]) })
 })
 
 describe('MainEngine runtime V1 browser cutover', () => {
@@ -107,7 +110,7 @@ describe('MainEngine runtime V1 browser cutover', () => {
   it('keeps the direct runner available only when explicitly selected', async () => {
     const { MainEngine } = await import('./main-engine')
 
-    await expect(new MainEngine({ mainThread: true, useDagMl: false }).run(ds, dsl)).resolves.toMatchObject({
+    await expect(new MainEngine({ mainThread: true, useDagMl: false, profile: 'transitional' }).run(ds, dsl)).resolves.toMatchObject({
       id: 'run:direct',
       engine: 'direct-libn4m',
     })
@@ -115,10 +118,56 @@ describe('MainEngine runtime V1 browser cutover', () => {
     expect(ctrl.runPipeline).toHaveBeenCalledTimes(1)
   })
 
+  it('strict product profile refuses the explicit direct runner before JS or libn4m compatibility execution', async () => {
+    const { MainEngine } = await import('./main-engine')
+
+    const err = await new MainEngine({ mainThread: false, useDagMl: false, profile: 'strict-wasm' }).run(ds, dsl).catch((e: unknown) => e)
+
+    expect(isRtErrorException(err)).toBe(true)
+    expect((err as RtErrorException).rtError).toMatchObject({
+      cause: 'unsupported_capability',
+      unsupported_capability: 'direct_browser_compatibility_runner',
+    })
+    expect(ctrl.loadLibn4mBackend).not.toHaveBeenCalled()
+    expect(ctrl.runPipeline).not.toHaveBeenCalled()
+  })
+
+  it('strict product profile rejects an explicit fallback request', async () => {
+    const { MainEngine } = await import('./main-engine')
+
+    const err = await new MainEngine({ profile: 'strict-wasm' }).run(ds, dsl, { allowFallback: true }).catch((e: unknown) => e)
+
+    expect(isRtErrorException(err)).toBe(true)
+    expect((err as RtErrorException).rtError.cause).toBe('invalid_request')
+    expect(ctrl.loadLibn4mBackend).not.toHaveBeenCalled()
+    expect(ctrl.runPipeline).not.toHaveBeenCalled()
+  })
+
+  it('strict product profile predicts with libn4m WASM models but rejects JavaScript-backend models', async () => {
+    const { MainEngine } = await import('./main-engine')
+    const engine = new MainEngine({ profile: 'strict-wasm' })
+    const libn4mModel = directRun().model
+    const jsModel = { ...libn4mModel, state: { backendId: 'js-pls' } }
+
+    await expect(engine.predict(libn4mModel, new Float64Array([1, 2]), 1, 2)).resolves.toMatchObject({
+      predictions: expect.any(Float64Array),
+    })
+    expect(ctrl.loadLibn4mBackend).toHaveBeenCalledTimes(1)
+    expect(ctrl.predictPipeline).toHaveBeenCalledTimes(1)
+
+    const err = await engine.predict(jsModel, new Float64Array([1, 2]), 1, 2).catch((e: unknown) => e)
+    expect(isRtErrorException(err)).toBe(true)
+    expect((err as RtErrorException).rtError).toMatchObject({
+      cause: 'unsupported_capability',
+      unsupported_capability: 'javascript_model_backend',
+    })
+    expect(ctrl.predictPipeline).toHaveBeenCalledTimes(1)
+  })
+
   it('resolves serializable sidecar options in MainEngine direct mode', async () => {
     const { MainEngine } = await import('./main-engine')
 
-    const result = await new MainEngine({ mainThread: true, useDagMl: false }).run(ds, dsl, {
+    const result = await new MainEngine({ mainThread: true, useDagMl: false, profile: 'transitional' }).run(ds, dsl, {
       robustnessEvidencePublicationHandoff: handoff,
       robustnessEvidenceSidecar: {
         kind: 'indexeddb',

@@ -3,6 +3,7 @@ import path from 'node:path'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { viteSingleFile } from 'vite-plugin-singlefile'
+import { type WebRuntimeProfile, webRuntimePolicy } from './src/engine/web-profile'
 
 // Two build modes:
 //  - default      → static site (lazy-loaded WASM), the primary web.nirs4all.org deliverable
@@ -10,9 +11,34 @@ import { viteSingleFile } from 'vite-plugin-singlefile'
 //                   `base: './'` keeps asset URLs relative so the file opens under file://
 export default defineConfig(({ mode }) => {
   const singlefile = mode === 'singlefile'
+  // Standard production builds are the strict browser product. Development,
+  // test and the explicit single-file compatibility build remain transitional.
+  const strict = mode === 'production' || mode === 'strict'
+  const runtimeProfile: WebRuntimeProfile = strict ? 'strict-wasm' : 'transitional'
+  const runtimePolicy = webRuntimePolicy(runtimeProfile)
   return {
     base: './',
-    plugins: [react(), tailwindcss(), ...(singlefile ? [viteSingleFile()] : [])],
+    define: {
+      __N4A_WEB_RUNTIME_PROFILE__: JSON.stringify(runtimeProfile),
+    },
+    plugins: [
+      react(),
+      tailwindcss(),
+      ...(singlefile ? [viteSingleFile()] : []),
+      ...(!singlefile ? [{
+        name: 'nirs4all-web-runtime-profile',
+        generateBundle() {
+          this.emitFile({
+            type: 'asset',
+            fileName: 'nirs4all-web-profile.v1.json',
+            source: `${JSON.stringify({
+              contract: 'nirs4all.web-runtime-profile.v1',
+              ...runtimePolicy,
+            }, null, 2)}\n`,
+          })
+        },
+      }] : []),
+    ],
     resolve: {
       alias: {
         // singlefile builds swap the engine entry for a Blob-backed classic
@@ -45,7 +71,7 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       target: 'es2022',
-      outDir: singlefile ? 'dist-single' : 'dist',
+      outDir: singlefile ? 'dist-single' : mode === 'strict' ? 'dist-strict' : mode === 'transitional' ? 'dist-transitional' : 'dist',
       chunkSizeWarningLimit: 4096,
     },
   }
