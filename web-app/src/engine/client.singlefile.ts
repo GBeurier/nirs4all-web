@@ -6,4 +6,6 @@ import { WorkerEngine } from './worker-engine'
 import type { Engine } from './types'
 import InlineEngineWorker from './worker?worker&inline'
 
-export const engine: Engine = typeof Worker !== 'undefined' ? new WorkerEngine(() => new InlineEngineWorker()) : new MainEngine({ mainThread: true, useDagMl: false })
+export const engine: Engine = typeof Worker !== 'undefined'
+  ? new WorkerEngine(() => new InlineEngineWorker())
+  : new MainEngine({ mainThread: true, useDagMl: false, profile: 'transitional' })

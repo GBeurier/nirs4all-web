@@ -7,8 +7,11 @@
 import { MainEngine } from './main-engine'
 import { WorkerEngine } from './worker-engine'
 import type { Engine } from './types'
+import { buildWebRuntimeProfile } from './web-profile'
 
 const useWorker = typeof Worker !== 'undefined' && (typeof location === 'undefined' || location.protocol !== 'file:')
 const createServedWorker = () => new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' })
 
-export const engine: Engine = useWorker ? new WorkerEngine(createServedWorker) : new MainEngine({ mainThread: true })
+export const engine: Engine = useWorker
+  ? new WorkerEngine(createServedWorker)
+  : new MainEngine({ mainThread: true, profile: buildWebRuntimeProfile() })

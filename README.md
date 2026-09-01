@@ -49,10 +49,17 @@ Main checks:
 ```bash
 npm run typecheck
 npm run test
+npm run test:strict-profile
 npm run validate:catalog
 npm run build
 npm run build:single
 ```
+
+`npm run build` is the deployed `strict-wasm` product profile: native/WASM
+execution is required and JavaScript, provider-to-matrix, scheduler, and remote
+compute fallbacks fail closed. Development/test and `build:single` remain the
+explicit transitional compatibility profile; `npm run build:transitional`
+produces that served profile for migration diagnostics.
 
 Browser smokes need a local Chromium:
 

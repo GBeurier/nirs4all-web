@@ -2,8 +2,8 @@
 // (compiled to WASM) executes the cross-validation: it owns the fold loop, the
 // leakage-safe OOF assembly (by sampleId) and lineage, and invokes a JS
 // controller per fold that runs the actual preprocessing + PLS via libn4m WASM.
-// The refit (full-train) model is fit directly with libn4m. Falls back to the
-// JS-orchestrated path on any error.
+// The refit (full-train) model is fit directly with libn4m. Compatibility
+// degrades exist only in the explicit transitional profile; strict-wasm fails closed.
 import { loadLibn4mBackend } from './backends'
 import { activeOrGenerator, compileWithDagMl, dagMlAvailable, dagMlRtSmokeForcedFailure, expandGeneratorVariants, hasUnsupportedGenerator, loadDagMl, toCompatDsl } from './dagml'
 import { materializeViaProvider } from './dagml-data'
@@ -21,8 +21,9 @@ import {
   scoreNode,
   trainAndPredict,
 } from './orchestrate'
-import { type RtError, RtErrorException, rtErrorFromUnknown } from './rt'
+import { makeRtError, type RtError, RtErrorException, rtErrorFromUnknown } from './rt'
 import type { Engine, FittedPipeline, MaterializedDataset, ParamSweep, PipelineDSL, PredRow, PredictResult, RunOptions, RunResult } from './types'
+import { buildWebRuntimeProfile, type WebRuntimePolicy, type WebRuntimeProfile, webRuntimePolicy } from './web-profile'
 
 const MODEL_CONTROLLER = 'controller:model'
 
@@ -179,8 +180,21 @@ function expandSweepVariants(dsl: PipelineDSL): VariantPlan[] {
 
 export class DagMlEngine implements Engine {
   readonly name = 'dag-ml-wasm'
+  private readonly policy: WebRuntimePolicy
+
+  constructor(opts: { profile?: WebRuntimeProfile } = {}) {
+    this.policy = webRuntimePolicy(opts.profile ?? buildWebRuntimeProfile())
+  }
 
   async run(ds: MaterializedDataset, dsl: PipelineDSL, opts: RunOptions = {}): Promise<RunResult> {
+    if (this.policy.schedulerFallback === 'forbid' && opts.allowFallback === true) {
+      throw new RtErrorException(makeRtError({
+        verb: 'run',
+        cause: 'invalid_request',
+        message: 'The strict Web profile forbids runtime fallback requests.',
+        mitigation: 'Remove allowFallback, or use the explicitly transitional development profile.',
+      }))
+    }
     // A model is mandatory to score/refit — refuse early with a clear message
     // (the editor guards too, but the engine is the authoritative gate).
     if (!dsl.model) throw new Error('This pipeline has no model — add a model to run / score.')
@@ -244,6 +258,13 @@ export class DagMlEngine implements Engine {
       onP?.({ phase: 'preprocess', pct: 5, message: `dag-ml-data ok — ${ds.nSamples}×${ds.nFeatures}` })
     } catch (e) {
       dataProvider = { layer: 'dag-ml-data', status: 'unavailable', error: e instanceof Error ? e.message : String(e) }
+      if (this.policy.providerMatrixFallback === 'forbid') {
+        throw new RtErrorException(rtErrorFromUnknown('run', e, {
+          cause: 'unavailable_backend',
+          message: 'The strict Web profile requires dag-ml-data materialization; provider failure cannot degrade to caller-supplied matrices.',
+          mitigation: 'Restore the staged dag-ml-data WASM provider and retry.',
+        }))
+      }
       onP?.({ phase: 'preprocess', pct: 5, message: 'dag-ml-data unavailable — using in-memory matrices' })
       console.warn('[dag-ml-data] provider unavailable, using in-memory matrices:', e)
     }
@@ -391,7 +412,7 @@ export class DagMlEngine implements Engine {
             mitigation: 'The configured sweep was skipped. Simplify the model parameters, or report this graph shape as unschedulable.',
             detail: msg,
           })
-          if (opts.allowFallback !== true) throw new RtErrorException(rtError)
+          if (this.policy.schedulerFallback === 'forbid' || opts.allowFallback !== true) throw new RtErrorException(rtError)
           diagnostics.push(rtError)
           variants = [baseVariant]
         } else {
@@ -557,7 +578,7 @@ export class DagMlEngine implements Engine {
           mitigation: 'Cross-validation re-ran through the libn4m chain over dag-ml folds — results are valid, but the dag-ml scheduler did not run this phase. Use a model-only pipeline to keep the native scheduler path.',
           detail: 'dag-ml execute_campaign_phase_json failed; degraded to the libn4m fold chain.',
         })
-        if (opts.allowFallback !== true) throw new RtErrorException(rtError)
+        if (this.policy.schedulerFallback === 'forbid' || opts.allowFallback !== true) throw new RtErrorException(rtError)
         diagnostics.push(rtError)
         schedulerFallback = true
         runChainOverFolds()

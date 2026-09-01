@@ -8,6 +8,7 @@
 import { MainEngine } from './main-engine'
 import { isRtErrorException, rtErrorToWire } from './rt'
 import { runResultToRtResultEnvelope } from './rt-result'
+import { buildWebRuntimeProfile } from './web-profile'
 import type {
   NativeRobustnessEvidencePublicationHandoff,
   RobustnessEvidenceSidecarOptions,
@@ -15,7 +16,12 @@ import type {
 } from './types'
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope
-const engine = new MainEngine({ mainThread: false, useDagMl: ctx.location?.protocol !== 'blob:' })
+const isInlineSingleFileWorker = ctx.location?.protocol === 'blob:'
+const engine = new MainEngine({
+  mainThread: false,
+  useDagMl: !isInlineSingleFileWorker,
+  profile: isInlineSingleFileWorker ? 'transitional' : buildWebRuntimeProfile(),
+})
 const controllers = new Map<string, AbortController>()
 
 interface RunMsg {

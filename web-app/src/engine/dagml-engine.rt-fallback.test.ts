@@ -23,6 +23,7 @@ import type { MaterializedDataset, PipelineDSL } from './types'
 const ctrl = vi.hoisted(() => ({
   failPlanning: false,
   failScheduler: true,
+  failProvider: false,
   SCHEDULER_ERROR: 'execute_campaign_phase_json crashed: scheduler boom',
   PLANNING_ERROR: 'no controller registered for model node',
 }))
@@ -76,13 +77,16 @@ vi.mock('./dagml', async (importOriginal) => {
 
 // dag-ml-data provider: serve the in-memory blocks straight back (no WASM init in node).
 vi.mock('./dagml-data', () => ({
-  materializeViaProvider: async (ds: MaterializedDataset) => ({
-    X: ds.X,
-    y: ds.y,
-    fingerprints: { schema: 'sch', plan: 'pln', relation: null },
-    outputRepresentation: 'tabular_numeric',
-    version: '0.0.0-test',
-  }),
+  materializeViaProvider: async (ds: MaterializedDataset) => {
+    if (ctrl.failProvider) throw new Error('dag-ml-data WASM provider unavailable')
+    return {
+      X: ds.X,
+      y: ds.y,
+      fingerprints: { schema: 'sch', plan: 'pln', relation: null },
+      outputRepresentation: 'tabular_numeric',
+      version: '0.0.0-test',
+    }
+  },
 }))
 
 // libn4m backend: identity stand-in — the numerics are exercised through the mocked
@@ -136,6 +140,61 @@ beforeEach(() => {
   // Start each test with scheduler failure enabled; planning succeeds unless overridden.
   ctrl.failPlanning = false
   ctrl.failScheduler = true
+  ctrl.failProvider = false
+})
+
+describe('DagMlEngine — WEB-001 strict product profile', () => {
+  it('runs the native/WASM route when provider and scheduler are available', async () => {
+    ctrl.failScheduler = false
+    const result = await new DagMlEngine({ profile: 'strict-wasm' })
+      .run(regressionDataset(), modelOnlyPipeline())
+
+    expect(result.engine).toBe('dag-ml-wasm + libn4m')
+    expect(result.lineage).toMatchObject({
+      engine: 'dag-ml-wasm',
+      schedulerFallback: undefined,
+      dataProvider: { status: 'materialized' },
+    })
+  })
+
+  it('fails closed when dag-ml-data cannot materialize instead of using caller matrices', async () => {
+    ctrl.failProvider = true
+    const err = await new DagMlEngine({ profile: 'strict-wasm' })
+      .run(regressionDataset(), modelOnlyPipeline())
+      .catch((e: unknown) => e)
+
+    expect(isRtErrorException(err)).toBe(true)
+    expect((err as RtErrorException).rtError).toMatchObject({
+      cause: 'unavailable_backend',
+      message: expect.stringMatching(/requires dag-ml-data materialization/i),
+    })
+  })
+
+  it('rejects allowFallback even before a scheduler degrade can be attempted', async () => {
+    const err = await new DagMlEngine({ profile: 'strict-wasm' })
+      .run(regressionDataset(), modelOnlyPipeline(), { allowFallback: true })
+      .catch((e: unknown) => e)
+
+    expect(isRtErrorException(err)).toBe(true)
+    expect((err as RtErrorException).rtError.cause).toBe('invalid_request')
+  })
+
+  it('preserves the diagnosed provider-to-matrix path only in the transitional profile', async () => {
+    ctrl.failProvider = true
+    ctrl.failScheduler = false
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    try {
+      const result = await new DagMlEngine({ profile: 'transitional' })
+        .run(regressionDataset(), modelOnlyPipeline())
+
+      expect(result.lineage).toMatchObject({
+        dataProvider: { status: 'unavailable', error: expect.stringMatching(/provider unavailable/i) },
+      })
+      expect(warning).toHaveBeenCalledOnce()
+    } finally {
+      warning.mockRestore()
+    }
+  })
 })
 
 describe('DagMlEngine — scheduler fallback surfaces a typed RtError (B-018)', () => {
