@@ -23,6 +23,8 @@ npm run test           # vitest: engine numerics + data assembly
 npm run test:strict-profile # strict positive/negative runtime gate
 npm run typecheck      # tsc --noEmit
 npm run validate:catalog   # fail if a node claims a non-exported libn4m ABI symbol
+npm run smoke:rt-fallback:strict       # strict build rejects allowFallback:true
+npm run smoke:rt-fallback:transitional # transition build proves diagnosed fallback
 ```
 
 The `strict-wasm` product profile fails closed if native/WASM execution, the
@@ -32,8 +34,15 @@ development/test and single-file profiles intentionally retain the explicit
 transitional path while migration is in progress; neither profile permits a
 remote compute provider.
 
-Runtime browser smoke (uses a local Chromium): `node tests/smoke.mjs` (set `SMOKE_URL` /
-`CHROME`). Both the served build and the `file://` single-file build pass it.
+Runtime browser smokes use a local Chromium (`CHROME`). Use the profile-aware
+runner instead of invoking `rt-fallback-smoke.mjs` directly: the runner reads
+the built profile manifest and passes the exact expectation to the smoke.
+
+The full smoke inventory also contains prerequisite-bearing cross-runtime gates:
+`converted-predictions-render` and `performance-compare` consume generated
+artifacts, `repository-best-pipeline` consumes a Python handoff/oracle, and the
+SPC/amylose dataset checks use optional external fixture directories. Their
+status is separate from the autonomous strict/transitional WEB-001 gates.
 
 ## Architecture — the full nirs4all WASM stack
 
