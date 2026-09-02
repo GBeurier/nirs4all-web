@@ -24,35 +24,31 @@ fi
 
 WASM_PACK="$(command -v wasm-pack || echo "$HOME/.cargo/bin/wasm-pack")"
 
-build_pack() {  # <crate-dir> <out-name>
-  local crate="$1" name="$2"
-  if [ -d "$crate" ]; then
-    echo "▶ building $name ($crate)"
-    "$WASM_PACK" build "$crate" --target web --release --out-dir "$OUT/$name"
-  else
-    echo "⚠ skip $name — $crate not found"
-  fi
-}
-
-set_package_name() {  # <out-name> <package-name>
-  local name="$1" package_name="$2" package_json="$OUT/$name/package.json"
-  if [ -f "$package_json" ]; then
-    node -e "const fs=require('fs'); const p=process.argv[1]; const name=process.argv[2]; const pkg=JSON.parse(fs.readFileSync(p, 'utf8')); pkg.name=name; fs.writeFileSync(p, JSON.stringify(pkg, null, 2) + '\n');" "$package_json" "$package_name"
-  fi
-}
-
 mkdir -p "$OUT"
-build_pack "$ECO/nirs4all-formats/bindings/wasm" formats
-set_package_name formats "@nirs4all/formats-wasm"
-build_pack "$ECO/nirs4all-io/bindings/wasm" io
-set_package_name io "@nirs4all/io-wasm"
+if [ -d "${NIRS4ALL_FORMATS_ROOT:-$ECO/nirs4all-formats}/bindings/wasm" ]; then
+  echo "▶ building and proving formats"
+  NIRS4ALL_FORMATS_ROOT="${NIRS4ALL_FORMATS_ROOT:-$ECO/nirs4all-formats}" \
+    WASM_PACK_BIN="$WASM_PACK" node "$HERE/stage-formats-wasm.mjs"
+else
+  echo "✗ formats crate not found" >&2
+  exit 1
+fi
+if [ -d "${NIRS4ALL_IO_ROOT:-$ECO/nirs4all-io}/bindings/wasm" ]; then
+  echo "▶ building and proving io"
+  NIRS4ALL_IO_ROOT="${NIRS4ALL_IO_ROOT:-$ECO/nirs4all-io}" \
+    WASM_PACK_BIN="$WASM_PACK" node "$HERE/stage-io-wasm.mjs"
+else
+  echo "✗ required io crate not found" >&2
+  exit 1
+fi
 
 if [ -d "${NIRS4ALL_DATASETS_ROOT:-$ECO/nirs4all-datasets}/bindings/wasm" ]; then
   echo "▶ building and proving datasets"
   NIRS4ALL_DATASETS_ROOT="${NIRS4ALL_DATASETS_ROOT:-$ECO/nirs4all-datasets}" \
     WASM_PACK_BIN="$WASM_PACK" node "$HERE/stage-datasets-wasm.mjs"
 else
-  echo "⚠ skip datasets — crate not found"
+  echo "✗ required datasets crate not found" >&2
+  exit 1
 fi
 
 echo "▶ staging methods (@nirs4all/methods V1 prebuilt dist)"
@@ -61,7 +57,9 @@ if [ -d "$METHODS" ]; then
   mkdir -p "$OUT/methods"
   cp "$METHODS"/*.js "$METHODS"/*.d.ts "$METHODS"/n4m.wasm "$OUT/methods/"
 else
-  echo "⚠ skip methods — $METHODS not found (run: cd $ECO/nirs4all-methods && cmake --preset emscripten && cmake --build --preset emscripten --target pls4all_wasm)"
+  echo "✗ required Methods artifact not found: $METHODS" >&2
+  echo "  run: cd $ECO/nirs4all-methods && cmake --preset emscripten && cmake --build --preset emscripten --target pls4all_wasm" >&2
+  exit 1
 fi
 
 if [ -d "${NIRS4ALL_DAG_ML_ROOT:-$ECO/dag-ml}/crates/dag-ml-wasm" ]; then
@@ -69,7 +67,8 @@ if [ -d "${NIRS4ALL_DAG_ML_ROOT:-$ECO/dag-ml}/crates/dag-ml-wasm" ]; then
   NIRS4ALL_DAG_ML_ROOT="${NIRS4ALL_DAG_ML_ROOT:-$ECO/dag-ml}" \
     WASM_PACK_BIN="$WASM_PACK" node "$HERE/stage-dagml-wasm.mjs"
 else
-  echo "⚠ skip dag-ml — crate not found"
+  echo "✗ required dag-ml crate not found" >&2
+  exit 1
 fi
 
 # dag-ml-data provider: the typed data-contract layer. The `provider` feature
@@ -80,6 +79,7 @@ if [ -d "${NIRS4ALL_DAG_ML_DATA_ROOT:-$ECO/dag-ml-data}/crates/dag-ml-data-wasm"
   NIRS4ALL_DAG_ML_DATA_ROOT="${NIRS4ALL_DAG_ML_DATA_ROOT:-$ECO/dag-ml-data}" \
     WASM_PACK_BIN="$WASM_PACK" node "$HERE/stage-dagml-data-wasm.mjs"
 else
-  echo "⚠ skip dagml-data — crate not found"
+  echo "✗ required dag-ml-data crate not found" >&2
+  exit 1
 fi
 echo "✓ WASM staged into $OUT (formats · io · datasets · methods · dag-ml · dag-ml-data)"

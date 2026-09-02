@@ -18,7 +18,7 @@
 //   node scripts/run-smokes.mjs --out-dir dist-strict --profile strict-wasm rt-fallback
 //   PORT=4345 CHROME=/usr/bin/google-chrome node scripts/run-smokes.mjs
 import { spawn } from 'node:child_process'
-import { readFileSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -30,6 +30,8 @@ const HOST = '127.0.0.1'
 const APP_URL = `http://${HOST}:${PORT}/`
 const CHROME = process.env.CHROME || '/usr/bin/google-chrome'
 const READY_TIMEOUT_MS = Number(process.env.READY_TIMEOUT_MS || 30000)
+const bundledNpmCli = path.resolve(path.dirname(process.execPath), '..', 'lib', 'node_modules', 'npm', 'bin', 'npm-cli.js')
+const npmCli = process.env.NPM_CLI_JS || (existsSync(bundledNpmCli) ? bundledNpmCli : '')
 
 const args = process.argv.slice(2)
 const filters = []
@@ -100,7 +102,8 @@ let previewExited = null
 function startPreview() {
   // `detached` so we can signal the whole process group (vite spawns children); `--host`
   // pins the interface so readiness polling and the smokes address the same origin.
-  const child = spawn('npm', ['run', 'preview', '--', '--outDir', outDir, '--port', String(PORT), '--strictPort', '--host', HOST], {
+  const previewArgs = ['run', 'preview', '--', '--outDir', outDir, '--port', String(PORT), '--strictPort', '--host', HOST]
+  const child = spawn(npmCli ? process.execPath : 'npm', npmCli ? [npmCli, ...previewArgs] : previewArgs, {
     cwd: root,
     detached: true,
     stdio: ['ignore', 'pipe', 'pipe'],

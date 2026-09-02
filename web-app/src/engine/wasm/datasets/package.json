@@ -5,7 +5,7 @@
     "Gregory Beurier <gregory.beurier@cirad.fr>"
   ],
   "description": "WASM (wasm-bindgen) binding over nirs4all-datasets-core: resolve the download contract + SHA-256 in the browser/Node. Scoped to metadata + small public datasets.",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "license": "MIT",
   "repository": {
     "type": "git",
