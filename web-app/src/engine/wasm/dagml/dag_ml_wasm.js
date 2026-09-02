@@ -1,5 +1,214 @@
 /* @ts-self-types="./dag_ml_wasm.d.ts" */
 
+export class LocalImplementationRegistry {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        LocalImplementationRegistryFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_localimplementationregistry_free(ptr, 0);
+    }
+    /**
+     * @param {string} node_task_json
+     * @param {number} role_index
+     * @returns {TrainingLossBinding}
+     */
+    bind_training_loss(node_task_json, role_index) {
+        const ptr0 = passStringToWasm0(node_task_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.localimplementationregistry_bind_training_loss(this.__wbg_ptr, ptr0, len0, role_index);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return TrainingLossBinding.__wrap(ret[0]);
+    }
+    clear() {
+        wasm.localimplementationregistry_clear(this.__wbg_ptr);
+    }
+    /**
+     * @returns {string}
+     */
+    descriptors_json() {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ret = wasm.localimplementationregistry_descriptors_json(this.__wbg_ptr);
+            var ptr1 = ret[0];
+            var len1 = ret[1];
+            if (ret[3]) {
+                ptr1 = 0; len1 = 0;
+                throw takeFromExternrefTable0(ret[2]);
+            }
+            deferred2_0 = ptr1;
+            deferred2_1 = len1;
+            return getStringFromWasm0(ptr1, len1);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+    constructor() {
+        const ret = wasm.localimplementationregistry_new();
+        this.__wbg_ptr = ret;
+        LocalImplementationRegistryFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * @param {string} loss_reference_json
+     * @param {Function} implementation
+     */
+    register_loss(loss_reference_json, implementation) {
+        const ptr0 = passStringToWasm0(loss_reference_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.localimplementationregistry_register_loss(this.__wbg_ptr, ptr0, len0, implementation);
+        if (ret[1]) {
+            throw takeFromExternrefTable0(ret[0]);
+        }
+    }
+    /**
+     * @param {string} metric_reference_json
+     * @param {Function} implementation
+     */
+    register_metric(metric_reference_json, implementation) {
+        const ptr0 = passStringToWasm0(metric_reference_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.localimplementationregistry_register_metric(this.__wbg_ptr, ptr0, len0, implementation);
+        if (ret[1]) {
+            throw takeFromExternrefTable0(ret[0]);
+        }
+    }
+    /**
+     * @param {string} loss_reference_json
+     * @returns {Function}
+     */
+    resolve_loss(loss_reference_json) {
+        const ptr0 = passStringToWasm0(loss_reference_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.localimplementationregistry_resolve_loss(this.__wbg_ptr, ptr0, len0);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * @param {string} metric_reference_json
+     * @returns {Function}
+     */
+    resolve_metric(metric_reference_json) {
+        const ptr0 = passStringToWasm0(metric_reference_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.localimplementationregistry_resolve_metric(this.__wbg_ptr, ptr0, len0);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * @param {string} training_loss_role_json
+     * @param {string} phase
+     * @returns {Function}
+     */
+    resolve_training_loss(training_loss_role_json, phase) {
+        const ptr0 = passStringToWasm0(training_loss_role_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(phase, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ret = wasm.localimplementationregistry_resolve_training_loss(this.__wbg_ptr, ptr0, len0, ptr1, len1);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * @returns {number}
+     */
+    get size() {
+        const ret = wasm.localimplementationregistry_size(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+     * @returns {any}
+     */
+    toJSON() {
+        const ret = wasm.localimplementationregistry_toJSON(this.__wbg_ptr);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * @param {string} loss_reference_json
+     * @returns {Function}
+     */
+    unregister_loss(loss_reference_json) {
+        const ptr0 = passStringToWasm0(loss_reference_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.localimplementationregistry_unregister_loss(this.__wbg_ptr, ptr0, len0);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * @param {string} metric_reference_json
+     * @returns {Function}
+     */
+    unregister_metric(metric_reference_json) {
+        const ptr0 = passStringToWasm0(metric_reference_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.localimplementationregistry_unregister_metric(this.__wbg_ptr, ptr0, len0);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+}
+if (Symbol.dispose) LocalImplementationRegistry.prototype[Symbol.dispose] = LocalImplementationRegistry.prototype.free;
+
+export class TrainingLossBinding {
+    static __wrap(ptr) {
+        const obj = Object.create(TrainingLossBinding.prototype);
+        obj.__wbg_ptr = ptr;
+        TrainingLossBindingFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        TrainingLossBindingFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_traininglossbinding_free(ptr, 0);
+    }
+    /**
+     * @returns {Function}
+     */
+    get invoke() {
+        const ret = wasm.traininglossbinding_invoke(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+     * @returns {string}
+     */
+    get required_attestation_json() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.traininglossbinding_required_attestation_json(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+}
+if (Symbol.dispose) TrainingLossBinding.prototype[Symbol.dispose] = TrainingLossBinding.prototype.free;
+
 /**
  * @param {string} plan_id
  * @param {string} graph_json
@@ -31,6 +240,45 @@ export function build_execution_plan_json(plan_id, graph_json, campaign_json, co
         return getStringFromWasm0(ptr5, len5);
     } finally {
         wasm.__wbindgen_free(deferred6_0, deferred6_1, 1);
+    }
+}
+
+/**
+ * Build an execution plan and lower an explicit set of native training-loss
+ * roles into its node plans. The supplied set replaces every node's roles.
+ * @param {string} plan_id
+ * @param {string} graph_json
+ * @param {string} campaign_json
+ * @param {string} controller_manifests_json
+ * @param {string} training_loss_roles_json
+ * @returns {string}
+ */
+export function build_execution_plan_with_training_losses_json(plan_id, graph_json, campaign_json, controller_manifests_json, training_loss_roles_json) {
+    let deferred7_0;
+    let deferred7_1;
+    try {
+        const ptr0 = passStringToWasm0(plan_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(graph_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ptr2 = passStringToWasm0(campaign_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len2 = WASM_VECTOR_LEN;
+        const ptr3 = passStringToWasm0(controller_manifests_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len3 = WASM_VECTOR_LEN;
+        const ptr4 = passStringToWasm0(training_loss_roles_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len4 = WASM_VECTOR_LEN;
+        const ret = wasm.build_execution_plan_with_training_losses_json(ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3, ptr4, len4);
+        var ptr6 = ret[0];
+        var len6 = ret[1];
+        if (ret[3]) {
+            ptr6 = 0; len6 = 0;
+            throw takeFromExternrefTable0(ret[2]);
+        }
+        deferred7_0 = ptr6;
+        deferred7_1 = len6;
+        return getStringFromWasm0(ptr6, len6);
+    } finally {
+        wasm.__wbindgen_free(deferred7_0, deferred7_1, 1);
     }
 }
 
@@ -151,14 +399,66 @@ export function dag_ml_version() {
 }
 
 /**
+ * @param {string} host_controller_spec_json
+ * @returns {string}
+ */
+export function derive_controller_manifest_json(host_controller_spec_json) {
+    let deferred3_0;
+    let deferred3_1;
+    try {
+        const ptr0 = passStringToWasm0(host_controller_spec_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.derive_controller_manifest_json(ptr0, len0);
+        var ptr2 = ret[0];
+        var len2 = ret[1];
+        if (ret[3]) {
+            ptr2 = 0; len2 = 0;
+            throw takeFromExternrefTable0(ret[2]);
+        }
+        deferred3_0 = ptr2;
+        deferred3_1 = len2;
+        return getStringFromWasm0(ptr2, len2);
+    } finally {
+        wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
+    }
+}
+
+/**
+ * @param {string} host_controller_specs_json
+ * @returns {string}
+ */
+export function derive_controller_manifest_list_json(host_controller_specs_json) {
+    let deferred3_0;
+    let deferred3_1;
+    try {
+        const ptr0 = passStringToWasm0(host_controller_specs_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.derive_controller_manifest_list_json(ptr0, len0);
+        var ptr2 = ret[0];
+        var len2 = ret[1];
+        if (ret[3]) {
+            ptr2 = 0; len2 = 0;
+            throw takeFromExternrefTable0(ret[2]);
+        }
+        deferred3_0 = ptr2;
+        deferred3_1 = len2;
+        return getStringFromWasm0(ptr2, len2);
+    } finally {
+        wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
+    }
+}
+
+/**
  * Execute one phase of a campaign with the in-process [`SequentialScheduler`],
  * invoking host operators through the supplied JS callback.
  *
  * - `graph_json` / `campaign_json` / `controller_manifests_json`: the same
  *   inputs as [`build_execution_plan_json`]. The campaign's
  *   `split_invocation.fold_set` drives the FIT_CV fold loop.
- * - `js_invoke`: `(controllerId: string, taskJson: string) => nodeResultJson: string`,
- *   **synchronous** (no `await` across this boundary).
+ * - `js_invoke`: `(controllerId: string, taskJson: string, exactSeed: string | null)
+ *   => nodeResultJson: string`, **synchronous** (no `await` across this boundary).
+ *   A callback may return `lineage.seed: null`; the bridge injects the native
+ *   `u64` from the task before scheduler validation.
  *
  * Returns the phase's `Vec<NodeResult>` as JSON (predictions + lineage).
  * @param {string} plan_id
@@ -199,6 +499,48 @@ export function execute_campaign_phase_json(plan_id, graph_json, campaign_json, 
         return getStringFromWasm0(ptr7, len7);
     } finally {
         wasm.__wbindgen_free(deferred8_0, deferred8_1, 1);
+    }
+}
+
+/**
+ * Execute one phase from a previously built and validated execution plan.
+ *
+ * Unlike [`execute_campaign_phase_json`], this preserves native training-loss
+ * roles already lowered into `NodePlan.training_losses`. Every embedded
+ * controller manifest must exactly match the independently supplied trusted
+ * runtime registry before any callback is dispatched.
+ * @param {string} execution_plan_json
+ * @param {string} trusted_controller_manifests_json
+ * @param {string} run_id
+ * @param {number} root_seed
+ * @param {string} phase
+ * @param {Function} js_invoke
+ * @returns {string}
+ */
+export function execute_execution_plan_phase_json(execution_plan_json, trusted_controller_manifests_json, run_id, root_seed, phase, js_invoke) {
+    let deferred6_0;
+    let deferred6_1;
+    try {
+        const ptr0 = passStringToWasm0(execution_plan_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(trusted_controller_manifests_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ptr2 = passStringToWasm0(run_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len2 = WASM_VECTOR_LEN;
+        const ptr3 = passStringToWasm0(phase, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len3 = WASM_VECTOR_LEN;
+        const ret = wasm.execute_execution_plan_phase_json(ptr0, len0, ptr1, len1, ptr2, len2, root_seed, ptr3, len3, js_invoke);
+        var ptr5 = ret[0];
+        var len5 = ret[1];
+        if (ret[3]) {
+            ptr5 = 0; len5 = 0;
+            throw takeFromExternrefTable0(ret[2]);
+        }
+        deferred6_0 = ptr5;
+        deferred6_1 = len5;
+        return getStringFromWasm0(ptr5, len5);
+    } finally {
+        wasm.__wbindgen_free(deferred6_0, deferred6_1, 1);
     }
 }
 
@@ -261,10 +603,38 @@ export function kfold_split_json(spec_json, sample_ids_json, id) {
 }
 
 /**
+ * @param {string} training_loss_role_json
+ * @param {string} phase
+ * @returns {string}
+ */
+export function loss_execution_attestation_json(training_loss_role_json, phase) {
+    let deferred4_0;
+    let deferred4_1;
+    try {
+        const ptr0 = passStringToWasm0(training_loss_role_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(phase, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ret = wasm.loss_execution_attestation_json(ptr0, len0, ptr1, len1);
+        var ptr3 = ret[0];
+        var len3 = ret[1];
+        if (ret[3]) {
+            ptr3 = 0; len3 = 0;
+            throw takeFromExternrefTable0(ret[2]);
+        }
+        deferred4_0 = ptr3;
+        deferred4_1 = len3;
+        return getStringFromWasm0(ptr3, len3);
+    } finally {
+        wasm.__wbindgen_free(deferred4_0, deferred4_1, 1);
+    }
+}
+
+/**
  * Rank candidate variants and return the winner — the SELECT phase for in-browser
  * generators/finetune. Selection stays in dag-ml (deterministic argmin/argmax +
  * id tie-break), not the host. `policy_json` = SelectionPolicy, `candidates_json`
- * = CandidateScore[]. With `groups_json` (group_id → [candidate_id]) returns a
+ * = `CandidateScore` array. With `groups_json` (group id to candidate ids) returns a
  * {group → SelectionDecision} map; otherwise a single SelectionDecision.
  * @param {string} policy_json
  * @param {string} candidates_json
@@ -431,14 +801,20 @@ export function validate_pipeline_dsl_json(json) {
 function __wbg_get_imports() {
     const import0 = {
         __proto__: null,
-        __wbg___wbindgen_debug_string_0accd80f45e5faa2: function(arg0, arg1) {
+        __wbg___wbindgen_debug_string_a57024b9c6e4a48b: function(arg0, arg1) {
             const ret = debugString(arg1);
             const ptr1 = passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             const len1 = WASM_VECTOR_LEN;
             getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
             getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
         },
-        __wbg___wbindgen_string_get_72bdf95d3ae505b1: function(arg0, arg1) {
+        __wbg___wbindgen_number_get_136b9679cab35cfb: function(arg0, arg1) {
+            const obj = arg1;
+            const ret = typeof(obj) === 'number' ? obj : undefined;
+            getDataViewMemory0().setFloat64(arg0 + 8 * 1, isLikeNone(ret) ? 0 : ret, true);
+            getDataViewMemory0().setInt32(arg0 + 4 * 0, !isLikeNone(ret), true);
+        },
+        __wbg___wbindgen_string_get_d154f1e671052120: function(arg0, arg1) {
             const obj = arg1;
             const ret = typeof(obj) === 'string' ? obj : undefined;
             var ptr1 = isLikeNone(ret) ? 0 : passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
@@ -446,11 +822,11 @@ function __wbg_get_imports() {
             getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
             getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
         },
-        __wbg___wbindgen_throw_1506f2235d1bdba0: function(arg0, arg1) {
+        __wbg___wbindgen_throw_bb96b2010945f0bc: function(arg0, arg1) {
             throw new Error(getStringFromWasm0(arg0, arg1));
         },
-        __wbg_call_40e4174f169eaca7: function() { return handleError(function (arg0, arg1, arg2, arg3) {
-            const ret = arg0.call(arg1, arg2, arg3);
+        __wbg_call_39f824e18d9d2414: function() { return handleError(function (arg0, arg1, arg2, arg3, arg4) {
+            const ret = arg0.call(arg1, arg2, arg3, arg4);
             return ret;
         }, arguments); },
         __wbindgen_cast_0000000000000001: function(arg0, arg1) {
@@ -473,6 +849,13 @@ function __wbg_get_imports() {
         "./dag_ml_wasm_bg.js": import0,
     };
 }
+
+const LocalImplementationRegistryFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_localimplementationregistry_free(ptr, 1));
+const TrainingLossBindingFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_traininglossbinding_free(ptr, 1));
 
 function addToExternrefTable0(obj) {
     const idx = wasm.__externref_table_alloc();
@@ -663,11 +1046,15 @@ function __wbg_finalize_init(instance, module) {
 
 async function __wbg_load(module, imports) {
     if (typeof Response === 'function' && module instanceof Response) {
+        if (!module.ok) {
+            throw new Error(`failed to fetch Wasm: ${module.status} ${module.statusText} fetching '${module.url}'`);
+        }
+
         if (typeof WebAssembly.instantiateStreaming === 'function') {
             try {
                 return await WebAssembly.instantiateStreaming(module, imports);
             } catch (e) {
-                const validResponse = module.ok && expectedResponseType(module.type);
+                const validResponse = expectedResponseType(module.type);
 
                 if (validResponse && module.headers.get('Content-Type') !== 'application/wasm') {
                     console.warn("`WebAssembly.instantiateStreaming` failed because your server does not serve Wasm with `application/wasm` MIME type. Falling back to `WebAssembly.instantiate` which is slower. Original error:\n", e);

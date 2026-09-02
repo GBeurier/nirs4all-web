@@ -208,6 +208,26 @@ describe('nirs4all-core aggregate loaders', () => {
     )
   })
 
+  it('loads the qualified dag-ml WASM coordinator', async () => {
+    const dagml = await import('./wasm/dagml/dag_ml_wasm.js')
+    const wasm = readFileSync(new URL('./wasm/dagml/dag_ml_wasm_bg.wasm', import.meta.url))
+    const provenance = JSON.parse(
+      readFileSync(new URL('./wasm/dagml/PROVENANCE.json', import.meta.url), 'utf8'),
+    ) as { version: string; source: { commit: string }; reproducibility: { byte_identical: boolean } }
+    dagml.initSync({ module: wasm })
+
+    const manifest = JSON.parse(dagml.contract_manifest_json()) as { crate: string; capabilities: string[] }
+    expect(dagml.dag_ml_version()).toBe('0.3.23')
+    expect(manifest.crate).toBe('dag-ml')
+    expect(manifest.capabilities).toContain('execute_execution_plan_phase')
+    expect(manifest.capabilities).toContain('loss_execution_attestation')
+    expect(provenance).toMatchObject({
+      version: '0.3.23',
+      source: { commit: 'bad5aff0bfbc14c622f5ade7f393f29399df6e07' },
+      reproducibility: { byte_identical: true },
+    })
+  })
+
   it('executes the shared portable oracle through the vendored aggregate', async () => {
     expect(existsSync(oracleUrl)).toBe(true)
     const oracle = JSON.parse(readFileSync(oracleUrl, 'utf8')) as {

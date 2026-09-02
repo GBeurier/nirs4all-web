@@ -64,7 +64,13 @@ else
   echo "⚠ skip methods — $METHODS not found (run: cd $ECO/nirs4all-methods && cmake --preset emscripten && cmake --build --preset emscripten --target pls4all_wasm)"
 fi
 
-build_pack "$ECO/dag-ml/crates/dag-ml-wasm" dagml   # compile + execute the pipeline DSL (SequentialScheduler in WASM)
+if [ -d "${NIRS4ALL_DAG_ML_ROOT:-$ECO/dag-ml}/crates/dag-ml-wasm" ]; then
+  echo "▶ building and proving dag-ml"
+  NIRS4ALL_DAG_ML_ROOT="${NIRS4ALL_DAG_ML_ROOT:-$ECO/dag-ml}" \
+    WASM_PACK_BIN="$WASM_PACK" node "$HERE/stage-dagml-wasm.mjs"
+else
+  echo "⚠ skip dag-ml — crate not found"
+fi
 
 # dag-ml-data provider: the typed data-contract layer. The `provider` feature
 # compiles WasmInMemoryProvider (materialize / make_view / feature_block /

@@ -34,10 +34,12 @@
     "vendor:core": "node scripts/sync-core-shim.mjs",
     "check:core-shim": "node scripts/sync-core-shim.mjs --check",
     "check:ui-package": "node scripts/check-ui-package.mjs",
-    "check:wasm-artifacts": "npm run check:dagml-data-wasm && npm run check:datasets-wasm",
+    "check:wasm-artifacts": "npm run check:dagml-wasm && npm run check:dagml-data-wasm && npm run check:datasets-wasm",
+    "check:dagml-wasm": "node scripts/verify-dagml-wasm.mjs",
     "check:dagml-data-wasm": "node scripts/verify-dagml-data-wasm.mjs",
     "check:datasets-wasm": "node scripts/verify-datasets-wasm.mjs",
     "wasm:dagml-data": "node scripts/stage-dagml-data-wasm.mjs",
+    "wasm:dagml": "node scripts/stage-dagml-wasm.mjs",
     "wasm:datasets": "node scripts/stage-datasets-wasm.mjs",
     "wasm": "bash scripts/build-wasm.sh"
   },
