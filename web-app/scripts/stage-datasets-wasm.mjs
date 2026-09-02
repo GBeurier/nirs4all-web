@@ -16,9 +16,9 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED_SOURCE = Object.freeze({
-  commit: '01596ab6a77ce3141d1f96d1cf675d13cacbc59a',
-  tree: '661750b9e565c76baa6fbc5550e88ece2aba7934',
-  version: '0.3.8',
+  commit: '53017672c82df106a17b512846425bc9e846565f',
+  tree: '68513f3b938407846a9014d0dad47f58ded09bf4',
+  version: '0.3.9',
 })
 const PACKAGE_NAME = '@nirs4all/datasets-wasm'
 const GENERATED_PACKAGE_NAME = '@nirs4all/nirs4all-datasets-wasm'
@@ -68,6 +68,32 @@ function normalizePackage(path) {
   return generatedName
 }
 
+function assertResolveWitness(module) {
+  const index = JSON.stringify({
+    schema: '1.0',
+    n_datasets: 1,
+    datasets: {
+      witness: {
+        tier: 'public',
+        dataverse: { instance: 'https://dv.example', doi: '10.70112/WITNESS', dataset_version: '1.0' },
+        files: [{ name: 'X.parquet', relpath: 'canonical/sources/X.parquet', sha256: 'aa', size: 9 }],
+        origins: [{ kind: 'manual', mode: 'canonical', locator: 'witness', access: 'open' }],
+        retrieval: { schema_version: '1.0', status: 'canonical_only', routes: [] },
+        descriptor: {
+          id: 'witness',
+          sources: [{ source_id: 'X', modality: 'NIR' }],
+          variables: [{ name: 'target', role: 'target', type: 'numeric' }],
+          ids: { sample_id: 'sample_id' },
+        },
+      },
+    },
+  })
+  const resolved = JSON.parse(module.resolve(index, 'witness'))
+  if (resolved.id !== 'witness' || resolved.files?.[0]?.relpath !== 'canonical/sources/X.parquet' || resolved.descriptor?.sources?.length !== 1) {
+    throw new Error('WASM dataset resolve witness failed')
+  }
+}
+
 if (!existsSync(crateRoot)) {
   throw new Error(`nirs4all-datasets WASM crate not found: ${crateRoot}`)
 }
@@ -110,6 +136,7 @@ try {
         ...process.env,
         CARGO_TARGET_DIR: target,
         SOURCE_DATE_EPOCH: String(source.epoch),
+        CONST_RANDOM_SEED: source.commit,
       },
     })
 
@@ -146,6 +173,7 @@ try {
   if (module.sha256(new Uint8Array([97, 98, 99])) !== 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad') {
     throw new Error('WASM SHA-256 witness failed')
   }
+  assertResolveWitness(module)
 
   mkdirSync(destination, { recursive: true })
   const allowedDestinationFiles = new Set([...GENERATED_FILES, 'PROVENANCE.json'])
@@ -173,6 +201,7 @@ try {
       profile: 'release',
       cargo_locked: true,
       source_date_epoch: source.epoch,
+      const_random_seed: source.commit,
       tools: {
         wasm_pack: command(wasmPack, ['--version'], { capture: true }),
         cargo: command('cargo', ['--version'], { capture: true }),
@@ -190,6 +219,7 @@ try {
     witnesses: {
       runtime_version: true,
       sha256_abc: true,
+      resolve_contract: true,
     },
     files: GENERATED_FILES.map((name) => ({
       path: name,

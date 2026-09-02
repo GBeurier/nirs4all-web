@@ -197,10 +197,10 @@ describe('nirs4all-core aggregate loaders', () => {
     ) as { version: string; source: { commit: string }; reproducibility: { byte_identical: boolean } }
     datasets.initSync({ module: wasm })
 
-    expect(datasets.abiVersion()).toBe('0.3.8')
+    expect(datasets.abiVersion()).toBe('0.3.9')
     expect(provenance).toMatchObject({
-      version: '0.3.8',
-      source: { commit: '01596ab6a77ce3141d1f96d1cf675d13cacbc59a' },
+      version: '0.3.9',
+      source: { commit: '53017672c82df106a17b512846425bc9e846565f' },
       reproducibility: { byte_identical: true },
     })
     expect(datasets.sha256(new Uint8Array([97, 98, 99]))).toBe(

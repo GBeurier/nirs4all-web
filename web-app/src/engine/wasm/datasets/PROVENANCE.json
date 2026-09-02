@@ -2,18 +2,19 @@
   "schema": "nirs4all-web.wasm-provenance.v1",
   "component": "nirs4all-datasets-wasm",
   "package": "@nirs4all/datasets-wasm",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "source": {
     "repository": "https://github.com/GBeurier/nirs4all-datasets",
-    "commit": "01596ab6a77ce3141d1f96d1cf675d13cacbc59a",
-    "tree": "661750b9e565c76baa6fbc5550e88ece2aba7934",
+    "commit": "53017672c82df106a17b512846425bc9e846565f",
+    "tree": "68513f3b938407846a9014d0dad47f58ded09bf4",
     "clean": true
   },
   "build": {
     "target": "web",
     "profile": "release",
     "cargo_locked": true,
-    "source_date_epoch": 1788372672,
+    "source_date_epoch": 1788377879,
+    "const_random_seed": "53017672c82df106a17b512846425bc9e846565f",
     "tools": {
       "wasm_pack": "wasm-pack 0.15.0",
       "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
@@ -30,7 +31,8 @@
   },
   "witnesses": {
     "runtime_version": true,
-    "sha256_abc": true
+    "sha256_abc": true,
+    "resolve_contract": true
   },
   "files": [
     {
@@ -55,8 +57,8 @@
     },
     {
       "path": "nirs4all_datasets_wasm_bg.wasm",
-      "size": 195621,
-      "sha256": "3518a10581bb8cde47bee554297f0a6a607230537d3836ae3302215eaf9ebcba"
+      "size": 195502,
+      "sha256": "9275834e88b052304b0258022956ab99373cd874b2c6167081faedf58ad20f0a"
     },
     {
       "path": "nirs4all_datasets_wasm_bg.wasm.d.ts",
@@ -66,7 +68,7 @@
     {
       "path": "package.json",
       "size": 707,
-      "sha256": "e7793dd50344d0f18e4c51031a3dcaf70375680216f7cf736eef3ec29fa06170"
+      "sha256": "ba0c18bd68a571b04223cb5f64df4d486f387e363817bd7e8d621077dfb3a791"
     }
   ]
 }
