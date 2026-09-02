@@ -65,6 +65,7 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(provenance).toContain('4eb8a687b0b3797b6f5db816444cf840f67c8ee0')
     expect(provenance).toContain('9dfb9c35f4e3b8ce7ecd7712ff2cd54330861bb48f95c32ce68c87133369c77f')
     expect(syncScript).toContain('6781d37229498004ad1b3274fe0cdf663c62af738965458ae3b7811c48062b3f')
+    expect(syncScript).toContain('a0767d31d7ce4162eab19184c3e5d63b400b7cc76522f55950e2a6185d436050')
   })
 
   it('keeps the datasets upstream candidate aligned with the vendored WASM package', () => {

@@ -9,18 +9,27 @@ runs:
     - name: Clone nirs4all-core source next to the workspace
       shell: bash
       run: |
+        expected_ref="4eb8a687b0b3797b6f5db816444cf840f67c8ee0"
+        expected_tree="4ccd67a7fe556db2c50615500cca096cae7666ef"
         sibling="$GITHUB_WORKSPACE/../nirs4all-core"
         rm -rf "$sibling"
         git clone --depth 1 https://github.com/GBeurier/nirs4all-core.git "$sibling"
 
-        ref="${NIRS4ALL_CORE_REF:-${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}}"
-        if [ -n "$ref" ]; then
-          git -C "$sibling" fetch --depth 1 origin "$ref" || {
-            echo "nirs4all-core sibling: missing required ref '$ref' upstream" >&2
-            exit 1
-          }
-          git -C "$sibling" checkout --detach FETCH_HEAD
-          echo "nirs4all-core sibling: using ref $ref @ $(git -C "$sibling" rev-parse HEAD)"
-        else
-          echo "nirs4all-core sibling: no GitHub ref provided; using default branch @ $(git -C "$sibling" rev-parse HEAD)"
+        ref="${NIRS4ALL_CORE_REF:-$expected_ref}"
+        if [ "$ref" != "$expected_ref" ]; then
+          echo "nirs4all-core sibling: ref '$ref' does not match qualified ref '$expected_ref'" >&2
+          exit 1
         fi
+        git -C "$sibling" fetch --depth 1 origin "$ref" || {
+          echo "nirs4all-core sibling: missing qualified ref '$ref' upstream" >&2
+          exit 1
+        }
+        git -C "$sibling" checkout --detach FETCH_HEAD
+
+        actual_ref=$(git -C "$sibling" rev-parse HEAD)
+        actual_tree=$(git -C "$sibling" rev-parse HEAD^{tree})
+        if [ "$actual_ref" != "$expected_ref" ] || [ "$actual_tree" != "$expected_tree" ]; then
+          echo "nirs4all-core sibling: identity mismatch $actual_ref/$actual_tree" >&2
+          exit 1
+        fi
+        echo "nirs4all-core sibling: using qualified ref $actual_ref (tree $actual_tree)"
