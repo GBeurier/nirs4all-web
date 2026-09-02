@@ -3,7 +3,7 @@
 #
 #   formats  : nirs4all-formats (vendor-format decode, ~58 families)   [wasm-pack --target web]
 #   io       : nirs4all-io      (dataset inference + DatasetSpec)       [wasm-pack --target web]
-#   methods  : @nirs4all/methods (libn4m PLS engine)                   [prebuilt dist, copied]
+#   methods  : @nirs4all/methods (libn4m PLS engine)                   [Emscripten, A/B proved]
 #   dag-ml*  : dag-ml + dag-ml-data execution                          [WS1 — execute_* exports pending]
 #
 # Toolchain is not on the default PATH here; we add nvm node, cargo, and emsdk.
@@ -51,14 +51,12 @@ else
   exit 1
 fi
 
-echo "▶ staging methods (@nirs4all/methods V1 prebuilt dist)"
-METHODS="$ECO/nirs4all-methods/bindings/js/dist"
-if [ -d "$METHODS" ]; then
-  mkdir -p "$OUT/methods"
-  cp "$METHODS"/*.js "$METHODS"/*.d.ts "$METHODS"/n4m.wasm "$OUT/methods/"
+if [ -d "${NIRS4ALL_METHODS_ROOT:-$ECO/nirs4all-methods}/bindings/js" ]; then
+  echo "▶ building and proving methods"
+  NIRS4ALL_METHODS_ROOT="${NIRS4ALL_METHODS_ROOT:-$ECO/nirs4all-methods}" \
+    EMSDK="${EMSDK:-$HOME/emsdk}" node "$HERE/stage-methods-wasm.mjs"
 else
-  echo "✗ required Methods artifact not found: $METHODS" >&2
-  echo "  run: cd $ECO/nirs4all-methods && cmake --preset emscripten && cmake --build --preset emscripten --target pls4all_wasm" >&2
+  echo "✗ required Methods source not found" >&2
   exit 1
 fi
 
