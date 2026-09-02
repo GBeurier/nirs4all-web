@@ -12,7 +12,7 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { dirname, join, resolve } from 'node:path'
+import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED_SOURCE = Object.freeze({
@@ -29,6 +29,17 @@ const GENERATED_FILES = Object.freeze([
   'dag_ml_data_wasm_bg.wasm.d.ts',
   'package.json',
 ])
+const LICENSE_FILES = Object.freeze([
+  'LICENSING.md',
+  'LICENSING_FR.md',
+  'THIRD_PARTY_NOTICES.md',
+  'LICENSES/AGPL-3.0-or-later.txt',
+  'LICENSES/Apache-2.0.txt',
+  'LICENSES/BSD-3-Clause.txt',
+  'LICENSES/CeCILL-2.1.txt',
+  'LICENSES/MIT.txt',
+])
+const STAGED_FILES = Object.freeze([...GENERATED_FILES, ...LICENSE_FILES].sort())
 
 const scriptDir = dirname(fileURLToPath(import.meta.url))
 const appRoot = resolve(scriptDir, '..')
@@ -57,11 +68,24 @@ function sha256(path) {
   return createHash('sha256').update(readFileSync(path)).digest('hex')
 }
 
+function filesRecursively(root, current = root) {
+  if (!existsSync(current)) return []
+  return readdirSync(current, { withFileTypes: true })
+    .flatMap((entry) => {
+      const path = join(current, entry.name)
+      return entry.isDirectory() ? filesRecursively(root, path) : [relative(root, path).split(sep).join('/')]
+    })
+    .sort()
+}
+
 if (!existsSync(crateRoot)) {
   throw new Error(`dag-ml-data WASM crate not found: ${crateRoot}`)
 }
 if (git('status', '--porcelain') !== '') {
   throw new Error(`dag-ml-data source must be clean: ${sourceRoot}`)
+}
+for (const name of LICENSE_FILES) {
+  if (!existsSync(join(sourceRoot, name))) throw new Error(`dag-ml-data license payload is incomplete: ${name}`)
 }
 const source = {
   commit: git('rev-parse', 'HEAD'),
@@ -119,7 +143,10 @@ try {
   }
 
   const builtPackage = JSON.parse(readFileSync(join(outputs[0], 'package.json'), 'utf8'))
-  if (builtPackage.version !== EXPECTED_SOURCE.version) {
+  if (
+    builtPackage.version !== EXPECTED_SOURCE.version ||
+    builtPackage.license !== 'CECILL-2.1 OR AGPL-3.0-or-later'
+  ) {
     throw new Error(`built package version ${builtPackage.version} != ${EXPECTED_SOURCE.version}`)
   }
   const module = await import(`${pathToFileURL(join(outputs[0], 'dag_ml_data_wasm.js')).href}?verify=${Date.now()}`)
@@ -132,14 +159,21 @@ try {
   }
 
   mkdirSync(destination, { recursive: true })
-  const allowedDestinationFiles = new Set([...GENERATED_FILES, 'PROVENANCE.json'])
-  const unexpectedDestinationFiles = readdirSync(destination).filter((name) => !allowedDestinationFiles.has(name))
+  const allowedDestinationFiles = new Set([...STAGED_FILES, 'PROVENANCE.json'])
+  const unexpectedDestinationFiles = filesRecursively(destination).filter((name) => !allowedDestinationFiles.has(name))
   if (unexpectedDestinationFiles.length > 0) {
     throw new Error(`refusing to overwrite unexpected staged files: ${unexpectedDestinationFiles.join(', ')}`)
   }
   for (const name of GENERATED_FILES) {
     copyFileSync(join(outputs[0], name), join(destination, name))
   }
+  for (const name of LICENSE_FILES) {
+    const target = join(destination, name)
+    mkdirSync(dirname(target), { recursive: true })
+    copyFileSync(join(sourceRoot, name), target)
+  }
+
+  const stagedHashes = Object.fromEntries(STAGED_FILES.map((name) => [name, sha256(join(destination, name))]))
 
   const provenance = {
     schema: 'nirs4all-web.wasm-provenance.v1',
@@ -167,10 +201,15 @@ try {
       independent_target_directories: 2,
       byte_identical: true,
     },
-    files: GENERATED_FILES.map((name) => ({
+    licensing: {
+      expression: builtPackage.license,
+      payload_source: 'qualified source tree',
+      files: ['LICENSE', ...LICENSE_FILES],
+    },
+    files: STAGED_FILES.map((name) => ({
       path: name,
       size: statSync(join(destination, name)).size,
-      sha256: hashesA[name],
+      sha256: stagedHashes[name],
     })),
   }
   writeFileSync(join(destination, 'PROVENANCE.json'), `${JSON.stringify(provenance, null, 2)}\n`)

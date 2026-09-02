@@ -12,7 +12,7 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { dirname, join, resolve } from 'node:path'
+import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED_SOURCE = Object.freeze({
@@ -29,6 +29,17 @@ const GENERATED_FILES = Object.freeze([
   'dag_ml_wasm_bg.wasm.d.ts',
   'package.json',
 ])
+const LICENSE_FILES = Object.freeze([
+  'LICENSING.md',
+  'LICENSING_FR.md',
+  'THIRD_PARTY_NOTICES.md',
+  'LICENSES/AGPL-3.0-or-later.txt',
+  'LICENSES/Apache-2.0.txt',
+  'LICENSES/BSD-3-Clause.txt',
+  'LICENSES/CeCILL-2.1.txt',
+  'LICENSES/MIT.txt',
+])
+const STAGED_FILES = Object.freeze([...GENERATED_FILES, ...LICENSE_FILES].sort())
 
 const scriptDir = dirname(fileURLToPath(import.meta.url))
 const appRoot = resolve(scriptDir, '..')
@@ -56,8 +67,21 @@ function sha256(path) {
   return createHash('sha256').update(readFileSync(path)).digest('hex')
 }
 
+function filesRecursively(root, current = root) {
+  if (!existsSync(current)) return []
+  return readdirSync(current, { withFileTypes: true })
+    .flatMap((entry) => {
+      const path = join(current, entry.name)
+      return entry.isDirectory() ? filesRecursively(root, path) : [relative(root, path).split(sep).join('/')]
+    })
+    .sort()
+}
+
 if (!existsSync(crateRoot)) throw new Error(`dag-ml WASM crate not found: ${crateRoot}`)
 if (git('status', '--porcelain') !== '') throw new Error(`dag-ml source must be clean: ${sourceRoot}`)
+for (const name of LICENSE_FILES) {
+  if (!existsSync(join(sourceRoot, name))) throw new Error(`dag-ml license payload is incomplete: ${name}`)
+}
 const source = {
   commit: git('rev-parse', 'HEAD'),
   tree: git('rev-parse', 'HEAD^{tree}'),
@@ -94,7 +118,11 @@ try {
   if (JSON.stringify(hashesA) !== JSON.stringify(hashesB)) throw new Error('dag-ml WASM A/B builds are not byte-identical')
 
   const metadata = JSON.parse(readFileSync(join(outputs[0], 'package.json'), 'utf8'))
-  if (metadata.name !== 'dag-ml-wasm' || metadata.version !== EXPECTED_SOURCE.version) {
+  if (
+    metadata.name !== 'dag-ml-wasm' ||
+    metadata.version !== EXPECTED_SOURCE.version ||
+    metadata.license !== 'CECILL-2.1 OR AGPL-3.0-or-later'
+  ) {
     throw new Error(`built package identity ${metadata.name}@${metadata.version} is not qualified`)
   }
   const module = await import(`${pathToFileURL(join(outputs[0], 'dag_ml_wasm.js')).href}?verify=${Date.now()}`)
@@ -110,10 +138,17 @@ try {
   }
 
   mkdirSync(destination, { recursive: true })
-  const allowed = new Set([...GENERATED_FILES, 'PROVENANCE.json'])
-  const unexpected = readdirSync(destination).filter((name) => !allowed.has(name))
+  const allowed = new Set([...STAGED_FILES, 'PROVENANCE.json'])
+  const unexpected = filesRecursively(destination).filter((name) => !allowed.has(name))
   if (unexpected.length > 0) throw new Error(`refusing to overwrite unexpected staged files: ${unexpected.join(', ')}`)
   for (const name of GENERATED_FILES) copyFileSync(join(outputs[0], name), join(destination, name))
+  for (const name of LICENSE_FILES) {
+    const target = join(destination, name)
+    mkdirSync(dirname(target), { recursive: true })
+    copyFileSync(join(sourceRoot, name), target)
+  }
+
+  const stagedHashes = Object.fromEntries(STAGED_FILES.map((name) => [name, sha256(join(destination, name))]))
 
   const provenance = {
     schema: 'nirs4all-web.wasm-provenance.v1',
@@ -138,11 +173,16 @@ try {
       },
     },
     reproducibility: { independent_target_directories: 2, byte_identical: true },
+    licensing: {
+      expression: metadata.license,
+      payload_source: 'qualified source tree',
+      files: ['LICENSE', ...LICENSE_FILES],
+    },
     witnesses: { runtime_version: true, contract_manifest: true },
-    files: GENERATED_FILES.map((name) => ({
+    files: STAGED_FILES.map((name) => ({
       path: name,
       size: statSync(join(destination, name)).size,
-      sha256: hashesA[name],
+      sha256: stagedHashes[name],
     })),
   }
   writeFileSync(join(destination, 'PROVENANCE.json'), `${JSON.stringify(provenance, null, 2)}\n`)
