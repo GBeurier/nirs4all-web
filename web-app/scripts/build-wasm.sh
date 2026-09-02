@@ -80,4 +80,5 @@ else
   echo "✗ required dag-ml-data crate not found" >&2
   exit 1
 fi
+node "$HERE/sync-component-legal.mjs"
 echo "✓ WASM staged into $OUT (formats · io · datasets · methods · dag-ml · dag-ml-data)"

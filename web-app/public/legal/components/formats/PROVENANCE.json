@@ -1,0 +1,127 @@
+{
+  "schema": "nirs4all-web.wasm-provenance.v1",
+  "component": "nirs4all-formats-wasm",
+  "package": "@nirs4all/formats-wasm",
+  "version": "0.2.8",
+  "source": {
+    "repository": "https://github.com/GBeurier/nirs4all-formats",
+    "commit": "2d46285843dc366da1d38f133131b5329c886b12",
+    "tree": "2ee12c035db8a78721315ee65cf684d811552aa9",
+    "clean": true
+  },
+  "build": {
+    "target": "web",
+    "profile": "release",
+    "cargo_locked": true,
+    "source_date_epoch": 1788359430,
+    "const_random_seed": "2d46285843dc366da1d38f133131b5329c886b12",
+    "wasm_bindgen_lock": "0.2.127",
+    "tools": {
+      "wasm_pack": "wasm-pack 0.15.0",
+      "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "emcc": "emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 5.0.7 (263db4cffa6f9fc2ec514a70abac81362ea41849)"
+    },
+    "package_name_normalization": {
+      "from": "nirs4all-formats-wasm",
+      "to": "@nirs4all/formats-wasm"
+    },
+    "supplemental_license_payload": [
+      "LICENSE",
+      "LICENSING.md",
+      "THIRD_PARTY_NOTICES.md",
+      "LICENSES/AGPL-3.0-or-later.txt",
+      "LICENSES/Apache-2.0.txt",
+      "LICENSES/BSD-3-Clause.txt",
+      "LICENSES/CeCILL-2.1.txt",
+      "LICENSES/MIT.txt"
+    ]
+  },
+  "reproducibility": {
+    "independent_target_directories": 2,
+    "byte_identical": true
+  },
+  "witnesses": {
+    "runtime_version": true,
+    "feature_flags": true,
+    "reader_catalog_count": 44,
+    "chunk_size_mb": 4
+  },
+  "files": [
+    {
+      "path": "LICENSE",
+      "size": 34020,
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+    },
+    {
+      "path": "LICENSES/AGPL-3.0-or-later.txt",
+      "size": 34020,
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+    },
+    {
+      "path": "LICENSES/Apache-2.0.txt",
+      "size": 10280,
+      "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+    },
+    {
+      "path": "LICENSES/BSD-3-Clause.txt",
+      "size": 1460,
+      "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
+    },
+    {
+      "path": "LICENSES/CeCILL-2.1.txt",
+      "size": 21778,
+      "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+    },
+    {
+      "path": "LICENSES/MIT.txt",
+      "size": 1078,
+      "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+    },
+    {
+      "path": "LICENSING.md",
+      "size": 1436,
+      "sha256": "a002efcef5dd83e5612fbd38990b0265da5fef66a67bfc7c849bdf06860076fd"
+    },
+    {
+      "path": "README.md",
+      "size": 2918,
+      "sha256": "724b92047f40593956684d2e0e58fced595df93eb01c953792bc5e43ef0345ee"
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "size": 1424,
+      "sha256": "b1227b3159f26cd3af19c6f08fddc1662f1aab8118f964d7a968ce725d2e2b75"
+    },
+    {
+      "path": "nirs4all_formats_wasm.d.ts",
+      "size": 5205,
+      "sha256": "de5bed954ea567a7a6b450920207c4edf582b07592c2e68f19d9ea6b05ee4feb"
+    },
+    {
+      "path": "nirs4all_formats_wasm.js",
+      "size": 23435,
+      "sha256": "1ee17efff92d71153517b983d6b190cea765c9092c4c3dcd1e6740d57de642fd"
+    },
+    {
+      "path": "nirs4all_formats_wasm_bg.wasm",
+      "size": 6467250,
+      "sha256": "51c8ff57186676b30b512142f7880075432c6b1f155912858dd21f1e785f8b6e"
+    },
+    {
+      "path": "nirs4all_formats_wasm_bg.wasm.d.ts",
+      "size": 1882,
+      "sha256": "6c37403e7702d32e7b9c62f50bc0ea8fe78083a56e3dcb98aaa47e70117bec68"
+    },
+    {
+      "path": "package.json",
+      "size": 609,
+      "sha256": "1285be28df17cf6128316659818e5e326526569041a6e8c8ed782cda2dde2cf4"
+    },
+    {
+      "path": "snippets/rds2rust-b87e702ea5d57172/wasm/decompress.js",
+      "size": 16502,
+      "sha256": "5258768404663b4b48572796afbe51e2a8669a89d3d5e21cf18c41830bf1d46b"
+    }
+  ]
+}

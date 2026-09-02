@@ -23,7 +23,8 @@
     "LICENSES",
     "LICENSING.md",
     "THIRD_PARTY_NOTICES.md",
-    "COPY_PROVENANCE.md"
+    "COPY_PROVENANCE.md",
+    "nirs4all-io-wasm.cdx.json"
   ],
   "main": "nirs4all_io_wasm.js",
   "types": "nirs4all_io_wasm.d.ts",

@@ -5,16 +5,16 @@
   "version": "0.1.12",
   "source": {
     "repository": "https://github.com/GBeurier/nirs4all-io",
-    "commit": "a47e950c43df03cc0b7ef76adfe015ad5f47c671",
-    "tree": "286355636dd854e6f19b3b9cb453a74b9c518250",
+    "commit": "7abd256cbad1ee4eff3b6d507dd3fd28d2caac80",
+    "tree": "b36575f0e21e3ff08225c7f421ce99deabd26aeb",
     "clean": true
   },
   "build": {
     "target": "web",
     "profile": "release",
     "cargo_locked": true,
-    "source_date_epoch": 1788378841,
-    "const_random_seed": "a47e950c43df03cc0b7ef76adfe015ad5f47c671",
+    "source_date_epoch": 1788380142,
+    "const_random_seed": "7abd256cbad1ee4eff3b6d507dd3fd28d2caac80",
     "wasm_bindgen_lock": "0.2.122",
     "package_name_normalization": {
       "from": "nirs4all-io-wasm",
@@ -95,13 +95,13 @@
     },
     {
       "path": "README.md",
-      "size": 6963,
-      "sha256": "4d552cec8c6cc65b886b82f542442cb6bba41b87850e14aab5e12ced387a1b3e"
+      "size": 7389,
+      "sha256": "a00106a406c90a2be85bd1063c62744e6f096499aaef7ae86ffacd0b4fcccf13"
     },
     {
       "path": "THIRD_PARTY_NOTICES.md",
-      "size": 4613,
-      "sha256": "b0bfaa0a29fbfa2d5706dd41108f563da55e4fc6fdcb9ffba178ec4f3714b3f1"
+      "size": 4935,
+      "sha256": "2d0aa4b2f137e77bad3d243bd908359c5e6bab37a3e9e29402f96e2103bb4932"
     },
     {
       "path": "idiomatic.d.ts",
@@ -112,6 +112,11 @@
       "path": "idiomatic.mjs",
       "size": 2684,
       "sha256": "a041c2304307eccbe805cfb97868eb2640fafe2fc51da8237e0a535135d1bfa3"
+    },
+    {
+      "path": "nirs4all-io-wasm.cdx.json",
+      "size": 34123,
+      "sha256": "2fb93d6b81a3fa7fab9b0bf388b170f8dac4e4ac0f5a37f51b616bfb67067631"
     },
     {
       "path": "nirs4all_io_wasm.d.ts",
@@ -135,8 +140,8 @@
     },
     {
       "path": "package.json",
-      "size": 1343,
-      "sha256": "0d62ee10065b118c69dc12d6d73d1e47c4b351c4076e46159a62e61342f34a04"
+      "size": 1376,
+      "sha256": "d7c4658efd2995d8830572539cf23670ea8895a58e06e77945475591c613036f"
     },
     {
       "path": "types/nirs4all-io.d.ts",

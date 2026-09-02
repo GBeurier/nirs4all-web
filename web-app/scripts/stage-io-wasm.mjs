@@ -16,8 +16,8 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED_SOURCE = Object.freeze({
-  commit: 'a47e950c43df03cc0b7ef76adfe015ad5f47c671',
-  tree: '286355636dd854e6f19b3b9cb453a74b9c518250',
+  commit: '7abd256cbad1ee4eff3b6d507dd3fd28d2caac80',
+  tree: 'b36575f0e21e3ff08225c7f421ce99deabd26aeb',
   version: '0.1.12',
   wasmBindgen: '0.2.122',
 })
@@ -39,6 +39,7 @@ const STAGED_FILES = Object.freeze([
   'THIRD_PARTY_NOTICES.md',
   'idiomatic.d.ts',
   'idiomatic.mjs',
+  'nirs4all-io-wasm.cdx.json',
   'types/nirs4all-io.d.ts',
   'LICENSES/AGPL-3.0-or-later.txt',
   'LICENSES/Apache-2.0.txt',

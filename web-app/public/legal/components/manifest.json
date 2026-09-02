@@ -1,0 +1,390 @@
+{
+  "schema": "nirs4all-web.component-legal.v1",
+  "components": [
+    {
+      "name": "core",
+      "files": [
+        {
+          "path": "LICENSE",
+          "size": 34020,
+          "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+        },
+        {
+          "path": "LICENSES/AGPL-3.0-or-later.txt",
+          "size": 34020,
+          "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+        },
+        {
+          "path": "LICENSES/Apache-2.0.txt",
+          "size": 10280,
+          "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+        },
+        {
+          "path": "LICENSES/BSD-3-Clause.txt",
+          "size": 1460,
+          "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
+        },
+        {
+          "path": "LICENSES/COMMERCIAL-LICENSE.md",
+          "size": 674,
+          "sha256": "4340124a3a1d3c82577ea3aebc834cb9d37ee196d83fbf320af218a751449702"
+        },
+        {
+          "path": "LICENSES/COMMERCIAL-LICENSE_FR.md",
+          "size": 763,
+          "sha256": "e05393d17534ba7129cd04f51c2ebe00448a4b427a50204f52ea37e906bf115a"
+        },
+        {
+          "path": "LICENSES/CeCILL-2.1.txt",
+          "size": 21778,
+          "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+        },
+        {
+          "path": "LICENSES/MIT.txt",
+          "size": 1078,
+          "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+        },
+        {
+          "path": "LICENSING.md",
+          "size": 2058,
+          "sha256": "46c57e67ed1e40c98a714f32a968b343650b02df3627744c28e9ceba011b7447"
+        },
+        {
+          "path": "PROVENANCE.md",
+          "size": 884,
+          "sha256": "a0767d31d7ce4162eab19184c3e5d63b400b7cc76522f55950e2a6185d436050"
+        },
+        {
+          "path": "THIRD_PARTY_NOTICES.md",
+          "size": 1582,
+          "sha256": "36239a5e2cfb203f0f9b1a4d78578e938b35fc696e7bedc613e4030954ba14ac"
+        }
+      ]
+    },
+    {
+      "name": "dagml",
+      "files": [
+        {
+          "path": "LICENSE",
+          "size": 34020,
+          "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+        },
+        {
+          "path": "LICENSES/AGPL-3.0-or-later.txt",
+          "size": 34020,
+          "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+        },
+        {
+          "path": "LICENSES/Apache-2.0.txt",
+          "size": 10280,
+          "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+        },
+        {
+          "path": "LICENSES/BSD-3-Clause.txt",
+          "size": 1460,
+          "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
+        },
+        {
+          "path": "LICENSES/CeCILL-2.1.txt",
+          "size": 21778,
+          "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+        },
+        {
+          "path": "LICENSES/MIT.txt",
+          "size": 1078,
+          "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+        },
+        {
+          "path": "LICENSING.md",
+          "size": 1406,
+          "sha256": "f9f26e32462eb28e350d0bd4db913ee5ccbd3a1eb88d97e78d187e1b35b86ae9"
+        },
+        {
+          "path": "LICENSING_FR.md",
+          "size": 1521,
+          "sha256": "6f907830be970cbd87723ebaa1e58ffd3dd3f69692a5b211edfc6ee964d93aff"
+        },
+        {
+          "path": "PROVENANCE.json",
+          "size": 3517,
+          "sha256": "2883fde2a70bb968a95bdf7433bf73425c45dc9b3fdc1e9863822d867c1b9d79"
+        },
+        {
+          "path": "THIRD_PARTY_NOTICES.md",
+          "size": 1573,
+          "sha256": "01a4064f18fa28336f49c40a4e2db4b40ebee4766160320174e5aaadc41304fd"
+        }
+      ]
+    },
+    {
+      "name": "dagml-data",
+      "files": [
+        {
+          "path": "LICENSE",
+          "size": 34020,
+          "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+        },
+        {
+          "path": "LICENSES/AGPL-3.0-or-later.txt",
+          "size": 34020,
+          "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+        },
+        {
+          "path": "LICENSES/Apache-2.0.txt",
+          "size": 10280,
+          "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+        },
+        {
+          "path": "LICENSES/BSD-3-Clause.txt",
+          "size": 1460,
+          "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
+        },
+        {
+          "path": "LICENSES/CeCILL-2.1.txt",
+          "size": 21778,
+          "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+        },
+        {
+          "path": "LICENSES/MIT.txt",
+          "size": 1078,
+          "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+        },
+        {
+          "path": "LICENSING.md",
+          "size": 1421,
+          "sha256": "de862d775334ff3cf60df5a4f2bde6a08bd0aac0add477212d94f82989e3a2a3"
+        },
+        {
+          "path": "LICENSING_FR.md",
+          "size": 1536,
+          "sha256": "cf4da85268262def2eb370b379d0d52d7bea3dc347a67ddc53ef108b914df68d"
+        },
+        {
+          "path": "PROVENANCE.json",
+          "size": 3479,
+          "sha256": "a59fe5d74219bc4aefd2aa4e1bbf691e583f3148dca5f23ce24133e434e3d97b"
+        },
+        {
+          "path": "THIRD_PARTY_NOTICES.md",
+          "size": 1583,
+          "sha256": "d4e03627160b905122799e578ed8e1288969a70f47488db402cf55c5e2bb633e"
+        }
+      ]
+    },
+    {
+      "name": "datasets",
+      "files": [
+        {
+          "path": "LICENSE",
+          "size": 1110,
+          "sha256": "d013c19348cb484bf19db0406cafeecb8df2103fd3a8a55a9dc16ce948bcdb96"
+        },
+        {
+          "path": "PROVENANCE.json",
+          "size": 2166,
+          "sha256": "9fdf5ca31906ad76c2a9513cf32a8615a2a80056fadd5baeb7d7e886a77a4ff9"
+        }
+      ]
+    },
+    {
+      "name": "formats",
+      "files": [
+        {
+          "path": "LICENSE",
+          "size": 34020,
+          "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+        },
+        {
+          "path": "LICENSES/AGPL-3.0-or-later.txt",
+          "size": 34020,
+          "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+        },
+        {
+          "path": "LICENSES/Apache-2.0.txt",
+          "size": 10280,
+          "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+        },
+        {
+          "path": "LICENSES/BSD-3-Clause.txt",
+          "size": 1460,
+          "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
+        },
+        {
+          "path": "LICENSES/CeCILL-2.1.txt",
+          "size": 21778,
+          "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+        },
+        {
+          "path": "LICENSES/MIT.txt",
+          "size": 1078,
+          "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+        },
+        {
+          "path": "LICENSING.md",
+          "size": 1436,
+          "sha256": "a002efcef5dd83e5612fbd38990b0265da5fef66a67bfc7c849bdf06860076fd"
+        },
+        {
+          "path": "PROVENANCE.json",
+          "size": 3915,
+          "sha256": "ed70055bd5f158a463280c86b0efe7eabdc09cfa23dd0a0146bc89233f8b889e"
+        },
+        {
+          "path": "THIRD_PARTY_NOTICES.md",
+          "size": 1424,
+          "sha256": "b1227b3159f26cd3af19c6f08fddc1662f1aab8118f964d7a968ce725d2e2b75"
+        }
+      ]
+    },
+    {
+      "name": "io",
+      "files": [
+        {
+          "path": "COPY_PROVENANCE.md",
+          "size": 2652,
+          "sha256": "d2ba7d73b4e78530678c9ac411318dd8880b5ab6d43d828309815745e1590e41"
+        },
+        {
+          "path": "LICENSE",
+          "size": 34020,
+          "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+        },
+        {
+          "path": "LICENSES/AGPL-3.0-or-later.txt",
+          "size": 34020,
+          "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+        },
+        {
+          "path": "LICENSES/Apache-2.0.txt",
+          "size": 9723,
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "path": "LICENSES/BSD-3-Clause.txt",
+          "size": 1459,
+          "sha256": "3cf06aba3588c41c514f6946bb2d757b413ff6491647d474800f55edca75dcb4"
+        },
+        {
+          "path": "LICENSES/COMMERCIAL-LICENSE.md",
+          "size": 670,
+          "sha256": "e62a66dc45d618d419706048b17a840f87d0c0c5c940eadd1cf6ea13c7eae08f"
+        },
+        {
+          "path": "LICENSES/COMMERCIAL-LICENSE_FR.md",
+          "size": 759,
+          "sha256": "7d1fd841891d4cb53836a6aca2fbbf7f36ef3bca540a394a9d94633af34ea3d6"
+        },
+        {
+          "path": "LICENSES/CeCILL-2.1.txt",
+          "size": 21778,
+          "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+        },
+        {
+          "path": "LICENSES/MIT.txt",
+          "size": 1078,
+          "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+        },
+        {
+          "path": "LICENSES/Unicode-3.0.txt",
+          "size": 1995,
+          "sha256": "f7db81051789b729fea528a63ec4c938fdcb93d9d61d97dc8cc2e9df6d47f2a1"
+        },
+        {
+          "path": "LICENSING.md",
+          "size": 2113,
+          "sha256": "b41ad1d4b8e62c89e42704fc4c9b5bb8a2099a0ad0680d72e95efb57c5d3326c"
+        },
+        {
+          "path": "PROVENANCE.json",
+          "size": 4576,
+          "sha256": "fbd0a8baf84061c8d9c9406c85837d8a010f436d95820e61de94b1d30e07975f"
+        },
+        {
+          "path": "THIRD_PARTY_NOTICES.md",
+          "size": 4935,
+          "sha256": "2d0aa4b2f137e77bad3d243bd908359c5e6bab37a3e9e29402f96e2103bb4932"
+        },
+        {
+          "path": "nirs4all-io-wasm.cdx.json",
+          "size": 34123,
+          "sha256": "2fb93d6b81a3fa7fab9b0bf388b170f8dac4e4ac0f5a37f51b616bfb67067631"
+        }
+      ]
+    },
+    {
+      "name": "methods",
+      "files": [
+        {
+          "path": "LICENSE",
+          "size": 34020,
+          "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+        },
+        {
+          "path": "LICENSES/AGPL-3.0-or-later.txt",
+          "size": 34020,
+          "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+        },
+        {
+          "path": "LICENSES/Apache-2.0.txt",
+          "size": 10280,
+          "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+        },
+        {
+          "path": "LICENSES/BSD-3-Clause.txt",
+          "size": 1460,
+          "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
+        },
+        {
+          "path": "LICENSES/COMMERCIAL-LICENSE.md",
+          "size": 680,
+          "sha256": "f26f5d9ce50fbbebf089b921bcb44add711cb066ec4dbb767da450dc767a81a6"
+        },
+        {
+          "path": "LICENSES/COMMERCIAL-LICENSE_FR.md",
+          "size": 769,
+          "sha256": "d6cb8560f7f4ba35443d91e47280da0e9b2369ba05b597db9d812646cc4336ee"
+        },
+        {
+          "path": "LICENSES/CeCILL-2.1.txt",
+          "size": 21778,
+          "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+        },
+        {
+          "path": "LICENSES/MIT.txt",
+          "size": 1078,
+          "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+        },
+        {
+          "path": "LICENSING.md",
+          "size": 2133,
+          "sha256": "674f3ab09bc6fca997bc765bbd5b710aabecb60d68f722ed4182bf40ec274bf1"
+        },
+        {
+          "path": "LICENSING_FR.md",
+          "size": 2280,
+          "sha256": "6996c1e0385782ca1d6adf3a2fe07189a4bbcad8be727adb7cac0b85c71255a1"
+        },
+        {
+          "path": "NOTICE.md",
+          "size": 1190,
+          "sha256": "c85840381f10a962f85703c0cffbaadeaa22bd9e2ea607b360f9623baa2702a8"
+        },
+        {
+          "path": "PROVENANCE.json",
+          "size": 5974,
+          "sha256": "6bc49fef170c7c8bd0b676675c622dc8c744fa2ded119ed80b1cf3fcc917d6b7"
+        },
+        {
+          "path": "THIRD_PARTY_LICENSES.md",
+          "size": 4782,
+          "sha256": "05105be116e1d57a7192c2ffa59d168e317f094cd98caa179527f7e92e3739e9"
+        },
+        {
+          "path": "THIRD_PARTY_NOTICES.md",
+          "size": 1520,
+          "sha256": "d7cb88c7da4946046de190b23be0b747f10136f8423e3eda29d5d9c2a9b192e4"
+        }
+      ]
+    }
+  ]
+}
