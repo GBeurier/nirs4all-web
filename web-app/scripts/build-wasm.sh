@@ -47,6 +47,14 @@ set_package_name formats "@nirs4all/formats-wasm"
 build_pack "$ECO/nirs4all-io/bindings/wasm" io
 set_package_name io "@nirs4all/io-wasm"
 
+if [ -d "${NIRS4ALL_DATASETS_ROOT:-$ECO/nirs4all-datasets}/bindings/wasm" ]; then
+  echo "▶ building and proving datasets"
+  NIRS4ALL_DATASETS_ROOT="${NIRS4ALL_DATASETS_ROOT:-$ECO/nirs4all-datasets}" \
+    WASM_PACK_BIN="$WASM_PACK" node "$HERE/stage-datasets-wasm.mjs"
+else
+  echo "⚠ skip datasets — crate not found"
+fi
+
 echo "▶ staging methods (@nirs4all/methods V1 prebuilt dist)"
 METHODS="$ECO/nirs4all-methods/bindings/js/dist"
 if [ -d "$METHODS" ]; then
@@ -68,4 +76,4 @@ if [ -d "${NIRS4ALL_DAG_ML_DATA_ROOT:-$ECO/dag-ml-data}/crates/dag-ml-data-wasm"
 else
   echo "⚠ skip dagml-data — crate not found"
 fi
-echo "✓ WASM staged into $OUT (formats · io · methods · dag-ml · dag-ml-data)"
+echo "✓ WASM staged into $OUT (formats · io · datasets · methods · dag-ml · dag-ml-data)"

@@ -79,6 +79,12 @@ script (`npm run vendor:core`) and the content-addressed UI package check
 the runtime surface, UI subpath exports, and UI assets available without introducing any backend
 dependency.
 
+The staged Core, datasets and dag-ml-data packages are content-addressed release-candidate
+artifacts. `npm run check:core-shim` verifies the complete Core package inventory, while
+`npm run check:wasm-artifacts` verifies provenance, byte hashes and live runtime witnesses for
+datasets and dag-ml-data. Re-stage datasets reproducibly with `npm run wasm:datasets` and an exact
+`NIRS4ALL_DATASETS_ROOT` checkout.
+
 `examples/custom-app-host/` is a copy-out template for custom client-side hosts. It imports only the
 public `nirs4all` and `nirs4all-ui` package surfaces and is pinned by
 `src/app/custom-app-host-template.contract.test.ts`.

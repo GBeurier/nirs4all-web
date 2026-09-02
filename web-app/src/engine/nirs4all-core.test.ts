@@ -191,9 +191,17 @@ describe('nirs4all-core aggregate loaders', () => {
   it('loads the vendored datasets WASM artifact', async () => {
     const datasets = await import('./wasm/datasets/nirs4all_datasets_wasm.js')
     const wasm = readFileSync(new URL('./wasm/datasets/nirs4all_datasets_wasm_bg.wasm', import.meta.url))
+    const provenance = JSON.parse(
+      readFileSync(new URL('./wasm/datasets/PROVENANCE.json', import.meta.url), 'utf8'),
+    ) as { version: string; source: { commit: string }; reproducibility: { byte_identical: boolean } }
     datasets.initSync({ module: wasm })
 
-    expect(datasets.abiVersion()).toMatch(/^\d/)
+    expect(datasets.abiVersion()).toBe('0.3.8')
+    expect(provenance).toMatchObject({
+      version: '0.3.8',
+      source: { commit: '01596ab6a77ce3141d1f96d1cf675d13cacbc59a' },
+      reproducibility: { byte_identical: true },
+    })
     expect(datasets.sha256(new Uint8Array([97, 98, 99]))).toBe(
       'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
     )
