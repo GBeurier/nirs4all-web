@@ -15,11 +15,11 @@ const required = process.env.NIRS4ALL_CORE_SHIM_REQUIRED === '1'
 const logPrefix = '[sync-core-shim]'
 
 const expected = Object.freeze({
-  commit: '4eb8a687b0b3797b6f5db816444cf840f67c8ee0',
-  tree: '4ccd67a7fe556db2c50615500cca096cae7666ef',
+  commit: '3a3ce728cebf001ad25b20b3eeaed3bc76daf32f',
+  tree: '57e8203bf33a6c7b0b3f049f0dcbf3efa28991b1',
   version: '0.3.25',
-  npmSha256: '9dfb9c35f4e3b8ce7ecd7712ff2cd54330861bb48f95c32ce68c87133369c77f',
-  provenanceSha256: 'a0767d31d7ce4162eab19184c3e5d63b400b7cc76522f55950e2a6185d436050',
+  npmSha256: 'f1f7d0f354e01980dd553d6edb48125c43d77a1e35561ba0ed955fd4f588bcf1',
+  provenanceSha256: '7c90235b10b6a7c6e2ddffaa0fe7b737a9d36afd54c2408e7bbdf404b2474536',
 })
 
 const sourceCandidates = [
@@ -43,6 +43,11 @@ const sourceFiles = [
   'src/index.d.ts',
   'src/execution.js',
   'src/archive-v2.js',
+  'native/nirs4all_core_wasm_native.d.ts',
+  'native/nirs4all_core_wasm_native.js',
+  'native/nirs4all_core_wasm_native_bg.wasm',
+  'native/nirs4all_core_wasm_native_bg.wasm.d.ts',
+  'native/package.json',
 ]
 
 // Exact inventory of the independently reproduced 0.3.25 npm artifact. This
@@ -60,16 +65,16 @@ const pinnedPackageSha256 = new Map(Object.entries({
   'LICENSING.md': '46c57e67ed1e40c98a714f32a968b343650b02df3627744c28e9ceba011b7447',
   'README.md': 'ae60cbaccf36af7a4885548e9a6fc8fad6c2659806164994550d5a419df82433',
   'THIRD_PARTY_NOTICES.md': '36239a5e2cfb203f0f9b1a4d78578e938b35fc696e7bedc613e4030954ba14ac',
-  'native/nirs4all_core_wasm_native.d.ts': '2948ea59c40da700e9cb157722bf915e009c06b76954e137977745771eb24462',
-  'native/nirs4all_core_wasm_native.js': '6cefd20ab8296b77ce0ad1a96ac02fa0d070637c8b53e18b2f0c7c94b0c11e40',
-  'native/nirs4all_core_wasm_native_bg.wasm': '6781d37229498004ad1b3274fe0cdf663c62af738965458ae3b7811c48062b3f',
-  'native/nirs4all_core_wasm_native_bg.wasm.d.ts': '01b958d260866df165731ad36ecef492ce0050fed6ed616e6e6566857f627640',
+  'native/nirs4all_core_wasm_native.d.ts': '14c9cc9bf53db4d3e0cc18450aa305cde1c29a4e9362340dc43c42c7dd3b3b2e',
+  'native/nirs4all_core_wasm_native.js': 'ea50e012b86936c81eeec77ac0c19b3c3ef13c4d2958a4899954aeed55d83c58',
+  'native/nirs4all_core_wasm_native_bg.wasm': '26fdff4c1ecf2a30d4dfbdadb5ac88617654e47931a53b8499165175afde5edf',
+  'native/nirs4all_core_wasm_native_bg.wasm.d.ts': '6766915572d258f151ebb11998e50193c9cd42c29f3300ba3cd6abd84ca4536c',
   'native/package.json': '69c3afbbaaa146da457d97d0e6b09fef342a6c6500334cf847cc21ce18c6f942',
   'package.json': 'ef3625454674c823d432ab6315f431353805a1c5b4d97aee0d40e060d0a54d18',
-  'src/archive-v2.js': 'edbd4e1d2ed7dec2b62e128756d533feea2df0b99a0e5a2c83c41a660056f6b2',
+  'src/archive-v2.js': 'ed0d81ebdad7f2b93e040222589e464a9c87f591b705cad295cdbc9eeee0b6eb',
   'src/execution.js': '1137730eca30c14c6615c40ca6cd979dbc1d48930a5103f0b3a44630c98784c6',
-  'src/index.d.ts': 'fb424a5487846c9599ef33492a1eebdfb7a481dbc5c10c0e8179793de7c7fd91',
-  'src/index.js': '936cb31f3646bc08d6faac4ea81b04c7cf2cabeb1b86a97acfa9df24d7fb8446',
+  'src/index.d.ts': '94f8dbd51ece961d703857689e675e856e2f1c7f763c8f419846571d2880d608',
+  'src/index.js': '6fa6a44e29300ca0add1bfdb5aab2deb64ca069655505d4a66dd6467ca1a1326',
 }))
 
 function packageFiles(directory, prefix = '') {

@@ -16,7 +16,6 @@ import {
 
 import type { PredictionPanelProps } from '@/components/contracts'
 import type { Confusion, Metrics, PredictResult, PredRow } from '@/engine/types'
-import { isArchiveV2Model } from '@/engine/archive-v2'
 import { parseSpectraCsv } from '@/data/dataset'
 import { classificationMetrics, regressionMetrics } from '@/engine/metrics'
 import { fmt } from '@/lib/format'
@@ -120,8 +119,7 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
   const [yBusy, setYBusy] = useState(false)
   const [yCells, setYCells] = useState<string[] | null>(null)
   const isRegression = model.taskType === 'regression'
-  const archiveV2 = isArchiveV2Model(model)
-  const nFeatures = archiveV2 ? null : model.nFeatures
+  const nFeatures = model.nFeatures
 
   function resetY() {
     setYCells(null)
@@ -143,10 +141,10 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
       const rows = parsed.rows
       if (rows.length === 0) throw new Error('No data rows found in the file.')
       const cols = rows[0].length
-      const replayFeatures = nFeatures ?? cols
+      const replayFeatures = nFeatures
       // Mechanism 1: an extra trailing column (nFeatures + 1) is interpreted as the reference Y.
-      const hasAutoY = nFeatures !== null && cols === nFeatures + 1
-      if (nFeatures !== null && cols !== nFeatures && !hasAutoY) {
+      const hasAutoY = cols === nFeatures + 1
+      if (cols !== nFeatures && !hasAutoY) {
         throw new Error(`Column count mismatch: the file has ${cols} columns but the model expects ${nFeatures} features${cols === nFeatures + 2 ? '' : ' (or ' + (nFeatures + 1) + ' with a trailing Y column)'}.`)
       }
       const nSamples = rows.length
@@ -258,9 +256,7 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
             <h3 className="text-base font-semibold text-foreground">Predict on new spectra</h3>
             <p className="text-xs text-muted-foreground">
               Model: <span className="font-medium text-foreground">{sourceName}</span> ·{' '}
-              {nFeatures === null
-                ? 'feature count validated from the Archive V2 model at replay'
-                : <><span className="font-mono">{nFeatures}</span> wavelengths</>} · {model.taskType}
+              <span className="font-mono">{nFeatures}</span> wavelengths · {model.taskType}
             </p>
           </div>
         </div>
@@ -311,13 +307,11 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
         <p className="text-sm font-semibold text-foreground">{busy ? 'Predicting…' : 'Drop new spectra here'}</p>
         <p className="text-xs text-muted-foreground">
           or <span className="font-medium text-brand-teal">browse</span> — CSV,{' '}
-          {nFeatures === null ? 'numeric feature columns validated by the archive' : `${nFeatures} columns`} (one spectrum per row)
+          {nFeatures} columns (one spectrum per row)
         </p>
-        {nFeatures !== null && (
-          <p className="text-[11px] text-muted-foreground/80">
-            Tip: add a trailing column ({nFeatures + 1} total) and it is read as reference Y values.
-          </p>
-        )}
+        <p className="text-[11px] text-muted-foreground/80">
+          Tip: add a trailing column ({nFeatures + 1} total) and it is read as reference Y values.
+        </p>
         <input ref={inputRef} type="file" accept=".csv,.tsv,.txt,text/csv" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleFile(f) }} />
       </div>
 

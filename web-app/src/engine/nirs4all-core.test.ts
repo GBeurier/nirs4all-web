@@ -4,6 +4,7 @@ import {
   artifactContracts,
   capabilityManifest,
   controllerCapabilities,
+  inspectMethodsArchiveV2Predictors,
   loadArchiveV2Native,
   loadDatasetsWasm,
   loadMethodsWasm,
@@ -62,10 +63,10 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(existsSync(new URL('../../scripts/sync-lite-shim.mjs', import.meta.url))).toBe(false)
     expect(syncScript).not.toMatch(/NIRS4ALL_LITE|nirs4all-lite|sync-lite/)
     expect(vendorPkg).toMatchObject({ name: 'nirs4all', version: '0.3.25' })
-    expect(provenance).toContain('4eb8a687b0b3797b6f5db816444cf840f67c8ee0')
-    expect(provenance).toContain('9dfb9c35f4e3b8ce7ecd7712ff2cd54330861bb48f95c32ce68c87133369c77f')
-    expect(syncScript).toContain('6781d37229498004ad1b3274fe0cdf663c62af738965458ae3b7811c48062b3f')
-    expect(syncScript).toContain('a0767d31d7ce4162eab19184c3e5d63b400b7cc76522f55950e2a6185d436050')
+    expect(provenance).toContain('3a3ce728cebf001ad25b20b3eeaed3bc76daf32f')
+    expect(provenance).toContain('f1f7d0f354e01980dd553d6edb48125c43d77a1e35561ba0ed955fd4f588bcf1')
+    expect(syncScript).toContain('26fdff4c1ecf2a30d4dfbdadb5ac88617654e47931a53b8499165175afde5edf')
+    expect(syncScript).toContain('ed0d81ebdad7f2b93e040222589e464a9c87f591b705cad295cdbc9eeee0b6eb')
   })
 
   it('keeps the datasets upstream candidate aligned with the vendored WASM package', () => {
@@ -103,6 +104,7 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(typeof runPortablePipeline).toBe('function')
     expect(typeof predictPortablePipeline).toBe('function')
     expect(typeof loadArchiveV2Native).toBe('function')
+    expect(typeof inspectMethodsArchiveV2Predictors).toBe('function')
     expect(typeof replayMethodsArchiveV2).toBe('function')
     expect(Array.isArray(requiredKeywordRegistryEntries)).toBe(true)
     expect(typeof loadMethodsWasm).toBe('function')
@@ -223,7 +225,7 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(manifest.capabilities).toContain('loss_execution_attestation')
     expect(provenance).toMatchObject({
       version: '0.3.23',
-      source: { commit: 'bad5aff0bfbc14c622f5ade7f393f29399df6e07' },
+      source: { commit: '189099119b69e74c69466f2308808cb423dc2e94' },
       reproducibility: { byte_identical: true },
     })
   })

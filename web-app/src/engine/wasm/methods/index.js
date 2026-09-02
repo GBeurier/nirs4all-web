@@ -16,6 +16,7 @@ export { Config } from "./config.js";
 export { Model, fitPls, predictPls, fitModel, predictModel, fitAom, fitPop, fitAomRidge, fitAomStack, computeSplit, computeSplitIndices } from "./model.js";
 export { ppCreate, ppFit, ppTransform, ppGetState, ppSetState, ppDestroy, } from "./preprocessing.js";
 export { MethodResult } from "./methodResult.js";
+export { inspectN4mm, SERIALIZED_MODEL_INFO_SCHEMA_V1, SERIALIZED_MODEL_CAPABILITY_PREDICT, SERIALIZED_MODEL_CAPABILITY_TRANSFORM, SERIALIZED_MODEL_CAPABILITY_AFFINE, } from "./serialization.js";
 export { Status, Dtype, Algorithm, Solver, Deflation, N4mError, } from "./types.js";
 /** ABI / project version reported by the loaded WASM module. */
 export function version() {

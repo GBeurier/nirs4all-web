@@ -7,6 +7,16 @@
 export class ValidatedMethodsArchiveV2 {
     free(): void;
     [Symbol.dispose](): void;
+    /**
+     * Bind authoritative Methods/WASM inspection fields to the inventoried
+     * N4MM bytes and return DAG-ML's typed descriptor JSON.
+     *
+     * The public JavaScript facade obtains these primitive fields only from
+     * `@nirs4all/methods.inspectN4mm`. Core supplies the artifact hash and
+     * controller from the validated archive, while DAG-ML owns all pure
+     * controller/algorithm/capability/dimension policy and TCV1 identity.
+     */
+    bind_inspected_native_predictor_v1(inspection_schema_version: number, format_version: number, writer_abi_major: number, writer_abi_minor: number, writer_abi_patch: number, storage_algorithm: number, training_samples: bigint, n_features: number, n_targets: number, n_components: number, capabilities: bigint): string;
     model_bytes(): Uint8Array;
     /**
      * Validate through Core before returning any package or model bytes.
@@ -32,6 +42,7 @@ export interface InitOutput {
     readonly validatedmethodsarchivev2_archive_id: (a: number) => [number, number];
     readonly validatedmethodsarchivev2_archive_sha256: (a: number) => [number, number];
     readonly validatedmethodsarchivev2_artifact_id: (a: number) => [number, number];
+    readonly validatedmethodsarchivev2_bind_inspected_native_predictor_v1: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: bigint, i: number, j: number, k: number, l: bigint) => [number, number, number, number];
     readonly validatedmethodsarchivev2_binding_id: (a: number) => [number, number];
     readonly validatedmethodsarchivev2_model_bytes: (a: number) => [number, number];
     readonly validatedmethodsarchivev2_new: (a: number, b: number) => [number, number, number];
@@ -41,8 +52,8 @@ export interface InitOutput {
     readonly validatedmethodsarchivev2_target_names_json: (a: number) => [number, number];
     readonly __wbindgen_externrefs: WebAssembly.Table;
     readonly __wbindgen_free: (a: number, b: number, c: number) => void;
-    readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __externref_table_dealloc: (a: number) => void;
+    readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_start: () => void;
 }
 

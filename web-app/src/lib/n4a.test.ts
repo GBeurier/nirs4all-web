@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
 import { plsFit, plsPredict, type PlsModel } from '@/engine/algo/pls'
 import { MAX_ARCHIVE_V2_BYTES } from '@/engine/archive-v2'
@@ -71,6 +72,28 @@ describe('.n4a typed-array codec', () => {
   it('rejects a non-n4a payload', () => {
     expect(() => parseN4a('{"hello":1}')).toThrow()
     expect(() => parseN4a('not json')).toThrow()
+  })
+
+  it('imports a binary Archive V2 with its inspected native dimensions', async () => {
+    const bytes = readFileSync(new URL('../engine/fixtures/archive-v2/multitarget-pls.n4a', import.meta.url))
+    const file = {
+      name: 'portable-multitarget.n4a',
+      size: bytes.byteLength,
+      arrayBuffer: async () => bytes.buffer.slice(
+        bytes.byteOffset,
+        bytes.byteOffset + bytes.byteLength,
+      ) as ArrayBuffer,
+    } as File
+
+    const loaded = await parseN4aFile(file)
+    expect(loaded.model.nFeatures).toBe(2)
+    expect(loaded.targetName).toBe('protein, moisture')
+    expect(loaded.model.state).toMatchObject({
+      nativePredictorDescriptor: {
+        descriptor_type: 'dagml.native_predictor_descriptor.v1',
+        dimensions: { n_features: 2, n_targets: 2 },
+      },
+    })
   })
 
   it.each([0, -1, MAX_ARCHIVE_V2_BYTES + 1, Number.MAX_SAFE_INTEGER + 1, Number.NaN])(

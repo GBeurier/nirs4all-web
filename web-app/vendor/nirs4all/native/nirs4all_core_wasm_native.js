@@ -67,6 +67,45 @@ export class ValidatedMethodsArchiveV2 {
         }
     }
     /**
+     * Bind authoritative Methods/WASM inspection fields to the inventoried
+     * N4MM bytes and return DAG-ML's typed descriptor JSON.
+     *
+     * The public JavaScript facade obtains these primitive fields only from
+     * `@nirs4all/methods.inspectN4mm`. Core supplies the artifact hash and
+     * controller from the validated archive, while DAG-ML owns all pure
+     * controller/algorithm/capability/dimension policy and TCV1 identity.
+     * @param {number} inspection_schema_version
+     * @param {number} format_version
+     * @param {number} writer_abi_major
+     * @param {number} writer_abi_minor
+     * @param {number} writer_abi_patch
+     * @param {number} storage_algorithm
+     * @param {bigint} training_samples
+     * @param {number} n_features
+     * @param {number} n_targets
+     * @param {number} n_components
+     * @param {bigint} capabilities
+     * @returns {string}
+     */
+    bind_inspected_native_predictor_v1(inspection_schema_version, format_version, writer_abi_major, writer_abi_minor, writer_abi_patch, storage_algorithm, training_samples, n_features, n_targets, n_components, capabilities) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ret = wasm.validatedmethodsarchivev2_bind_inspected_native_predictor_v1(this.__wbg_ptr, inspection_schema_version, format_version, writer_abi_major, writer_abi_minor, writer_abi_patch, storage_algorithm, training_samples, n_features, n_targets, n_components, capabilities);
+            var ptr1 = ret[0];
+            var len1 = ret[1];
+            if (ret[3]) {
+                ptr1 = 0; len1 = 0;
+                throw takeFromExternrefTable0(ret[2]);
+            }
+            deferred2_0 = ptr1;
+            deferred2_1 = len1;
+            return getStringFromWasm0(ptr1, len1);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+    /**
      * @returns {string}
      */
     get binding_id() {

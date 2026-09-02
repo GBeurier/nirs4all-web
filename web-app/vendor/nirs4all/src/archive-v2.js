@@ -62,12 +62,19 @@ export async function replayMethodsArchiveV2(archiveBytes, dataset) {
     if (typeof methods.loadModule === 'function') {
       await methods.loadModule();
     }
+    const modelBytes = archive.model_bytes();
+    const nativePredictorDescriptor = bindNativePredictorDescriptor(
+      methods,
+      archive,
+      modelBytes,
+    );
     const predicted = predictN4mm(
       methods,
-      archive.model_bytes(),
+      modelBytes,
       input,
       targetNames.length,
       archive.abi_min_minor,
+      nativePredictorDescriptor,
     );
     return Object.freeze({
       schema: 'nirs4all.core.archive-v2-replay.v1',
@@ -79,6 +86,7 @@ export async function replayMethodsArchiveV2(archiveBytes, dataset) {
       bindingId: archive.binding_id,
       nodeId: archive.node_id,
       portName: archive.port_name,
+      nativePredictorDescriptor,
       sampleIds: Object.freeze([...input.sampleIds]),
       targetNames: Object.freeze([...targetNames]),
       data: Object.freeze(Array.from(predicted.data)),
@@ -90,7 +98,68 @@ export async function replayMethodsArchiveV2(archiveBytes, dataset) {
   }
 }
 
-function predictN4mm(methods, modelBytes, input, expectedTargets, abiMinMinor) {
+/**
+ * Inspect and expose the native predictor descriptor without running predict.
+ *
+ * Historical Archive V2 packages without an embedded descriptor are accepted:
+ * the result is derived from their inventoried N4MM bytes. New packages are
+ * refused unless their embedded DAG-ML descriptor matches the same inspection.
+ */
+export async function inspectMethodsArchiveV2Predictors(archiveBytes) {
+  const bytes = bytesView(archiveBytes, 'Archive V2');
+  if (bytes.byteLength > MAX_ARCHIVE_BYTES) {
+    throw new RangeError('Archive V2 exceeds the canonical Core byte budget.');
+  }
+  const archiveNative = await loadArchiveV2Native();
+  if (typeof archiveNative?.ValidatedMethodsArchiveV2 !== 'function') {
+    throw new TypeError('Archive V2 native validator is unavailable or incompatible.');
+  }
+  const archive = new archiveNative.ValidatedMethodsArchiveV2(bytes);
+  try {
+    const methods = await loadMethodsWasm();
+    if (typeof methods.loadModule === 'function') {
+      await methods.loadModule();
+    }
+    return Object.freeze([
+      bindNativePredictorDescriptor(methods, archive, archive.model_bytes()),
+    ]);
+  } finally {
+    archive.free();
+  }
+}
+
+function bindNativePredictorDescriptor(methods, archive, modelBytes) {
+  if (typeof methods?.inspectN4mm !== 'function') {
+    throw new TypeError('Methods WASM lacks authoritative N4MM inspection.');
+  }
+  const info = methods.inspectN4mm(bytesView(modelBytes, 'N4MM model'));
+  const json = archive.bind_inspected_native_predictor_v1(
+    info.schemaVersion,
+    info.formatVersion,
+    info.writerAbi[0],
+    info.writerAbi[1],
+    info.writerAbi[2],
+    info.algorithm,
+    info.trainingSamples,
+    info.nFeatures,
+    info.nTargets,
+    info.nComponents,
+    info.capabilities,
+  );
+  const descriptor = JSON.parse(json);
+  Object.freeze(descriptor.writer_abi);
+  Object.freeze(descriptor.dimensions);
+  return Object.freeze(descriptor);
+}
+
+function predictN4mm(
+  methods,
+  modelBytes,
+  input,
+  expectedTargets,
+  abiMinMinor,
+  nativePredictorDescriptor,
+) {
   const required = ['abiVersion', 'Context', 'getModule', 'makeMatrixView', 'readArrayView'];
   const missing = required.filter((key) => methods?.[key] == null);
   if (missing.length > 0) {
@@ -116,7 +185,6 @@ function predictN4mm(methods, modelBytes, input, expectedTargets, abiMinMinor) {
     modelBuffer = allocate(module, Math.max(1, raw.byteLength), 'N4MM input');
     modelOut = allocate(module, 4, 'N4MM model handle');
     module.HEAPU8.set(raw, modelBuffer);
-    inspectN4mm(module, modelBuffer, raw.byteLength);
     module.setValue(modelOut, 0, 'i32');
     checkStatus(module, context.handle, module.ccall(
       'n4m_model_import_from_buffer',
@@ -131,10 +199,14 @@ function predictN4mm(methods, modelBytes, input, expectedTargets, abiMinMinor) {
 
     const nFeatures = modelDimension(module, model, 'n4m_model_get_n_features', 'features');
     const nTargets = modelDimension(module, model, 'n4m_model_get_n_targets', 'targets');
-    if (nFeatures !== input.cols) {
+    if (nativePredictorDescriptor.dimensions.n_features !== nFeatures
+      || nativePredictorDescriptor.dimensions.n_targets !== nTargets) {
+      throw new Error('Imported N4MM dimensions differ from its native predictor descriptor.');
+    }
+    if (nativePredictorDescriptor.dimensions.n_features !== input.cols) {
       throw new RangeError(`Archive model expects ${nFeatures} features; received ${input.cols}.`);
     }
-    if (nTargets !== expectedTargets) {
+    if (nativePredictorDescriptor.dimensions.n_targets !== expectedTargets) {
       throw new RangeError(
         `Archive output binding declares ${expectedTargets} targets; N4MM contains ${nTargets}.`,
       );
@@ -179,27 +251,6 @@ function predictN4mm(methods, modelBytes, input, expectedTargets, abiMinMinor) {
     if (modelOut !== 0) module._free(modelOut);
     if (modelBuffer !== 0) module._free(modelBuffer);
     context.destroy();
-  }
-}
-
-function inspectN4mm(module, modelBuffer, modelLength) {
-  const metadata = allocate(module, 16, 'N4MM inspection metadata');
-  try {
-    checkStatus(module, 0, module.ccall(
-      'n4m_serialization_inspect',
-      'number',
-      ['number', 'number', 'number', 'number', 'number', 'number'],
-      [modelBuffer, modelLength, metadata, metadata + 4, metadata + 8, metadata + 12],
-    ), 'N4MM header inspection');
-    const formatVersion = module.getValue(metadata, 'i32') >>> 0;
-    const writerAbiMajor = module.getValue(metadata + 4, 'i32') >>> 0;
-    if (formatVersion !== 1 || writerAbiMajor !== 2) {
-      throw new Error(
-        `Archive V2 requires N4MM format 1 written by ABI major 2; received format ${formatVersion}, ABI ${writerAbiMajor}.`,
-      );
-    }
-  } finally {
-    module._free(metadata);
   }
 }
 
