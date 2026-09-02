@@ -2,10 +2,10 @@
   "name": "@nirs4all/datasets-wasm",
   "type": "module",
   "collaborators": [
-    "Gregory Beurier <beurier@cirad.fr>"
+    "Gregory Beurier <gregory.beurier@cirad.fr>"
   ],
   "description": "WASM (wasm-bindgen) binding over nirs4all-datasets-core: resolve the download contract + SHA-256 in the browser/Node. Scoped to metadata + small public datasets.",
-  "version": "0.2.0-alpha.1",
+  "version": "0.3.8",
   "license": "MIT",
   "repository": {
     "type": "git",

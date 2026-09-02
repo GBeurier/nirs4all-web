@@ -18,7 +18,7 @@ export function abiVersion() {
 }
 
 /**
- * Resolve a dataset id against an index JSON string; return the download-contract JSON.
+ * Resolve a dataset id against an index JSON string; return the descriptor+download-contract JSON.
  *
  * Throws (a JS `Error`) if the id is absent or the index is malformed.
  * @param {string} index_json
