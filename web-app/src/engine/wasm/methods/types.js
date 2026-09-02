@@ -44,6 +44,7 @@ export var Algorithm;
     Algorithm[Algorithm["LW_PLS"] = 8] = "LW_PLS";
     Algorithm[Algorithm["AOM_PLS"] = 9] = "AOM_PLS";
     Algorithm[Algorithm["PCR"] = 10] = "PCR";
+    Algorithm[Algorithm["IMPORTED_LINEAR_PREDICTOR"] = 11] = "IMPORTED_LINEAR_PREDICTOR";
 })(Algorithm || (Algorithm = {}));
 /** Mirror of n4m_solver_t. */
 export var Solver;

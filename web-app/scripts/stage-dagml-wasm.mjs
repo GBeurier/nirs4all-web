@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import {
+  appendFileSync,
   copyFileSync,
   existsSync,
   mkdirSync,
@@ -16,8 +17,8 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED_SOURCE = Object.freeze({
-  commit: 'bad5aff0bfbc14c622f5ade7f393f29399df6e07',
-  tree: '529ecc687d6b9307f41ee34feafcf5d8135ba9ae',
+  commit: '189099119b69e74c69466f2308808cb423dc2e94',
+  tree: '6ce31722bdb999482932e9d4a3884987426d1dd6',
   version: '0.3.23',
 })
 const GENERATED_FILES = Object.freeze([
@@ -29,6 +30,9 @@ const GENERATED_FILES = Object.freeze([
   'dag_ml_wasm_bg.wasm.d.ts',
   'package.json',
 ])
+const CONTRACT_FILES = Object.freeze({
+  'native_predictor_descriptor.v1.schema.json': 'docs/contracts/native_predictor_descriptor.v1.schema.json',
+})
 const LICENSE_FILES = Object.freeze([
   'LICENSING.md',
   'LICENSING_FR.md',
@@ -39,12 +43,12 @@ const LICENSE_FILES = Object.freeze([
   'LICENSES/CeCILL-2.1.txt',
   'LICENSES/MIT.txt',
 ])
-const STAGED_FILES = Object.freeze([...GENERATED_FILES, ...LICENSE_FILES].sort())
+const STAGED_FILES = Object.freeze([...GENERATED_FILES, ...Object.keys(CONTRACT_FILES), ...LICENSE_FILES].sort())
 
 const scriptDir = dirname(fileURLToPath(import.meta.url))
 const appRoot = resolve(scriptDir, '..')
 const sourceRoot = resolve(process.env.NIRS4ALL_DAG_ML_ROOT ?? join(appRoot, '..', '..', 'dag-ml'))
-const crateRoot = join(sourceRoot, 'crates', 'dag-ml-wasm')
+const n4mRoot = resolve(process.env.NIRS4ALL_N4M_CRATE_ROOT ?? join(appRoot, '..', '..', 'nirs4all-methods', 'bindings', 'rust', 'n4m'))
 const destination = join(appRoot, 'src', 'engine', 'wasm', 'dagml')
 const wasmPack = process.env.WASM_PACK_BIN ?? 'wasm-pack'
 const wasmPackMode = process.env.WASM_PACK_MODE
@@ -77,7 +81,8 @@ function filesRecursively(root, current = root) {
     .sort()
 }
 
-if (!existsSync(crateRoot)) throw new Error(`dag-ml WASM crate not found: ${crateRoot}`)
+if (!existsSync(join(sourceRoot, 'crates', 'dag-ml-wasm'))) throw new Error(`dag-ml WASM crate not found: ${sourceRoot}`)
+if (!existsSync(join(n4mRoot, 'Cargo.toml'))) throw new Error(`n4m qualification crate not found: ${n4mRoot}`)
 if (git('status', '--porcelain') !== '') throw new Error(`dag-ml source must be clean: ${sourceRoot}`)
 for (const name of LICENSE_FILES) {
   if (!existsSync(join(sourceRoot, name))) throw new Error(`dag-ml license payload is incomplete: ${name}`)
@@ -94,6 +99,22 @@ if (source.commit !== EXPECTED_SOURCE.commit || source.tree !== EXPECTED_SOURCE.
 const proofRoot = mkdtempSync(join(tmpdir(), 'nirs4all-web-dagml-'))
 const outputs = []
 try {
+  const sourceArchive = join(proofRoot, 'dag-ml.tar')
+  const buildSourceRoot = join(proofRoot, 'source')
+  mkdirSync(buildSourceRoot)
+  command('git', ['-C', sourceRoot, 'archive', '--format=tar', `--output=${sourceArchive}`, 'HEAD'])
+  command('tar', ['-xf', sourceArchive, '-C', buildSourceRoot])
+  appendFileSync(
+    join(buildSourceRoot, 'Cargo.toml'),
+    `\n[patch.crates-io]\nn4m = { path = ${JSON.stringify(n4mRoot)} }\n`,
+  )
+  command('cargo', [
+    'update',
+    '--manifest-path', join(buildSourceRoot, 'Cargo.toml'),
+    '-p', 'n4m',
+    '--precise', '0.1.3',
+  ])
+  const crateRoot = join(buildSourceRoot, 'crates', 'dag-ml-wasm')
   for (const leg of ['a', 'b']) {
     const output = join(proofRoot, `out-${leg}`)
     const args = ['build', crateRoot, '--target', 'web', '--release', '--out-dir', output]
@@ -142,6 +163,9 @@ try {
   const unexpected = filesRecursively(destination).filter((name) => !allowed.has(name))
   if (unexpected.length > 0) throw new Error(`refusing to overwrite unexpected staged files: ${unexpected.join(', ')}`)
   for (const name of GENERATED_FILES) copyFileSync(join(outputs[0], name), join(destination, name))
+  for (const [name, sourceName] of Object.entries(CONTRACT_FILES)) {
+    copyFileSync(join(sourceRoot, sourceName), join(destination, name))
+  }
   for (const name of LICENSE_FILES) {
     const target = join(destination, name)
     mkdirSync(dirname(target), { recursive: true })
@@ -165,6 +189,13 @@ try {
       target: 'web',
       profile: 'release',
       cargo_locked: true,
+      qualification_patch: {
+        package: 'n4m',
+        version: '0.1.3',
+        source_commit: 'a71ee2927524d03482183de3d6e22661efc05d12',
+        source_tree: 'f6749f4c4be7dca161f3c2677dd10a9ac4434b66',
+        persisted_in_release_lock: false,
+      },
       source_date_epoch: source.epoch,
       tools: {
         wasm_pack: command(wasmPack, ['--version'], { capture: true }),
@@ -178,7 +209,7 @@ try {
       payload_source: 'qualified source tree',
       files: ['LICENSE', ...LICENSE_FILES],
     },
-    witnesses: { runtime_version: true, contract_manifest: true },
+    witnesses: { runtime_version: true, contract_manifest: true, native_predictor_descriptor_schema: true },
     files: STAGED_FILES.map((name) => ({
       path: name,
       size: statSync(join(destination, name)).size,

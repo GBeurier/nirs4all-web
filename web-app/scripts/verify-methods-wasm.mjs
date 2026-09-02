@@ -4,11 +4,11 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED = Object.freeze({
-  commit: '4983c9a1df39d430a78c615bda209d3353514aa1',
-  tree: '8f8a7809d22ff5d95f64a22e519759eaa3fd2ec0',
-  version: '1.0.13',
-  runtimeVersion: '1.0.13+abi.2.3.0',
-  abi: '2.3.0',
+  commit: 'a71ee2927524d03482183de3d6e22661efc05d12',
+  tree: 'f6749f4c4be7dca161f3c2677dd10a9ac4434b66',
+  version: '1.0.14',
+  runtimeVersion: '1.0.14+abi.2.4.0',
+  abi: '2.4.0',
   package: '@nirs4all/methods',
   emscripten: '3.1.74',
 })
@@ -32,18 +32,20 @@ const EXPECTED_FILES = Object.freeze({
   'context.js': { size: 1572, sha256: '3a58b4044b0ddb86bbfdfc4127b8146b69bc087e043364ef402840d3ad4142c5' },
   'ffi.d.ts': { size: 2285, sha256: 'cc1f3aa4183c1e9565485d257af728b2881e1663f00c98949969be1443556a15' },
   'ffi.js': { size: 4655, sha256: '5c548af3c9ca606cd33b7cc5e4d3fd0fa0b05de2ae1393126e7c75df36feab45' },
-  'index.d.ts': { size: 963, sha256: '0dac797b0e691165f9f55439479d9e3c243c545365ade8e868ad0a256a875b6b' },
-  'index.js': { size: 1617, sha256: '9344c636f25a02593268cbea60ed9539842459e862bb7fdd7b6eb909999a6983' },
+  'index.d.ts': { size: 1185, sha256: 'e14ddbe54ee0e0895dffd01a4fc6a36e34d288903a4303d73b2391300444cbd4' },
+  'index.js': { size: 1813, sha256: '8931c298d302b12cec6c46cb62cf375bb4c45f6b1129481cb26f23f42c88b4f3' },
   'methodResult.d.ts': { size: 1385, sha256: 'b7f04f638af654c65198606650c6691107c9b636b531d807eed1f21affd55f4f' },
   'methodResult.js': { size: 5708, sha256: '48e484fc3c6e05bdbbf3db2ea748e237d8c84eb04004315d0bdea9203f235469' },
   'model.d.ts': { size: 10243, sha256: '86ad335441c6df563301fba365b7d5534acdda44dd4850cca3a16f2e02a3248f' },
   'model.js': { size: 24213, sha256: '0846c2596d1a241213c7abb3a71f73bcb8aa1642c3db34b05d87de67fac3a2bd' },
-  'n4m.js': { size: 171995, sha256: '6093fffcedf8bf06cc590e76e10c6bc05f33ee1cddc251445c06d359bbc8c4a1' },
-  'n4m.wasm': { size: 2054487, sha256: 'a4526248a6c67d505a843dbf68a95e6fa85045a72c4520c7de34d9c8a4282250' },
+  'n4m.js': { size: 172179, sha256: '27b8015715d229064273d6383393474fe6a1639eeea7c6de9c844b63fd139cac' },
+  'n4m.wasm': { size: 2056216, sha256: 'e30128f7b8b0446053d344286d2c3129303894c1f34ec3e8a721ff2995468bf3' },
   'preprocessing.d.ts': { size: 985, sha256: '9408b9c93abdc74af2e0c8b042fdcd17ea1701961b6f6a746e0cc7ad1ed79a49' },
   'preprocessing.js': { size: 4726, sha256: 'e9714d38d9a744a706ff38c13c4b42fc737a3236dee6a1ccdf9e690db2519af8' },
-  'types.d.ts': { size: 1712, sha256: '08a3709ee57c2a7d91615156252cb4b1639aed7e461369c7c02ab22dd8c0a4a7' },
-  'types.js': { size: 3487, sha256: '0d359e5f4903b91b4e10d65804d5e58235de5dc5699f576bb73ef4d96afe1e89' },
+  'serialization.d.ts': { size: 964, sha256: '4b08af8515592d96371360b9badac41129148e81250976b3bfc9c399d3466310' },
+  'serialization.js': { size: 2097, sha256: '656e450d6dbd82b9f0506bcaf797366dfe19c9c3e118b29d362eb8db2e8a3307' },
+  'types.d.ts': { size: 1748, sha256: 'b8f21b59681e5fa18a13b4fd31d6e2c9a139ef6719f72012ca4dbe09f1529b9f' },
+  'types.js': { size: 3577, sha256: '464fcb35f9fc3ca1c03ed888d125afba145269333098e25b9e864abd14b5aff0' },
 })
 const LEGAL_FILES = Object.freeze([
   'LICENSE',

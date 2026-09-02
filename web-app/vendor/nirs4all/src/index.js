@@ -529,4 +529,8 @@ function collectClasses(value, output) {
 }
 
 export { parseExecutionPlan, predictPortablePipeline, runPortablePipeline } from './execution.js';
-export { loadArchiveV2Native, replayMethodsArchiveV2 } from './archive-v2.js';
+export {
+  inspectMethodsArchiveV2Predictors,
+  loadArchiveV2Native,
+  replayMethodsArchiveV2,
+} from './archive-v2.js';

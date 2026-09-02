@@ -8,6 +8,7 @@ import {
   loadDatasetsWasm as loadDatasetsWasmRaw,
   loadMethodsWasm as loadMethodsWasmRaw,
   loadArchiveV2Native as loadArchiveV2NativeRaw,
+  inspectMethodsArchiveV2Predictors as inspectMethodsArchiveV2PredictorsRaw,
   loadPipelineDefinition,
   methodsWasm as methodsWasmRaw,
   parseExecutionPlan,
@@ -53,9 +54,11 @@ export type {
   PortablePredictionResult,
   RuntimeContract,
   RuntimeSurface,
+  NativePredictorDescriptorV1,
 } from 'nirs4all'
 
 export const loadArchiveV2Native = loadArchiveV2NativeRaw as () => Promise<unknown>
+export const inspectMethodsArchiveV2Predictors = inspectMethodsArchiveV2PredictorsRaw
 export const replayMethodsArchiveV2 = replayMethodsArchiveV2Raw
 
 export const loadMethodsWasm = loadMethodsWasmRaw as () => Promise<MethodsWasmMod>

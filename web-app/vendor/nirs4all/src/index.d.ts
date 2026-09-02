@@ -135,6 +135,25 @@ export interface ArchiveV2ReplayDataset {
   sample_ids?: readonly string[];
 }
 
+export interface NativePredictorDescriptorV1 {
+  descriptor_type: 'dagml.native_predictor_descriptor.v1';
+  schema_version: 1;
+  artifact_sha256: string;
+  owner_controller: 'controller:methods.pls' | 'controller:methods.ridge';
+  format: 'N4MM';
+  format_version: 1;
+  writer_abi: Readonly<{ major: number; minor: number; patch: number }>;
+  storage_algorithm: number;
+  capabilities: number;
+  dimensions: Readonly<{
+    training_samples: number;
+    n_features: number;
+    n_targets: number;
+    n_components: number;
+  }>;
+  descriptor_fingerprint: string;
+}
+
 export interface ArchiveV2ReplayResult {
   schema: 'nirs4all.core.archive-v2-replay.v1';
   engine: 'nirs4all-methods-wasm';
@@ -145,6 +164,7 @@ export interface ArchiveV2ReplayResult {
   bindingId: string;
   nodeId: string;
   portName: string;
+  nativePredictorDescriptor: NativePredictorDescriptorV1;
   sampleIds: readonly string[];
   targetNames: readonly string[];
   data: readonly number[];
@@ -205,6 +225,9 @@ export function predictPortablePipeline(
   options?: { methods?: unknown },
 ): Promise<PortablePredictionResult>;
 export function loadArchiveV2Native(): Promise<unknown>;
+export function inspectMethodsArchiveV2Predictors(
+  archiveBytes: ArrayBuffer | ArrayBufferView,
+): Promise<readonly NativePredictorDescriptorV1[]>;
 export function replayMethodsArchiveV2(
   archiveBytes: ArrayBuffer | ArrayBufferView,
   dataset: ArchiveV2ReplayDataset,

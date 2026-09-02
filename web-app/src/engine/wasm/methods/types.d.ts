@@ -46,7 +46,8 @@ export declare enum Algorithm {
     MB_PLS = 7,
     LW_PLS = 8,
     AOM_PLS = 9,
-    PCR = 10
+    PCR = 10,
+    IMPORTED_LINEAR_PREDICTOR = 11
 }
 /** Mirror of n4m_solver_t. */
 export declare enum Solver {
