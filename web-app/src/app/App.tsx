@@ -586,7 +586,8 @@ export default function App() {
             <a href="https://nirs4all.org" target="_blank" rel="noreferrer" className="transition-colors hover:text-brand-teal-d">nirs4all.org</a>
             <a href="https://formats.nirs4all.org" target="_blank" rel="noreferrer" className="transition-colors hover:text-brand-teal-d">formats</a>
             <a href="https://datasets.nirs4all.org" target="_blank" rel="noreferrer" className="transition-colors hover:text-brand-teal-d">datasets</a>
-            <a href="https://github.com/GBeurier/nirs4all" target="_blank" rel="noreferrer" className="transition-colors hover:text-brand-teal-d">GitHub</a>
+            <a href="./legal/" className="transition-colors hover:text-brand-teal-d">Licences</a>
+            <a href="https://github.com/GBeurier/nirs4all-web" target="_blank" rel="noreferrer" className="transition-colors hover:text-brand-teal-d">GitHub</a>
           </nav>
         </div>
       </footer>

@@ -26,6 +26,21 @@
     "independent_target_directories": 2,
     "byte_identical": true
   },
+  "licensing": {
+    "expression": "CECILL-2.1 OR AGPL-3.0-or-later",
+    "payload_source": "qualified source tree",
+    "files": [
+      "LICENSE",
+      "LICENSING.md",
+      "LICENSING_FR.md",
+      "THIRD_PARTY_NOTICES.md",
+      "LICENSES/AGPL-3.0-or-later.txt",
+      "LICENSES/Apache-2.0.txt",
+      "LICENSES/BSD-3-Clause.txt",
+      "LICENSES/CeCILL-2.1.txt",
+      "LICENSES/MIT.txt"
+    ]
+  },
   "files": [
     {
       "path": "LICENSE",
@@ -33,9 +48,49 @@
       "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
     },
     {
+      "path": "LICENSES/AGPL-3.0-or-later.txt",
+      "size": 34020,
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+    },
+    {
+      "path": "LICENSES/Apache-2.0.txt",
+      "size": 10280,
+      "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+    },
+    {
+      "path": "LICENSES/BSD-3-Clause.txt",
+      "size": 1460,
+      "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
+    },
+    {
+      "path": "LICENSES/CeCILL-2.1.txt",
+      "size": 21778,
+      "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+    },
+    {
+      "path": "LICENSES/MIT.txt",
+      "size": 1078,
+      "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+    },
+    {
+      "path": "LICENSING.md",
+      "size": 1421,
+      "sha256": "de862d775334ff3cf60df5a4f2bde6a08bd0aac0add477212d94f82989e3a2a3"
+    },
+    {
+      "path": "LICENSING_FR.md",
+      "size": 1536,
+      "sha256": "cf4da85268262def2eb370b379d0d52d7bea3dc347a67ddc53ef108b914df68d"
+    },
+    {
       "path": "README.md",
       "size": 2465,
       "sha256": "471b5bc0070411c82674a24fb776efeb00a44f27d821a8327c6d9536145555b0"
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "size": 1583,
+      "sha256": "d4e03627160b905122799e578ed8e1288969a70f47488db402cf55c5e2bb633e"
     },
     {
       "path": "dag_ml_data_wasm.d.ts",
