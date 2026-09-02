@@ -28,7 +28,9 @@ PLS component sweeps to `@nirs4all/methods`:
   WASM byte reader compile the same Core-owned `archive_v2.rs` validation source;
   there is no second binding-owned archive parser. The JavaScript layer only
   validates host arrays and handles marshalling/ownership; it contains no
-  numerical fallback and never fits a replacement model.
+  numerical fallback and never fits a replacement model. Before import it also
+  compares the manifest's capability-derived `abi_min_minor` with the actual
+  Methods WASM `abiVersion()` and refuses an older runtime.
 
 The Archive V2 WASM replay intentionally covers the Phase 2 portable Methods
 PLS final-refit contract only. Archives with preprocessing, multiple predictor

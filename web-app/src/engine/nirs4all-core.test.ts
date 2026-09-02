@@ -47,6 +47,11 @@ function maxAbsDiff(actual: number[], expected: number[]): number {
 describe('nirs4all-core aggregate loaders', () => {
   it('uses core names for the vendored aggregate sync path', () => {
     const pkg = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8')) as { scripts: Record<string, string> }
+    const vendorPkg = JSON.parse(readFileSync(new URL('../../vendor/nirs4all/package.json', import.meta.url), 'utf8')) as {
+      name: string
+      version: string
+    }
+    const provenance = readFileSync(new URL('../../vendor/nirs4all/PROVENANCE.md', import.meta.url), 'utf8')
     const syncScript = readFileSync(new URL('../../scripts/sync-core-shim.mjs', import.meta.url), 'utf8')
 
     expect(pkg.scripts['vendor:core']).toBe('node scripts/sync-core-shim.mjs')
@@ -56,6 +61,10 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(existsSync(new URL('../../scripts/sync-core-shim.mjs', import.meta.url))).toBe(true)
     expect(existsSync(new URL('../../scripts/sync-lite-shim.mjs', import.meta.url))).toBe(false)
     expect(syncScript).not.toMatch(/NIRS4ALL_LITE|nirs4all-lite|sync-lite/)
+    expect(vendorPkg).toMatchObject({ name: 'nirs4all', version: '0.3.25' })
+    expect(provenance).toContain('4eb8a687b0b3797b6f5db816444cf840f67c8ee0')
+    expect(provenance).toContain('9dfb9c35f4e3b8ce7ecd7712ff2cd54330861bb48f95c32ce68c87133369c77f')
+    expect(syncScript).toContain('6781d37229498004ad1b3274fe0cdf663c62af738965458ae3b7811c48062b3f')
   })
 
   it('keeps the datasets upstream candidate aligned with the vendored WASM package', () => {

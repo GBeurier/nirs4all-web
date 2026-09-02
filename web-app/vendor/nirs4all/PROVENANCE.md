@@ -1,16 +1,19 @@
 # Vendored Core Archive V2 payload
 
 This directory stages the real npm payload produced from `nirs4all-core` commit
-`7c3ed3fdaeec7dd01ee2a99a8b72bfa378676d66`.
+`4eb8a687b0b3797b6f5db816444cf840f67c8ee0` (tree
+`4ccd67a7fe556db2c50615500cca096cae7666ef`).
 
-- Package: `nirs4all@0.3.22`
+- Package: `nirs4all@0.3.25`
 - Qualified tarball SHA-256:
-  `1869c1957db6419b7a269aa11896e7561ca4cb1092b8e2de7381a218cf3296d6`
+  `9dfb9c35f4e3b8ce7ecd7712ff2cd54330861bb48f95c32ce68c87133369c77f`
 - Native Rust/WASM SHA-256:
-  `6eb1f28ff00641415104411284029f7c49f85f612d15b70d776cf5a79edb1d82`
+  `6781d37229498004ad1b3274fe0cdf663c62af738965458ae3b7811c48062b3f`
 - Archive V2 JavaScript surface SHA-256:
-  `d0fe44eea7f4454d7e34febb6a33ae8f69cb1af92bc978bcbaef924ec109a0ce`
+  `edbd4e1d2ed7dec2b62e128756d533feea2df0b99a0e5a2c83c41a660056f6b2`
 
 `scripts/sync-core-shim.mjs` copies text surfaces from the selected Core source
-and pins every generated `native/` file by SHA-256 when the sibling checkout has
-not built wasm-pack output. Build outputs, Cargo targets and caches are excluded.
+and checks the complete 21-file package inventory by SHA-256, including every
+generated `native/` file and all licensing notices. The pinned package is still
+verified when no sibling checkout is present. Build outputs, Cargo targets and
+caches are excluded.

@@ -15,6 +15,13 @@ export class ValidatedMethodsArchiveV2 {
         wasm.__wbg_validatedmethodsarchivev2_free(ptr, 0);
     }
     /**
+     * @returns {number}
+     */
+    get abi_min_minor() {
+        const ret = wasm.validatedmethodsarchivev2_abi_min_minor(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
      * @returns {string}
      */
     get archive_id() {
