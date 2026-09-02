@@ -4,8 +4,8 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED = Object.freeze({
-  commit: 'a47e950c43df03cc0b7ef76adfe015ad5f47c671',
-  tree: '286355636dd854e6f19b3b9cb453a74b9c518250',
+  commit: '7abd256cbad1ee4eff3b6d507dd3fd28d2caac80',
+  tree: 'b36575f0e21e3ff08225c7f421ce99deabd26aeb',
   version: '0.1.12',
   package: '@nirs4all/io-wasm',
   generatedPackage: 'nirs4all-io-wasm',
@@ -23,15 +23,16 @@ const EXPECTED_FILES = Object.freeze({
   'LICENSES/MIT.txt': { size: 1078, sha256: 'b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5' },
   'LICENSES/Unicode-3.0.txt': { size: 1995, sha256: 'f7db81051789b729fea528a63ec4c938fdcb93d9d61d97dc8cc2e9df6d47f2a1' },
   'LICENSING.md': { size: 2113, sha256: 'b41ad1d4b8e62c89e42704fc4c9b5bb8a2099a0ad0680d72e95efb57c5d3326c' },
-  'README.md': { size: 6963, sha256: '4d552cec8c6cc65b886b82f542442cb6bba41b87850e14aab5e12ced387a1b3e' },
-  'THIRD_PARTY_NOTICES.md': { size: 4613, sha256: 'b0bfaa0a29fbfa2d5706dd41108f563da55e4fc6fdcb9ffba178ec4f3714b3f1' },
+  'README.md': { size: 7389, sha256: 'a00106a406c90a2be85bd1063c62744e6f096499aaef7ae86ffacd0b4fcccf13' },
+  'THIRD_PARTY_NOTICES.md': { size: 4935, sha256: '2d0aa4b2f137e77bad3d243bd908359c5e6bab37a3e9e29402f96e2103bb4932' },
   'idiomatic.d.ts': { size: 2044, sha256: 'cca0b1700625d48c17232333702e3d788047b5dfb9b953c78326bce61f4a6094' },
   'idiomatic.mjs': { size: 2684, sha256: 'a041c2304307eccbe805cfb97868eb2640fafe2fc51da8237e0a535135d1bfa3' },
+  'nirs4all-io-wasm.cdx.json': { size: 34123, sha256: '2fb93d6b81a3fa7fab9b0bf388b170f8dac4e4ac0f5a37f51b616bfb67067631' },
   'nirs4all_io_wasm.d.ts': { size: 5369, sha256: 'a4fe6564849d63e779e5899d7e61d43e3d63ae17950b0aac84793b11e0ad2e8f' },
   'nirs4all_io_wasm.js': { size: 24322, sha256: '8fc4d75bc209f53db50aa2dc2ca1d5c159202bc2f10b4fe392b59963e12e005d' },
   'nirs4all_io_wasm_bg.wasm': { size: 2334986, sha256: 'a99b75a6dfa3fe86c0b27d96334b8da0b4ccae5eda39084533f57a104738fc9c' },
   'nirs4all_io_wasm_bg.wasm.d.ts': { size: 1273, sha256: 'fd34bc545e2588f28a9d388e7ac3890e83d9af1a38e2861c4426bdd8a1fb1740' },
-  'package.json': { size: 1343, sha256: '0d62ee10065b118c69dc12d6d73d1e47c4b351c4076e46159a62e61342f34a04' },
+  'package.json': { size: 1376, sha256: 'd7c4658efd2995d8830572539cf23670ea8895a58e06e77945475591c613036f' },
   'types/nirs4all-io.d.ts': { size: 3923, sha256: 'b0384126ad078a6fbb35172cf7983e37259aa1c0b2a96e3fa256cb83b1d7a555' },
 })
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'engine', 'wasm', 'io')
@@ -105,6 +106,21 @@ for (const file of receipt.files) {
     throw new Error(`staged nirs4all-io file does not match qualified bytes: ${file.path}`)
   }
 }
+
+const sbom = JSON.parse(readFileSync(join(root, 'nirs4all-io-wasm.cdx.json'), 'utf8'))
+const sbomRoot = sbom.metadata?.component
+const sbomProperties = Object.fromEntries((sbomRoot?.properties ?? []).map(({ name, value }) => [name, value]))
+if (
+  sbom.bomFormat !== 'CycloneDX' ||
+  sbom.specVersion !== '1.6' ||
+  sbom.serialNumber !== undefined ||
+  sbom.metadata?.timestamp !== undefined ||
+  sbomRoot?.name !== 'nirs4all-io-wasm' ||
+  sbomRoot?.version !== EXPECTED.version ||
+  sbomProperties['nirs4all:source:commit'] !== EXPECTED.commit ||
+  sbomProperties['nirs4all:source:tree'] !== EXPECTED.tree ||
+  sbom.components?.length !== 55
+) throw new Error('nirs4all-io CycloneDX SBOM contract mismatch')
 
 const metadata = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
 if (metadata.name !== EXPECTED.package || metadata.version !== EXPECTED.version) {

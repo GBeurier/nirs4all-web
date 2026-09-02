@@ -1,0 +1,1403 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "type": "library",
+      "bom-ref": "pkg:cargo/nirs4all-io-wasm@0.1.12",
+      "name": "nirs4all-io-wasm",
+      "version": "0.1.12",
+      "licenses": [
+        {
+          "expression": "CECILL-2.1 OR AGPL-3.0-or-later"
+        }
+      ],
+      "purl": "pkg:cargo/nirs4all-io-wasm@0.1.12",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/GBeurier/nirs4all-io/tree/7abd256cbad1ee4eff3b6d507dd3fd28d2caac80"
+        }
+      ],
+      "properties": [
+        {
+          "name": "nirs4all:source:commit",
+          "value": "7abd256cbad1ee4eff3b6d507dd3fd28d2caac80"
+        },
+        {
+          "name": "nirs4all:source:tree",
+          "value": "b36575f0e21e3ff08225c7f421ce99deabd26aeb"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/aho-corasick@1.1.4",
+      "name": "aho-corasick",
+      "version": "1.1.4",
+      "licenses": [
+        {
+          "expression": "Unlicense OR MIT"
+        }
+      ],
+      "purl": "pkg:cargo/aho-corasick@1.1.4",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ddd31a130427c27518df266943a5308ed92d4b226cc639f5a8f1002816174301"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/block-buffer@0.10.4",
+      "name": "block-buffer",
+      "version": "0.10.4",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/block-buffer@0.10.4",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "3078c7629b62d3f0439517fa394996acacc5cbc91c5a20d8c658e77abd503a71"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/bumpalo@3.20.3",
+      "name": "bumpalo",
+      "version": "3.20.3",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/bumpalo@3.20.3",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "72f5acc6cb2ba439de613abc23857ec3d78374d8ed5ac84e9d11336e87da8649"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/cfg-if@1.0.4",
+      "name": "cfg-if",
+      "version": "1.0.4",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/cfg-if@1.0.4",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/cpufeatures@0.2.17",
+      "name": "cpufeatures",
+      "version": "0.2.17",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/cpufeatures@0.2.17",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "59ed5838eebb26a2bb2e58f6d5b5316989ae9d08bab10e0e6d103e656d1b0280"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/crypto-common@0.1.7",
+      "name": "crypto-common",
+      "version": "0.1.7",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/crypto-common@0.1.7",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "78c8292055d1c1df0cce5d180393dc8cce0abec0a7102adb6c7b1eef6016d60a"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/csv-core@0.1.13",
+      "name": "csv-core",
+      "version": "0.1.13",
+      "licenses": [
+        {
+          "expression": "Unlicense OR MIT"
+        }
+      ],
+      "purl": "pkg:cargo/csv-core@0.1.13",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "704a3c26996a80471189265814dbc2c257598b96b8a7feae2d31ace646bb9782"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/csv@1.4.0",
+      "name": "csv",
+      "version": "1.4.0",
+      "licenses": [
+        {
+          "expression": "Unlicense OR MIT"
+        }
+      ],
+      "purl": "pkg:cargo/csv@1.4.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "52cd9d68cf7efc6ddfaaee42e7288d3a99d613d4b50f76ce9827ae0c6e14f938"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/digest@0.10.7",
+      "name": "digest",
+      "version": "0.10.7",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/digest@0.10.7",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9ed9a281f7bc9b7576e61468ba615a66a5c8cfdff42420a70aa82701a3b1e292"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/equivalent@1.0.2",
+      "name": "equivalent",
+      "version": "1.0.2",
+      "licenses": [
+        {
+          "expression": "Apache-2.0 OR MIT"
+        }
+      ],
+      "purl": "pkg:cargo/equivalent@1.0.2",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/futures-core@0.3.32",
+      "name": "futures-core",
+      "version": "0.3.32",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/futures-core@0.3.32",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "7e3450815272ef58cec6d564423f6e755e25379b217b0bc688e295ba24df6b1d"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/futures-task@0.3.32",
+      "name": "futures-task",
+      "version": "0.3.32",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/futures-task@0.3.32",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "037711b3d59c33004d3856fbdc83b99d4ff37a24768fa1be9ce3538a1cde4393"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/futures-util@0.3.32",
+      "name": "futures-util",
+      "version": "0.3.32",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/futures-util@0.3.32",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "389ca41296e6190b48053de0321d02a77f32f8a5d2461dd38762c0593805c6d6"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/generic-array@0.14.7",
+      "name": "generic-array",
+      "version": "0.14.7",
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "purl": "pkg:cargo/generic-array@0.14.7",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "85649ca51fd72272d7821adaf274ad91c288277713d9c18820d8499a7ff69e9a"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/hashbrown@0.17.1",
+      "name": "hashbrown",
+      "version": "0.17.1",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/hashbrown@0.17.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/indexmap@2.14.0",
+      "name": "indexmap",
+      "version": "2.14.0",
+      "licenses": [
+        {
+          "expression": "Apache-2.0 OR MIT"
+        }
+      ],
+      "purl": "pkg:cargo/indexmap@2.14.0",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d466e9454f08e4a911e14806c24e16fba1b4c121d1ea474396f396069cf949d9"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/itoa@1.0.18",
+      "name": "itoa",
+      "version": "1.0.18",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/itoa@1.0.18",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/js-sys@0.3.99",
+      "name": "js-sys",
+      "version": "0.3.99",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/js-sys@0.3.99",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "142bc4740e452c1e57ade0cbc129f139c9093e354346f0872ef985f4f5cf5f11"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/libc@0.2.186",
+      "name": "libc",
+      "version": "0.2.186",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/libc@0.2.186",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "68ab91017fe16c622486840e4c83c9a37afeff978bd239b5293d61ece587de66"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/memchr@2.8.1",
+      "name": "memchr",
+      "version": "2.8.1",
+      "licenses": [
+        {
+          "expression": "Unlicense OR MIT"
+        }
+      ],
+      "purl": "pkg:cargo/memchr@2.8.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "6b947ae49db0d222b1dbc6b113ce7248a3fc3a6ca21b696717bfc000ba4484d8"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/nirs4all-io-core@0.1.12",
+      "name": "nirs4all-io-core",
+      "version": "0.1.12",
+      "licenses": [
+        {
+          "expression": "CECILL-2.1 OR AGPL-3.0-or-later"
+        }
+      ],
+      "purl": "pkg:cargo/nirs4all-io-core@0.1.12",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/GBeurier/nirs4all-io/tree/7abd256cbad1ee4eff3b6d507dd3fd28d2caac80"
+        }
+      ],
+      "properties": [
+        {
+          "name": "nirs4all:source:commit",
+          "value": "7abd256cbad1ee4eff3b6d507dd3fd28d2caac80"
+        },
+        {
+          "name": "nirs4all:source:tree",
+          "value": "b36575f0e21e3ff08225c7f421ce99deabd26aeb"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/nirs4all-io-wasm@0.1.12",
+      "name": "nirs4all-io-wasm",
+      "version": "0.1.12",
+      "licenses": [
+        {
+          "expression": "CECILL-2.1 OR AGPL-3.0-or-later"
+        }
+      ],
+      "purl": "pkg:cargo/nirs4all-io-wasm@0.1.12",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/GBeurier/nirs4all-io/tree/7abd256cbad1ee4eff3b6d507dd3fd28d2caac80"
+        }
+      ],
+      "properties": [
+        {
+          "name": "nirs4all:source:commit",
+          "value": "7abd256cbad1ee4eff3b6d507dd3fd28d2caac80"
+        },
+        {
+          "name": "nirs4all:source:tree",
+          "value": "b36575f0e21e3ff08225c7f421ce99deabd26aeb"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/once_cell@1.21.4",
+      "name": "once_cell",
+      "version": "1.21.4",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/once_cell@1.21.4",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/pin-project-lite@0.2.17",
+      "name": "pin-project-lite",
+      "version": "0.2.17",
+      "licenses": [
+        {
+          "expression": "Apache-2.0 OR MIT"
+        }
+      ],
+      "purl": "pkg:cargo/pin-project-lite@0.2.17",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/proc-macro2@1.0.106",
+      "name": "proc-macro2",
+      "version": "1.0.106",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/proc-macro2@1.0.106",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8fd00f0bb2e90d81d1044c2b32617f68fcb9fa3bb7640c23e9c748e53fb30934"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/quote@1.0.45",
+      "name": "quote",
+      "version": "1.0.45",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/quote@1.0.45",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "41f2619966050689382d2b44f664f4bc593e129785a36d6ee376ddf37259b924"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/regex-automata@0.4.14",
+      "name": "regex-automata",
+      "version": "0.4.14",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/regex-automata@0.4.14",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "6e1dd4122fc1595e8162618945476892eefca7b88c52820e74af6262213cae8f"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/regex-syntax@0.8.10",
+      "name": "regex-syntax",
+      "version": "0.8.10",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/regex-syntax@0.8.10",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "dc897dd8d9e8bd1ed8cdad82b5966c3e0ecae09fb1907d58efaa013543185d0a"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/regex@1.12.3",
+      "name": "regex",
+      "version": "1.12.3",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/regex@1.12.3",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e10754a14b9137dd7b1e3e5b0493cc9171fdd105e0ab477f51b72e7f3ac0e276"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/rustversion@1.0.22",
+      "name": "rustversion",
+      "version": "1.0.22",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/rustversion@1.0.22",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b39cdef0fa800fc44525c84ccb54a029961a8215f9619753635a9c0d2538d46d"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/ryu@1.0.23",
+      "name": "ryu",
+      "version": "1.0.23",
+      "licenses": [
+        {
+          "expression": "Apache-2.0 OR BSL-1.0"
+        }
+      ],
+      "purl": "pkg:cargo/ryu@1.0.23",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9774ba4a74de5f7b1c1451ed6cd5285a32eddb5cccb8cc655a4e50009e06477f"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/serde_core@1.0.228",
+      "name": "serde_core",
+      "version": "1.0.228",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/serde_core@1.0.228",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "41d385c7d4ca58e59fc732af25c3983b67ac852c1a25000afe1175de458b67ad"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/serde_derive@1.0.228",
+      "name": "serde_derive",
+      "version": "1.0.228",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/serde_derive@1.0.228",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d540f220d3187173da220f885ab66608367b6574e925011a9353e4badda91d79"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/serde_json@1.0.150",
+      "name": "serde_json",
+      "version": "1.0.150",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/serde_json@1.0.150",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e8014e44b4736ed0538adeecded0fce2a272f22dc9578a7eb6b2d9993c74cfb9"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/serde_spanned@0.6.9",
+      "name": "serde_spanned",
+      "version": "0.6.9",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/serde_spanned@0.6.9",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "bf41e0cfaf7226dca15e8197172c295a782857fcb97fad1808a166870dee75a3"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/serde-wasm-bindgen@0.6.5",
+      "name": "serde-wasm-bindgen",
+      "version": "0.6.5",
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "purl": "pkg:cargo/serde-wasm-bindgen@0.6.5",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8302e169f0eddcc139c70f139d19d6467353af16f9fce27e8c30158036a1e16b"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/serde@1.0.228",
+      "name": "serde",
+      "version": "1.0.228",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/serde@1.0.228",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9a8e94ea7f378bd32cbbd37198a4a91436180c5bb472411e48b5ec2e2124ae9e"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/sha2@0.10.9",
+      "name": "sha2",
+      "version": "0.10.9",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/sha2@0.10.9",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a7507d819769d01a365ab707794a4084392c824f54a7a6a7862f8c3d0892b283"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/slab@0.4.12",
+      "name": "slab",
+      "version": "0.4.12",
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "purl": "pkg:cargo/slab@0.4.12",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/syn@2.0.117",
+      "name": "syn",
+      "version": "2.0.117",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/syn@2.0.117",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e665b8803e7b1d2a727f4023456bbbbe74da67099c585258af0ad9c5013b9b99"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/thiserror-impl@2.0.18",
+      "name": "thiserror-impl",
+      "version": "2.0.18",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/thiserror-impl@2.0.18",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ebc4ee7f67670e9b64d05fa4253e753e016c6c95ff35b89b7941d6b856dec1d5"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/thiserror@2.0.18",
+      "name": "thiserror",
+      "version": "2.0.18",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/thiserror@2.0.18",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4288b5bcbc7920c07a1149a35cf9590a2aa808e0bc1eafaade0b80947865fbc4"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/toml_datetime@0.6.11",
+      "name": "toml_datetime",
+      "version": "0.6.11",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/toml_datetime@0.6.11",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "22cddaf88f4fbc13c51aebbf5f8eceb5c7c5a9da2ac40a13519eb5b0a0e8f11c"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/toml_edit@0.22.27",
+      "name": "toml_edit",
+      "version": "0.22.27",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/toml_edit@0.22.27",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "41fe8c660ae4257887cf66394862d21dbca4a6ddd26f04a3560410406a2f819a"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/toml_write@0.1.2",
+      "name": "toml_write",
+      "version": "0.1.2",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/toml_write@0.1.2",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5d99f8c9a7727884afe522e9bd5edbfc91a3312b36a77b5fb8926e4c31a41801"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/toml@0.8.23",
+      "name": "toml",
+      "version": "0.8.23",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/toml@0.8.23",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "dc1beb996b9d83529a9e75c17a1686767d148d70663143c7854d8b4a09ced362"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/typenum@1.20.1",
+      "name": "typenum",
+      "version": "1.20.1",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/typenum@1.20.1",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b6f5e870be6c3b371b77fe0ee0bafb859fa4964b4404c27de1d380043c4dda20"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/unicode-ident@1.0.24",
+      "name": "unicode-ident",
+      "version": "1.0.24",
+      "licenses": [
+        {
+          "expression": "(MIT OR Apache-2.0) AND Unicode-3.0"
+        }
+      ],
+      "purl": "pkg:cargo/unicode-ident@1.0.24",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e6e4313cd5fcd3dad5cafa179702e2b244f760991f45397d14d4ebf38247da75"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/version_check@0.9.5",
+      "name": "version_check",
+      "version": "0.9.5",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/version_check@0.9.5",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/wasm-bindgen-macro-support@0.2.122",
+      "name": "wasm-bindgen-macro-support",
+      "version": "0.2.122",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/wasm-bindgen-macro-support@0.2.122",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "299047362ccbfce148b67ab7e73349f77748e00c8296f9542adfad2ad82c5c5e"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/wasm-bindgen-macro@0.2.122",
+      "name": "wasm-bindgen-macro",
+      "version": "0.2.122",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/wasm-bindgen-macro@0.2.122",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "916151b09da36bd82f6615cbf3a419e2f0ba23a03c6160e8e92eb6bd4aa1dec6"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/wasm-bindgen-shared@0.2.122",
+      "name": "wasm-bindgen-shared",
+      "version": "0.2.122",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/wasm-bindgen-shared@0.2.122",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9a929b2c61f11ba3e9bc35b50c1f25cb38e0e892c0c231ae2b8cf78d5dad4437"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/wasm-bindgen@0.2.122",
+      "name": "wasm-bindgen",
+      "version": "0.2.122",
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "purl": "pkg:cargo/wasm-bindgen@0.2.122",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "3ed04576f974d2b2fba0f38c51dbc5518011e38c36bf1143164be765528fd409"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/winnow@0.7.15",
+      "name": "winnow",
+      "version": "0.7.15",
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "purl": "pkg:cargo/winnow@0.7.15",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "df79d97927682d2fd8adb29682d1140b343be4ac0f08fd68b7765d9c059d3945"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:cargo/zmij@1.0.21",
+      "name": "zmij",
+      "version": "1.0.21",
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "purl": "pkg:cargo/zmij@1.0.21",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b8848ee67ecc8aedbaf3e4122217aff892639231befc6a1b58d29fff4c2cabaa"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:cargo/aho-corasick@1.1.4",
+      "dependsOn": [
+        "pkg:cargo/memchr@2.8.1"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/block-buffer@0.10.4",
+      "dependsOn": [
+        "pkg:cargo/generic-array@0.14.7"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/bumpalo@3.20.3",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:cargo/cfg-if@1.0.4",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:cargo/cpufeatures@0.2.17",
+      "dependsOn": [
+        "pkg:cargo/libc@0.2.186"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/crypto-common@0.1.7",
+      "dependsOn": [
+        "pkg:cargo/generic-array@0.14.7",
+        "pkg:cargo/typenum@1.20.1"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/csv-core@0.1.13",
+      "dependsOn": [
+        "pkg:cargo/memchr@2.8.1"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/csv@1.4.0",
+      "dependsOn": [
+        "pkg:cargo/csv-core@0.1.13",
+        "pkg:cargo/itoa@1.0.18",
+        "pkg:cargo/ryu@1.0.23",
+        "pkg:cargo/serde_core@1.0.228"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/digest@0.10.7",
+      "dependsOn": [
+        "pkg:cargo/block-buffer@0.10.4",
+        "pkg:cargo/crypto-common@0.1.7"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/equivalent@1.0.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:cargo/futures-core@0.3.32",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:cargo/futures-task@0.3.32",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:cargo/futures-util@0.3.32",
+      "dependsOn": [
+        "pkg:cargo/futures-core@0.3.32",
+        "pkg:cargo/futures-task@0.3.32",
+        "pkg:cargo/pin-project-lite@0.2.17",
+        "pkg:cargo/slab@0.4.12"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/generic-array@0.14.7",
+      "dependsOn": [
+        "pkg:cargo/typenum@1.20.1",
+        "pkg:cargo/version_check@0.9.5"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/hashbrown@0.17.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:cargo/indexmap@2.14.0",
+      "dependsOn": [
+        "pkg:cargo/equivalent@1.0.2",
+        "pkg:cargo/hashbrown@0.17.1",
+        "pkg:cargo/serde@1.0.228",
+        "pkg:cargo/serde_core@1.0.228"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/itoa@1.0.18",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:cargo/js-sys@0.3.99",
+      "dependsOn": [
+        "pkg:cargo/cfg-if@1.0.4",
+        "pkg:cargo/futures-util@0.3.32",
+        "pkg:cargo/once_cell@1.21.4",
+        "pkg:cargo/wasm-bindgen@0.2.122"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/libc@0.2.186",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:cargo/memchr@2.8.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:cargo/nirs4all-io-core@0.1.12",
+      "dependsOn": [
+        "pkg:cargo/csv@1.4.0",
+        "pkg:cargo/indexmap@2.14.0",
+        "pkg:cargo/regex@1.12.3",
+        "pkg:cargo/serde@1.0.228",
+        "pkg:cargo/serde_json@1.0.150",
+        "pkg:cargo/sha2@0.10.9",
+        "pkg:cargo/thiserror@2.0.18",
+        "pkg:cargo/toml@0.8.23"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/nirs4all-io-wasm@0.1.12",
+      "dependsOn": [
+        "pkg:cargo/nirs4all-io-core@0.1.12",
+        "pkg:cargo/serde-wasm-bindgen@0.6.5",
+        "pkg:cargo/serde@1.0.228",
+        "pkg:cargo/serde_json@1.0.150",
+        "pkg:cargo/wasm-bindgen@0.2.122"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/once_cell@1.21.4",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:cargo/pin-project-lite@0.2.17",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:cargo/proc-macro2@1.0.106",
+      "dependsOn": [
+        "pkg:cargo/unicode-ident@1.0.24"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/quote@1.0.45",
+      "dependsOn": [
+        "pkg:cargo/proc-macro2@1.0.106"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/regex-automata@0.4.14",
+      "dependsOn": [
+        "pkg:cargo/aho-corasick@1.1.4",
+        "pkg:cargo/memchr@2.8.1",
+        "pkg:cargo/regex-syntax@0.8.10"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/regex-syntax@0.8.10",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:cargo/regex@1.12.3",
+      "dependsOn": [
+        "pkg:cargo/aho-corasick@1.1.4",
+        "pkg:cargo/memchr@2.8.1",
+        "pkg:cargo/regex-automata@0.4.14",
+        "pkg:cargo/regex-syntax@0.8.10"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/rustversion@1.0.22",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:cargo/ryu@1.0.23",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:cargo/serde_core@1.0.228",
+      "dependsOn": [
+        "pkg:cargo/serde_derive@1.0.228"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/serde_derive@1.0.228",
+      "dependsOn": [
+        "pkg:cargo/proc-macro2@1.0.106",
+        "pkg:cargo/quote@1.0.45",
+        "pkg:cargo/syn@2.0.117"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/serde_json@1.0.150",
+      "dependsOn": [
+        "pkg:cargo/indexmap@2.14.0",
+        "pkg:cargo/itoa@1.0.18",
+        "pkg:cargo/memchr@2.8.1",
+        "pkg:cargo/serde@1.0.228",
+        "pkg:cargo/serde_core@1.0.228",
+        "pkg:cargo/zmij@1.0.21"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/serde_spanned@0.6.9",
+      "dependsOn": [
+        "pkg:cargo/serde@1.0.228"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/serde-wasm-bindgen@0.6.5",
+      "dependsOn": [
+        "pkg:cargo/js-sys@0.3.99",
+        "pkg:cargo/serde@1.0.228",
+        "pkg:cargo/wasm-bindgen@0.2.122"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/serde@1.0.228",
+      "dependsOn": [
+        "pkg:cargo/serde_core@1.0.228",
+        "pkg:cargo/serde_derive@1.0.228"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/sha2@0.10.9",
+      "dependsOn": [
+        "pkg:cargo/cfg-if@1.0.4",
+        "pkg:cargo/cpufeatures@0.2.17",
+        "pkg:cargo/digest@0.10.7"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/slab@0.4.12",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:cargo/syn@2.0.117",
+      "dependsOn": [
+        "pkg:cargo/proc-macro2@1.0.106",
+        "pkg:cargo/quote@1.0.45",
+        "pkg:cargo/unicode-ident@1.0.24"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/thiserror-impl@2.0.18",
+      "dependsOn": [
+        "pkg:cargo/proc-macro2@1.0.106",
+        "pkg:cargo/quote@1.0.45",
+        "pkg:cargo/syn@2.0.117"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/thiserror@2.0.18",
+      "dependsOn": [
+        "pkg:cargo/thiserror-impl@2.0.18"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/toml_datetime@0.6.11",
+      "dependsOn": [
+        "pkg:cargo/serde@1.0.228"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/toml_edit@0.22.27",
+      "dependsOn": [
+        "pkg:cargo/indexmap@2.14.0",
+        "pkg:cargo/serde@1.0.228",
+        "pkg:cargo/serde_spanned@0.6.9",
+        "pkg:cargo/toml_datetime@0.6.11",
+        "pkg:cargo/toml_write@0.1.2",
+        "pkg:cargo/winnow@0.7.15"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/toml_write@0.1.2",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:cargo/toml@0.8.23",
+      "dependsOn": [
+        "pkg:cargo/serde@1.0.228",
+        "pkg:cargo/serde_spanned@0.6.9",
+        "pkg:cargo/toml_datetime@0.6.11",
+        "pkg:cargo/toml_edit@0.22.27"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/typenum@1.20.1",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:cargo/unicode-ident@1.0.24",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:cargo/version_check@0.9.5",
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:cargo/wasm-bindgen-macro-support@0.2.122",
+      "dependsOn": [
+        "pkg:cargo/bumpalo@3.20.3",
+        "pkg:cargo/proc-macro2@1.0.106",
+        "pkg:cargo/quote@1.0.45",
+        "pkg:cargo/syn@2.0.117",
+        "pkg:cargo/wasm-bindgen-shared@0.2.122"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/wasm-bindgen-macro@0.2.122",
+      "dependsOn": [
+        "pkg:cargo/quote@1.0.45",
+        "pkg:cargo/wasm-bindgen-macro-support@0.2.122"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/wasm-bindgen-shared@0.2.122",
+      "dependsOn": [
+        "pkg:cargo/unicode-ident@1.0.24"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/wasm-bindgen@0.2.122",
+      "dependsOn": [
+        "pkg:cargo/cfg-if@1.0.4",
+        "pkg:cargo/once_cell@1.21.4",
+        "pkg:cargo/rustversion@1.0.22",
+        "pkg:cargo/wasm-bindgen-macro@0.2.122",
+        "pkg:cargo/wasm-bindgen-shared@0.2.122"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/winnow@0.7.15",
+      "dependsOn": [
+        "pkg:cargo/memchr@2.8.1"
+      ]
+    },
+    {
+      "ref": "pkg:cargo/zmij@1.0.21",
+      "dependsOn": []
+    }
+  ]
+}
