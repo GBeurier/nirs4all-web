@@ -14,6 +14,7 @@ export class ValidatedMethodsArchiveV2 {
     constructor(archive_bytes: Uint8Array);
     package_json(): string;
     target_names_json(): string;
+    readonly abi_min_minor: number;
     readonly archive_id: string;
     readonly archive_sha256: string;
     readonly artifact_id: string;
@@ -27,6 +28,7 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly __wbg_validatedmethodsarchivev2_free: (a: number, b: number) => void;
+    readonly validatedmethodsarchivev2_abi_min_minor: (a: number) => number;
     readonly validatedmethodsarchivev2_archive_id: (a: number) => [number, number];
     readonly validatedmethodsarchivev2_archive_sha256: (a: number) => [number, number];
     readonly validatedmethodsarchivev2_artifact_id: (a: number) => [number, number];

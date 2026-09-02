@@ -2,6 +2,7 @@
 /* eslint-disable */
 export const memory: WebAssembly.Memory;
 export const __wbg_validatedmethodsarchivev2_free: (a: number, b: number) => void;
+export const validatedmethodsarchivev2_abi_min_minor: (a: number) => number;
 export const validatedmethodsarchivev2_archive_id: (a: number) => [number, number];
 export const validatedmethodsarchivev2_archive_sha256: (a: number) => [number, number];
 export const validatedmethodsarchivev2_artifact_id: (a: number) => [number, number];

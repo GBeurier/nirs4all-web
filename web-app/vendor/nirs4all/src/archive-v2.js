@@ -62,7 +62,13 @@ export async function replayMethodsArchiveV2(archiveBytes, dataset) {
     if (typeof methods.loadModule === 'function') {
       await methods.loadModule();
     }
-    const predicted = predictN4mm(methods, archive.model_bytes(), input, targetNames.length);
+    const predicted = predictN4mm(
+      methods,
+      archive.model_bytes(),
+      input,
+      targetNames.length,
+      archive.abi_min_minor,
+    );
     return Object.freeze({
       schema: 'nirs4all.core.archive-v2-replay.v1',
       engine: 'nirs4all-methods-wasm',
@@ -84,15 +90,19 @@ export async function replayMethodsArchiveV2(archiveBytes, dataset) {
   }
 }
 
-function predictN4mm(methods, modelBytes, input, expectedTargets) {
+function predictN4mm(methods, modelBytes, input, expectedTargets, abiMinMinor) {
   const required = ['abiVersion', 'Context', 'getModule', 'makeMatrixView', 'readArrayView'];
   const missing = required.filter((key) => methods?.[key] == null);
   if (missing.length > 0) {
     throw new TypeError(`Methods WASM lacks Archive V2 ABI helpers: ${missing.join(', ')}.`);
   }
   const abi = methods.abiVersion();
-  if (!Array.isArray(abi) || abi[0] !== 2) {
-    throw new Error(`Archive V2 requires Methods ABI major 2; received ${String(abi)}.`);
+  if (!Number.isInteger(abiMinMinor) || abiMinMinor < 0
+    || !Array.isArray(abi) || abi[0] !== 2
+    || !Number.isInteger(abi[1]) || abi[1] < abiMinMinor) {
+    throw new Error(
+      `Archive V2 requires Methods ABI 2.${String(abiMinMinor)} or newer within major 2; received ${String(abi)}.`,
+    );
   }
   const module = methods.getModule();
   const context = methods.Context.create();

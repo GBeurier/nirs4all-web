@@ -1,6 +1,6 @@
 {
   "name": "nirs4all",
-  "version": "0.3.22",
+  "version": "0.3.25",
   "description": "Portable nirs4all aggregate binding for JavaScript and WASM",
   "type": "module",
   "exports": {
@@ -14,7 +14,10 @@
     "src",
     "native",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "LICENSES",
+    "LICENSING.md",
+    "THIRD_PARTY_NOTICES.md"
   ],
   "scripts": {
     "build:native": "wasm-pack build ../wasm-native --target web --out-dir ../wasm/native --release",
