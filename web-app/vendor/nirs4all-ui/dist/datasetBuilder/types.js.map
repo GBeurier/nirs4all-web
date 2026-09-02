@@ -1,1 +1,0 @@
-{"version":3,"file":"types.js","sourceRoot":"","sources":["../../src/datasetBuilder/types.ts"],"names":[],"mappings":"AAAA;;;;;;;;GAQG;AA4OH,MAAM,CAAC,MAAM,wBAAwB,GAAoB;IACvD,YAAY,EAAE,QAAQ;IACtB,iBAAiB,EAAE,MAAM;IACzB,gBAAgB,EAAE,WAAW;IAC7B,aAAa,EAAE,QAAQ;IACvB,KAAK,EAAE,MAAM;CACd,CAAC"}

@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "nirs4all": "file:../../vendor/nirs4all",
-    "nirs4all-ui": "file:../../vendor/nirs4all-ui",
+    "nirs4all-ui": "file:../../vendor/npm/nirs4all-ui-0.1.13.tgz",
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },

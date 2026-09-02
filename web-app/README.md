@@ -73,8 +73,9 @@ The browser app also serves as the reference for a **client-side custom host** t
   helpers, and shared brand assets.
 
 The contract is pinned by `src/app/custom-app-host.contract.test.ts`,
-`src/app/shared-ui-contract.test.ts`, and `src/app/client-side-only.test.ts`. The vendored package
-sync scripts (`npm run vendor:core`, `npm run vendor:ui`) are part of that contract: they must keep
+`src/app/shared-ui-contract.test.ts`, and `src/app/client-side-only.test.ts`. The vendored core sync
+script (`npm run vendor:core`) and the content-addressed UI package check
+(`npm run check:ui-package`) are part of that contract: they must keep
 the runtime surface, UI subpath exports, and UI assets available without introducing any backend
 dependency.
 

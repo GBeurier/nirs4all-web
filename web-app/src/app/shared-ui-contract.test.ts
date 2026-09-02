@@ -99,7 +99,7 @@ describe('shared nirs4all-ui contract', () => {
 
   it('keeps shared nirs4all-ui asset exports available to custom hosts', () => {
     const packageJson = JSON.parse(
-      readFileSync(new URL('../../vendor/nirs4all-ui/package.json', import.meta.url), 'utf8'),
+      readFileSync(new URL('../../node_modules/nirs4all-ui/package.json', import.meta.url), 'utf8'),
     ) as { exports?: Record<string, string | { import?: string; types?: string }> }
 
     expect(packageJson.exports?.['./assets/*']).toBe('./assets/*')
@@ -112,11 +112,11 @@ describe('shared nirs4all-ui contract', () => {
     expect(getNirs4allBrandDefinition('nirs4all-ui').role).toBe('Shared visual system')
     expect(getNirs4allStyleAsset('default-theme').packageExport)
       .toBe('nirs4all-ui/assets/styles/nirs4all-default.css')
-    expect(existsSync(new URL('../../vendor/nirs4all-ui/assets/brand/icon.svg', import.meta.url))).toBe(true)
-    expect(existsSync(new URL('../../vendor/nirs4all-ui/assets/brand/horizontal.svg', import.meta.url))).toBe(true)
-    expect(existsSync(new URL('../../vendor/nirs4all-ui/assets/brands/nirs4all-core/horizontal.svg', import.meta.url))).toBe(true)
-    expect(existsSync(new URL('../../vendor/nirs4all-ui/assets/styles/nirs4all-default.css', import.meta.url))).toBe(true)
-    expect(existsSync(new URL('../../vendor/nirs4all-ui/assets/motion/nirs-spectra.svg', import.meta.url))).toBe(true)
+    expect(existsSync(new URL('../../node_modules/nirs4all-ui/assets/brand/icon.svg', import.meta.url))).toBe(true)
+    expect(existsSync(new URL('../../node_modules/nirs4all-ui/assets/brand/horizontal.svg', import.meta.url))).toBe(true)
+    expect(existsSync(new URL('../../node_modules/nirs4all-ui/assets/brands/nirs4all-core/horizontal.svg', import.meta.url))).toBe(true)
+    expect(existsSync(new URL('../../node_modules/nirs4all-ui/assets/styles/nirs4all-default.css', import.meta.url))).toBe(true)
+    expect(existsSync(new URL('../../node_modules/nirs4all-ui/assets/motion/nirs-spectra.svg', import.meta.url))).toBe(true)
   })
 
   it('projects calibrated conformal results through the public nirs4all-ui contract', () => {

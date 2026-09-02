@@ -1,9 +1,0 @@
-import { Fragment as _Fragment, jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-export function PerClassTable({ rows, headers, valueFormat, className, theadClassName, rowClassName, cellClassName, labelCellClassName, empty, }) {
-    if (rows.length === 0)
-        return empty == null ? null : _jsx(_Fragment, { children: empty });
-    const formatRate = valueFormat ?? ((value) => value.toFixed(3));
-    const formatSupport = valueFormat ?? ((value) => String(Math.round(value)));
-    return (_jsxs("table", { className: className, children: [headers ? (_jsx("thead", { className: theadClassName, children: _jsxs("tr", { children: [_jsx("th", { className: labelCellClassName, children: headers.class ?? "Class" }), _jsx("th", { className: cellClassName, children: headers.precision ?? "Precision" }), _jsx("th", { className: cellClassName, children: headers.recall ?? "Recall" }), _jsx("th", { className: cellClassName, children: headers.f1 ?? "F1" }), _jsx("th", { className: cellClassName, children: headers.support ?? "Support" })] }) })) : null, _jsx("tbody", { children: rows.map((row) => (_jsxs("tr", { className: rowClassName, "data-class": row.label, children: [_jsx("th", { className: labelCellClassName, scope: "row", children: row.label }), _jsx("td", { className: cellClassName, children: formatRate(row.precision) }), _jsx("td", { className: cellClassName, children: formatRate(row.recall) }), _jsx("td", { className: cellClassName, children: formatRate(row.f1) }), _jsx("td", { className: cellClassName, children: formatSupport(row.support) })] }, row.label))) })] }));
-}
-//# sourceMappingURL=PerClassTable.js.map
