@@ -20,7 +20,9 @@ npm test
 npm run build
 ```
 
-The package uses file dependencies against `../../vendor/nirs4all` and `../../vendor/nirs4all-ui` so it can be tested against the same vendored release candidate as `web.nirs4all.org`.
+The package uses file dependencies against `../../vendor/nirs4all` and the exact content-addressed
+`../../vendor/npm/nirs4all-ui-0.1.13.tgz` artifact, so it is tested against the same vendored release
+candidate as `web.nirs4all.org`.
 
 ## Host Boundary
 
