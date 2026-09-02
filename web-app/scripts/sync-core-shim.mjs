@@ -3,6 +3,7 @@
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
+import { execFileSync } from 'node:child_process'
 import { dirname, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -18,6 +19,7 @@ const expected = Object.freeze({
   tree: '4ccd67a7fe556db2c50615500cca096cae7666ef',
   version: '0.3.25',
   npmSha256: '9dfb9c35f4e3b8ce7ecd7712ff2cd54330861bb48f95c32ce68c87133369c77f',
+  provenanceSha256: 'a0767d31d7ce4162eab19184c3e5d63b400b7cc76522f55950e2a6185d436050',
 })
 
 const sourceCandidates = [
@@ -105,6 +107,12 @@ function verifyPinnedPackage() {
   if (packageMetadata.name !== 'nirs4all' || packageMetadata.version !== expected.version) {
     throw new Error(`qualified Core package identity mismatch: ${packageMetadata.name}@${packageMetadata.version}`)
   }
+
+  const provenancePath = resolve(vendor, 'PROVENANCE.md')
+  const provenanceSha256 = createHash('sha256').update(readFileSync(provenancePath)).digest('hex')
+  if (provenanceSha256 !== expected.provenanceSha256) {
+    throw new Error(`qualified Core provenance hash mismatch: ${provenanceSha256} != ${expected.provenanceSha256}`)
+  }
 }
 
 function normalizeForWeb(file, bytes) {
@@ -128,6 +136,14 @@ if (!sourceRoot) {
 }
 
 console.log(`${logPrefix} source ${relative(root, sourceRoot)}`)
+
+const sourceCommit = execFileSync('git', ['-C', sourceRoot, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()
+const sourceTree = execFileSync('git', ['-C', sourceRoot, 'rev-parse', 'HEAD^{tree}'], { encoding: 'utf8' }).trim()
+if (sourceCommit !== expected.commit || sourceTree !== expected.tree) {
+  throw new Error(
+    `nirs4all-core sibling identity mismatch: ${sourceCommit}/${sourceTree} != ${expected.commit}/${expected.tree}`,
+  )
+}
 
 let drift = false
 

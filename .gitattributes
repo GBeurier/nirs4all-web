@@ -1,0 +1,3 @@
+# Qualified package payloads are byte-addressed and must never be rewritten by
+# checkout EOL conversion or whitespace normalization.
+web-app/vendor/nirs4all/** -text -eol -whitespace
