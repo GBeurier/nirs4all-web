@@ -4,6 +4,9 @@ export const memory: WebAssembly.Memory;
 export const __wbg_wasmfeatureblockf64_free: (a: number, b: number) => void;
 export const __wbg_wasminmemoryprovider_free: (a: number, b: number) => void;
 export const build_coordinator_data_plan_envelope_json: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number, number, number];
+export const builtin_adapter_registry_json: () => [number, number, number, number];
+export const builtin_data_models_json: () => [number, number, number, number];
+export const builtin_representations_json: () => [number, number, number, number];
 export const contract_manifest_json: () => [number, number, number, number];
 export const dag_ml_data_version: () => [number, number];
 export const data_plan_fingerprint_json: (a: number, b: number) => [number, number, number, number];
@@ -11,6 +14,7 @@ export const dataset_schema_fingerprint_json: (a: number, b: number) => [number,
 export const fold_set_fingerprint_json: (a: number, b: number) => [number, number, number, number];
 export const plan_model_input_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number, number, number];
 export const sample_relation_table_fingerprint_json: (a: number, b: number) => [number, number, number, number];
+export const tabular_numeric_model_input_spec_json: () => [number, number, number, number];
 export const validate_adapter_registry_json: (a: number, b: number) => [number, number];
 export const validate_coordinator_data_plan_envelope_json: (a: number, b: number) => [number, number];
 export const validate_data_plan_json: (a: number, b: number) => [number, number];

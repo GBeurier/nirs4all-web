@@ -65,6 +65,12 @@ export class WasmInMemoryProvider {
 
 export function build_coordinator_data_plan_envelope_json(schema_json: string, data_plan_json: string, sample_relations_json?: string | null): string;
 
+export function builtin_adapter_registry_json(): string;
+
+export function builtin_data_models_json(): string;
+
+export function builtin_representations_json(): string;
+
 export function contract_manifest_json(): string;
 
 export function dag_ml_data_version(): string;
@@ -78,6 +84,8 @@ export function fold_set_fingerprint_json(json: string): string;
 export function plan_model_input_json(schema_json: string, model_input_json: string, adapter_registry_json: string, request_json: string): string;
 
 export function sample_relation_table_fingerprint_json(json: string): string;
+
+export function tabular_numeric_model_input_spec_json(): string;
 
 export function validate_adapter_registry_json(json: string): void;
 
@@ -102,6 +110,9 @@ export interface InitOutput {
     readonly __wbg_wasmfeatureblockf64_free: (a: number, b: number) => void;
     readonly __wbg_wasminmemoryprovider_free: (a: number, b: number) => void;
     readonly build_coordinator_data_plan_envelope_json: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number, number, number];
+    readonly builtin_adapter_registry_json: () => [number, number, number, number];
+    readonly builtin_data_models_json: () => [number, number, number, number];
+    readonly builtin_representations_json: () => [number, number, number, number];
     readonly contract_manifest_json: () => [number, number, number, number];
     readonly dag_ml_data_version: () => [number, number];
     readonly data_plan_fingerprint_json: (a: number, b: number) => [number, number, number, number];
@@ -109,6 +120,7 @@ export interface InitOutput {
     readonly fold_set_fingerprint_json: (a: number, b: number) => [number, number, number, number];
     readonly plan_model_input_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number, number, number];
     readonly sample_relation_table_fingerprint_json: (a: number, b: number) => [number, number, number, number];
+    readonly tabular_numeric_model_input_spec_json: () => [number, number, number, number];
     readonly validate_adapter_registry_json: (a: number, b: number) => [number, number];
     readonly validate_coordinator_data_plan_envelope_json: (a: number, b: number) => [number, number];
     readonly validate_data_plan_json: (a: number, b: number) => [number, number];

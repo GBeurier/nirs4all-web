@@ -1,0 +1,66 @@
+{
+  "schema": "nirs4all-web.wasm-provenance.v1",
+  "component": "dag-ml-data-wasm",
+  "version": "0.2.10",
+  "source": {
+    "repository": "https://github.com/GBeurier/dag-ml-data",
+    "commit": "1f60b920d34acda7c0fbc044b593bb6af1fab4c1",
+    "tree": "f2144d861642e81758dcef4f6ee76ec32c0961ff",
+    "clean": true
+  },
+  "build": {
+    "target": "web",
+    "profile": "release",
+    "cargo_locked": true,
+    "features": [
+      "provider"
+    ],
+    "source_date_epoch": 1788363144,
+    "tools": {
+      "wasm_pack": "wasm-pack 0.15.0",
+      "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)"
+    }
+  },
+  "reproducibility": {
+    "independent_target_directories": 2,
+    "byte_identical": true
+  },
+  "files": [
+    {
+      "path": "LICENSE",
+      "size": 34020,
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+    },
+    {
+      "path": "README.md",
+      "size": 2465,
+      "sha256": "471b5bc0070411c82674a24fb776efeb00a44f27d821a8327c6d9536145555b0"
+    },
+    {
+      "path": "dag_ml_data_wasm.d.ts",
+      "size": 9920,
+      "sha256": "f217d639f912a7d57827bb5aec8ee9d0d2a7f9ea77345dde13712d8b82de843a"
+    },
+    {
+      "path": "dag_ml_data_wasm.js",
+      "size": 34118,
+      "sha256": "85e91d92faeb619abc1fe4682b648c499afd3bcff7d8f61825382c4a1f53e746"
+    },
+    {
+      "path": "dag_ml_data_wasm_bg.wasm",
+      "size": 1202907,
+      "sha256": "ae5475188fb29e3027ae041ce6c157d9cd87de79564022f80e5325d2497cb31b"
+    },
+    {
+      "path": "dag_ml_data_wasm_bg.wasm.d.ts",
+      "size": 4363,
+      "sha256": "9f6716d8350aa14b8cbc2b57e0ff3bc987ca3849b6557447310db5041017390c"
+    },
+    {
+      "path": "package.json",
+      "size": 621,
+      "sha256": "35364cd0376c83da5fd594b679aaefe62fdd321f99df44c6557dc02135810348"
+    }
+  ]
+}

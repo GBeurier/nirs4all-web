@@ -61,10 +61,10 @@ build_pack "$ECO/dag-ml/crates/dag-ml-wasm" dagml   # compile + execute the pipe
 # dag-ml-data provider: the typed data-contract layer. The `provider` feature
 # compiles WasmInMemoryProvider (materialize / make_view / feature_block /
 # target_block) into the wasm so the browser can serve X/y by sampleId.
-if [ -d "$ECO/dag-ml-data/crates/dag-ml-data-wasm" ]; then
-  echo "▶ building dagml-data (provider feature)"
-  "$WASM_PACK" build "$ECO/dag-ml-data/crates/dag-ml-data-wasm" --target web --release \
-    --out-dir "$OUT/dagml-data" -- --features provider
+if [ -d "${NIRS4ALL_DAG_ML_DATA_ROOT:-$ECO/dag-ml-data}/crates/dag-ml-data-wasm" ]; then
+  echo "▶ building and proving dagml-data (provider feature)"
+  NIRS4ALL_DAG_ML_DATA_ROOT="${NIRS4ALL_DAG_ML_DATA_ROOT:-$ECO/dag-ml-data}" \
+    WASM_PACK_BIN="$WASM_PACK" node "$HERE/stage-dagml-data-wasm.mjs"
 else
   echo "⚠ skip dagml-data — crate not found"
 fi

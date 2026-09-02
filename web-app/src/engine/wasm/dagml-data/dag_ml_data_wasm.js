@@ -403,6 +403,72 @@ export function build_coordinator_data_plan_envelope_json(schema_json, data_plan
 /**
  * @returns {string}
  */
+export function builtin_adapter_registry_json() {
+    let deferred2_0;
+    let deferred2_1;
+    try {
+        const ret = wasm.builtin_adapter_registry_json();
+        var ptr1 = ret[0];
+        var len1 = ret[1];
+        if (ret[3]) {
+            ptr1 = 0; len1 = 0;
+            throw takeFromExternrefTable0(ret[2]);
+        }
+        deferred2_0 = ptr1;
+        deferred2_1 = len1;
+        return getStringFromWasm0(ptr1, len1);
+    } finally {
+        wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+    }
+}
+
+/**
+ * @returns {string}
+ */
+export function builtin_data_models_json() {
+    let deferred2_0;
+    let deferred2_1;
+    try {
+        const ret = wasm.builtin_data_models_json();
+        var ptr1 = ret[0];
+        var len1 = ret[1];
+        if (ret[3]) {
+            ptr1 = 0; len1 = 0;
+            throw takeFromExternrefTable0(ret[2]);
+        }
+        deferred2_0 = ptr1;
+        deferred2_1 = len1;
+        return getStringFromWasm0(ptr1, len1);
+    } finally {
+        wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+    }
+}
+
+/**
+ * @returns {string}
+ */
+export function builtin_representations_json() {
+    let deferred2_0;
+    let deferred2_1;
+    try {
+        const ret = wasm.builtin_representations_json();
+        var ptr1 = ret[0];
+        var len1 = ret[1];
+        if (ret[3]) {
+            ptr1 = 0; len1 = 0;
+            throw takeFromExternrefTable0(ret[2]);
+        }
+        deferred2_0 = ptr1;
+        deferred2_1 = len1;
+        return getStringFromWasm0(ptr1, len1);
+    } finally {
+        wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+    }
+}
+
+/**
+ * @returns {string}
+ */
 export function contract_manifest_json() {
     let deferred2_0;
     let deferred2_1;
@@ -573,6 +639,28 @@ export function sample_relation_table_fingerprint_json(json) {
 }
 
 /**
+ * @returns {string}
+ */
+export function tabular_numeric_model_input_spec_json() {
+    let deferred2_0;
+    let deferred2_1;
+    try {
+        const ret = wasm.tabular_numeric_model_input_spec_json();
+        var ptr1 = ret[0];
+        var len1 = ret[1];
+        if (ret[3]) {
+            ptr1 = 0; len1 = 0;
+            throw takeFromExternrefTable0(ret[2]);
+        }
+        deferred2_0 = ptr1;
+        deferred2_1 = len1;
+        return getStringFromWasm0(ptr1, len1);
+    } finally {
+        wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+    }
+}
+
+/**
  * @param {string} json
  */
 export function validate_adapter_registry_json(json) {
@@ -673,7 +761,7 @@ export function validate_sample_relation_table_json(json) {
 function __wbg_get_imports() {
     const import0 = {
         __proto__: null,
-        __wbg___wbindgen_throw_1506f2235d1bdba0: function(arg0, arg1) {
+        __wbg___wbindgen_throw_344f42d3211c4765: function(arg0, arg1) {
             throw new Error(getStringFromWasm0(arg0, arg1));
         },
         __wbindgen_cast_0000000000000001: function(arg0, arg1) {
