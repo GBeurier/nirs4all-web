@@ -7,13 +7,13 @@
   "license": "(CECILL-2.1 OR AGPL-3.0-or-later)",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/validate-web-profile.mjs dist strict-wasm",
-    "build:strict": "vite build --mode strict && node scripts/validate-web-profile.mjs dist-strict strict-wasm",
-    "build:transitional": "vite build --mode transitional && node scripts/validate-web-profile.mjs dist-transitional transitional",
-    "build:single": "vite build --mode singlefile",
+    "build": "npm run check:dagml-data-wasm && vite build && node scripts/validate-web-profile.mjs dist strict-wasm",
+    "build:strict": "npm run check:dagml-data-wasm && vite build --mode strict && node scripts/validate-web-profile.mjs dist-strict strict-wasm",
+    "build:transitional": "npm run check:dagml-data-wasm && vite build --mode transitional && node scripts/validate-web-profile.mjs dist-transitional transitional",
+    "build:single": "npm run check:dagml-data-wasm && vite build --mode singlefile",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "npm run check:dagml-data-wasm && vitest run",
     "test:strict-profile": "vitest run --config vitest.config.ts src/engine/web-profile.test.ts src/engine/main-engine.runtime-v1.test.ts src/engine/dagml-engine.rt-fallback.test.ts src/app/client-side-only.test.ts",
     "test:client-only": "vitest run --config vitest.config.ts src/app/client-side-only.test.ts",
     "test:watch": "vitest",
@@ -34,6 +34,8 @@
     "vendor:core": "node scripts/sync-core-shim.mjs",
     "check:core-shim": "node scripts/sync-core-shim.mjs --check",
     "check:ui-package": "node scripts/check-ui-package.mjs",
+    "check:dagml-data-wasm": "node scripts/verify-dagml-data-wasm.mjs",
+    "wasm:dagml-data": "node scripts/stage-dagml-data-wasm.mjs",
     "wasm": "bash scripts/build-wasm.sh"
   },
   "dependencies": {
