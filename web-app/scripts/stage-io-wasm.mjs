@@ -16,8 +16,8 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED_SOURCE = Object.freeze({
-  commit: '7abd256cbad1ee4eff3b6d507dd3fd28d2caac80',
-  tree: 'b36575f0e21e3ff08225c7f421ce99deabd26aeb',
+  commit: 'e41bf8f94a92356e98c215d4c41e907a7dfaf6ac',
+  tree: 'ba5323cce8833610d974b7aa84ac65057355a687',
   version: '0.1.12',
   wasmBindgen: '0.2.122',
 })

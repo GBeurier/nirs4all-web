@@ -20,7 +20,7 @@
       "wasm_pack": "wasm-pack 0.15.0",
       "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
       "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
-      "emcc": "emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 5.0.7 (263db4cffa6f9fc2ec514a70abac81362ea41849)"
+      "emcc": "emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 3.1.74 (1092ec30a3fb1d46b1782ff1b4db5094d3d06ae5)"
     },
     "package_name_normalization": {
       "from": "nirs4all-formats-wasm",
@@ -105,8 +105,8 @@
     },
     {
       "path": "nirs4all_formats_wasm_bg.wasm",
-      "size": 6467250,
-      "sha256": "51c8ff57186676b30b512142f7880075432c6b1f155912858dd21f1e785f8b6e"
+      "size": 6471620,
+      "sha256": "25c75b14ffb43abe9d47c905639c942ec438791a1ee990e28182b3b91c016a25"
     },
     {
       "path": "nirs4all_formats_wasm_bg.wasm.d.ts",

@@ -15,11 +15,11 @@ const required = process.env.NIRS4ALL_CORE_SHIM_REQUIRED === '1'
 const logPrefix = '[sync-core-shim]'
 
 const expected = Object.freeze({
-  commit: '6b25b63bb09adfe3c4dae8ffacc90d09a1a81e16',
-  tree: '11344243884a24aeec75f73e0469f23721c76978',
+  commit: 'e0f5d485eae4279f02d58fe82fad3946202e463f',
+  tree: '3fd59b96fc5728088c6d1d207e783d826f87401f',
   version: '0.3.25',
-  npmSha256: 'e794accfc3010cdf04f5033f1066dad5a245ee76791b2871b23f308efb974445',
-  provenanceSha256: 'c83a4265df44e705d849ce76c3d353c844e6d10fa977b6e68bd86ee46fdd23aa',
+  npmSha256: 'e6feeaa766a252ecaba7be78c4bff6e693839a72230ee070a77b22bed4e2aaa7',
+  provenanceSha256: '655dd80fcbb7a1f85d0337068cf8fdbaa5059986205f9521e8f3b8a90b7f51fb',
 })
 
 const sourceCandidates = [
@@ -67,7 +67,7 @@ const pinnedPackageSha256 = new Map(Object.entries({
   'THIRD_PARTY_NOTICES.md': '36239a5e2cfb203f0f9b1a4d78578e938b35fc696e7bedc613e4030954ba14ac',
   'native/nirs4all_core_wasm_native.d.ts': '829c7e2b56cb9f97cdf35aee6da68ef765942a238949c4a3a994553a137bc0e3',
   'native/nirs4all_core_wasm_native.js': 'e5b743ae98d98e61b6e5c46538ecc5a813e1293eb96f08bba99fe55e199b3e13',
-  'native/nirs4all_core_wasm_native_bg.wasm': 'ab4a2ce8c52bc304cb91e22a19549fc643326cb8a816ba03f414730a7cf44fa0',
+  'native/nirs4all_core_wasm_native_bg.wasm': '629e84f92b2c3e3119a5d1924d0507b1be17e045961bdae39d58c7b7e5a7bed8',
   'native/nirs4all_core_wasm_native_bg.wasm.d.ts': '156193632dd90859ae50d7da7cfc3ea2f138832bc1c2da6eebb5b3e9b16a0c94',
   'native/package.json': '69c3afbbaaa146da457d97d0e6b09fef342a6c6500334cf847cc21ce18c6f942',
   'package.json': 'ef3625454674c823d432ab6315f431353805a1c5b4d97aee0d40e060d0a54d18',
