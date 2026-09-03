@@ -82,6 +82,18 @@ const DESCRIPTOR_KEYS = [
   'storage_algorithm',
   'writer_abi',
 ] as const
+const PIPELINE_KEYS = [
+  'fingerprint_algorithm',
+  'model_n_features',
+  'native_fingerprint',
+  'operator_count',
+  'pipeline_type',
+  'raw_n_features',
+  'savgol_poly_degree',
+  'savgol_window',
+  'schema_version',
+] as const
+const NATIVE_FINGERPRINT = /^[0-9a-f]{16}$/
 
 function exactKeys(value: Record<string, unknown>, expected: readonly string[]): boolean {
   return Object.keys(value).sort().join('\u0000') === [...expected].sort().join('\u0000')
@@ -95,6 +107,35 @@ function nonNegativeInteger(value: unknown): value is number {
   return Number.isSafeInteger(value) && Number(value) >= 0
 }
 
+function nativePipeline(
+  value: unknown,
+  nFeatures: number,
+): NonNullable<NativePredictorDescriptorV1['pipeline']> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new TypeError('Core returned no usable native preprocessing pipeline descriptor.')
+  }
+  const pipeline = value as Record<string, unknown>
+  if (!exactKeys(pipeline, PIPELINE_KEYS)
+    || pipeline.pipeline_type !== 'n4m.snv_savgol_smooth.v1'
+    || pipeline.schema_version !== 1
+    || pipeline.operator_count !== 2
+    || pipeline.raw_n_features !== nFeatures
+    || pipeline.model_n_features !== nFeatures
+    || pipeline.fingerprint_algorithm !== 'fnv1a64.v1'
+    || typeof pipeline.native_fingerprint !== 'string'
+    || !NATIVE_FINGERPRINT.test(pipeline.native_fingerprint)
+    || !positiveInteger(pipeline.savgol_window)
+    || pipeline.savgol_window < 3
+    || pipeline.savgol_window > 501
+    || pipeline.savgol_window > nFeatures
+    || pipeline.savgol_window % 2 === 0
+    || !nonNegativeInteger(pipeline.savgol_poly_degree)
+    || pipeline.savgol_poly_degree >= pipeline.savgol_window) {
+    throw new TypeError('Core returned an invalid native preprocessing pipeline descriptor.')
+  }
+  return value as NonNullable<NativePredictorDescriptorV1['pipeline']>
+}
+
 /** Validate only the browser-facing descriptor schema; DAG-ML owns controller/algorithm policy. */
 function nativePredictorDescriptor(value: unknown): NativePredictorDescriptorV1 {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -103,7 +144,9 @@ function nativePredictorDescriptor(value: unknown): NativePredictorDescriptorV1 
   const descriptor = value as Record<string, unknown>
   const writer = descriptor.writer_abi
   const dimensions = descriptor.dimensions
-  if (!exactKeys(descriptor, DESCRIPTOR_KEYS)
+  const formatVersion = descriptor.format_version
+  const expectedKeys = formatVersion === 2 ? [...DESCRIPTOR_KEYS, 'pipeline'] : DESCRIPTOR_KEYS
+  if (!exactKeys(descriptor, expectedKeys)
     || !writer || typeof writer !== 'object' || Array.isArray(writer)
     || !exactKeys(writer as Record<string, unknown>, ['major', 'minor', 'patch'])
     || !dimensions || typeof dimensions !== 'object' || Array.isArray(dimensions)
@@ -111,10 +154,10 @@ function nativePredictorDescriptor(value: unknown): NativePredictorDescriptorV1 
     || descriptor.descriptor_type !== 'dagml.native_predictor_descriptor.v1'
     || descriptor.schema_version !== 1
     || descriptor.format !== 'N4MM'
-    || descriptor.format_version !== 1
+    || (formatVersion !== 1 && formatVersion !== 2)
     || !['controller:methods.pls', 'controller:methods.ridge'].includes(String(descriptor.owner_controller))
     || !Number.isSafeInteger(descriptor.storage_algorithm)
-    || !nonNegativeInteger(descriptor.capabilities) || descriptor.capabilities > 7
+    || !nonNegativeInteger(descriptor.capabilities) || descriptor.capabilities > 15
     || (Number(descriptor.capabilities) & 1) !== 1
     || typeof descriptor.artifact_sha256 !== 'string' || !SHA256.test(descriptor.artifact_sha256)
     || typeof descriptor.descriptor_fingerprint !== 'string' || !SHA256.test(descriptor.descriptor_fingerprint)
@@ -126,6 +169,16 @@ function nativePredictorDescriptor(value: unknown): NativePredictorDescriptorV1 
     || !positiveInteger((dimensions as Record<string, unknown>).n_targets)
     || !nonNegativeInteger((dimensions as Record<string, unknown>).n_components)) {
     throw new TypeError('Core returned an invalid native predictor descriptor contract.')
+  }
+  if (formatVersion === 2) {
+    if (descriptor.owner_controller !== 'controller:methods.pls'
+      || descriptor.storage_algorithm !== 0
+      || Number(descriptor.capabilities) < 8
+      || (Number(descriptor.capabilities) & 8) !== 8
+      || Number((writer as Record<string, unknown>).minor) < 5) {
+      throw new TypeError('Core returned an unsupported native pipeline predictor contract.')
+    }
+    nativePipeline(descriptor.pipeline, Number((dimensions as Record<string, unknown>).n_features))
   }
   return value as NativePredictorDescriptorV1
 }
@@ -150,6 +203,17 @@ function sameNativePredictor(
     && expected.dimensions.n_features === actual.dimensions.n_features
     && expected.dimensions.n_targets === actual.dimensions.n_targets
     && expected.dimensions.n_components === actual.dimensions.n_components
+    && ((expected.pipeline === undefined && actual.pipeline === undefined)
+      || (expected.pipeline !== undefined && actual.pipeline !== undefined
+        && expected.pipeline.pipeline_type === actual.pipeline.pipeline_type
+        && expected.pipeline.schema_version === actual.pipeline.schema_version
+        && expected.pipeline.operator_count === actual.pipeline.operator_count
+        && expected.pipeline.raw_n_features === actual.pipeline.raw_n_features
+        && expected.pipeline.model_n_features === actual.pipeline.model_n_features
+        && expected.pipeline.fingerprint_algorithm === actual.pipeline.fingerprint_algorithm
+        && expected.pipeline.native_fingerprint === actual.pipeline.native_fingerprint
+        && expected.pipeline.savgol_window === actual.pipeline.savgol_window
+        && expected.pipeline.savgol_poly_degree === actual.pipeline.savgol_poly_degree))
 }
 
 /**

@@ -141,7 +141,7 @@ export interface NativePredictorDescriptorV1 {
   artifact_sha256: string;
   owner_controller: 'controller:methods.pls' | 'controller:methods.ridge';
   format: 'N4MM';
-  format_version: 1;
+  format_version: 1 | 2;
   writer_abi: Readonly<{ major: number; minor: number; patch: number }>;
   storage_algorithm: number;
   capabilities: number;
@@ -150,6 +150,17 @@ export interface NativePredictorDescriptorV1 {
     n_features: number;
     n_targets: number;
     n_components: number;
+  }>;
+  pipeline?: Readonly<{
+    pipeline_type: 'n4m.snv_savgol_smooth.v1';
+    schema_version: 1;
+    operator_count: 2;
+    raw_n_features: number;
+    model_n_features: number;
+    fingerprint_algorithm: 'fnv1a64.v1';
+    native_fingerprint: string;
+    savgol_window: number;
+    savgol_poly_degree: number;
   }>;
   descriptor_fingerprint: string;
 }

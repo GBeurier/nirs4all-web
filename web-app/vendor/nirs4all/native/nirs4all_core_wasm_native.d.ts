@@ -16,7 +16,7 @@ export class ValidatedMethodsArchiveV2 {
      * controller from the validated archive, while DAG-ML owns all pure
      * controller/algorithm/capability/dimension policy and TCV1 identity.
      */
-    bind_inspected_native_predictor_v1(inspection_schema_version: number, format_version: number, writer_abi_major: number, writer_abi_minor: number, writer_abi_patch: number, storage_algorithm: number, training_samples: bigint, n_features: number, n_targets: number, n_components: number, capabilities: bigint): string;
+    bind_inspected_native_predictor_v1(inspection_schema_version: number, format_version: number, writer_abi_major: number, writer_abi_minor: number, writer_abi_patch: number, storage_algorithm: number, training_samples: bigint, n_features: number, n_targets: number, n_components: number, capabilities: bigint, pipeline_present: boolean, pipeline_schema_version: number, pipeline_operator_count: number, pipeline_first_operator: number, pipeline_second_operator: number, savgol_window: number, savgol_poly_degree: number, savgol_derivative: number, pipeline_semantic_profile: number, savgol_delta: number, pipeline_raw_n_features: number, pipeline_model_n_features: number, pipeline_fingerprint_algorithm: number, pipeline_fingerprint: bigint, snv_axis: number, snv_with_mean: boolean, snv_with_std: boolean, snv_ddof: number, savgol_mode: number, savgol_cval: number): string;
     model_bytes(): Uint8Array;
     /**
      * Validate through Core before returning any package or model bytes.
@@ -29,6 +29,7 @@ export class ValidatedMethodsArchiveV2 {
     readonly archive_sha256: string;
     readonly artifact_id: string;
     readonly binding_id: string;
+    readonly format_version: number;
     readonly node_id: string;
     readonly port_name: string;
 }
@@ -42,8 +43,9 @@ export interface InitOutput {
     readonly validatedmethodsarchivev2_archive_id: (a: number) => [number, number];
     readonly validatedmethodsarchivev2_archive_sha256: (a: number) => [number, number];
     readonly validatedmethodsarchivev2_artifact_id: (a: number) => [number, number];
-    readonly validatedmethodsarchivev2_bind_inspected_native_predictor_v1: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: bigint, i: number, j: number, k: number, l: bigint) => [number, number, number, number];
+    readonly validatedmethodsarchivev2_bind_inspected_native_predictor_v1: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: bigint, i: number, j: number, k: number, l: bigint, m: number, n: number, o: number, p: number, q: number, r: number, s: number, t: number, u: number, v: number, w: number, x: number, y: number, z: bigint, a1: number, b1: number, c1: number, d1: number, e1: number, f1: number) => [number, number, number, number];
     readonly validatedmethodsarchivev2_binding_id: (a: number) => [number, number];
+    readonly validatedmethodsarchivev2_format_version: (a: number) => number;
     readonly validatedmethodsarchivev2_model_bytes: (a: number) => [number, number];
     readonly validatedmethodsarchivev2_new: (a: number, b: number) => [number, number, number];
     readonly validatedmethodsarchivev2_node_id: (a: number) => [number, number];

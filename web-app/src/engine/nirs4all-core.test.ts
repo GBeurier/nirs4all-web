@@ -63,10 +63,10 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(existsSync(new URL('../../scripts/sync-lite-shim.mjs', import.meta.url))).toBe(false)
     expect(syncScript).not.toMatch(/NIRS4ALL_LITE|nirs4all-lite|sync-lite/)
     expect(vendorPkg).toMatchObject({ name: 'nirs4all', version: '0.3.25' })
-    expect(provenance).toContain('3a3ce728cebf001ad25b20b3eeaed3bc76daf32f')
-    expect(provenance).toContain('f1f7d0f354e01980dd553d6edb48125c43d77a1e35561ba0ed955fd4f588bcf1')
-    expect(syncScript).toContain('26fdff4c1ecf2a30d4dfbdadb5ac88617654e47931a53b8499165175afde5edf')
-    expect(syncScript).toContain('ed0d81ebdad7f2b93e040222589e464a9c87f591b705cad295cdbc9eeee0b6eb')
+    expect(provenance).toContain('46a51a4bf123f9766b363fcbfb3009ea5c5f0a62')
+    expect(provenance).toContain('1e08637a7d026e4dc6fa530204ef5dc34362e76cab0f3722ef94d5bb7acf4dba')
+    expect(syncScript).toContain('41f0a5304b76b94a573caac86de42667cbc8c8e60dcf59e351c8e8ffe708f482')
+    expect(syncScript).toContain('69b613bce35ccb34ee328a4257f0254ce58719d95d6519ac38ff0eb81710b7e4')
   })
 
   it('keeps the datasets upstream candidate aligned with the vendored WASM package', () => {
@@ -225,7 +225,7 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(manifest.capabilities).toContain('loss_execution_attestation')
     expect(provenance).toMatchObject({
       version: '0.3.23',
-      source: { commit: '189099119b69e74c69466f2308808cb423dc2e94' },
+      source: { commit: '6800c4fd0ec8b13b171cec9ed4a9b2ccdbabca0d' },
       reproducibility: { byte_identical: true },
     })
   })

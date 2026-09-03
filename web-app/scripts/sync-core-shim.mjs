@@ -15,11 +15,11 @@ const required = process.env.NIRS4ALL_CORE_SHIM_REQUIRED === '1'
 const logPrefix = '[sync-core-shim]'
 
 const expected = Object.freeze({
-  commit: '3a3ce728cebf001ad25b20b3eeaed3bc76daf32f',
-  tree: '57e8203bf33a6c7b0b3f049f0dcbf3efa28991b1',
+  commit: '46a51a4bf123f9766b363fcbfb3009ea5c5f0a62',
+  tree: '3b02332cfa4cf5e3424a7697f56d85a55fd80de6',
   version: '0.3.25',
-  npmSha256: 'f1f7d0f354e01980dd553d6edb48125c43d77a1e35561ba0ed955fd4f588bcf1',
-  provenanceSha256: '7c90235b10b6a7c6e2ddffaa0fe7b737a9d36afd54c2408e7bbdf404b2474536',
+  npmSha256: '1e08637a7d026e4dc6fa530204ef5dc34362e76cab0f3722ef94d5bb7acf4dba',
+  provenanceSha256: 'b3f286ef515e02a82f2095e911950fcd95e0b0ae99376ccbc293f75767769e56',
 })
 
 const sourceCandidates = [
@@ -63,17 +63,17 @@ const pinnedPackageSha256 = new Map(Object.entries({
   'LICENSES/CeCILL-2.1.txt': '4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5',
   'LICENSES/MIT.txt': 'b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5',
   'LICENSING.md': '46c57e67ed1e40c98a714f32a968b343650b02df3627744c28e9ceba011b7447',
-  'README.md': 'ae60cbaccf36af7a4885548e9a6fc8fad6c2659806164994550d5a419df82433',
+  'README.md': 'b6495cd4bbec596ffb5dc713aa002597fc08149226702f5e3db1c52119177a38',
   'THIRD_PARTY_NOTICES.md': '36239a5e2cfb203f0f9b1a4d78578e938b35fc696e7bedc613e4030954ba14ac',
-  'native/nirs4all_core_wasm_native.d.ts': '14c9cc9bf53db4d3e0cc18450aa305cde1c29a4e9362340dc43c42c7dd3b3b2e',
-  'native/nirs4all_core_wasm_native.js': 'ea50e012b86936c81eeec77ac0c19b3c3ef13c4d2958a4899954aeed55d83c58',
-  'native/nirs4all_core_wasm_native_bg.wasm': '26fdff4c1ecf2a30d4dfbdadb5ac88617654e47931a53b8499165175afde5edf',
-  'native/nirs4all_core_wasm_native_bg.wasm.d.ts': '6766915572d258f151ebb11998e50193c9cd42c29f3300ba3cd6abd84ca4536c',
+  'native/nirs4all_core_wasm_native.d.ts': '829c7e2b56cb9f97cdf35aee6da68ef765942a238949c4a3a994553a137bc0e3',
+  'native/nirs4all_core_wasm_native.js': 'e5b743ae98d98e61b6e5c46538ecc5a813e1293eb96f08bba99fe55e199b3e13',
+  'native/nirs4all_core_wasm_native_bg.wasm': '41f0a5304b76b94a573caac86de42667cbc8c8e60dcf59e351c8e8ffe708f482',
+  'native/nirs4all_core_wasm_native_bg.wasm.d.ts': '156193632dd90859ae50d7da7cfc3ea2f138832bc1c2da6eebb5b3e9b16a0c94',
   'native/package.json': '69c3afbbaaa146da457d97d0e6b09fef342a6c6500334cf847cc21ce18c6f942',
   'package.json': 'ef3625454674c823d432ab6315f431353805a1c5b4d97aee0d40e060d0a54d18',
-  'src/archive-v2.js': 'ed0d81ebdad7f2b93e040222589e464a9c87f591b705cad295cdbc9eeee0b6eb',
+  'src/archive-v2.js': '69b613bce35ccb34ee328a4257f0254ce58719d95d6519ac38ff0eb81710b7e4',
   'src/execution.js': '1137730eca30c14c6615c40ca6cd979dbc1d48930a5103f0b3a44630c98784c6',
-  'src/index.d.ts': '94f8dbd51ece961d703857689e675e856e2f1c7f763c8f419846571d2880d608',
+  'src/index.d.ts': 'c43856d507a043402ec746801e704e1d02c86c9aa67e7ff875fecab0a8d9e069',
   'src/index.js': '6fa6a44e29300ca0add1bfdb5aab2deb64ca069655505d4a66dd6467ca1a1326',
 }))
 

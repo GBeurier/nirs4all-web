@@ -2,19 +2,19 @@
   "schema": "nirs4all-web.wasm-provenance.v1",
   "component": "nirs4all-methods-wasm",
   "package": "@nirs4all/methods",
-  "version": "1.0.14",
-  "runtime_version": "1.0.14+abi.2.4.0",
-  "abi": "2.4.0",
+  "version": "1.0.15",
+  "runtime_version": "1.0.15+abi.2.5.0",
+  "abi": "2.5.0",
   "source": {
     "repository": "https://github.com/GBeurier/nirs4all-methods",
-    "commit": "a71ee2927524d03482183de3d6e22661efc05d12",
-    "tree": "f6749f4c4be7dca161f3c2677dd10a9ac4434b66",
+    "commit": "48ad1e5a50844f68c2b99e93b02ad6a3b491c07b",
+    "tree": "f2eaa3c46629c26d11913a25bff723f9a9cefbc9",
     "clean": true
   },
   "build": {
     "target": "web",
     "profile": "release",
-    "source_date_epoch": 1788384279,
+    "source_date_epoch": 1788397182,
     "emscripten": "3.1.74",
     "cmake": "cmake version 4.4.2",
     "ninja": "1.13.0.git.kitware.jobserver-pipe-1",
@@ -145,13 +145,13 @@
     },
     {
       "path": "index.d.ts",
-      "size": 1185,
-      "sha256": "e14ddbe54ee0e0895dffd01a4fc6a36e34d288903a4303d73b2391300444cbd4"
+      "size": 1368,
+      "sha256": "dc6bb37eaabd6727d605dd1138a5175c4119917640ae804071f557152361fe47"
     },
     {
       "path": "index.js",
-      "size": 1813,
-      "sha256": "8931c298d302b12cec6c46cb62cf375bb4c45f6b1129481cb26f23f42c88b4f3"
+      "size": 1967,
+      "sha256": "aa30c58c85a1e2dffdeea704d6265c4eb5fd4cfe3e3d873b08df9533fb397f78"
     },
     {
       "path": "methodResult.d.ts",
@@ -175,13 +175,13 @@
     },
     {
       "path": "n4m.js",
-      "size": 172179,
-      "sha256": "27b8015715d229064273d6383393474fe6a1639eeea7c6de9c844b63fd139cac"
+      "size": 172375,
+      "sha256": "c3c8d598ee24b709da6560f53eb6c88872859b4fbf1a3a0524705f39f251feb6"
     },
     {
       "path": "n4m.wasm",
-      "size": 2056216,
-      "sha256": "e30128f7b8b0446053d344286d2c3129303894c1f34ec3e8a721ff2995468bf3"
+      "size": 2063690,
+      "sha256": "cf0c009fcf6dd2b40e79f2bdc9c613e3906148ec118c045c20546811d8d6768c"
     },
     {
       "path": "preprocessing.d.ts",
@@ -195,13 +195,13 @@
     },
     {
       "path": "serialization.d.ts",
-      "size": 964,
-      "sha256": "4b08af8515592d96371360b9badac41129148e81250976b3bfc9c399d3466310"
+      "size": 2028,
+      "sha256": "0ca1d47fb4b6d189b2fbfa270d4669ed3505c7896636b5607757c2a05c14ed0a"
     },
     {
       "path": "serialization.js",
-      "size": 2097,
-      "sha256": "656e450d6dbd82b9f0506bcaf797366dfe19c9c3e118b29d362eb8db2e8a3307"
+      "size": 5133,
+      "sha256": "0bbb43cf63525293ff8675a4fb53c42b9aa36a940d1807a53ec9e4c84bd75474"
     },
     {
       "path": "types.d.ts",
