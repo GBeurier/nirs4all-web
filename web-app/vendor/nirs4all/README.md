@@ -33,7 +33,8 @@ PLS component sweeps to `@nirs4all/methods`:
   Methods WASM `abiVersion()` and refuses an older runtime.
 
 The Archive V2 WASM replay intentionally covers the Phase 2 portable Methods
-PLS final-refit contract only. Archives with preprocessing, multiple predictor
+PLS final-refit contract only. N4MM v2 preprocessing stays embedded in Methods
+and therefore receives the raw matrix without a JavaScript kernel. Archives with multiple predictor
 nodes, optimization checkpoints, conformal/robustness payloads, external or
 host-only artifacts, undeclared inventory members, incompatible N4MM metadata,
 or non-Methods dispatch are refused rather than silently approximated.

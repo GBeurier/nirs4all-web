@@ -17,8 +17,8 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED_SOURCE = Object.freeze({
-  commit: '189099119b69e74c69466f2308808cb423dc2e94',
-  tree: '6ce31722bdb999482932e9d4a3884987426d1dd6',
+  commit: '6800c4fd0ec8b13b171cec9ed4a9b2ccdbabca0d',
+  tree: '37d61366cae6061756a92befc60266e52dae5623',
   version: '0.3.23',
 })
 const GENERATED_FILES = Object.freeze([
@@ -112,7 +112,7 @@ try {
     'update',
     '--manifest-path', join(buildSourceRoot, 'Cargo.toml'),
     '-p', 'n4m',
-    '--precise', '0.1.3',
+    '--precise', '0.1.4',
   ])
   const crateRoot = join(buildSourceRoot, 'crates', 'dag-ml-wasm')
   for (const leg of ['a', 'b']) {
@@ -191,9 +191,9 @@ try {
       cargo_locked: true,
       qualification_patch: {
         package: 'n4m',
-        version: '0.1.3',
-        source_commit: 'a71ee2927524d03482183de3d6e22661efc05d12',
-        source_tree: 'f6749f4c4be7dca161f3c2677dd10a9ac4434b66',
+        version: '0.1.4',
+        source_commit: '48ad1e5a50844f68c2b99e93b02ad6a3b491c07b',
+        source_tree: 'f2eaa3c46629c26d11913a25bff723f9a9cefbc9',
         persisted_in_release_lock: false,
       },
       source_date_epoch: source.epoch,

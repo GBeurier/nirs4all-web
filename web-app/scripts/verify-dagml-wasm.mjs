@@ -4,15 +4,15 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED = Object.freeze({
-  commit: '189099119b69e74c69466f2308808cb423dc2e94',
-  tree: '6ce31722bdb999482932e9d4a3884987426d1dd6',
+  commit: '6800c4fd0ec8b13b171cec9ed4a9b2ccdbabca0d',
+  tree: '37d61366cae6061756a92befc60266e52dae5623',
   version: '0.3.23',
 })
 const EXPECTED_N4M_PATCH = Object.freeze({
   package: 'n4m',
-  version: '0.1.3',
-  source_commit: 'a71ee2927524d03482183de3d6e22661efc05d12',
-  source_tree: 'f6749f4c4be7dca161f3c2677dd10a9ac4434b66',
+  version: '0.1.4',
+  source_commit: '48ad1e5a50844f68c2b99e93b02ad6a3b491c07b',
+  source_tree: 'f2eaa3c46629c26d11913a25bff723f9a9cefbc9',
   persisted_in_release_lock: false,
 })
 const EXPECTED_FILES = Object.freeze({
@@ -28,9 +28,9 @@ const EXPECTED_FILES = Object.freeze({
   'THIRD_PARTY_NOTICES.md': { size: 1573, sha256: '01a4064f18fa28336f49c40a4e2db4b40ebee4766160320174e5aaadc41304fd' },
   'dag_ml_wasm.d.ts': { size: 11607, sha256: '3cafdfb0603a8b5c32928ef20422676c5b63c111437ee327a5a20c76f9be3748' },
   'dag_ml_wasm.js': { size: 40062, sha256: 'e91cf64c6e6adad7abe06b2889f58880b1bd6affc8e0428d4136c11411666eef' },
-  'dag_ml_wasm_bg.wasm': { size: 4758279, sha256: 'd6a548ba6b616c5d6d1585f0adfeed84b262a11a4146b76dee96fa9fd54eff8a' },
+  'dag_ml_wasm_bg.wasm': { size: 4761835, sha256: 'd03326d6a5912d024c391214580028fd2b9e099e157f4b7fa0d14b40fa3bff0a' },
   'dag_ml_wasm_bg.wasm.d.ts': { size: 5165, sha256: '7d2153ae782688992671b959da807675c9370cc8217c3c1031709f5543fc3039' },
-  'native_predictor_descriptor.v1.schema.json': { size: 2770, sha256: '7d89f4b4531c16a9512221192f030961072bfd4057e1c9e0f3371710298e1d0a' },
+  'native_predictor_descriptor.v1.schema.json': { size: 4275, sha256: 'b29746645106a88d7e014ff7ad8df242a967f0b60c85df259094063dab329c1d' },
   'package.json': { size: 576, sha256: 'ff7b36dba8cbe59afe113fa0cf9a562d064ba8e6ec3b3f4dd8f0356e3a101ce8' },
 })
 const EXPECTED_LICENSE_FILES = Object.freeze([

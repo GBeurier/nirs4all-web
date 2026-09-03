@@ -85,13 +85,33 @@ export class ValidatedMethodsArchiveV2 {
      * @param {number} n_targets
      * @param {number} n_components
      * @param {bigint} capabilities
+     * @param {boolean} pipeline_present
+     * @param {number} pipeline_schema_version
+     * @param {number} pipeline_operator_count
+     * @param {number} pipeline_first_operator
+     * @param {number} pipeline_second_operator
+     * @param {number} savgol_window
+     * @param {number} savgol_poly_degree
+     * @param {number} savgol_derivative
+     * @param {number} pipeline_semantic_profile
+     * @param {number} savgol_delta
+     * @param {number} pipeline_raw_n_features
+     * @param {number} pipeline_model_n_features
+     * @param {number} pipeline_fingerprint_algorithm
+     * @param {bigint} pipeline_fingerprint
+     * @param {number} snv_axis
+     * @param {boolean} snv_with_mean
+     * @param {boolean} snv_with_std
+     * @param {number} snv_ddof
+     * @param {number} savgol_mode
+     * @param {number} savgol_cval
      * @returns {string}
      */
-    bind_inspected_native_predictor_v1(inspection_schema_version, format_version, writer_abi_major, writer_abi_minor, writer_abi_patch, storage_algorithm, training_samples, n_features, n_targets, n_components, capabilities) {
+    bind_inspected_native_predictor_v1(inspection_schema_version, format_version, writer_abi_major, writer_abi_minor, writer_abi_patch, storage_algorithm, training_samples, n_features, n_targets, n_components, capabilities, pipeline_present, pipeline_schema_version, pipeline_operator_count, pipeline_first_operator, pipeline_second_operator, savgol_window, savgol_poly_degree, savgol_derivative, pipeline_semantic_profile, savgol_delta, pipeline_raw_n_features, pipeline_model_n_features, pipeline_fingerprint_algorithm, pipeline_fingerprint, snv_axis, snv_with_mean, snv_with_std, snv_ddof, savgol_mode, savgol_cval) {
         let deferred2_0;
         let deferred2_1;
         try {
-            const ret = wasm.validatedmethodsarchivev2_bind_inspected_native_predictor_v1(this.__wbg_ptr, inspection_schema_version, format_version, writer_abi_major, writer_abi_minor, writer_abi_patch, storage_algorithm, training_samples, n_features, n_targets, n_components, capabilities);
+            const ret = wasm.validatedmethodsarchivev2_bind_inspected_native_predictor_v1(this.__wbg_ptr, inspection_schema_version, format_version, writer_abi_major, writer_abi_minor, writer_abi_patch, storage_algorithm, training_samples, n_features, n_targets, n_components, capabilities, pipeline_present, pipeline_schema_version, pipeline_operator_count, pipeline_first_operator, pipeline_second_operator, savgol_window, savgol_poly_degree, savgol_derivative, pipeline_semantic_profile, savgol_delta, pipeline_raw_n_features, pipeline_model_n_features, pipeline_fingerprint_algorithm, pipeline_fingerprint, snv_axis, snv_with_mean, snv_with_std, snv_ddof, savgol_mode, savgol_cval);
             var ptr1 = ret[0];
             var len1 = ret[1];
             if (ret[3]) {
@@ -119,6 +139,13 @@ export class ValidatedMethodsArchiveV2 {
         } finally {
             wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
         }
+    }
+    /**
+     * @returns {number}
+     */
+    get format_version() {
+        const ret = wasm.validatedmethodsarchivev2_format_version(this.__wbg_ptr);
+        return ret >>> 0;
     }
     /**
      * @returns {Uint8Array}

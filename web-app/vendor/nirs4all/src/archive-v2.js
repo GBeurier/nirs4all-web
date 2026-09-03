@@ -133,6 +133,7 @@ function bindNativePredictorDescriptor(methods, archive, modelBytes) {
     throw new TypeError('Methods WASM lacks authoritative N4MM inspection.');
   }
   const info = methods.inspectN4mm(bytesView(modelBytes, 'N4MM model'));
+  const pipeline = info.pipeline;
   const json = archive.bind_inspected_native_predictor_v1(
     info.schemaVersion,
     info.formatVersion,
@@ -145,6 +146,26 @@ function bindNativePredictorDescriptor(methods, archive, modelBytes) {
     info.nTargets,
     info.nComponents,
     info.capabilities,
+    pipeline !== null,
+    pipeline?.schemaVersion ?? 0,
+    pipeline?.operatorCount ?? 0,
+    pipeline?.operators?.[0] ?? 0,
+    pipeline?.operators?.[1] ?? 0,
+    pipeline?.savgolWindow ?? 0,
+    pipeline?.savgolPolyDegree ?? 0,
+    pipeline?.savgolDerivative ?? 0,
+    pipeline?.semanticProfile ?? 0,
+    pipeline?.savgolDelta ?? 0,
+    pipeline?.rawNFeatures ?? 0,
+    pipeline?.modelNFeatures ?? 0,
+    pipeline?.fingerprintAlgorithm ?? 0,
+    pipeline?.fingerprint ?? 0n,
+    pipeline?.snvAxis ?? 0,
+    pipeline?.snvWithMean ?? false,
+    pipeline?.snvWithStd ?? false,
+    pipeline?.snvDdof ?? 0,
+    pipeline?.savgolMode ?? 0,
+    pipeline?.savgolCval ?? 0,
   );
   const descriptor = JSON.parse(json);
   Object.freeze(descriptor.writer_abi);

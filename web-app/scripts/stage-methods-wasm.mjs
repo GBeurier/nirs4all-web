@@ -16,11 +16,11 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED_SOURCE = Object.freeze({
-  commit: 'a71ee2927524d03482183de3d6e22661efc05d12',
-  tree: 'f6749f4c4be7dca161f3c2677dd10a9ac4434b66',
-  version: '1.0.14',
-  runtimeVersion: '1.0.14+abi.2.4.0',
-  abi: '2.4.0',
+  commit: '48ad1e5a50844f68c2b99e93b02ad6a3b491c07b',
+  tree: 'f2eaa3c46629c26d11913a25bff723f9a9cefbc9',
+  version: '1.0.15',
+  runtimeVersion: '1.0.15+abi.2.5.0',
+  abi: '2.5.0',
   emscripten: '3.1.74',
 })
 const PACKAGE_NAME = '@nirs4all/methods'
