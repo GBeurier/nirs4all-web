@@ -35,6 +35,15 @@ There is no Python backend and no new numerical implementation here. Parser, dat
 chemometric fixes belong upstream in `nirs4all-formats`, `nirs4all-io`, `dag-ml`,
 `dag-ml-data`, or `nirs4all-methods`.
 
+Archive V2 prediction is likewise upstream-owned. Web passes the stored ZIP to
+Core's Rust/WASM validator and executes its single Methods predictor through
+Methods WASM. N4MM format 1 carries raw PLS; format 2 carries the exact embedded
+`SNV(ddof=0) -> Savitzky-Golay(mode=interp) -> PLS` pipeline and receives raw
+features from Web. Both paths preserve named multi-target output and have no
+JavaScript/Python model or preprocessing fallback. Calibrated/conformal Archive
+V2 packages are not a Web execution surface yet; conformal fields remain
+metadata-only rather than a locally minted guarantee.
+
 ## Run
 
 ```bash

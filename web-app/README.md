@@ -63,6 +63,15 @@ Five real WASM surfaces participate: **formats** (decode), **io** (inference), *
 cross-validation), and **libn4m** (the PLS numerics), all reached through the vendored
 `nirs4all` aggregate where possible.
 
+The Archive V2 consumer passes bytes to Core's Rust/WASM validator, then imports
+the single predictor through Methods WASM. It supports named multi-target raw
+PLS in N4MM format 1 and raw-feature replay of the exact embedded
+`SNV(ddof=0) -> Savitzky-Golay(mode=interp) -> PLS` profile in format 2. Web
+does not rebuild either pipeline or model. Archives carrying conformal,
+robustness, optimizer, multiple-predictor, external, or host-only payloads are
+refused; the app may display conformal metadata but does not produce a native
+multi-target conformal presentation.
+
 ## Custom app host
 
 The browser app also serves as the reference for a **client-side custom host** that composes:
@@ -99,10 +108,15 @@ without the local vendors.
   `predictPortablePipeline()`. Other served runs use `MainEngine` → `DagMlEngine`:
   dag-ml-wasm's `execute_campaign_phase_json` runs FIT_CV, calling a synchronous JS controller per
   fold that resolves the fold's samples (via `task.fold_id` + the host `FoldSet`) and runs the
-  pipeline through the **libn4m** backend (real C++ PLS, WASM). `DagMlEngine` falls back to direct
-  libn4m orchestration on any error, and offline (`file://`) the engine uses the pure-JS NIPALS
-  backend. Orchestration is leakage-honest (preprocessing fit-on-train, OOF-by-`sampleId`) and
-  refuses to train without targets. The Rust execution binding lives in
+  pipeline through the **libn4m** backend (real C++ PLS, WASM). The deployed
+  `strict-wasm` profile refuses scheduler/provider/JavaScript fallbacks and
+  rejects `allowFallback:true`. Only the explicit transitional profile may
+  degrade a diagnosed scheduler failure to direct libn4m orchestration, and
+  only when `allowFallback:true`; the offline single-file profile is likewise
+  transitional, prefers inlined libn4m WASM, and reserves pure-JS NIPALS as its
+  final legacy PLS-family fallback. Orchestration is leakage-honest
+  (preprocessing fit-on-train, OOF-by-`sampleId`) and refuses to train without
+  targets. The Rust execution binding lives in
   `dag-ml/crates/dag-ml-wasm` (`execute_campaign_phase_json` + a `JsRuntimeController`).
 - **Native robustness handoff** (`RunOptions.robustnessEvidencePublicationHandoff`): browser/WASM
   runs can receive the same Studio/native spectral/OOD replay publication request used by cluster
