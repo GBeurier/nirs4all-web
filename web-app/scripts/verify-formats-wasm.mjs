@@ -4,9 +4,9 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED = Object.freeze({
-  commit: '2d46285843dc366da1d38f133131b5329c886b12',
-  tree: '2ee12c035db8a78721315ee65cf684d811552aa9',
-  version: '0.2.8',
+  commit: '3e5a05674dfab4bbcebf23fe9d615d231ca4d551',
+  tree: '3b9717258fc80791d80641633a4bbf6478e7256a',
+  version: '0.2.9',
   package: '@nirs4all/formats-wasm',
   generatedPackage: 'nirs4all-formats-wasm',
   wasmBindgen: '0.2.127',
@@ -23,9 +23,9 @@ const EXPECTED_FILES = Object.freeze({
   'THIRD_PARTY_NOTICES.md': { size: 1424, sha256: 'b1227b3159f26cd3af19c6f08fddc1662f1aab8118f964d7a968ce725d2e2b75' },
   'nirs4all_formats_wasm.d.ts': { size: 5205, sha256: 'de5bed954ea567a7a6b450920207c4edf582b07592c2e68f19d9ea6b05ee4feb' },
   'nirs4all_formats_wasm.js': { size: 23435, sha256: '1ee17efff92d71153517b983d6b190cea765c9092c4c3dcd1e6740d57de642fd' },
-  'nirs4all_formats_wasm_bg.wasm': { size: 6471620, sha256: '25c75b14ffb43abe9d47c905639c942ec438791a1ee990e28182b3b91c016a25' },
+  'nirs4all_formats_wasm_bg.wasm': { size: 6444993, sha256: 'de0881dfc3ee53729b8c39c4214461660d4bec863a2e39455d797e09c2fffcd0' },
   'nirs4all_formats_wasm_bg.wasm.d.ts': { size: 1882, sha256: '6c37403e7702d32e7b9c62f50bc0ea8fe78083a56e3dcb98aaa47e70117bec68' },
-  'package.json': { size: 609, sha256: '1285be28df17cf6128316659818e5e326526569041a6e8c8ed782cda2dde2cf4' },
+  'package.json': { size: 609, sha256: '69391aafbcccc7c1382a0a182ea04043211ad44fdf741dffe379148101f92541' },
   'snippets/rds2rust-b87e702ea5d57172/wasm/decompress.js': { size: 16502, sha256: '5258768404663b4b48572796afbe51e2a8669a89d3d5e21cf18c41830bf1d46b' },
 })
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'engine', 'wasm', 'formats')
