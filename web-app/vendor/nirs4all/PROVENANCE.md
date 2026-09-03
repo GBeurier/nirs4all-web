@@ -1,14 +1,14 @@
 # Vendored Core Archive V2 payload
 
 This directory stages the real npm payload produced from `nirs4all-core` commit
-`46a51a4bf123f9766b363fcbfb3009ea5c5f0a62` (tree
-`3b02332cfa4cf5e3424a7697f56d85a55fd80de6`).
+`94d712f60848df60ce6fa90f006ada09767cfd08` (tree
+`e1444766493d235d13cbdf53bf7e80371a43a525`).
 
 - Package: `nirs4all@0.3.25`
 - Qualified tarball SHA-256:
-  `1e08637a7d026e4dc6fa530204ef5dc34362e76cab0f3722ef94d5bb7acf4dba`
+  `e794accfc3010cdf04f5033f1066dad5a245ee76791b2871b23f308efb974445`
 - Native Rust/WASM SHA-256:
-  `41f0a5304b76b94a573caac86de42667cbc8c8e60dcf59e351c8e8ffe708f482`
+  `ab4a2ce8c52bc304cb91e22a19549fc643326cb8a816ba03f414730a7cf44fa0`
 - Archive V2 JavaScript surface SHA-256:
   `69b613bce35ccb34ee328a4257f0254ce58719d95d6519ac38ff0eb81710b7e4`
 

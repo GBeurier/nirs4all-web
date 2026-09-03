@@ -4,8 +4,8 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED = Object.freeze({
-  commit: '879e2af880548287fe4f5de556681ae998e25bca',
-  tree: '28acb24f9d31b0900263ce45d85f2d6806380dc9',
+  commit: 'dafb8b6fb98f9d380d30559a3f4b868c91e5b5c4',
+  tree: '44a2c4a46911d2c49c33fe75418674bd0e129d5e',
   version: '0.3.23',
 })
 const EXPECTED_N4M_PATCH = Object.freeze({
@@ -28,7 +28,7 @@ const EXPECTED_FILES = Object.freeze({
   'THIRD_PARTY_NOTICES.md': { size: 1573, sha256: '01a4064f18fa28336f49c40a4e2db4b40ebee4766160320174e5aaadc41304fd' },
   'dag_ml_wasm.d.ts': { size: 11607, sha256: '3cafdfb0603a8b5c32928ef20422676c5b63c111437ee327a5a20c76f9be3748' },
   'dag_ml_wasm.js': { size: 40062, sha256: 'e91cf64c6e6adad7abe06b2889f58880b1bd6affc8e0428d4136c11411666eef' },
-  'dag_ml_wasm_bg.wasm': { size: 4761835, sha256: 'd03326d6a5912d024c391214580028fd2b9e099e157f4b7fa0d14b40fa3bff0a' },
+  'dag_ml_wasm_bg.wasm': { size: 4757467, sha256: 'd1dd984b91b42ef3d6e8ecf8452233b95a97c3d1e943d8f11b22a45d6b7e6528' },
   'dag_ml_wasm_bg.wasm.d.ts': { size: 5165, sha256: '7d2153ae782688992671b959da807675c9370cc8217c3c1031709f5543fc3039' },
   'native_predictor_descriptor.v1.schema.json': { size: 4275, sha256: 'b29746645106a88d7e014ff7ad8df242a967f0b60c85df259094063dab329c1d' },
   'package.json': { size: 576, sha256: 'ff7b36dba8cbe59afe113fa0cf9a562d064ba8e6ec3b3f4dd8f0356e3a101ce8' },

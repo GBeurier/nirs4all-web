@@ -5,8 +5,8 @@
   "version": "0.3.23",
   "source": {
     "repository": "https://github.com/GBeurier/dag-ml",
-    "commit": "879e2af880548287fe4f5de556681ae998e25bca",
-    "tree": "28acb24f9d31b0900263ce45d85f2d6806380dc9",
+    "commit": "dafb8b6fb98f9d380d30559a3f4b868c91e5b5c4",
+    "tree": "44a2c4a46911d2c49c33fe75418674bd0e129d5e",
     "clean": true
   },
   "build": {
@@ -20,7 +20,7 @@
       "source_tree": "f2eaa3c46629c26d11913a25bff723f9a9cefbc9",
       "persisted_in_release_lock": false
     },
-    "source_date_epoch": 1788399221,
+    "source_date_epoch": 1788401057,
     "tools": {
       "wasm_pack": "wasm-pack 0.15.0",
       "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
@@ -114,8 +114,8 @@
     },
     {
       "path": "dag_ml_wasm_bg.wasm",
-      "size": 4761835,
-      "sha256": "d03326d6a5912d024c391214580028fd2b9e099e157f4b7fa0d14b40fa3bff0a"
+      "size": 4757467,
+      "sha256": "d1dd984b91b42ef3d6e8ecf8452233b95a97c3d1e943d8f11b22a45d6b7e6528"
     },
     {
       "path": "dag_ml_wasm_bg.wasm.d.ts",
