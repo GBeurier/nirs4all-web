@@ -15,17 +15,17 @@ const required = process.env.NIRS4ALL_CORE_SHIM_REQUIRED === '1'
 const logPrefix = '[sync-core-shim]'
 
 const expected = Object.freeze({
-  commit: 'e0f5d485eae4279f02d58fe82fad3946202e463f',
-  tree: '3fd59b96fc5728088c6d1d207e783d826f87401f',
-  version: '0.3.25',
-  npmSha256: 'e6feeaa766a252ecaba7be78c4bff6e693839a72230ee070a77b22bed4e2aaa7',
-  provenanceSha256: '655dd80fcbb7a1f85d0337068cf8fdbaa5059986205f9521e8f3b8a90b7f51fb',
+  commit: '89787477bd7883ceb26b51fa3228bca13db85f6e',
+  tree: '7d748e79e4bef0da2a0803f9a0dd8984e28a46bb',
+  version: '0.3.27',
+  npmSha256: 'dd55134aa9439ac4ac194bbcd7b5aa3ac5364de789672546c64e76cf4500b177',
+  provenanceSha256: '2f1b6a228323c76c2a14e105b36db2a24fab3c77275526819afe48eca82feac3',
 })
 
 const sourceCandidates = [
   process.env.NIRS4ALL_CORE_WASM_DIR,
   process.env.NIRS4ALL_CORE_SHIM_ROOT,
-  resolve(root, '..', '..', 'RC-v1-core-0.3.25', 'bindings', 'wasm'),
+  resolve(root, '..', '..', 'RC-v1-core-0.3.27', 'bindings', 'wasm'),
   resolve(root, '..', '..', 'RC-v1-core', 'bindings', 'wasm'),
   resolve(root, '..', '..', '_worktrees', 'RC-v1-core', 'bindings', 'wasm'),
   resolve(root, '..', '..', 'nirs4all-core', 'bindings', 'wasm'),
@@ -50,7 +50,7 @@ const sourceFiles = [
   'native/package.json',
 ]
 
-// Exact inventory of the independently reproduced 0.3.25 npm artifact. This
+// Exact inventory of the independently fetched public 0.3.27 npm artifact. This
 // is checked even when no sibling checkout is available, so CI cannot silently
 // accept a stale or locally rebuilt WASM payload.
 const pinnedPackageSha256 = new Map(Object.entries({
@@ -67,10 +67,10 @@ const pinnedPackageSha256 = new Map(Object.entries({
   'THIRD_PARTY_NOTICES.md': '36239a5e2cfb203f0f9b1a4d78578e938b35fc696e7bedc613e4030954ba14ac',
   'native/nirs4all_core_wasm_native.d.ts': '829c7e2b56cb9f97cdf35aee6da68ef765942a238949c4a3a994553a137bc0e3',
   'native/nirs4all_core_wasm_native.js': 'e5b743ae98d98e61b6e5c46538ecc5a813e1293eb96f08bba99fe55e199b3e13',
-  'native/nirs4all_core_wasm_native_bg.wasm': '629e84f92b2c3e3119a5d1924d0507b1be17e045961bdae39d58c7b7e5a7bed8',
+  'native/nirs4all_core_wasm_native_bg.wasm': 'ace0b9079d98f6411bf02a483ea27f0767b6a1ebb1415740e31b12a892a80f44',
   'native/nirs4all_core_wasm_native_bg.wasm.d.ts': '156193632dd90859ae50d7da7cfc3ea2f138832bc1c2da6eebb5b3e9b16a0c94',
-  'native/package.json': '69c3afbbaaa146da457d97d0e6b09fef342a6c6500334cf847cc21ce18c6f942',
-  'package.json': 'ef3625454674c823d432ab6315f431353805a1c5b4d97aee0d40e060d0a54d18',
+  'native/package.json': '3bbe5e8299800d65f571d6b8d503911b1fdeed914ce1ebc308a80a7b710d806f',
+  'package.json': '3d7fc4e0a0e6f7ab5decd6c4a91514268312a329e6d2ca580ea5347a1b99a0db',
   'src/archive-v2.js': '69b613bce35ccb34ee328a4257f0254ce58719d95d6519ac38ff0eb81710b7e4',
   'src/execution.js': '1137730eca30c14c6615c40ca6cd979dbc1d48930a5103f0b3a44630c98784c6',
   'src/index.d.ts': 'c43856d507a043402ec746801e704e1d02c86c9aa67e7ff875fecab0a8d9e069',
@@ -124,10 +124,13 @@ function normalizeForWeb(file, bytes) {
   if (!['package.json', 'README.md', 'src/index.js'].includes(file)) {
     return bytes
   }
-  return Buffer.from(
-    bytes.toString('utf8').replaceAll('@nirs4all/methods' + '-wasm', '@nirs4all/methods'),
-    'utf8',
-  )
+  const normalized = bytes.toString('utf8').replaceAll('@nirs4all/methods' + '-wasm', '@nirs4all/methods')
+  if (file === 'package.json') {
+    const metadata = JSON.parse(normalized)
+    metadata.publishConfig = { access: 'public', provenance: true }
+    return Buffer.from(`${JSON.stringify(metadata, null, 2)}\n`, 'utf8')
+  }
+  return Buffer.from(normalized, 'utf8')
 }
 
 if (!sourceRoot) {

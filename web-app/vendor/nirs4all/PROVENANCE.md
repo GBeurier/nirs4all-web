@@ -1,19 +1,19 @@
 # Vendored Core Archive V2 payload
 
 This directory stages the real npm payload produced from `nirs4all-core` commit
-`e0f5d485eae4279f02d58fe82fad3946202e463f` (tree
-`3fd59b96fc5728088c6d1d207e783d826f87401f`).
+`89787477bd7883ceb26b51fa3228bca13db85f6e` (tree
+`7d748e79e4bef0da2a0803f9a0dd8984e28a46bb`).
 
-- Package: `nirs4all@0.3.25`
+- Package: `nirs4all@0.3.27`
 - Qualified tarball SHA-256:
-  `e6feeaa766a252ecaba7be78c4bff6e693839a72230ee070a77b22bed4e2aaa7`
+  `dd55134aa9439ac4ac194bbcd7b5aa3ac5364de789672546c64e76cf4500b177`
 - Native Rust/WASM SHA-256:
-  `629e84f92b2c3e3119a5d1924d0507b1be17e045961bdae39d58c7b7e5a7bed8`
+  `ace0b9079d98f6411bf02a483ea27f0767b6a1ebb1415740e31b12a892a80f44`
 - Archive V2 JavaScript surface SHA-256:
   `69b613bce35ccb34ee328a4257f0254ce58719d95d6519ac38ff0eb81710b7e4`
 
-`scripts/sync-core-shim.mjs` copies text surfaces from the selected Core source
-and checks the complete 21-file package inventory by SHA-256, including every
-generated `native/` file and all licensing notices. The pinned package is still
-verified when no sibling checkout is present. Build outputs, Cargo targets and
-caches are excluded.
+The public registry tarball was fetched twice independently and both copies had
+the qualified SHA-256 above. `scripts/sync-core-shim.mjs` checks the exact
+source commit/tree plus the complete 21-file public package inventory by
+SHA-256, including every generated `native/` file and all licensing notices.
+Build outputs, Cargo targets and caches are excluded.
