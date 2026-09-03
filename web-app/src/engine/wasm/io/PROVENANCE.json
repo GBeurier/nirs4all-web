@@ -5,16 +5,16 @@
   "version": "0.1.12",
   "source": {
     "repository": "https://github.com/GBeurier/nirs4all-io",
-    "commit": "7abd256cbad1ee4eff3b6d507dd3fd28d2caac80",
-    "tree": "b36575f0e21e3ff08225c7f421ce99deabd26aeb",
+    "commit": "e41bf8f94a92356e98c215d4c41e907a7dfaf6ac",
+    "tree": "ba5323cce8833610d974b7aa84ac65057355a687",
     "clean": true
   },
   "build": {
     "target": "web",
     "profile": "release",
     "cargo_locked": true,
-    "source_date_epoch": 1788380142,
-    "const_random_seed": "7abd256cbad1ee4eff3b6d507dd3fd28d2caac80",
+    "source_date_epoch": 1788409851,
+    "const_random_seed": "e41bf8f94a92356e98c215d4c41e907a7dfaf6ac",
     "wasm_bindgen_lock": "0.2.122",
     "package_name_normalization": {
       "from": "nirs4all-io-wasm",
@@ -116,7 +116,7 @@
     {
       "path": "nirs4all-io-wasm.cdx.json",
       "size": 34123,
-      "sha256": "2fb93d6b81a3fa7fab9b0bf388b170f8dac4e4ac0f5a37f51b616bfb67067631"
+      "sha256": "cc008cd42cfcb1bf0380ba6f7dd00abfa3eee2564cfebb9d5c19b14cffcf3a28"
     },
     {
       "path": "nirs4all_io_wasm.d.ts",
@@ -130,8 +130,8 @@
     },
     {
       "path": "nirs4all_io_wasm_bg.wasm",
-      "size": 2334986,
-      "sha256": "a99b75a6dfa3fe86c0b27d96334b8da0b4ccae5eda39084533f57a104738fc9c"
+      "size": 2339146,
+      "sha256": "c576f9acc7f6f3e7d09ae22059b9db7263d564c7f4fb5aa05a6d828378a07a60"
     },
     {
       "path": "nirs4all_io_wasm_bg.wasm.d.ts",

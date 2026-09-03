@@ -4,8 +4,8 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED = Object.freeze({
-  commit: '7abd256cbad1ee4eff3b6d507dd3fd28d2caac80',
-  tree: 'b36575f0e21e3ff08225c7f421ce99deabd26aeb',
+  commit: 'e41bf8f94a92356e98c215d4c41e907a7dfaf6ac',
+  tree: 'ba5323cce8833610d974b7aa84ac65057355a687',
   version: '0.1.12',
   package: '@nirs4all/io-wasm',
   generatedPackage: 'nirs4all-io-wasm',
@@ -27,10 +27,10 @@ const EXPECTED_FILES = Object.freeze({
   'THIRD_PARTY_NOTICES.md': { size: 4935, sha256: '2d0aa4b2f137e77bad3d243bd908359c5e6bab37a3e9e29402f96e2103bb4932' },
   'idiomatic.d.ts': { size: 2044, sha256: 'cca0b1700625d48c17232333702e3d788047b5dfb9b953c78326bce61f4a6094' },
   'idiomatic.mjs': { size: 2684, sha256: 'a041c2304307eccbe805cfb97868eb2640fafe2fc51da8237e0a535135d1bfa3' },
-  'nirs4all-io-wasm.cdx.json': { size: 34123, sha256: '2fb93d6b81a3fa7fab9b0bf388b170f8dac4e4ac0f5a37f51b616bfb67067631' },
+  'nirs4all-io-wasm.cdx.json': { size: 34123, sha256: 'cc008cd42cfcb1bf0380ba6f7dd00abfa3eee2564cfebb9d5c19b14cffcf3a28' },
   'nirs4all_io_wasm.d.ts': { size: 5369, sha256: 'a4fe6564849d63e779e5899d7e61d43e3d63ae17950b0aac84793b11e0ad2e8f' },
   'nirs4all_io_wasm.js': { size: 24322, sha256: '8fc4d75bc209f53db50aa2dc2ca1d5c159202bc2f10b4fe392b59963e12e005d' },
-  'nirs4all_io_wasm_bg.wasm': { size: 2334986, sha256: 'a99b75a6dfa3fe86c0b27d96334b8da0b4ccae5eda39084533f57a104738fc9c' },
+  'nirs4all_io_wasm_bg.wasm': { size: 2339146, sha256: 'c576f9acc7f6f3e7d09ae22059b9db7263d564c7f4fb5aa05a6d828378a07a60' },
   'nirs4all_io_wasm_bg.wasm.d.ts': { size: 1273, sha256: 'fd34bc545e2588f28a9d388e7ac3890e83d9af1a38e2861c4426bdd8a1fb1740' },
   'package.json': { size: 1376, sha256: 'd7c4658efd2995d8830572539cf23670ea8895a58e06e77945475591c613036f' },
   'types/nirs4all-io.d.ts': { size: 3923, sha256: 'b0384126ad078a6fbb35172cf7983e37259aa1c0b2a96e3fa256cb83b1d7a555' },

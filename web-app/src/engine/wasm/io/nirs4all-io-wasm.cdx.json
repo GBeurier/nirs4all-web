@@ -17,17 +17,17 @@
       "externalReferences": [
         {
           "type": "vcs",
-          "url": "https://github.com/GBeurier/nirs4all-io/tree/7abd256cbad1ee4eff3b6d507dd3fd28d2caac80"
+          "url": "https://github.com/GBeurier/nirs4all-io/tree/e41bf8f94a92356e98c215d4c41e907a7dfaf6ac"
         }
       ],
       "properties": [
         {
           "name": "nirs4all:source:commit",
-          "value": "7abd256cbad1ee4eff3b6d507dd3fd28d2caac80"
+          "value": "e41bf8f94a92356e98c215d4c41e907a7dfaf6ac"
         },
         {
           "name": "nirs4all:source:tree",
-          "value": "b36575f0e21e3ff08225c7f421ce99deabd26aeb"
+          "value": "ba5323cce8833610d974b7aa84ac65057355a687"
         }
       ]
     }
@@ -407,17 +407,17 @@
       "externalReferences": [
         {
           "type": "vcs",
-          "url": "https://github.com/GBeurier/nirs4all-io/tree/7abd256cbad1ee4eff3b6d507dd3fd28d2caac80"
+          "url": "https://github.com/GBeurier/nirs4all-io/tree/e41bf8f94a92356e98c215d4c41e907a7dfaf6ac"
         }
       ],
       "properties": [
         {
           "name": "nirs4all:source:commit",
-          "value": "7abd256cbad1ee4eff3b6d507dd3fd28d2caac80"
+          "value": "e41bf8f94a92356e98c215d4c41e907a7dfaf6ac"
         },
         {
           "name": "nirs4all:source:tree",
-          "value": "b36575f0e21e3ff08225c7f421ce99deabd26aeb"
+          "value": "ba5323cce8833610d974b7aa84ac65057355a687"
         }
       ]
     },
@@ -435,17 +435,17 @@
       "externalReferences": [
         {
           "type": "vcs",
-          "url": "https://github.com/GBeurier/nirs4all-io/tree/7abd256cbad1ee4eff3b6d507dd3fd28d2caac80"
+          "url": "https://github.com/GBeurier/nirs4all-io/tree/e41bf8f94a92356e98c215d4c41e907a7dfaf6ac"
         }
       ],
       "properties": [
         {
           "name": "nirs4all:source:commit",
-          "value": "7abd256cbad1ee4eff3b6d507dd3fd28d2caac80"
+          "value": "e41bf8f94a92356e98c215d4c41e907a7dfaf6ac"
         },
         {
           "name": "nirs4all:source:tree",
-          "value": "b36575f0e21e3ff08225c7f421ce99deabd26aeb"
+          "value": "ba5323cce8833610d974b7aa84ac65057355a687"
         }
       ]
     },
