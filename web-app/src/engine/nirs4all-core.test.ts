@@ -225,7 +225,7 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(manifest.capabilities).toContain('loss_execution_attestation')
     expect(provenance).toMatchObject({
       version: '0.3.23',
-      source: { commit: '6800c4fd0ec8b13b171cec9ed4a9b2ccdbabca0d' },
+      source: { commit: '879e2af880548287fe4f5de556681ae998e25bca' },
       reproducibility: { byte_identical: true },
     })
   })

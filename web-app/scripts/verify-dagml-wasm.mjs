@@ -4,8 +4,8 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED = Object.freeze({
-  commit: '6800c4fd0ec8b13b171cec9ed4a9b2ccdbabca0d',
-  tree: '37d61366cae6061756a92befc60266e52dae5623',
+  commit: '879e2af880548287fe4f5de556681ae998e25bca',
+  tree: '28acb24f9d31b0900263ce45d85f2d6806380dc9',
   version: '0.3.23',
 })
 const EXPECTED_N4M_PATCH = Object.freeze({
