@@ -63,9 +63,9 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(existsSync(new URL('../../scripts/sync-lite-shim.mjs', import.meta.url))).toBe(false)
     expect(syncScript).not.toMatch(/NIRS4ALL_LITE|nirs4all-lite|sync-lite/)
     expect(vendorPkg).toMatchObject({ name: 'nirs4all', version: '0.3.25' })
-    expect(provenance).toContain('46a51a4bf123f9766b363fcbfb3009ea5c5f0a62')
-    expect(provenance).toContain('1e08637a7d026e4dc6fa530204ef5dc34362e76cab0f3722ef94d5bb7acf4dba')
-    expect(syncScript).toContain('41f0a5304b76b94a573caac86de42667cbc8c8e60dcf59e351c8e8ffe708f482')
+    expect(provenance).toContain('94d712f60848df60ce6fa90f006ada09767cfd08')
+    expect(provenance).toContain('e794accfc3010cdf04f5033f1066dad5a245ee76791b2871b23f308efb974445')
+    expect(syncScript).toContain('ab4a2ce8c52bc304cb91e22a19549fc643326cb8a816ba03f414730a7cf44fa0')
     expect(syncScript).toContain('69b613bce35ccb34ee328a4257f0254ce58719d95d6519ac38ff0eb81710b7e4')
   })
 
@@ -225,7 +225,7 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(manifest.capabilities).toContain('loss_execution_attestation')
     expect(provenance).toMatchObject({
       version: '0.3.23',
-      source: { commit: '879e2af880548287fe4f5de556681ae998e25bca' },
+      source: { commit: 'dafb8b6fb98f9d380d30559a3f4b868c91e5b5c4' },
       reproducibility: { byte_identical: true },
     })
   })

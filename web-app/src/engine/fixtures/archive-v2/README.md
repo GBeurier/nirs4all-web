@@ -16,7 +16,7 @@ validator and Methods replay surface; it must not parse or rebuild the archive.
 
 `snv-savgol-pls.n4a` is the exact content-bound format-2 companion assembled
 through DAG-ML `6800c4fd0ec8b13b171cec9ed4a9b2ccdbabca0d`, persisted through Core
-`46a51a4bf123f9766b363fcbfb3009ea5c5f0a62`, and fitted/inspected through
+`94d712f60848df60ce6fa90f006ada09767cfd08`, and fitted/inspected through
 Methods `48ad1e5a50844f68c2b99e93b02ad6a3b491c07b` (ABI 2.5).
 
 - SHA-256: `ccac47faeeca1d8de493245182bc4a4375d3c487f60f2bfb2b108bddd2339498`
