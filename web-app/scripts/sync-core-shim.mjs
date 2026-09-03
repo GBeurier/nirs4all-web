@@ -15,11 +15,11 @@ const required = process.env.NIRS4ALL_CORE_SHIM_REQUIRED === '1'
 const logPrefix = '[sync-core-shim]'
 
 const expected = Object.freeze({
-  commit: '94d712f60848df60ce6fa90f006ada09767cfd08',
-  tree: 'e1444766493d235d13cbdf53bf7e80371a43a525',
+  commit: '6b25b63bb09adfe3c4dae8ffacc90d09a1a81e16',
+  tree: '11344243884a24aeec75f73e0469f23721c76978',
   version: '0.3.25',
   npmSha256: 'e794accfc3010cdf04f5033f1066dad5a245ee76791b2871b23f308efb974445',
-  provenanceSha256: '51c5a9e037b7b3d1854bc13e1de5e9926fb6a0bf82d826c1804a253e44c0f6c3',
+  provenanceSha256: 'c83a4265df44e705d849ce76c3d353c844e6d10fa977b6e68bd86ee46fdd23aa',
 })
 
 const sourceCandidates = [
