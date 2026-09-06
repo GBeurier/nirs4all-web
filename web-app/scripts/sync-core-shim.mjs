@@ -148,9 +148,13 @@ console.log(`${logPrefix} source ${relative(root, sourceRoot)}`)
 const sourceCommit = execFileSync('git', ['-C', sourceRoot, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()
 const sourceTree = execFileSync('git', ['-C', sourceRoot, 'rev-parse', 'HEAD^{tree}'], { encoding: 'utf8' }).trim()
 if (sourceCommit !== expected.commit || sourceTree !== expected.tree) {
-  throw new Error(
-    `nirs4all-core sibling identity mismatch: ${sourceCommit}/${sourceTree} != ${expected.commit}/${expected.tree}`,
-  )
+  const msg = `nirs4all-core sibling identity mismatch: ${sourceCommit}/${sourceTree} != ${expected.commit}/${expected.tree}`
+  if (!check || required) {
+    throw new Error(msg)
+  }
+  verifyPinnedPackage()
+  console.warn(`${logPrefix} ${msg}; verified pinned ${expected.version} package independently.`)
+  process.exit(0)
 }
 
 let drift = false
