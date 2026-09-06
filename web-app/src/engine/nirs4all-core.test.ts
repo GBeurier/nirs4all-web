@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { spawnSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import {
   artifactContracts,
   capabilityManifest,
@@ -67,6 +69,29 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(provenance).toContain('dd55134aa9439ac4ac194bbcd7b5aa3ac5364de789672546c64e76cf4500b177')
     expect(syncScript).toContain('ace0b9079d98f6411bf02a483ea27f0767b6a1ebb1415740e31b12a892a80f44')
     expect(syncScript).toContain('69b613bce35ccb34ee328a4257f0254ce58719d95d6519ac38ff0eb81710b7e4')
+  })
+
+  it('accepts a newer optional Core sibling only after verifying the pinned package', () => {
+    const script = fileURLToPath(new URL('../../scripts/sync-core-shim.mjs', import.meta.url))
+    const webRepo = fileURLToPath(new URL('../../../', import.meta.url))
+    const cwd = fileURLToPath(new URL('../../', import.meta.url))
+    const optional = spawnSync(process.execPath, [script, '--check'], {
+      cwd,
+      encoding: 'utf8',
+      env: { ...process.env, NIRS4ALL_CORE_WASM_DIR: webRepo, NIRS4ALL_CORE_SHIM_REQUIRED: '0' },
+    })
+
+    expect(optional.status).toBe(0)
+    expect(optional.stderr).toContain('sibling identity mismatch')
+    expect(optional.stderr).toContain('verified pinned 0.3.27 package independently')
+
+    const required = spawnSync(process.execPath, [script, '--check'], {
+      cwd,
+      encoding: 'utf8',
+      env: { ...process.env, NIRS4ALL_CORE_WASM_DIR: webRepo, NIRS4ALL_CORE_SHIM_REQUIRED: '1' },
+    })
+    expect(required.status).not.toBe(0)
+    expect(required.stderr).toContain('sibling identity mismatch')
   })
 
   it('keeps the datasets upstream candidate aligned with the vendored WASM package', () => {
