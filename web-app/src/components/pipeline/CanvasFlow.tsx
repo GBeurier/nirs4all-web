@@ -305,6 +305,11 @@ export function CanvasFlow({
             {pipeline.steps.length} preprocessing step{pipeline.steps.length === 1 ? '' : 's'} → {model ? (modelDef?.name ?? model.type) : 'no model'}
           </p>
         </div>
+        {!running && model ? (
+          <Button size="sm" className="shrink-0 gap-1.5 shadow-md shadow-brand-teal/20" onClick={onRun}>
+            <Play className="size-4" /> Run pipeline
+          </Button>
+        ) : null}
       </div>
 
       <div
@@ -578,11 +583,7 @@ export function CanvasFlow({
             <p className="text-sm font-medium text-brand-amber">Add a model to run / score.</p>
             <p className="mt-0.5 text-[11px] text-muted-foreground">This pipeline is preprocessing-only — pick a model to cross-validate and score.</p>
           </div>
-        ) : (
-          <Button size="lg" className="w-full gap-2 shadow-md shadow-brand-teal/20" onClick={onRun}>
-            <Play className="size-5" /> Run pipeline
-          </Button>
-        )}
+        ) : null}
 
         {/* execution log — visible during and after the run until the next run starts */}
         <ExecutionLog runLog={runLog} />

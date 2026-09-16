@@ -27,6 +27,20 @@ try {
     else fail(`palette is missing the "${label}" family — ${kind} operators not surfaced`)
   }
 
+  // Large families stay collapsed initially so they cannot make the editor row
+  // taller and push the primary Run action to the bottom of the page.
+  for (const label of ['Preprocessings', 'DAG / structure']) {
+    const expanded = await page.getByRole('button', { name: new RegExp(label) }).first().getAttribute('aria-expanded')
+    if (expanded === 'false') console.log(`✓ palette family "${label}" starts collapsed`)
+    else fail(`expected palette family "${label}" to start collapsed`)
+  }
+
+  const runButton = page.getByRole('button', { name: /Run pipeline/i })
+  const runBox = await runButton.boundingBox()
+  const viewportHeight = await page.evaluate(() => window.innerHeight)
+  if (runBox && runBox.y + runBox.height <= viewportHeight) console.log('✓ Run pipeline is visible without scrolling')
+  else fail('Run pipeline is below the initial viewport')
+
   // search reveals a SPLIT operator → click adds it to the pipeline
   const search = page.getByPlaceholder(/Search operators/i).first()
   await search.fill('Kennard')
