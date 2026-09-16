@@ -48,7 +48,9 @@ const SUBCAT_LABEL: Record<string, string> = {
  */
 export function NodePalette({ onAdd, taskType }: NodePaletteProps) {
   const [q, setQ] = useState('')
-  const [openManual, setOpenManual] = useState<Record<string, boolean>>({ preprocessing: true, dag: true })
+  // Keep the catalog compact on first render. An expanded preprocessing family
+  // can be taller than the canvas and push its Run action below the viewport.
+  const [openManual, setOpenManual] = useState<Record<string, boolean>>({})
 
   const models = useMemo(() => modelsForTask(taskType), [taskType])
 
