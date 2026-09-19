@@ -83,7 +83,7 @@ expectedProfile = profileManifest.profile
 
 const smokes = readdirSync(testsDir)
   .filter((f) => f.endsWith('smoke.mjs')) // the *-timing probe is excluded by the glob (CLAUDE.md)
-  .filter((f) => filters.length === 0 || filters.some((q) => f.includes(q)))
+  .filter((f) => filters.length === 0 || filters.some((q) => q.endsWith('.mjs') ? f === q : f.includes(q)))
   .sort()
 
 if (smokes.length === 0) {

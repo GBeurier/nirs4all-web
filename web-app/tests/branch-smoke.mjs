@@ -40,10 +40,11 @@ try {
   await page.locator('[data-step="pipeline"]').click()
   await page.waitForTimeout(300)
 
-  // the DAG / structure palette bucket is a real foldable accordion (open by
-  // default) holding multiple operators — add the Branch operator from it.
+  // Palette families start collapsed; open the two used by this workflow.
   if (!(await palette().locator('[data-palette-dag]').count())) fail('expected a foldable DAG / structure palette bucket')
   else console.log('✓ foldable DAG / structure palette bucket present')
+  await palette().locator('[data-palette-bucket="dag"]').click()
+  await palette().locator('[data-palette-bucket="preprocessing"]').click()
   await palette().getByRole('button', { name: 'Branch', exact: true }).first().click()
   await page.waitForTimeout(250)
 

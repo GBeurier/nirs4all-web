@@ -5,6 +5,8 @@ import { jsPreprocessor, libn4mPreprocessor } from './methods/preproc'
 import { loadMethodsWasm } from './nirs4all-core'
 import type { ModelBackend } from './orchestrate'
 import { AOM_DEFAULT_BANK } from '@/catalog/types'
+import { nodeByType } from '@/catalog/nodes'
+import { makeRtError, RtErrorException } from './rt'
 
 const DISABLED_AOM_OPERATOR_KINDS = new Set([16])
 
@@ -50,7 +52,7 @@ export const jsBackend: ModelBackend = {
  */
 export async function loadLibn4mBackend(): Promise<ModelBackend> {
   const n4m = await loadMethodsWasm()
-  return {
+  const backend: ModelBackend = {
     id: 'libn4m-wasm',
     fit: (spec, X, Y, nComp) => {
       const Xm = { data: X.data, rows: X.rows, cols: X.cols }
@@ -91,12 +93,35 @@ export async function loadLibn4mBackend(): Promise<ModelBackend> {
           gapPenalty: Number(spec.params.gap_penalty ?? 0),
         })
       }
-      return n4m.fitModel(spec.type, Xm, Ym, nComp, modelParamVector(spec.type, spec.params))
+      // Canonical/SVD PLS extract joint X/Y directions, so their component
+      // count is bounded by Y as well as X (including restored older presets).
+      const components = spec.type === 'PLSCanonical' || spec.type === 'PLSSVD' ? Math.min(nComp, Y.cols) : nComp
+      return n4m.fitModel(spec.type, Xm, Ym, components, modelParamVector(spec.type, spec.params))
     },
     predict: (model, X) => {
       const r = n4m.predictModel(model as ReturnType<typeof n4m.fitModel>, { data: X.data, rows: X.rows, cols: X.cols })
       return { data: r.data, rows: r.rows, cols: r.cols } as Mat
     },
     preproc: libn4mPreprocessor, // preprocessing numerics in libn4m too
+  }
+  return {
+    ...backend,
+    fit: (spec, X, Y, nComp) => {
+      try {
+        return backend.fit(spec, X, Y, nComp)
+      } catch (error) {
+        if (!(error instanceof n4m.N4mError)) throw error
+        const numerical = error.status === n4m.Status.ERR_NUMERICAL_FAILURE || /convergence failed/i.test(error.message)
+        throw new RtErrorException(makeRtError({
+          verb: 'run',
+          cause: error.status === n4m.Status.ERR_INVALID_ARGUMENT ? 'invalid_request' : 'runtime_error',
+          message: `${nodeByType(spec.type)?.name ?? spec.type} could not fit ${X.rows} samples × ${X.cols} features${'n_components' in spec.params ? ` with ${nComp} components` : ''}: ${error.message}.`,
+          mitigation: numerical
+            ? 'Try fewer components and check for constant or redundant features and targets.'
+            : 'Check this model’s parameters and the dataset dimensions.',
+          detail: error.stack,
+        }))
+      }
+    },
   }
 }

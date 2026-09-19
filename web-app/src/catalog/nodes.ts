@@ -436,7 +436,7 @@ export const MODEL_NODES: NodeDef[] = [
     icon: 'Wand2',
     task: 'regression',
     params: [
-      { name: 'n_components', label: 'Max components', type: 'int', default: 15, min: 1, max: 40, help: 'Max latent variables for the internal SIMPLS fits.' },
+      { name: 'n_components', label: 'Max components', type: 'int', default: 5, min: 1, max: 40, help: 'Max latent variables for the internal SIMPLS fits. Start small; increase after checking convergence.' },
       { name: 'screen_folds', label: 'Screen CV folds', type: 'int', default: 5, min: 2, max: 10, help: 'Internal-CV fold count for the operator screen.' },
       { name: 'operator_bank', label: 'Operator bank', type: 'operators', default: AOM_DEFAULT_BANK, help: 'Strict-linear operators screened by the AOM selector. Picking fewer/different operators changes the fit.' },
     ],
@@ -454,7 +454,7 @@ export const MODEL_NODES: NodeDef[] = [
     icon: 'Wand2',
     task: 'regression',
     params: [
-      { name: 'n_components', label: 'Max components', type: 'int', default: 15, min: 1, max: 40, help: 'Max latent variables; the screen picks an operator for each one.' },
+      { name: 'n_components', label: 'Max components', type: 'int', default: 5, min: 1, max: 40, help: 'Max latent variables; the screen picks an operator for each one. Increasing this can make the nested search expensive.' },
       { name: 'screen_folds', label: 'Screen CV folds', type: 'int', default: 5, min: 2, max: 10, help: 'Internal-CV fold count for the per-component operator screen.' },
       { name: 'operator_bank', label: 'Operator bank', type: 'operators', default: AOM_DEFAULT_BANK, help: 'Strict-linear operators the per-component selector may pick from.' },
     ],
@@ -530,7 +530,7 @@ export const MODEL_NODES: NodeDef[] = [
     task: 'regression',
     advanced: true,
     params: [
-      { name: 'n_components', label: 'Components', type: 'int', default: 10, min: 1, max: 40, help: 'Number of latent variables.' },
+      { name: 'n_components', label: 'Components', type: 'int', default: 1, min: 1, max: 40, help: 'Limited by the number of targets: one component for single-target regression.' },
     ],
     n4m: { fit: 'n4m_model_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
   },
@@ -544,7 +544,7 @@ export const MODEL_NODES: NodeDef[] = [
     task: 'regression',
     advanced: true,
     params: [
-      { name: 'n_components', label: 'Components', type: 'int', default: 10, min: 1, max: 40, help: 'Number of latent variables.' },
+      { name: 'n_components', label: 'Components', type: 'int', default: 1, min: 1, max: 40, help: 'Limited by the number of targets: one component for single-target regression.' },
     ],
     n4m: { fit: 'n4m_model_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
   },
@@ -568,12 +568,12 @@ export const MODEL_NODES: NodeDef[] = [
     type: 'RidgePLS',
     name: 'Ridge PLS',
     category: 'model',
-    description: 'Ridge-augmented SIMPLS — adds an L2 penalty into the PLS direction search.',
+    description: 'Ridge-augmented PLS — adds an L2 penalty into the PLS direction search.',
     icon: 'GitBranch',
     task: 'regression',
     advanced: true,
     params: [
-      { name: 'n_components', label: 'Components', type: 'int', default: 10, min: 1, max: 40, help: 'Number of latent variables.' },
+      { name: 'n_components', label: 'Components', type: 'int', default: 2, min: 1, max: 40, help: 'Start small: excessive components can exhaust the regularized signal and cause a numerical failure.' },
       { name: 'ridge_lambda', label: 'λ (L2 penalty)', type: 'float', default: 1, min: 0, max: 1e6, step: 0.1 },
     ],
     n4m: { fit: 'n4m_estimators_ridge_pls_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
@@ -773,7 +773,7 @@ export const MODEL_NODES: NodeDef[] = [
     task: 'regression',
     advanced: true,
     params: [
-      { name: 'n_components', label: 'Components', type: 'int', default: 10, min: 1, max: 40, help: 'Number of latent components.' },
+      { name: 'n_components', label: 'Components', type: 'int', default: 2, min: 1, max: 40, help: 'Start small: excessive components can exhaust the signal, especially after derivatives.' },
       { name: 'alpha', label: 'α (PCR↔PLS)', type: 'float', default: 0.5, min: 0, max: 1, step: 0.05, help: '0 = PCR-like, 1 = PLS-like.' },
     ],
     n4m: { fit: 'n4m_estimators_ecr_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },

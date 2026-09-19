@@ -91,6 +91,21 @@ handoff/oracle. Dataset smokes may additionally use `SPC_DIR` or `AMYLOSE_DIR`.
 Those prerequisite-bearing gates are reported separately; they are not skipped
 or treated as evidence for the two self-contained profile smokes above.
 
+The model catalog gate runs every offered estimator with its default parameters
+on Corn (regression) and Meat (multiclass), checking CV/refit scores and prediction
+on held-out spectra. It uses model-only pipelines to exercise the WASM scheduler
+and its one-hot class-score contract. Run the four bundled datasets with:
+
+```bash
+MODEL_SAMPLES=corn,beer,meat,anopheles MODEL_TIMEOUT_MS=600000 MODEL_REPORT=/tmp/web-models.json npm run smoke -- models-smoke.mjs
+```
+
+Set `MODEL_PREPROCESSING=preset` to retain each sample's initial preprocessing,
+or `MODEL_NAMES='ECR,Ridge PLS'` to check specific picker entries. POP-PLS runs
+nested operator selection and can exceed the default three-minute per-model
+test timeout on the wider examples; its worker remains cancellable.
+See [the model audit](MODEL_AUDIT.md) for reproduced failures and validation scope.
+
 ## Deployment
 
 GitHub Pages publishes at:
