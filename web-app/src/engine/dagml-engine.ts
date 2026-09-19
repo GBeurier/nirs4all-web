@@ -406,13 +406,18 @@ export class DagMlEngine implements Engine {
         // than dropping a configured search or throwing a raw stack — but record it
         // (B-018) since the configured variant search is silently dropped otherwise.
         if (/no controller registered|planning failed|planning_failed/i.test(msg)) {
+          const canFallback = this.policy.schedulerFallback !== 'forbid' && opts.allowFallback === true
           const rtError = rtErrorFromUnknown('run', err, {
             cause: 'unsupported_shape',
-            message: 'dag-ml could not plan the variant search; ran the base variant only.',
-            mitigation: 'The configured sweep was skipped. Simplify the model parameters, or report this graph shape as unschedulable.',
+            message: canFallback
+              ? 'dag-ml could not plan the variant search; ran the base variant only.'
+              : 'dag-ml could not plan the variant search; the run stopped.',
+            mitigation: canFallback
+              ? 'The configured sweep was skipped. Simplify the model parameters, or report this graph shape as unschedulable.'
+              : 'Simplify the model parameters, or report this graph shape as unschedulable.',
             detail: msg,
           })
-          if (this.policy.schedulerFallback === 'forbid' || opts.allowFallback !== true) throw new RtErrorException(rtError)
+          if (!canFallback) throw new RtErrorException(rtError)
           diagnostics.push(rtError)
           variants = [baseVariant]
         } else {
@@ -445,6 +450,7 @@ export class DagMlEngine implements Engine {
 
     let foldsDone = 0
     const totalFoldCalls = folds.length * variants.length
+    let controllerError: unknown
     const invoke = (_controllerId: string, taskJson: string): string => {
       if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError')
       const t = JSON.parse(taskJson)
@@ -474,7 +480,15 @@ export class DagMlEngine implements Engine {
       // params onto np.params; we re-derive from the variant id for parity with the
       // refit + the preprocessing nodes, which the model-only task does not carry.)
       const vDsl = dslForVariantId(t.variant_id ?? null)
-      const { pred } = trainAndPredict(ds, vDsl, backend, trainIdx, valIdx)
+      let pred: Mat
+      try {
+        pred = trainAndPredict(ds, vDsl, backend, trainIdx, valIdx).pred
+      } catch (error) {
+        // WASM wraps callback exceptions in a JSON diagnostic. Preserve the
+        // original model error so its actionable message survives the boundary.
+        controllerError = error
+        throw error
+      }
       const valSampleIds = valIdx.map(dagId)
       const result = {
         node_id: np.node_id,
@@ -486,7 +500,7 @@ export class DagMlEngine implements Engine {
           fold_id: t.fold_id ?? null,
           sample_ids: valSampleIds,
           values: matToRows(pred),
-          target_names: [ds.targetName],
+          target_names: task === 'regression' ? [ds.targetName] : classNames,
         }],
         observation_predictions: [],
         aggregated_predictions: [],
@@ -567,6 +581,7 @@ export class DagMlEngine implements Engine {
         // in a dag-ml runtime_validation error — normalize it back to a clean
         // AbortError so the UI suppresses it (App.tsx) instead of showing a fault.
         if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError')
+        if (controllerError !== undefined) throw controllerError
         // Model-only scheduler failed unexpectedly. Historically this degraded to the
         // libn4m chain SILENTLY — the run still reported "executed by dag-ml". B-018:
         // make the degrade explicit. In strict mode (allowFallback omitted/false) throw a
@@ -574,11 +589,14 @@ export class DagMlEngine implements Engine {
         // schedulerFallback so the result is not misrepresented as a native run, then
         // fall back to the libn4m chain (loops every variant over the folds — no
         // variant is dropped).
+        const canFallback = this.policy.schedulerFallback !== 'forbid' && opts.allowFallback === true
         const rtError = rtErrorFromUnknown('run', err, {
-          mitigation: 'Cross-validation re-ran through the libn4m chain over dag-ml folds — results are valid, but the dag-ml scheduler did not run this phase. Use a model-only pipeline to keep the native scheduler path.',
-          detail: 'dag-ml execute_campaign_phase_json failed; degraded to the libn4m fold chain.',
+          mitigation: canFallback
+            ? 'Cross-validation re-ran through the libn4m chain over dag-ml folds — results are valid, but the dag-ml scheduler did not run this phase.'
+            : 'Check the model parameters and dataset, then retry. Cross-validation stopped without producing a result.',
+          detail: 'dag-ml execute_campaign_phase_json failed.',
         })
-        if (this.policy.schedulerFallback === 'forbid' || opts.allowFallback !== true) throw new RtErrorException(rtError)
+        if (!canFallback) throw new RtErrorException(rtError)
         diagnostics.push(rtError)
         schedulerFallback = true
         runChainOverFolds()

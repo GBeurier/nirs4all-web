@@ -39,6 +39,8 @@ try {
   // --- 1) the DAG bucket is a foldable accordion with MULTIPLE operators -------
   const dagBucket = palette().locator('[data-palette-dag]')
   if (!(await dagBucket.count())) fail('expected a foldable DAG / structure palette bucket')
+  await palette().locator('[data-palette-bucket="dag"]').click()
+  await palette().locator('[data-palette-bucket="preprocessing"]').click()
   // it should hold Branch, Concat-transform, Merge, Generator: OR, Generator: Cartesian
   for (const name of ['Branch', 'Concat-transform', 'Merge', 'Generator: OR', 'Generator: Cartesian']) {
     if (await palette().getByRole('button', { name, exact: true }).count()) console.log(`✓ DAG bucket has "${name}"`)
@@ -89,6 +91,8 @@ try {
   await page.reload({ waitUntil: 'load' })
   await page.waitForSelector('text=/samples ×/', { timeout: 20000 })
   await page.locator('[data-step="pipeline"]').click(); await page.waitForTimeout(300)
+  await palette().locator('[data-palette-bucket="dag"]').click()
+  await palette().locator('[data-palette-bucket="preprocessing"]').click()
 
   // switch the model to Ridge (a generic Tier-B estimator) so the alternative
   // preprocessing → model variants fit cleanly through libn4m.

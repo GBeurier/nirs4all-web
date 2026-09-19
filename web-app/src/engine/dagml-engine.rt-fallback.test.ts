@@ -235,6 +235,8 @@ describe('DagMlEngine — scheduler fallback surfaces a typed RtError (B-018)', 
     expect(ex.rtError.verb).toBe('run')
     expect(ex.rtError.cause).toBe('runtime_error')
     expect(ex.message).toContain('scheduler boom')
+    expect(ex.rtError.mitigation).toContain('stopped without producing a result')
+    expect(ex.rtError.mitigation).not.toContain('re-ran')
   })
 })
 

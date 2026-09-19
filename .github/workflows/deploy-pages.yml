@@ -62,6 +62,8 @@ jobs:
       - run: npm run build
       - name: Strict product browser smoke
         run: npm run smoke -- --out-dir dist --profile strict-wasm rt-fallback
+      - name: Catalog models train and predict in the browser
+        run: npm run smoke -- --out-dir dist --profile strict-wasm models-smoke.mjs
       - name: Finalize Pages metadata
         run: |
           printf 'web.nirs4all.org\n' > dist/CNAME
