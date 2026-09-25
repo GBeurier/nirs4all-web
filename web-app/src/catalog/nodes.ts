@@ -400,6 +400,50 @@ export const PREPROCESSING_NODES: NodeDef[] = [
 
 export const MODEL_NODES: NodeDef[] = [
   {
+    id: 'models.mljs.decision_tree_regressor',
+    type: 'MlJsDecisionTreeRegressor',
+    name: 'Decision tree (ml.js)',
+    category: 'model',
+    description: 'CART regression from ml.js; model JSON remains specific to ml.js.',
+    icon: 'Trees',
+    task: 'regression',
+    provider: 'mljs',
+    params: [
+      { name: 'min_samples', label: 'Min. samples', type: 'int', default: 3, min: 1, max: 100 },
+      { name: 'max_depth', label: 'Max. depth', type: 'int', default: 20, min: 1, max: 100 },
+    ],
+    n4m: { fit: null },
+  },
+  {
+    id: 'models.mljs.decision_tree_classifier',
+    type: 'MlJsDecisionTreeClassifier',
+    name: 'Decision tree classifier (ml.js)',
+    category: 'model',
+    description: 'CART classification from ml.js; predicts hard class labels.',
+    icon: 'Trees',
+    task: 'binary',
+    provider: 'mljs',
+    params: [
+      { name: 'min_samples', label: 'Min. samples', type: 'int', default: 3, min: 1, max: 100 },
+      { name: 'max_depth', label: 'Max. depth', type: 'int', default: 20, min: 1, max: 100 },
+    ],
+    n4m: { fit: null },
+  },
+  {
+    id: 'models.mljs.knn_classifier',
+    type: 'MlJsKNeighborsClassifier',
+    name: 'KNN classifier (ml.js)',
+    category: 'model',
+    description: 'K-nearest-neighbor classification from ml.js; predicts hard class labels.',
+    icon: 'Network',
+    task: 'binary',
+    provider: 'mljs',
+    params: [
+      { name: 'n_neighbors', label: 'Neighbors', type: 'int', default: 5, min: 1, max: 100 },
+    ],
+    n4m: { fit: null },
+  },
+  {
     id: 'models.mljs.random_forest_regressor',
     type: 'MlJsRandomForestRegressor',
     name: 'Random forest (ml.js)',

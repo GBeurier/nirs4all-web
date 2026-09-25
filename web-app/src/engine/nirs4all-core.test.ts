@@ -64,9 +64,9 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(existsSync(new URL('../../scripts/sync-core-shim.mjs', import.meta.url))).toBe(true)
     expect(existsSync(new URL('../../scripts/sync-lite-shim.mjs', import.meta.url))).toBe(false)
     expect(syncScript).not.toMatch(/NIRS4ALL_LITE|nirs4all-lite|sync-lite/)
-    expect(vendorPkg).toMatchObject({ name: 'nirs4all', version: '0.3.34' })
-    expect(provenance).toContain('1bd963198624531d7658ec17c27a992d75f5133d')
-    expect(provenance).toContain('883f9a2796bfdba962c80ef88cffe00e9c026dd4cbbcd6f79f963a5cb9abf1dc')
+    expect(vendorPkg).toMatchObject({ name: 'nirs4all', version: '0.3.35' })
+    expect(provenance).toContain('430edfcced7b34cb91fdc54099f2ac4427614884')
+    expect(provenance).toContain('418179af48e5092a8e42f8816e118d223d72829bbead84b172c2572efa18b44c')
     expect(syncScript).toContain('b4f15573714f6de1eb24d04eb1fb498e2d492563ef117c8a9060a9bb44b14911')
     expect(syncScript).toContain('69b613bce35ccb34ee328a4257f0254ce58719d95d6519ac38ff0eb81710b7e4')
   })
@@ -83,7 +83,7 @@ describe('nirs4all-core aggregate loaders', () => {
 
     expect(optional.status).toBe(0)
     expect(optional.stderr).toContain('sibling identity mismatch')
-    expect(optional.stderr).toContain('verified pinned 0.3.34 package independently')
+    expect(optional.stderr).toContain('verified pinned 0.3.35 package independently')
 
     const required = spawnSync(process.execPath, [script, '--check'], {
       cwd,

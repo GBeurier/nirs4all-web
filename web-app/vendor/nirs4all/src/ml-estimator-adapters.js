@@ -1,6 +1,6 @@
 /** Optional classical-ML libraries. Numerical work stays in the selected library. */
 
-import { createJsEstimatorController } from './js-estimator-controller.js';
+import { createAsyncJsEstimatorController, createJsEstimatorController } from './js-estimator-controller.js';
 
 const MLJS_MODELS = Object.freeze({
   RandomForestRegressor: { exportName: 'RandomForestRegression', training: 'train' },
@@ -120,9 +120,20 @@ export function createMlJsEstimator({ ml, estimatorName, params = {} }) {
     },
     toJSON() {
       if (!model) throw new Error('Fit this ml.js estimator before export.');
-      return model.toJSON();
+      const payload = model.toJSON();
+      // ml-knn relies on KDTree.toJSON() to flatten its root. Worker transfer
+      // strips that method, so flatten before handing the artifact to a host.
+      return estimatorName === 'KNeighborsClassifier'
+        ? JSON.parse(JSON.stringify(payload)) : payload;
     },
-    load(payload) { model = Constructor.load(restoreClassifierLeaves(payload)); return api; },
+    load(payload) {
+      // ml-knn.load() mutates every tree node by adding parent links. Keep the
+      // caller's persisted artifact acyclic so it remains JSON serializable.
+      model = Constructor.load(restoreClassifierLeaves(
+        estimatorName === 'KNeighborsClassifier' ? structuredClone(payload) : payload,
+      ));
+      return api;
+    },
   };
   return api;
 }
@@ -228,5 +239,19 @@ export function createScikitJsController({ scikitJs, estimatorName, controllerId
       scikitJs: module, estimatorName, params: { ...params, randomState: seed },
     }),
     restoreEstimator: (payload) => createScikitJsEstimator({ scikitJs: module, estimatorName }).load(payload),
+  });
+}
+
+/** Await any scikitjs estimator in an asynchronous host phase executor. */
+export function createScikitJsAsyncController({ scikitJs, estimatorName, controllerId, ...options }) {
+  if (!scikitJs) throw new TypeError('Load scikitjs once with loadScikitJs().');
+  resolved(estimatorName, scikitJs[estimatorName]);
+  return createAsyncJsEstimatorController({
+    ...options,
+    controllerId: controllerId ?? `controller:scikitjs.${estimatorName.toLowerCase()}`,
+    createEstimator: ({ params, seed }) => createScikitJsEstimator({
+      scikitJs, estimatorName, params: { ...params, randomState: seed },
+    }),
+    restoreEstimator: (payload) => createScikitJsEstimator({ scikitJs, estimatorName }).load(payload),
   });
 }

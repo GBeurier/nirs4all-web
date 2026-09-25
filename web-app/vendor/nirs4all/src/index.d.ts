@@ -151,7 +151,7 @@ export interface JsEstimatorDataset {
 export interface JsEstimator {
   fit?(X: number[][], y: number[]): unknown;
   train?(X: number[][], y: number[]): unknown;
-  predict(X: number[][]): number[] | Float64Array;
+  predict(X: number[][]): number[] | Float64Array | Promise<number[] | Float64Array>;
   toJSON?(): unknown;
 }
 
@@ -174,6 +174,21 @@ export interface JsEstimatorControllerOptions {
   targetName?: string;
   operatorSelectors?: Record<string, unknown>[];
   paramsForTask?: (params: Record<string, unknown>) => Record<string, unknown>;
+}
+
+export interface AsyncJsEstimatorControllerOptions extends Omit<JsEstimatorControllerOptions, 'createEstimator' | 'restoreEstimator'> {
+  createEstimator(context: { params: Record<string, unknown>; seed: number; exactSeed: string | null }): JsEstimator | Promise<JsEstimator>;
+  restoreEstimator?: (model: unknown) => JsEstimator | Promise<JsEstimator>;
+}
+
+export interface AsyncJsEstimatorController {
+  manifest: Record<string, unknown>;
+  invokeAsync(controllerId: string, taskJson: string, exactSeed: string | null): Promise<string>;
+  setPredictionDataset(dataset: JsEstimatorDataset): void;
+  fitFull(params?: Record<string, unknown>, seed?: string): Promise<JsEstimator>;
+  predict(dataset: JsEstimatorDataset): Promise<number[]>;
+  exportModel(): Promise<unknown>;
+  importModel(payload: unknown): Promise<void>;
 }
 
 export interface JsEstimatorController {
@@ -214,6 +229,8 @@ export function createDagMlModelManifest(options: {
 }): Record<string, unknown>;
 
 export function createJsEstimatorController(options: JsEstimatorControllerOptions): JsEstimatorController;
+/** Host async phase adapter; not accepted by DAG-ML's synchronous WASM callback. */
+export function createAsyncJsEstimatorController(options: AsyncJsEstimatorControllerOptions): AsyncJsEstimatorController;
 export function createN4mModelController(
   options: Omit<JsEstimatorControllerOptions, 'controllerId' | 'createEstimator' | 'restoreEstimator'> & {
     controllerId?: string;

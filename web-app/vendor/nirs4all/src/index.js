@@ -531,7 +531,7 @@ function collectClasses(value, output) {
 }
 
 export { parseExecutionPlan, predictPortablePipeline, runPortablePipeline } from './execution.js';
-export { createDagMlModelManifest, createDagMlNodeResult, createJsEstimatorController, createN4mModelController, createRandomForestController } from './js-estimator-controller.js';
+export { createAsyncJsEstimatorController, createDagMlModelManifest, createDagMlNodeResult, createJsEstimatorController, createN4mModelController, createRandomForestController } from './js-estimator-controller.js';
 export {
   inspectMethodsArchiveV2Predictors,
   loadArchiveV2Native,

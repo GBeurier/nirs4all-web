@@ -1,4 +1,4 @@
-import type { JsEstimatorController, JsEstimatorControllerOptions } from './index.js';
+import type { AsyncJsEstimatorController, JsEstimatorController, JsEstimatorControllerOptions } from './index.js';
 
 export type MlJsModelName = 'RandomForestRegressor' | 'RandomForestClassifier' |
   'DecisionTreeRegressor' | 'DecisionTreeClassifier' | 'KNeighborsClassifier';
@@ -68,3 +68,9 @@ export function createScikitJsController(options:
     estimatorName: ScikitJsSyncModelName;
     controllerId?: string;
   }): JsEstimatorController;
+export function createScikitJsAsyncController(options:
+  Omit<JsEstimatorControllerOptions, 'controllerId' | 'createEstimator' | 'restoreEstimator'> & {
+    scikitJs: Record<string, unknown>;
+    estimatorName: string;
+    controllerId?: string;
+  }): AsyncJsEstimatorController;

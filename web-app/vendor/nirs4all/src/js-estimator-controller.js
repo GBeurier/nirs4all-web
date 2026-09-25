@@ -79,6 +79,24 @@ function train(estimator, X, y) {
   return estimator;
 }
 
+async function trainAsync(estimator, X, y) {
+  const fit = estimator.fit ?? estimator.train;
+  if (typeof fit !== 'function' || typeof estimator.predict !== 'function') {
+    throw new TypeError('An estimator must expose fit()/train() and predict().');
+  }
+  await fit.call(estimator, X, y);
+  return estimator;
+}
+
+async function predictionsAsync(estimator, X, rows) {
+  const result = await estimator.predict(X);
+  const values = Array.from(result ?? []);
+  if (values.length !== rows || values.some((value) => !Number.isFinite(value))) {
+    throw new TypeError('Estimator predictions must contain one finite number per sample.');
+  }
+  return values.map((value) => [value]);
+}
+
 function seedFor(exactSeed) {
   if (exactSeed == null) return { exactSeed: null, seed: 0 };
   if (typeof exactSeed !== 'string' || !/^\d+$/.test(exactSeed)) {
@@ -161,21 +179,15 @@ export function createDagMlModelManifest({
   return manifest;
 }
 
-/**
- * Adapt a synchronous JS estimator to DAG-ML's native model-controller wire.
- * The host owns feature matrices and fitted objects; DAG-ML owns folds and lineage.
- */
-export function createJsEstimatorController({
+function controllerSetup({
   dagMl,
   controllerId,
-  controllerVersion = '1.0.0',
+  controllerVersion,
   createEstimator,
-  restoreEstimator,
   dataset,
   foldSet,
-  targetName = 'y',
-  operatorSelectors = [],
-  paramsForTask = (params) => params,
+  operatorSelectors,
+  paramsForTask,
 }) {
   requireFunction(createEstimator, 'createEstimator');
   requireFunction(paramsForTask, 'paramsForTask');
@@ -201,6 +213,29 @@ export function createJsEstimatorController({
   }
   const manifest = createDagMlModelManifest({
     dagMl, controllerId, controllerVersion, operatorSelectors,
+  });
+  return { training, folds, manifest };
+}
+
+/**
+ * Adapt a synchronous JS estimator to DAG-ML's native model-controller wire.
+ * The host owns feature matrices and fitted objects; DAG-ML owns folds and lineage.
+ */
+export function createJsEstimatorController({
+  dagMl,
+  controllerId,
+  controllerVersion = '1.0.0',
+  createEstimator,
+  restoreEstimator,
+  dataset,
+  foldSet,
+  targetName = 'y',
+  operatorSelectors = [],
+  paramsForTask = (params) => params,
+}) {
+  const { training, folds, manifest } = controllerSetup({
+    dagMl, controllerId, controllerVersion, createEstimator,
+    dataset, foldSet, operatorSelectors, paramsForTask,
   });
   let predictionData = null;
   let selectedVariant = null;
@@ -320,6 +355,126 @@ export function createJsEstimatorController({
           payload.controllerVersion !== controllerVersion || payload.nFeatures !== training.cols) {
         throw new Error('JS estimator artifact is incompatible with this controller.');
       }
+      requireFunction(restoreEstimator, 'restoreEstimator');
+      const estimator = await restoreEstimator(payload.model);
+      if (typeof estimator?.predict !== 'function') throw new TypeError('Restored estimator lacks predict().');
+      fitted.set('base', estimator);
+      selectedVariant = 'base';
+    },
+  };
+}
+
+/**
+ * Await a host estimator outside the synchronous DAG-ML WASM callback.
+ * The host supplies native NodeTasks and awaits invokeAsync before continuing.
+ * This is intentionally not a drop-in callback for execute_*_phase_json.
+ */
+export function createAsyncJsEstimatorController({
+  dagMl,
+  controllerId,
+  controllerVersion = '1.0.0',
+  createEstimator,
+  restoreEstimator,
+  dataset,
+  foldSet,
+  targetName = 'y',
+  operatorSelectors = [],
+  paramsForTask = (params) => params,
+}) {
+  const { training, folds, manifest } = controllerSetup({
+    dagMl, controllerId, controllerVersion, createEstimator,
+    dataset, foldSet, operatorSelectors, paramsForTask,
+  });
+  let predictionData = null;
+  let selectedVariant = null;
+  const fitted = new Map();
+
+  async function fitOn(ids, params, exactSeed, variantId = 'base') {
+    const cohort = select(training, ids, true);
+    const estimator = await createEstimator({ params, ...seedFor(exactSeed) });
+    await trainAsync(estimator, cohort.X, cohort.y);
+    fitted.set(variantId, estimator);
+    return estimator;
+  }
+
+  async function predictFrom(estimator, data, ids) {
+    const cohort = select(data, ids, false);
+    return predictionsAsync(estimator, cohort.X, ids.length);
+  }
+
+  function validateArtifact(payload) {
+    if (payload?.schema !== MODEL_SCHEMA || payload.controllerId !== controllerId ||
+        payload.controllerVersion !== controllerVersion || payload.nFeatures !== training.cols) {
+      throw new Error('JS estimator artifact is incompatible with this controller.');
+    }
+  }
+
+  return {
+    manifest,
+    async invokeAsync(id, taskJson, exactSeed) {
+      if (id !== controllerId) throw new Error(`Unexpected controller '${id}'.`);
+      const task = JSON.parse(taskJson);
+      if (task.node_plan?.controller_id !== controllerId ||
+          task.node_plan?.controller_version !== controllerVersion) {
+        throw new Error('NodeTask controller identity does not match its registered implementation.');
+      }
+      const variantId = task.variant_id ?? 'base';
+      const params = paramsForTask(task.node_plan.params ?? {});
+      if (task.phase === 'FIT_CV') {
+        const fold = folds.get(task.fold_id);
+        if (!fold) throw new Error(`Unknown DAG-ML fold '${task.fold_id}'.`);
+        const cohort = select(training, fold.train_sample_ids, true);
+        const estimator = await createEstimator({ params, ...seedFor(exactSeed) });
+        await trainAsync(estimator, cohort.X, cohort.y);
+        const values = await predictFrom(estimator, training, fold.validation_sample_ids);
+        return JSON.stringify(createDagMlNodeResult(task, {
+          sampleIds: fold.validation_sample_ids, values, targetNames: [targetName],
+        }));
+      }
+      if (task.phase === 'REFIT') {
+        await fitOn(foldSet.sample_ids, params, exactSeed, variantId);
+        selectedVariant = variantId;
+        return JSON.stringify(createDagMlNodeResult(task));
+      }
+      if (task.phase === 'PREDICT') {
+        const estimator = fitted.get(variantId) ?? fitted.get(selectedVariant);
+        if (!estimator) throw new Error('Predict requires a refitted or restored estimator.');
+        if (!predictionData) throw new Error('Call setPredictionDataset() before DAG-ML PREDICT.');
+        return JSON.stringify(createDagMlNodeResult(task, {
+          sampleIds: predictionData.sampleIds,
+          values: await predictFrom(estimator, predictionData, predictionData.sampleIds),
+          targetNames: [targetName],
+        }));
+      }
+      throw new Error(`Unsupported DAG-ML phase '${task.phase}'.`);
+    },
+    setPredictionDataset(value) {
+      const next = rowsFrom(value, 'prediction dataset', false);
+      if (next.cols !== training.cols) throw new RangeError('Prediction feature count differs from training.');
+      predictionData = next;
+    },
+    async fitFull(params = {}, seed = '0') {
+      const estimator = await fitOn(foldSet.sample_ids, paramsForTask(params), seed);
+      selectedVariant = 'base';
+      return estimator;
+    },
+    async predict(value) {
+      const estimator = fitted.get(selectedVariant);
+      if (!estimator) throw new Error('Fit or restore an estimator before prediction.');
+      const data = rowsFrom(value, 'prediction dataset', false);
+      if (data.cols !== training.cols) throw new RangeError('Prediction feature count differs from training.');
+      return (await predictFrom(estimator, data, data.sampleIds)).map((row) => row[0]);
+    },
+    async exportModel() {
+      const estimator = fitted.get(selectedVariant);
+      if (!estimator || typeof estimator.toJSON !== 'function') {
+        throw new Error('This estimator has no JSON model export.');
+      }
+      return { schema: MODEL_SCHEMA, controllerId, controllerVersion,
+        nFeatures: training.cols, model: await estimator.toJSON() };
+    },
+    async importModel(payload) {
+      validateArtifact(payload);
       requireFunction(restoreEstimator, 'restoreEstimator');
       const estimator = await restoreEstimator(payload.model);
       if (typeof estimator?.predict !== 'function') throw new TypeError('Restored estimator lacks predict().');

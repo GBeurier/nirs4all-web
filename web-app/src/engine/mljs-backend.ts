@@ -6,6 +6,9 @@ import type { ModelBackend } from './orchestrate'
 const MODEL_NAMES: Record<string, MlJsModelName> = {
   MlJsRandomForestRegressor: 'RandomForestRegressor',
   MlJsRandomForestClassifier: 'RandomForestClassifier',
+  MlJsDecisionTreeRegressor: 'DecisionTreeRegressor',
+  MlJsDecisionTreeClassifier: 'DecisionTreeClassifier',
+  MlJsKNeighborsClassifier: 'KNeighborsClassifier',
 }
 
 export function isMlJsModelType(type: string): boolean {
@@ -35,10 +38,11 @@ export async function loadMlJsBackend(): Promise<ModelBackend> {
       const estimatorName = MODEL_NAMES[spec.type]
       if (!estimatorName) throw new RangeError(`Unsupported ml.js model ${spec.type}.`)
       if (X.rows !== Y.rows) throw new RangeError('Feature and target row counts differ.')
-      if (Y.cols !== 1 && estimatorName === 'RandomForestRegressor') {
-        throw new RangeError('This ml.js random forest regressor requires one target column.')
+      const classifier = estimatorName.endsWith('Classifier')
+      if (Y.cols !== 1 && !classifier) {
+        throw new RangeError('This ml.js regressor requires one target column.')
       }
-      if (Y.cols < 2 && estimatorName === 'RandomForestClassifier') {
+      if (Y.cols < 2 && classifier) {
         throw new RangeError('This ml.js classifier requires at least two classes.')
       }
       const Xrows = matrixRows(X)
@@ -50,17 +54,36 @@ export async function loadMlJsBackend(): Promise<ModelBackend> {
         }
         return best
       })
-      const nEstimators = Number(spec.params.n_estimators ?? 100)
-      const seed = Number(spec.params.seed ?? 42)
-      if (!Number.isInteger(nEstimators) || nEstimators < 1 || nEstimators > 1000) {
-        throw new RangeError('n_estimators must be an integer from 1 to 1000.')
+      let params: Record<string, number | boolean>
+      if (estimatorName.startsWith('RandomForest')) {
+        const nEstimators = Number(spec.params.n_estimators ?? 100)
+        const seed = Number(spec.params.seed ?? 42)
+        if (!Number.isInteger(nEstimators) || nEstimators < 1 || nEstimators > 1000) {
+          throw new RangeError('n_estimators must be an integer from 1 to 1000.')
+        }
+        if (!Number.isInteger(seed) || seed < 0 || seed > 2147483647) {
+          throw new RangeError('seed must be a nonnegative 32-bit integer.')
+        }
+        // DAG-ML computes CV; ml-random-forest OOB can fail on small folds.
+        params = { nEstimators, seed, noOOB: true }
+      } else if (estimatorName.startsWith('DecisionTree')) {
+        const minNumSamples = Number(spec.params.min_samples ?? 3)
+        const maxDepth = Number(spec.params.max_depth ?? 20)
+        if (!Number.isInteger(minNumSamples) || minNumSamples < 1 || minNumSamples > X.rows) {
+          throw new RangeError('min_samples must be an integer from 1 to the fold size.')
+        }
+        if (!Number.isInteger(maxDepth) || maxDepth < 1 || maxDepth > 100) {
+          throw new RangeError('max_depth must be an integer from 1 to 100.')
+        }
+        params = { minNumSamples, maxDepth }
+      } else {
+        const k = Number(spec.params.n_neighbors ?? 5)
+        if (!Number.isInteger(k) || k < 1 || k > X.rows) {
+          throw new RangeError('n_neighbors must be an integer from 1 to the fold size.')
+        }
+        params = { k }
       }
-      if (!Number.isInteger(seed) || seed < 0 || seed > 2147483647) {
-        throw new RangeError('seed must be a nonnegative 32-bit integer.')
-      }
-      // ml-random-forest's optional OOB aggregation can fail on small folds
-      // with no OOB votes. Web scores via DAG-ML CV instead.
-      const estimator = createMlJsEstimator({ ml, estimatorName, params: { nEstimators, seed, noOOB: true } })
+      const estimator = createMlJsEstimator({ ml, estimatorName, params })
       estimator.fit(Xrows, y)
       return {
         provider: 'mljs', estimatorName, nFeatures: X.cols, nTargets: Y.cols,
@@ -78,7 +101,7 @@ export async function loadMlJsBackend(): Promise<ModelBackend> {
       if (labels.length !== X.rows || labels.some((value) => !Number.isFinite(value))) {
         throw new Error('ml.js returned an invalid prediction shape or non-finite values.')
       }
-      if (stored.estimatorName === 'RandomForestRegressor') {
+      if (!stored.estimatorName.endsWith('Classifier')) {
         return { data: Float64Array.from(labels), rows: X.rows, cols: 1 }
       }
       const data = new Float64Array(X.rows * stored.nTargets)

@@ -15,11 +15,11 @@ const required = process.env.NIRS4ALL_CORE_SHIM_REQUIRED === '1'
 const logPrefix = '[sync-core-shim]'
 
 const expected = Object.freeze({
-  commit: '1bd963198624531d7658ec17c27a992d75f5133d',
-  tree: '7c8718ffd95041dc2f8c83874e735e5e288a9c53',
-  version: '0.3.34',
-  npmSha256: '883f9a2796bfdba962c80ef88cffe00e9c026dd4cbbcd6f79f963a5cb9abf1dc',
-  provenanceSha256: '31a4c434b688ea82271851889ed0ee8027c5b837660756aa3dd15d3f31410e56',
+  commit: '430edfcced7b34cb91fdc54099f2ac4427614884',
+  tree: '955ff21c514d961d55ae77cc93b410dd7778e1b7',
+  version: '0.3.35',
+  npmSha256: '418179af48e5092a8e42f8816e118d223d72829bbead84b172c2572efa18b44c',
+  provenanceSha256: '4c1dec51875cce88db9fdd353c281824a1ed0619f7ee17932eea471f5751ff0c',
 })
 
 const sourceCandidates = [
@@ -55,7 +55,7 @@ const sourceFiles = [
   'native/package.json',
 ]
 
-// Exact inventory of the public 0.3.34 npm package. This is checked even
+// Exact inventory of the public 0.3.35 npm package. This is checked even
 // when no sibling checkout is available.
 const pinnedPackageSha256 = new Map(Object.entries({
   "LICENSE": 'd8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee',
@@ -67,21 +67,21 @@ const pinnedPackageSha256 = new Map(Object.entries({
   "LICENSES/CeCILL-2.1.txt": '4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5',
   "LICENSES/MIT.txt": 'b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5',
   "LICENSING.md": '46c57e67ed1e40c98a714f32a968b343650b02df3627744c28e9ceba011b7447',
-  "README.md": '42a2f2aa9d0c3df799972bca95f3d006af3ef5c39a1c4fe1fcf6b084c5f7a871',
+  "README.md": '033085eed0362629f6e40af2e17aff13a7787e78404492f782c5f05816236acb',
   "THIRD_PARTY_NOTICES.md": '36239a5e2cfb203f0f9b1a4d78578e938b35fc696e7bedc613e4030954ba14ac',
   "native/nirs4all_core_wasm_native.d.ts": '829c7e2b56cb9f97cdf35aee6da68ef765942a238949c4a3a994553a137bc0e3',
   "native/nirs4all_core_wasm_native.js": 'e5b743ae98d98e61b6e5c46538ecc5a813e1293eb96f08bba99fe55e199b3e13',
   "native/nirs4all_core_wasm_native_bg.wasm": 'b4f15573714f6de1eb24d04eb1fb498e2d492563ef117c8a9060a9bb44b14911',
   "native/nirs4all_core_wasm_native_bg.wasm.d.ts": '156193632dd90859ae50d7da7cfc3ea2f138832bc1c2da6eebb5b3e9b16a0c94',
-  "native/package.json": '369a230f64ed7933e9543a658052cb3a3ce67d321fddadca71949bca4faabab8',
-  "package.json": '186cf6e518ff72f2277643749c8f9b3811cfaf0795f5239dd26b60ba538489c8',
+  "native/package.json": '4818ed507a23905dc689ed9ea8fa1e3496af8aabca6783f0aa4931abc340e6d6',
+  "package.json": 'b0f6f657f11035dd935bef2fcc8643ac77f4f8762b3ff6fb1dbad82508615b9b',
   "src/archive-v2.js": '69b613bce35ccb34ee328a4257f0254ce58719d95d6519ac38ff0eb81710b7e4',
-  "src/classic-ml.d.ts": '45c3cf4d8f6a1a755b4139a3497e998497937afb9778ceb6dd2d2987e3e33252',
+  "src/classic-ml.d.ts": '84b0bb294a01dba395b31dec48813d866014df0e635f0e71c4ec8b084f00cd04',
   "src/execution.js": '7ece6ca2374eb1d94abc93ab7dac419b2a37969c48b3dcdf424aeb8d850d5161',
-  "src/index.d.ts": '1bd2539f8705af74ee6233a211f2351910bd5b061d4756f92e5373b17e7b0347',
-  "src/index.js": 'b95255b825aa1ac4250e63f5c4cde7788cbce0d7c8a7c04166ef9e4fbf529267',
-  "src/js-estimator-controller.js": 'a5a3d69f899961db8c932a1978f243841768655efc43559eba73e98d5c97d39e',
-  "src/ml-estimator-adapters.js": '293d524bfe85de19d58b92df43d6402e2e1ed213451ba4b3e8b657de9d9f3a3c',
+  "src/index.d.ts": '0bf4401a47fef238d333802021e10b2304ec2886f9d9a7f24f7a1d94b7fe761a',
+  "src/index.js": 'c8ee37ace44b3b8fba519e6bf905dcd9823d9c3f60e57afb843a5b1ce30766ab',
+  "src/js-estimator-controller.js": 'ede3dc3ab81413a7e550dd02d2cec9d1b3d8c34f55bdb15f4c58f3ef4fb41631',
+  "src/ml-estimator-adapters.js": '530e3081a3caba6e4f726f21fff7aaa48b0b95b10680e60c4d70531e0f399701',
 }))
 
 function packageFiles(directory, prefix = '') {
