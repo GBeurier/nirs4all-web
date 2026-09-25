@@ -15,11 +15,11 @@ const required = process.env.NIRS4ALL_CORE_SHIM_REQUIRED === '1'
 const logPrefix = '[sync-core-shim]'
 
 const expected = Object.freeze({
-  commit: '89787477bd7883ceb26b51fa3228bca13db85f6e',
-  tree: '7d748e79e4bef0da2a0803f9a0dd8984e28a46bb',
-  version: '0.3.27',
-  npmSha256: 'dd55134aa9439ac4ac194bbcd7b5aa3ac5364de789672546c64e76cf4500b177',
-  provenanceSha256: '2f1b6a228323c76c2a14e105b36db2a24fab3c77275526819afe48eca82feac3',
+  commit: '57e372202989becb77f3b706b7ab9a5f0014e9f7',
+  tree: '57202cc8b0430ad16a68d51926ce0014c7181de4',
+  version: '0.3.32',
+  npmSha256: '4daf17413a3b2501bbe4ae13ef6cdf5fce0898b71f096af4e2a7bdb825159be5',
+  provenanceSha256: 'a098b47249896d9577df3350669bf02b5d4226a44d243c699ff67dd6004db390',
 })
 
 const sourceCandidates = [
@@ -28,6 +28,8 @@ const sourceCandidates = [
   resolve(root, '..', '..', 'RC-v1-core-0.3.27', 'bindings', 'wasm'),
   resolve(root, '..', '..', 'RC-v1-core', 'bindings', 'wasm'),
   resolve(root, '..', '..', '_worktrees', 'RC-v1-core', 'bindings', 'wasm'),
+  resolve(root, '..', '..', 'nirs4all-core-wasm-controllers', 'bindings', 'wasm'),
+  resolve(root, '..', '..', '_worktrees', 'nirs4all-core-wasm-controllers', 'bindings', 'wasm'),
   resolve(root, '..', '..', 'nirs4all-core', 'bindings', 'wasm'),
   resolve(root, '..', '..', '_worktrees', 'RC-v1-nirs4all-core', 'bindings', 'wasm'),
   resolve(root, '..', '..', 'RC-v1-nirs4all-core', 'bindings', 'wasm'),
@@ -41,6 +43,7 @@ const sourceFiles = [
   'LICENSE',
   'src/index.js',
   'src/index.d.ts',
+  'src/js-estimator-controller.js',
   'src/execution.js',
   'src/archive-v2.js',
   'native/nirs4all_core_wasm_native.d.ts',
@@ -50,31 +53,31 @@ const sourceFiles = [
   'native/package.json',
 ]
 
-// Exact inventory of the independently fetched public 0.3.27 npm artifact. This
-// is checked even when no sibling checkout is available, so CI cannot silently
-// accept a stale or locally rebuilt WASM payload.
+// Exact inventory of the public 0.3.32 npm package. This is checked even
+// when no sibling checkout is available.
 const pinnedPackageSha256 = new Map(Object.entries({
-  'LICENSE': 'd8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee',
-  'LICENSES/AGPL-3.0-or-later.txt': 'd8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee',
-  'LICENSES/Apache-2.0.txt': '074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff',
-  'LICENSES/BSD-3-Clause.txt': '5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d',
-  'LICENSES/COMMERCIAL-LICENSE.md': '4340124a3a1d3c82577ea3aebc834cb9d37ee196d83fbf320af218a751449702',
-  'LICENSES/COMMERCIAL-LICENSE_FR.md': 'e05393d17534ba7129cd04f51c2ebe00448a4b427a50204f52ea37e906bf115a',
-  'LICENSES/CeCILL-2.1.txt': '4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5',
-  'LICENSES/MIT.txt': 'b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5',
-  'LICENSING.md': '46c57e67ed1e40c98a714f32a968b343650b02df3627744c28e9ceba011b7447',
-  'README.md': 'b6495cd4bbec596ffb5dc713aa002597fc08149226702f5e3db1c52119177a38',
-  'THIRD_PARTY_NOTICES.md': '36239a5e2cfb203f0f9b1a4d78578e938b35fc696e7bedc613e4030954ba14ac',
-  'native/nirs4all_core_wasm_native.d.ts': '829c7e2b56cb9f97cdf35aee6da68ef765942a238949c4a3a994553a137bc0e3',
-  'native/nirs4all_core_wasm_native.js': 'e5b743ae98d98e61b6e5c46538ecc5a813e1293eb96f08bba99fe55e199b3e13',
-  'native/nirs4all_core_wasm_native_bg.wasm': 'ace0b9079d98f6411bf02a483ea27f0767b6a1ebb1415740e31b12a892a80f44',
-  'native/nirs4all_core_wasm_native_bg.wasm.d.ts': '156193632dd90859ae50d7da7cfc3ea2f138832bc1c2da6eebb5b3e9b16a0c94',
-  'native/package.json': '3bbe5e8299800d65f571d6b8d503911b1fdeed914ce1ebc308a80a7b710d806f',
-  'package.json': '3d7fc4e0a0e6f7ab5decd6c4a91514268312a329e6d2ca580ea5347a1b99a0db',
-  'src/archive-v2.js': '69b613bce35ccb34ee328a4257f0254ce58719d95d6519ac38ff0eb81710b7e4',
-  'src/execution.js': '1137730eca30c14c6615c40ca6cd979dbc1d48930a5103f0b3a44630c98784c6',
-  'src/index.d.ts': 'c43856d507a043402ec746801e704e1d02c86c9aa67e7ff875fecab0a8d9e069',
-  'src/index.js': '6fa6a44e29300ca0add1bfdb5aab2deb64ca069655505d4a66dd6467ca1a1326',
+  "LICENSE": 'd8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee',
+  "LICENSES/AGPL-3.0-or-later.txt": 'd8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee',
+  "LICENSES/Apache-2.0.txt": '074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff',
+  "LICENSES/BSD-3-Clause.txt": '5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d',
+  "LICENSES/COMMERCIAL-LICENSE.md": '4340124a3a1d3c82577ea3aebc834cb9d37ee196d83fbf320af218a751449702',
+  "LICENSES/COMMERCIAL-LICENSE_FR.md": 'e05393d17534ba7129cd04f51c2ebe00448a4b427a50204f52ea37e906bf115a',
+  "LICENSES/CeCILL-2.1.txt": '4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5',
+  "LICENSES/MIT.txt": 'b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5',
+  "LICENSING.md": '46c57e67ed1e40c98a714f32a968b343650b02df3627744c28e9ceba011b7447',
+  "README.md": '7b3d236125640810d9984a411db07b33cb34ef1579f3fcb212fd7d96102ce539',
+  "THIRD_PARTY_NOTICES.md": '36239a5e2cfb203f0f9b1a4d78578e938b35fc696e7bedc613e4030954ba14ac',
+  "native/nirs4all_core_wasm_native.d.ts": '829c7e2b56cb9f97cdf35aee6da68ef765942a238949c4a3a994553a137bc0e3',
+  "native/nirs4all_core_wasm_native.js": 'e5b743ae98d98e61b6e5c46538ecc5a813e1293eb96f08bba99fe55e199b3e13',
+  "native/nirs4all_core_wasm_native_bg.wasm": 'b4f15573714f6de1eb24d04eb1fb498e2d492563ef117c8a9060a9bb44b14911',
+  "native/nirs4all_core_wasm_native_bg.wasm.d.ts": '156193632dd90859ae50d7da7cfc3ea2f138832bc1c2da6eebb5b3e9b16a0c94',
+  "native/package.json": '11dcbbca834811c2779ccdd44a13beb995345f3562e78090fd9d922a204a21f5',
+  "package.json": 'ea2651608a62c059617e37028db7d5c3cb368a64f7b1ad196ef04bd83651feb7',
+  "src/archive-v2.js": '69b613bce35ccb34ee328a4257f0254ce58719d95d6519ac38ff0eb81710b7e4',
+  "src/execution.js": '7e58d4d121675ca441cba89a8ac4399e9797d3b04d3b0284721aa392c86772de',
+  "src/index.d.ts": '85f17b4b1e44508c63e23ec5a8aa0a079b4fbc6fb555ba2c987659f0f80c0157',
+  "src/index.js": '414e0d1798c2709611af9682f17752391e4f5902b5ce6fd370b85e9e2afdb16c',
+  "src/js-estimator-controller.js": '3766a3b4035e96d7f24e91a6912ad318a895fd1bd261ffe5808d9404601d9ad6',
 }))
 
 function packageFiles(directory, prefix = '') {
@@ -160,6 +163,9 @@ if (sourceCommit !== expected.commit || sourceTree !== expected.tree) {
 let drift = false
 
 for (const file of sourceFiles) {
+  // Generated WASM bytes depend on the build toolchain. The published binary
+  // is checked against the pinned registry hash by verifyPinnedPackage().
+  if (file.startsWith('native/')) continue
   const source = resolve(sourceRoot, file)
   const target = resolve(vendor, file)
   if (!existsSync(source)) {

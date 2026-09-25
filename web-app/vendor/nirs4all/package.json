@@ -1,6 +1,6 @@
 {
   "name": "nirs4all",
-  "version": "0.3.27",
+  "version": "0.3.32",
   "description": "Portable nirs4all aggregate binding for JavaScript and WASM",
   "type": "module",
   "exports": {
@@ -48,6 +48,8 @@
     "yaml": "^2.9.0"
   },
   "devDependencies": {
+    "dag-ml-wasm": "^0.3.27",
+    "ml-random-forest": "^2.1.0",
     "typescript": "5.9.3"
   },
   "peerDependencies": {
@@ -56,7 +58,8 @@
     "@nirs4all/io-wasm": "*",
     "@nirs4all/methods": "*",
     "dag-ml-data-wasm": "*",
-    "dag-ml-wasm": "*"
+    "dag-ml-wasm": "*",
+    "ml-random-forest": "^2.1.0"
   },
   "peerDependenciesMeta": {
     "@nirs4all/datasets-wasm": {
@@ -75,6 +78,9 @@
       "optional": true
     },
     "dag-ml-data-wasm": {
+      "optional": true
+    },
+    "ml-random-forest": {
       "optional": true
     }
   },

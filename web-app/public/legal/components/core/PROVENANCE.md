@@ -1,19 +1,22 @@
-# Vendored Core Archive V2 payload
+# Vendored nirs4all JavaScript/WASM payload
 
-This directory stages the real npm payload produced from `nirs4all-core` commit
-`89787477bd7883ceb26b51fa3228bca13db85f6e` (tree
-`7d748e79e4bef0da2a0803f9a0dd8984e28a46bb`).
+This directory stages the public `nirs4all@0.3.32` npm tarball published from
+`nirs4all-core` commit `57e372202989becb77f3b706b7ab9a5f0014e9f7`
+(tree `57202cc8b0430ad16a68d51926ce0014c7181de4`).
 
-- Package: `nirs4all@0.3.27`
-- Qualified tarball SHA-256:
-  `dd55134aa9439ac4ac194bbcd7b5aa3ac5364de789672546c64e76cf4500b177`
-- Native Rust/WASM SHA-256:
-  `ace0b9079d98f6411bf02a483ea27f0767b6a1ebb1415740e31b12a892a80f44`
+- Public registry tarball SHA-256:
+  `4daf17413a3b2501bbe4ae13ef6cdf5fce0898b71f096af4e2a7bdb825159be5`
+- npm `dist.integrity`:
+  `sha512-OMQIbn9m2R0H45KbmaLjyJbvXIdhaS/2L92OxRbZMtGEEHCRKtWel6B6ZapYVEBoQ3OlAfyfBC4MeNW4wFlpIg==`
+- Published Rust/WASM SHA-256:
+  `b4f15573714f6de1eb24d04eb1fb498e2d492563ef117c8a9060a9bb44b14911`
 - Archive V2 JavaScript surface SHA-256:
   `69b613bce35ccb34ee328a4257f0254ce58719d95d6519ac38ff0eb81710b7e4`
 
-The public registry tarball was fetched twice independently and both copies had
-the qualified SHA-256 above. `scripts/sync-core-shim.mjs` checks the exact
-source commit/tree plus the complete 21-file public package inventory by
-SHA-256, including every generated `native/` file and all licensing notices.
-Build outputs, Cargo targets and caches are excluded.
+The package passed the Core strict Methods parity gate before publication and
+carries signed GitHub Actions provenance. The registry tarball was downloaded
+and its complete inventory was compared with the locally qualified package;
+only the generated Rust/WASM binary differed between build environments. This
+vendor directory uses the published binary. `scripts/sync-core-shim.mjs` checks
+the source commit/tree, source JS files, and every published package file by
+SHA-256, including the generated binary and licensing notices.
