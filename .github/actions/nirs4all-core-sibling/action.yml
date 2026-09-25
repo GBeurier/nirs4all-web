@@ -9,8 +9,8 @@ runs:
     - name: Clone nirs4all-core source next to the workspace
       shell: bash
       run: |
-        expected_ref="1bd963198624531d7658ec17c27a992d75f5133d"
-        expected_tree="7c8718ffd95041dc2f8c83874e735e5e288a9c53"
+        expected_ref="430edfcced7b34cb91fdc54099f2ac4427614884"
+        expected_tree="955ff21c514d961d55ae77cc93b410dd7778e1b7"
         sibling="$GITHUB_WORKSPACE/../nirs4all-core"
         rm -rf "$sibling"
         git clone --depth 1 https://github.com/GBeurier/nirs4all-core.git "$sibling"

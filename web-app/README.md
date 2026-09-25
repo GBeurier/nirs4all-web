@@ -30,8 +30,9 @@ npm run smoke:rt-fallback:transitional # transition build proves diagnosed fallb
 The `strict-wasm` product profile fails closed if native/WASM execution, the
 `dag-ml-data` provider, or the native scheduler cannot serve the request. It
 also rejects the legacy JavaScript PLS fallback and `allowFallback:true`.
-The explicit ml.js random forest nodes run synchronously inside DAG-ML's
-browser scheduler; preprocessing still uses libn4m WASM. Their model JSON is
+The five explicit ml.js nodes (random forests, CART trees and KNN classification)
+run synchronously inside DAG-ML's browser scheduler; preprocessing still uses
+libn4m WASM. Their model JSON is
 specific to ml.js and is not a portable n4m artifact. The
 development/test and single-file profiles intentionally retain the explicit
 transitional path while migration is in progress; neither profile permits a

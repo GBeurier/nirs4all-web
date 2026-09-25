@@ -20,11 +20,14 @@ const classification: Mat = {
 
 describe('Web ml.js backend', () => {
   it.each([
-    ['MlJsRandomForestRegressor', regression, 1],
-    ['MlJsRandomForestClassifier', classification, 2],
-  ] as const)('fits and replays %s with a synchronous predictor', async (type, Y, cols) => {
+    ['MlJsRandomForestRegressor', regression, 1, { n_estimators: 11, seed: 7 }],
+    ['MlJsRandomForestClassifier', classification, 2, { n_estimators: 11, seed: 7 }],
+    ['MlJsDecisionTreeRegressor', regression, 1, { min_samples: 3, max_depth: 10 }],
+    ['MlJsDecisionTreeClassifier', classification, 2, { min_samples: 3, max_depth: 10 }],
+    ['MlJsKNeighborsClassifier', classification, 2, { n_neighbors: 3 }],
+  ] as const)('fits and replays %s with a synchronous predictor', async (type, Y, cols, params) => {
     const backend = await loadMlJsBackend()
-    const model = backend.fit({ type, params: { n_estimators: 11, seed: 7 } }, X, Y, 1)
+    const model = backend.fit({ type, params }, X, Y, 1)
     const result = backend.predict(JSON.parse(JSON.stringify(model)), X)
     expect(result.rows).toBe(X.rows)
     expect(result.cols).toBe(cols)
