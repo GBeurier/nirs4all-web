@@ -13,12 +13,15 @@ runs:
         git clone --depth 1 https://github.com/GBeurier/nirs4all-methods.git "$sibling"
         ref="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
         if [ -n "$ref" ]; then
-          git -C "$sibling" fetch --depth 1 origin "$ref" || {
-            echo "nirs4all-methods sibling: missing required ref '$ref' upstream" >&2
+          if git -C "$sibling" fetch --depth 1 origin "$ref"; then
+            git -C "$sibling" checkout --detach FETCH_HEAD
+            echo "nirs4all-methods sibling: using ref $ref @ $(git -C "$sibling" rev-parse HEAD)"
+          elif [[ "$ref" == rc/* ]]; then
+            echo "nirs4all-methods sibling: missing required RC ref '$ref' upstream" >&2
             exit 1
-          }
-          git -C "$sibling" checkout --detach FETCH_HEAD
-          echo "nirs4all-methods sibling: using ref $ref @ $(git -C "$sibling" rev-parse HEAD)"
+          else
+            echo "nirs4all-methods sibling: no matching feature ref '$ref'; using default branch @ $(git -C "$sibling" rev-parse HEAD)"
+          fi
         else
           echo "nirs4all-methods sibling: no GitHub ref provided; using default branch @ $(git -C "$sibling" rev-parse HEAD)"
         fi

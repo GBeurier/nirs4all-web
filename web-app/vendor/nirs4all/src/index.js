@@ -79,8 +79,8 @@ export const runtimeContracts = Object.freeze([
     surface: 'rust',
     pipelineExecution: 'parity-validated',
     pipelineEntrypoint: 'run_portable_pipeline_with_library',
-    serializedModelPredict: false,
-    predictEntrypoint: null,
+    serializedModelPredict: true,
+    predictEntrypoint: 'predict_exported_portable_model_with_library',
   }),
   Object.freeze({
     surface: 'matlab_octave',
@@ -529,6 +529,7 @@ function collectClasses(value, output) {
 }
 
 export { parseExecutionPlan, predictPortablePipeline, runPortablePipeline } from './execution.js';
+export { createDagMlModelManifest, createDagMlNodeResult, createJsEstimatorController, createN4mModelController, createRandomForestController } from './js-estimator-controller.js';
 export {
   inspectMethodsArchiveV2Predictors,
   loadArchiveV2Native,
