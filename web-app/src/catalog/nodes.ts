@@ -400,6 +400,36 @@ export const PREPROCESSING_NODES: NodeDef[] = [
 
 export const MODEL_NODES: NodeDef[] = [
   {
+    id: 'models.mljs.random_forest_regressor',
+    type: 'MlJsRandomForestRegressor',
+    name: 'Random forest (ml.js)',
+    category: 'model',
+    description: 'Seeded random forest regression from ml.js; model JSON remains specific to ml.js.',
+    icon: 'Trees',
+    task: 'regression',
+    provider: 'mljs',
+    params: [
+      { name: 'n_estimators', label: 'Trees', type: 'int', default: 100, min: 1, max: 1000 },
+      { name: 'seed', label: 'Seed', type: 'int', default: 42, min: 0, max: 2147483647 },
+    ],
+    n4m: { fit: null },
+  },
+  {
+    id: 'models.mljs.random_forest_classifier',
+    type: 'MlJsRandomForestClassifier',
+    name: 'Random forest classifier (ml.js)',
+    category: 'model',
+    description: 'Seeded random forest classification from ml.js; predicts hard class labels.',
+    icon: 'Trees',
+    task: 'binary',
+    provider: 'mljs',
+    params: [
+      { name: 'n_estimators', label: 'Trees', type: 'int', default: 100, min: 1, max: 1000 },
+      { name: 'seed', label: 'Seed', type: 'int', default: 42, min: 0, max: 2147483647 },
+    ],
+    n4m: { fit: null },
+  },
+  {
     id: 'models.pls.pls_regression',
     type: 'PLS',
     name: 'PLS Regression',

@@ -5,6 +5,7 @@
 // The refit (full-train) model is fit directly with libn4m. Compatibility
 // degrades exist only in the explicit transitional profile; strict-wasm fails closed.
 import { loadLibn4mBackend } from './backends'
+import { isMlJsModelType, loadMlJsBackend } from './mljs-backend'
 import { createDagMlModelManifest, createDagMlNodeResult } from './nirs4all-core'
 import { activeOrGenerator, compileWithDagMl, dagMlAvailable, dagMlRtSmokeForcedFailure, expandGeneratorVariants, hasUnsupportedGenerator, loadDagMl, toCompatDsl } from './dagml'
 import { materializeViaProvider } from './dagml-data'
@@ -194,7 +195,7 @@ export class DagMlEngine implements Engine {
     if (hasUnsupportedGenerator(dsl)) {
       throw new Error('Cartesian generators (and more than one OR generator) are not executable yet — use a single OR generator, or move param sweeps onto the model.')
     }
-    const backend = await loadLibn4mBackend()
+    const backend = isMlJsModelType(dsl.model.type) ? await loadMlJsBackend() : await loadLibn4mBackend()
     // GENERATOR: OR — expand the alternatives into candidate pipelines, run each
     // through the normal dag-ml CV path, and let dag-ml SELECT the best (reuses the
     // existing per-variant FIT_CV + select_candidates_json machinery).
@@ -652,7 +653,8 @@ export class DagMlEngine implements Engine {
   }
 
   async predict(model: FittedPipeline, Xnew: Float64Array, nSamples: number, nFeatures: number): Promise<PredictResult> {
-    const backend = await loadLibn4mBackend()
+    const backend = (model.state as FittedState).backendId === 'mljs-classic'
+      ? await loadMlJsBackend() : await loadLibn4mBackend()
     return predictPipeline(model, Xnew, nSamples, nFeatures, backend)
   }
 }
