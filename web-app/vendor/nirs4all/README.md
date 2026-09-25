@@ -141,6 +141,28 @@ the synchronous callback would break fold/seed validation. Scikitjs models use
 `exportModelAsync()` and `importModelAsync()` on the DAG controller because its
 serializer is asynchronous.
 
+`createScikitJsAsyncController()` is the awaiting host counterpart. It offers
+`invokeAsync()`, `fitFull()`, `predict()`, `exportModel()` and `importModel()` as
+Promises for scikitjs classes such as `LinearRegression`. A host can pass it
+native DAG-ML `NodeTask` records and await each result. It cannot be passed to
+the current synchronous `dag-ml-wasm` phase callback: blocking that browser
+worker would prevent the Promise from resolving. Native scheduler execution of
+these estimators needs a DAG-ML async phase driver.
+
+| Classical ML capability | This JS package | Web pipeline catalogue |
+| --- | --- | --- |
+| ml.js random forests, CART trees, KNN classifier | Synchronous DAG-ML controllers | Five model nodes |
+| ml.js PCA | Host fit/transform/inverseTransform | No pipeline node |
+| scikitjs trees | Synchronous DAG-ML controllers | No node |
+| scikitjs async classes, e.g. LinearRegression | Awaiting host controller | No DAG-ML/Web node yet |
+| Kanaries ML | Evaluated, no binding | No node |
+| Torch, ONNX and neural-network training | No binding | No node |
+
+`docs/CLASSIC_ML_JS.md` in the Core repository records qualification evidence,
+the portable n4m scope, and remaining gaps. ML library JSON artifacts are
+library-specific; only the n4m portable subset has a cross-language binary
+and Python-oracle parity claim.
+
 Both libraries are optional peer dependencies. They provide familiar classical
 ML APIs in JavaScript, but no numerical equality with sklearn is claimed for
 their independently implemented algorithms. The Methods-backed portable subset
