@@ -66,8 +66,8 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(syncScript).not.toMatch(/NIRS4ALL_LITE|nirs4all-lite|sync-lite/)
     expect(vendorPkg).toMatchObject({ name: 'nirs4all', version: '0.3.32' })
     expect(provenance).toContain('57e372202989becb77f3b706b7ab9a5f0014e9f7')
-    expect(provenance).toContain('8e28bf41ca7afa8c36b63c989fb3b316065d29960d3bd985082a04f31b8fd4ea')
-    expect(syncScript).toContain('66c39cdde1482203800518b614fb16fa3dce3bc4f02197cc71778c98b24a4d0a')
+    expect(provenance).toContain('4daf17413a3b2501bbe4ae13ef6cdf5fce0898b71f096af4e2a7bdb825159be5')
+    expect(syncScript).toContain('b4f15573714f6de1eb24d04eb1fb498e2d492563ef117c8a9060a9bb44b14911')
     expect(syncScript).toContain('69b613bce35ccb34ee328a4257f0254ce58719d95d6519ac38ff0eb81710b7e4')
   })
 

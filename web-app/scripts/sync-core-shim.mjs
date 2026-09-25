@@ -18,8 +18,8 @@ const expected = Object.freeze({
   commit: '57e372202989becb77f3b706b7ab9a5f0014e9f7',
   tree: '57202cc8b0430ad16a68d51926ce0014c7181de4',
   version: '0.3.32',
-  npmSha256: '8e28bf41ca7afa8c36b63c989fb3b316065d29960d3bd985082a04f31b8fd4ea',
-  provenanceSha256: '375901247d30febea10cf218ef3adbd6ca91bea6d3a7db913965ec0527274e95',
+  npmSha256: '4daf17413a3b2501bbe4ae13ef6cdf5fce0898b71f096af4e2a7bdb825159be5',
+  provenanceSha256: 'a098b47249896d9577df3350669bf02b5d4226a44d243c699ff67dd6004db390',
 })
 
 const sourceCandidates = [
@@ -53,8 +53,8 @@ const sourceFiles = [
   'native/package.json',
 ]
 
-// Exact inventory of the locally qualified 0.3.32 npm package. This is
-// checked even when no sibling checkout is available.
+// Exact inventory of the public 0.3.32 npm package. This is checked even
+// when no sibling checkout is available.
 const pinnedPackageSha256 = new Map(Object.entries({
   "LICENSE": 'd8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee',
   "LICENSES/AGPL-3.0-or-later.txt": 'd8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee',
@@ -69,7 +69,7 @@ const pinnedPackageSha256 = new Map(Object.entries({
   "THIRD_PARTY_NOTICES.md": '36239a5e2cfb203f0f9b1a4d78578e938b35fc696e7bedc613e4030954ba14ac',
   "native/nirs4all_core_wasm_native.d.ts": '829c7e2b56cb9f97cdf35aee6da68ef765942a238949c4a3a994553a137bc0e3',
   "native/nirs4all_core_wasm_native.js": 'e5b743ae98d98e61b6e5c46538ecc5a813e1293eb96f08bba99fe55e199b3e13',
-  "native/nirs4all_core_wasm_native_bg.wasm": '66c39cdde1482203800518b614fb16fa3dce3bc4f02197cc71778c98b24a4d0a',
+  "native/nirs4all_core_wasm_native_bg.wasm": 'b4f15573714f6de1eb24d04eb1fb498e2d492563ef117c8a9060a9bb44b14911',
   "native/nirs4all_core_wasm_native_bg.wasm.d.ts": '156193632dd90859ae50d7da7cfc3ea2f138832bc1c2da6eebb5b3e9b16a0c94',
   "native/package.json": '11dcbbca834811c2779ccdd44a13beb995345f3562e78090fd9d922a204a21f5',
   "package.json": 'ea2651608a62c059617e37028db7d5c3cb368a64f7b1ad196ef04bd83651feb7',
@@ -163,6 +163,9 @@ if (sourceCommit !== expected.commit || sourceTree !== expected.tree) {
 let drift = false
 
 for (const file of sourceFiles) {
+  // Generated WASM bytes depend on the build toolchain. The published binary
+  // is checked against the pinned registry hash by verifyPinnedPackage().
+  if (file.startsWith('native/')) continue
   const source = resolve(sourceRoot, file)
   const target = resolve(vendor, file)
   if (!existsSync(source)) {
