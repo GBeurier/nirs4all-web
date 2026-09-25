@@ -97,6 +97,8 @@ try {
       } catch (error) {
         report.push({ sample, name, status: 'failed', error: error.message, consoleErrors: errors, milliseconds: Date.now() - start })
         console.error(`✗ ${sample}: ${name} — ${error.message}`)
+        console.error((await page.locator('body').innerText()).slice(-1600))
+        if (errors.length) console.error(`Browser errors: ${errors.join('; ')}`)
         process.exitCode = 1
       } finally {
         // Terminate an expensive worker via the same Cancel action as a user

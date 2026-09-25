@@ -35,6 +35,15 @@ describe('Web ml.js backend', () => {
       }
     }
     expect(backend.predict(model, X)).toEqual(result)
+    if (cols === 2) {
+      // The actual browser sends fitted state across a Worker boundary.
+      // structuredClone strips ml-matrix methods from CART leaf probabilities.
+      const future: Mat = { data: Float64Array.from([-1, 0, 25, 1]), rows: 2, cols: 2 }
+      const transferred = structuredClone(model)
+      const expected = backend.predict(model, future)
+      expect(backend.predict(transferred, future)).toEqual(expected)
+      expect(backend.predict(JSON.parse(JSON.stringify(transferred)), future)).toEqual(expected)
+    }
   })
 
 })
