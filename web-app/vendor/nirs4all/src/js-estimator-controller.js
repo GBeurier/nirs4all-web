@@ -282,9 +282,23 @@ export function createJsEstimatorController({
       if (!estimator || typeof estimator.toJSON !== 'function') {
         throw new Error('This estimator has no JSON model export.');
       }
+      const model = estimator.toJSON();
+      if (model && typeof model.then === 'function') {
+        throw new TypeError('This estimator exports asynchronously; use exportModelAsync().');
+      }
       return {
         schema: MODEL_SCHEMA, controllerId, controllerVersion,
-        nFeatures: training.cols, model: estimator.toJSON(),
+        nFeatures: training.cols, model,
+      };
+    },
+    async exportModelAsync() {
+      const estimator = fitted.get(selectedVariant);
+      if (!estimator || typeof estimator.toJSON !== 'function') {
+        throw new Error('This estimator has no JSON model export.');
+      }
+      return {
+        schema: MODEL_SCHEMA, controllerId, controllerVersion,
+        nFeatures: training.cols, model: await estimator.toJSON(),
       };
     },
     importModel(payload) {
@@ -294,6 +308,20 @@ export function createJsEstimatorController({
       }
       requireFunction(restoreEstimator, 'restoreEstimator');
       const estimator = restoreEstimator(payload.model);
+      if (estimator && typeof estimator.then === 'function') {
+        throw new TypeError('This estimator restores asynchronously; use importModelAsync().');
+      }
+      if (typeof estimator?.predict !== 'function') throw new TypeError('Restored estimator lacks predict().');
+      fitted.set('base', estimator);
+      selectedVariant = 'base';
+    },
+    async importModelAsync(payload) {
+      if (payload?.schema !== MODEL_SCHEMA || payload.controllerId !== controllerId ||
+          payload.controllerVersion !== controllerVersion || payload.nFeatures !== training.cols) {
+        throw new Error('JS estimator artifact is incompatible with this controller.');
+      }
+      requireFunction(restoreEstimator, 'restoreEstimator');
+      const estimator = await restoreEstimator(payload.model);
       if (typeof estimator?.predict !== 'function') throw new TypeError('Restored estimator lacks predict().');
       fitted.set('base', estimator);
       selectedVariant = 'base';
