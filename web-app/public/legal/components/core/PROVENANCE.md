@@ -1,13 +1,13 @@
 # Vendored nirs4all JavaScript/WASM payload
 
-This directory stages the public `nirs4all@0.3.33` npm tarball published from
-`nirs4all-core` commit `204517482f99c017fbc8210bd1eed5c8c13a0f3e`
-(tree `80f868f66a765458c650af612347c850fea070ba`).
+This directory stages the public `nirs4all@0.3.34` npm tarball published from
+`nirs4all-core` commit `1bd963198624531d7658ec17c27a992d75f5133d`
+(tree `7c8718ffd95041dc2f8c83874e735e5e288a9c53`).
 
 - Public registry tarball SHA-256:
-  `8290fe6e73a58f2c3a451ad1b209403f677461b1eef5ecffde57311c240f903e`
+  `883f9a2796bfdba962c80ef88cffe00e9c026dd4cbbcd6f79f963a5cb9abf1dc`
 - npm `dist.integrity`:
-  `sha512-hyH/d8y+cMcy8okPt3q2kLzCCOvevQkwOJdx+BkIz1UBDNnPpzHOu0I0z2Tfb5DCrZnVto5fhgqnyjOBBkfFHw==`
+  `sha512-B7dGF7xr6PTuS3x/Et5BQ2a5Rqm0YcmuIKeVk+WIOZTIly1Nq/Al3iQqyqEQHIZG8MKs49DtNZIQjidy0WSOYQ==`
 - Published Rust/WASM SHA-256:
   `b4f15573714f6de1eb24d04eb1fb498e2d492563ef117c8a9060a9bb44b14911`
 - Archive V2 JavaScript surface SHA-256:
