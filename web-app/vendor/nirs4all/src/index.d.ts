@@ -117,6 +117,11 @@ export interface PortableExecutionResult {
   selected: PortableVariantResult;
   model: PortablePlsModel;
   targets: number[];
+  /** Present on current runs; older persisted results may omit this metadata. */
+  evaluation?: {
+    scope: 'training' | 'selection_validation';
+    independent_test: false;
+  };
 }
 
 export interface PortablePredictionResult {
@@ -134,6 +139,92 @@ export interface ArchiveV2ReplayDataset {
   sampleIds?: readonly string[];
   sample_ids?: readonly string[];
 }
+
+export interface JsEstimatorDataset {
+  sampleIds: string[];
+  X: Float64Array | number[] | number[][];
+  y?: Float64Array | number[];
+  cols?: number;
+  n_features?: number;
+}
+
+export interface JsEstimator {
+  fit?(X: number[][], y: number[]): unknown;
+  train?(X: number[][], y: number[]): unknown;
+  predict(X: number[][]): number[] | Float64Array;
+  toJSON?(): unknown;
+}
+
+export interface DagMlModelControllerModule {
+  derive_controller_manifest_json(specJson: string): string;
+  validate_controller_manifest_json(manifestJson: string): void;
+}
+
+export interface JsEstimatorControllerOptions {
+  dagMl: DagMlModelControllerModule;
+  controllerId: string;
+  controllerVersion?: string;
+  createEstimator(context: { params: Record<string, unknown>; seed: number; exactSeed: string | null }): JsEstimator;
+  restoreEstimator?: (model: unknown) => JsEstimator;
+  dataset: JsEstimatorDataset & { y: Float64Array | number[] };
+  foldSet: {
+    sample_ids: string[];
+    folds: { fold_id: string; train_sample_ids: string[]; validation_sample_ids: string[] }[];
+  };
+  targetName?: string;
+  operatorSelectors?: Record<string, unknown>[];
+  paramsForTask?: (params: Record<string, unknown>) => Record<string, unknown>;
+}
+
+export interface JsEstimatorController {
+  manifest: Record<string, unknown>;
+  invoke(controllerId: string, taskJson: string, exactSeed: string | null): string;
+  setPredictionDataset(dataset: JsEstimatorDataset): void;
+  fitFull(params?: Record<string, unknown>, seed?: string): JsEstimator;
+  predict(dataset: JsEstimatorDataset): number[];
+  exportModel(): {
+    schema: 'nirs4all.js-estimator-model.v1';
+    controllerId: string;
+    controllerVersion: string;
+    nFeatures: number;
+    model: unknown;
+  };
+  importModel(payload: unknown): void;
+}
+
+export function createDagMlNodeResult(
+  task: Record<string, unknown>,
+  prediction?: { sampleIds: string[]; values: number[][]; targetNames: string[] } | null,
+): Record<string, unknown>;
+export function createDagMlModelManifest(options: {
+  dagMl: DagMlModelControllerModule;
+  controllerId: string;
+  controllerVersion?: string;
+  operatorSelectors?: Record<string, unknown>[];
+  priority?: number;
+  artifactPolicy?: 'host_only' | 'serializable' | 'content_addressed' | 'replay_required';
+}): Record<string, unknown>;
+
+export function createJsEstimatorController(options: JsEstimatorControllerOptions): JsEstimatorController;
+export function createN4mModelController(
+  options: Omit<JsEstimatorControllerOptions, 'controllerId' | 'createEstimator' | 'restoreEstimator'> & {
+    controllerId?: string;
+    modelType: string;
+    methods: {
+      fitModel(modelType: string, X: { data: Float64Array; rows: number; cols: number },
+        y: { data: Float64Array; rows: number; cols: number }, nComponents: number,
+        params: number[]): unknown;
+      predictModel(model: unknown, X: { data: Float64Array; rows: number; cols: number }):
+        { data: Float64Array; rows: number; cols: number };
+    };
+  },
+): JsEstimatorController;
+export function createRandomForestController(
+  options: Omit<JsEstimatorControllerOptions, 'controllerId' | 'createEstimator' | 'restoreEstimator'> & {
+    controllerId?: string;
+    task?: 'regression' | 'classification';
+  },
+): Promise<JsEstimatorController>;
 
 export interface NativePredictorDescriptorV1 {
   descriptor_type: 'dagml.native_predictor_descriptor.v1';
