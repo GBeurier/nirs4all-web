@@ -61,6 +61,8 @@ export interface NodeDef {
   params: ParamDef[]
   /** exported libn4m ABI symbols (validated in CI; null fit = stateless) */
   n4m: { fit: string | null; transform?: string; predict?: string }
+  /** Optional JavaScript estimator provider; n4m still owns preprocessing. */
+  provider?: 'mljs'
   /** stateful transforms must reuse fit-state on test/predict data */
   stateful?: boolean
   advanced?: boolean
