@@ -97,7 +97,7 @@ describe('custom app host contract', () => {
     expect(artifactContracts.every((item) => item.consumerLevel.javascript_wasm === 'metadata')).toBe(true)
     expect(runtimeContracts.map((item) => item.surface)).toEqual(runtimeSurfaces)
     expect(runtimeContracts.filter((item) => item.serializedModelPredict).map((item) => item.surface)).toEqual([
-      'javascript_wasm',
+      'javascript_wasm', 'rust',
     ])
     expect(runtimeContracts.find((item) => item.surface === 'javascript_wasm')?.predictEntrypoint).toBe(
       'predictPortablePipeline',
@@ -115,7 +115,7 @@ describe('custom app host contract', () => {
       .filter((item) => item.serializedModelPredict)
       .map((item) => item.surface)
     const wasmPredictEntrypoint = runtimeContracts.find((item) => item.surface === 'javascript_wasm')?.predictEntrypoint
-    const expectedSerializedModelPredictSurfaces = ['javascript_wasm']
+    const expectedSerializedModelPredictSurfaces = ['javascript_wasm', 'rust']
     const expectedWasmPredictEntrypoint = 'predictPortablePipeline'
     const runtimeContractChecks = {
       serialized_predict_surface_count_absolute_delta: Math.abs(

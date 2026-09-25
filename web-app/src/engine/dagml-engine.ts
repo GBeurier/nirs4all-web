@@ -5,6 +5,7 @@
 // The refit (full-train) model is fit directly with libn4m. Compatibility
 // degrades exist only in the explicit transitional profile; strict-wasm fails closed.
 import { loadLibn4mBackend } from './backends'
+import { createDagMlModelManifest, createDagMlNodeResult } from './nirs4all-core'
 import { activeOrGenerator, compileWithDagMl, dagMlAvailable, dagMlRtSmokeForcedFailure, expandGeneratorVariants, hasUnsupportedGenerator, loadDagMl, toCompatDsl } from './dagml'
 import { materializeViaProvider } from './dagml-data'
 import { applySplit, SPLIT_KINDS } from './split'
@@ -27,21 +28,12 @@ import { buildWebRuntimeProfile, type WebRuntimePolicy, type WebRuntimeProfile, 
 
 const MODEL_CONTROLLER = 'controller:model'
 
-function modelManifest() {
-  return [{
-    controller_id: MODEL_CONTROLLER,
-    controller_version: '0.1.0',
-    operator_kind: 'model',
-    priority: 0,
-    supported_phases: ['FIT_CV'],
-    input_ports: [{ name: 'x', kind: 'data', representation: 'tabular_numeric', cardinality: 'one', description: '' }],
-    output_ports: [{ name: 'oof', kind: 'prediction', representation: null, cardinality: 'one', description: '' }],
-    data_requirements: null,
-    capabilities: ['deterministic', 'thread_safe', 'process_safe', 'uses_core_rng', 'emits_predictions', 'consumes_oof_predictions', 'emits_artifacts', 'stateful'],
-    fit_scope: 'fold_train',
-    rng_policy: 'uses_core_seed',
-    artifact_policy: 'serializable',
-  }]
+function modelManifest(dagml: Awaited<ReturnType<typeof loadDagMl>>) {
+  return [createDagMlModelManifest({
+    dagMl: dagml,
+    controllerId: MODEL_CONTROLLER,
+    controllerVersion: '0.1.0',
+  })]
 }
 
 const matToRows = (m: Mat): number[][] => {
@@ -366,6 +358,7 @@ export class DagMlEngine implements Engine {
     const campaign = artifact.campaign_template
     campaign.split_invocation.fold_set = foldSet
     campaign.root_seed = cv.seed
+    const manifestsJson = JSON.stringify(modelManifest(dagml))
 
     // --- dag-ml enumerates the variant set (cartesian/zip, max_variants-capped,
     // deterministic + fingerprinted). The host never expands variants itself; we
@@ -392,7 +385,7 @@ export class DagMlEngine implements Engine {
         const forcedPlanningFailure = dagMlRtSmokeForcedFailure('planning')
         if (forcedPlanningFailure) throw forcedPlanningFailure
         const plan = JSON.parse(
-          dagml.build_execution_plan_json('plan:n4a', JSON.stringify(graph), JSON.stringify(campaign), JSON.stringify(modelManifest())),
+          dagml.build_execution_plan_json('plan:n4a', JSON.stringify(graph), JSON.stringify(campaign), manifestsJson),
         ) as { variants: VariantPlan[] }
         variants = plan.variants.length ? plan.variants : [baseVariant]
       } catch (err) {
@@ -454,10 +447,6 @@ export class DagMlEngine implements Engine {
     const invoke = (_controllerId: string, taskJson: string): string => {
       if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError')
       const t = JSON.parse(taskJson)
-      const np = t.node_plan
-      // NodeTask.seed is a u64 JSON.parse would round — echo the exact digits.
-      const seedMatches = [...taskJson.matchAll(/"seed":\s*(\d+|null)/g)]
-      const seedRaw = seedMatches.length ? seedMatches[seedMatches.length - 1][1] : 'null'
       const fold = t.fold_id ? foldByDagId.get(t.fold_id) : null
       const valIdx = fold ? fold.valIdx : []
       const trainIdx = fold ? fold.trainIdx : trainUniverse
@@ -490,45 +479,12 @@ export class DagMlEngine implements Engine {
         throw error
       }
       const valSampleIds = valIdx.map(dagId)
-      const result = {
-        node_id: np.node_id,
-        outputs: {},
-        predictions: [{
-          prediction_id: `pred:${np.node_id}:${t.variant_id ?? 'base'}:${t.fold_id ?? 'nofold'}`,
-          producer_node: np.node_id,
-          partition: 'validation',
-          fold_id: t.fold_id ?? null,
-          sample_ids: valSampleIds,
-          values: matToRows(pred),
-          target_names: task === 'regression' ? [ds.targetName] : classNames,
-        }],
-        observation_predictions: [],
-        aggregated_predictions: [],
-        explanations: [],
-        shape_deltas: [],
-        artifacts: [],
-        artifact_handles: {},
-        lineage: {
-          record_id: `lineage:${np.node_id}:${t.phase}:${t.variant_id ?? 'base'}:${t.fold_id ?? 'nofold'}`,
-          run_id: t.run_id,
-          node_id: np.node_id,
-          phase: t.phase,
-          controller_id: np.controller_id,
-          controller_version: np.controller_version,
-          variant_id: t.variant_id ?? null,
-          fold_id: t.fold_id ?? null,
-          branch_path: t.branch_path ?? [],
-          input_lineage: [],
-          artifact_refs: [],
-          params_fingerprint: np.params_fingerprint,
-          data_model_shape_fingerprint: null,
-          aggregation_policy_fingerprint: null,
-          seed: '__SEED__',
-          unsafe_flags: [],
-          metrics: {},
-        },
-      }
-      return JSON.stringify(result).replace('"__SEED__"', seedRaw)
+      const result = createDagMlNodeResult(t, {
+        sampleIds: valSampleIds,
+        values: matToRows(pred),
+        targetNames: task === 'regression' ? [ds.targetName] : classNames,
+      })
+      return JSON.stringify(result)
     }
 
     type ResultBlock = { partition: string; fold_id: string | null; sample_ids: string[]; values: number[][] }
@@ -574,7 +530,7 @@ export class DagMlEngine implements Engine {
         const forcedSchedulerFailure = dagMlRtSmokeForcedFailure('scheduler')
         if (forcedSchedulerFailure) throw forcedSchedulerFailure
         nodeResults = JSON.parse(
-          dagml.execute_campaign_phase_json('plan:n4a', JSON.stringify(graph), JSON.stringify(campaign), JSON.stringify(modelManifest()), 'run:n4a', cv.seed >>> 0, 'FIT_CV', invoke),
+          dagml.execute_campaign_phase_json('plan:n4a', JSON.stringify(graph), JSON.stringify(campaign), manifestsJson, 'run:n4a', cv.seed >>> 0, 'FIT_CV', invoke),
         )
       } catch (err) {
         // A cancel mid-schedule surfaces as the JS controller's AbortError wrapped

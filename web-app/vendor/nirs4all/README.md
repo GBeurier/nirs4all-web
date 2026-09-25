@@ -61,7 +61,53 @@ selecting a runtime. The manifest schema is `nirs4all-core.capabilities.v1`; it
 exposes the stable V1 controller IDs for Kennard-Stone, SNV, Savitzky-Golay,
 PLS regression, and the portable methods pipeline, with parameter lists
 matching the executable parser. `runtimeContracts` also makes explicit that
-standalone serialized-model prediction is currently a WASM-only contract.
+standalone serialized-model prediction is available on the WASM and Rust
+surfaces.
+
+## JavaScript model controllers
+
+`createJsEstimatorController()` adapts a synchronous JavaScript estimator with
+`fit(X, y)` (or `train(X, y)`) and `predict(X)` to DAG-ML's native
+`HostControllerSpec`/`ControllerManifest` and `NodeTask`/`NodeResult` contracts.
+Pass the initialized `dag-ml-wasm` module, a native DAG-ML `FoldSet`, and a
+sample-ID-aligned numeric dataset. DAG-ML assigns folds, variants, phases and
+64-bit seeds; the controller selects only each fold's training rows and emits
+identity-keyed validation predictions. `REFIT` keeps the fitted JS object for
+`PREDICT`. The public `createDagMlNodeResult()` helper lets browser clients
+return the same wire result from an n4m-backed controller without duplicating
+lineage or prediction serialization.
+
+```js
+import * as dagMl from 'dag-ml-wasm';
+import { createRandomForestController } from 'nirs4all';
+
+const controller = await createRandomForestController({
+  dagMl, // initialize the WASM module before this call
+  foldSet, // returned by dagMl.kfold_split_json / stratified_kfold_split_json
+  dataset: { sampleIds, X, y },
+});
+const manifestsJson = JSON.stringify([controller.manifest]);
+const resultsJson = dagMl.execute_execution_plan_phase_json(
+  planJson, manifestsJson, 'run:example', 42, 'FIT_CV', controller.invoke,
+);
+```
+
+Install the optional `ml-random-forest` peer to use that adapter. It supports
+regression and numeric-class classification; `n_estimators` in pipeline params
+maps to the library's `nEstimators` option. `fitFull()`/`predict()` and
+`exportModel()`/`importModel()` serve simple host workflows. Other synchronous
+classic-ML libraries can use `createJsEstimatorController()` directly. The JS
+estimator's predictions are contract-compatible with DAG-ML, but numerical
+parity with Python is only claimed for the n4m-backed portable methods path.
+No browser Python or deep-learning training runtime is required.
+
+`createN4mModelController()` uses the same fold/phase contract for any
+coefficient-based `@nirs4all/methods` model supported by `fitModel()` and
+`predictModel()`. Supply `modelType` (for example, `"PLSRegression"` or
+`"Ridge"`) and an initialized Methods binding. DAG-ML params may contain
+`n_components` and the Methods positional `params` vector. The adapter has
+no numerical implementation; its fold predictions are tested against direct
+Methods WASM calls at a `1e-12` absolute threshold.
 
 For a browser-only custom host, pair this package with `nirs4all-ui`: keep
 runtime loading and portable execution in `nirs4all`, and consume shared React

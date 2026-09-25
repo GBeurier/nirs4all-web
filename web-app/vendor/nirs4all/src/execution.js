@@ -23,13 +23,13 @@ const PLS = new Set([
 
 export async function runPortablePipeline(source, dataset, options = {}) {
   const definition = loadPipelineDefinition(source);
+  const plan = parseExecutionPlan(definition);
   const methods = options.methods ?? await loadMethodsWasm();
   if (typeof methods.loadModule === 'function') {
     await methods.loadModule();
   }
 
   const input = coerceDataset(dataset);
-  const plan = parseExecutionPlan(definition);
   const split = computeSplit(methods, plan.splitter, input);
   const train = selectRows(input.X, input.rows, input.cols, split.trainIndices);
   const test = selectRows(input.X, input.rows, input.cols, split.testIndices);
@@ -94,6 +94,10 @@ export async function runPortablePipeline(source, dataset, options = {}) {
     selected: stripVariantModel(selected),
     model: selected.model,
     targets: Array.from(yTest.data),
+    evaluation: {
+      scope: split.kind === 'all' ? 'training' : 'selection_validation',
+      independent_test: false,
+    },
   };
 }
 
@@ -144,10 +148,20 @@ export function parseExecutionPlan(source) {
     if (!step || typeof step !== 'object' || Array.isArray(step)) {
       throw new TypeError('Portable pipeline steps must be mapping objects.');
     }
+    if (modelStep) {
+      throw new Error('The model must be the final portable pipeline step.');
+    }
+    if ('class' in step && 'model' in step) {
+      throw new Error('A portable step cannot contain both class and model.');
+    }
 
     if (typeof step.class === 'string') {
       if (KENNARD_STONE.has(step.class)) {
-        splitter = { type: 'KennardStone', params: step.params ?? {} };
+        if (splitter) {
+          throw new Error('The optional splitter must appear once, before the model.');
+        }
+        const params = { ...step.params, test_size: numberParam(step.params?.test_size, 0.25, 'test_size') };
+        splitter = { type: 'KennardStone', params };
       } else if (SNV.has(step.class)) {
         preprocessing.push({ type: 'StandardNormalVariate', params: [] });
       } else if (SAVGOL.has(step.class)) {
@@ -281,7 +295,7 @@ function selectRows(data, rows, cols, indices) {
 
 function savgolParams(params) {
   const delta = numberParam(params.delta, 1, 'delta');
-  if (Math.abs(delta - 1) > Number.EPSILON) {
+  if (delta !== 1) {
     throw new Error('Portable Savitzky-Golay execution currently supports delta=1 only.');
   }
   return [
@@ -310,7 +324,7 @@ function savgolMode(value) {
     }
     throw new Error(`Unsupported Savitzky-Golay mode: ${value}`);
   }
-  const mode = Number(value);
+  const mode = integerParam(value, 4, 'mode', { min: 0 });
   if (Number.isInteger(mode) && mode >= 0 && mode <= 4) {
     return mode;
   }
@@ -318,11 +332,11 @@ function savgolMode(value) {
 }
 
 function componentValues(step) {
-  if (Array.isArray(step._range_)) {
+  if ('_range_' in step) {
     if (step.param !== 'n_components') {
       throw new Error("Portable execution only supports _range_ sweeps over 'n_components'.");
     }
-    if (step._range_.length !== 3) {
+    if (!Array.isArray(step._range_) || step._range_.length !== 3) {
       throw new Error('Invalid n_components _range_; expected [start, stop, positive_step].');
     }
     const start = integerParam(step._range_[0], undefined, 'n_components range start', { min: 1 });
@@ -331,11 +345,11 @@ function componentValues(step) {
     if (start > stop) {
       throw new Error('Invalid n_components _range_; start must be <= stop.');
     }
-    const values = [];
-    for (let value = start; value <= stop; value += stride) {
-      values.push(value);
+    const count = Math.floor((stop - start) / stride) + 1;
+    if (count > 10_000) {
+      throw new Error('Portable n_components sweep exceeds 10000 variants.');
     }
-    return values;
+    return Array.from({ length: count }, (_, index) => start + index * stride);
   }
   const params = step.model?.params ?? {};
   return [integerParam(params.n_components, 2, 'n_components', { min: 1 })];
@@ -363,6 +377,9 @@ function integerParam(value, fallback, label, options = {}) {
   const n = numberParam(value, fallback, label);
   if (!Number.isInteger(n)) {
     throw new RangeError(`${label} must be an integer.`);
+  }
+  if (n < -2147483648 || n > 2147483647) {
+    throw new RangeError(`${label} is outside i32 range.`);
   }
   if (options.min != null && n < options.min) {
     throw new RangeError(`${label} must be >= ${options.min}.`);

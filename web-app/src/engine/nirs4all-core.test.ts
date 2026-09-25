@@ -64,10 +64,10 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(existsSync(new URL('../../scripts/sync-core-shim.mjs', import.meta.url))).toBe(true)
     expect(existsSync(new URL('../../scripts/sync-lite-shim.mjs', import.meta.url))).toBe(false)
     expect(syncScript).not.toMatch(/NIRS4ALL_LITE|nirs4all-lite|sync-lite/)
-    expect(vendorPkg).toMatchObject({ name: 'nirs4all', version: '0.3.27' })
-    expect(provenance).toContain('89787477bd7883ceb26b51fa3228bca13db85f6e')
-    expect(provenance).toContain('dd55134aa9439ac4ac194bbcd7b5aa3ac5364de789672546c64e76cf4500b177')
-    expect(syncScript).toContain('ace0b9079d98f6411bf02a483ea27f0767b6a1ebb1415740e31b12a892a80f44')
+    expect(vendorPkg).toMatchObject({ name: 'nirs4all', version: '0.3.32' })
+    expect(provenance).toContain('57e372202989becb77f3b706b7ab9a5f0014e9f7')
+    expect(provenance).toContain('8e28bf41ca7afa8c36b63c989fb3b316065d29960d3bd985082a04f31b8fd4ea')
+    expect(syncScript).toContain('66c39cdde1482203800518b614fb16fa3dce3bc4f02197cc71778c98b24a4d0a')
     expect(syncScript).toContain('69b613bce35ccb34ee328a4257f0254ce58719d95d6519ac38ff0eb81710b7e4')
   })
 
@@ -83,7 +83,7 @@ describe('nirs4all-core aggregate loaders', () => {
 
     expect(optional.status).toBe(0)
     expect(optional.stderr).toContain('sibling identity mismatch')
-    expect(optional.stderr).toContain('verified pinned 0.3.27 package independently')
+    expect(optional.stderr).toContain('verified pinned 0.3.32 package independently')
 
     const required = spawnSync(process.execPath, [script, '--check'], {
       cwd,
@@ -194,7 +194,7 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(manifest.artifactContracts.every((item) => item.consumerLevel.javascript_wasm === 'metadata')).toBe(true)
     expect(manifest.runtimeContracts.map((item) => item.surface)).toEqual(manifest.runtimeSurfaces)
     expect(manifest.runtimeContracts.filter((item) => item.serializedModelPredict).map((item) => item.surface)).toEqual([
-      'javascript_wasm',
+      'javascript_wasm', 'rust',
     ])
     expect(manifest.runtimeContracts.find((item) => item.surface === 'javascript_wasm')?.predictEntrypoint).toBe(
       'predictPortablePipeline',
