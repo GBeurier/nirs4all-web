@@ -32,6 +32,39 @@ function resolved(name, value) {
   return value;
 }
 
+// Worker postMessage/structuredClone strips ml-matrix prototypes from CART
+// leaves. ml-cart.load accepts a dense array and rebuilds the matrix itself.
+function restoreClassifierLeaves(payload) {
+  const restoreNode = (node) => {
+    if (!node || typeof node !== 'object') return node;
+    const distribution = node.distribution;
+    let repaired = distribution;
+    if (distribution && !Array.isArray(distribution)
+      && typeof distribution.maxRowIndex !== 'function'
+      && Number.isInteger(distribution.rows) && Number.isInteger(distribution.columns)
+      && Array.isArray(distribution.data)) {
+      repaired = distribution.data.map((row) => Array.from(
+        { length: distribution.columns }, (_, column) => row[column],
+      ));
+      if (repaired.length !== distribution.rows
+        || repaired.some((row) => row.some((value) => !Number.isFinite(value)))) {
+        throw new TypeError('Invalid ml.js classifier leaf distribution.');
+      }
+    }
+    return { ...node, ...(repaired !== distribution ? { distribution: repaired } : {}),
+      ...(node.left ? { left: restoreNode(node.left) } : {}),
+      ...(node.right ? { right: restoreNode(node.right) } : {}) };
+  };
+  if (payload?.name === 'RFClassifier') {
+    return { ...payload, baseModel: { ...payload.baseModel,
+      estimators: payload.baseModel.estimators.map((tree) => ({
+        ...tree, root: restoreNode(tree.root),
+      })) } };
+  }
+  if (payload?.name === 'DTClassifier') return { ...payload, root: restoreNode(payload.root) };
+  return payload;
+}
+
 /** Load the browser-oriented ml.js collection only when a consumer needs it. */
 export async function loadMlJs() {
   try {
@@ -89,7 +122,7 @@ export function createMlJsEstimator({ ml, estimatorName, params = {} }) {
       if (!model) throw new Error('Fit this ml.js estimator before export.');
       return model.toJSON();
     },
-    load(payload) { model = Constructor.load(payload); return api; },
+    load(payload) { model = Constructor.load(restoreClassifierLeaves(payload)); return api; },
   };
   return api;
 }
