@@ -29,7 +29,10 @@ npm run smoke:rt-fallback:transitional # transition build proves diagnosed fallb
 
 The `strict-wasm` product profile fails closed if native/WASM execution, the
 `dag-ml-data` provider, or the native scheduler cannot serve the request. It
-also rejects JavaScript model prediction and `allowFallback:true`. The
+also rejects the legacy JavaScript PLS fallback and `allowFallback:true`.
+The explicit ml.js random forest nodes run synchronously inside DAG-ML's
+browser scheduler; preprocessing still uses libn4m WASM. Their model JSON is
+specific to ml.js and is not a portable n4m artifact. The
 development/test and single-file profiles intentionally retain the explicit
 transitional path while migration is in progress; neither profile permits a
 remote compute provider.
@@ -53,8 +56,8 @@ status is separate from the autonomous strict/transitional WEB-001 gates.
         (Kennard-Stone, SNV, Savitzky-Golay, PLS, n_components range sweep)
  broader pipeline (catalog) → dag-ml WASM compiles the DSL → GraphSpec, then its SequentialScheduler
         EXECUTES the cross-validation in-browser: per (node, fold) it invokes a JS controller that
-        runs preprocessing + PLS/PLS-DA via libn4m WASM; dag-ml owns the fold loop, OOF assembly
-        (by sampleId) and lineage. Refit (full-train) is fit directly with libn4m.
+        runs preprocessing via libn4m WASM and the selected n4m or ml.js model; dag-ml owns the fold loop, OOF assembly
+        (by sampleId) and lineage. Refit (full-train) uses the selected model provider.
         → RunResult (refit/CV/folds + predictions + dag-ml lineage) → results / residuals / predict
 ```
 

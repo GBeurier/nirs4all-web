@@ -3,22 +3,27 @@ import { loadMethodsWasm, loadPipelineDefinition } from './index.js';
 const KENNARD_STONE = new Set([
   'nirs4all.operators.splitters.KennardStoneSplitter',
   'nirs4all.operators.splitters.splitters.KennardStoneSplitter',
+  'n4m.KennardStone',
 ]);
 
 const SNV = new Set([
   'nirs4all.operators.transforms.SNV',
   'nirs4all.operators.transforms.StandardNormalVariate',
   'nirs4all.operators.transforms.scalers.StandardNormalVariate',
+  'n4m.SNV',
 ]);
 
 const SAVGOL = new Set([
   'nirs4all.operators.transforms.SavitzkyGolay',
   'nirs4all.operators.transforms.nirs.SavitzkyGolay',
+  'n4m.SavitzkyGolay',
 ]);
 
 const PLS = new Set([
   'sklearn.cross_decomposition.PLSRegression',
   'sklearn.cross_decomposition._pls.PLSRegression',
+  'n4m.PLS',
+  'n4m.PLSRegression',
 ]);
 
 export async function runPortablePipeline(source, dataset, options = {}) {

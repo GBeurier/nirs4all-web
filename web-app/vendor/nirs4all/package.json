@@ -1,12 +1,16 @@
 {
   "name": "nirs4all",
-  "version": "0.3.32",
+  "version": "0.3.33",
   "description": "Portable nirs4all aggregate binding for JavaScript and WASM",
   "type": "module",
   "exports": {
     ".": {
       "types": "./src/index.d.ts",
       "default": "./src/index.js"
+    },
+    "./classic-ml": {
+      "types": "./src/classic-ml.d.ts",
+      "default": "./src/ml-estimator-adapters.js"
     }
   },
   "types": "./src/index.d.ts",
@@ -48,8 +52,11 @@
     "yaml": "^2.9.0"
   },
   "devDependencies": {
+    "@tensorflow/tfjs": "^3.21.0",
     "dag-ml-wasm": "^0.3.27",
+    "ml": "^8.0.0",
     "ml-random-forest": "^2.1.0",
+    "scikitjs": "^1.24.0",
     "typescript": "5.9.3"
   },
   "peerDependencies": {
@@ -57,9 +64,12 @@
     "@nirs4all/formats-wasm": "*",
     "@nirs4all/io-wasm": "*",
     "@nirs4all/methods": "*",
+    "@tensorflow/tfjs": "^3.21.0",
     "dag-ml-data-wasm": "*",
     "dag-ml-wasm": "*",
-    "ml-random-forest": "^2.1.0"
+    "ml": "^8.0.0",
+    "ml-random-forest": "^2.1.0",
+    "scikitjs": "^1.24.0"
   },
   "peerDependenciesMeta": {
     "@nirs4all/datasets-wasm": {
@@ -81,6 +91,15 @@
       "optional": true
     },
     "ml-random-forest": {
+      "optional": true
+    },
+    "ml": {
+      "optional": true
+    },
+    "scikitjs": {
+      "optional": true
+    },
+    "@tensorflow/tfjs": {
       "optional": true
     }
   },

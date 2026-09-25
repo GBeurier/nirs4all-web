@@ -109,6 +109,43 @@ coefficient-based `@nirs4all/methods` model supported by `fitModel()` and
 no numerical implementation; its fold predictions are tested against direct
 Methods WASM calls at a `1e-12` absolute threshold.
 
+### Classical JavaScript ML and sklearn-style interfaces
+
+Import these optional adapters from `nirs4all/classic-ml`; the default entry
+does not load their ML dependencies.
+Call `loadMlJs()` or `loadScikitJs()` during setup, then pass the loaded module
+to the synchronous controller factory. Fit, predict and DAG-ML callbacks stay
+synchronous for the supported controllers.
+
+`loadMlJs()` loads the optional [`ml`](https://github.com/mljs/ml) collection
+on demand. `createMlJsEstimator()` wraps its random forests, decision trees and
+k-nearest-neighbor classifier with `getParams()`, `setParams()`, `fit()` and
+`predict()`. `createMlJsPca()` adds `fit()`, `transform()`, `fitTransform()` and
+`inverseTransform()` around ml.js PCA. `createMlJsController()` connects the
+supported supervised models to the native DAG-ML fold and phase contract. The
+collection also exposes its matrix, decomposition and statistics tools directly
+through `loadMlJs()`; this is a selected numerical toolbox, not the entire SciPy
+API. Model JSON belongs to ml.js and is not a sklearn pickle or a portable n4m
+artifact.
+
+`loadScikitJs()` loads optional `scikitjs` and a compatible TensorFlow.js 3.x
+backend only when requested. `createScikitJsEstimator()` exposes the same
+structural estimator/transformer interface for its classes, preserving whether
+their `fit()` returns immediately or returns a Promise. Its output tensors are
+converted to ordinary arrays and disposed at the boundary. Sync decision-tree
+classifiers and regressors can also use `createScikitJsController()` with the
+native DAG-ML WASM scheduler. Other scikitjs estimators, including its linear
+models, train asynchronously and cannot run inside the current synchronous
+DAG-ML WASM callback. Their host API remains available; forcing a Promise into
+the synchronous callback would break fold/seed validation. Scikitjs models use
+`exportModelAsync()` and `importModelAsync()` on the DAG controller because its
+serializer is asynchronous.
+
+Both libraries are optional peer dependencies. They provide familiar classical
+ML APIs in JavaScript, but no numerical equality with sklearn is claimed for
+their independently implemented algorithms. The Methods-backed portable subset
+retains its separate Python oracle gate.
+
 For a browser-only custom host, pair this package with `nirs4all-ui`: keep
 runtime loading and portable execution in `nirs4all`, and consume shared React
 components / view-model helpers / brand assets from `nirs4all-ui`. The
