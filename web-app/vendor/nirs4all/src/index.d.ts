@@ -26,7 +26,7 @@ export interface PipelineDefinition {
   pipeline: unknown[];
 }
 
-export type RuntimeSurface = 'python' | 'r' | 'javascript_wasm' | 'rust' | 'matlab_octave';
+export type RuntimeSurface = 'python' | 'javascript_wasm' | 'rust' | 'matlab_octave';
 export type CapabilityLevel = 'metadata' | 'plan' | 'execute-local' | 'execute-remote' | 'parity-validated';
 
 export interface RuntimeContract {
@@ -189,7 +189,15 @@ export interface JsEstimatorController {
     nFeatures: number;
     model: unknown;
   };
+  exportModelAsync(): Promise<{
+    schema: 'nirs4all.js-estimator-model.v1';
+    controllerId: string;
+    controllerVersion: string;
+    nFeatures: number;
+    model: unknown;
+  }>;
   importModel(payload: unknown): void;
+  importModelAsync(payload: unknown): Promise<void>;
 }
 
 export function createDagMlNodeResult(

@@ -4,6 +4,7 @@
 // still prefers the inlined libn4m WASM backend; pure-JS NIPALS is only a final
 // fallback for legacy PLS-family runs in the explicit transitional profile.
 import { jsBackend, loadLibn4mBackend } from './backends'
+import { isMlJsModelType, loadMlJsBackend } from './mljs-backend'
 import { isArchiveV2Model, predictArchiveV2 } from './archive-v2'
 import { DagMlEngine } from './dagml-engine'
 import { activeOrGenerator, dagMlAvailable, expandGeneratorVariants, hasUnsupportedGenerator } from './dagml'
@@ -94,14 +95,18 @@ export class MainEngine implements Engine {
     // available so catalog models such as AOM/POP do not fall back to slow or
     // unsupported JS behavior.
     let backend = jsBackend
-    try {
-      backend = await loadLibn4mBackend()
-    } catch (e) {
-      opts.onProgress?.({
-        phase: 'preprocess',
-        pct: 1,
-        message: `libn4m unavailable in offline mode — using JS fallback (${e instanceof Error ? e.message : String(e)})`,
-      })
+    if (dsl.model && isMlJsModelType(dsl.model.type)) {
+      backend = await loadMlJsBackend()
+    } else {
+      try {
+        backend = await loadLibn4mBackend()
+      } catch (e) {
+        opts.onProgress?.({
+          phase: 'preprocess',
+          pct: 1,
+          message: `libn4m unavailable in offline mode — using JS fallback (${e instanceof Error ? e.message : String(e)})`,
+        })
+      }
     }
     // Handle a generator-OR pipeline by expanding alternatives + selecting the
     // best by the canonical metric (host argmin/argmax — dag-ml scheduling is off
@@ -151,6 +156,9 @@ export class MainEngine implements Engine {
     if (backendIdOf(model) === 'libn4m-wasm') {
       const backend = await loadLibn4mBackend()
       return predictPipeline(model, Xnew, nSamples, nFeatures, backend)
+    }
+    if (backendIdOf(model) === 'mljs-classic') {
+      return predictPipeline(model, Xnew, nSamples, nFeatures, await loadMlJsBackend())
     }
     if (this.policy.jsBackendFallback === 'forbid') {
       throw new RtErrorException(makeRtError({

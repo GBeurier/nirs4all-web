@@ -64,9 +64,9 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(existsSync(new URL('../../scripts/sync-core-shim.mjs', import.meta.url))).toBe(true)
     expect(existsSync(new URL('../../scripts/sync-lite-shim.mjs', import.meta.url))).toBe(false)
     expect(syncScript).not.toMatch(/NIRS4ALL_LITE|nirs4all-lite|sync-lite/)
-    expect(vendorPkg).toMatchObject({ name: 'nirs4all', version: '0.3.32' })
-    expect(provenance).toContain('57e372202989becb77f3b706b7ab9a5f0014e9f7')
-    expect(provenance).toContain('4daf17413a3b2501bbe4ae13ef6cdf5fce0898b71f096af4e2a7bdb825159be5')
+    expect(vendorPkg).toMatchObject({ name: 'nirs4all', version: '0.3.33' })
+    expect(provenance).toContain('204517482f99c017fbc8210bd1eed5c8c13a0f3e')
+    expect(provenance).toContain('8290fe6e73a58f2c3a451ad1b209403f677461b1eef5ecffde57311c240f903e')
     expect(syncScript).toContain('b4f15573714f6de1eb24d04eb1fb498e2d492563ef117c8a9060a9bb44b14911')
     expect(syncScript).toContain('69b613bce35ccb34ee328a4257f0254ce58719d95d6519ac38ff0eb81710b7e4')
   })
@@ -83,7 +83,7 @@ describe('nirs4all-core aggregate loaders', () => {
 
     expect(optional.status).toBe(0)
     expect(optional.stderr).toContain('sibling identity mismatch')
-    expect(optional.stderr).toContain('verified pinned 0.3.32 package independently')
+    expect(optional.stderr).toContain('verified pinned 0.3.33 package independently')
 
     const required = spawnSync(process.execPath, [script, '--check'], {
       cwd,
@@ -140,7 +140,7 @@ describe('nirs4all-core aggregate loaders', () => {
     const manifest = capabilityManifest()
 
     expect(manifest.schema).toBe('nirs4all-core.capabilities.v1')
-    expect(manifest.runtimeSurfaces).toEqual(['python', 'r', 'javascript_wasm', 'rust', 'matlab_octave'])
+    expect(manifest.runtimeSurfaces).toEqual(['python', 'javascript_wasm', 'rust', 'matlab_octave'])
     expect(manifest.runtimeContracts).toEqual(runtimeContracts)
     expect(manifest.artifactContracts).toEqual(artifactContracts)
     expect(manifest.artifactContracts.map((item) => item.id)).toEqual([

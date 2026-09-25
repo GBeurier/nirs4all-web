@@ -2,7 +2,7 @@
   "name": "nirs4all-core-wasm-native",
   "type": "module",
   "description": "Native Archive V2 validation bridge for nirs4all-core WASM",
-  "version": "0.3.32",
+  "version": "0.3.33",
   "license": "CECILL-2.1 OR AGPL-3.0-or-later",
   "repository": {
     "type": "git",
