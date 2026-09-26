@@ -1,7 +1,9 @@
 #!/usr/bin/env node
-// Catalog ↔ ABI drift gate. Every n4m_* symbol referenced by the node catalog
-// must be an exported libn4m symbol upstream — so the demo never advertises a
-// method the engine can't run (e.g. OPLS). Fails CI on drift.
+// Catalog ↔ ABI drift gate. Every n4m_* symbol referenced by the hand-written
+// node catalog entries must be an exported libn4m symbol upstream — so the demo
+// never advertises a method the engine can't run (e.g. OPLS). Native nodes are
+// generated from the n4m manifest instead (src/catalog/native.test.ts). Fails CI
+// on drift.
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'

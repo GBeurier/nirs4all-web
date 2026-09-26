@@ -31,6 +31,8 @@
     "smoke:published-custom-host": "node scripts/smoke-published-custom-host.mjs",
     "smoke:artifacts": "node scripts/run-smokes.mjs n4a-roundtrip pipeline-repository",
     "validate:catalog": "node scripts/validate-catalog.mjs",
+    "n4m:manifest": "node scripts/sync-n4m-manifest.mjs",
+    "check:n4m-manifest": "node scripts/sync-n4m-manifest.mjs --check",
     "vendor:core": "node scripts/sync-core-shim.mjs",
     "check:core-shim": "node scripts/sync-core-shim.mjs --check",
     "legal:components": "node scripts/sync-component-legal.mjs",

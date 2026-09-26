@@ -1,6 +1,7 @@
 import type { Mat } from './algo/linalg'
 import { type PlsModel, plsFit, plsPredict } from './algo/pls'
-import { LEGACY_PLS_MODELS, modelParamVector } from './methods/models'
+import { LEGACY_PLS_MODELS } from './methods/models'
+import { legacyParamVector } from './methods/params'
 import { jsPreprocessor, libn4mPreprocessor } from './methods/preproc'
 import { loadMethodsWasm } from './nirs4all-core'
 import type { ModelBackend } from './orchestrate'
@@ -96,7 +97,7 @@ export async function loadLibn4mBackend(): Promise<ModelBackend> {
       // Canonical/SVD PLS extract joint X/Y directions, so their component
       // count is bounded by Y as well as X (including restored older presets).
       const components = spec.type === 'PLSCanonical' || spec.type === 'PLSSVD' ? Math.min(nComp, Y.cols) : nComp
-      return n4m.fitModel(spec.type, Xm, Ym, components, modelParamVector(spec.type, spec.params))
+      return n4m.fitModel(spec.type, Xm, Ym, components, legacyParamVector(nodeByType(spec.type), spec.params))
     },
     predict: (model, X) => {
       const r = n4m.predictModel(model as ReturnType<typeof n4m.fitModel>, { data: X.data, rows: X.rows, cols: X.cols })

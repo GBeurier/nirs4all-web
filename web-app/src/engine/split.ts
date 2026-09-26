@@ -4,6 +4,8 @@
 // dataset's partition: its test rows are held out of CV, the train rows feed the
 // CV fold builder. Predict-partition rows (if any) are left untouched. The
 // numerics never live here; this only marshals X/Y and rewrites partitions.
+import { nodeByType } from '@/catalog/nodes'
+import { legacyParamValue } from './methods/params'
 import { loadMethodsWasm } from './nirs4all-core'
 import type { MaterializedDataset, PipelineStep, Partition } from './types'
 
@@ -46,12 +48,13 @@ export async function applySplit(ds: MaterializedDataset, step: PipelineStep): P
   const X = { data: Xd, rows: nu, cols: p }
   const Y = { data: Yd, rows: nu, cols: 1 }
 
+  const strategy = nodeByType(step.type)?.params.find((p) => p.name === 'strategy')
   const opts = {
     testSize: Math.min(0.6, Math.max(0.05, num(step.params.test_size, 0.25))),
     seed: num(step.params.seed, 42) >>> 0,
     maxIter: num(step.params.max_iter, 100),
     nBins: num(step.params.n_bins, 5),
-    strategy: num(step.params.strategy, 0),
+    strategy: strategy ? legacyParamValue(strategy, step.params.strategy) : 0,
   }
   const mask = n4m.computeSplit(kind, X, Y_SPLIT_KINDS.has(kind) ? Y : null, opts)
 

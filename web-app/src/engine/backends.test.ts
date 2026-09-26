@@ -64,7 +64,7 @@ describe('catalog model defaults against staged WASM', () => {
       name: 'ECR classification',
       steps: [
         { id: 'snv', type: 'StandardNormalVariate', params: {} },
-        { id: 'sg', type: 'SavitzkyGolay', params: { window: 17, polyorder: 2, deriv: 2 } },
+        { id: 'sg', type: 'SavitzkyGolay', params: { window_length: 17, polyorder: 2, deriv: 2 } },
       ],
       model: { id: 'model', type: 'ECR', params: defaultParams('ECR') },
     }, backend, train, test)

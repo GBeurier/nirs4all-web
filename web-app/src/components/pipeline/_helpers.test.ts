@@ -10,15 +10,15 @@ describe('normalizeImportedPipeline', () => {
   it('normalizes a valid pipeline, filling ids/params/cv', () => {
     const p = normalizeImportedPipeline({
       name: 'My pipe',
-      steps: [{ type: 'StandardNormalVariate' }, { type: 'SavitzkyGolay', params: { window: 15 } }],
+      steps: [{ type: 'StandardNormalVariate' }, { type: 'SavitzkyGolay', params: { window_length: 15 } }],
       model: { type: 'PLS', params: { n_components: 8 } },
     })
     expect(p).not.toBeNull()
     expect(p!.name).toBe('My pipe')
     expect(p!.steps).toHaveLength(2)
     expect(p!.steps.every((s) => typeof s.id === 'string' && s.id.length > 0)).toBe(true)
-    // catalog defaults merged for SavitzkyGolay (polyorder/deriv) + provided window kept
-    expect(p!.steps[1].params.window).toBe(15)
+    // catalog defaults merged for SavitzkyGolay (polyorder/deriv) + provided window_length kept
+    expect(p!.steps[1].params.window_length).toBe(15)
     expect(p!.steps[1].params).toHaveProperty('polyorder')
     expect(p!.model!.type).toBe('PLS')
     expect(p!.model!.params.n_components).toBe(8)
@@ -60,11 +60,11 @@ describe('normalizeImportedPipeline', () => {
 
   it('carries per-step sweeps and variants through import (not dropped)', () => {
     const p = normalizeImportedPipeline({
-      steps: [{ type: 'SavitzkyGolay', params: { window: 11 }, sweeps: { window: { type: 'range', from: 7, to: 15, step: 2 } } }],
+      steps: [{ type: 'SavitzkyGolay', params: { window_length: 11 }, sweeps: { window_length: { type: 'range', from: 7, to: 15, step: 2 } } }],
       model: { type: 'PLS', sweeps: { n_components: { type: 'or', choices: [5, 10, 20] } } },
     })
     expect(p).not.toBeNull()
-    expect(p!.steps[0].sweeps?.window).toEqual({ type: 'range', from: 7, to: 15, step: 2 })
+    expect(p!.steps[0].sweeps?.window_length).toEqual({ type: 'range', from: 7, to: 15, step: 2 })
     expect(p!.model!.sweeps?.n_components).toEqual({ type: 'or', choices: [5, 10, 20] })
   })
 

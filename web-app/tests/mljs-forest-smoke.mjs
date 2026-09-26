@@ -31,7 +31,7 @@ try {
   await classificationPage.locator('button').filter({ hasText: 'Meat species' }).first().click()
   await classificationPage.waitForSelector('text=/samples ×/', { timeout: 20000 })
   await classificationPage.locator('[data-step="pipeline"]').click()
-  await classificationPage.getByRole('button', { name: /PLS-DA/ }).first().click()
+  await classificationPage.getByRole('button', { name: /PLS LDA/ }).first().click()
   await classificationPage.locator('#model-select').click()
   await classificationPage.getByRole('option', { name: 'Random forest classifier (ml.js)', exact: true }).click()
   await classificationPage.getByRole('button', { name: /Run pipeline/i }).click()

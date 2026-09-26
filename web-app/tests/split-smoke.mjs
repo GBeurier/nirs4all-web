@@ -35,7 +35,7 @@ try {
   // open the "Add a train/test split" dropdown and pick Kennard–Stone
   await page.locator('[data-add-split]').click()
   await page.waitForTimeout(200)
-  await page.getByRole('menuitem').filter({ hasText: /^Kennard–Stone/ }).first().click()
+  await page.getByRole('menuitem').filter({ hasText: /^Kennard Stone/ }).first().click()
   await page.waitForTimeout(250)
   const body1 = (await page.textContent('body')) || ''
   if (/Kennard/.test(body1)) console.log('✓ Kennard–Stone split node added to the canvas')

@@ -26,7 +26,7 @@ async function openSample(page, sample) {
   if (!keepPreprocessing) {
     while (await remove.count() > 1) await remove.first().click()
   }
-  await page.getByRole('button', { name: /PLS Regression|PLS-DA/ })
+  await page.getByRole('button', { name: /PLS Regression|PLS LDA/ })
     .filter({ has: remove }).last().click()
 }
 

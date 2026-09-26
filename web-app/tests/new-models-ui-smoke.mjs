@@ -31,20 +31,20 @@ try {
   await page.locator('[data-step="pipeline"]').click()
   await page.waitForTimeout(300)
 
-  // select the terminal model node, then switch the estimator to MB-PLS
+  // select the terminal model node, then switch the estimator to MB PLS
   await page.getByRole('button', { name: /PLS Regression/ }).first().click()
   await page.waitForTimeout(200)
   await page.locator('#model-select').click()
   await page.waitForTimeout(200)
-  await page.getByRole('option', { name: 'MB-PLS', exact: true }).click()
+  await page.getByRole('option', { name: 'MB PLS', exact: true }).click()
   await page.waitForTimeout(200)
   const body = (await page.textContent('body')) || ''
-  if (/MB-PLS/.test(body)) console.log('✓ estimator switched to MB-PLS (new model)')
-  else fail('expected MB-PLS to be selected')
+  if (/MB PLS/.test(body)) console.log('✓ estimator switched to MB PLS (new model)')
+  else fail('expected MB PLS to be selected')
 
   await page.getByRole('button', { name: /Run pipeline/i }).click()
   await page.waitForSelector('text=/CV Scores/', { timeout: 60000 })
-  console.log('✓ MB-PLS pipeline executed (CV Scores rendered)')
+  console.log('✓ MB PLS pipeline executed (CV Scores rendered)')
 
   const body2 = (await page.textContent('body')) || ''
   if (/RMSE/i.test(body2)) console.log('✓ RMSE metric present')
