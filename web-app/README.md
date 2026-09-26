@@ -83,7 +83,7 @@ The browser app also serves as the reference for a **client-side custom host** t
 - `nirs4all` (vendored from `../../nirs4all-core/bindings/wasm`) for browser-safe runtime loaders
   and the portable execution subset;
 - `nirs4all-ui` from the exact content-addressed
-  `vendor/npm/nirs4all-ui-0.1.13.tgz` artifact for reusable components, pure
+  `vendor/npm/nirs4all-ui-0.1.14.tgz` artifact for reusable components, pure
   view-model helpers, and shared brand assets. `npm run check:ui-package`
   verifies its SHA-256, npm integrity, source commit/tree, package exports, and
   provenance receipt before the app gate.
