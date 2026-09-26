@@ -371,13 +371,13 @@
         },
         {
           "path": "PROVENANCE.json",
-          "size": 6277,
-          "sha256": "69f1ab38e32243e0c69f31997bb1ddb91047fbdf2b5ccafde0432045ed56fd1a"
+          "size": 8788,
+          "sha256": "16b80d113e497d983d06fe8dade18489fc0dccde98a71615917594e7f26217ef"
         },
         {
           "path": "THIRD_PARTY_LICENSES.md",
-          "size": 4782,
-          "sha256": "05105be116e1d57a7192c2ffa59d168e317f094cd98caa179527f7e92e3739e9"
+          "size": 4804,
+          "sha256": "0f61b74f895a6fa4c8026bf465da107037a3d291bc9f2fe5b3f030585b6f71c9"
         },
         {
           "path": "THIRD_PARTY_NOTICES.md",

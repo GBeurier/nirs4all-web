@@ -16,11 +16,11 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED_SOURCE = Object.freeze({
-  commit: '48ad1e5a50844f68c2b99e93b02ad6a3b491c07b',
-  tree: 'f2eaa3c46629c26d11913a25bff723f9a9cefbc9',
-  version: '1.0.15',
-  runtimeVersion: '1.0.15+abi.2.5.0',
-  abi: '2.5.0',
+  commit: '9a157fbd07877bf57cce58b9cc31587f0a6571d7',
+  tree: '28eb046d48a8dbe53e566ad53ee27e610a097595',
+  version: '1.1.0',
+  runtimeVersion: '1.1.0+abi.2.13.0',
+  abi: '2.13.0',
   emscripten: '3.1.74',
 })
 const PACKAGE_NAME = '@nirs4all/methods'
@@ -29,6 +29,10 @@ const GENERATED_FILES = Object.freeze([
   'config.js',
   'context.d.ts',
   'context.js',
+  'estimatorRoles.d.ts',
+  'estimatorRoles.js',
+  'estimatorRolesGenerated.d.ts',
+  'estimatorRolesGenerated.js',
   'ffi.d.ts',
   'ffi.js',
   'index.d.ts',
@@ -39,8 +43,18 @@ const GENERATED_FILES = Object.freeze([
   'model.js',
   'n4m.js',
   'n4m.wasm',
+  'nativeAugmentation.d.ts',
+  'nativeAugmentation.js',
+  'nativeModel.d.ts',
+  'nativeModel.js',
+  'nativePreprocessingPipeline.d.ts',
+  'nativePreprocessingPipeline.js',
+  'nativeSplitter.d.ts',
+  'nativeSplitter.js',
   'preprocessing.d.ts',
   'preprocessing.js',
+  'selection.d.ts',
+  'selection.js',
   'serialization.d.ts',
   'serialization.js',
   'types.d.ts',
@@ -126,6 +140,36 @@ async function assertRuntimeWitness(output) {
   if (prediction.rows !== 4 || prediction.cols !== 1 || !Number.isFinite(maxError) || maxError > 1e-10) {
     throw new Error(`Methods PLS fit/predict witness failed (max error ${maxError})`)
   }
+  // Generic role API: fit by method id, export N4ME, re-import and predict identically.
+  const estimator = new (module.methodClass('models.pls.pls_regression'))()
+  estimator.params = { n_components: 1 }
+  estimator.fit(X, Y)
+  const restored = module.NativeEstimator.fromN4me(estimator.toN4me())
+  const direct = estimator.predict(X).data
+  const replayed = restored.predict(X).data
+  estimator.dispose()
+  restored.dispose()
+  if (restored.methodId !== 'models.pls.pls_regression' || direct.some((value, index) => value !== replayed[index])) {
+    throw new Error('Methods estimator-role N4ME round-trip witness failed')
+  }
+}
+
+/** The published npm package must carry exactly the bytes built here. */
+function assertRegistryPackage(output) {
+  const packRoot = join(proofRoot, 'registry')
+  mkdirSync(packRoot, { recursive: true })
+  const [packed] = JSON.parse(command('npm', ['pack', `${PACKAGE_NAME}@${EXPECTED_SOURCE.version}`, '--json', '--pack-destination', packRoot], { cwd: packRoot, capture: true }))
+  command('tar', ['-xzf', join(packRoot, packed.filename), '-C', packRoot], { capture: true })
+  const published = inventory(join(packRoot, 'package', 'dist'))
+  if (JSON.stringify(published) !== JSON.stringify(GENERATED_FILES)) {
+    throw new Error(`published ${PACKAGE_NAME}@${EXPECTED_SOURCE.version} inventory differs: ${published.join(', ')}`)
+  }
+  for (const name of GENERATED_FILES) {
+    if (sha256(join(packRoot, 'package', 'dist', name)) !== sha256(join(output, name))) {
+      throw new Error(`published ${PACKAGE_NAME}@${EXPECTED_SOURCE.version} differs from the source build: ${name}`)
+    }
+  }
+  return { tarball: packed.filename, integrity: packed.integrity, shasum: packed.shasum, byte_identical: true }
 }
 
 if (!existsSync(bindingRoot)) throw new Error(`nirs4all-methods JS binding not found: ${bindingRoot}`)
@@ -191,6 +235,7 @@ try {
   if (JSON.stringify(hashesA) !== JSON.stringify(hashesB)) {
     throw new Error('nirs4all-methods WASM A/B builds are not byte-identical')
   }
+  const registry = assertRegistryPackage(outputs[0])
 
   mkdirSync(destination, { recursive: true })
   const allowed = new Set([...STAGED_FILES, 'PROVENANCE.json'])
@@ -222,7 +267,8 @@ try {
       typescript: command(process.execPath, [tsc, '--version'], { capture: true }),
     },
     reproducibility: { independent_build_directories: 2, byte_identical: true },
-    witnesses: { runtime_version: true, abi_version: true, pls_fit_predict: true },
+    registry: { package: `${PACKAGE_NAME}@${EXPECTED_SOURCE.version}`, ...registry },
+    witnesses: { runtime_version: true, abi_version: true, pls_fit_predict: true, estimator_role_n4me: true },
     legal_payload: { included: true, files: LEGAL_FILES },
     files: STAGED_FILES.map((name) => ({
       path: name,
