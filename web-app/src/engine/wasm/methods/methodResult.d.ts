@@ -22,6 +22,8 @@ export declare class MethodResult {
     matrix(name: string): Matrix;
     /** Read a named int32 vector. */
     vectorInt(name: string): Int32Array;
+    /** Read a named int64 vector without narrowing its elements to JS numbers. */
+    vectorInt64(name: string): BigInt64Array;
     /** Read a named scalar (returns NaN if not present). */
     scalar(name: string): number;
     destroy(): void;

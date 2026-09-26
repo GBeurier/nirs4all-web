@@ -106,7 +106,10 @@ export function predictPls(model, X_new) {
  * @param X row-major (n × p) input matrix.
  * @param Y row-major (n × q) target matrix.
  * @param n_components number of latent components (used by the PLS family).
- * @param params positional hyper-parameter vector for the model.
+ * @param params positional hyper-parameter vector for the model. For
+ *   GroupSparsePLS this is `[group_lambda, ...group_assignment]`, with exactly
+ *   one non-negative integer group ID per input feature; no implicit grouping
+ *   is applied.
  */
 export function fitModel(model, X, Y, n_components, params = []) {
     if (X.rows !== Y.rows) {
@@ -134,7 +137,7 @@ export function fitModel(model, X, Y, n_components, params = []) {
             coefsBuf.ptr, xmBuf.ptr, ymBuf.ptr, interBuf.ptr,
             hasInterBuf, 0]);
         checkStatus(status);
-        // Only models with a genuine affine intercept (currently Ridge) report
+        // Only models with a genuine affine intercept (Ridge and MBPLS) report
         // has_intercept=1; the PLS/PCR family and the PLS-based Tier-B fits
         // predict via the centred form and carry no intercept (kept null so a
         // caller never adds a misleading zero/y_mean term to x.B).
@@ -176,7 +179,7 @@ export function predictModel(model, X_new) {
     // AOM-PLS (and any future affine model) carries input-space coefficients +
     // a genuine intercept and zero means — it predicts on RAW X via the
     // explicit-intercept form  pred = intercept + x.B. Every centred model
-    // (PLS family + the Tier-B fits, including Ridge) carries intercept = null
+    // (PLS family + centred Tier-B fits) carries intercept = null
     // and predicts via  pred = y_mean + (x - x_mean).B. The C helper picks the
     // form from whether the intercept pointer is non-NULL.
     const useIntercept = model.intercept !== null;
@@ -206,6 +209,69 @@ export function predictModel(model, X_new) {
         M._free(predsBuf.ptr);
         if (interBuf.ptr !== 0)
             M._free(interBuf.ptr);
+    }
+}
+/** Fit one PLS or Ridge head with the configurable native AOM chain sweep.
+ * The exact same descriptor can be evaluated by an external HPO implementation,
+ * making search-space parity explicit and auditable. */
+export function fitAomChain(X, Y, descriptor, options) {
+    if (X.rows !== Y.rows)
+        throw new Error(`X.rows (${X.rows}) must equal Y.rows (${Y.rows})`);
+    const { chainOffsets, operatorKinds, parameterOffsets, parameters } = descriptor;
+    if (chainOffsets.length < 2 || operatorKinds.length < 1 || parameterOffsets.length !== operatorKinds.length + 1) {
+        throw new Error("Invalid AOM chain descriptor");
+    }
+    const ridgeLambdas = options.ridgeLambdas ?? [];
+    const plsComponents = options.plsComponents ?? [];
+    if (options.head === "ridge" && ridgeLambdas.length < 1)
+        throw new Error("Ridge AOM requires ridgeLambdas");
+    if (options.head === "pls" && plsComponents.length < 1)
+        throw new Error("PLS AOM requires plsComponents");
+    const M = getModule();
+    const n = X.rows, p = X.cols, q = Y.cols;
+    const xBuf = _malloc_f64(M, n * p), yBuf = _malloc_f64(M, n * q);
+    const chainBuf = M._malloc(chainOffsets.length * 4);
+    const kindsBuf = M._malloc(operatorKinds.length * 4);
+    const offsetsBuf = M._malloc(parameterOffsets.length * 4);
+    const paramsBuf = parameters.length > 0 ? _malloc_f64(M, parameters.length).ptr : 0;
+    const ridgeBuf = ridgeLambdas.length > 0 ? _malloc_f64(M, ridgeLambdas.length).ptr : 0;
+    const plsBuf = plsComponents.length > 0 ? M._malloc(plsComponents.length * 4) : 0;
+    const coefsBuf = _malloc_f64(M, p * q), interBuf = _malloc_f64(M, q);
+    const selectedBuf = M._malloc(4), parameterBuf = _malloc_f64(M, 1), scoreBuf = _malloc_f64(M, 1);
+    try {
+        _copy_in(M, X.data, xBuf.ptr);
+        _copy_in(M, Y.data, yBuf.ptr);
+        M.HEAP32.set(Int32Array.from(chainOffsets), chainBuf >> 2);
+        M.HEAP32.set(Int32Array.from(operatorKinds), kindsBuf >> 2);
+        M.HEAP32.set(Int32Array.from(parameterOffsets), offsetsBuf >> 2);
+        if (paramsBuf !== 0)
+            M.HEAPF64.set(Float64Array.from(parameters), paramsBuf >>> 3);
+        if (ridgeBuf !== 0)
+            M.HEAPF64.set(Float64Array.from(ridgeLambdas), ridgeBuf >>> 3);
+        if (plsBuf !== 0)
+            M.HEAP32.set(Int32Array.from(plsComponents), plsBuf >> 2);
+        const status = M.ccall("n4m_wasm_aom_chain_fit", "number", Array(25).fill("number"), [xBuf.ptr, yBuf.ptr, n, p, q, options.nFolds ?? 5,
+            chainBuf, chainOffsets.length, kindsBuf, operatorKinds.length,
+            offsetsBuf, parameterOffsets.length, paramsBuf, parameters.length,
+            ridgeBuf, ridgeLambdas.length, plsBuf, plsComponents.length,
+            options.head === "ridge" ? 1 : 2,
+            options.momentPolicy === "materialized" ? 1 : options.momentPolicy === "moments" ? 2 : 0,
+            coefsBuf.ptr, interBuf.ptr, selectedBuf, parameterBuf.ptr, scoreBuf.ptr]);
+        checkStatus(status);
+        return {
+            coefficients: _read_out(M, coefsBuf.ptr, p * q),
+            xMean: new Float64Array(p), yMean: new Float64Array(q),
+            intercept: _read_out(M, interBuf.ptr, q),
+            n_features: p, n_targets: q,
+            selectedChain: M.HEAP32[selectedBuf >> 2] ?? -1,
+            selectedParameter: _read_out(M, parameterBuf.ptr, 1)[0] ?? NaN,
+            score: _read_out(M, scoreBuf.ptr, 1)[0] ?? NaN,
+        };
+    }
+    finally {
+        [xBuf.ptr, yBuf.ptr, chainBuf, kindsBuf, offsetsBuf, paramsBuf, ridgeBuf, plsBuf,
+            coefsBuf.ptr, interBuf.ptr, selectedBuf, parameterBuf.ptr, scoreBuf.ptr]
+            .filter((ptr) => ptr !== 0).forEach((ptr) => M._free(ptr));
     }
 }
 /** Fit AOM-PLS (operator-adaptive PLS) on (X, Y).

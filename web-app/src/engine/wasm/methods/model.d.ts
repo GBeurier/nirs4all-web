@@ -44,7 +44,10 @@ export interface FittedModel {
  * @param X row-major (n × p) input matrix.
  * @param Y row-major (n × q) target matrix.
  * @param n_components number of latent components (used by the PLS family).
- * @param params positional hyper-parameter vector for the model.
+ * @param params positional hyper-parameter vector for the model. For
+ *   GroupSparsePLS this is `[group_lambda, ...group_assignment]`, with exactly
+ *   one non-negative integer group ID per input feature; no implicit grouping
+ *   is applied.
  */
 export declare function fitModel(model: string, X: Matrix, Y: Matrix, n_components: number, params?: number[]): FittedModel;
 /** Predict from a fitted {@link FittedModel} for new X (row-major n_new × p). */
@@ -59,6 +62,31 @@ export interface AomModel extends FittedModel {
     /** Best internal-CV score of the selected operator. */
     score: number;
 }
+export interface AomChainDescriptor {
+    /** Chain boundaries in the flattened operator list (n_chains + 1). */
+    chainOffsets: number[];
+    /** Flattened n4m_operator_kind_t values. */
+    operatorKinds: number[];
+    /** Parameter boundaries in the flattened parameter list (n_ops + 1). */
+    parameterOffsets: number[];
+    /** Flattened operator parameters. */
+    parameters: number[];
+}
+export interface AomChainModel extends FittedModel {
+    selectedChain: number;
+    selectedParameter: number;
+    score: number;
+}
+/** Fit one PLS or Ridge head with the configurable native AOM chain sweep.
+ * The exact same descriptor can be evaluated by an external HPO implementation,
+ * making search-space parity explicit and auditable. */
+export declare function fitAomChain(X: Matrix, Y: Matrix, descriptor: AomChainDescriptor, options: {
+    nFolds?: number;
+    head: "ridge" | "pls";
+    ridgeLambdas?: number[];
+    plsComponents?: number[];
+    momentPolicy?: "auto" | "materialized" | "moments";
+}): AomChainModel;
 /** Fit AOM-PLS (operator-adaptive PLS) on (X, Y).
  *
  * Screens a bank of strict-linear preprocessing operators by internal k-fold CV

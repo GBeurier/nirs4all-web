@@ -1,25 +1,26 @@
 // SPDX-License-Identifier: CECILL-2.1
-/** Mirror of the C enum n4m_status_t. */
+/** Mirror of the C enum n4m_status_t (cpp/include/n4m/n4m.h). */
 export var Status;
 (function (Status) {
     Status[Status["OK"] = 0] = "OK";
     Status[Status["ERR_INVALID_ARGUMENT"] = 1] = "ERR_INVALID_ARGUMENT";
     Status[Status["ERR_NULL_POINTER"] = 2] = "ERR_NULL_POINTER";
-    Status[Status["ERR_OUT_OF_MEMORY"] = 3] = "ERR_OUT_OF_MEMORY";
+    Status[Status["ERR_SHAPE_MISMATCH"] = 3] = "ERR_SHAPE_MISMATCH";
     Status[Status["ERR_DTYPE_MISMATCH"] = 4] = "ERR_DTYPE_MISMATCH";
-    Status[Status["ERR_SHAPE_MISMATCH"] = 5] = "ERR_SHAPE_MISMATCH";
-    Status[Status["ERR_DIM_MISMATCH"] = 6] = "ERR_DIM_MISMATCH";
+    Status[Status["ERR_STRIDE_INVALID"] = 5] = "ERR_STRIDE_INVALID";
+    Status[Status["ERR_NOT_FITTED"] = 6] = "ERR_NOT_FITTED";
     Status[Status["ERR_NUMERICAL_FAILURE"] = 7] = "ERR_NUMERICAL_FAILURE";
-    Status[Status["ERR_NOT_FITTED"] = 8] = "ERR_NOT_FITTED";
-    Status[Status["ERR_INTERNAL"] = 9] = "ERR_INTERNAL";
-    Status[Status["ERR_ABI_MISMATCH"] = 10] = "ERR_ABI_MISMATCH";
-    Status[Status["ERR_VERSION_INCOMPATIBLE"] = 11] = "ERR_VERSION_INCOMPATIBLE";
-    Status[Status["ERR_BACKEND_UNAVAILABLE"] = 12] = "ERR_BACKEND_UNAVAILABLE";
+    Status[Status["ERR_CONVERGENCE_FAILED"] = 8] = "ERR_CONVERGENCE_FAILED";
+    Status[Status["ERR_OUT_OF_MEMORY"] = 9] = "ERR_OUT_OF_MEMORY";
+    Status[Status["ERR_UNSUPPORTED"] = 10] = "ERR_UNSUPPORTED";
+    Status[Status["ERR_NOT_IMPLEMENTED"] = 11] = "ERR_NOT_IMPLEMENTED";
+    Status[Status["ERR_ABI_MISMATCH"] = 12] = "ERR_ABI_MISMATCH";
     Status[Status["ERR_IO"] = 13] = "ERR_IO";
-    Status[Status["ERR_PERMISSION"] = 14] = "ERR_PERMISSION";
-    Status[Status["ERR_NOT_IMPLEMENTED"] = 15] = "ERR_NOT_IMPLEMENTED";
-    Status[Status["ERR_TIMEOUT"] = 16] = "ERR_TIMEOUT";
-    Status[Status["ERR_CANCELED"] = 17] = "ERR_CANCELED";
+    Status[Status["ERR_CORRUPT_BUFFER"] = 14] = "ERR_CORRUPT_BUFFER";
+    Status[Status["ERR_VERSION_INCOMPATIBLE"] = 15] = "ERR_VERSION_INCOMPATIBLE";
+    Status[Status["ERR_BACKEND_UNAVAILABLE"] = 16] = "ERR_BACKEND_UNAVAILABLE";
+    Status[Status["ERR_CANCELLED"] = 17] = "ERR_CANCELLED";
+    Status[Status["ERR_INTERNAL"] = 255] = "ERR_INTERNAL";
 })(Status || (Status = {}));
 /** Mirror of n4m_dtype_t (cpp/include/n4m/n4m.h §2). */
 export var Dtype;

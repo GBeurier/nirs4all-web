@@ -13,9 +13,16 @@ import { getModule } from "./ffi.js";
 export { loadModule, getModule, makeMatrixView, readArrayView } from "./ffi.js";
 export { Context } from "./context.js";
 export { Config } from "./config.js";
-export { Model, fitPls, predictPls, fitModel, predictModel, fitAom, fitPop, fitAomRidge, fitAomStack, computeSplit, computeSplitIndices } from "./model.js";
+export { Model, fitPls, predictPls, fitModel, predictModel, fitAom, fitAomChain, fitPop, fitAomRidge, fitAomStack, computeSplit, computeSplitIndices } from "./model.js";
 export { ppCreate, ppFit, ppTransform, ppGetState, ppSetState, ppDestroy, } from "./preprocessing.js";
 export { MethodResult } from "./methodResult.js";
+export { NativeModel } from "./nativeModel.js";
+export { NativeEstimator, NativeMethod, NativeProcedure, manifest, methodClass } from "./estimatorRoles.js";
+export * from "./estimatorRolesGenerated.js";
+export { splitNative } from "./nativeSplitter.js";
+export { augmentNative } from "./nativeAugmentation.js";
+export { NativePreprocessingPipeline, PipelineOperatorKind, } from "./nativePreprocessingPipeline.js";
+export { selectSpa, selectVariables, selectorMethods } from "./selection.js";
 export { inspectN4mm, SERIALIZED_MODEL_INFO_SCHEMA_V1, SERIALIZED_MODEL_CAPABILITY_PREDICT, SERIALIZED_MODEL_CAPABILITY_TRANSFORM, SERIALIZED_MODEL_CAPABILITY_AFFINE, SERIALIZED_MODEL_CAPABILITY_PIPELINE, PipelineFingerprintAlgorithm, PipelineSemanticProfile, SerializedSavitzkyGolayMode, SerializedPipelineOperatorKind, } from "./serialization.js";
 export { Status, Dtype, Algorithm, Solver, Deflation, N4mError, } from "./types.js";
 /** ABI / project version reported by the loaded WASM module. */
