@@ -18,7 +18,7 @@ export const PRESETS: Preset[] = [
     task: 'regression',
     steps: [
       { type: 'StandardNormalVariate' },
-      { type: 'SavitzkyGolay', params: { window: 15, polyorder: 2, deriv: 0 } },
+      { type: 'SavitzkyGolay', params: { window_length: 15, polyorder: 2, deriv: 0 } },
     ],
     model: { type: 'PLS', params: { n_components: 12 } },
   },
@@ -29,7 +29,7 @@ export const PRESETS: Preset[] = [
     task: 'regression',
     steps: [
       { type: 'MSC' },
-      { type: 'SavitzkyGolay', params: { window: 15, polyorder: 2, deriv: 1 } },
+      { type: 'SavitzkyGolay', params: { window_length: 15, polyorder: 2, deriv: 1 } },
     ],
     model: { type: 'PLS', params: { n_components: 14 } },
   },
@@ -40,7 +40,7 @@ export const PRESETS: Preset[] = [
     task: 'binary',
     steps: [
       { type: 'StandardNormalVariate' },
-      { type: 'SavitzkyGolay', params: { window: 17, polyorder: 2, deriv: 2 } },
+      { type: 'SavitzkyGolay', params: { window_length: 17, polyorder: 2, deriv: 2 } },
     ],
     model: { type: 'PLSDA', params: { n_components: 12 } },
   },

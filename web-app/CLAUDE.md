@@ -127,13 +127,18 @@ Load-bearing concepts (require reading several files):
   real demos (Fruit-purée regression, NIR-protein regression & 7-class) via `?raw` so they work
   offline.
 
-- **The node catalog is the single source of truth for methods, gated against the real ABI.**
-  `src/catalog/nodes.ts` has one entry per *exported* libn4m operator, carrying the actual ABI
-  symbols. `scripts/validate-catalog.mjs` (CI gate) fails if a symbol isn't in
+- **Native nodes come from the n4m manifest.** `src/catalog/n4m-manifest.json` is the checked-in
+  `n4m_cli --manifest-json` output (`npm run n4m:manifest` refreshes it, `npm run check:n4m-manifest`
+  checks it; both need `--cli <n4m_cli>` or `N4M_CLI`). `src/catalog/native.ts` projects it through
+  `nirs4all-ui/nodeRegistry` (`projectN4mManifest`) and keeps the methods listed in
+  `src/catalog/legacy-dispatch.ts`: the staged ABI-2.5 WASM dispatcher token each one runs under and
+  the manifest params that dispatcher honours, in positional order (`src/engine/methods/params.ts`
+  encodes them). The n4m role API replaces that table once the web stages `@nirs4all/methods` ABI ≥
+  2.13. `src/catalog/nodes.ts` adds the hand-written nodes the manifest does not describe the way the
+  staged WASM runs them (ml.js models, the AOM family, PLS Canonical/SVD, data twinning); their ABI
+  symbols are gated by `scripts/validate-catalog.mjs` against
   `../../nirs4all-methods/cpp/abi/expected_symbols_*.txt` — this is why **OPLS is intentionally
-  absent** (its enum exists but no symbol is exported). The engine dispatches on the node `type`
-  token; preprocessing lives in `src/engine/algo/preprocessing.ts`. **Adding a method = add one
-  catalog entry** (+ a dispatch case only if it needs new numerics). Presets/builder live in
+  absent**. The engine dispatches on the node `type` token. Presets/builder live in
   `src/catalog/presets.ts` + `src/components/pipeline/`.
 
 - **dag-ml EXECUTES the cross-validation (not just plans it).** `src/engine/dagml-engine.ts`

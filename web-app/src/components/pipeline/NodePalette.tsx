@@ -26,14 +26,8 @@ const BUCKETS: { key: BucketKey; label: string; accent: string; dot: string }[] 
   { key: 'model', label: 'Models', accent: 'text-brand-teal-d', dot: 'bg-brand-teal-d' },
   { key: 'dag', label: 'DAG / structure', accent: 'text-brand-teal', dot: 'bg-brand-teal' },
 ]
-// nice sub-labels for the preprocessing sub-groups
+// sub-labels for the DAG sub-groups (native preprocessing families are already labelled)
 const SUBCAT_LABEL: Record<string, string> = {
-  scatter: 'Scatter correction',
-  derivative: 'Derivatives',
-  baseline: 'Baseline',
-  filtering: 'Smoothing & filtering',
-  signal: 'Signal transforms',
-  scaling: 'Scaling',
   parallel: 'Parallel paths',
   combine: 'Combine',
   generator: 'Generators',

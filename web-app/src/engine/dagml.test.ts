@@ -172,7 +172,7 @@ describe('toCompatDsl DAG containers', () => {
   it('lowers a Cartesian generator container to a `_cartesian_` step (dsl.rs:1874)', () => {
     const gen: ContainerNode = { id: 'g', container: 'generator', mode: 'cartesian', branches: [
       { id: 'ax1', steps: [{ id: 'a', type: 'StandardNormalVariate', params: {} }] },
-      { id: 'ax2', steps: [{ id: 'b', type: 'Detrend', params: { degree: 1 } }] },
+      { id: 'ax2', steps: [{ id: 'b', type: 'Detrend', params: { polyorder: 1 } }] },
     ] }
     const out = toCompatDsl(basePipeline({ containers: [gen] })) as { pipeline: Record<string, unknown>[] }
     const cart = out.pipeline.find((s) => '_cartesian_' in s) as { _cartesian_: unknown[] }
@@ -185,7 +185,7 @@ describe('generator container variant expansion / guards', () => {
   const orGen: ContainerNode = { id: 'g', container: 'generator', mode: 'or', branches: [
     { id: 'o1', steps: [{ id: 'a', type: 'StandardNormalVariate', params: {} }] },
     { id: 'o2', steps: [{ id: 'b', type: 'MSC', params: {} }] },
-    { id: 'o3', steps: [{ id: 'c', type: 'Detrend', params: { degree: 1 } }] },
+    { id: 'o3', steps: [{ id: 'c', type: 'Detrend', params: { polyorder: 1 } }] },
   ] }
   it('countVariants counts an OR generator (one variant per alternative)', () => {
     expect(countVariants(basePipeline({ containers: [orGen] }))).toBe(3)

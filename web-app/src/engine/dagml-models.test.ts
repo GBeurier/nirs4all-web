@@ -37,7 +37,7 @@ describe('model-only classification through the real WASM scheduler', () => {
     }
     const result = await new DagMlEngine({ profile: 'strict-wasm' }).run(ds, {
       name: 'Ridge classification', steps: [],
-      model: { id: 'model', type: 'Ridge', params: { lambda: 1 } },
+      model: { id: 'model', type: 'Ridge', params: { alpha: 1 } },
       cv: { folds: 3, seed: 42 },
     })
     expect(result.cv?.predictions).toHaveLength(nSamples)

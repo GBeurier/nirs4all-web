@@ -42,10 +42,10 @@ try {
     await page.waitForTimeout(150)
     await search.fill('')
   }
-  await addOp('Robust NV')
-  await addOp('AsLS')
+  await addOp('Robust SNV')
+  await addOp('ASLS')
   const body1 = (await page.textContent('body')) || ''
-  if (/Robust NV/.test(body1) && /AsLS/.test(body1)) console.log('✓ two new preprocessing operators added (Robust NV + AsLS)')
+  if (/Robust SNV/.test(body1) && /ASLS/.test(body1)) console.log('✓ two new preprocessing operators added (Robust SNV + ASLS)')
   else fail('expected the two added operators to appear on the canvas')
 
   // select the terminal model node on the CANVAS (palette now also lists models),

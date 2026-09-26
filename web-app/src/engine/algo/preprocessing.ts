@@ -110,7 +110,7 @@ function convolveRowwise(m: Mat, w: Float64Array): Mat {
 }
 
 function savitzkyGolay(params: Record<string, unknown>): Transformer {
-  const window = Number(params.window ?? 11)
+  const window = Number(params.window_length ?? 11)
   const polyorder = Number(params.polyorder ?? 2)
   const deriv = Number(params.deriv ?? 0)
   const w = sgWeights(window, polyorder, deriv)
@@ -137,7 +137,7 @@ function derivative(params: Record<string, unknown>): Transformer {
 
 // --- detrend (remove polynomial trend over the index axis) ---
 function detrend(params: Record<string, unknown>): Transformer {
-  const degree = Math.max(0, Number(params.degree ?? 1))
+  const degree = Math.max(0, Number(params.polyorder ?? 1))
   return {
     apply: (m) =>
       rowwise(m, (row, out) => {

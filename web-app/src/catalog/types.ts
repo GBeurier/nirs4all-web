@@ -39,14 +39,12 @@ export const AOM_OPERATOR_KINDS: { value: number; label: string }[] = [
 export const AOM_DEFAULT_BANK: number[] = [0, 7, 8, 9, 10, 15, 17]
 
 /**
- * One node = one exported nirs4all-methods operator. The `type` token is what the
- * pipeline DSL and the engine dispatch on; `n4m` carries the real libn4m ABI
- * symbols so a CI validator can check them against
- * nirs4all-methods/catalog/abi_method_map.yaml (and so the future dag-ml/libn4m
- * controller can translate type → symbol). Adding a method later = add one entry.
+ * One node = one operator. The `type` token is what the pipeline DSL and the
+ * engine dispatch on. Native nodes are generated from the n4m manifest
+ * (./native); hand-written legacy nodes carry their libn4m ABI symbols in `n4m`.
  */
 export interface NodeDef {
-  /** libn4m method id, e.g. 'preprocessing.scatter.snv' */
+  /** n4m method id, e.g. 'preprocessing.scatter.snv' */
   id: string
   /** DSL token the engine dispatches on, e.g. 'StandardNormalVariate' */
   type: string
@@ -59,12 +57,10 @@ export interface NodeDef {
   /** for models: which tasks they support */
   task?: TaskType | 'any'
   params: ParamDef[]
-  /** exported libn4m ABI symbols (validated in CI; null fit = stateless) */
-  n4m: { fit: string | null; transform?: string; predict?: string }
+  /** legacy nodes: exported libn4m ABI symbols (validated in CI; null fit = stateless) */
+  n4m?: { fit: string | null; transform?: string; predict?: string }
   /** Optional JavaScript estimator provider; n4m still owns preprocessing. */
   provider?: 'mljs'
-  /** stateful transforms must reuse fit-state on test/predict data */
-  stateful?: boolean
   advanced?: boolean
   /** self-contained models (e.g. AOM/POP) that screen preprocessing internally;
    *  adding preprocessing steps in front of them is redundant, so the UI surfaces

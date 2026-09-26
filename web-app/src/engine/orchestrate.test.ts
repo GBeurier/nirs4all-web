@@ -78,7 +78,7 @@ describe('trainAndPredict autonomous bypass', () => {
       name: 'aom+preproc',
       steps: [
         { id: '1', type: 'StandardNormalVariate', params: {} },
-        { id: '2', type: 'SavitzkyGolay', params: { window: 5, polyorder: 2, deriv: 1 } },
+        { id: '2', type: 'SavitzkyGolay', params: { window_length: 5, polyorder: 2, deriv: 1 } },
       ],
       model: { id: 'm', type: 'AOMPLS', params: { n_components: 4 } },
     }

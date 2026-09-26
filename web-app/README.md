@@ -22,7 +22,7 @@ npm run build:single   # single offline HTML → dist-single/index.html (opens v
 npm run test           # vitest: engine numerics + data assembly
 npm run test:strict-profile # strict positive/negative runtime gate
 npm run typecheck      # tsc --noEmit
-npm run validate:catalog   # fail if a node claims a non-exported libn4m ABI symbol
+npm run validate:catalog   # fail if a hand-written node claims a non-exported libn4m ABI symbol
 npm run smoke:rt-fallback:strict       # strict build rejects allowFallback:true
 npm run smoke:rt-fallback:transitional # transition build proves diagnosed fallback
 ```
@@ -147,10 +147,13 @@ without the local vendors.
   the same publisher. Served builds that run through `WorkerEngine` cannot send a function publisher
   through `postMessage`; pass `robustnessEvidenceSidecar` instead, and the worker will create the
   IndexedDB publisher in its own context.
-- **Node catalog** (`src/catalog/`): one entry per *exported* nirs4all-methods operator, carrying the
-  real libn4m ABI symbols. `npm run validate:catalog` fails CI if any symbol isn't exported upstream
-  (e.g. OPLS is intentionally excluded). **Adding a method = add one catalog entry** (+ a dispatch
-  case if it needs new numerics). The preset gallery is authored over these entries.
+- **Node catalog** (`src/catalog/`): native nirs4all-methods nodes are generated from the checked-in
+  n4m method manifest (`npm run n4m:manifest` / `check:n4m-manifest`) through
+  `nirs4all-ui/nodeRegistry`, limited to the methods the staged WASM dispatcher runs
+  (`legacy-dispatch.ts`, replaced by the n4m role API once the web stages methods ABI ≥ 2.13). The
+  few hand-written native nodes carry their libn4m ABI symbols and `npm run validate:catalog` fails
+  CI if one isn't exported upstream (e.g. OPLS is intentionally excluded). The preset gallery is
+  authored over these entries.
 - **Data** (`src/data/`): two ingestion paths behind one `MaterializedDataset` shape — an
   axis-aware **CSV** builder (`X_train/y_train(+_test,+metadata)` convention, wavelength-header and
   task-type inference), and the real **nirs4all-formats + nirs4all-io WASM** stack (`wasm-io.ts`,
