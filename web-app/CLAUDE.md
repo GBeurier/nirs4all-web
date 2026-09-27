@@ -57,7 +57,8 @@ path) — plus one smoke per editor/feature surface added since: the full DAG bu
 `branch` feature-union, `generators` sweep), `split` / optional `cv-optional` / optional `no-model`
 sequencing, the AOM family (`aom`, `pop`), the extra catalog models (`new-models` engine-level role
 API + N4ME round trip, `new-models-ui` for a manifest model outside the retired dispatcher subset,
-`operators`), the broad model pack (`new-pack` engine-level + `new-pack-ui` for ECR / O2PLS / AOM
+`operators`), the training-row export consent (`training-rows-export`: Kernel PLS, Cancel exports
+nothing, the consented bundle records `containsTrainingRows` and re-imports identically), the broad model pack (`new-pack` engine-level + `new-pack-ui` for ECR / O2PLS / AOM
 Ridge blender / AOM operator-PLS stack and the SPlit twinning / SystematicCircular splits), the
 Explore playground (`explore` — preprocessing preview + client PCA), the `palette`, and `persistence`
 + `n4a-roundtrip` (session and `.n4a` bundle round-trips; the latter checks the v2 bundle carries
@@ -142,7 +143,13 @@ Load-bearing concepts (require reading several files):
   staged `@nirs4all/methods` role API (`methodClass` + manifest-typed params → fit / transform /
   predict / predictLabels / getMask / split / augment) and persists fitted states as N4ME bytes
   (`toN4me`, reloaded by `NativeEstimator.fromN4me`); `.n4a` bundles are v2 and carry them base64
-  (`$u8`). Native regressors are also offered for classification (one-hot targets + argmax;
+  (`$u8`). Session states are in-memory checkpoints (`checkpoint`: N4ME with the training-row
+  opt-in, plus libn4m's `containsTrainingRows` per state); the `.n4a` export is a separate,
+  shareable copy made by `Engine.exportModel(model, { allowTrainingRows })`, which re-serializes
+  every state through its backend (`exportN4me` → libn4m refuses training rows without the
+  opt-in). The Results export asks for explicit consent when `trainingRowSteps(model)` is not
+  empty — never set `allowTrainingRows` implicitly. `RolePipeline` is staged but not used: the web
+  chain also runs augmenters, feature unions, one-hot regressor-classifiers and ml.js models. Native regressors are also offered for classification (one-hot targets + argmax;
   single-target methods refuse natively). The `aom_pop.*` models are `autonomous` (they screen their
   own operator bank on raw X). `src/catalog/nodes.ts` adds the hand-written models the manifest does
   not describe (ml.js, PLS Canonical / SVD on the legacy coefficient dispatcher); their ABI symbols
