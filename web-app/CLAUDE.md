@@ -51,15 +51,17 @@ SMOKE_URL="file://$PWD/dist-single/index.html" node tests/smoke.mjs   # offline 
 ```
 
 The suite covers the **core path** — `smoke` (load→run→results→predict with dag-ml & libn4m),
-`classification` (PLS-DA → confusion), `wasm-upload` (vendor SPC decode, uses
+`classification` (PLS-LDA → confusion), `wasm-upload` (vendor SPC decode, uses
 `../../nirs4all-formats/samples`), `amylose-folder` (the nirs4all-io CSV `X*`/`Y*` train/test folder
 path) — plus one smoke per editor/feature surface added since: the full DAG bucket (`dag-ops`,
 `branch` feature-union, `generators` sweep), `split` / optional `cv-optional` / optional `no-model`
-sequencing, the AOM family (`aom`, `pop`), the extra catalog models (`new-models`, `new-models-ui`,
-`operators`), the broad model pack (`new-pack` engine-level + `new-pack-ui` for ECR / O2PLS /
-AOM-Ridge blender / AOM operator-PLS stack and the DataTwinning / SystematicCircular splits), the
+sequencing, the AOM family (`aom`, `pop`), the extra catalog models (`new-models` engine-level role
+API + N4ME round trip, `new-models-ui` for a manifest model outside the retired dispatcher subset,
+`operators`), the broad model pack (`new-pack` engine-level + `new-pack-ui` for ECR / O2PLS / AOM
+Ridge blender / AOM operator-PLS stack and the SPlit twinning / SystematicCircular splits), the
 Explore playground (`explore` — preprocessing preview + client PCA), the `palette`, and `persistence`
-+ `n4a-roundtrip` (session and `.n4a` bundle round-trips). `tests/aom-cassava-timing.mjs` is a one-off
++ `n4a-roundtrip` (session and `.n4a` bundle round-trips; the latter checks the v2 bundle carries
+N4ME states and the re-imported model predicts identically). `tests/aom-cassava-timing.mjs` is a one-off
 `fitAom` wall-time probe, **not** part of the gate (and is excluded by the `*smoke.mjs` glob). Each
 smoke is independent and reads the served app from `$SMOKE_URL`; `new-models-smoke.mjs` and
 `new-pack-smoke.mjs` are self-contained (load the staged WASM directly) and ignore it.
@@ -81,7 +83,7 @@ run    → dag-ml-data WASM (WasmInMemoryProvider): schema + plan + sample relat
          by sampleId — the data-contract layer                     [src/engine/dagml-data.ts]
        → dag-ml WASM: compile DSL → GraphSpec, SequentialScheduler runs FIT_CV in-WASM,
          invoking a JS controller per fold                          [src/engine/dagml-engine.ts]
-       → PLS / PLS-DA numerics by libn4m WASM                       [src/engine/backends.ts]
+       → n4m methods by method id through the libn4m role API      [src/engine/methods/n4m.ts]
        → RunResult (refit/CV/folds + predictions + dag-ml lineage incl. dataProvider)
 ```
 
@@ -127,18 +129,26 @@ Load-bearing concepts (require reading several files):
   real demos (Fruit-purée regression, NIR-protein regression & 7-class) via `?raw` so they work
   offline.
 
-- **Native nodes come from the n4m manifest.** `src/catalog/n4m-manifest.json` is the checked-in
-  `n4m_cli --manifest-json` output (`npm run n4m:manifest` refreshes it, `npm run check:n4m-manifest`
-  checks it; both need `--cli <n4m_cli>` or `N4M_CLI`). `src/catalog/native.ts` projects it through
-  `nirs4all-ui/nodeRegistry` (`projectN4mManifest`) and keeps the methods listed in
-  `src/catalog/legacy-dispatch.ts`: the staged ABI-2.5 WASM dispatcher token each one runs under and
-  the manifest params that dispatcher honours, in positional order (`src/engine/methods/params.ts`
-  encodes them). The n4m role API replaces that table once the web stages `@nirs4all/methods` ABI ≥
-  2.13. `src/catalog/nodes.ts` adds the hand-written nodes the manifest does not describe the way the
-  staged WASM runs them (ml.js models, the AOM family, PLS Canonical/SVD, data twinning); their ABI
-  symbols are gated by `scripts/validate-catalog.mjs` against
-  `../../nirs4all-methods/cpp/abi/expected_symbols_*.txt` — this is why **OPLS is intentionally
-  absent**. The engine dispatches on the node `type` token. Presets/builder live in
+- **Native nodes come from the n4m manifest and run through the n4m role API.**
+  `src/catalog/n4m-manifest.json` is the checked-in `n4m_cli --manifest-json` output (`npm run
+  n4m:manifest` refreshes it, `npm run check:n4m-manifest` checks it; both need `--cli <n4m_cli>` or
+  `N4M_CLI`). `src/catalog/native.ts` projects it through `nirs4all-ui/nodeRegistry`
+  (`projectN4mManifest`) into one node per method the web pipeline can place — transformers /
+  selectors (preprocessing), sample filters and augmenters (train-only row operators of the main
+  chain), regressors / classifiers (model; transformer+regressor methods only as models), splitters
+  (split) — skipping methods that require fit inputs a web dataset cannot supply (groups, feature
+  groups, blocks, a transfer target). The DSL token is `n4m:<method_id>` (the portable token
+  Studio serializes). `src/engine/methods/n4m.ts` executes every such node by method id through the
+  staged `@nirs4all/methods` role API (`methodClass` + manifest-typed params → fit / transform /
+  predict / predictLabels / getMask / split / augment) and persists fitted states as N4ME bytes
+  (`toN4me`, reloaded by `NativeEstimator.fromN4me`); `.n4a` bundles are v2 and carry them base64
+  (`$u8`). Native regressors are also offered for classification (one-hot targets + argmax;
+  single-target methods refuse natively). The `aom_pop.*` models are `autonomous` (they screen their
+  own operator bank on raw X). `src/catalog/nodes.ts` adds the hand-written models the manifest does
+  not describe (ml.js, PLS Canonical / SVD on the legacy coefficient dispatcher); their ABI symbols
+  are gated by `scripts/validate-catalog.mjs` against `expected_symbols_*.txt` — this is why **OPLS
+  is intentionally absent** — and it also fails when the manifest ABI differs from the staged methods
+  WASM. The engine dispatches on the node `type` token. Presets/builder live in
   `src/catalog/presets.ts` + `src/components/pipeline/`.
 
 - **dag-ml EXECUTES the cross-validation (not just plans it).** `src/engine/dagml-engine.ts`
