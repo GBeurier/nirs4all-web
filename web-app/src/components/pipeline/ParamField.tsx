@@ -46,7 +46,7 @@ export function ParamField({ def, value, onChange }: ParamFieldProps) {
 
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-xs text-muted-foreground">
+      <Label htmlFor={id} className="text-xs text-muted-foreground" title={def.recorded ? 'Recorded in the fitted model: a saved model keeps the value it was fitted with' : undefined}>
         {label}
         {def.required ? <span className="text-brand-amber" title="Required — the method refuses to fit until it is set"> *</span> : null}
       </Label>
@@ -85,6 +85,7 @@ export function ParamField({ def, value, onChange }: ParamFieldProps) {
           type="number"
           className="h-8 font-mono"
           value={value === undefined || value === null ? '' : Number(value)}
+          placeholder={def.default === undefined && !def.required ? 'unset' : undefined}
           min={def.min}
           max={def.max}
           step={def.step ?? (def.type === 'int' ? 1 : 'any')}

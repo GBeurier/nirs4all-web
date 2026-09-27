@@ -15,6 +15,8 @@ export interface ParamDef {
   default?: ParamValue
   /** the method refuses to fit until this parameter is set */
   required?: boolean
+  /** the fitted state records this value (a saved model keeps the value it was fitted with) */
+  recorded?: boolean
   /** item type of an `array` param */
   itemType?: 'int' | 'float'
   min?: number

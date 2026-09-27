@@ -58,6 +58,18 @@ describe('native catalog generated from the n4m manifest', () => {
     expect(nodeByType('n4m:splitters.kbins_stratified')?.params.find((p) => p.name === 'strategy')?.options?.map((o) => o.value)).toEqual(['uniform', 'quantile'])
   })
 
+  it('leaves unset optional seeds without a default and carries the recorded flag', () => {
+    for (const token of ['n4m:augmentation.noise.gaussian_noise', 'n4m:splitters.kmeans', 'n4m:filters.x_outlier']) {
+      const seed = nodeByType(token)?.params.find((p) => p.name === 'seed')
+      expect(seed, token).toMatchObject({ type: 'int' })
+      expect(seed?.default, token).toBeUndefined()
+      expect(seed?.required, token).toBeUndefined()
+    }
+    const pls = nodeByType(n4mToken('models.pls.pls_regression'))!
+    expect(pls.params.find((p) => p.name === 'n_components')?.recorded).toBe(true)
+    expect(nodeByType('n4m:preprocessing.derivatives.savitzky_golay')!.params.some((p) => p.recorded)).toBe(false)
+  })
+
   it('offers native classifiers and every native regressor for classification', () => {
     const classification = modelsForTask('multiclass').map((m) => m.id)
     for (const node of NATIVE_MODEL_NODES) expect(classification.includes(node.id)).toBe(true)
