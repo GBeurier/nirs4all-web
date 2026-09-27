@@ -5,6 +5,14 @@
 // `NativeEstimator.fromN4me` reloads in any n4m binding. This module only
 // marshals matrices and parameters: defaults, validation and every numeric live
 // in libn4m.
+//
+// Training rows (audit F10): some fitted states embed the training spectra
+// (kernel PLS, GPR-PLS, LW-PLS; libn4m's `containsTrainingRows()`), and libn4m
+// exports such a state only with an explicit `allowTrainingRows`. The session
+// keeps every fitted state as an in-memory checkpoint (`checkpoint`, opt-in set:
+// it never leaves this browser session as is) and records the flag; a shareable
+// export re-serializes each state through `exportN4me` with the user's choice,
+// so libn4m refuses to write training rows the user did not agree to share.
 import { nodeByType } from '@/catalog/nodes'
 import type { NativeMethodRef, NodeDef } from '@/catalog/types'
 import type { Mat } from '../algo/linalg'
@@ -23,10 +31,16 @@ import type {
   Transformer,
 } from '../wasm/methods/index.js'
 
-/** A fitted native model as the pipeline state stores it. */
-export interface NativeModelState {
+/** A fitted native state as the session keeps it. */
+export interface N4meCheckpoint {
   /** portable fitted estimator (N4ME) */
   n4me: Uint8Array
+  /** the state embeds training rows (libn4m `containsTrainingRows()`) */
+  containsTrainingRows: boolean
+}
+
+/** A fitted native model as the pipeline state stores it. */
+export interface NativeModelState extends N4meCheckpoint {
   /** classifiers: the class-score width (one column per encoded class) */
   nClasses?: number
 }
@@ -99,6 +113,23 @@ export function loadEstimator(n4me: Uint8Array): NativeEstimator {
   return methodsWasm().NativeEstimator.fromN4me(n4me)
 }
 
+/** The in-session checkpoint of a fitted estimator. Not an export: the bytes
+ *  stay in this browser session; `exportN4me` makes the shareable copy. */
+export function checkpoint(est: NativeEstimator): N4meCheckpoint {
+  return { n4me: est.toN4me({ allowTrainingRows: true }), containsTrainingRows: est.containsTrainingRows() }
+}
+
+/** The shareable N4ME of a checkpoint. libn4m refuses a state that embeds
+ *  training rows unless the user allowed sharing them. */
+export function exportN4me(n4me: Uint8Array, allowTrainingRows: boolean): Uint8Array {
+  const est = loadEstimator(n4me)
+  try {
+    return est.toN4me({ allowTrainingRows })
+  } finally {
+    est.dispose()
+  }
+}
+
 export function transform(est: NativeEstimator, X: Mat): Mat {
   return (est as NativeEstimator & Transformer).transform(matrix(X))
 }
@@ -107,7 +138,7 @@ export function transform(est: NativeEstimator, X: Mat): Mat {
 export function fitModel(type: string, params: Record<string, unknown>, X: Mat, Y: Mat): NativeModelState {
   const est = fitEstimator(type, params, X, { Y })
   try {
-    return nativeNode(type).native.role === 'classifier' ? { n4me: est.toN4me(), nClasses: Y.cols } : { n4me: est.toN4me() }
+    return nativeNode(type).native.role === 'classifier' ? { ...checkpoint(est), nClasses: Y.cols } : checkpoint(est)
   } finally {
     est.dispose()
   }

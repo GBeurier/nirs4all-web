@@ -21,6 +21,8 @@ interface StoredMlJsModel {
   nFeatures: number
   nTargets: number
   artifact: unknown
+  /** the artifact embeds training rows (ml-knn serializes its training points) */
+  containsTrainingRows: boolean
 }
 
 function matrixRows(matrix: Mat): number[][] {
@@ -88,7 +90,15 @@ export async function loadMlJsBackend(): Promise<ModelBackend> {
       return {
         provider: 'mljs', estimatorName, nFeatures: X.cols, nTargets: Y.cols,
         artifact: estimator.toJSON(),
+        containsTrainingRows: estimatorName === 'KNeighborsClassifier',
       } satisfies StoredMlJsModel
+    },
+    share(model, allowTrainingRows) {
+      const stored = model as StoredMlJsModel
+      if (stored.containsTrainingRows && !allowTrainingRows) {
+        throw new Error(`${stored.estimatorName} stores its training spectra; exporting it needs the explicit training-row opt-in.`)
+      }
+      return model
     },
     predict(model, X) {
       const stored = model as StoredMlJsModel

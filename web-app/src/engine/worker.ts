@@ -1,7 +1,7 @@
 // Engine Web Worker: hosts MainEngine off the main thread so heavy libn4m /
 // dag-ml WASM compute (notably the AOM operator screen on a large dataset) never
 // blocks the UI. The main thread talks to it through WorkerEngine (worker-engine.ts)
-// with a tiny request/response protocol: {run|predict|cancel} in, {progress|
+// with a tiny request/response protocol: {run|predict|export|cancel} in, {progress|
 // result|error} out, correlated by job id. onProgress is relayed as messages and
 // AbortSignal is bridged to a per-job AbortController.
 /// <reference lib="webworker" />
@@ -35,8 +35,9 @@ interface RunMsg {
   robustnessEvidenceSidecar?: RobustnessEvidenceSidecarOptions
 }
 interface PredictMsg { type: 'predict'; id: string; model: Parameters<MainEngine['predict']>[0]; Xnew: Float64Array; nSamples: number; nFeatures: number }
+interface ExportMsg { type: 'export'; id: string; model: Parameters<MainEngine['exportModel']>[0]; allowTrainingRows: boolean }
 interface CancelMsg { type: 'cancel'; id: string }
-type InMsg = RunMsg | PredictMsg | CancelMsg
+type InMsg = RunMsg | PredictMsg | ExportMsg | CancelMsg
 
 ctx.onmessage = (ev: MessageEvent<InMsg>) => {
   void handle(ev.data)
@@ -65,6 +66,9 @@ async function handle(msg: InMsg): Promise<void> {
         result,
         rtResult: runResultToRtResultEnvelope(result, { allowFallback: msg.allowFallback === true }),
       })
+    } else if (msg.type === 'export') {
+      const result = await engine.exportModel(msg.model, { allowTrainingRows: msg.allowTrainingRows })
+      ctx.postMessage({ type: 'result', id: msg.id, result })
     } else {
       const result = await engine.predict(msg.model, msg.Xnew, msg.nSamples, msg.nFeatures)
       ctx.postMessage({ type: 'result', id: msg.id, result })

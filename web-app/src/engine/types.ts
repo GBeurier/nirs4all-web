@@ -385,6 +385,11 @@ export interface PredictResult {
   fallback?: false;
   archiveSha256?: string;
 }
+/** A shareable export of a fitted model (the .n4a file). */
+export interface ExportOptions {
+  /** the user explicitly agreed to share the training spectra some fitted states embed */
+  allowTrainingRows: boolean;
+}
 export interface Engine {
   readonly name: string;
   run(ds: MaterializedDataset, dsl: PipelineDSL, opts?: RunOptions): Promise<RunResult>;
@@ -394,4 +399,8 @@ export interface Engine {
     nSamples: number,
     nFeatures: number,
   ): Promise<PredictResult>;
+  /** The shareable copy of a model this engine fitted: every state is
+   *  re-serialized by its backend, and one that embeds training rows is refused
+   *  unless `opts.allowTrainingRows`. The session model is not an export. */
+  exportModel(model: FittedPipeline, opts: ExportOptions): Promise<FittedPipeline>;
 }

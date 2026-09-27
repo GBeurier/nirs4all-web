@@ -16,6 +16,7 @@ import type { Mat } from './algo/linalg'
 import {
   classInfo,
   decodeRows,
+  exportPipeline,
   type FittedState,
   type ModelBackend,
   predictPipeline,
@@ -24,7 +25,7 @@ import {
   trainAndPredict,
 } from './orchestrate'
 import { makeRtError, type RtError, RtErrorException, rtErrorFromUnknown } from './rt'
-import type { Engine, FittedPipeline, MaterializedDataset, ParamSweep, PipelineDSL, PredRow, PredictResult, RunOptions, RunResult } from './types'
+import type { Engine, ExportOptions, FittedPipeline, MaterializedDataset, ParamSweep, PipelineDSL, PredRow, PredictResult, RunOptions, RunResult } from './types'
 import { buildWebRuntimeProfile, type WebRuntimePolicy, type WebRuntimeProfile, webRuntimePolicy } from './web-profile'
 
 const MODEL_CONTROLLER = 'controller:model'
@@ -656,6 +657,12 @@ export class DagMlEngine implements Engine {
     const backend = (model.state as FittedState).backendId === 'mljs-classic'
       ? await loadMlJsBackend() : await loadLibn4mBackend()
     return predictPipeline(model, Xnew, nSamples, nFeatures, backend)
+  }
+
+  async exportModel(model: FittedPipeline, { allowTrainingRows }: ExportOptions): Promise<FittedPipeline> {
+    const backend = (model.state as FittedState).backendId === 'mljs-classic'
+      ? await loadMlJsBackend() : await loadLibn4mBackend()
+    return exportPipeline(model, allowTrainingRows, backend)
   }
 }
 

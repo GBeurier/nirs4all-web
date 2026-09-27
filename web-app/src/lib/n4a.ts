@@ -5,6 +5,7 @@
 // encoded losslessly), so it stays diff-able and works offline.
 import type { FittedPipeline, Metrics, RunResult, TaskType } from '@/engine/types'
 import { importArchiveV2Model, MAX_ARCHIVE_V2_BYTES } from '@/engine/archive-v2'
+import { trainingRowSteps } from '@/engine/orchestrate'
 
 export const N4A_FORMAT = 'nirs4all-web/n4a'
 const COMPATIBLE_N4A_FORMATS = ['nirs4all-core/n4a']
@@ -22,6 +23,9 @@ export interface N4aBundle {
   engine: string
   scoreMetric: keyof Metrics
   metrics: { cv?: Metrics; refit?: Metrics }
+  /** some fitted state embeds training spectra (each state records its own
+   *  `containsTrainingRows`); the export required the user's explicit consent */
+  containsTrainingRows: boolean
   model: FittedPipeline
 }
 
@@ -78,6 +82,7 @@ export function buildN4aBundle(run: RunResult): N4aBundle {
     engine: run.engine,
     scoreMetric: run.scoreMetric,
     metrics: { cv: run.cv?.metrics, refit: run.refit.metrics },
+    containsTrainingRows: trainingRowSteps(run.model).length > 0,
     model: run.model,
   }
 }

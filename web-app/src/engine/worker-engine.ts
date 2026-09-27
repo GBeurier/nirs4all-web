@@ -8,6 +8,7 @@ import { type RtError, RtErrorException } from './rt'
 import type { RtResultWire } from './rt-result'
 import type {
   Engine,
+  ExportOptions,
   FittedPipeline,
   MaterializedDataset,
   PipelineDSL,
@@ -131,5 +132,9 @@ export class WorkerEngine implements Engine {
 
   predict(model: FittedPipeline, Xnew: Float64Array, nSamples: number, nFeatures: number): Promise<PredictResult> {
     return this.call<PredictResult>({ type: 'predict', model, Xnew, nSamples, nFeatures })
+  }
+
+  exportModel(model: FittedPipeline, opts: ExportOptions): Promise<FittedPipeline> {
+    return this.call<FittedPipeline>({ type: 'export', model, allowTrainingRows: opts.allowTrainingRows })
   }
 }
