@@ -29,7 +29,7 @@ export interface RolePipelineState {
     n4me: Uint8Array;
     containsTrainingRows: boolean;
 }
-/** Class labels: integer ids, or names mapped to ids in sorted order. */
+/** Class labels: integer ids, or strings / numbers mapped to ids in sorted order. */
 export type ClassLabel = number | string;
 /** Native trained recipe of role steps, portable as N4ME states. */
 export declare class RolePipeline {
@@ -43,11 +43,14 @@ export declare class RolePipeline {
     /**
      * A fitted pipeline rebuilt from one N4ME state per stateful step. The
      * native import refuses states that contradict the recipe (count, method,
-     * parameters, role, widths). classNames restores string class labels.
+     * parameters, role, widths). classNames restores the label table of a
+     * classifier trained on strings or non-integer numbers; it is refused
+     * unless it is a non-empty list of unique strings or finite numbers with
+     * an entry for every class id of the fitted state.
      */
     static fromStates(steps: ReadonlyArray<RoleStep>, states: ReadonlyArray<Uint8Array | RolePipelineState>, options?: {
         featureNames?: string[];
-        classNames?: string[];
+        classNames?: ClassLabel[];
     }): RolePipeline;
     get fitted(): boolean;
     /** Input column names stored at fit or import (undefined: positional). */
@@ -76,9 +79,11 @@ export declare class RolePipeline {
      * undefined. Unlike classes() it keeps labels whose rows a sample filter
      * removed, so an exported pipeline can restore every name.
      */
-    labelNames(): string[] | undefined;
+    labelNames(): ClassLabel[] | undefined;
     /** Fitted classes, ascending ids (names when trained on names). */
     classes(): ClassLabel[];
+    /** Native class ids of the final classifier (n4m_role_pipeline_classes). */
+    private static classIds;
     /** Per step: method, role played, state index, fitted widths, training rows. */
     stepsInfo(): RolePipelineStepInfo[];
     /**

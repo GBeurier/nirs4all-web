@@ -2,19 +2,19 @@
   "schema": "nirs4all-web.wasm-provenance.v1",
   "component": "nirs4all-methods-wasm",
   "package": "@nirs4all/methods",
-  "version": "1.2.0",
-  "runtime_version": "1.2.0+abi.2.14.0",
+  "version": "1.2.1",
+  "runtime_version": "1.2.1+abi.2.14.0",
   "abi": "2.14.0",
   "source": {
     "repository": "https://github.com/GBeurier/nirs4all-methods",
-    "commit": "d2a587642bde4627f0e22c9a2c9655324f46c5d5",
-    "tree": "997590999cf211741e618481aed79587f4412b1d",
+    "commit": "b8b942aea291102d974bb68eb09013f3453b0a86",
+    "tree": "737178058bed3135d5b33de77388a1b709c7696c",
     "clean": true
   },
   "build": {
     "target": "web",
     "profile": "release",
-    "source_date_epoch": 1790507727,
+    "source_date_epoch": 1790525478,
     "emscripten": "3.1.74",
     "cmake": "cmake version 4.4.2",
     "ninja": "1.13.0.git.kitware.jobserver-pipe-1",
@@ -25,10 +25,10 @@
     "byte_identical": true
   },
   "registry": {
-    "package": "@nirs4all/methods@1.2.0",
-    "tarball": "nirs4all-methods-1.2.0.tgz",
-    "integrity": "sha512-W9WlrkGZF8cv7EmfJdi0wAFOo9HcT0Rjtwhq/CNe8ArPYU8pWm3sZ4TklhkyoMSgzxBCT3u1Hv3de25YOeZShQ==",
-    "shasum": "3e9357ec9464026f0176f18e4be70b2ee749357d",
+    "package": "@nirs4all/methods@1.2.1",
+    "tarball": "nirs4all-methods-1.2.1.tgz",
+    "integrity": "sha512-4BL8EiE4qJKqePC/Xj6JlCeeAfWzDj0cyMDaW0xKnTWzZyawyUKs6z6gh4ADYvc3LtWM+H4qmBPSf+DRMg9tkA==",
+    "shasum": "589ee3fa6eb16668972606e03494672d8706b5d1",
     "byte_identical": true
   },
   "witnesses": {
@@ -209,8 +209,8 @@
     },
     {
       "path": "n4m.wasm",
-      "size": 2742989,
-      "sha256": "946053cae1ca9ff7535b4b974eed92acd58b28d504f6d8d10a2c7cf0c73375c7"
+      "size": 2742778,
+      "sha256": "030cf583a225ff6e095b4d0f8723ed174ed0752d389c653baa02db80a2686966"
     },
     {
       "path": "nativeAugmentation.d.ts",
@@ -264,13 +264,13 @@
     },
     {
       "path": "rolePipeline.d.ts",
-      "size": 4411,
-      "sha256": "ffe778c3e983b459363b9d242bf93a8f1fb30da59d56b412ce756c55362a772c"
+      "size": 4750,
+      "sha256": "ff7bff5b830f829f90e039cd543dd7c052c7835031bd8e3b7e777324564a1f41"
     },
     {
       "path": "rolePipeline.js",
-      "size": 15921,
-      "sha256": "0e9be4942dd0a1150995916dc3dba2d7e35febecd76cc8fd504566401357df2b"
+      "size": 20140,
+      "sha256": "8779166e0a71339e120d608cfdd0ecd03d1630e7b7f42c8bea38c4a881913033"
     },
     {
       "path": "selection.d.ts",

@@ -4,14 +4,14 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED = Object.freeze({
-  commit: 'd2a587642bde4627f0e22c9a2c9655324f46c5d5',
-  tree: '997590999cf211741e618481aed79587f4412b1d',
-  version: '1.2.0',
-  runtimeVersion: '1.2.0+abi.2.14.0',
+  commit: 'b8b942aea291102d974bb68eb09013f3453b0a86',
+  tree: '737178058bed3135d5b33de77388a1b709c7696c',
+  version: '1.2.1',
+  runtimeVersion: '1.2.1+abi.2.14.0',
   abi: '2.14.0',
   package: '@nirs4all/methods',
   emscripten: '3.1.74',
-  npmIntegrity: 'sha512-W9WlrkGZF8cv7EmfJdi0wAFOo9HcT0Rjtwhq/CNe8ArPYU8pWm3sZ4TklhkyoMSgzxBCT3u1Hv3de25YOeZShQ==',
+  npmIntegrity: 'sha512-4BL8EiE4qJKqePC/Xj6JlCeeAfWzDj0cyMDaW0xKnTWzZyawyUKs6z6gh4ADYvc3LtWM+H4qmBPSf+DRMg9tkA==',
 })
 const EXPECTED_FILES = Object.freeze({
   'LICENSE': { size: 34020, sha256: 'd8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee' },
@@ -44,7 +44,7 @@ const EXPECTED_FILES = Object.freeze({
   'model.d.ts': { size: 11450, sha256: '545e4dc89f7543d822d761ec503d6e6bb5d274501a6c6d0de8af3ab752dc0eba' },
   'model.js': { size: 28099, sha256: 'f39f2ca8e181cdc3193ca8cf0228faa084b937147ea1d8e3ebd471afa5326b4f' },
   'n4m.js': { size: 186006, sha256: '2865e22c361bfd496585814adfd60c9063990f21a998b01a73178e7b1d05ab43' },
-  'n4m.wasm': { size: 2742989, sha256: '946053cae1ca9ff7535b4b974eed92acd58b28d504f6d8d10a2c7cf0c73375c7' },
+  'n4m.wasm': { size: 2742778, sha256: '030cf583a225ff6e095b4d0f8723ed174ed0752d389c653baa02db80a2686966' },
   'nativeAugmentation.d.ts': { size: 1340, sha256: '55e3f2d7692ec5da253c8b17c3e9b9efaa497c6a4a465e7c37cb6c224905aee2' },
   'nativeAugmentation.js': { size: 2479, sha256: 'f623004e281162862a3fa10095e9a3d162159663a53952235aa2333e0d5ae851' },
   'nativeModel.d.ts': { size: 735, sha256: 'e28d791d034cc030bf9501dd4b6b7a6adb522cda3bc8cba237f837f6f2468fd9' },
@@ -55,8 +55,8 @@ const EXPECTED_FILES = Object.freeze({
   'nativeSplitter.js': { size: 5272, sha256: '4277fe3a0bf0625b7b1c3e3417888017bd9746a3f2a4dcba42ef38807c5aa163' },
   'preprocessing.d.ts': { size: 985, sha256: '9408b9c93abdc74af2e0c8b042fdcd17ea1701961b6f6a746e0cc7ad1ed79a49' },
   'preprocessing.js': { size: 4726, sha256: 'e9714d38d9a744a706ff38c13c4b42fc737a3236dee6a1ccdf9e690db2519af8' },
-  'rolePipeline.d.ts': { size: 4411, sha256: 'ffe778c3e983b459363b9d242bf93a8f1fb30da59d56b412ce756c55362a772c' },
-  'rolePipeline.js': { size: 15921, sha256: '0e9be4942dd0a1150995916dc3dba2d7e35febecd76cc8fd504566401357df2b' },
+  'rolePipeline.d.ts': { size: 4750, sha256: 'ff7bff5b830f829f90e039cd543dd7c052c7835031bd8e3b7e777324564a1f41' },
+  'rolePipeline.js': { size: 20140, sha256: '8779166e0a71339e120d608cfdd0ecd03d1630e7b7f42c8bea38c4a881913033' },
   'selection.d.ts': { size: 508, sha256: 'b42f61adb1047978a3f719b109342d3be37850f7155a19993159c45393f1c01e' },
   'selection.js': { size: 11407, sha256: '112ba4aa0db523b9edcd46f62df36c0b28b4129adf7920e1822c30334a6eb237' },
   'serialization.d.ts': { size: 2028, sha256: '0ca1d47fb4b6d189b2fbfa270d4669ed3505c7896636b5607757c2a05c14ed0a' },
