@@ -16,10 +16,10 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED_SOURCE = Object.freeze({
-  commit: 'd2a587642bde4627f0e22c9a2c9655324f46c5d5',
-  tree: '997590999cf211741e618481aed79587f4412b1d',
-  version: '1.2.0',
-  runtimeVersion: '1.2.0+abi.2.14.0',
+  commit: 'b8b942aea291102d974bb68eb09013f3453b0a86',
+  tree: '737178058bed3135d5b33de77388a1b709c7696c',
+  version: '1.2.1',
+  runtimeVersion: '1.2.1+abi.2.14.0',
   abi: '2.14.0',
   emscripten: '3.1.74',
 })

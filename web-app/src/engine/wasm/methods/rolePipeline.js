@@ -3,7 +3,8 @@
 // estimators (sample filters, transformers / selectors, one regressor or
 // classifier). Recipe validation, fit-input routing, the feature-name check
 // and the per-step N4ME states are native (n4m_role_pipeline_*); this file
-// marshals only. Class label names stay here, as the other bindings do.
+// marshals only. Class label tables stay here, as the other bindings do, and
+// follow the shared label contract (docs/abi/estimator_roles_design.md).
 import { checkStatus, getModule, makeMatrixView } from "./ffi.js";
 import { cString, methodClass, nativeParams, readI64, withContext, withFitInputs, } from "./estimatorRoles.js";
 const ROLES = {
@@ -33,17 +34,87 @@ function cStrings(values, allocs) {
     });
     return head;
 }
+/** Column names become C strings: a NUL would silently truncate one, so it is refused. */
+function checkNames(names) {
+    names.forEach((name, i) => {
+        if (name.includes("\0")) {
+            throw new Error(`feature name ${i} must not contain NUL: ${JSON.stringify(name)}`);
+        }
+    });
+}
+/**
+ * Class ids for the core and the label table (shared label contract).
+ * Integer labels are the ids and must be safe integers (so they fit int64
+ * exactly); strings and non-integer numbers become the table of sorted unique
+ * labels, the ids their positions. Missing (null / undefined), non-finite and
+ * boolean labels, and a mix of strings and numbers, are refused.
+ */
 function encodeLabels(y) {
     const labels = Array.from(y);
-    if (labels.every((v) => typeof v === "number" && Number.isInteger(v))) {
+    for (const v of labels) {
+        if (v === null || v === undefined) {
+            throw new TypeError("class labels must not be missing (null or undefined)");
+        }
+        if (typeof v === "number" && !Number.isFinite(v)) {
+            throw new RangeError("class labels must be finite (no NaN or infinity)");
+        }
+        if (typeof v !== "number" && typeof v !== "string") {
+            throw new TypeError(`class labels must be integers, finite numbers or strings; got ${String(v)}`);
+        }
+    }
+    const numbers = labels.every((v) => typeof v === "number");
+    if (numbers && labels.every((v) => Number.isInteger(v))) {
+        const unsafe = labels.find((v) => !Number.isSafeInteger(v));
+        if (unsafe !== undefined) {
+            throw new RangeError(`class labels must fit int64 exactly (safe integers); got ${unsafe}`);
+        }
         return { ids: labels };
     }
-    if (!labels.every((v) => typeof v === "string")) {
-        throw new TypeError("class labels must be all integers or all strings");
+    if (!numbers && !labels.every((v) => typeof v === "string")) {
+        throw new TypeError("class labels must be all numbers or all strings");
     }
-    const names = [...new Set(labels)].sort();
+    const names = [...new Set(labels)];
+    names.sort(numbers ? (a, b) => a - b : undefined);
     const index = new Map(names.map((name, i) => [name, i]));
     return { ids: labels.map((v) => index.get(v)), names };
+}
+/**
+ * An imported label table (class_names) checked against the shared label
+ * contract: a non-empty list of unique strings or finite numbers (not both,
+ * no boolean) with an entry for every class id of the fitted state.
+ */
+function labelTable(table, ids) {
+    if (!Array.isArray(table))
+        throw new TypeError("class_names must be a list");
+    if (table.length === 0)
+        throw new RangeError("class_names must not be empty");
+    table.forEach((v, i) => {
+        if (v === null || v === undefined)
+            throw new TypeError(`class_names has a missing entry at ${i}`);
+        if (typeof v !== "string" && typeof v !== "number") {
+            throw new TypeError(`class_names entries must be strings or numbers; entry ${i} is ${String(v)}`);
+        }
+        if (typeof v === "number" && !Number.isFinite(v)) {
+            throw new RangeError(`class_names has a non-finite entry at ${i}: ${v}`);
+        }
+    });
+    if (new Set(table.map((v) => typeof v)).size > 1)
+        throw new TypeError("class_names mixes strings and numbers");
+    const inexact = table.find((v) => typeof v === "number" && Number.isInteger(v) && Math.abs(v) > 2 ** 53);
+    if (inexact !== undefined) {
+        throw new RangeError(`numeric class_names must be exactly representable as float64; ${inexact} is beyond ±2^53`);
+    }
+    const seen = new Set();
+    for (const v of table) {
+        if (seen.has(v))
+            throw new RangeError(`class_names has duplicate label ${JSON.stringify(v)}`);
+        seen.add(v);
+    }
+    const outside = ids.find((id) => id < 0 || id >= table.length);
+    if (outside !== undefined) {
+        throw new RangeError(`class id ${outside} has no entry in class_names (${table.length} entries)`);
+    }
+    return [...table];
 }
 /** Native trained recipe of role steps, portable as N4ME states. */
 export class RolePipeline {
@@ -63,7 +134,10 @@ export class RolePipeline {
     /**
      * A fitted pipeline rebuilt from one N4ME state per stateful step. The
      * native import refuses states that contradict the recipe (count, method,
-     * parameters, role, widths). classNames restores string class labels.
+     * parameters, role, widths). classNames restores the label table of a
+     * classifier trained on strings or non-integer numbers; it is refused
+     * unless it is a non-empty list of unique strings or finite numbers with
+     * an entry for every class id of the fitted state.
      */
     static fromStates(steps, states, options = {}) {
         const m = getModule();
@@ -71,6 +145,7 @@ export class RolePipeline {
         const handle = pipeline.create();
         const payloads = states.map((s) => (s instanceof Uint8Array ? s : s.n4me));
         const allocs = [];
+        let classNames;
         try {
             const buffers = m._malloc(Math.max(1, payloads.length) * 4);
             allocs.push({ ptr: buffers, free: () => m._free(buffers) });
@@ -87,6 +162,12 @@ export class RolePipeline {
                 RolePipeline.setFeatureNames(ctx, handle, options.featureNames);
                 checkStatus(m.ccall("n4m_role_pipeline_import_states", "number", ["number", "number", "number", "number", "number"], [ctx, handle, payloads.length, buffers, sizes]), ctx);
             });
+            if (options.classNames !== undefined) {
+                if (RolePipeline.stepInfo(handle, steps.length - 1).role !== "classifier") {
+                    throw new TypeError("class_names are given but the final step is not a classifier");
+                }
+                classNames = labelTable(options.classNames, RolePipeline.classIds(handle));
+            }
         }
         catch (error) {
             m.ccall("n4m_role_pipeline_destroy", null, ["number"], [handle]);
@@ -95,7 +176,7 @@ export class RolePipeline {
         finally {
             allocs.forEach((a) => a.free());
         }
-        pipeline.publish(handle, options.featureNames, options.classNames);
+        pipeline.publish(handle, options.featureNames, classNames);
         return pipeline;
     }
     get fitted() {
@@ -184,8 +265,11 @@ export class RolePipeline {
     }
     /** Fitted classes, ascending ids (names when trained on names). */
     classes() {
+        return RolePipeline.classIds(this.handle()).map((id) => this.label(id));
+    }
+    /** Native class ids of the final classifier (n4m_role_pipeline_classes). */
+    static classIds(handle) {
         const m = getModule();
-        const handle = this.handle();
         const countPtr = m._malloc(8);
         try {
             checkStatus(m.ccall("n4m_role_pipeline_classes", "number", ["number", "number", "i64", "number"], [handle, 0, BigInt(0), countPtr]));
@@ -193,7 +277,7 @@ export class RolePipeline {
             const buf = m._malloc(Math.max(1, count) * 8);
             try {
                 checkStatus(m.ccall("n4m_role_pipeline_classes", "number", ["number", "number", "i64", "number"], [handle, buf, BigInt(count), countPtr]));
-                return Array.from({ length: count }, (_, i) => this.label(readI64(buf + 8 * i)));
+                return Array.from({ length: count }, (_, i) => readI64(buf + 8 * i));
             }
             finally {
                 m._free(buf);
@@ -291,6 +375,7 @@ export class RolePipeline {
     static setFeatureNames(ctx, handle, names) {
         if (names === undefined)
             return;
+        checkNames(names);
         const allocs = [];
         try {
             checkStatus(getModule().ccall("n4m_role_pipeline_set_feature_names", "number", ["number", "number", "number", "i64"], [ctx, handle, cStrings(names, allocs), BigInt(names.length)]), ctx);
@@ -304,6 +389,8 @@ export class RolePipeline {
         if (names !== undefined && names.length !== X.cols) {
             throw new RangeError(`${names.length} feature names for ${X.cols} columns`);
         }
+        if (names !== undefined)
+            checkNames(names);
         const namesPtr = names === undefined ? 0 : cStrings(names, allocs);
         checkStatus(getModule().ccall("n4m_role_pipeline_check_features", "number", ["number", "number", "i64", "number"], [ctx, this.handle(), BigInt(X.cols), namesPtr]), ctx);
     }
