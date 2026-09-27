@@ -149,11 +149,17 @@ without the local vendors.
   IndexedDB publisher in its own context.
 - **Node catalog** (`src/catalog/`): native nirs4all-methods nodes are generated from the checked-in
   n4m method manifest (`npm run n4m:manifest` / `check:n4m-manifest`) through
-  `nirs4all-ui/nodeRegistry`, limited to the methods the staged WASM dispatcher runs
-  (`legacy-dispatch.ts`, replaced by the n4m role API once the web stages methods ABI ≥ 2.13). The
-  few hand-written native nodes carry their libn4m ABI symbols and `npm run validate:catalog` fails
-  CI if one isn't exported upstream (e.g. OPLS is intentionally excluded). The preset gallery is
-  authored over these entries.
+  `nirs4all-ui/nodeRegistry`: every manifest method whose role the pipeline can place
+  (transformer / selector → preprocessing, sample filter, augmenter, regressor / classifier → model,
+  splitter → split) and whose required fit inputs a web dataset can supply (targets, class labels,
+  spectral axis). Their DSL token is the portable `n4m:<method_id>` operator token Studio also
+  serializes, and they run through the generic n4m role API (`src/engine/methods/n4m.ts`:
+  `methodClass(method_id)` + manifest-typed params → fit / transform / predict / predictLabels /
+  getMask / split / augment); fitted states are saved as portable N4ME bytes (`.n4a` v2) and
+  reloaded with `NativeEstimator.fromN4me`. The few hand-written nodes (ml.js models, PLS
+  Canonical / SVD) carry their libn4m ABI symbols and `npm run validate:catalog` fails CI if one
+  isn't exported upstream (e.g. OPLS is intentionally excluded) or if the manifest ABI drifts from
+  the staged methods WASM. The preset gallery is authored over these entries.
 - **Data** (`src/data/`): two ingestion paths behind one `MaterializedDataset` shape — an
   axis-aware **CSV** builder (`X_train/y_train(+_test,+metadata)` convention, wavelength-header and
   task-type inference), and the real **nirs4all-formats + nirs4all-io WASM** stack (`wasm-io.ts`,

@@ -1,15 +1,25 @@
 #!/usr/bin/env node
-// Catalog ↔ ABI drift gate. Every n4m_* symbol referenced by the hand-written
-// node catalog entries must be an exported libn4m symbol upstream — so the demo
-// never advertises a method the engine can't run (e.g. OPLS). Native nodes are
-// generated from the n4m manifest instead (src/catalog/native.test.ts). Fails CI
-// on drift.
+// Catalog ↔ ABI drift gate. Native nodes are generated from the checked-in n4m
+// manifest and run through the n4m role API of the staged methods WASM, so the
+// manifest must describe exactly the ABI that WASM was built at (the per-node
+// checks live in src/catalog/native.test.ts). Every n4m_* symbol referenced by the
+// hand-written node catalog entries must be an exported libn4m symbol upstream —
+// so the demo never advertises a method the engine can't run (e.g. OPLS). Fails
+// CI on drift.
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = join(here, '..')
+
+const manifestAbi = JSON.parse(readFileSync(join(root, 'src/catalog/n4m-manifest.json'), 'utf8')).abi
+const stagedAbi = JSON.parse(readFileSync(join(root, 'src/engine/wasm/methods/PROVENANCE.json'), 'utf8')).abi
+if (manifestAbi !== stagedAbi) {
+  console.error(`✗ src/catalog/n4m-manifest.json is ABI ${manifestAbi} but the staged methods WASM is ABI ${stagedAbi}.`)
+  process.exit(1)
+}
+console.log(`✓ n4m manifest ↔ staged methods WASM ABI ${stagedAbi}.`)
 const requireMethodsAbi = process.env.NIRS4ALL_METHODS_ABI_REQUIRED === '1'
 const requireStudioRegistry = process.env.NIRS4ALL_STUDIO_REGISTRY_REQUIRED === '1'
 // candidate locations for the upstream ABI symbol snapshot
