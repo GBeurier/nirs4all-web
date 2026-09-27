@@ -13,6 +13,11 @@
 // it never leaves this browser session as is) and records the flag; a shareable
 // export re-serializes each state through `exportN4me` with the user's choice,
 // so libn4m refuses to write training rows the user did not agree to share.
+//
+// Column identity (re-audit R09): the estimator API carries no column names, so
+// a model with recorded columns predicts through `predictNamedPipeline`, one
+// native RolePipeline rebuilt from the same states that holds the fitted names
+// and checks the input's.
 import { nodeByType } from '@/catalog/nodes'
 import type { NativeMethodRef, NodeDef } from '@/catalog/types'
 import type { Mat } from '../algo/linalg'
@@ -43,6 +48,9 @@ export interface N4meCheckpoint {
 export interface NativeModelState extends N4meCheckpoint {
   /** classifiers: the class-score width (one column per encoded class) */
   nClasses?: number
+  /** the node params the model was fitted with (after the n_components clamp):
+   *  the recipe a native pipeline rebuilt from this state must repeat */
+  fitParams?: Record<string, unknown>
 }
 
 /** Fit-time context: the (train) targets and the dataset's spectral axis. */
@@ -138,10 +146,18 @@ export function transform(est: NativeEstimator, X: Mat): Mat {
 export function fitModel(type: string, params: Record<string, unknown>, X: Mat, Y: Mat): NativeModelState {
   const est = fitEstimator(type, params, X, { Y })
   try {
-    return nativeNode(type).native.role === 'classifier' ? { ...checkpoint(est), nClasses: Y.cols } : checkpoint(est)
+    const state = { ...checkpoint(est), fitParams: params }
+    return nativeNode(type).native.role === 'classifier' ? { ...state, nClasses: Y.cols } : state
   } finally {
     est.dispose()
   }
+}
+
+/** One-hot rows of class ids over `nClasses` columns. */
+function oneHot(labels: number[], nClasses: number): Mat {
+  const out: Mat = { data: new Float64Array(labels.length * nClasses), rows: labels.length, cols: nClasses }
+  labels.forEach((label, r) => (out.data[r * nClasses + label] = 1))
+  return out
 }
 
 /** Predict with a saved native model: regressor outputs, or one-hot class ids
@@ -150,12 +166,36 @@ export function predictModel(model: NativeModelState, X: Mat): Mat {
   const est = loadEstimator(model.n4me)
   try {
     if (model.nClasses === undefined) return (est as NativeEstimator & Regressor).predict(matrix(X))
-    const labels = (est as NativeEstimator & Classifier).predictLabels(matrix(X))
-    const out: Mat = { data: new Float64Array(X.rows * model.nClasses), rows: X.rows, cols: model.nClasses }
-    labels.forEach((label, r) => (out.data[r * model.nClasses! + label] = 1))
-    return out
+    return oneHot((est as NativeEstimator & Classifier).predictLabels(matrix(X)), model.nClasses)
   } finally {
     est.dispose()
+  }
+}
+
+/**
+ * Predict through one native RolePipeline rebuilt from the fitted states (the
+ * replayed transformers / selectors, then the model) and the fitted input
+ * column names: libn4m checks every input's width and, when `inputNames` is
+ * given, its names and order (F03). Same states and numerics as the per-step
+ * replay; only the column check is added.
+ */
+export function predictNamedPipeline(
+  steps: { type: string; params: Record<string, unknown>; n4me: Uint8Array }[],
+  model: { type: string; state: NativeModelState & { fitParams: Record<string, unknown> } },
+  X: Mat,
+  featureNames: string[],
+  inputNames: string[] | undefined,
+): Mat {
+  const recipe = [...steps, { type: model.type, params: model.state.fitParams }].map((s) => {
+    const def = nativeNode(s.type)
+    return { methodId: def.native.methodId, params: nativeParams(def, s.params) }
+  })
+  const pipeline = methodsWasm().RolePipeline.fromStates(recipe, [...steps.map((s) => s.n4me), model.state.n4me], { featureNames })
+  try {
+    if (model.state.nClasses === undefined) return pipeline.predict(matrix(X), inputNames)
+    return oneHot(pipeline.predictLabels(matrix(X), inputNames) as number[], model.state.nClasses)
+  } finally {
+    pipeline.dispose()
   }
 }
 

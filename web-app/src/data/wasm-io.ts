@@ -6,6 +6,7 @@
 // pull it, keeping the initial bundle and the offline single-file build lean.
 import type { MaterializedDataset, Partition } from '@/engine/types'
 import { loadDataIoWasm } from '@/engine/nirs4all-core'
+import { columnName } from '@/engine/feature-identity'
 import { encodeTarget, inferTaskType } from './dataset'
 
 export interface DecodedFile {
@@ -165,6 +166,8 @@ export function mapAssembledToMaterialized(full: AssembledFull): MaterializedDat
   const axisNums = headers.map(Number)
   const axis = axisNums.length === nFeatures && axisNums.every((v) => Number.isFinite(v)) ? axisNums : Array.from({ length: nFeatures }, (_, i) => i)
   const axisUnit = first.header_units?.[0] || 'index'
+  // headers that are not a spectral axis still name the columns
+  const featureNames = headers.length === nFeatures && axisUnit === 'index' ? headers.map((h) => columnName(String(h))) : undefined
   const targetName = first.y_headers?.[0] ?? 'target'
 
   let nSamples = 0
@@ -233,7 +236,7 @@ export function mapAssembledToMaterialized(full: AssembledFull): MaterializedDat
   // to train without targets, so an all-NaN y never silently produces a model.
   const taskType = inferTaskType(Array.from(yRaw), labelsRaw)
   const { y, classes } = encodeTarget(yRaw, labelsRaw, taskType)
-  return { X, nSamples, nFeatures, axis, axisUnit, y, yRaw, labelsRaw, targetName, taskType, classes, sampleIds, partitions, metadata }
+  return { X, nSamples, nFeatures, axis, axisUnit, ...(featureNames ? { featureNames } : {}), y, yRaw, labelsRaw, targetName, taskType, classes, sampleIds, partitions, metadata }
 }
 
 /**

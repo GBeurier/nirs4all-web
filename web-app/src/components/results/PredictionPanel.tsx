@@ -16,7 +16,7 @@ import {
 
 import type { PredictionPanelProps } from '@/components/contracts'
 import type { Confusion, Metrics, PredictResult, PredRow } from '@/engine/types'
-import { parseSpectraCsv } from '@/data/dataset'
+import { columnContract, readPredictionCsv } from '@/data/prediction-input'
 import { classificationMetrics, regressionMetrics } from '@/engine/metrics'
 import { fmt } from '@/lib/format'
 import { parseCsv } from '@/data/csv'
@@ -40,6 +40,8 @@ interface PredState {
   nSamples: number
   /** when the spectra CSV carried an extra last column, its raw cells (length nSamples) become the auto-detected Y */
   autoY: string[] | null
+  /** how the file's columns met the model's: checked by name and order, or positional */
+  columns: { checked: boolean; message: string }
 }
 
 /** Equal-axis extent across actual & predicted for a parity scatter (mirrors _helpers.parityExtent). */
@@ -136,40 +138,10 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
     resetY()
     try {
       const text = await file.text()
-      // parseSpectraCsv drops a numeric wavelength header row (matches dataset assembly)
-      const parsed = parseSpectraCsv(text)
-      const rows = parsed.rows
-      if (rows.length === 0) throw new Error('No data rows found in the file.')
-      const cols = rows[0].length
-      const replayFeatures = nFeatures
-      // Mechanism 1: an extra trailing column (nFeatures + 1) is interpreted as the reference Y.
-      const hasAutoY = cols === nFeatures + 1
-      if (cols !== nFeatures && !hasAutoY) {
-        throw new Error(`Column count mismatch: the file has ${cols} columns but the model expects ${nFeatures} features${cols === nFeatures + 2 ? '' : ' (or ' + (nFeatures + 1) + ' with a trailing Y column)'}.`)
-      }
-      const nSamples = rows.length
-      const X = new Float64Array(nSamples * replayFeatures)
-      const autoY: string[] | null = hasAutoY ? new Array(nSamples) : null
-      // raw string cells aligned to the data rows — offset by 1 when parseSpectraCsv stripped a wavelength header row
-      const pcForRaw = hasAutoY ? parseCsv(text) : null
-      const rawOffset = pcForRaw ? pcForRaw.rows.length - rows.length : 0
-      const rawCells = pcForRaw?.raw ?? null
-      for (let i = 0; i < nSamples; i++) {
-        const row = rows[i]
-        if (row.length !== cols) throw new Error(`Row ${i + 1} has ${row.length} columns, expected ${cols}.`)
-        for (let j = 0; j < replayFeatures; j++) {
-          const v = row[j]
-          if (!Number.isFinite(v)) throw new Error(`Non-numeric value at row ${i + 1}, column ${j + 1}.`)
-          X[i * replayFeatures + j] = v
-        }
-        if (autoY) {
-          // prefer the raw string (preserves class labels); rawOffset accounts for a stripped wavelength row
-          const raw = rawCells?.[i + rawOffset]?.[replayFeatures]
-          autoY[i] = (raw ?? String(row[replayFeatures])).trim()
-        }
-      }
-      const result = await engine.predict(model, X, nSamples, replayFeatures)
-      setPred({ result, nSamples, autoY })
+      const input = readPredictionCsv(text, nFeatures)
+      // the engine refuses named columns that differ from the model's; unnamed ones are positional
+      const result = await engine.predict(model, input.X, input.nSamples, input.nFeatures, input.featureNames)
+      setPred({ result, nSamples: input.nSamples, autoY: input.autoY, columns: columnContract(model, input.featureNames) })
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -312,6 +284,11 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
         <p className="text-[11px] text-muted-foreground/80">
           Tip: add a trailing column ({nFeatures + 1} total) and it is read as reference Y values.
         </p>
+        <p className="text-[11px] text-muted-foreground/80">
+          {model.features
+            ? 'Keep the header row: column names and order are checked against the model. Without it, columns are taken by position.'
+            : 'This model records no column names: columns are taken by position.'}
+        </p>
         <input ref={inputRef} type="file" accept=".csv,.tsv,.txt,text/csv" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleFile(f) }} />
       </div>
 
@@ -330,6 +307,18 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
 
       {pred && (
         <div className="space-y-5">
+          <div
+            className={cn(
+              'flex items-start gap-2 rounded-xl border p-3 text-xs',
+              pred.columns.checked
+                ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300'
+                : 'border-amber-500/40 bg-amber-500/5 text-amber-700 dark:text-amber-300',
+            )}
+            data-column-check={pred.columns.checked ? 'names' : 'positional'}
+          >
+            {pred.columns.checked ? <ShieldCheck className="mt-0.5 size-3.5 shrink-0" /> : <AlertCircle className="mt-0.5 size-3.5 shrink-0" />}
+            <span>{pred.columns.message}</span>
+          </div>
           <div className="text-xs text-muted-foreground">
             {pred.nSamples} sample{pred.nSamples === 1 ? '' : 's'} predicted.
             {multiTarget && (

@@ -12,8 +12,8 @@ export class StubEngine implements Engine {
     return runPipeline(ds, dsl, opts, jsBackend)
   }
 
-  predict(model: FittedPipeline, Xnew: Float64Array, nSamples: number, nFeatures: number): Promise<PredictResult> {
-    return Promise.resolve(predictPipeline(model, Xnew, nSamples, nFeatures, jsBackend))
+  predict(model: FittedPipeline, Xnew: Float64Array, nSamples: number, nFeatures: number, featureNames?: string[]): Promise<PredictResult> {
+    return Promise.resolve(predictPipeline(model, Xnew, nSamples, nFeatures, jsBackend, featureNames))
   }
 
   exportModel(model: FittedPipeline, { allowTrainingRows }: ExportOptions): Promise<FittedPipeline> {

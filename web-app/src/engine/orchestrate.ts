@@ -10,6 +10,7 @@ import { buildFolds, type Fold } from './kfold'
 import { testRowsOf, trainRowsOf } from './partition'
 import { applySplit, isSplitType } from './split'
 import { classificationMetrics, regressionMetrics } from './metrics'
+import { checkInputColumns, datasetFeatureIdentity } from './feature-identity'
 import type {
   FittedPipeline,
   MaterializedDataset,
@@ -45,6 +46,10 @@ export interface ModelBackend {
   predict(model: unknown, X: Mat): Mat
   /** the shareable copy of a fitted model; refuses one embedding training rows unless allowed */
   share(model: unknown, allowTrainingRows: boolean): unknown
+  /** libn4m: predict the whole fitted chain as one native pipeline that holds the
+   *  fitted column names and checks `inputNames` against them (F03); undefined
+   *  when the chain is not one native pipeline (feature union, non-N4ME model). */
+  predictNamed?(st: FittedState, modelType: string, X: Mat, featureNames: string[], inputNames: string[] | undefined): Mat | undefined
   /** preprocessing operators (libn4m or JS) — the numerics never live here */
   preproc: Preprocessor
 }
@@ -400,6 +405,7 @@ export async function runPipeline(
     dsl,
     taskType: task,
     nFeatures: ds.nFeatures,
+    features: datasetFeatureIdentity(ds),
     classes: classNames.length ? classNames : undefined,
     state: { chain: descriptors, branch, model, classNames: classNames.length ? classNames : undefined, backendId: backend.id } as FittedState,
   }
@@ -420,18 +426,22 @@ export async function runPipeline(
   }
 }
 
+/** Predict new rows. `featureNames` are the input's column names (its header),
+ *  checked against the model's fitted columns; without them the input is
+ *  positional. */
 export function predictPipeline(
   model: FittedPipeline,
   Xnew: Float64Array,
   nSamples: number,
   nFeatures: number,
   backend: ModelBackend,
+  featureNames?: string[],
 ): PredictResult {
+  checkInputColumns(model, nFeatures, featureNames)
   const st = model.state as FittedState
-  // main chain → optional branch sub-chains → concat columns (mirrors training).
-  const Xpre = applyChain(st.chain, { data: Xnew, rows: nSamples, cols: nFeatures }, backend.preproc)
-  const Xp = st.branch && st.branch.length >= 2 ? concatCols(st.branch.map((c) => applyChain(c, Xpre, backend.preproc))) : Xpre
-  const pred = backend.predict(st.model, Xp)
+  const X: Mat = { data: Xnew, rows: nSamples, cols: nFeatures }
+  const named = model.features && model.dsl.model ? backend.predictNamed?.(st, model.dsl.model.type, X, model.features.names, featureNames) : undefined
+  const pred = named ?? replayPipeline(st, X, backend)
   if (model.taskType === 'regression') {
     return { values: Float64Array.from({ length: nSamples }, (_, i) => pred.data[i]) }
   }
@@ -450,6 +460,13 @@ export function predictPipeline(
     labels.push(names[best])
   }
   return { values, labels }
+}
+
+/** Main chain → optional branch sub-chains → concat columns (mirrors training) → model. */
+function replayPipeline(st: FittedState, X: Mat, backend: ModelBackend): Mat {
+  const Xpre = applyChain(st.chain, X, backend.preproc)
+  const Xp = st.branch && st.branch.length >= 2 ? concatCols(st.branch.map((c) => applyChain(c, Xpre, backend.preproc))) : Xpre
+  return backend.predict(st.model, Xp)
 }
 
 export function backendIdOf(model: FittedPipeline): string {

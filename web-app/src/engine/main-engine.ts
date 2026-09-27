@@ -141,7 +141,7 @@ export class MainEngine implements Engine {
     )
   }
 
-  async predict(model: FittedPipeline, Xnew: Float64Array, nSamples: number, nFeatures: number): Promise<PredictResult> {
+  async predict(model: FittedPipeline, Xnew: Float64Array, nSamples: number, nFeatures: number, featureNames?: string[]): Promise<PredictResult> {
     if (isArchiveV2Model(model)) {
       // Archive replay is always native and fail-closed in both product
       // profiles. Transitional mode never substitutes a JS model or two
@@ -149,16 +149,16 @@ export class MainEngine implements Engine {
       return predictArchiveV2(model, Xnew, nSamples, nFeatures)
     }
     if (isPortableCoreModel(model)) {
-      return predictPortableCore(model, Xnew, nSamples, nFeatures)
+      return predictPortableCore(model, Xnew, nSamples, nFeatures, featureNames)
     }
     // A libn4m-fitted model MUST predict with libn4m — the model blob shape and the
     // preprocessing math differ from the JS backend, so never coerce it through JS.
     if (backendIdOf(model) === 'libn4m-wasm') {
       const backend = await loadLibn4mBackend()
-      return predictPipeline(model, Xnew, nSamples, nFeatures, backend)
+      return predictPipeline(model, Xnew, nSamples, nFeatures, backend, featureNames)
     }
     if (backendIdOf(model) === 'mljs-classic') {
-      return predictPipeline(model, Xnew, nSamples, nFeatures, await loadMlJsBackend())
+      return predictPipeline(model, Xnew, nSamples, nFeatures, await loadMlJsBackend(), featureNames)
     }
     if (this.policy.jsBackendFallback === 'forbid') {
       throw new RtErrorException(makeRtError({
@@ -169,7 +169,7 @@ export class MainEngine implements Engine {
         unsupported_capability: 'javascript_model_backend',
       }))
     }
-    return predictPipeline(model, Xnew, nSamples, nFeatures, jsBackend)
+    return predictPipeline(model, Xnew, nSamples, nFeatures, jsBackend, featureNames)
   }
 
   async exportModel(model: FittedPipeline, { allowTrainingRows }: ExportOptions): Promise<FittedPipeline> {

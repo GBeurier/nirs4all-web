@@ -1,5 +1,6 @@
 import { predictPortablePipeline, runPortablePipeline } from './nirs4all-core'
 import { scoreNode } from './orchestrate'
+import { checkInputColumns, datasetFeatureIdentity } from './feature-identity'
 import type { PortablePlsModel } from './nirs4all-core'
 import type { FittedPipeline, MaterializedDataset, PipelineDSL, PipelineStep, PredictResult, PredRow, RunOptions, RunResult } from './types'
 
@@ -49,6 +50,7 @@ export async function tryRunPortableCore(ds: MaterializedDataset, dsl: PipelineD
     dsl: selectedDsl(dsl, result.selected.n_components),
     taskType: 'regression',
     nFeatures: ds.nFeatures,
+    features: datasetFeatureIdentity(ds),
     state: {
       backendId: BACKEND_ID,
       source,
@@ -85,7 +87,8 @@ export async function tryRunPortableCore(ds: MaterializedDataset, dsl: PipelineD
   }
 }
 
-export async function predictPortableCore(model: FittedPipeline, Xnew: Float64Array, nSamples: number, nFeatures: number): Promise<PredictResult> {
+export async function predictPortableCore(model: FittedPipeline, Xnew: Float64Array, nSamples: number, nFeatures: number, featureNames?: string[]): Promise<PredictResult> {
+  checkInputColumns(model, nFeatures, featureNames)
   const state = model.state as PortableCoreState
   const predicted = await predictPortablePipeline(state.result, {
     X: Xnew,

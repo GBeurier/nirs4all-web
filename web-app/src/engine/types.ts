@@ -21,6 +21,9 @@ export interface MaterializedDataset {
   /** spectral axis, length nFeatures (wavelengths or 0..n-1 index fallback) */
   axis: number[];
   axisUnit: string; // 'nm' | 'cm-1' | 'index' | ...
+  /** column names from a non-numeric header, length nFeatures (absent: the
+   *  columns are named by `axis`, or anonymous when axisUnit is 'index') */
+  featureNames?: string[];
   /** numeric target: value (regression) or class index (classification) */
   y: Float64Array;
   targetName: string;
@@ -226,11 +229,23 @@ export interface ScoreNode {
   status: 'completed' | 'running' | 'failed';
 }
 
+/** The input columns a model was fitted on, in order. `names` are what predict
+ *  checks (spectral axis values in canonical number form, or header names); a
+ *  model without it (index axis, older bundle) takes its input by position. */
+export interface FeatureIdentity {
+  names: string[];
+  /** the numeric spectral axis, when the columns are one */
+  axis?: number[];
+  unit?: string;
+}
+
 /** Opaque fitted pipeline — produced by run(), consumed by predict(). */
 export interface FittedPipeline {
   dsl: PipelineDSL;
   taskType: TaskType;
   nFeatures: number;
+  /** the fitted input columns; absent: positional input */
+  features?: FeatureIdentity;
   classes?: string[];
   /** engine-specific serialized state (preprocessing states + model coeffs) */
   state: unknown;
@@ -393,11 +408,15 @@ export interface ExportOptions {
 export interface Engine {
   readonly name: string;
   run(ds: MaterializedDataset, dsl: PipelineDSL, opts?: RunOptions): Promise<RunResult>;
+  /** `featureNames`: the input's column names in order (from its header). A
+   *  model that records its columns refuses names that differ in content, order
+   *  or count; without names the input is taken by position. */
   predict(
     model: FittedPipeline,
     Xnew: Float64Array,
     nSamples: number,
     nFeatures: number,
+    featureNames?: string[],
   ): Promise<PredictResult>;
   /** The shareable copy of a model this engine fitted: every state is
    *  re-serialized by its backend, and one that embeds training rows is refused

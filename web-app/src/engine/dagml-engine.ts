@@ -12,6 +12,7 @@ import { materializeViaProvider } from './dagml-data'
 import { applySplit, isSplitType } from './split'
 import type { Fold } from './kfold'
 import { testRowsOf, trainRowsOf } from './partition'
+import { datasetFeatureIdentity } from './feature-identity'
 import type { Mat } from './algo/linalg'
 import {
   classInfo,
@@ -305,6 +306,7 @@ export class DagMlEngine implements Engine {
         dsl,
         taskType: task,
         nFeatures: ds.nFeatures,
+        features: datasetFeatureIdentity(ds),
         classes: classNames.length ? classNames : undefined,
         state: { chain: descriptors, branch, model, classNames: classNames.length ? classNames : undefined, backendId: backend.id } as FittedState,
       }
@@ -627,6 +629,7 @@ export class DagMlEngine implements Engine {
       dsl: winner.vDsl,
       taskType: task,
       nFeatures: ds.nFeatures,
+      features: datasetFeatureIdentity(ds),
       classes: classNames.length ? classNames : undefined,
       state: { chain: descriptors, branch, model, classNames: classNames.length ? classNames : undefined, backendId: backend.id } as FittedState,
     }
@@ -653,10 +656,10 @@ export class DagMlEngine implements Engine {
     }
   }
 
-  async predict(model: FittedPipeline, Xnew: Float64Array, nSamples: number, nFeatures: number): Promise<PredictResult> {
+  async predict(model: FittedPipeline, Xnew: Float64Array, nSamples: number, nFeatures: number, featureNames?: string[]): Promise<PredictResult> {
     const backend = (model.state as FittedState).backendId === 'mljs-classic'
       ? await loadMlJsBackend() : await loadLibn4mBackend()
-    return predictPipeline(model, Xnew, nSamples, nFeatures, backend)
+    return predictPipeline(model, Xnew, nSamples, nFeatures, backend, featureNames)
   }
 
   async exportModel(model: FittedPipeline, { allowTrainingRows }: ExportOptions): Promise<FittedPipeline> {

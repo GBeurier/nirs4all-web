@@ -1,6 +1,12 @@
 import type { Mat } from './algo/linalg'
 import { type PlsModel, plsFit, plsPredict } from './algo/pls'
-import { exportN4me, isNativeModelState, fitModel as fitNativeModel, predictModel as predictNativeModel } from './methods/n4m'
+import {
+  exportN4me,
+  isNativeModelState,
+  fitModel as fitNativeModel,
+  predictModel as predictNativeModel,
+  predictNamedPipeline,
+} from './methods/n4m'
 import { jsPreprocessor, libn4mPreprocessor } from './methods/preproc'
 import { loadMethodsWasm } from './nirs4all-core'
 import type { ModelBackend } from './orchestrate'
@@ -63,6 +69,18 @@ export async function loadLibn4mBackend(): Promise<ModelBackend> {
     // Canonical/SVD coefficient models keep no training rows.
     share: (model, allowTrainingRows) =>
       isNativeModelState(model) ? { ...model, n4me: exportN4me(model.n4me, allowTrainingRows) } : model,
+    // A chain of N4ME transformers / selectors ending in an N4ME model is one
+    // native RolePipeline: libn4m then checks the input column names (F03).
+    // Train-only row operators (state null) are not replayed; a feature union or
+    // a legacy coefficient model is not one pipeline.
+    predictNamed: (st, modelType, X, featureNames, inputNames) => {
+      const model = st.model
+      if ((st.branch && st.branch.length >= 2) || !isNativeModelState(model) || !model.fitParams) return undefined
+      const replayed = st.chain.filter((s) => s.state !== null)
+      if (!replayed.every((s) => s.state instanceof Uint8Array)) return undefined
+      const steps = replayed.map((s) => ({ type: s.type, params: s.params, n4me: s.state as Uint8Array }))
+      return predictNamedPipeline(steps, { type: modelType, state: { ...model, fitParams: model.fitParams } }, X, featureNames, inputNames)
+    },
     preproc: libn4mPreprocessor, // preprocessing numerics in libn4m too
   }
   return {

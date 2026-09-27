@@ -6,11 +6,14 @@
 import type { FittedPipeline, Metrics, RunResult, TaskType } from '@/engine/types'
 import { importArchiveV2Model, MAX_ARCHIVE_V2_BYTES } from '@/engine/archive-v2'
 import { trainingRowSteps } from '@/engine/orchestrate'
+import { parseFeatureIdentity } from '@/engine/feature-identity'
 
 export const N4A_FORMAT = 'nirs4all-web/n4a'
 const COMPATIBLE_N4A_FORMATS = ['nirs4all-core/n4a']
 /** v2: n4m methods carry their fitted state as portable N4ME bytes. v1 bundles
- *  stored per-method positional number arrays that no current engine reads. */
+ *  stored per-method positional number arrays that no current engine reads.
+ *  `model.features` (the fitted column names / axis, optional) is checked at
+ *  import; a v2 bundle without it predicts by position. */
 export const N4A_VERSION = 2
 
 export interface N4aBundle {
@@ -135,8 +138,9 @@ export function parseN4a(text: string): LoadedModel {
   if (!m || typeof m !== 'object' || !m.dsl || !m.state || typeof m.nFeatures !== 'number') {
     throw new Error('The .n4a bundle has no usable fitted model.')
   }
+  const features = parseFeatureIdentity(m.features, m.nFeatures)
   return {
-    model: m,
+    model: { ...m, features },
     name: bundle.name || m.dsl.name || 'Imported model',
     taskType: bundle.taskType ?? m.taskType,
     targetName: bundle.targetName ?? 'target',
