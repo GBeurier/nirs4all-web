@@ -37,13 +37,21 @@ const ICON: Record<NativeCategory, string> = {
  *  ids, sample weights) have no source in a web dataset and get no node. */
 const SUPPLIED_INPUTS = new Set(['y', 'labels', 'axis'])
 
-function paramDef(param: NodeDefinition['parameters'][number]): ParamDef {
+/** An ABI 2.14 manifest parameter. The shared projector drops a `null` default
+ *  (an optional value left unset, e.g. every seed: unset runs natively as 0) and
+ *  does not carry `recorded` (the fitted state stores the value and an N4ME
+ *  import refuses a contradicting one), which is read here. */
+type ManifestParam = N4mManifestMethod['params'][number] & { recorded?: boolean }
+
+function paramDef(method: N4mManifestMethod, param: NodeDefinition['parameters'][number]): ParamDef {
+  const recorded = (method.params as readonly ManifestParam[]).find((p) => p.name === param.name)?.recorded
   return {
     name: param.name,
     label: param.label,
     type: param.type,
     ...(param.default !== undefined && { default: param.default }),
     ...(param.required && { required: true }),
+    ...(recorded && { recorded: true }),
     ...(param.itemType && { itemType: param.itemType }),
     ...(param.min !== undefined && { min: param.min }),
     ...(param.max !== undefined && { max: param.max }),
@@ -80,7 +88,7 @@ function nativeNode(node: NodeDefinition): NodeDef[] {
     subcategory: node.category,
     description: node.description,
     icon: ICON[category],
-    params: node.parameters.map(paramDef),
+    params: node.parameters.map((param) => paramDef(method, param)),
     native,
   }
   if (category === 'model') {
