@@ -880,7 +880,7 @@ function StepPanel(props: StepPanelProps) {
         ) : null}
         <ExecutionLog runLog={props.runLog} />
         <div className="grid gap-6 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
-          <ResultsList runs={props.runs} selectedRunId={selectedRun?.id ?? null} selectedScoreId={props.selectedScoreId} onSelect={props.onSelectScore} />
+          <ResultsList runs={props.runs} engine={engine} selectedRunId={selectedRun?.id ?? null} selectedScoreId={props.selectedScoreId} onSelect={props.onSelectScore} />
           {selectedRun && selectedScore && <ResultsVisualization run={selectedRun} score={selectedScore} />}
         </div>
       </Panel>
