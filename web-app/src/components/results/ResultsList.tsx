@@ -2,8 +2,19 @@ import { useState } from 'react'
 import { AlertCircle, CheckCircle2, ChevronDown, ChevronRight, Cpu, Download, GitBranch, Layers, Loader2, Sparkles, Target, Trophy } from 'lucide-react'
 
 import type { ResultsListProps } from '@/components/contracts'
-import type { Metrics, RunResult, ScoreNode } from '@/engine/types'
+import { trainingRowSteps } from '@/engine/orchestrate'
+import type { Engine, Metrics, RunResult, ScoreNode } from '@/engine/types'
 import { fmt, metricChips, primaryMetric } from '@/lib/format'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/app/components/ui/alert-dialog'
 import { Badge } from '@/app/components/ui/badge'
 import { Button } from '@/app/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/app/components/ui/collapsible'
@@ -138,18 +149,71 @@ function VariantRows({ run }: { run: RunResult }) {
   )
 }
 
+/**
+ * The .n4a model export. The file is meant to be shared, so a fitted state that
+ * embeds training rows (kernel / local methods, as libn4m reports them) is only
+ * exported after the user explicitly agrees to share those training spectra;
+ * the engine re-serializes every state with that choice and refuses otherwise.
+ */
+function useModelExport(run: RunResult, engine: Engine) {
+  const [consentSteps, setConsentSteps] = useState<string[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const exportModel = async (allowTrainingRows: boolean) => {
+    setError(null)
+    try {
+      downloadN4a(run, await engine.exportModel(run.model, { allowTrainingRows }))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    }
+  }
+  const request = () => {
+    const steps = trainingRowSteps(run.model)
+    if (steps.length > 0) setConsentSteps(steps)
+    else void exportModel(false)
+  }
+  const dialog = (
+    <AlertDialog open={consentSteps !== null} onOpenChange={(open) => !open && setConsentSteps(null)}>
+      <AlertDialogContent data-testid="n4a-training-rows-consent">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Share the training spectra?</AlertDialogTitle>
+          <AlertDialogDescription>
+            {consentSteps?.join(', ')} {consentSteps?.length === 1 ? 'keeps' : 'keep'} the training spectra in the fitted
+            model. The exported .n4a file will contain the training spectra of this dataset, and anyone you share it with
+            can read them.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => {
+              setConsentSteps(null)
+              void exportModel(true)
+            }}
+          >
+            Export with training spectra
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+  return { request, dialog, error }
+}
+
 function RunCard({
   run,
+  engine,
   selectedRunId,
   selectedScoreId,
   onSelect,
 }: {
   run: RunResult
+  engine: Engine
   selectedRunId: string | null
   selectedScoreId: string | null
   onSelect: ResultsListProps['onSelect']
 }) {
   const [cvOpen, setCvOpen] = useState(false)
+  const modelExport = useModelExport(run, engine)
   const pm = primaryMetric(run.taskType)
   // CV is optional (refit-only run): headline + the CV score row fall back to refit.
   const headlineNode = run.cv ?? run.refit
@@ -186,7 +250,7 @@ function RunCard({
           <DropdownMenuContent align="end" className="w-60">
             <DropdownMenuLabel>Export “{run.pipelineName}”</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => downloadN4a(run)} className="gap-2">
+            <DropdownMenuItem onSelect={modelExport.request} className="gap-2">
               <Layers className="size-4 text-brand-teal" />
               <span className="flex-1">Model bundle</span>
               <span className="font-mono text-[10px] text-muted-foreground">.n4a</span>
@@ -209,7 +273,13 @@ function RunCard({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        {modelExport.dialog}
       </div>
+      {modelExport.error ? (
+        <p role="alert" className="mb-4 rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+          Model export failed: {modelExport.error}
+        </p>
+      ) : null}
 
       {/* Headline primary metric — CV when cross-validated, else the refit. */}
       <div className="mb-4 flex items-baseline gap-2 rounded-xl bg-muted/50 px-4 py-3">
@@ -276,7 +346,7 @@ function RunCard({
 }
 
 export function ResultsList(props: ResultsListProps) {
-  const { runs, selectedRunId, selectedScoreId, onSelect } = props
+  const { runs, engine, selectedRunId, selectedScoreId, onSelect } = props
 
   if (runs.length === 0) {
     return (
@@ -296,6 +366,7 @@ export function ResultsList(props: ResultsListProps) {
         <RunCard
           key={run.id}
           run={run}
+          engine={engine}
           selectedRunId={selectedRunId}
           selectedScoreId={selectedScoreId}
           onSelect={onSelect}

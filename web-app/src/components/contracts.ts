@@ -48,6 +48,8 @@ export interface PipelineBuilderProps {
 // --- results group (src/components/results/) ---
 export interface ResultsListProps {
   runs: RunResult[]
+  /** re-serializes a run's model for the .n4a export (training-row policy) */
+  engine: Engine
   selectedRunId: string | null
   selectedScoreId: string | null
   onSelect: (run: RunResult, score: ScoreNode) => void
