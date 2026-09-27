@@ -19,6 +19,7 @@ export { MethodResult } from "./methodResult.js";
 export { NativeModel } from "./nativeModel.js";
 export { NativeEstimator, NativeMethod, NativeProcedure, manifest, methodClass } from "./estimatorRoles.js";
 export * from "./estimatorRolesGenerated.js";
+export { RolePipeline } from "./rolePipeline.js";
 export { splitNative } from "./nativeSplitter.js";
 export { augmentNative } from "./nativeAugmentation.js";
 export { NativePreprocessingPipeline, PipelineOperatorKind, } from "./nativePreprocessingPipeline.js";

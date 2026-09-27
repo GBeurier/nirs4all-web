@@ -2,19 +2,19 @@
   "schema": "nirs4all-web.wasm-provenance.v1",
   "component": "nirs4all-methods-wasm",
   "package": "@nirs4all/methods",
-  "version": "1.1.0",
-  "runtime_version": "1.1.0+abi.2.13.0",
-  "abi": "2.13.0",
+  "version": "1.2.0",
+  "runtime_version": "1.2.0+abi.2.14.0",
+  "abi": "2.14.0",
   "source": {
     "repository": "https://github.com/GBeurier/nirs4all-methods",
-    "commit": "9a157fbd07877bf57cce58b9cc31587f0a6571d7",
-    "tree": "28eb046d48a8dbe53e566ad53ee27e610a097595",
+    "commit": "d2a587642bde4627f0e22c9a2c9655324f46c5d5",
+    "tree": "997590999cf211741e618481aed79587f4412b1d",
     "clean": true
   },
   "build": {
     "target": "web",
     "profile": "release",
-    "source_date_epoch": 1790463866,
+    "source_date_epoch": 1790507727,
     "emscripten": "3.1.74",
     "cmake": "cmake version 4.4.2",
     "ninja": "1.13.0.git.kitware.jobserver-pipe-1",
@@ -25,17 +25,18 @@
     "byte_identical": true
   },
   "registry": {
-    "package": "@nirs4all/methods@1.1.0",
-    "tarball": "nirs4all-methods-1.1.0.tgz",
-    "integrity": "sha512-1qr3pPOlR1mU/HLRMOhupT9VqcUgAIBOn0AMTb+vO4K4MMe7mnOLDK0TxzmhF8F0OvHquRRdX4KK9iwYn2JYrA==",
-    "shasum": "ce8ecadf09c3920f704d56c409d835c979215ce0",
+    "package": "@nirs4all/methods@1.2.0",
+    "tarball": "nirs4all-methods-1.2.0.tgz",
+    "integrity": "sha512-W9WlrkGZF8cv7EmfJdi0wAFOo9HcT0Rjtwhq/CNe8ArPYU8pWm3sZ4TklhkyoMSgzxBCT3u1Hv3de25YOeZShQ==",
+    "shasum": "3e9357ec9464026f0176f18e4be70b2ee749357d",
     "byte_identical": true
   },
   "witnesses": {
     "runtime_version": true,
     "abi_version": true,
     "pls_fit_predict": true,
-    "estimator_role_n4me": true
+    "estimator_role_n4me": true,
+    "training_rows_opt_in": true
   },
   "legal_payload": {
     "included": true,
@@ -143,23 +144,23 @@
     },
     {
       "path": "estimatorRoles.d.ts",
-      "size": 6375,
-      "sha256": "b9ac8547131dc3eb163825af816f29bd17314efc32665faedabd062acd3a84ff"
+      "size": 7845,
+      "sha256": "2389591087f0dbea32e6b252ac4f16b51e8bc513f8f1e9f440f50b94f531d38a"
     },
     {
       "path": "estimatorRoles.js",
-      "size": 23030,
-      "sha256": "d3bf111433c5d37167019fcb0fe5fe3b64022afd04b1d99a4b9534b9925a243a"
+      "size": 26633,
+      "sha256": "632245bd3548e23aaf619a93a63e3d222d52e4b13395eafd8c023f1b98d32d66"
     },
     {
       "path": "estimatorRolesGenerated.d.ts",
-      "size": 165040,
-      "sha256": "8ad9571f12701d56fdb5ae44bbf1682ae84dd4a3f0a565f4ed0ab05bb0a779c4"
+      "size": 166138,
+      "sha256": "c75a13f6f600adb0d23ce8f6c1be82e5b732c5f1eb7e445464d57a5360e84f55"
     },
     {
       "path": "estimatorRolesGenerated.js",
       "size": 112580,
-      "sha256": "7f93ba7ddf1201f96b5b70660c301af672d1101735dde5f648c136ead958d5b6"
+      "sha256": "7f4e133a33bb79381426a4e92fb6d97aefc5c6935fe3e379ab3a329062d4b567"
     },
     {
       "path": "ffi.d.ts",
@@ -173,13 +174,13 @@
     },
     {
       "path": "index.d.ts",
-      "size": 2316,
-      "sha256": "2ba2079b34cbffcd990273607417149bb53bc0f6f5bf8ed7255bbfd4560e62c4"
+      "size": 2468,
+      "sha256": "86143fc4ad180161d794f51cc358d5257e22319827c7bfc2bcc5a8a6b2b2fc99"
     },
     {
       "path": "index.js",
-      "size": 2472,
-      "sha256": "a14ec39781214211b4bc0b994b83099be72d186950c4280bb4151c49dec89b6f"
+      "size": 2522,
+      "sha256": "093f255e511ede18cd89de847fbba80e1a46c0933a82ee6a756380ca127b7a27"
     },
     {
       "path": "methodResult.d.ts",
@@ -203,13 +204,13 @@
     },
     {
       "path": "n4m.js",
-      "size": 181994,
-      "sha256": "37e5eb11b143e36e2bd96ad0f91619a5099b16eb5daf02601b026f659f899675"
+      "size": 186006,
+      "sha256": "2865e22c361bfd496585814adfd60c9063990f21a998b01a73178e7b1d05ab43"
     },
     {
       "path": "n4m.wasm",
-      "size": 2699290,
-      "sha256": "cb8b7b525176ab44d6d870eb6d5176453abf6b534af5d14c2705c2999baf4ad6"
+      "size": 2742989,
+      "sha256": "946053cae1ca9ff7535b4b974eed92acd58b28d504f6d8d10a2c7cf0c73375c7"
     },
     {
       "path": "nativeAugmentation.d.ts",
@@ -260,6 +261,16 @@
       "path": "preprocessing.js",
       "size": 4726,
       "sha256": "e9714d38d9a744a706ff38c13c4b42fc737a3236dee6a1ccdf9e690db2519af8"
+    },
+    {
+      "path": "rolePipeline.d.ts",
+      "size": 4411,
+      "sha256": "ffe778c3e983b459363b9d242bf93a8f1fb30da59d56b412ce756c55362a772c"
+    },
+    {
+      "path": "rolePipeline.js",
+      "size": 15921,
+      "sha256": "0e9be4942dd0a1150995916dc3dba2d7e35febecd76cc8fd504566401357df2b"
     },
     {
       "path": "selection.d.ts",

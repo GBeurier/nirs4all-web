@@ -16,11 +16,11 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED_SOURCE = Object.freeze({
-  commit: '9a157fbd07877bf57cce58b9cc31587f0a6571d7',
-  tree: '28eb046d48a8dbe53e566ad53ee27e610a097595',
-  version: '1.1.0',
-  runtimeVersion: '1.1.0+abi.2.13.0',
-  abi: '2.13.0',
+  commit: 'd2a587642bde4627f0e22c9a2c9655324f46c5d5',
+  tree: '997590999cf211741e618481aed79587f4412b1d',
+  version: '1.2.0',
+  runtimeVersion: '1.2.0+abi.2.14.0',
+  abi: '2.14.0',
   emscripten: '3.1.74',
 })
 const PACKAGE_NAME = '@nirs4all/methods'
@@ -53,6 +53,8 @@ const GENERATED_FILES = Object.freeze([
   'nativeSplitter.js',
   'preprocessing.d.ts',
   'preprocessing.js',
+  'rolePipeline.d.ts',
+  'rolePipeline.js',
   'selection.d.ts',
   'selection.js',
   'serialization.d.ts',
@@ -152,6 +154,21 @@ async function assertRuntimeWitness(output) {
   if (restored.methodId !== 'models.pls.pls_regression' || direct.some((value, index) => value !== replayed[index])) {
     throw new Error('Methods estimator-role N4ME round-trip witness failed')
   }
+  // A state that embeds training rows (kernel PLS) exports only with the explicit opt-in.
+  const kernel = new (module.methodClass('models.pls.kernel'))()
+  kernel.params = { n_components: 1 }
+  kernel.fit(X, Y)
+  let refused = false
+  try {
+    kernel.toN4me()
+  } catch {
+    refused = true
+  }
+  const shared = module.NativeEstimator.fromN4me(kernel.toN4me({ allowTrainingRows: true }))
+  const optIn = refused && kernel.containsTrainingRows() && shared.containsTrainingRows()
+  kernel.dispose()
+  shared.dispose()
+  if (!optIn) throw new Error('Methods training-row export opt-in witness failed')
 }
 
 /** The published npm package must carry exactly the bytes built here. */
@@ -268,7 +285,7 @@ try {
     },
     reproducibility: { independent_build_directories: 2, byte_identical: true },
     registry: { package: `${PACKAGE_NAME}@${EXPECTED_SOURCE.version}`, ...registry },
-    witnesses: { runtime_version: true, abi_version: true, pls_fit_predict: true, estimator_role_n4me: true },
+    witnesses: { runtime_version: true, abi_version: true, pls_fit_predict: true, estimator_role_n4me: true, training_rows_opt_in: true },
     legal_payload: { included: true, files: LEGAL_FILES },
     files: STAGED_FILES.map((name) => ({
       path: name,

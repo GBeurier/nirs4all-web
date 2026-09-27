@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: CECILL-2.1
 // Generic native estimator roles (ABI 2.13).
 //
+// The helpers exported below (contexts, allocations, typed parameters, fit
+// inputs) are shared with rolePipeline.ts; the package index does not
+// re-export them.
+//
 // Every class in estimatorRolesGenerated.ts extends NativeEstimator and
 // implements exactly the role interfaces its native method declares
 // (Regressor, Transformer, ...). Parameters, defaults, required inputs,
@@ -15,7 +19,7 @@ const OFF = {
     nAxis: 96, XTarget: 104, foldIds: 108, nFoldIds: 112,
 };
 /** Runs `fn` with a fresh native context, destroyed afterwards. */
-function withContext(fn) {
+export function withContext(fn) {
     const m = getModule();
     const out = m._malloc(4);
     try {
@@ -33,7 +37,7 @@ function withContext(fn) {
         m._free(out);
     }
 }
-function readI64(ptr) {
+export function readI64(ptr) {
     const m = getModule();
     return Number(m.getValue(ptr, "i64"));
 }
@@ -50,7 +54,7 @@ function allocI64(values) {
     return { ptr, free: () => m._free(ptr) };
 }
 const registry = new Map();
-function cString(s) {
+export function cString(s) {
     const m = getModule();
     const n = m.lengthBytesUTF8(s) + 1;
     const ptr = m._malloc(n);
@@ -58,7 +62,7 @@ function cString(s) {
     return { ptr, free: () => m._free(ptr) };
 }
 /** Validated native parameters of a method; the caller destroys them. */
-function nativeParams(ctx, method) {
+export function nativeParams(ctx, method) {
     const m = getModule();
     const indexPtr = m._malloc(4);
     const out = m._malloc(4);
@@ -121,8 +125,45 @@ function nativeParams(ctx, method) {
         m._free(out);
     }
 }
-/** Runs `fn` over an n4m_fit_inputs_v1_t built from the given data. */
-function withFitInputs(X, y, labels, inputs, fn) {
+function checkMatrix(name, M) {
+    if (!Number.isInteger(M.rows) || !Number.isInteger(M.cols) || M.rows < 1 || M.cols < 1 ||
+        M.data.length !== M.rows * M.cols) {
+        throw new Error(`${name} must be a non-empty rows x cols matrix with rows*cols values; ` +
+            `got ${M.rows} x ${M.cols} with ${M.data.length} values`);
+    }
+}
+function checkLength(name, values, length, what) {
+    if (values.length !== length) {
+        throw new Error(`${name} must have length ${length} (${what}); got ${values.length}`);
+    }
+}
+function checkIntegers(name, values) {
+    for (let i = 0; i < values.length; ++i) {
+        if (!Number.isSafeInteger(values[i]))
+            throw new Error(`${name} must contain integers`);
+    }
+}
+/** The target as a matrix with one row per row of X (a vector is one column). */
+function targetMatrix(y, rows) {
+    if ("data" in y && "rows" in y) {
+        const ym = y;
+        checkMatrix("y", ym);
+        if (ym.rows !== rows) {
+            throw new Error(`y must have ${rows} rows (one per row of X); got ${ym.rows} x ${ym.cols}`);
+        }
+        return ym;
+    }
+    const values = y;
+    checkLength("y", values, rows, "one per row of X");
+    return { data: Float64Array.from(values), rows, cols: 1 };
+}
+/**
+ * Runs `fn` over an n4m_fit_inputs_v1_t built from the given data. Per-row
+ * inputs (y, labels, sampleWeight, groups, foldIds) must have one entry per
+ * row of X and per-column inputs (featureGroups, axis) one per column; the
+ * lengths are checked here with the argument named, and again natively.
+ */
+export function withFitInputs(X, y, labels, inputs, fn) {
     const m = getModule();
     const allocs = [];
     const hold = (a) => (allocs.push(a), a.ptr);
@@ -130,6 +171,27 @@ function withFitInputs(X, y, labels, inputs, fn) {
     try {
         m.HEAPU8.fill(0, struct, struct + FIT_INPUTS_SIZE);
         m.setValue(struct, FIT_INPUTS_SIZE, "i32");
+        checkMatrix("X", X);
+        const rows = "one per row of X";
+        const cols = "one per column of X";
+        if (inputs.sampleWeight)
+            checkLength("sampleWeight", inputs.sampleWeight, X.rows, rows);
+        for (const [name, values] of [["groups", inputs.groups], ["foldIds", inputs.foldIds]]) {
+            if (values) {
+                checkLength(name, values, X.rows, rows);
+                checkIntegers(name, values);
+            }
+        }
+        if (inputs.featureGroups) {
+            checkLength("featureGroups", inputs.featureGroups, X.cols, cols);
+            checkIntegers("featureGroups", inputs.featureGroups);
+        }
+        if (inputs.blocks)
+            checkIntegers("blocks", inputs.blocks);
+        if (inputs.axis)
+            checkLength("axis", inputs.axis, X.cols, cols);
+        if (inputs.XTarget)
+            checkMatrix("XTarget", inputs.XTarget);
         const xv = makeMatrixView(X.data, X.rows, X.cols);
         allocs.push({ ptr: xv.viewPtr, free: xv.free });
         m.setValue(struct + OFF.X, xv.viewPtr, "i32");
@@ -139,11 +201,12 @@ function withFitInputs(X, y, labels, inputs, fn) {
         };
         if (y !== undefined && labels) {
             const ids = Array.from(y);
+            checkLength("labels", ids, X.rows, rows);
+            checkIntegers("labels", ids);
             setArray(OFF.labels, OFF.nLabels, allocI64(ids), ids.length);
         }
         else if (y !== undefined) {
-            const ym = "data" in y ? y
-                : { data: Float64Array.from(y), rows: y.length, cols: 1 };
+            const ym = targetMatrix(y, X.rows);
             const yv = makeMatrixView(ym.data, ym.rows, ym.cols);
             allocs.push({ ptr: yv.viewPtr, free: yv.free });
             m.setValue(struct + OFF.Y, yv.viewPtr, "i32");
@@ -218,7 +281,9 @@ export class NativeEstimator extends NativeMethod {
     }
     /**
      * Fit on row-major X and the target: responses for a regressor (a vector
-     * or a row-major matrix), integer class ids for a classifier. Returns this.
+     * or a row-major matrix, one row per row of X), integer class ids for a
+     * classifier (one per row). Returns this. The fitted state is replaced
+     * only when the fit succeeds: a failed refit leaves the previous one.
      */
     fit(X, y, inputs = {}) {
         const m = getModule();
@@ -246,18 +311,35 @@ export class NativeEstimator extends NativeMethod {
         this.ptr = est;
         return this;
     }
-    /** Portable fitted state (N4ME bytes), readable by every n4m binding. */
-    toN4me() {
+    /** True when the fitted state embeds training rows (kernel PLS, GPR-PLS, LW-PLS, ...). */
+    containsTrainingRows() {
+        const m = getModule();
+        const out = m._malloc(4);
+        try {
+            checkStatus(m.ccall("n4m_estimator_contains_training_rows", "number", ["number", "number"], [this.handle(), out]));
+            return m.getValue(out, "i32") !== 0;
+        }
+        finally {
+            m._free(out);
+        }
+    }
+    /**
+     * Portable fitted state (N4ME bytes), readable by every n4m binding. A
+     * state that embeds training rows (containsTrainingRows()) is refused
+     * unless `allowTrainingRows` is set: sharing the export shares them.
+     */
+    toN4me(options = {}) {
         const m = getModule();
         const handle = this.handle();
+        const flags = options.allowTrainingRows === true ? 1 : 0;
         return withContext((ctx) => {
             const sizePtr = m._malloc(4);
             try {
-                checkStatus(m.ccall("n4m_estimator_export_size", "number", ["number", "number", "number", "number"], [ctx, handle, 1, sizePtr]), ctx);
+                checkStatus(m.ccall("n4m_estimator_export_size", "number", ["number", "number", "number", "number"], [ctx, handle, flags, sizePtr]), ctx);
                 const size = m.getValue(sizePtr, "i32");
                 const buf = m._malloc(Math.max(1, size));
                 try {
-                    checkStatus(m.ccall("n4m_estimator_export_to_buffer", "number", ["number", "number", "number", "number", "number", "number"], [ctx, handle, 1, buf, size, sizePtr]), ctx);
+                    checkStatus(m.ccall("n4m_estimator_export_to_buffer", "number", ["number", "number", "number", "number", "number", "number"], [ctx, handle, flags, buf, size, sizePtr]), ctx);
                     return m.HEAPU8.slice(buf, buf + m.getValue(sizePtr, "i32"));
                 }
                 finally {
@@ -331,6 +413,9 @@ export class NativeEstimator extends NativeMethod {
     maskArray(X, y) {
         const m = getModule();
         const handle = this.handle();
+        checkMatrix("X", X);
+        if (y !== undefined)
+            checkLength("y", y, X.rows, "one per row of X");
         const xv = makeMatrixView(X.data, X.rows, X.cols);
         const yv = y === undefined ? undefined
             : makeMatrixView(Float64Array.from(y), X.rows, 1);

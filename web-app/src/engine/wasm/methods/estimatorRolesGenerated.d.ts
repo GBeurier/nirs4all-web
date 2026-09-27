@@ -664,7 +664,7 @@ export interface LinearDriftParams {
     slope_min?: number;
     /** Default 0.01. */
     slope_max?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.drift.linear_drift` (augmenter). */
@@ -686,7 +686,7 @@ export interface PathLengthParams {
     path_length_std?: number;
     /** Default 0.1. */
     min_path_length?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.drift.path_length` (augmenter). */
@@ -706,7 +706,7 @@ export interface PolyDriftParams {
     coeff_min?: number[];
     /** Default [0.01, 0.01, 0.01]. */
     coeff_max?: number[];
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.drift.poly_drift` (augmenter). */
@@ -730,7 +730,7 @@ export interface DetectorRolloffParams {
     noise_amplification?: number;
     /** Default true. */
     include_baseline_distortion?: boolean;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.edge_artifacts.detector_rolloff` (augmenter). Required inputs: axis. */
@@ -760,7 +760,7 @@ export interface EdgeArtifactsParams {
     overall_strength?: number;
     /** Default "generic_nir". */
     detector_model?: "ingaas_standard" | "ingaas_extended" | "pbs" | "silicon_ccd" | "generic_nir";
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.edge_artifacts.edge_artifacts` (augmenter). Required inputs: axis. */
@@ -788,7 +788,7 @@ export interface EdgeCurvatureParams {
     asymmetry?: number;
     /** Default 0.7. */
     edge_focus?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.edge_artifacts.edge_curvature` (augmenter). Required inputs: axis. */
@@ -814,7 +814,7 @@ export interface StrayLightParams {
     edge_width?: number;
     /** Default true. */
     include_peak_truncation?: boolean;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.edge_artifacts.stray_light` (augmenter). */
@@ -846,7 +846,7 @@ export interface TruncatedPeakParams {
     left_edge?: boolean;
     /** Default true. */
     right_edge?: boolean;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.edge_artifacts.truncated_peak` (augmenter). Required inputs: axis. */
@@ -887,7 +887,7 @@ export interface MoistureParams {
     enable_shift?: boolean;
     /** Default true. */
     enable_intensity?: boolean;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.environmental.moisture` (augmenter). Required inputs: axis. */
@@ -927,7 +927,7 @@ export interface TemperatureParams {
     enable_broadening?: boolean;
     /** Default true. */
     region_specific?: boolean;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.environmental.temperature` (augmenter). Required inputs: axis. */
@@ -953,7 +953,7 @@ export interface LocalMixupParams {
     alpha?: number;
     /** Default 5. */
     k_neighbors?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.mixup.local_mixup` (augmenter). Required inputs: y. */
@@ -974,7 +974,7 @@ export declare class LocalMixup extends NativeProcedure implements TargetMixingA
 export interface MixupParams {
     /** Default 0.2. */
     alpha?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.mixup.mixup` (augmenter). Required inputs: y. */
@@ -994,7 +994,7 @@ export declare class Mixup extends NativeProcedure implements TargetMixingAugmen
 export interface GaussianNoiseParams {
     /** Default 0.01. */
     sigma?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.noise.gaussian_noise` (augmenter). */
@@ -1013,7 +1013,7 @@ export interface HeteroNoiseParams {
     noise_base?: number;
     /** Default 0.01. */
     noise_signal_dep?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.noise.hetero_noise` (augmenter). */
@@ -1031,7 +1031,7 @@ export declare class HeteroNoise extends NativeProcedure implements Augmenter {
 export interface MultiplicativeNoiseParams {
     /** Default 0.01. */
     sigma_gain?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.noise.multiplicative_noise` (augmenter). */
@@ -1054,7 +1054,7 @@ export interface SpikeNoiseParams {
     amplitude_min?: number;
     /** Default 0.1. */
     amplitude_max?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.noise.spike_noise` (augmenter). */
@@ -1078,7 +1078,7 @@ export interface RandomXOpParams {
     operator_range_min?: number;
     /** Default 1.03. */
     operator_range_max?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.random.random_x_op` (augmenter). */
@@ -1099,7 +1099,7 @@ export interface RotateTranslateParams {
     p_range?: number;
     /** Default 3. */
     y_factor?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.random.rotate_translate` (augmenter). */
@@ -1123,7 +1123,7 @@ export interface BatchEffectParams {
     gain_std?: number;
     /** Default "sample". */
     variation_scope?: "sample" | "batch";
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.scattering.batch_effect` (augmenter). */
@@ -1153,7 +1153,7 @@ export interface DeadBandParams {
     probability?: number;
     /** Default "sample". */
     variation_scope?: "sample" | "batch";
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.scattering.dead_band` (augmenter). */
@@ -1187,7 +1187,7 @@ export interface EMSCDistortParams {
     polynomial_strength?: number;
     /** Default 0.3. */
     correlation?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.scattering.emsc_distort` (augmenter). Required inputs: axis. */
@@ -1218,7 +1218,7 @@ export interface InstrumentBroadenParams {
     fwhm_high?: number;
     /** Default "sample". */
     variation_scope?: "sample" | "batch";
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.scattering.instrument_broaden` (augmenter). */
@@ -1257,7 +1257,7 @@ export interface ParticleSizeParams {
     include_path_length?: boolean;
     /** Default 0.5. */
     path_length_sensitivity?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.scattering.particle_size` (augmenter). Required inputs: axis. */
@@ -1289,7 +1289,7 @@ export interface ScatterSimMSCParams {
     b_low?: number;
     /** Default 1.1. */
     b_high?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.scattering.scatter_sim_msc` (augmenter). */
@@ -1317,7 +1317,7 @@ export interface BandMaskParams {
     bw_hi?: number;
     /** Default "zero". */
     mode?: "zero" | "interp";
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.spectral.band_mask` (augmenter). */
@@ -1350,7 +1350,7 @@ export interface BandPerturbParams {
     offset_lo?: number;
     /** Default 0.01. */
     offset_hi?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.spectral.band_perturb` (augmenter). */
@@ -1375,7 +1375,7 @@ export interface ChannelDropoutParams {
     dropout_prob?: number;
     /** Default "zero". */
     mode?: "zero" | "interp";
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.spectral.channel_dropout` (augmenter). */
@@ -1397,7 +1397,7 @@ export interface GaussJitterParams {
     sigma_hi?: number;
     /** Default 9. */
     kernel_width?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.spectral.gauss_jitter` (augmenter). */
@@ -1420,7 +1420,7 @@ export interface LocalClipParams {
     width_lo?: number;
     /** Default 15. */
     width_hi?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.spectral.local_clip` (augmenter). */
@@ -1443,7 +1443,7 @@ export interface MagnitudeWarpParams {
     gain_lo?: number;
     /** Default 1.1. */
     gain_hi?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.spectral.magnitude_warp` (augmenter). */
@@ -1468,7 +1468,7 @@ export interface UnsharpMaskParams {
     sigma?: number;
     /** Default 11. */
     kernel_width?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.spectral.unsharp_mask` (augmenter). */
@@ -1490,7 +1490,7 @@ export interface SplineCurveSimplificationParams {
     spline_points?: number;
     /** Default false. */
     uniform?: boolean;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.splines.spline_curve_simplification` (augmenter). */
@@ -1506,7 +1506,7 @@ export declare class SplineCurveSimplification extends NativeProcedure implement
 }
 /** Parameters of SplineSmoothing; unset values take the native defaults. */
 export interface SplineSmoothingParams {
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.splines.spline_smoothing` (augmenter). */
@@ -1528,7 +1528,7 @@ export interface SplineXPerturbationsParams {
     perturbation_range_min?: number;
     /** Default 0.1. */
     perturbation_range_max?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.splines.spline_x_perturbations` (augmenter). */
@@ -1550,7 +1550,7 @@ export interface SplineXSimplificationParams {
     spline_points?: number;
     /** Default false. */
     uniform?: boolean;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.splines.spline_x_simplification` (augmenter). */
@@ -1570,7 +1570,7 @@ export interface SplineYPerturbationsParams {
     spline_points?: number;
     /** Default 0.005. */
     perturbation_intensity?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.splines.spline_y_perturbations` (augmenter). */
@@ -1590,7 +1590,7 @@ export interface LocalWarpParams {
     n_control_points?: number;
     /** Default 1. */
     max_shift?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.wavelength.local_warp` (augmenter). */
@@ -1610,7 +1610,7 @@ export interface WavelengthShiftParams {
     shift_lo?: number;
     /** Default 1. */
     shift_hi?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.wavelength.wavelength_shift` (augmenter). */
@@ -1630,7 +1630,7 @@ export interface WavelengthStretchParams {
     stretch_lo?: number;
     /** Default 1.01. */
     stretch_hi?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `augmentation.wavelength.wavelength_stretch` (augmenter). */
@@ -1757,7 +1757,7 @@ export interface HighLeverageFilterParams {
     method?: "hat" | "pca";
     /** Default 2. */
     threshold_multiplier?: number;
-    /** */
+    /** Optional: unset by default. */
     absolute_threshold?: number;
     /** Default 0. */
     n_components?: number;
@@ -1785,9 +1785,9 @@ export interface SpectralQualityFilterParams {
     max_zero_ratio?: number;
     /** Default 1e-08. */
     min_variance?: number;
-    /** */
+    /** Optional: unset by default. */
     max_value?: number;
-    /** */
+    /** Optional: unset by default. */
     min_value?: number;
     /** Default true. */
     check_inf?: boolean;
@@ -1828,13 +1828,13 @@ export declare class VarianceFilter extends NativeEstimator implements Selector 
 export interface XOutlierFilterParams {
     /** Default "mahalanobis". */
     method?: "mahalanobis" | "robust_mahalanobis" | "pca_residual" | "pca_leverage" | "isolation_forest" | "lof";
-    /** */
+    /** Optional: unset by default. */
     threshold?: number;
     /** Default 0. */
     n_components?: number;
     /** Default 0.1. */
     contamination?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
     /** Default 100. */
     n_estimators?: number;
@@ -1941,7 +1941,7 @@ export interface BaggingPLSParams {
     n_components?: number;
     /** Default 50. */
     n_estimators?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `models.ensembles.bagging_pls` (regressor). */
@@ -1983,7 +1983,7 @@ export interface RandomSubspacePLSParams {
     n_estimators?: number;
     /** Default 10. */
     features_per_subspace?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `models.ensembles.random_subspace_pls` (regressor). */
@@ -3817,7 +3817,7 @@ export interface EMCUVEParams {
     n_components?: number;
     /** Default 50. */
     noise_features?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     noise_seed?: number;
     /** Default 10. */
     n_ensembles?: number;
@@ -3857,7 +3857,7 @@ export interface GAParams {
     mutation_rate?: number;
     /** Default 3. */
     cv?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `selection.ga` (selector). */
@@ -3938,7 +3938,7 @@ export interface IRFParams {
     initial_intervals?: number;
     /** Default 3. */
     cv?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `selection.irf` (selector). */
@@ -3965,7 +3965,7 @@ export interface IRIVParams {
     max_rounds?: number;
     /** Default 5. */
     cv?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `selection.iriv` (selector). */
@@ -3999,7 +3999,7 @@ export interface PSOParams {
     v_max?: number;
     /** Default 3. */
     cv?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `selection.pso` (selector). */
@@ -4036,7 +4036,7 @@ export interface RandomFrogParams {
     max_size?: number;
     /** Default 3. */
     cv?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `selection.random_frog` (selector). */
@@ -4062,7 +4062,7 @@ export interface RandomizationParams {
     n_components?: number;
     /** Default 200. */
     n_permutations?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     randomization_seed?: number;
     /** Default 0.05. */
     alpha?: number;
@@ -4119,7 +4119,7 @@ export interface SCARSParams {
     sample_fraction?: number;
     /** Default 3. */
     cv?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `selection.scars` (selector). */
@@ -4281,7 +4281,7 @@ export interface UVEParams {
     n_components?: number;
     /** Default 50. */
     noise_features?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     noise_seed?: number;
     /** Default -1. */
     min_features?: number;
@@ -4360,7 +4360,7 @@ export interface VISSAParams {
     floor_probability?: number;
     /** Default 3. */
     cv?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `selection.vissa` (selector). */
@@ -4438,7 +4438,7 @@ export interface BinnedStratifiedGroupKFoldParams {
     strategy?: "uniform" | "quantile";
     /** Default true. */
     shuffle?: boolean;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `splitters.binned_strat_group_kfold` (splitter). Required inputs: y, groups. */
@@ -4458,7 +4458,7 @@ export declare class BinnedStratifiedGroupKFold extends NativeProcedure implemen
 export interface KBinsStratifiedParams {
     /** Default 0.25. */
     test_size?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
     /** Default 5. */
     n_bins?: number;
@@ -4495,7 +4495,7 @@ export declare class KennardStone extends NativeProcedure implements Splitter {
 export interface KMeansParams {
     /** Default 0.25. */
     test_size?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
     /** Default 100. */
     max_iter?: number;
@@ -4515,7 +4515,7 @@ export declare class KMeans extends NativeProcedure implements Splitter {
 export interface SPlitSplitterParams {
     /** Default 0.25. */
     test_size?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `splitters.split_splitter` (splitter). */
@@ -4583,7 +4583,7 @@ export declare class SPXYGroupFold extends NativeProcedure implements Splitter {
 export interface SystematicCircularParams {
     /** Default 0.25. */
     test_size?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `splitters.systematic_circular` (splitter). Required inputs: y. */
@@ -4695,7 +4695,7 @@ export interface TransferMetricsParams {
     n_components?: number;
     /** Default 10. */
     k_neighbors?: number;
-    /** Default 0. */
+    /** Optional: unset by default. */
     seed?: number;
 }
 /** Native `utilities.transfer_metrics` (generic). Required inputs: target_domain. */
