@@ -135,7 +135,7 @@ async function runWorkerFault(workerUrl, { allowFallback } = {}) {
       const dsl = {
         name: 'rt-fallback-smoke',
         steps: [],
-        model: { id: 'pls', type: 'PLS', params: { n_components: 2 } },
+        model: { id: 'pls', type: 'n4m:models.pls.pls_regression', params: { n_components: 2 } },
         cv: { folds: 2, seed: 13 },
       }
 

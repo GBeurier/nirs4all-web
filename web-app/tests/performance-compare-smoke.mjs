@@ -143,9 +143,9 @@ function webDslFromSelectedCandidate(candidate, family) {
   if (!classes.some((name) => /PLSRegression/.test(name))) throw new Error('candidate must include PLSRegression')
   return {
     name: 'e2e_generated_selected_candidate',
-    steps: [{ id: 'snv', type: 'StandardNormalVariate', params: {} }],
+    steps: [{ id: 'snv', type: 'n4m:preprocessing.scatter.snv', params: {} }],
     cv: { folds: 3, seed: 42 },
-    model: { id: 'pls', type: 'PLS', params: { n_components: selected.n_components } },
+    model: { id: 'pls', type: 'n4m:models.pls.pls_regression', params: { n_components: selected.n_components } },
   }
 }
 

@@ -113,7 +113,7 @@ try {
     if (info.branchLanes >= 2) console.log(`✓ fitted model uses a ${info.branchLanes}-lane feature union (engine: ${info.engine})`)
     else fail(`expected a ≥2-lane branch in the fitted model, got ${info.branchLanes}`)
     const flat = info.laneTypes.flat()
-    if (flat.includes('StandardNormalVariate') && flat.includes('SavitzkyGolay')) {
+    if (flat.includes('n4m:preprocessing.scatter.snv') && flat.includes('n4m:preprocessing.derivatives.savitzky_golay')) {
       console.log(`✓ branch lanes carry the configured ops: ${JSON.stringify(info.laneTypes)}`)
     } else {
       fail(`branch lanes missing expected ops: ${JSON.stringify(info.laneTypes)}`)

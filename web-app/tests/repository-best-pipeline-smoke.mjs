@@ -328,8 +328,8 @@ payload = {
         "metadata_sample_ids_sha256": __import__("hashlib").sha256(json.dumps(metadata_sample_ids, separators=(",", ":")).encode("utf-8")).hexdigest(),
     },
     "pipeline": {
-        "steps": ["StandardNormalVariate"],
-        "model": "PLS",
+        "steps": ["n4m:preprocessing.scatter.snv"],
+        "model": "n4m:models.pls.pls_regression",
         "n_components": n_components,
         "fold_source": "browser_dag_ml_run_result",
     },

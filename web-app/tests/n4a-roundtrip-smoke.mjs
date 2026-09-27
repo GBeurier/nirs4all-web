@@ -1,8 +1,10 @@
 // End-to-end .n4a round-trip: train a model → export the .n4a bundle → reload the
 // app fresh → import the .n4a → predict on new spectra. Proves a saved model can be
-// re-used later with no dataset and no retraining (the "broader usage" path).
+// re-used later with no dataset and no retraining (the "broader usage" path), and
+// that the bundle carries the n4m fitted states as portable N4ME bytes which the
+// browser engine reloads (NativeEstimator.fromN4me) into identical predictions.
 import { tmpdir } from 'node:os'
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { chromium } from 'playwright-core'
 import {
@@ -88,6 +90,15 @@ try {
   evidence.exported_model_bundle_sha256 = exportedHash.sha256
   console.log(`✓ exported .n4a → ${dl.suggestedFilename()}`)
   if (!/\.n4a$/.test(dl.suggestedFilename())) fail('exported file is not a .n4a')
+  // the n4m model and every fitted n4m step are N4ME payloads (base64 "N4ME" magic)
+  const bundle = JSON.parse(await readFile(n4aPath, 'utf8'))
+  const isN4me = (value) => typeof value?.$u8 === 'string' && Buffer.from(value.$u8, 'base64').subarray(0, 4).toString('latin1') === 'N4ME'
+  const state = bundle.model?.state
+  if (bundle.version !== 2 || !isN4me(state?.model?.n4me) || !state.chain.every((step) => step.state === null || isN4me(step.state))) {
+    fail('exported .n4a does not carry the n4m fitted states as N4ME')
+  } else {
+    console.log(`✓ .n4a v2 carries N4ME states (${bundle.model.dsl.model.type} + ${state.chain.length} step${state.chain.length === 1 ? '' : 's'})`)
+  }
 
   // 4. reload the app FRESH (no dataset, no run) — clear the persisted session
   // first so this is a genuine cold start (persistence would otherwise restore
@@ -110,7 +121,7 @@ try {
   // 6. predict on new spectra and compare with the pre-export prediction panel.
   await page.locator('input[type=file][accept*="csv"]').last().setInputFiles(FRUIT_XTEST)
   evidence.imported_prediction_panel = await capturePredictionPanel(page)
-  evidence.prediction_comparison = comparePredictionPanels(evidence.pre_export_prediction_panel, evidence.imported_prediction_panel)
+  evidence.prediction_comparison = comparePredictionPanels(evidence.pre_export_prediction_panel, evidence.imported_prediction_panel, 0)
   const charts = evidence.imported_prediction_panel.chart_count
   evidence.prediction_chart_count = charts
   if (charts >= 1) console.log(`✓ imported model predicted (${charts} chart) — round-trip complete`)

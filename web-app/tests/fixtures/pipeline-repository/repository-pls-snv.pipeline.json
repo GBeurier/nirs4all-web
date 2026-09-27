@@ -3,13 +3,13 @@
   "steps": [
     {
       "id": "repo-snv",
-      "type": "StandardNormalVariate",
+      "type": "n4m:preprocessing.scatter.snv",
       "params": {}
     }
   ],
   "model": {
     "id": "repo-pls",
-    "type": "PLS",
+    "type": "n4m:models.pls.pls_regression",
     "params": {
       "n_components": 2
     }

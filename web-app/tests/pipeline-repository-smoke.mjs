@@ -412,10 +412,10 @@ synthetic_sample_ids = [f"train-{index}" for index in range(X.shape[0])]
 
 if X.shape[0] != y.shape[0] or len(metadata_sample_ids) != y.shape[0]:
     raise AssertionError(f"fixture row mismatch: X={X.shape[0]} y={y.shape[0]} metadata_ids={len(metadata_sample_ids)}")
-if pipeline.get("steps") != [{"id": "repo-snv", "type": "StandardNormalVariate", "params": {}}]:
+if pipeline.get("steps") != [{"id": "repo-snv", "type": "n4m:preprocessing.scatter.snv", "params": {}}]:
     raise AssertionError("repository Python oracle only covers the deterministic SNV fixture")
 model = pipeline.get("model") or {}
-if model.get("type") != "PLS":
+if model.get("type") != "n4m:models.pls.pls_regression":
     raise AssertionError(f"repository Python oracle only covers PLS, got {model.get('type')}")
 n_components = int((model.get("params") or {}).get("n_components", 2))
 cv = pipeline.get("cv") or {}
