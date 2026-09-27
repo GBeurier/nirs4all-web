@@ -37,7 +37,7 @@ describe('model-only classification through the real WASM scheduler', () => {
     }
     const result = await new DagMlEngine({ profile: 'strict-wasm' }).run(ds, {
       name: 'Ridge classification', steps: [],
-      model: { id: 'model', type: 'Ridge', params: { alpha: 1 } },
+      model: { id: 'model', type: 'n4m:models.regularized.ridge', params: { alpha: 1 } },
       cv: { folds: 3, seed: 42 },
     })
     expect(result.cv?.predictions).toHaveLength(nSamples)
@@ -53,7 +53,7 @@ describe('model-only classification through the real WASM scheduler', () => {
     const ds = await loadSampleDataset('corn')
     await expect(new DagMlEngine({ profile: 'strict-wasm' }).run(ds, {
       name: 'Ridge PLS numerical refusal', steps: [],
-      model: { id: 'model', type: 'RidgePLS', params: { n_components: 10, ridge_lambda: 1 } },
+      model: { id: 'model', type: 'n4m:models.regularized.ridge_pls', params: { n_components: 10, ridge_lambda: 1 } },
       cv: { folds: 5, seed: 42 },
     })).rejects.toMatchObject({
       name: 'RtErrorException',

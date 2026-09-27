@@ -136,7 +136,7 @@ function regressionDataset(): MaterializedDataset {
 }
 
 const modelOnlyPipeline = (): PipelineDSL =>
-  ({ name: 'rt-fallback', steps: [], model: { id: 'm', type: 'PLS', params: { n_components: 2 } }, cv: { folds: 2, seed: 7 } }) as unknown as PipelineDSL
+  ({ name: 'rt-fallback', steps: [], model: { id: 'm', type: 'n4m:models.pls.pls_regression', params: { n_components: 2 } }, cv: { folds: 2, seed: 7 } }) as unknown as PipelineDSL
 
 beforeEach(() => {
   // Start each test with scheduler failure enabled; planning succeeds unless overridden.

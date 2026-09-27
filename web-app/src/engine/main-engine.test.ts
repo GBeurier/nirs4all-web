@@ -8,7 +8,7 @@ const ds = (nSamples: number, nFeatures: number): MaterializedDataset =>
 const heavyAom: PipelineDSL = {
   name: 'heavy-aom',
   steps: [],
-  model: { id: 'm', type: 'AOMPLS', params: { n_components: 10 } },
+  model: { id: 'm', type: 'n4m:aom_pop.aom_pls', params: { n_components: 10 } },
   cv: { folds: 5, seed: 42 },
 }
 

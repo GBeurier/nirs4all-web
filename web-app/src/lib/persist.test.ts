@@ -26,8 +26,8 @@ describe('session persistence', () => {
   it('round-trips a pipeline carrying sweeps + the active sample', () => {
     const pipeline = {
       name: 'p',
-      steps: [{ id: 's1', type: 'SavitzkyGolay', params: { window_length: 11 }, sweeps: { window_length: { type: 'or', choices: [7, 11, 15] } } }],
-      model: { id: 'm', type: 'PLS', params: { n_components: 10 }, sweeps: { n_components: { type: 'range', from: 2, to: 20, step: 2 } } },
+      steps: [{ id: 's1', type: 'n4m:preprocessing.derivatives.savitzky_golay', params: { window_length: 11 }, sweeps: { window_length: { type: 'or', choices: [7, 11, 15] } } }],
+      model: { id: 'm', type: 'n4m:models.pls.pls_regression', params: { n_components: 10 }, sweeps: { n_components: { type: 'range', from: 2, to: 20, step: 2 } } },
       cv: { folds: 5, seed: 42 },
     } as never
     saveSession({ pipeline, model: null, sampleId: 'beer' })
@@ -39,20 +39,20 @@ describe('session persistence', () => {
   it('round-trips a pipeline with a split node and an OPTIONAL (omitted) model', () => {
     const pipeline = {
       name: 'split-only',
-      split: { id: 'sp', type: 'KennardStone', params: { test_size: 0.3 } },
-      steps: [{ id: 's1', type: 'StandardNormalVariate', params: {} }],
+      split: { id: 'sp', type: 'n4m:splitters.kennard_stone', params: { test_size: 0.3 } },
+      steps: [{ id: 's1', type: 'n4m:preprocessing.scatter.snv', params: {} }],
       // model intentionally omitted — preprocessing-only is now valid
       cv: { folds: 5, seed: 42 },
     } as never
     saveSession({ pipeline, sampleId: 'corn' })
     const s = loadSession()
     expect(s.pipeline).toEqual(pipeline)
-    expect((s.pipeline as { split?: { type: string } }).split?.type).toBe('KennardStone')
+    expect((s.pipeline as { split?: { type: string } }).split?.type).toBe('n4m:splitters.kennard_stone')
     expect((s.pipeline as { model?: unknown }).model).toBeUndefined()
   })
 
   it('discards a pipeline whose split references an unknown split operator', () => {
-    const pipeline = { name: 'p', split: { id: 'sp', type: 'GhostSplit', params: {} }, steps: [], model: { id: 'm', type: 'PLS', params: {} }, cv: { folds: 5, seed: 42 } } as never
+    const pipeline = { name: 'p', split: { id: 'sp', type: 'GhostSplit', params: {} }, steps: [], model: { id: 'm', type: 'n4m:models.pls.pls_regression', params: {} }, cv: { folds: 5, seed: 42 } } as never
     saveSession({ pipeline, sampleId: 'corn' })
     expect(loadSession().pipeline).toBeUndefined()
   })
@@ -63,7 +63,7 @@ describe('session persistence', () => {
       taskType: 'regression',
       targetName: 'y',
       model: {
-        dsl: { name: 'p', steps: [], model: { id: 'm', type: 'PLS', params: {} }, cv: { folds: 5, seed: 42 } },
+        dsl: { name: 'p', steps: [], model: { id: 'm', type: 'n4m:models.pls.pls_regression', params: {} }, cv: { folds: 5, seed: 42 } },
         nFeatures: 3,
         taskType: 'regression',
         state: { chain: [], model: { coefficients: new Float64Array([1.5, 2.5, 3.5]), xMean: new Float64Array([0, 0, 0]) }, backendId: 'libn4m-wasm' },
@@ -76,7 +76,7 @@ describe('session persistence', () => {
   })
 
   it('discards a stale pipeline that references an operator no longer in the catalog', () => {
-    const pipeline = { name: 'p', steps: [{ id: 's', type: 'GhostOperator', params: {} }], model: { id: 'm', type: 'PLS', params: {} }, cv: { folds: 5, seed: 42 } } as never
+    const pipeline = { name: 'p', steps: [{ id: 's', type: 'GhostOperator', params: {} }], model: { id: 'm', type: 'n4m:models.pls.pls_regression', params: {} }, cv: { folds: 5, seed: 42 } } as never
     saveSession({ pipeline, sampleId: 'corn' })
     const s = loadSession()
     expect(s.pipeline).toBeUndefined() // invalid → dropped, App falls back to the default
@@ -100,7 +100,7 @@ describe('session persistence', () => {
 
   it('ignores the retired nirs4all-lite session key', () => {
     const retired = {
-      pipeline: { name: 'p', steps: [], model: { id: 'm', type: 'PLS', params: {} }, cv: { folds: 5, seed: 42 } },
+      pipeline: { name: 'p', steps: [], model: { id: 'm', type: 'n4m:models.pls.pls_regression', params: {} }, cv: { folds: 5, seed: 42 } },
       sampleId: 'corn',
     }
     ;(globalThis as unknown as { localStorage: MemStorage }).localStorage.setItem('nirs4all-lite:session:v1', JSON.stringify(retired))

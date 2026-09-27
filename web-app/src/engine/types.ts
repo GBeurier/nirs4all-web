@@ -94,7 +94,7 @@ export interface FinetuneSpec {
 
 export interface PipelineStep {
   id: string; // unique instance id
-  type: string; // node catalog `type` token (e.g. 'StandardNormalVariate', 'PLS')
+  type: string; // node catalog `type` token (e.g. 'n4m:preprocessing.scatter.snv', 'n4m:models.pls.pls_regression')
   params: Record<string, unknown>;
   /** per-param sweeps → dag-ml `param_generators` (or/range/log_range) */
   sweeps?: Record<string, ParamSweep>;
@@ -161,10 +161,11 @@ export interface PipelineDSL {
   /** optional train/test split operator applied BEFORE cross-validation: it
    *  overrides the dataset's partition (its test rows are held out of CV, the
    *  train rows feed the CV fold builder). At most one, runs before the model.
-   *  type is a split-category catalog token (KennardStone / SPXY / KMeans /
-   *  KBinsStratified). */
+   *  type is a split-category catalog token (an n4m splitter, e.g.
+   *  'n4m:splitters.kennard_stone'); a K-fold splitter holds out its first fold. */
   split?: PipelineStep;
-  /** ordered preprocessing chain */
+  /** ordered main chain: preprocessing plus the train-only row operators
+   *  (sample filters, augmentation), which predict never replays */
   steps: PipelineStep[];
   /** optional recursive DAG container tree (branch / concat_transform / merge /
    *  generator), applied AFTER `steps` and BEFORE the model. Each container holds

@@ -40,7 +40,7 @@ const dataset: MaterializedDataset = {
 
 const result: RunResult = {
   id: 'run-1',
-  pipelineName: 'PLS',
+  pipelineName: 'n4m:models.pls.pls_regression',
   taskType: 'regression',
   targetName: 'y',
   refit: {
@@ -64,7 +64,7 @@ const result: RunResult = {
   engine: 'dag-ml-wasm + libn4m',
   scoreMetric: 'rmse',
   model: {
-    dsl: { name: 'PLS', steps: [], model: { id: 'm', type: 'PLS', params: {} } },
+    dsl: { name: 'n4m:models.pls.pls_regression', steps: [], model: { id: 'm', type: 'n4m:models.pls.pls_regression', params: {} } },
     taskType: 'regression',
     nFeatures: 2,
     state: {},

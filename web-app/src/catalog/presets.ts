@@ -9,7 +9,7 @@ export const PRESETS: Preset[] = [
     description: 'Raw spectra → PLS. The simplest honest reference model.',
     task: 'regression',
     steps: [],
-    model: { type: 'PLS', params: { n_components: 12 } },
+    model: { type: 'n4m:models.pls.pls_regression', params: { n_components: 12 } },
   },
   {
     id: 'snv-sg-pls',
@@ -17,10 +17,10 @@ export const PRESETS: Preset[] = [
     description: 'Scatter correction, Savitzky–Golay smoothing, then PLS — a robust everyday NIRS pipeline.',
     task: 'regression',
     steps: [
-      { type: 'StandardNormalVariate' },
-      { type: 'SavitzkyGolay', params: { window_length: 15, polyorder: 2, deriv: 0 } },
+      { type: 'n4m:preprocessing.scatter.snv' },
+      { type: 'n4m:preprocessing.derivatives.savitzky_golay', params: { window_length: 15, polyorder: 2, deriv: 0 } },
     ],
-    model: { type: 'PLS', params: { n_components: 12 } },
+    model: { type: 'n4m:models.pls.pls_regression', params: { n_components: 12 } },
   },
   {
     id: 'msc-deriv-pls',
@@ -28,20 +28,20 @@ export const PRESETS: Preset[] = [
     description: 'Multiplicative scatter correction, first derivative, then PLS — strong on baseline-dominated spectra.',
     task: 'regression',
     steps: [
-      { type: 'MSC' },
-      { type: 'SavitzkyGolay', params: { window_length: 15, polyorder: 2, deriv: 1 } },
+      { type: 'n4m:preprocessing.scatter.msc' },
+      { type: 'n4m:preprocessing.derivatives.savitzky_golay', params: { window_length: 15, polyorder: 2, deriv: 1 } },
     ],
-    model: { type: 'PLS', params: { n_components: 14 } },
+    model: { type: 'n4m:models.pls.pls_regression', params: { n_components: 14 } },
   },
   {
     id: 'snv-deriv-plsda',
-    name: 'SNV + 2nd deriv + PLS-DA',
-    description: 'Scatter correction and second derivative feeding PLS-DA for classification tasks.',
+    name: 'SNV + 2nd deriv + PLS-LDA',
+    description: 'Scatter correction and second derivative feeding PLS-LDA for classification tasks.',
     task: 'binary',
     steps: [
-      { type: 'StandardNormalVariate' },
-      { type: 'SavitzkyGolay', params: { window_length: 17, polyorder: 2, deriv: 2 } },
+      { type: 'n4m:preprocessing.scatter.snv' },
+      { type: 'n4m:preprocessing.derivatives.savitzky_golay', params: { window_length: 17, polyorder: 2, deriv: 2 } },
     ],
-    model: { type: 'PLSDA', params: { n_components: 12 } },
+    model: { type: 'n4m:models.classification.pls_lda', params: { n_components: 8 } },
   },
 ]

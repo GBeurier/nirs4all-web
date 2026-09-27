@@ -1,39 +1,27 @@
 import type { Mat } from './algo/linalg'
 import { type PlsModel, plsFit, plsPredict } from './algo/pls'
-import { LEGACY_PLS_MODELS } from './methods/models'
-import { legacyParamVector } from './methods/params'
+import { isNativeModelState, fitModel as fitNativeModel, predictModel as predictNativeModel } from './methods/n4m'
 import { jsPreprocessor, libn4mPreprocessor } from './methods/preproc'
 import { loadMethodsWasm } from './nirs4all-core'
 import type { ModelBackend } from './orchestrate'
-import { AOM_DEFAULT_BANK } from '@/catalog/types'
+import { n4mToken } from '@/catalog/native'
 import { nodeByType } from '@/catalog/nodes'
 import { makeRtError, RtErrorException } from './rt'
 
-const DISABLED_AOM_OPERATOR_KINDS = new Set([16])
-
-/** Coerce the AOM/POP `operator_bank` param (an int[] of n4m_operator_kind_t)
- *  into a clean integer array; an empty/invalid bank falls back to the libn4m
- *  default screen set so the screen always has operators to choose from. */
-export function operatorBank(raw: unknown): number[] {
-  const arr = Array.isArray(raw)
-    ? raw
-        .map((v) => Math.round(Number(v)))
-        .filter((v) => Number.isInteger(v) && !DISABLED_AOM_OPERATOR_KINDS.has(v))
-    : []
-  return arr.length > 0 ? arr : AOM_DEFAULT_BANK
-}
+/** The one model the offline JS fallback implements (NIPALS PLS regression). */
+const PLS_REGRESSION_TOKEN = n4mToken('models.pls.pls_regression')
 
 /** Pure-JS NIPALS PLS + JS preprocessing — OFFLINE fallback only (file:// can't
  *  load the emscripten module). The served/public build uses libn4m for both.
- *  Only PLS / PLS-DA are supported here; any other catalog model falls back to
- *  NIPALS PLS (the offline build is a degraded demonstrator). */
+ *  Only PLS regression is supported here (classification uses it through one-hot
+ *  targets); the offline build is a degraded demonstrator. */
 export const jsBackend: ModelBackend = {
   id: 'js-pls',
-  // Offline NIPALS only models PLS / PLS-DA. Fail loudly on anything else rather
-  // than silently fitting PLS for it (the served build uses libn4m for all models).
+  // Offline NIPALS only models PLS. Fail loudly on anything else rather than
+  // silently fitting PLS for it (the served build uses libn4m for all models).
   fit: (spec, X, Y, nComp) => {
-    if (!LEGACY_PLS_MODELS.has(spec.type)) {
-      throw new Error(`Offline mode runs PLS-family models only; "${spec.type}" needs the served build (libn4m).`)
+    if (spec.type !== PLS_REGRESSION_TOKEN) {
+      throw new Error(`Offline mode runs PLS regression only; "${nodeByType(spec.type)?.name ?? spec.type}" needs the served build (libn4m).`)
     }
     return plsFit(X, Y, nComp)
   },
@@ -43,63 +31,29 @@ export const jsBackend: ModelBackend = {
 
 /**
  * The real nirs4all-methods engine (libn4m, C++ → WASM). Lazily imported so the
- * ~1.4 MB n4m.wasm only loads when actually used (served build); the model blob
- * it returns is plain serializable data.
+ * n4m.wasm only loads when actually used (served build).
  *
- * PLS / PLS-DA use the legacy SIMPLS fast-path (`fitPls`); every other catalog
- * model token routes through the generic coeff dispatcher (`fitModel`). Both
- * produce a coefficient triple predicted via the centred form, so a single
- * `predictModel` path covers all of them.
+ * Every manifest-generated model node is fitted through the generic n4m role API
+ * by method id and stored as portable N4ME bytes (methods/n4m.ts). The two
+ * hand-written models the manifest does not list, PLS Canonical / PLS SVD, keep
+ * the legacy coefficient dispatcher (`fitModel` / `predictModel`).
  */
 export async function loadLibn4mBackend(): Promise<ModelBackend> {
   const n4m = await loadMethodsWasm()
   const backend: ModelBackend = {
     id: 'libn4m-wasm',
     fit: (spec, X, Y, nComp) => {
-      const Xm = { data: X.data, rows: X.rows, cols: X.cols }
-      const Ym = { data: Y.data, rows: Y.rows, cols: Y.cols }
-      if (LEGACY_PLS_MODELS.has(spec.type)) {
-        const m = n4m.fitPls(Xm, Ym, nComp)
-        return { coefficients: m.coefficients, xMean: m.xMean, yMean: m.yMean, intercept: null, n_features: m.n_features, n_targets: m.n_targets }
-      }
-      // AOM-PLS / POP-PLS screen preprocessing internally and return input-space
-      // coeffs + a genuine intercept (zero means), so they predict on RAW X via
-      // predictModel's explicit-intercept path. The selected operator(s) + score
-      // ride along on the model blob (serialized in lineage) for display only. The
-      // operator bank (an n4m_operator_kind_t int[]) is screened by libn4m.
-      if (spec.type === 'AOMPLS') {
-        const folds = Math.max(2, Math.round(Number(spec.params.screen_folds ?? 5)))
-        return n4m.fitAom(Xm, Ym, nComp, folds, 0, operatorBank(spec.params.operator_bank))
-      }
-      if (spec.type === 'POPPLS') {
-        const folds = Math.max(2, Math.round(Number(spec.params.screen_folds ?? 5)))
-        return n4m.fitPop(Xm, Ym, nComp, folds, 0, operatorBank(spec.params.operator_bank))
-      }
-      // AOM-Ridge blender / AOM operator-PLS stack — own bridges (input-space
-      // coeffs + intercept, predict on RAW X via predictModel). They screen
-      // preprocessing internally, like AOM-PLS / POP-PLS.
-      if (spec.type === 'AOMRidgeBlender') {
-        return n4m.fitAomRidge(Xm, Ym, {
-          profile: Math.round(Number(spec.params.profile ?? 0)),
-          cv: Math.max(2, Math.round(Number(spec.params.screen_folds ?? 5))),
-          regularizer: Number(spec.params.regularizer ?? 0.01),
-        })
-      }
-      if (spec.type === 'AOMOperatorPLSStack') {
-        return n4m.fitAomStack(Xm, Ym, {
-          profile: Math.round(Number(spec.params.profile ?? 0)),
-          cv: Math.max(2, Math.round(Number(spec.params.screen_folds ?? 5))),
-          maxComponents: Math.max(1, Math.round(Number(spec.params.n_components ?? 15))),
-          stdPenalty: Number(spec.params.std_penalty ?? 0),
-          gapPenalty: Number(spec.params.gap_penalty ?? 0),
-        })
+      const def = nodeByType(spec.type)
+      if (def?.native) {
+        const params = def.params.some((p) => p.name === 'n_components') ? { ...spec.params, n_components: nComp } : spec.params
+        return fitNativeModel(spec.type, params, X, Y)
       }
       // Canonical/SVD PLS extract joint X/Y directions, so their component
-      // count is bounded by Y as well as X (including restored older presets).
-      const components = spec.type === 'PLSCanonical' || spec.type === 'PLSSVD' ? Math.min(nComp, Y.cols) : nComp
-      return n4m.fitModel(spec.type, Xm, Ym, components, legacyParamVector(nodeByType(spec.type), spec.params))
+      // count is bounded by Y as well as X.
+      return n4m.fitModel(spec.type, X, Y, Math.min(nComp, Y.cols), [])
     },
     predict: (model, X) => {
+      if (isNativeModelState(model)) return predictNativeModel(model, X)
       const r = n4m.predictModel(model as ReturnType<typeof n4m.fitModel>, { data: X.data, rows: X.rows, cols: X.cols })
       return { data: r.data, rows: r.rows, cols: r.cols } as Mat
     },

@@ -64,8 +64,8 @@ describe('StubEngine', () => {
     const ds = synthRegression(140, 60)
     const dsl: PipelineDSL = {
       name: 'SNV+PLS',
-      steps: [{ id: '1', type: 'StandardNormalVariate', params: {} }],
-      model: { id: 'm', type: 'PLS', params: { n_components: 8 } },
+      steps: [{ id: '1', type: 'n4m:preprocessing.scatter.snv', params: {} }],
+      model: { id: 'm', type: 'n4m:models.pls.pls_regression', params: { n_components: 8 } },
       cv: { folds: 5, seed: 42 },
     }
     const eng = new StubEngine()
@@ -84,12 +84,12 @@ describe('StubEngine', () => {
     expect(Number.isFinite(out.values[0])).toBe(true)
   })
 
-  it('classifies a separable multiclass signal (SNV + PLS-DA)', async () => {
+  it('classifies a separable multiclass signal (SNV + PLS on one-hot targets)', async () => {
     const ds = synthClassification(150, 45, 3)
     const dsl: PipelineDSL = {
-      name: 'SNV+PLSDA',
-      steps: [{ id: '1', type: 'StandardNormalVariate', params: {} }],
-      model: { id: 'm', type: 'PLSDA', params: { n_components: 10 } },
+      name: 'SNV+PLS-DA',
+      steps: [{ id: '1', type: 'n4m:preprocessing.scatter.snv', params: {} }],
+      model: { id: 'm', type: 'n4m:models.pls.pls_regression', params: { n_components: 10 } },
       cv: { folds: 5, seed: 1 },
     }
     const res = await new StubEngine().run(ds, dsl)
@@ -103,7 +103,7 @@ describe('StubEngine', () => {
     const dsl: PipelineDSL = {
       name: 'x',
       steps: [],
-      model: { id: 'm', type: 'PLS', params: { n_components: 3 } },
+      model: { id: 'm', type: 'n4m:models.pls.pls_regression', params: { n_components: 3 } },
       cv: { folds: 3, seed: 0 },
     }
     await expect(new StubEngine().run(ds, dsl)).rejects.toThrow(/no numeric targets/i)
@@ -114,7 +114,7 @@ describe('StubEngine', () => {
     // a preprocessing-only DSL — model omitted entirely
     const dsl: PipelineDSL = {
       name: 'preproc-only',
-      steps: [{ id: '1', type: 'StandardNormalVariate', params: {} }],
+      steps: [{ id: '1', type: 'n4m:preprocessing.scatter.snv', params: {} }],
       cv: { folds: 3, seed: 0 },
     }
     await expect(new StubEngine().run(ds, dsl)).rejects.toThrow(/no model/i)
@@ -127,7 +127,7 @@ describe('StubEngine', () => {
     const dsl: PipelineDSL = {
       name: 'x',
       steps: [],
-      model: { id: 'm', type: 'PLS', params: { n_components: 3 } },
+      model: { id: 'm', type: 'n4m:models.pls.pls_regression', params: { n_components: 3 } },
       cv: { folds: 3, seed: 0 },
     }
     await expect(new StubEngine().run(ds, dsl, { signal: ctrl.signal })).rejects.toThrow()

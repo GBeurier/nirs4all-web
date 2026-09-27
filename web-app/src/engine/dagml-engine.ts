@@ -9,7 +9,7 @@ import { isMlJsModelType, loadMlJsBackend } from './mljs-backend'
 import { createDagMlModelManifest, createDagMlNodeResult } from './nirs4all-core'
 import { activeOrGenerator, compileWithDagMl, dagMlAvailable, dagMlRtSmokeForcedFailure, expandGeneratorVariants, hasUnsupportedGenerator, loadDagMl, toCompatDsl } from './dagml'
 import { materializeViaProvider } from './dagml-data'
-import { applySplit, SPLIT_KINDS } from './split'
+import { applySplit, isSplitType } from './split'
 import type { Fold } from './kfold'
 import { testRowsOf, trainRowsOf } from './partition'
 import type { Mat } from './algo/linalg'
@@ -267,7 +267,7 @@ export class DagMlEngine implements Engine {
     // fold_set over the resulting train rows; the test rows are held out of CV
     // and scored by the refit. Runs before classInfo so the class vocab is the
     // same regardless of split. ---
-    if (dsl.split && SPLIT_KINDS.has(dsl.split.type)) {
+    if (dsl.split && isSplitType(dsl.split.type)) {
       onP?.({ phase: 'preprocess', pct: 7, message: `splitting via ${dsl.split.type}` })
       ds = await applySplit(ds, dsl.split)
       const nTrain = trainRowsOf(ds).length

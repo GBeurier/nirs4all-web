@@ -44,7 +44,7 @@ const ds: MaterializedDataset = {
 const dsl: PipelineDSL = {
   name: 'runtime-v1',
   steps: [],
-  model: { id: 'pls', type: 'PLS', params: { n_components: 1 } },
+  model: { id: 'pls', type: 'n4m:models.pls.pls_regression', params: { n_components: 1 } },
   cv: { folds: 2, seed: 7 },
 }
 

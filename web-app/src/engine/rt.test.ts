@@ -67,7 +67,7 @@ describe('assertAomBudget emits a typed RtError on the main-thread refuse', () =
   it('throws an RtErrorException with cause unsupported_capability, message preserved', () => {
     let caught: unknown
     try {
-      assertAomBudget(ds(1000, 1000), dsl('AOMPLS'), undefined, { mainThread: true })
+      assertAomBudget(ds(1000, 1000), dsl('n4m:aom_pop.aom_pls'), undefined, { mainThread: true })
     } catch (e) {
       caught = e
     }

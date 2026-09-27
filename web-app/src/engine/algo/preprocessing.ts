@@ -205,22 +205,25 @@ function gaussian(params: Record<string, unknown>): Transformer {
   return { apply: (m) => convolveRowwise(m, w) }
 }
 
+export const SNV_TOKEN = 'n4m:preprocessing.scatter.snv'
+export const MSC_TOKEN = 'n4m:preprocessing.scatter.msc'
+
 /** Build a fitted transformer for a DSL `type` using training data. */
 export function makeTransformer(type: string, params: Record<string, unknown>, train: Mat): Transformer {
   switch (type) {
-    case 'StandardNormalVariate':
+    case SNV_TOKEN:
       return snv()
-    case 'MSC':
+    case MSC_TOKEN:
       return msc(train)
-    case 'SavitzkyGolay':
+    case 'n4m:preprocessing.derivatives.savitzky_golay':
       return savitzkyGolay(params)
-    case 'Derivative':
+    case 'n4m:preprocessing.derivatives.first_derivative':
       return derivative(params)
-    case 'Detrend':
+    case 'n4m:preprocessing.baselines.detrend':
       return detrend(params)
     case 'Normalize':
       return normalize(params)
-    case 'GaussianFilter':
+    case 'n4m:preprocessing.smoothing.gaussian':
       return gaussian(params)
     default:
       // Offline JS implements only this core set; the served build runs every
