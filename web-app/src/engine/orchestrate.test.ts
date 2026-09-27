@@ -39,7 +39,7 @@ function spyPreproc(): { preproc: Preprocessor; fits: string[] } {
     const out = { data: Float64Array.from(X.data, (v) => v + 1000), rows: X.rows, cols: X.cols }
     return out
   }
-  const tf: FittedTransformer = { state: [], apply: stamp, free: () => {} }
+  const tf: FittedTransformer = { state: [], containsTrainingRows: false, apply: stamp, free: () => {} }
   const preproc: Preprocessor = {
     id: 'spy',
     fit: (type) => {
@@ -52,6 +52,7 @@ function spyPreproc(): { preproc: Preprocessor; fits: string[] } {
       fits.push(type)
       return { X: { data: X.data.slice(X.cols), rows: X.rows - 1, cols: X.cols }, Y: { data: Y.data.slice(Y.cols), rows: Y.rows - 1, cols: Y.cols } }
     },
+    share: (state) => state,
   }
   return { preproc, fits }
 }
@@ -70,6 +71,7 @@ function spyBackend(preproc: Preprocessor): { backend: ModelBackend; seen: { fit
       seen.predX = { data: Float64Array.from(X.data), rows: X.rows, cols: X.cols }
       return mat(X.rows, 1)
     },
+    share: (model) => model,
     preproc,
   }
   return { backend, seen }

@@ -43,6 +43,8 @@ export interface ModelBackend {
   id: string
   fit(spec: ModelSpec, X: Mat, Y: Mat, nComp: number): unknown
   predict(model: unknown, X: Mat): Mat
+  /** the shareable copy of a fitted model; refuses one embedding training rows unless allowed */
+  share(model: unknown, allowTrainingRows: boolean): unknown
   /** preprocessing operators (libn4m or JS) — the numerics never live here */
   preproc: Preprocessor
 }
@@ -53,6 +55,8 @@ interface FittedStep {
   /** serialized fitted preprocessing state; null for the train-only row
    *  operators (sample filters, augmentation), which predict never replays */
   state: StepState | null
+  /** the state embeds training rows (reported by libn4m at fit) */
+  containsTrainingRows: boolean
 }
 export interface FittedState {
   chain: FittedStep[]
@@ -233,13 +237,13 @@ function fitChain(
       if (isRowOperator(s.type)) {
         // train-only: reshapes the training rows, never replayed on predict rows
         ;({ X: cur, Y } = preproc.resample(s.type, s.params, cur, Y, axis))
-        descriptors.push({ type: s.type, params: s.params, state: null })
+        descriptors.push({ type: s.type, params: s.params, state: null, containsTrainingRows: false })
         continue
       }
       const t = preproc.fit(s.type, s.params, cur, { Y, axis }) // fit-on-train, in libn4m
       transformers.push(t)
       cur = t.apply(cur)
-      descriptors.push({ type: s.type, params: s.params, state: t.state })
+      descriptors.push({ type: s.type, params: s.params, state: t.state, containsTrainingRows: t.containsTrainingRows })
     }
   } catch (e) {
     transformers.forEach((t) => t.free())
@@ -450,4 +454,36 @@ export function predictPipeline(
 
 export function backendIdOf(model: FittedPipeline): string {
   return (model.state as FittedState).backendId
+}
+
+/** Names of the fitted steps (and model) whose state embeds training rows, as
+ *  libn4m reported them at fit: exporting the model shares those rows. */
+export function trainingRowSteps(model: FittedPipeline): string[] {
+  const st = model.state as Partial<FittedState> | null
+  if (!st || !Array.isArray(st.chain)) return []
+  const steps = [...st.chain, ...(st.branch ?? []).flat()].filter((s) => s.containsTrainingRows)
+  const names = steps.map((s) => nodeByType(s.type)?.name ?? s.type)
+  const fitted = st.model as { containsTrainingRows?: boolean } | null
+  if (fitted?.containsTrainingRows && model.dsl.model) names.push(nodeByType(model.dsl.model.type)?.name ?? model.dsl.model.type)
+  return names
+}
+
+/**
+ * The shareable copy of a fitted pipeline (the .n4a export). Every fitted state
+ * is re-serialized by its backend with the user's training-row choice, so a
+ * state that embeds training rows is refused (libn4m for N4ME states) unless
+ * `allowTrainingRows`. The in-session model is left untouched.
+ */
+export function exportPipeline(model: FittedPipeline, allowTrainingRows: boolean, backend: ModelBackend): FittedPipeline {
+  const st = model.state as FittedState
+  const share = (s: FittedStep): FittedStep => (s.state === null ? s : { ...s, state: backend.preproc.share(s.state, allowTrainingRows) })
+  return {
+    ...model,
+    state: {
+      ...st,
+      chain: st.chain.map(share),
+      branch: st.branch?.map((chain) => chain.map(share)),
+      model: backend.share(st.model, allowTrainingRows),
+    } satisfies FittedState,
+  }
 }

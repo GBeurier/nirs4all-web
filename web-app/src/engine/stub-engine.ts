@@ -2,8 +2,8 @@
 // Kept as a thin, dependency-free engine for unit tests and as the offline
 // fallback backend. The app uses MainEngine, which prefers real libn4m WASM.
 import { jsBackend } from './backends'
-import { predictPipeline, runPipeline } from './orchestrate'
-import type { Engine, FittedPipeline, MaterializedDataset, PipelineDSL, PredictResult, RunOptions, RunResult } from './types'
+import { exportPipeline, predictPipeline, runPipeline } from './orchestrate'
+import type { Engine, ExportOptions, FittedPipeline, MaterializedDataset, PipelineDSL, PredictResult, RunOptions, RunResult } from './types'
 
 export class StubEngine implements Engine {
   readonly name = 'stub-js-pls'
@@ -14,5 +14,9 @@ export class StubEngine implements Engine {
 
   predict(model: FittedPipeline, Xnew: Float64Array, nSamples: number, nFeatures: number): Promise<PredictResult> {
     return Promise.resolve(predictPipeline(model, Xnew, nSamples, nFeatures, jsBackend))
+  }
+
+  exportModel(model: FittedPipeline, { allowTrainingRows }: ExportOptions): Promise<FittedPipeline> {
+    return Promise.resolve(exportPipeline(model, allowTrainingRows, jsBackend))
   }
 }

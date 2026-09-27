@@ -9,12 +9,12 @@ import { isArchiveV2Model, predictArchiveV2 } from './archive-v2'
 import { DagMlEngine } from './dagml-engine'
 import { activeOrGenerator, dagMlAvailable, expandGeneratorVariants, hasUnsupportedGenerator } from './dagml'
 import { assertAomBudget } from './guard'
-import { backendIdOf, predictPipeline, runGeneratorOr, runPipeline } from './orchestrate'
+import { backendIdOf, exportPipeline, predictPipeline, runGeneratorOr, runPipeline } from './orchestrate'
 import { isPortableCoreModel, predictPortableCore, tryRunPortableCore } from './portable-core'
 import { withWasmRobustnessEvidencePublicationTrace } from './robustness-evidence'
 import { createRobustnessEvidencePublisherFromSidecar } from './robustness-evidence-sidecar'
 import { makeRtError, RtErrorException } from './rt'
-import type { Engine, FittedPipeline, MaterializedDataset, PipelineDSL, PredictResult, RunOptions, RunResult } from './types'
+import type { Engine, ExportOptions, FittedPipeline, MaterializedDataset, PipelineDSL, PredictResult, RunOptions, RunResult } from './types'
 import { buildWebRuntimeProfile, type WebRuntimePolicy, type WebRuntimeProfile, webRuntimePolicy } from './web-profile'
 
 export interface MainEngineOptions {
@@ -170,5 +170,15 @@ export class MainEngine implements Engine {
       }))
     }
     return predictPipeline(model, Xnew, nSamples, nFeatures, jsBackend)
+  }
+
+  async exportModel(model: FittedPipeline, { allowTrainingRows }: ExportOptions): Promise<FittedPipeline> {
+    // An imported archive is replayed, never re-exported; the portable Core
+    // subset stores PLS coefficients only.
+    if (isArchiveV2Model(model)) throw new Error('An imported Archive V2 model is not re-exported by the web client.')
+    if (isPortableCoreModel(model)) return model
+    const id = backendIdOf(model)
+    const backend = id === 'libn4m-wasm' ? await loadLibn4mBackend() : id === 'mljs-classic' ? await loadMlJsBackend() : jsBackend
+    return exportPipeline(model, allowTrainingRows, backend)
   }
 }

@@ -1,6 +1,6 @@
 import type { Mat } from './algo/linalg'
 import { type PlsModel, plsFit, plsPredict } from './algo/pls'
-import { isNativeModelState, fitModel as fitNativeModel, predictModel as predictNativeModel } from './methods/n4m'
+import { exportN4me, isNativeModelState, fitModel as fitNativeModel, predictModel as predictNativeModel } from './methods/n4m'
 import { jsPreprocessor, libn4mPreprocessor } from './methods/preproc'
 import { loadMethodsWasm } from './nirs4all-core'
 import type { ModelBackend } from './orchestrate'
@@ -26,6 +26,8 @@ export const jsBackend: ModelBackend = {
     return plsFit(X, Y, nComp)
   },
   predict: (model, X) => plsPredict(model as PlsModel, X),
+  // NIPALS keeps weights and loadings, no training rows
+  share: (model) => model,
   preproc: jsPreprocessor,
 }
 
@@ -57,6 +59,10 @@ export async function loadLibn4mBackend(): Promise<ModelBackend> {
       const r = n4m.predictModel(model as ReturnType<typeof n4m.fitModel>, { data: X.data, rows: X.rows, cols: X.cols })
       return { data: r.data, rows: r.rows, cols: r.cols } as Mat
     },
+    // N4ME states are re-exported by libn4m with the user's choice; the legacy
+    // Canonical/SVD coefficient models keep no training rows.
+    share: (model, allowTrainingRows) =>
+      isNativeModelState(model) ? { ...model, n4me: exportN4me(model.n4me, allowTrainingRows) } : model,
     preproc: libn4mPreprocessor, // preprocessing numerics in libn4m too
   }
   return {
