@@ -47,17 +47,23 @@ function spyPreproc(): { preproc: Preprocessor; fits: string[] } {
       return tf
     },
     restore: () => ({ apply: stamp, free: () => {} }),
+    // train-only row operator stand-in: drop the first training row
+    resample: (type, _params, X, Y) => {
+      fits.push(type)
+      return { X: { data: X.data.slice(X.cols), rows: X.rows - 1, cols: X.cols }, Y: { data: Y.data.slice(Y.cols), rows: Y.rows - 1, cols: Y.cols } }
+    },
   }
   return { preproc, fits }
 }
 
 /** A backend that records the X matrix it was asked to fit / predict on. */
-function spyBackend(preproc: Preprocessor): { backend: ModelBackend; seen: { fitX: Mat | null; predX: Mat | null } } {
-  const seen: { fitX: Mat | null; predX: Mat | null } = { fitX: null, predX: null }
+function spyBackend(preproc: Preprocessor): { backend: ModelBackend; seen: { fitX: Mat | null; fitY: Mat | null; predX: Mat | null } } {
+  const seen: { fitX: Mat | null; fitY: Mat | null; predX: Mat | null } = { fitX: null, fitY: null, predX: null }
   const backend: ModelBackend = {
     id: 'spy',
-    fit: (_spec: ModelSpec, X: Mat) => {
+    fit: (_spec: ModelSpec, X: Mat, Y: Mat) => {
       seen.fitX = { data: Float64Array.from(X.data), rows: X.rows, cols: X.cols }
+      seen.fitY = { data: Float64Array.from(Y.data), rows: Y.rows, cols: Y.cols }
       return { kind: 'spy' }
     },
     predict: (_m, X: Mat) => {
@@ -77,10 +83,10 @@ describe('trainAndPredict autonomous bypass', () => {
     const dsl: PipelineDSL = {
       name: 'aom+preproc',
       steps: [
-        { id: '1', type: 'StandardNormalVariate', params: {} },
-        { id: '2', type: 'SavitzkyGolay', params: { window_length: 5, polyorder: 2, deriv: 1 } },
+        { id: '1', type: 'n4m:preprocessing.scatter.snv', params: {} },
+        { id: '2', type: 'n4m:preprocessing.derivatives.savitzky_golay', params: { window_length: 5, polyorder: 2, deriv: 1 } },
       ],
-      model: { id: 'm', type: 'AOMPLS', params: { n_components: 4 } },
+      model: { id: 'm', type: 'n4m:aom_pop.aom_pls', params: { n_components: 4 } },
     }
     const trainIdx = [0, 1, 2, 3, 4, 5, 6]
     const predIdx = [7, 8, 9]
@@ -104,13 +110,37 @@ describe('trainAndPredict autonomous bypass', () => {
     const d = ds(10, 6)
     const dsl: PipelineDSL = {
       name: 'snv+pls',
-      steps: [{ id: '1', type: 'StandardNormalVariate', params: {} }],
-      model: { id: 'm', type: 'PLS', params: { n_components: 3 } },
+      steps: [{ id: '1', type: 'n4m:preprocessing.scatter.snv', params: {} }],
+      model: { id: 'm', type: 'n4m:models.pls.pls_regression', params: { n_components: 3 } },
     }
     const out = trainAndPredict(d, dsl, backend, [0, 1, 2, 3, 4, 5, 6], [7, 8, 9])
-    expect(fits).toEqual(['StandardNormalVariate'])
-    expect(out.descriptors.map((s) => s.type)).toEqual(['StandardNormalVariate'])
+    expect(fits).toEqual(['n4m:preprocessing.scatter.snv'])
+    expect(out.descriptors.map((s) => s.type)).toEqual(['n4m:preprocessing.scatter.snv'])
     // the model saw the stamped (transformed) matrix, not raw X
     expect(seen.fitX?.data[0]).toBe(d.X[0] + 1000)
+  })
+})
+
+describe('trainAndPredict train-only row operators', () => {
+  it('reshapes the training rows and targets for filters / augmentation, never the predict rows', () => {
+    const { preproc, fits } = spyPreproc()
+    const { backend, seen } = spyBackend(preproc)
+    const d = ds(10, 6)
+    const dsl: PipelineDSL = {
+      name: 'filter+snv+pls',
+      steps: [
+        { id: '1', type: 'n4m:filters.x_outlier', params: {} },
+        { id: '2', type: 'n4m:preprocessing.scatter.snv', params: {} },
+      ],
+      model: { id: 'm', type: 'n4m:models.pls.pls_regression', params: { n_components: 3 } },
+    }
+    const out = trainAndPredict(d, dsl, backend, [0, 1, 2, 3, 4, 5, 6], [7, 8, 9])
+    expect(fits).toEqual(['n4m:filters.x_outlier', 'n4m:preprocessing.scatter.snv'])
+    // the model trains on the 6 kept rows, with the matching targets
+    expect(seen.fitX?.rows).toBe(6)
+    expect(Array.from(seen.fitY!.data)).toEqual([0.5, 1, 1.5, 2, 2.5, 3])
+    // predict rows are only transformed (all 3 kept), and the filter stores no state
+    expect(seen.predX?.rows).toBe(3)
+    expect(out.descriptors.map((s) => s.state)).toEqual([null, []])
   })
 })

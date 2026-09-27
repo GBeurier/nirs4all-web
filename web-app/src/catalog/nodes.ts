@@ -1,14 +1,21 @@
-import { NATIVE_MODEL_NODES, NATIVE_PREPROCESSING_NODES, NATIVE_SPLIT_NODES } from './native'
+import {
+  NATIVE_AUGMENTATION_NODES,
+  NATIVE_FILTER_NODES,
+  NATIVE_MODEL_NODES,
+  NATIVE_PREPROCESSING_NODES,
+  NATIVE_SPLIT_NODES,
+} from './native'
 import type { NodeDef } from './types'
-import { AOM_DEFAULT_BANK } from './types'
 
-// Native nirs4all-methods preprocessing, models and splits come from the n4m
-// manifest (./native). The hand-written entries below are the ones the manifest
-// does not describe the way the staged WASM runs them: ml.js models, the AOM
-// family bridges, PLS Canonical / SVD and data twinning. Their `n4m` ABI symbols
-// are checked by `scripts/validate-catalog.mjs`.
+// Native nirs4all-methods preprocessing, sample filters, augmentation, models
+// and splits come from the n4m manifest (./native) and run through the generic
+// n4m role API. The hand-written entries below are the models the manifest does
+// not describe: the ml.js estimators and PLS Canonical / SVD (legacy libn4m
+// dispatcher). Their `n4m` ABI symbols are checked by `scripts/validate-catalog.mjs`.
 
 export const PREPROCESSING_NODES: NodeDef[] = NATIVE_PREPROCESSING_NODES
+export const FILTER_NODES: NodeDef[] = NATIVE_FILTER_NODES
+export const AUGMENTATION_NODES: NodeDef[] = NATIVE_AUGMENTATION_NODES
 
 export const MODEL_NODES: NodeDef[] = [
   {
@@ -88,89 +95,6 @@ export const MODEL_NODES: NodeDef[] = [
   ...NATIVE_MODEL_NODES,
 
   {
-    id: 'models.pls.aom_pls',
-    type: 'AOMPLS',
-    name: 'AOM-PLS',
-    category: 'model',
-    description:
-      'Operator-adaptive PLS — screens a bank of strict-linear preprocessing operators by internal CV and fits SIMPLS on the single winner, returning input-space coefficients. Screens preprocessing internally, so use it WITHOUT preceding preprocessing steps.',
-    icon: 'Wand2',
-    task: 'regression',
-    params: [
-      { name: 'n_components', label: 'Max components', type: 'int', default: 5, min: 1, max: 40, help: 'Max latent variables for the internal SIMPLS fits. Start small; increase after checking convergence.' },
-      { name: 'screen_folds', label: 'Screen CV folds', type: 'int', default: 5, min: 2, max: 10, help: 'Internal-CV fold count for the operator screen.' },
-      { name: 'operator_bank', label: 'Operator bank', type: 'operators', default: AOM_DEFAULT_BANK, help: 'Strict-linear operators screened by the AOM selector. Picking fewer/different operators changes the fit.' },
-    ],
-    n4m: { fit: 'n4m_model_selection_aom_pls_select', predict: 'n4m_wasm_model_predict_from_coeffs' },
-    autonomous: true,
-    classifiable: true,
-  },
-
-  {
-    id: 'models.pls.pop_pls',
-    type: 'POPPLS',
-    name: 'POP-PLS',
-    category: 'model',
-    description:
-      'Per-operator PLS — like AOM-PLS but picks one strict-linear operator PER latent component (per-component AOM) rather than one for the whole model, then returns input-space coefficients. Screens preprocessing internally, so use it WITHOUT preceding preprocessing steps.',
-    icon: 'Wand2',
-    task: 'regression',
-    params: [
-      { name: 'n_components', label: 'Max components', type: 'int', default: 5, min: 1, max: 40, help: 'Max latent variables; the screen picks an operator for each one. Increasing this can make the nested search expensive.' },
-      { name: 'screen_folds', label: 'Screen CV folds', type: 'int', default: 5, min: 2, max: 10, help: 'Internal-CV fold count for the per-component operator screen.' },
-      { name: 'operator_bank', label: 'Operator bank', type: 'operators', default: AOM_DEFAULT_BANK, help: 'Strict-linear operators the per-component selector may pick from.' },
-    ],
-    n4m: { fit: 'n4m_model_selection_pop_pls_select', predict: 'n4m_wasm_model_predict_from_coeffs' },
-    autonomous: true,
-    classifiable: true,
-  },
-
-  {
-    id: 'models.ensemble.aom_ridge_blender',
-    type: 'AOMRidgeBlender',
-    name: 'AOM-Ridge blender',
-    category: 'model',
-    description:
-      'AOM Ridge simplex blender — builds a strict-linear chain bank, scores (chain, λ) Ridge candidates by out-of-fold CV, then non-negatively blends them and folds the result back into input-space coefficients. Screens preprocessing internally, so use it WITHOUT preceding preprocessing steps.',
-    icon: 'Wand2',
-    task: 'regression',
-    advanced: true,
-    params: [
-      { name: 'profile', label: 'Bank profile', type: 'select', default: 0, options: [
-        { value: 0, label: 'compact' }, { value: 1, label: 'wide' },
-      ], help: 'Strict-linear chain bank size screened by the blender.' },
-      { name: 'screen_folds', label: 'Screen CV folds', type: 'int', default: 5, min: 2, max: 10, help: 'Internal-CV folds for the out-of-fold Ridge scoring.' },
-      { name: 'regularizer', label: 'Blend regularizer', type: 'float', default: 0.01, min: 0, max: 10, step: 0.01, help: 'Shrinks the simplex blend weights toward uniform.' },
-    ],
-    n4m: { fit: 'n4m_ensemble_aom_ridge_blender_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
-    autonomous: true,
-    classifiable: true,
-  },
-
-  {
-    id: 'models.ensemble.aom_operator_pls_stack',
-    type: 'AOMOperatorPLSStack',
-    name: 'AOM PLS stack',
-    category: 'model',
-    description:
-      'AOM operator-PLS score stack with a Ridge head — fits a PLS score projector per strict-linear operator, concatenates the scores, CV-selects (components, α), refits the Ridge head and folds the stack into input-space coefficients. Single-target regression. Screens preprocessing internally, so use it WITHOUT preceding preprocessing steps.',
-    icon: 'Wand2',
-    task: 'regression',
-    advanced: true,
-    params: [
-      { name: 'profile', label: 'Bank profile', type: 'select', default: 0, options: [
-        { value: 0, label: 'compact' }, { value: 1, label: 'wide' },
-      ], help: 'Strict-linear operator bank size.' },
-      { name: 'screen_folds', label: 'Screen CV folds', type: 'int', default: 5, min: 2, max: 10, help: 'Internal-CV folds for the (components, α) screen.' },
-      { name: 'n_components', label: 'Max components', type: 'int', default: 15, min: 1, max: 40, help: 'Component-grid endpoint; the screen tries 1…this.' },
-      { name: 'std_penalty', label: 'Std penalty', type: 'float', default: 0, min: 0, max: 10, step: 0.05, help: 'Penalty on OOF-RMSE std in the selection criterion.' },
-      { name: 'gap_penalty', label: 'Gap penalty', type: 'float', default: 0, min: 0, max: 10, step: 0.05, help: 'Penalty on the (OOF − train) RMSE gap.' },
-    ],
-    n4m: { fit: 'n4m_ensemble_aom_operator_pls_stack_fit', predict: 'n4m_wasm_model_predict_from_coeffs' },
-    autonomous: true,
-  },
-
-  {
     id: 'models.pls.pls_canonical',
     type: 'PLSCanonical',
     name: 'PLS Canonical',
@@ -200,22 +124,7 @@ export const MODEL_NODES: NodeDef[] = [
   },
 ]
 
-export const SPLIT_NODES: NodeDef[] = [
-  ...NATIVE_SPLIT_NODES,
-  {
-    id: 'split.data_twinning',
-    type: 'DataTwinning',
-    name: 'SPlit (twinning)',
-    category: 'split',
-    description: 'SPlit / data twinning — deterministic X-space split that builds a statistically "twin" test set with balanced multivariate coverage of the training set.',
-    icon: 'Split',
-    params: [
-      { name: 'test_size', label: 'Test fraction', type: 'float', default: 0.25, min: 0.05, max: 0.6, step: 0.05, help: 'Fraction of samples held out as the test set.' },
-      { name: 'seed', label: 'Seed', type: 'int', default: 42, min: 0, max: 1e9 },
-    ],
-    n4m: { fit: 'n4m_model_selection_data_twinning_create', transform: 'n4m_model_selection_data_twinning_split' },
-  },
-]
+export const SPLIT_NODES: NodeDef[] = NATIVE_SPLIT_NODES
 
 // DAG / structure operators — the structural + generator container set. Each is
 // a real, executable operator that lowers to a dag-ml step and runs through the
@@ -293,23 +202,28 @@ export const DAG_NODES: NodeDef[] = [
   },
 ]
 
-export const ALL_NODES: NodeDef[] = [...PREPROCESSING_NODES, ...MODEL_NODES, ...SPLIT_NODES, ...DAG_NODES]
+export const ALL_NODES: NodeDef[] = [...PREPROCESSING_NODES, ...FILTER_NODES, ...AUGMENTATION_NODES, ...MODEL_NODES, ...SPLIT_NODES, ...DAG_NODES]
+
+/** Node categories a pipeline's main chain (`steps`) may hold: preprocessing and
+ *  the train-only row operators. Container branches hold preprocessing only. */
+export const MAIN_CHAIN_CATEGORIES: readonly string[] = ['preprocessing', 'filter', 'augmentation']
 
 const BY_TYPE = new Map(ALL_NODES.map((n) => [n.type, n]))
 export function nodeByType(type: string): NodeDef | undefined {
   return BY_TYPE.get(type)
 }
 export function modelsForTask(task: 'regression' | 'binary' | 'multiclass'): NodeDef[] {
-  // Regression keeps only regression/any models. Classification adds PLS-DA (task
-  // 'binary') plus every `classifiable` regression model (one-hot Y + argmax).
+  // Regression keeps only regression/any models. Classification adds the native
+  // classifiers (task 'binary') plus every native regressor, which classifies
+  // through one-hot targets + argmax (single-target methods refuse that natively).
   if (task === 'regression') return MODEL_NODES.filter((m) => m.task === 'any' || m.task === 'regression')
-  return MODEL_NODES.filter((m) => m.task === 'any' || m.task === task || (task === 'multiclass' && m.task === 'binary') || m.classifiable)
+  return MODEL_NODES.filter((m) => m.task === 'any' || m.task === task || (task === 'multiclass' && m.task === 'binary') || m.native?.role === 'regressor')
 }
-/** default params object for a node type */
+/** default params object for a node type (params the manifest leaves unset are omitted) */
 export function defaultParams(type: string): Record<string, unknown> {
   const def = BY_TYPE.get(type)
   if (!def) return {}
-  return Object.fromEntries(def.params.map((p) => [p.name, p.default]))
+  return Object.fromEntries(def.params.filter((p) => p.default !== undefined).map((p) => [p.name, p.default]))
 }
 
 /** The dag-node catalog entry for a structural container kind (+ generator mode). */

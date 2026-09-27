@@ -318,14 +318,14 @@ describe('nirs4all-core aggregate loaders', () => {
     }
     const dsl: PipelineDSL = {
       name: 'portable_methods_pipeline',
-      split: { id: 'split', type: 'KennardStone', params: { test_size: 0.3 } },
+      split: { id: 'split', type: 'n4m:splitters.kennard_stone', params: { test_size: 0.3 } },
       steps: [
-        { id: 'snv', type: 'StandardNormalVariate', params: {} },
-        { id: 'sg', type: 'SavitzkyGolay', params: { window_length: 11, polyorder: 2, deriv: 0 } },
+        { id: 'snv', type: 'n4m:preprocessing.scatter.snv', params: {} },
+        { id: 'sg', type: 'n4m:preprocessing.derivatives.savitzky_golay', params: { window_length: 11, polyorder: 2, deriv: 0 } },
       ],
       model: {
         id: 'pls',
-        type: 'PLS',
+        type: 'n4m:models.pls.pls_regression',
         params: { n_components: 2 },
         sweeps: { n_components: { type: 'range', from: 2, to: 11, step: 2 } },
       },
@@ -371,7 +371,7 @@ describe('nirs4all-core aggregate loaders', () => {
     await expect(tryRunPortableCore(ds, {
       name: 'fractional_component',
       steps: [],
-      model: { id: 'pls', type: 'PLS', params: { n_components: 1.5 } },
+      model: { id: 'pls', type: 'n4m:models.pls.pls_regression', params: { n_components: 1.5 } },
     })).rejects.toThrow(/n_components must be an integer/)
 
     await expect(tryRunPortableCore(ds, {
@@ -379,7 +379,7 @@ describe('nirs4all-core aggregate loaders', () => {
       steps: [],
       model: {
         id: 'pls',
-        type: 'PLS',
+        type: 'n4m:models.pls.pls_regression',
         params: { n_components: 2 },
         sweeps: { n_components: { type: 'range', from: 1.5, to: 3, step: 1 } },
       },

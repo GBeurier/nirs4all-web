@@ -5,10 +5,10 @@
 // identical and leakage-honest regardless of backend.
 import { nodeByType } from '@/catalog/nodes'
 import { type Mat, mat, selectRows } from './algo/linalg'
-import { type FittedTransformer, type Preprocessor } from './methods/preproc'
+import { type FittedTransformer, isRowOperator, type Preprocessor, type StepState } from './methods/preproc'
 import { buildFolds, type Fold } from './kfold'
 import { testRowsOf, trainRowsOf } from './partition'
-import { applySplit, SPLIT_KINDS } from './split'
+import { applySplit, isSplitType } from './split'
 import { classificationMetrics, regressionMetrics } from './metrics'
 import type {
   FittedPipeline,
@@ -34,11 +34,11 @@ export interface ModelSpec {
 
 /** A pluggable numeric backend: the model fit/predict + the preprocessing
  *  operators. Both come from libn4m (C++ → WASM) in production; a JS backend is
- *  the offline fallback. Model blobs + preprocessing state are plain serializable data.
+ *  the offline fallback. Model blobs + preprocessing state are serializable data
+ *  (N4ME bytes for every n4m method).
  *
- *  `fit` dispatches on `spec.type` — the libn4m backend routes PLS/PLS-DA through
- *  the legacy fast-path and every other catalog model through the generic
- *  coeff dispatcher (`fitModel`); the JS fallback only does NIPALS PLS. */
+ *  `fit` dispatches on `spec.type` — the libn4m backend fits every n4m model node
+ *  through the generic role API; the JS fallback only does NIPALS PLS. */
 export interface ModelBackend {
   id: string
   fit(spec: ModelSpec, X: Mat, Y: Mat, nComp: number): unknown
@@ -50,8 +50,9 @@ export interface ModelBackend {
 interface FittedStep {
   type: string
   params: Record<string, unknown>
-  /** serialized fitted preprocessing state (empty for stateless ops) */
-  state: number[]
+  /** serialized fitted preprocessing state; null for the train-only row
+   *  operators (sample filters, augmentation), which predict never replays */
+  state: StepState | null
 }
 export interface FittedState {
   chain: FittedStep[]
@@ -168,8 +169,10 @@ export function trainAndPredict(
     const pred = backend.predict(model, selectRows(Xfull, predictIdx))
     return { pred, descriptors: [], branch: undefined, model, classNames }
   }
-  // Main preprocessing chain, fit on the train rows only.
-  const { transformers, descriptors, Xout } = fitChain(dsl.steps, selectRows(Xfull, trainIdx), backend.preproc)
+  // Main preprocessing chain, fit on the train rows only. Sample filters and
+  // augmentation reshape these training rows (and their targets) on the way.
+  const Ytrain = buildYMatrix(ds, classNames, classIdx, trainIdx)
+  const { transformers, descriptors, Xout, Yout } = fitChain(dsl.steps, selectRows(Xfull, trainIdx), Ytrain, backend.preproc, ds.axis)
   // Optional feature-union: fit each branch sub-chain on the (train) main-chain
   // output, then concat columns. Leakage-safe — every fit sees only train rows.
   const branches = activeBranches(dsl)
@@ -180,14 +183,14 @@ export function trainAndPredict(
     if (branches) {
       const parts: Mat[] = []
       for (const b of branches) {
-        const fb = fitChain(b.steps, Xout, backend.preproc)
+        const fb = fitChain(b.steps, Xout, Yout, backend.preproc, ds.axis)
         branchTransformers.push(fb.transformers)
         branchDescriptors.push(fb.descriptors)
         parts.push(fb.Xout)
       }
       Xtr = concatCols(parts)
     }
-    const model = backend.fit(modelSpec, Xtr, buildYMatrix(ds, classNames, classIdx, trainIdx), clampNcomp(ncomp, Xtr))
+    const model = backend.fit(modelSpec, Xtr, Yout, clampNcomp(ncomp, Xtr))
     // Replay on predict rows: main chain → branch sub-chains → concat columns.
     const Xpre = applyTransformers(transformers, selectRows(Xfull, predictIdx))
     const Xpred = branches ? concatCols(branchTransformers.map((ts) => applyTransformers(ts, Xpre))) : Xpre
@@ -214,17 +217,35 @@ function activeBranches(dsl: PipelineDSL): PipelineBranch[] | undefined {
   return lanes.length >= 2 ? lanes : undefined
 }
 
-function fitChain(steps: PipelineStep[], Xin: Mat, preproc: Preprocessor): { transformers: FittedTransformer[]; descriptors: FittedStep[]; Xout: Mat } {
+function fitChain(
+  steps: PipelineStep[],
+  Xin: Mat,
+  Yin: Mat,
+  preproc: Preprocessor,
+  axis: number[],
+): { transformers: FittedTransformer[]; descriptors: FittedStep[]; Xout: Mat; Yout: Mat } {
   let cur = Xin
+  let Y = Yin
   const transformers: FittedTransformer[] = []
   const descriptors: FittedStep[] = []
-  for (const s of steps) {
-    const t = preproc.fit(s.type, s.params, cur) // fit-on-train, in libn4m
-    cur = t.apply(cur)
-    transformers.push(t)
-    descriptors.push({ type: s.type, params: s.params, state: t.state })
+  try {
+    for (const s of steps) {
+      if (isRowOperator(s.type)) {
+        // train-only: reshapes the training rows, never replayed on predict rows
+        ;({ X: cur, Y } = preproc.resample(s.type, s.params, cur, Y, axis))
+        descriptors.push({ type: s.type, params: s.params, state: null })
+        continue
+      }
+      const t = preproc.fit(s.type, s.params, cur, { Y, axis }) // fit-on-train, in libn4m
+      transformers.push(t)
+      cur = t.apply(cur)
+      descriptors.push({ type: s.type, params: s.params, state: t.state })
+    }
+  } catch (e) {
+    transformers.forEach((t) => t.free())
+    throw e
   }
-  return { transformers, descriptors, Xout: cur }
+  return { transformers, descriptors, Xout: cur, Yout: Y }
 }
 
 function applyTransformers(transformers: FittedTransformer[], X: Mat): Mat {
@@ -238,6 +259,7 @@ function applyChain(chain: FittedStep[], X: Mat, preproc: Preprocessor): Mat {
   try {
     let cur = X
     for (const d of chain) {
+      if (d.state === null) continue // train-only row operator
       const t = preproc.restore(d.type, d.params, d.state)
       live.push(t)
       cur = t.apply(cur)
@@ -313,7 +335,7 @@ export async function runPipeline(
   // SPLIT (optional, the FIRST split): override partitions before CV. Best-effort
   // offline — if libn4m can't compute the split (file://), keep the existing
   // partition rather than failing the whole run.
-  if (dsl.split && SPLIT_KINDS.has(dsl.split.type)) {
+  if (dsl.split && isSplitType(dsl.split.type)) {
     try {
       onP?.({ phase: 'preprocess', pct: 1, message: `splitting via ${dsl.split.type}` })
       ds = await applySplit(ds, dsl.split)

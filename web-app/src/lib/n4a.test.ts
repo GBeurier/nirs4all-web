@@ -13,7 +13,7 @@ function tinyRun(): RunResult {
   const Y = { data: Float64Array.from([1, 2, 3]), rows: 3, cols: 1 }
   const model = plsFit(X, Y, 2)
   const fitted: FittedPipeline = {
-    dsl: { name: 'unit', steps: [], model: { id: 'm', type: 'PLS', params: { n_components: 2 } }, cv: { folds: 3, seed: 42 } },
+    dsl: { name: 'unit', steps: [], model: { id: 'm', type: 'n4m:models.pls.pls_regression', params: { n_components: 2 } }, cv: { folds: 3, seed: 42 } },
     taskType: 'regression',
     nFeatures: 4,
     state: { chain: [], model, classNames: undefined, backendId: 'js-pls' },

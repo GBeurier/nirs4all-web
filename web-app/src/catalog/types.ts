@@ -1,17 +1,22 @@
 import type { TaskType } from '@/engine/types'
 
-export type NodeCategory = 'preprocessing' | 'model' | 'split' | 'dag'
-export type ParamType = 'int' | 'float' | 'bool' | 'select' | 'operators'
+export type NodeCategory = 'preprocessing' | 'model' | 'split' | 'filter' | 'augmentation' | 'dag'
+export type ParamType = 'int' | 'float' | 'bool' | 'select' | 'array'
 
-/** A single editable parameter value as carried by the pipeline DSL. The
- *  `operators` param type carries an `int[]` (n4m_operator_kind_t bank). */
+/** A single editable parameter value as carried by the pipeline DSL (`array`
+ *  params carry a `number[]`). */
 export type ParamValue = number | boolean | string | number[]
 
 export interface ParamDef {
   name: string
   label?: string
   type: ParamType
-  default: ParamValue
+  /** absent = the native default applies (the manifest leaves it unset) */
+  default?: ParamValue
+  /** the method refuses to fit until this parameter is set */
+  required?: boolean
+  /** item type of an `array` param */
+  itemType?: 'int' | 'float'
   min?: number
   max?: number
   step?: number
@@ -19,24 +24,14 @@ export interface ParamDef {
   help?: string
 }
 
-/** The strict-linear operator kinds the AOM / POP selectors accept as a bank.
- *  Values are n4m_operator_kind_t ints (see nirs4all-methods/cpp/include/n4m/
- *  pls.h §15); non-strict operators (SNV, MSC, ...) are rejected by libn4m and
- *  are intentionally absent. `label` is the picker text. */
-export const AOM_OPERATOR_KINDS: { value: number; label: string }[] = [
-  { value: 0, label: 'Identity' },
-  { value: 7, label: 'Detrend (poly)' },
-  { value: 8, label: 'SG smooth' },
-  { value: 9, label: 'SG derivative' },
-  { value: 10, label: 'Norris–Williams' },
-  { value: 15, label: 'Finite difference' },
-  { value: 17, label: 'FCK' },
-]
-
-/** Default AOM/POP operator bank. Identity + the strict-linear derivative /
- *  detrend family the libn4m AOM screen accepts, now including Norris–Williams
- *  (10) and FCK (17) so the default screen spans the full shipped kind set. */
-export const AOM_DEFAULT_BANK: number[] = [0, 7, 8, 9, 10, 15, 17]
+/** The n4m method a manifest-generated node runs through the generic role API. */
+export interface NativeMethodRef {
+  methodId: string
+  role: 'transformer' | 'selector' | 'regressor' | 'classifier' | 'sample_filter' | 'splitter' | 'augmenter'
+  /** fit inputs the method reads beyond X (`y`, class `labels`, the spectral `axis`) */
+  inputs: { y: InputUse; labels: InputUse; axis: InputUse }
+}
+export type InputUse = 'none' | 'optional' | 'required'
 
 /**
  * One node = one operator. The `type` token is what the pipeline DSL and the
@@ -46,7 +41,7 @@ export const AOM_DEFAULT_BANK: number[] = [0, 7, 8, 9, 10, 15, 17]
 export interface NodeDef {
   /** n4m method id, e.g. 'preprocessing.scatter.snv' */
   id: string
-  /** DSL token the engine dispatches on, e.g. 'StandardNormalVariate' */
+  /** DSL token the engine dispatches on, e.g. 'n4m:preprocessing.scatter.snv' */
   type: string
   name: string
   category: NodeCategory
@@ -57,19 +52,17 @@ export interface NodeDef {
   /** for models: which tasks they support */
   task?: TaskType | 'any'
   params: ParamDef[]
-  /** legacy nodes: exported libn4m ABI symbols (validated in CI; null fit = stateless) */
+  /** manifest-generated nodes: the n4m method executed through the role API */
+  native?: NativeMethodRef
+  /** hand-written nodes: exported libn4m ABI symbols (validated in CI; null fit = stateless) */
   n4m?: { fit: string | null; transform?: string; predict?: string }
   /** Optional JavaScript estimator provider; n4m still owns preprocessing. */
   provider?: 'mljs'
   advanced?: boolean
-  /** self-contained models (e.g. AOM/POP) that screen preprocessing internally;
-   *  adding preprocessing steps in front of them is redundant, so the UI surfaces
-   *  this before users duplicate work. */
+  /** self-contained models (the AOM/POP family) that screen preprocessing
+   *  internally; adding preprocessing steps in front of them is redundant, so the
+   *  UI surfaces this before users duplicate work. */
   autonomous?: boolean
-  /** a regression-default model that can ALSO classify via one-hot Y + argmax
-   *  (exactly like PLS-DA) — surfaced in the classification model picker without
-   *  changing its regression `task`. Verified multi-target-capable in libn4m. */
-  classifiable?: boolean
   /** for `dag`-category structural operators: the container kind + generator mode
    *  it creates, and the nirs4all-studio CANONICAL flow node id it corresponds to
    *  (e.g. branch.parallel, merge.sources, container.concat_transform,

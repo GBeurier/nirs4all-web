@@ -33,7 +33,7 @@ const ds = {
 const dsl = {
   name: 'x',
   steps: [],
-  model: { id: 'm', type: 'PLS', params: { n_components: 1 } },
+  model: { id: 'm', type: 'n4m:models.pls.pls_regression', params: { n_components: 1 } },
 } as PipelineDSL
 
 const handoff: NativeRobustnessEvidencePublicationHandoff = {

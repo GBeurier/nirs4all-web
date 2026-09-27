@@ -18,14 +18,14 @@ export interface PreviewOp {
 /** The core preprocessors the offline JS engine implements (makeTransformer). */
 export const PREVIEW_OPS: PreviewOp[] = [
   { id: 'none', label: 'Raw', type: '', params: {} },
-  { id: 'snv', label: 'SNV', type: 'StandardNormalVariate', params: {} },
-  { id: 'msc', label: 'MSC', type: 'MSC', params: {} },
-  { id: 'sg', label: 'SG smooth', type: 'SavitzkyGolay', params: { window_length: 11, polyorder: 2, deriv: 0 } },
-  { id: 'sg1', label: 'SG 1st deriv', type: 'SavitzkyGolay', params: { window_length: 11, polyorder: 2, deriv: 1 } },
-  { id: 'sg2', label: 'SG 2nd deriv', type: 'SavitzkyGolay', params: { window_length: 15, polyorder: 2, deriv: 2 } },
-  { id: 'd1', label: '1st derivative', type: 'Derivative', params: { order: 1 } },
-  { id: 'detrend', label: 'Detrend', type: 'Detrend', params: { polyorder: 1 } },
-  { id: 'gauss', label: 'Gaussian', type: 'GaussianFilter', params: { sigma: 2 } },
+  { id: 'snv', label: 'SNV', type: 'n4m:preprocessing.scatter.snv', params: {} },
+  { id: 'msc', label: 'MSC', type: 'n4m:preprocessing.scatter.msc', params: {} },
+  { id: 'sg', label: 'SG smooth', type: 'n4m:preprocessing.derivatives.savitzky_golay', params: { window_length: 11, polyorder: 2, deriv: 0 } },
+  { id: 'sg1', label: 'SG 1st deriv', type: 'n4m:preprocessing.derivatives.savitzky_golay', params: { window_length: 11, polyorder: 2, deriv: 1 } },
+  { id: 'sg2', label: 'SG 2nd deriv', type: 'n4m:preprocessing.derivatives.savitzky_golay', params: { window_length: 15, polyorder: 2, deriv: 2 } },
+  { id: 'd1', label: '1st derivative', type: 'n4m:preprocessing.derivatives.first_derivative', params: { order: 1 } },
+  { id: 'detrend', label: 'Detrend', type: 'n4m:preprocessing.baselines.detrend', params: { polyorder: 1 } },
+  { id: 'gauss', label: 'Gaussian', type: 'n4m:preprocessing.smoothing.gaussian', params: { sigma: 2 } },
   { id: 'norm', label: 'Normalize (L2)', type: 'Normalize', params: { norm: 'l2' } },
 ]
 

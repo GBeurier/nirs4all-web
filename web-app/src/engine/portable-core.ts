@@ -96,7 +96,7 @@ export async function predictPortableCore(model: FittedPipeline, Xnew: Float64Ar
 }
 
 function toPortableSource(ds: MaterializedDataset, dsl: PipelineDSL): Record<string, unknown> | null {
-  if (ds.taskType !== 'regression' || !dsl.model || dsl.model.type !== 'PLS') return null
+  if (ds.taskType !== 'regression' || !dsl.model || dsl.model.type !== 'n4m:models.pls.pls_regression') return null
   if (dsl.cv || dsl.branch || dsl.generation || hasFeatureContainers(dsl)) return null
   if (ds.partitions.some((part) => part === 'predict')) return null
   if (!dsl.split && ds.partitions.some((part) => part === 'test')) return null
@@ -112,9 +112,9 @@ function toPortableSource(ds: MaterializedDataset, dsl: PipelineDSL): Record<str
     })
   }
   for (const step of dsl.steps) {
-    if (step.type === 'StandardNormalVariate') {
+    if (step.type === 'n4m:preprocessing.scatter.snv') {
       pipeline.push({ class: 'nirs4all.operators.transforms.StandardNormalVariate', params: { ...step.params } })
-    } else if (step.type === 'SavitzkyGolay') {
+    } else if (step.type === 'n4m:preprocessing.derivatives.savitzky_golay') {
       pipeline.push({ class: 'nirs4all.operators.transforms.SavitzkyGolay', params: { ...step.params } })
     }
   }
@@ -142,11 +142,11 @@ function toPortableSource(ds: MaterializedDataset, dsl: PipelineDSL): Record<str
 }
 
 function compatibleSplit(step: PipelineStep): boolean {
-  return step.type === 'KennardStone' && !step.variants && !step.sweeps
+  return step.type === 'n4m:splitters.kennard_stone' && !step.variants && !step.sweeps
 }
 
 function compatiblePreprocessing(step: PipelineStep): boolean {
-  return (step.type === 'StandardNormalVariate' || step.type === 'SavitzkyGolay') && !step.variants && !step.sweeps
+  return (step.type === 'n4m:preprocessing.scatter.snv' || step.type === 'n4m:preprocessing.derivatives.savitzky_golay') && !step.variants && !step.sweeps
 }
 
 function unsupportedSweepKeys(step: PipelineStep, allowed: string[]): boolean {

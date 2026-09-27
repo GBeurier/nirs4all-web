@@ -8,7 +8,9 @@ import { importArchiveV2Model, MAX_ARCHIVE_V2_BYTES } from '@/engine/archive-v2'
 
 export const N4A_FORMAT = 'nirs4all-web/n4a'
 const COMPATIBLE_N4A_FORMATS = ['nirs4all-core/n4a']
-export const N4A_VERSION = 1
+/** v2: n4m methods carry their fitted state as portable N4ME bytes. v1 bundles
+ *  stored per-method positional number arrays that no current engine reads. */
+export const N4A_VERSION = 2
 
 export interface N4aBundle {
   format: string
@@ -24,13 +26,24 @@ export interface N4aBundle {
 }
 
 // --- typed-array-aware JSON (PlsModel / libn4m blobs carry Float64Array fields
-// that JSON.stringify would silently turn into {"0":…} objects) ---
-type TypedTag = { $f64: number[] } | { $f32: number[] } | { $i32: number[] }
+// and N4ME Uint8Array payloads that JSON.stringify would silently turn into
+// {"0":…} objects; bytes travel as base64) ---
+type TypedTag = { $f64: number[] } | { $f32: number[] } | { $i32: number[] } | { $u8: string }
+
+function toBase64(bytes: Uint8Array): string {
+  let binary = ''
+  for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000))
+  return btoa(binary)
+}
+function fromBase64(text: string): Uint8Array {
+  return Uint8Array.from(atob(text), (c) => c.charCodeAt(0))
+}
 
 function replacer(_k: string, v: unknown): unknown {
   if (v instanceof Float64Array) return { $f64: Array.from(v) }
   if (v instanceof Float32Array) return { $f32: Array.from(v) }
   if (v instanceof Int32Array) return { $i32: Array.from(v) }
+  if (v instanceof Uint8Array) return { $u8: toBase64(v) }
   return v
 }
 function reviver(_k: string, v: unknown): unknown {
@@ -39,6 +52,7 @@ function reviver(_k: string, v: unknown): unknown {
     if ('$f64' in t && Array.isArray(t.$f64)) return Float64Array.from(t.$f64)
     if ('$f32' in t && Array.isArray(t.$f32)) return Float32Array.from(t.$f32)
     if ('$i32' in t && Array.isArray(t.$i32)) return Int32Array.from(t.$i32)
+    if ('$u8' in t && typeof t.$u8 === 'string') return fromBase64(t.$u8)
   }
   return v
 }
@@ -47,7 +61,7 @@ function reviver(_k: string, v: unknown): unknown {
 export function serializeTyped(value: unknown): string {
   return JSON.stringify(value, replacer, 2)
 }
-/** Inverse of serializeTyped — restores Float64Array/Float32Array/Int32Array. */
+/** Inverse of serializeTyped — restores Float64Array/Float32Array/Int32Array and N4ME bytes. */
 export function deserializeTyped<T = unknown>(text: string): T {
   return JSON.parse(text, reviver) as T
 }
@@ -108,6 +122,9 @@ export function parseN4a(text: string): LoadedModel {
   }
   if ((bundle.version ?? 0) > N4A_VERSION) {
     throw new Error(`This .n4a was made by a newer version (v${bundle.version}); v${N4A_VERSION} can't read it.`)
+  }
+  if ((bundle.version ?? 0) < N4A_VERSION) {
+    throw new Error(`This .n4a (v${bundle.version ?? 0}) stores models in the retired per-method number-array form; retrain the pipeline and export it again.`)
   }
   const m = bundle.model
   if (!m || typeof m !== 'object' || !m.dsl || !m.state || typeof m.nFeatures !== 'number') {

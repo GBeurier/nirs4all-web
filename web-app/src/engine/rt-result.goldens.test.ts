@@ -112,7 +112,7 @@ const score = (id: string, name: string, kind: ScoreNode['kind'], rows: PredRow[
 const dsl: PipelineDSL = {
   name: 'rt-golden-pls',
   steps: [],
-  model: { id: 'm', type: 'PLS', params: { n_components: 2 } },
+  model: { id: 'm', type: 'n4m:models.pls.pls_regression', params: { n_components: 2 } },
   cv: { folds: 2, seed: 7 },
 }
 

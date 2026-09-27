@@ -44,8 +44,9 @@ export function PipelineBuilder({ pipeline, taskType, datasetLabel, running, pro
   }
 
   // The palette/canvas surface ALL operators; route each add by its catalog
-  // category — preprocessing → chain step (or a focused container branch), split →
-  // split node, model → model slot, dag → a structural container.
+  // category — preprocessing → chain step (or a focused container branch), sample
+  // filter / augmentation → main-chain step (train-only row operators never go in
+  // a branch), split → split node, model → model slot, dag → a structural container.
   const addOperator = (type: string, index?: number) => {
     const cat = nodeByType(type)?.category
     if (cat === 'model') {
@@ -53,7 +54,7 @@ export function PipelineBuilder({ pipeline, taskType, datasetLabel, running, pro
       onChange(sanitizeAutonomousPipeline(next))
       setBlockedNotice(null)
       setSelected({ kind: 'model' })
-    } else if (autonomous && (cat === 'preprocessing' || cat === 'dag')) {
+    } else if (autonomous && (cat === 'preprocessing' || cat === 'filter' || cat === 'augmentation' || cat === 'dag')) {
       blockAutonomousExternal()
     } else if (cat === 'split') {
       addSplit(type)
@@ -184,6 +185,9 @@ export function PipelineBuilder({ pipeline, taskType, datasetLabel, running, pro
   }
   const setContainerMode = (containerId: string, mode: GeneratorMode) => patchContainer(containerId, (c) => ({ ...c, mode }))
   const insertContainerStep = (containerId: string, branchId: string, type: string) => {
+    // container branches hold preprocessing only; anything else dropped on a
+    // branch goes to its own slot (row operators → main chain, model, split, ...)
+    if (nodeByType(type)?.category !== 'preprocessing') return addOperator(type)
     if (autonomous) {
       blockAutonomousExternal()
       return

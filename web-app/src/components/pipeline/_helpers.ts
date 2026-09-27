@@ -1,7 +1,7 @@
 import * as Icons from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { Preset } from '@/catalog/types'
-import { defaultParams, nodeByType } from '@/catalog/nodes'
+import { defaultParams, MAIN_CHAIN_CATEGORIES, nodeByType } from '@/catalog/nodes'
 import type {
   ContainerNode,
   ContainerType,
@@ -36,7 +36,7 @@ let stepCounter = 0
 /** Mint a unique, stable-per-session step instance id. */
 export function newStepId(type: string): string {
   stepCounter += 1
-  return `${type.toLowerCase()}-${Date.now().toString(36)}-${stepCounter}`
+  return `${type.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now().toString(36)}-${stepCounter}`
 }
 
 let branchCounter = 0
@@ -238,12 +238,12 @@ function mergeSweeps(...items: (Record<string, ParamSweep> | undefined)[]): Reco
 }
 
 const repositoryPreprocessingTypes: Record<string, string> = {
-  'nirs4all.operators.transforms.StandardNormalVariate': 'StandardNormalVariate',
-  'nirs4all.operators.transforms.SavitzkyGolay': 'SavitzkyGolay',
+  'nirs4all.operators.transforms.StandardNormalVariate': 'n4m:preprocessing.scatter.snv',
+  'nirs4all.operators.transforms.SavitzkyGolay': 'n4m:preprocessing.derivatives.savitzky_golay',
 }
 
 const repositoryModelTypes: Record<string, string> = {
-  'sklearn.cross_decomposition.PLSRegression': 'PLS',
+  'sklearn.cross_decomposition.PLSRegression': 'n4m:models.pls.pls_regression',
 }
 
 const asRecord = (value: unknown): Record<string, unknown> | null => {
@@ -321,7 +321,9 @@ export function normalizeImportedPipeline(value: unknown): PipelineDSL | null {
   if (!Array.isArray(v.steps)) return null
   if (typeof v.model !== 'object' || v.model === null) return null
 
-  const parsePreprocChain = (arr: unknown): PipelineStep[] | null => {
+  // Main-chain steps may also be train-only row operators (sample filters,
+  // augmentation); container branches hold preprocessing only.
+  const parsePreprocChain = (arr: unknown, categories: readonly string[] = ['preprocessing']): PipelineStep[] | null => {
     if (!Array.isArray(arr)) return null
     const out: PipelineStep[] = []
     for (const raw of arr) {
@@ -329,7 +331,7 @@ export function normalizeImportedPipeline(value: unknown): PipelineDSL | null {
       const s = raw as Record<string, unknown>
       if (typeof s.type !== 'string') return null
       const def = nodeByType(s.type)
-      if (!def || def.category !== 'preprocessing') return null // unknown / non-preprocessing step
+      if (!def || !categories.includes(def.category)) return null // unknown / misplaced step
       out.push({
         id: typeof s.id === 'string' ? s.id : newStepId(s.type),
         type: s.type,
@@ -341,7 +343,7 @@ export function normalizeImportedPipeline(value: unknown): PipelineDSL | null {
     return out
   }
 
-  const steps = parsePreprocChain(v.steps)
+  const steps = parsePreprocChain(v.steps, MAIN_CHAIN_CATEGORIES)
   if (steps === null) return null
 
   const m = v.model as Record<string, unknown>
@@ -440,9 +442,6 @@ export function pipelineWarnings(dsl: PipelineDSL): string[] {
   const out: string[] = []
   if (isAutonomousPipeline(dsl) && (dsl.steps.length > 0 || !!dsl.branch || (dsl.containers?.length ?? 0) > 0)) {
     out.push(`${nodeByType(dsl.model!.type)?.name ?? dsl.model!.type}: external preprocessing and DAG containers are ignored because the model screens preprocessing internally.`)
-  }
-  if (isAutonomousPipeline(dsl) && Array.isArray(dsl.model?.params.operator_bank) && dsl.model.params.operator_bank.includes(16)) {
-    out.push(`${nodeByType(dsl.model!.type)?.name ?? dsl.model!.type}: Whittaker is ignored in browser AOM/POP runs because libn4m 0.98 stalls on wide spectra with that operator.`)
   }
   const containers = dsl.containers ?? []
   for (const c of containers) {

@@ -153,8 +153,8 @@ function compatStepEntry(s: PipelineStep): unknown {
   const generators = generatorsForStep(s)
   const variants = variantsForStep(s.variants)
   const hasGen = generators.length > 0 || variants.length > 0
-  if (s.type === 'StandardNormalVariate' && !hasGen) return 'SNV'
-  if (s.type === 'MSC' && !hasGen) return 'MSC'
+  if (s.type === 'n4m:preprocessing.scatter.snv' && !hasGen) return 'SNV'
+  if (s.type === 'n4m:preprocessing.scatter.msc' && !hasGen) return 'MSC'
   const step: Record<string, unknown> = { preprocessing: s.type, params: s.params }
   if (generators.length) step.generators = generators
   if (variants.length) step.variants = variants
@@ -278,7 +278,7 @@ export function toCompatDsl(dsl: PipelineDSL): object {
   // to the preprocessing chain + split, with no terminal estimator step.
   if (dsl.model) {
     const modelStep: Record<string, unknown> = {
-      model: dsl.model.type === 'PLSDA' ? 'PLSDA' : 'PLSRegression',
+      model: dsl.model.type === 'n4m:models.classification.pls_lda' ? 'PLSDA' : 'PLSRegression',
       params: dsl.model.params,
     }
     const modelGenerators = generatorsForStep(dsl.model)

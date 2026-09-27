@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { ChevronRight, Plus, Search, Sparkles } from 'lucide-react'
-import { DAG_NODES, modelsForTask, PREPROCESSING_NODES, SPLIT_NODES } from '@/catalog/nodes'
+import { AUGMENTATION_NODES, DAG_NODES, FILTER_NODES, modelsForTask, PREPROCESSING_NODES, SPLIT_NODES } from '@/catalog/nodes'
 import type { NodeDef } from '@/catalog/types'
 import type { TaskType } from '@/engine/types'
 import { Input } from '@/app/components/ui/input'
@@ -12,16 +12,18 @@ export interface NodePaletteProps {
   taskType: TaskType
 }
 
-// Four top-level buckets, in pipeline order: Split → Preprocessing → Models →
-// DAG / structure. The DAG bucket is a normal foldable accordion holding the
-// structural + generator operators (Branch / Concat-transform / Merge / OR /
-// Cartesian), each a real catalog node added through `onAdd` like any other.
-type BucketKey = 'split' | 'preprocessing' | 'model' | 'dag'
+// Top-level buckets, in pipeline order: Split → Sample filters → Augmentation →
+// Preprocessing → Models → DAG / structure. The DAG bucket is a normal foldable
+// accordion holding the structural + generator operators (Branch / Concat-transform
+// / Merge / OR / Cartesian), each a real catalog node added through `onAdd` like any other.
+type BucketKey = 'split' | 'filter' | 'augmentation' | 'preprocessing' | 'model' | 'dag'
 // Teal-led palette (matching the studio chrome): the active data path —
 // preprocessing, DAG containers, and the model "hero" — is teal; the passive
 // train/test split (dataset scaffolding) reads as cool slate.
 const BUCKETS: { key: BucketKey; label: string; accent: string; dot: string }[] = [
   { key: 'split', label: 'Train / test split', accent: 'text-muted-foreground', dot: 'bg-muted-foreground' },
+  { key: 'filter', label: 'Sample filters', accent: 'text-muted-foreground', dot: 'bg-muted-foreground' },
+  { key: 'augmentation', label: 'Augmentation', accent: 'text-muted-foreground', dot: 'bg-muted-foreground' },
   { key: 'preprocessing', label: 'Preprocessings', accent: 'text-brand-teal', dot: 'bg-brand-teal' },
   { key: 'model', label: 'Models', accent: 'text-brand-teal-d', dot: 'bg-brand-teal-d' },
   { key: 'dag', label: 'DAG / structure', accent: 'text-brand-teal', dot: 'bg-brand-teal' },
@@ -34,8 +36,9 @@ const SUBCAT_LABEL: Record<string, string> = {
 }
 
 /**
- * Left rail of the editor: the operator catalog in three buckets matching the
- * pipeline order — Split, Preprocessings, Models — as a searchable accordion.
+ * Left rail of the editor: the operator catalog in buckets matching the
+ * pipeline order — Split, Sample filters, Augmentation, Preprocessings, Models,
+ * DAG — as a searchable accordion.
  * Preprocessings sub-group by family; self-contained models (AOM/POP) carry an
  * "auto" badge so users don't stack redundant preprocessing on them.
  * Styling echoes the nirs4all-formats demo (mono eyebrows, pill counts, glass).
@@ -58,13 +61,15 @@ export function NodePalette({ onAdd, taskType }: NodePaletteProps) {
       n.description.toLowerCase().includes(query)
     return {
       split: SPLIT_NODES.filter(match),
+      filter: FILTER_NODES.filter(match),
+      augmentation: AUGMENTATION_NODES.filter(match),
       preprocessing: PREPROCESSING_NODES.filter(match),
       model: models.filter(match),
       dag: DAG_NODES.filter(match),
     } as Record<BucketKey, NodeDef[]>
   }, [q, models])
 
-  const total = SPLIT_NODES.length + PREPROCESSING_NODES.length + models.length + DAG_NODES.length
+  const total = SPLIT_NODES.length + FILTER_NODES.length + AUGMENTATION_NODES.length + PREPROCESSING_NODES.length + models.length + DAG_NODES.length
   const searching = q.trim().length > 0
   const isOpen = (key: string) => (searching ? true : openManual[key] ?? false)
   const toggle = (key: string) => setOpenManual((s) => ({ ...s, [key]: !(s[key] ?? false) }))
@@ -109,7 +114,7 @@ export function NodePalette({ onAdd, taskType }: NodePaletteProps) {
           <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-teal">Operators</span>
           <span className="rounded-full bg-brand-teal/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-brand-teal">{total}</span>
         </div>
-        <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">Split → preprocessings → model → DAG structure. Search, or open a family; drag or click to add.</p>
+        <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">Split → filters / augmentation → preprocessings → model → DAG structure. Search, or open a family; drag or click to add.</p>
       </div>
 
       <div className="relative">
@@ -124,8 +129,8 @@ export function NodePalette({ onAdd, taskType }: NodePaletteProps) {
           BUCKETS.filter((b) => matched[b.key].length > 0).map((b) => {
             const nodes = matched[b.key]
             const open = isOpen(b.key)
-            // preprocessing + dag sub-group by subcategory family with captions
-            const grouped = b.key === 'preprocessing' || b.key === 'dag'
+            // preprocessing, augmentation + dag sub-group by subcategory family with captions
+            const grouped = b.key === 'preprocessing' || b.key === 'augmentation' || b.key === 'dag'
             return (
               <div key={b.key} className="overflow-hidden rounded-lg border border-border/70 bg-card/40" {...(b.key === 'dag' ? { 'data-palette-dag': '' } : {})}>
                 <button

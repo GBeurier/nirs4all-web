@@ -5,7 +5,7 @@
 // matrices are intentionally NOT persisted (localStorage is small) — only the
 // bundled-sample id is, so demo sessions restore in full and uploads are
 // re-dropped. Typed arrays in the fitted model round-trip via the n4a codec.
-import { nodeByType } from '@/catalog/nodes'
+import { MAIN_CHAIN_CATEGORIES, nodeByType } from '@/catalog/nodes'
 import { SAMPLES, type SampleId } from '@/data/samples'
 import { isArchiveV2Model } from '@/engine/archive-v2'
 import type { PipelineDSL } from '@/engine/types'
@@ -29,7 +29,7 @@ function validPipeline(p: unknown): PipelineDSL | undefined {
   if (!Array.isArray(dsl.steps)) return undefined
   // cv is OPTIONAL (refit-only run); if present it must be well-formed.
   if (dsl.cv !== undefined && (typeof dsl.cv.folds !== 'number' || typeof dsl.cv.seed !== 'number')) return undefined
-  if (!dsl.steps.every((s) => s && typeof s.type === 'string' && nodeByType(s.type))) return undefined
+  if (!dsl.steps.every((s) => s && typeof s.type === 'string' && MAIN_CHAIN_CATEGORIES.includes(nodeByType(s.type)?.category ?? ''))) return undefined
   // containers are OPTIONAL (the recursive DAG tree); if present, validate each
   // against the catalog. branch/concat/merge branches hold preprocessing nodes;
   // generator branches hold preprocessing nodes too (the alternative sub-chains).
@@ -79,6 +79,9 @@ function validModel(m: unknown): LoadedModel | undefined {
   // bounded binary artifact store nor an authority for portable archives.
   if (isArchiveV2Model(fp)) return undefined
   if (!fp || typeof fp !== 'object' || !fp.dsl || !fp.state || typeof fp.nFeatures !== 'number') return undefined
+  // A model saved before the n4m role API (retired DSL tokens, number-array
+  // state) no longer matches the catalog: drop it, the user retrains.
+  if (!validPipeline(fp.dsl)) return undefined
   return lm
 }
 const validSampleId = (s: unknown): SampleId | undefined => (typeof s === 'string' && (SAMPLE_IDS as string[]).includes(s) ? (s as SampleId) : undefined)
