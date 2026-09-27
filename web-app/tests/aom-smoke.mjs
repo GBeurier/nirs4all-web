@@ -1,9 +1,9 @@
-// AOM smoke (task #13): build an AOM-PLS pipeline with NO preprocessing on the
+// AOM smoke (task #13): build an AOM PLS pipeline with NO preprocessing on the
 // Corn protein regression sample, run it via the served WASM stack, and confirm
 // CV Scores render with an RMSE metric, the "by dag-ml" badge, and no console
-// errors. AOM screens preprocessing internally and returns input-space coeffs +
-// intercept, so it is used WITHOUT preceding preproc steps (default preset is
-// already empty-step). Exercises n4m.fitAom (n4m_model_selection_aom_pls_select) end-to-end.
+// errors. AOM screens preprocessing internally, so it is used WITHOUT preceding
+// preproc steps (default preset is already empty-step). Exercises the n4m role
+// API (aom_pop.aom_pls by method id) end-to-end.
 import { chromium } from 'playwright-core'
 
 const URL = process.env.SMOKE_URL || 'http://localhost:4345/'
@@ -40,33 +40,30 @@ try {
   await page.waitForTimeout(200)
   await page.locator('#model-select').click()
   await page.waitForTimeout(200)
-  await page.getByRole('option', { name: 'AOM-PLS', exact: true }).click()
+  await page.getByRole('option', { name: 'AOM PLS', exact: true }).click()
   await page.waitForTimeout(200)
   const body1 = (await page.textContent('body')) || ''
-  if (/AOM-PLS/.test(body1)) console.log('✓ estimator switched to AOM-PLS')
-  else fail('expected AOM-PLS to be selected')
+  if (/AOM PLS/.test(body1)) console.log('✓ estimator switched to AOM PLS')
+  else fail('expected AOM PLS to be selected')
 
-  // operator-bank picker present + editable on the AOM node (a checkbox group of
-  // strict-linear operator kinds the AOM selector screens)
-  const bank = page.locator('[data-operator-bank]').first()
-  if ((await bank.count()) > 0) console.log('✓ operator-bank picker present on AOM node')
-  else fail('expected an operator-bank picker on the AOM-PLS node')
-  const boxes = bank.locator('input[type="checkbox"]')
-  if ((await boxes.count()) >= 5) console.log(`✓ operator-bank exposes ${await boxes.count()} operator kinds`)
-  else fail('expected >=5 operator-kind checkboxes on the AOM node')
-  const first = boxes.first()
-  const before = await first.isChecked()
-  await first.click()
+  // the operator bank is the manifest's op_kinds int[] param, edited as a list
+  const bank = page.locator('[data-array-param="op_kinds"]').first()
+  if ((await bank.count()) > 0) console.log('✓ operator-bank (op_kinds) editor present on the AOM PLS node')
+  else fail('expected an op_kinds editor on the AOM PLS node')
+  const defaultBank = await bank.inputValue()
+  if (defaultBank.split(',').length >= 5) console.log(`✓ operator bank defaults to the manifest bank [${defaultBank}]`)
+  else fail(`expected >=5 operator kinds in the default bank, got [${defaultBank}]`)
+  await bank.fill('0, 7')
   await page.waitForTimeout(150)
-  if ((await first.isChecked()) !== before) console.log('✓ operator-bank checkbox is editable (toggled)')
-  else fail('expected the operator-bank checkbox to toggle')
-  await first.click() // restore the default bank before running
+  if ((await bank.inputValue()) === '0, 7') console.log('✓ operator bank is editable')
+  else fail('expected the operator bank to be editable')
+  await bank.fill(defaultBank) // restore the consistent manifest bank before running
   await page.waitForTimeout(150)
 
   // run the pipeline (no preprocessing — AOM screens it internally)
   await page.getByRole('button', { name: /Run pipeline/i }).click()
   await page.waitForSelector('text=/CV Scores/', { timeout: 60000 })
-  console.log('✓ AOM-PLS pipeline executed (CV Scores rendered)')
+  console.log('✓ AOM PLS pipeline executed (CV Scores rendered)')
 
   const body2 = (await page.textContent('body')) || ''
   if (/RMSE/i.test(body2)) console.log('✓ RMSE metric present')

@@ -1,9 +1,9 @@
-// Node smoke for the broad-model-pack additions, run against the STAGED methods
-// WASM the app actually ships (src/engine/wasm/methods). Proves ECR, O2PLS (via
-// the generic fitModel dispatcher), the AOM-Ridge blender + AOM operator-PLS
-// stack bridges, and the DataTwinning / SystematicCircular splitters all fit,
-// predict (finite + signal-correlated) and split through the real engine.
-// Self-contained; ignores SMOKE_URL.
+// Node smoke for the broad-model-pack methods, run against the STAGED methods
+// WASM the app actually ships (src/engine/wasm/methods). Proves ECR, O2PLS, the
+// AOM-Ridge blender and the AOM operator-PLS stack fit and predict (finite +
+// signal-correlated), and the SPlit (twinning) / SystematicCircular splitters
+// split, all through the generic n4m role API the engine uses (methodClass by
+// method id). Self-contained; ignores SMOKE_URL.
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 
@@ -41,22 +41,23 @@ function corr(d) {
   return va > 0 && vb > 0 ? c / Math.sqrt(va * vb) : 0
 }
 
-const ecr = n4m.fitModel('ECR', X, Y, 6, [0.5])
-ok(finite(ecr.coefficients) && corr(n4m.predictModel(ecr, X).data) > 0.8, 'ECR fits + predicts (correlated)')
+const create = (methodId, params = {}) => {
+  const m = new (n4m.methodClass(methodId))()
+  m.params = params
+  return m
+}
+const model = (methodId, params) => create(methodId, params).fit(X, Y)
 
-const o2 = n4m.fitModel('O2PLS', X, Y, 6, [2, 1, 1])
-ok(finite(o2.coefficients) && corr(n4m.predictModel(o2, X).data) > 0.5, 'O2PLS fits + predicts (correlated)')
+ok(corr(model('models.specialized.ecr', { n_components: 6, alpha: 0.5 }).predict(X).data) > 0.8, 'ECR fits + predicts (correlated)')
+ok(corr(model('models.multiblock.o2pls', { n_predictive: 2, n_x_orthogonal: 1, n_y_orthogonal: 1 }).predict(X).data) > 0.5, 'O2PLS fits + predicts (correlated)')
+const ridge = model('aom_pop.ridge_blender', { cv: 4 }).predict(X).data
+ok(finite(ridge) && corr(ridge) > 0.7, 'AOM-Ridge blender fits + predicts (correlated)')
+const stack = model('aom_pop.operator_pls_stack', { cv: 4, components: [2, 4, 8] }).predict(X).data
+ok(finite(stack) && corr(stack) > 0.7, 'AOM operator-PLS stack fits + predicts (correlated)')
 
-const ridge = n4m.fitAomRidge(X, Y, { cv: 4 })
-ok(finite(ridge.coefficients) && corr(n4m.predictModel(ridge, X).data) > 0.7, 'AOM-Ridge fits + predicts (correlated)')
-
-const stack = n4m.fitAomStack(X, Y, { cv: 4, maxComponents: 8 })
-ok(finite(stack.coefficients) && corr(n4m.predictModel(stack, X).data) > 0.7, 'AOM-Stack fits + predicts (correlated)')
-
-for (const kind of ['DataTwinning', 'SystematicCircular']) {
-  const mask = n4m.computeSplit(kind, X, kind === 'SystematicCircular' ? Y : null, { testSize: 0.25 })
-  const nt = Array.from(mask).filter((v) => v === 1).length
-  ok(mask.length === n && nt > 0 && nt < n, `${kind} split: ${nt}/${n} test rows`)
+for (const [methodId, y] of [['splitters.split_splitter', undefined], ['splitters.systematic_circular', Yd]]) {
+  const [fold] = create(methodId, { test_size: 0.25 }).split(X, y)
+  ok(fold.test.length > 0 && fold.train.length + fold.test.length === n, `${methodId} split: ${fold.test.length}/${n} test rows`)
 }
 
 if (failed) { console.error(`NEW-PACK SMOKE FAILED (${failed})`); process.exit(1) }

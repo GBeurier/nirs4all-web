@@ -16,7 +16,7 @@
   "recipe": {
     "path": "repository-pls-snv.pipeline.json",
     "format": "n4a.web.pipeline_dsl.v1",
-    "sha256": "03dfc33b63b121f57733f19d6ab3c58f4b918ba39bd56f9af145740245df9440"
+    "sha256": "03bb6a573bef24079f1ef04cd5b116fdb2102e4c6b6bcb13c92545750c92c238"
   },
   "dataset": {
     "id": "lab-transfer-corn-protein-2026-07",

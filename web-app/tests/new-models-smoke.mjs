@@ -1,9 +1,9 @@
-// FEATURE 2 node smoke: prove the two NEW catalog models (MIR-PLS, MB-PLS) fit
-// and predict through the staged libn4m WASM via the same generic dispatcher the
-// studio uses (fitModel/predictModel → n4m_wasm_model_fit), producing finite
-// predictions that are SENSITIVE to n_components (a different component count
-// gives a different coefficient vector). Runs under Node against the staged
-// src/engine/wasm/methods (no browser needed).
+// Model node smoke: catalog models (MIR-PLS, missing-aware NIPALS, PLS, CPPLS)
+// fit and predict through the staged libn4m WASM via the generic n4m role API the
+// engine uses (methodClass(method_id) → fit → predict), producing finite
+// predictions that are SENSITIVE to n_components where the method has a true
+// latent count, and N4ME exports that reload and predict bit-identically. Runs
+// under Node against the staged src/engine/wasm/methods (no browser needed).
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 
@@ -54,47 +54,64 @@ function corrFull(pred) {
   return vh > 0 && vt > 0 ? cov / Math.sqrt(vh * vt) : 0
 }
 
-// MBPLS + MissingAwareNIPALS must be component-SENSITIVE (a true latent count).
-// MIRPLS inverts the Y→X map and is component-stable for a single target (q=1) by
-// design, so it is only checked for finite-fit + learning, not sensitivity.
-const SENSITIVE = ['MBPLS', 'MissingAwareNIPALS']
-const STABLE = ['MIRPLS']
+const fit = (methodId, params) => {
+  const est = new (n4m.methodClass(methodId))()
+  est.params = params
+  return est.fit(X, Y)
+}
+// N4ME round trip: the reloaded estimator predicts exactly like the fitted one.
+function roundTrips(est) {
+  const again = n4m.NativeEstimator.fromN4me(est.toN4me())
+  const a = est.predict(X).data
+  const b = again.predict(X).data
+  again.dispose()
+  return again.methodId === est.methodId && a.every((v, i) => v === b[i])
+}
+
+// Component-SENSITIVE models (a true latent count). MIRPLS inverts the Y→X map
+// and is component-stable for a single target (q=1) by design, so it is only
+// checked for finite-fit + learning, not sensitivity.
+const SENSITIVE = ['models.specialized.missing_aware_nipals', 'models.pls.pls_regression', 'models.pls.cppls']
+const STABLE = ['models.multiblock.mir_pls']
 let sensitivePassed = 0
 let stablePassed = 0
 
-for (const type of SENSITIVE) {
+for (const id of SENSITIVE) {
   try {
-    const m3 = n4m.fitModel(type, X, Y, 3, [])
-    const m7 = n4m.fitModel(type, X, Y, 7, [])
-    if (!finite(m3.coefficients) || m3.coefficients.length !== p) { fail(`${type}: coefficients not finite/${p}`); continue }
-    const pred3 = n4m.predictModel(m3, Xnew)
-    if (!finite(pred3.data) || pred3.data.length !== 5) { fail(`${type}: predictions not finite/shaped`); continue }
-    const coeffDelta = Math.max(...m3.coefficients.map((c, i) => Math.abs(c - m7.coefficients[i])))
-    if (!(coeffDelta > 1e-9)) { fail(`${type}: coefficients NOT sensitive to n_components (Δ=${coeffDelta})`); continue }
-    const r = corrFull(n4m.predictModel(m7, X))
-    if (!(r > 0.5)) { fail(`${type}: did not learn the signal (r=${r.toFixed(2)})`); continue }
-    console.log(`✓ ${type}: ${p} finite coeffs · finite preds · component-sensitive (Δcoef=${coeffDelta.toExponential(2)}) · r=${r.toFixed(3)}`)
+    const m3 = fit(id, { n_components: 3 })
+    const m7 = fit(id, { n_components: 7 })
+    const pred3 = m3.predict(Xnew)
+    if (!finite(pred3.data) || pred3.data.length !== 5) { fail(`${id}: predictions not finite/shaped`); continue }
+    const delta = Math.max(...Array.from(m3.predict(X).data, (v, i) => Math.abs(v - m7.predict(X).data[i])))
+    if (!(delta > 1e-9)) { fail(`${id}: predictions NOT sensitive to n_components (Δ=${delta})`); continue }
+    const r = corrFull(m7.predict(X))
+    if (!(r > 0.5)) { fail(`${id}: did not learn the signal (r=${r.toFixed(2)})`); continue }
+    if (!roundTrips(m7)) { fail(`${id}: N4ME reload does not predict identically`); continue }
+    console.log(`✓ ${id}: finite preds · component-sensitive (Δpred=${delta.toExponential(2)}) · r=${r.toFixed(3)} · N4ME round trip exact`)
+    m3.dispose()
+    m7.dispose()
     sensitivePassed++
   } catch (e) {
-    fail(`${type}: threw — ${e instanceof Error ? e.message : String(e)}`)
+    fail(`${id}: threw — ${e instanceof Error ? e.message : String(e)}`)
   }
 }
 
-for (const type of STABLE) {
+for (const id of STABLE) {
   try {
-    const m = n4m.fitModel(type, X, Y, 7, [])
-    if (!finite(m.coefficients) || m.coefficients.length !== p) { fail(`${type}: coefficients not finite/${p}`); continue }
-    const pred = n4m.predictModel(m, Xnew)
-    if (!finite(pred.data) || pred.data.length !== 5) { fail(`${type}: predictions not finite/shaped`); continue }
-    const r = corrFull(n4m.predictModel(m, X))
-    if (!(r > 0.5)) { fail(`${type}: did not learn the signal (r=${r.toFixed(2)})`); continue }
-    console.log(`✓ ${type}: ${p} finite coeffs · finite preds · learns (r=${r.toFixed(3)}; component-stable for single-target by design)`)
+    const m = fit(id, { n_components: 7 })
+    const pred = m.predict(Xnew)
+    if (!finite(pred.data) || pred.data.length !== 5) { fail(`${id}: predictions not finite/shaped`); continue }
+    const r = corrFull(m.predict(X))
+    if (!(r > 0.5)) { fail(`${id}: did not learn the signal (r=${r.toFixed(2)})`); continue }
+    if (!roundTrips(m)) { fail(`${id}: N4ME reload does not predict identically`); continue }
+    console.log(`✓ ${id}: finite preds · learns (r=${r.toFixed(3)}; component-stable for single-target by design) · N4ME round trip exact`)
+    m.dispose()
     stablePassed++
   } catch (e) {
-    fail(`${type}: threw — ${e instanceof Error ? e.message : String(e)}`)
+    fail(`${id}: threw — ${e instanceof Error ? e.message : String(e)}`)
   }
 }
 
-if (sensitivePassed < 2) fail(`expected >=2 component-sensitive new models, only ${sensitivePassed} passed`)
+if (sensitivePassed < SENSITIVE.length) fail(`expected ${SENSITIVE.length} component-sensitive models, only ${sensitivePassed} passed`)
 if (stablePassed < 1) fail(`expected MIRPLS to fit+predict+learn, ${stablePassed} passed`)
 console.log(process.exitCode ? 'NEW-MODELS SMOKE FAILED' : 'NEW-MODELS SMOKE PASSED')

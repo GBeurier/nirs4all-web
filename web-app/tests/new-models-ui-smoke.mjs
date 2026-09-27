@@ -1,7 +1,8 @@
-// FEATURE 2 browser smoke: pick a NEW model (MB-PLS) in the served editor and run
-// it through the full WASM stack (dag-ml + libn4m), confirming CV Scores + an RMSE
-// metric render with no console errors. Proves the catalog→engine wiring for the
-// added generic-dispatcher models in-browser.
+// Browser smoke: pick a manifest model the retired positional dispatcher never
+// ran (Weighted PLS) in the served editor and run it through the full WASM stack
+// (dag-ml + the libn4m role API), confirming CV Scores + an RMSE metric render
+// with no console errors. Proves every manifest method with a role is a live,
+// executable node — not only the old dispatcher subset.
 import { chromium } from 'playwright-core'
 
 const URL = process.env.SMOKE_URL || 'http://localhost:4345/'
@@ -31,20 +32,20 @@ try {
   await page.locator('[data-step="pipeline"]').click()
   await page.waitForTimeout(300)
 
-  // select the terminal model node, then switch the estimator to MB PLS
+  // select the terminal model node, then switch the estimator to Weighted PLS
   await page.getByRole('button', { name: /PLS Regression/ }).first().click()
   await page.waitForTimeout(200)
   await page.locator('#model-select').click()
   await page.waitForTimeout(200)
-  await page.getByRole('option', { name: 'MB PLS', exact: true }).click()
+  await page.getByRole('option', { name: 'Weighted PLS', exact: true }).click()
   await page.waitForTimeout(200)
   const body = (await page.textContent('body')) || ''
-  if (/MB PLS/.test(body)) console.log('✓ estimator switched to MB PLS (new model)')
-  else fail('expected MB PLS to be selected')
+  if (/Weighted PLS/.test(body)) console.log('✓ estimator switched to Weighted PLS (generic role path)')
+  else fail('expected Weighted PLS to be selected')
 
   await page.getByRole('button', { name: /Run pipeline/i }).click()
   await page.waitForSelector('text=/CV Scores/', { timeout: 60000 })
-  console.log('✓ MB PLS pipeline executed (CV Scores rendered)')
+  console.log('✓ Weighted PLS pipeline executed (CV Scores rendered)')
 
   const body2 = (await page.textContent('body')) || ''
   if (/RMSE/i.test(body2)) console.log('✓ RMSE metric present')

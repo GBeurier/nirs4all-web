@@ -2,6 +2,12 @@
 // catalog defaults, real samples, CV/refit and prediction in a fresh worker.
 // Model-only classification is deliberate: preprocessing bypassed the scheduler
 // callback and hid its incorrect one-hot target metadata in older smoke tests.
+//
+// Every n4m regressor is offered for classification (one-hot targets); the
+// single-target ones, and PLS-Cox (survival targets), must refuse natively with
+// the typed "could not fit … n4m error" diagnostic rather than fail silently.
+// Models with a required parameter that has no manifest default cannot run on
+// catalog defaults by design and are skipped (the inspector marks them).
 import assert from 'node:assert/strict'
 import { writeFile } from 'node:fs/promises'
 import { chromium } from 'playwright-core'
@@ -16,6 +22,10 @@ const browser = await chromium.launch({
   executablePath: process.env.CHROME || '/usr/bin/google-chrome', headless: true, args: ['--no-sandbox'],
 })
 const report = []
+const EXPECTED_REFUSALS = {
+  corn: new Set(['PLS Cox']),
+  meat: new Set(['PLS Cox', 'Calibration', 'Operator PLS Stack', 'Robust HPO', 'Robust PLS', 'GPR PLS']),
+}
 
 async function openSample(page, sample) {
   await page.goto(url, { waitUntil: 'load' })
@@ -52,10 +62,22 @@ try {
         await openSample(page, sample)
         await page.locator('#model-select').click()
         await page.getByRole('option', { name, exact: true }).click()
+        if (await page.locator('[title^="Required"]').count()) {
+          report.push({ sample, name, status: 'skipped', reason: 'required parameter without a default' })
+          console.log(`• ${sample}: ${name} — skipped (needs a user-set required parameter)`)
+          continue
+        }
         await page.getByRole('button', { name: /Run pipeline/i }).click()
         // Stop on an error banner as well as success, avoiding a slow timeout
         // for a caught native exception that does not reach the JS console.
         await page.waitForFunction(() => window.__n4aLastRun || /Run refused|could not fit|n4m error/i.test(document.body.innerText), null, { timeout })
+        if (EXPECTED_REFUSALS[sample]?.has(name)) {
+          const body = await page.locator('body').innerText()
+          assert(/could not fit/i.test(body) && /n4m error/i.test(body), `${name} must refuse natively on ${sample}`)
+          report.push({ sample, name, status: 'refused', milliseconds: Date.now() - start })
+          console.log(`✓ ${sample}: ${name} — refused natively (${body.match(/n4m error[^\n.]*/)?.[0]})`)
+          continue
+        }
         const result = await page.evaluate(() => {
           const run = window.__n4aLastRun
           if (!run) return null
@@ -113,4 +135,5 @@ try {
 } finally {
   await browser.close()
 }
-console.log(`MODEL SMOKE: ${report.filter((result) => result.status === 'passed').length}/${report.length} passed`)
+const count = (status) => report.filter((result) => result.status === status).length
+console.log(`MODEL SMOKE: ${count('passed')}/${report.length} passed, ${count('refused')} refused natively as expected, ${count('skipped')} skipped (required parameter)`)

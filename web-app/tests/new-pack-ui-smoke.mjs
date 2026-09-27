@@ -1,7 +1,7 @@
-// Browser smoke: pick the AOM-Ridge blender (a NEW AOM-family model wired to its
-// own libn4m bridge) in the served editor and run it end-to-end through the WASM
-// stack (dag-ml + libn4m), confirming CV Scores + an RMSE metric render with no
-// console errors. Proves the catalog→engine wiring for the broad-model-pack adds.
+// Browser smoke: pick the AOM Ridge blender (aom_pop.ridge_blender, an AOM-family
+// manifest model) in the served editor and run it end-to-end through the WASM
+// stack (dag-ml + the libn4m role API), confirming CV Scores + an RMSE metric
+// render with no console errors.
 import { chromium } from 'playwright-core'
 
 const URL = process.env.SMOKE_URL || 'http://localhost:4345/'
@@ -31,16 +31,16 @@ try {
   await page.locator('[data-step="pipeline"]').click()
   await page.waitForTimeout(300)
 
-  // select the terminal model node, then switch the estimator to AOM-Ridge blender
+  // select the terminal model node, then switch the estimator to Ridge Blender
   await page.getByRole('button', { name: /PLS Regression/ }).first().click()
   await page.waitForTimeout(200)
   await page.locator('#model-select').click()
   await page.waitForTimeout(200)
-  await page.getByRole('option', { name: 'AOM-Ridge blender', exact: true }).click()
+  await page.getByRole('option', { name: 'Ridge Blender', exact: true }).click()
   await page.waitForTimeout(200)
   const body = (await page.textContent('body')) || ''
-  if (/AOM-Ridge blender/.test(body)) console.log('✓ estimator switched to AOM-Ridge blender (new model)')
-  else fail('expected AOM-Ridge blender to be selected')
+  if (/Ridge Blender/.test(body)) console.log('✓ estimator switched to Ridge Blender (new model)')
+  else fail('expected Ridge Blender to be selected')
 
   await page.getByRole('button', { name: /Run pipeline/i }).click()
   await page.waitForSelector('text=/CV Scores/', { timeout: 90000 })
