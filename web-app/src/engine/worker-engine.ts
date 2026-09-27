@@ -130,8 +130,8 @@ export class WorkerEngine implements Engine {
     }, opts)
   }
 
-  predict(model: FittedPipeline, Xnew: Float64Array, nSamples: number, nFeatures: number): Promise<PredictResult> {
-    return this.call<PredictResult>({ type: 'predict', model, Xnew, nSamples, nFeatures })
+  predict(model: FittedPipeline, Xnew: Float64Array, nSamples: number, nFeatures: number, featureNames?: string[]): Promise<PredictResult> {
+    return this.call<PredictResult>({ type: 'predict', model, Xnew, nSamples, nFeatures, featureNames })
   }
 
   exportModel(model: FittedPipeline, opts: ExportOptions): Promise<FittedPipeline> {

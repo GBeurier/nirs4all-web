@@ -8,6 +8,7 @@
 import { MAIN_CHAIN_CATEGORIES, nodeByType } from '@/catalog/nodes'
 import { SAMPLES, type SampleId } from '@/data/samples'
 import { isArchiveV2Model } from '@/engine/archive-v2'
+import { parseFeatureIdentity } from '@/engine/feature-identity'
 import type { PipelineDSL } from '@/engine/types'
 import { deserializeTyped, type LoadedModel, serializeTyped } from './n4a'
 
@@ -79,6 +80,11 @@ function validModel(m: unknown): LoadedModel | undefined {
   // bounded binary artifact store nor an authority for portable archives.
   if (isArchiveV2Model(fp)) return undefined
   if (!fp || typeof fp !== 'object' || !fp.dsl || !fp.state || typeof fp.nFeatures !== 'number') return undefined
+  try {
+    parseFeatureIdentity(fp.features, fp.nFeatures)
+  } catch {
+    return undefined
+  }
   // A model saved before the n4m role API (retired DSL tokens, number-array
   // state) no longer matches the catalog: drop it, the user retrains.
   if (!validPipeline(fp.dsl)) return undefined

@@ -34,7 +34,7 @@ interface RunMsg {
   robustnessEvidencePublicationHandoff?: NativeRobustnessEvidencePublicationHandoff
   robustnessEvidenceSidecar?: RobustnessEvidenceSidecarOptions
 }
-interface PredictMsg { type: 'predict'; id: string; model: Parameters<MainEngine['predict']>[0]; Xnew: Float64Array; nSamples: number; nFeatures: number }
+interface PredictMsg { type: 'predict'; id: string; model: Parameters<MainEngine['predict']>[0]; Xnew: Float64Array; nSamples: number; nFeatures: number; featureNames?: string[] }
 interface ExportMsg { type: 'export'; id: string; model: Parameters<MainEngine['exportModel']>[0]; allowTrainingRows: boolean }
 interface CancelMsg { type: 'cancel'; id: string }
 type InMsg = RunMsg | PredictMsg | ExportMsg | CancelMsg
@@ -70,7 +70,7 @@ async function handle(msg: InMsg): Promise<void> {
       const result = await engine.exportModel(msg.model, { allowTrainingRows: msg.allowTrainingRows })
       ctx.postMessage({ type: 'result', id: msg.id, result })
     } else {
-      const result = await engine.predict(msg.model, msg.Xnew, msg.nSamples, msg.nFeatures)
+      const result = await engine.predict(msg.model, msg.Xnew, msg.nSamples, msg.nFeatures, msg.featureNames)
       ctx.postMessage({ type: 'result', id: msg.id, result })
     }
   } catch (e) {

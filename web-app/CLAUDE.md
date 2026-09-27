@@ -58,7 +58,9 @@ path) — plus one smoke per editor/feature surface added since: the full DAG bu
 sequencing, the AOM family (`aom`, `pop`), the extra catalog models (`new-models` engine-level role
 API + N4ME round trip, `new-models-ui` for a manifest model outside the retired dispatcher subset,
 `operators`), the training-row export consent (`training-rows-export`: Kernel PLS, Cancel exports
-nothing, the consented bundle records `containsTrainingRows` and re-imports identically), the broad model pack (`new-pack` engine-level + `new-pack-ui` for ECR / O2PLS / AOM
+nothing, the consented bundle records `containsTrainingRows` and re-imports identically), the
+column identity at predict (`column-identity`: matching header checked, permuted columns refused,
+header-less file stated as positional), the broad model pack (`new-pack` engine-level + `new-pack-ui` for ECR / O2PLS / AOM
 Ridge blender / AOM operator-PLS stack and the SPlit twinning / SystematicCircular splits), the
 Explore playground (`explore` — preprocessing preview + client PCA), the `palette`, and `persistence`
 + `n4a-roundtrip` (session and `.n4a` bundle round-trips; the latter checks the v2 bundle carries
@@ -148,8 +150,16 @@ Load-bearing concepts (require reading several files):
   shareable copy made by `Engine.exportModel(model, { allowTrainingRows })`, which re-serializes
   every state through its backend (`exportN4me` → libn4m refuses training rows without the
   opt-in). The Results export asks for explicit consent when `trainingRowSteps(model)` is not
-  empty — never set `allowTrainingRows` implicitly. `RolePipeline` is staged but not used: the web
-  chain also runs augmenters, feature unions, one-hot regressor-classifiers and ml.js models. Native regressors are also offered for classification (one-hot targets + argmax;
+  empty — never set `allowTrainingRows` implicitly. `RolePipeline` is not used to fit (the web
+  chain also runs augmenters, feature unions, one-hot regressor-classifiers and ml.js models); it is
+  used at predict for column identity (re-audit R09 / F03): a model fitted on a dataset with a
+  spectral axis or header names records them as `FittedPipeline.features` (kept in `.n4a`),
+  `Engine.predict(..., featureNames)` refuses named input columns that differ in names, order or
+  count (`src/engine/feature-identity.ts`), and when the fitted chain is N4ME transformers / selectors
+  + an N4ME model the libn4m backend predicts it as one `RolePipeline.fromStates(..., {
+  featureNames })` so libn4m checks the names too (same states, bit-identical predictions; model
+  states keep their `fitParams` for that recipe). Unnamed input (no header) and models without
+  `features` (index axis, older bundles) are positional, and the Predict panel says so. Native regressors are also offered for classification (one-hot targets + argmax;
   single-target methods refuse natively). The `aom_pop.*` models are `autonomous` (they screen their
   own operator bank on raw X). `src/catalog/nodes.ts` adds the hand-written models the manifest does
   not describe (ml.js, PLS Canonical / SVD on the legacy coefficient dispatcher); their ABI symbols

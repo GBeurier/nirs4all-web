@@ -3,6 +3,7 @@
 // Task type and class labels are inferred from y. The spectral axis is read from
 // the X header when numeric. Vendor formats route through wasm-io.ts instead.
 import type { MaterializedDataset, Partition, TaskType } from '@/engine/types'
+import { columnMismatch, columnName } from '@/engine/feature-identity'
 import { parseCsv } from './csv'
 
 export interface RawFile {
@@ -65,11 +66,14 @@ function axisFromHeader(header: string[]): { axis: number[]; unit: string } {
  * Parse a spectra (X) CSV into numeric rows + axis. X files often carry the
  * wavelength axis as a numeric first row with no text header; if so it is taken
  * as the axis, not a sample. Shared by dataset assembly and new-spectra prediction.
+ * `columnNames` are the header's canonical column names (`columnName`), absent
+ * when the file has no header row (anonymous, positional columns).
  */
-export function parseSpectraCsv(text: string): { rows: number[][]; axis: number[]; axisUnit: string } {
+export function parseSpectraCsv(text: string): { rows: number[][]; axis: number[]; axisUnit: string; columnNames?: string[] } {
   const xc = parseCsv(text)
   let headerCells = xc.header
   let dataRows = xc.rows
+  let named = xc.hasHeader
   if (!xc.hasHeader && xc.rows.length > 1) {
     const r0 = xc.rows[0]
     const monotonic =
@@ -82,16 +86,19 @@ export function parseSpectraCsv(text: string): { rows: number[][]; axis: number[
     if (monotonic && maxAbs > 50) {
       headerCells = r0.map(String)
       dataRows = xc.rows.slice(1)
+      named = true
     }
   }
   const { axis, unit } = axisFromHeader(headerCells)
-  return { rows: dataRows, axis, axisUnit: unit }
+  return { rows: dataRows, axis, axisUnit: unit, ...(named ? { columnNames: headerCells.map(columnName) } : {}) }
 }
 
 interface Block {
   X: number[][]
   axis: number[]
   axisUnit: string
+  /** header column names; absent when the X file has no header row */
+  columnNames?: string[]
   yNum: number[]
   yLabels: string[]
   ids: string[]
@@ -102,7 +109,7 @@ interface Block {
 function buildBlock(files: RawFile[], partition: Partition): Block | null {
   const xFile = files.find((f) => isX(f.name) && !isY(f.name))
   if (!xFile) return null
-  const { rows: dataRows, axis, axisUnit: unit } = parseSpectraCsv(xFile.text)
+  const { rows: dataRows, axis, axisUnit: unit, columnNames } = parseSpectraCsv(xFile.text)
 
   let yNum: number[] = []
   let yLabels: string[] = []
@@ -133,7 +140,7 @@ function buildBlock(files: RawFile[], partition: Partition): Block | null {
         .map(({ name, idx }) => ({ name, values: mc.raw.map((r) => r[idx] ?? '') }))
     }
   }
-  return { X: dataRows, axis, axisUnit: unit, yNum, yLabels, ids, meta }
+  return { X: dataRows, axis, axisUnit: unit, columnNames, yNum, yLabels, ids, meta }
 }
 
 export function buildDataset(files: RawFile[], name = 'Uploaded dataset'): MaterializedDataset {
@@ -152,6 +159,9 @@ export function buildDataset(files: RawFile[], name = 'Uploaded dataset'): Mater
     if (bad >= 0) throw new Error(`Inconsistent spectra width: row ${bad + 1} has ${b.X[bad].length} values, expected ${nFeatures}.`)
     if (b.yNum.length !== b.X.length) throw new Error(`Target count (${b.yNum.length}) does not match spectra count (${b.X.length}).`)
   }
+  // the test spectra must name the training columns, in the same order
+  const why = train.columnNames && test?.columnNames ? columnMismatch(train.columnNames, test.columnNames) : null
+  if (why) throw new Error(`The test spectra columns do not match the training spectra: ${why}.`)
   const nSamples = blocks.reduce((a, b) => a + b.X.length, 0)
   const X = new Float64Array(nSamples * nFeatures)
   const yRaw = new Float64Array(nSamples)
@@ -203,6 +213,8 @@ export function buildDataset(files: RawFile[], name = 'Uploaded dataset'): Mater
     nFeatures,
     axis: train.axis,
     axisUnit: train.axisUnit,
+    // a header that is not a spectral axis still names the columns
+    ...(train.columnNames && train.axisUnit === 'index' ? { featureNames: train.columnNames } : {}),
     y,
     yRaw,
     labelsRaw,

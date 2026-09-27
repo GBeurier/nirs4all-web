@@ -177,13 +177,20 @@ without the local vendors.
 
   The IndexedDB robustness-evidence sidecar (opt-in, host-provided) stores the dataset `X` itself
   and is a local store, not a shareable export.
-- **Native role pipeline** (`RolePipeline`, methods 1.2.0) is staged but not used by the engine:
-  it covers linear chains of sample filters, transformers / selectors and one regressor or
-  classifier, whereas the web chain also runs augmenters, feature-union branches, native
-  regressors used as classifiers through one-hot targets, ml.js models and the offline JS
-  fallback. Adopting it for the linear subset would add a second fit / predict / state path
-  beside the per-step one instead of removing TS logic; dag-ml keeps orchestrating the per-fold
-  JS controller either way.
+- **Native role pipeline** (`RolePipeline`, methods 1.2.0) does not fit: it covers linear chains
+  of sample filters, transformers / selectors and one regressor or classifier, whereas the web
+  chain also runs augmenters, feature-union branches, native regressors used as classifiers
+  through one-hot targets, ml.js models and the offline JS fallback; dag-ml keeps orchestrating
+  the per-fold JS controller. It is used at predict as the native carrier of the column-name
+  check (below).
+- **Column identity** (re-audit R09 / F03): a model fitted on a dataset with a spectral axis or
+  header names records its input columns in order (`FittedPipeline.features`: names, axis, unit),
+  and the `.n4a` bundle keeps them. At predict, a CSV whose header names differ from the model's
+  (other names, other order, other count) is refused with the first mismatch; when the fitted
+  chain is N4ME transformers / selectors and an N4ME model, the libn4m backend replays it as one
+  `RolePipeline` holding the fitted names, so libn4m checks them as well. A file without a header
+  row, or a model without recorded columns (index axis, older bundle), is taken by position, and
+  the Predict panel states it. Test spectra must carry the training header when both have one.
 - **Data** (`src/data/`): two ingestion paths behind one `MaterializedDataset` shape — an
   axis-aware **CSV** builder (`X_train/y_train(+_test,+metadata)` convention, wavelength-header and
   task-type inference), and the real **nirs4all-formats + nirs4all-io WASM** stack (`wasm-io.ts`,
