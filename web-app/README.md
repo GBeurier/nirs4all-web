@@ -156,10 +156,34 @@ without the local vendors.
   serializes, and they run through the generic n4m role API (`src/engine/methods/n4m.ts`:
   `methodClass(method_id)` + manifest-typed params → fit / transform / predict / predictLabels /
   getMask / split / augment); fitted states are saved as portable N4ME bytes (`.n4a` v2) and
-  reloaded with `NativeEstimator.fromN4me`. The few hand-written nodes (ml.js models, PLS
+  reloaded with `NativeEstimator.fromN4me`. Seeds are optional parameters (the manifest publishes
+  no default; an unset seed runs natively as 0), and parameters the fitted state records carry
+  the manifest `recorded` flag. The few hand-written nodes (ml.js models, PLS
   Canonical / SVD) carry their libn4m ABI symbols and `npm run validate:catalog` fails CI if one
   isn't exported upstream (e.g. OPLS is intentionally excluded) or if the manifest ABI drifts from
   the staged methods WASM. The preset gallery is authored over these entries.
+- **Training rows in exported models** (audit F10): some fitted states embed the training spectra
+  (kernel PLS, GPR-PLS, LW-PLS; libn4m's `containsTrainingRows()`, and the ml.js k-NN). A `.n4a`
+  file is meant to be shared, so the web keeps two things apart:
+  - *session state* — every fitted state is an in-memory checkpoint of this browser session (N4ME
+    written with the opt-in set) that records `containsTrainingRows`; running, inspecting and
+    predicting never export anything;
+  - *shareable export* — **Export → Model bundle** calls `Engine.exportModel(model,
+    { allowTrainingRows })`, which re-serializes every state through its backend with the user's
+    choice (`toN4me({ allowTrainingRows })` in libn4m). When a state embeds training rows, a
+    consent dialog names the steps and says the file will contain the training spectra; only
+    "Export with training spectra" sets the opt-in, and without it libn4m refuses the export.
+    Bundles record `containsTrainingRows` per state and at bundle level.
+
+  The IndexedDB robustness-evidence sidecar (opt-in, host-provided) stores the dataset `X` itself
+  and is a local store, not a shareable export.
+- **Native role pipeline** (`RolePipeline`, methods 1.2.0) is staged but not used by the engine:
+  it covers linear chains of sample filters, transformers / selectors and one regressor or
+  classifier, whereas the web chain also runs augmenters, feature-union branches, native
+  regressors used as classifiers through one-hot targets, ml.js models and the offline JS
+  fallback. Adopting it for the linear subset would add a second fit / predict / state path
+  beside the per-step one instead of removing TS logic; dag-ml keeps orchestrating the per-fold
+  JS controller either way.
 - **Data** (`src/data/`): two ingestion paths behind one `MaterializedDataset` shape — an
   axis-aware **CSV** builder (`X_train/y_train(+_test,+metadata)` convention, wavelength-header and
   task-type inference), and the real **nirs4all-formats + nirs4all-io WASM** stack (`wasm-io.ts`,
