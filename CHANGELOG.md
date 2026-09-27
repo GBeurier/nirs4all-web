@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased (0.3.1)
+## 0.3.1 — 2026-09-27
 
 ### Fixed
 
@@ -15,3 +15,12 @@
   the Predict panel says so. Column names containing NUL are refused.
 - CSV datasets: test spectra whose header differs from the training spectra header are refused,
   and a non-numeric header now names the columns.
+
+### Changed
+
+- Stages `@nirs4all/methods` 1.2.1 (ABI 2.14.0 unchanged), rebuilt reproducibly from the v1.2.1
+  tag and byte-identical to the published npm tarball. It carries the Methods re-audit fixes:
+  every estimator input view is validated (layout, float64) before dispatch, a role pipeline
+  predicting zero rows returns an empty output, the `RolePipeline` facade applies the shared
+  label contract (exact numeric labels, validated class-name tables) and refuses column names
+  containing NUL at fit, import and predict.
