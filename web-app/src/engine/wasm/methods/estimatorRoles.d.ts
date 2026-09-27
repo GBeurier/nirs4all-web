@@ -52,6 +52,23 @@ export interface FitInputs {
     XTarget?: Matrix;
     foldIds?: number[];
 }
+/** Runs `fn` with a fresh native context, destroyed afterwards. */
+export declare function withContext<T>(fn: (ctx: number) => T): T;
+export declare function readI64(ptr: number): number;
+export type Alloc = {
+    ptr: number;
+    free: () => void;
+};
+export declare function cString(s: string): Alloc;
+/** Validated native parameters of a method; the caller destroys them. */
+export declare function nativeParams(ctx: number, method: NativeMethod): number;
+/**
+ * Runs `fn` over an n4m_fit_inputs_v1_t built from the given data. Per-row
+ * inputs (y, labels, sampleWeight, groups, foldIds) must have one entry per
+ * row of X and per-column inputs (featureGroups, axis) one per column; the
+ * lengths are checked here with the argument named, and again natively.
+ */
+export declare function withFitInputs<T>(X: Matrix, y: Matrix | Float64Array | ArrayLike<number> | undefined, labels: boolean, inputs: FitInputs, fn: (struct: number, hold: (a: Alloc) => number) => T): T;
 /** Parameters of one catalog method (estimator or procedure). */
 export declare abstract class NativeMethod {
     /** Catalog method id, for example "models.pls.pls_regression". */
@@ -78,11 +95,21 @@ export declare abstract class NativeEstimator extends NativeMethod {
     get fitted(): boolean;
     /**
      * Fit on row-major X and the target: responses for a regressor (a vector
-     * or a row-major matrix), integer class ids for a classifier. Returns this.
+     * or a row-major matrix, one row per row of X), integer class ids for a
+     * classifier (one per row). Returns this. The fitted state is replaced
+     * only when the fit succeeds: a failed refit leaves the previous one.
      */
     fit(X: Matrix, y?: Matrix | Float64Array | ArrayLike<number>, inputs?: FitInputs): this;
-    /** Portable fitted state (N4ME bytes), readable by every n4m binding. */
-    toN4me(): Uint8Array;
+    /** True when the fitted state embeds training rows (kernel PLS, GPR-PLS, LW-PLS, ...). */
+    containsTrainingRows(): boolean;
+    /**
+     * Portable fitted state (N4ME bytes), readable by every n4m binding. A
+     * state that embeds training rows (containsTrainingRows()) is refused
+     * unless `allowTrainingRows` is set: sharing the export shares them.
+     */
+    toN4me(options?: {
+        allowTrainingRows?: boolean;
+    }): Uint8Array;
     /** Rebuilds a fitted estimator of the class registered for its method. */
     static fromN4me(payload: Uint8Array): NativeEstimator;
     /** Releases the native estimator. */

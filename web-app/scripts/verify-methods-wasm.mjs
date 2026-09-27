@@ -4,14 +4,14 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED = Object.freeze({
-  commit: '9a157fbd07877bf57cce58b9cc31587f0a6571d7',
-  tree: '28eb046d48a8dbe53e566ad53ee27e610a097595',
-  version: '1.1.0',
-  runtimeVersion: '1.1.0+abi.2.13.0',
-  abi: '2.13.0',
+  commit: 'd2a587642bde4627f0e22c9a2c9655324f46c5d5',
+  tree: '997590999cf211741e618481aed79587f4412b1d',
+  version: '1.2.0',
+  runtimeVersion: '1.2.0+abi.2.14.0',
+  abi: '2.14.0',
   package: '@nirs4all/methods',
   emscripten: '3.1.74',
-  npmIntegrity: 'sha512-1qr3pPOlR1mU/HLRMOhupT9VqcUgAIBOn0AMTb+vO4K4MMe7mnOLDK0TxzmhF8F0OvHquRRdX4KK9iwYn2JYrA==',
+  npmIntegrity: 'sha512-W9WlrkGZF8cv7EmfJdi0wAFOo9HcT0Rjtwhq/CNe8ArPYU8pWm3sZ4TklhkyoMSgzxBCT3u1Hv3de25YOeZShQ==',
 })
 const EXPECTED_FILES = Object.freeze({
   'LICENSE': { size: 34020, sha256: 'd8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee' },
@@ -31,20 +31,20 @@ const EXPECTED_FILES = Object.freeze({
   'config.js': { size: 1982, sha256: '386dfd18890d81c815bb07ccaa1ae1dd8e9f0f6063a85bf8b90869e7a5938788' },
   'context.d.ts': { size: 800, sha256: '701d7344a07f4f3f3487ce182a04e3493781f5818e0d69acdb2b11dfaf668ec6' },
   'context.js': { size: 1572, sha256: '3a58b4044b0ddb86bbfdfc4127b8146b69bc087e043364ef402840d3ad4142c5' },
-  'estimatorRoles.d.ts': { size: 6375, sha256: 'b9ac8547131dc3eb163825af816f29bd17314efc32665faedabd062acd3a84ff' },
-  'estimatorRoles.js': { size: 23030, sha256: 'd3bf111433c5d37167019fcb0fe5fe3b64022afd04b1d99a4b9534b9925a243a' },
-  'estimatorRolesGenerated.d.ts': { size: 165040, sha256: '8ad9571f12701d56fdb5ae44bbf1682ae84dd4a3f0a565f4ed0ab05bb0a779c4' },
-  'estimatorRolesGenerated.js': { size: 112580, sha256: '7f93ba7ddf1201f96b5b70660c301af672d1101735dde5f648c136ead958d5b6' },
+  'estimatorRoles.d.ts': { size: 7845, sha256: '2389591087f0dbea32e6b252ac4f16b51e8bc513f8f1e9f440f50b94f531d38a' },
+  'estimatorRoles.js': { size: 26633, sha256: '632245bd3548e23aaf619a93a63e3d222d52e4b13395eafd8c023f1b98d32d66' },
+  'estimatorRolesGenerated.d.ts': { size: 166138, sha256: 'c75a13f6f600adb0d23ce8f6c1be82e5b732c5f1eb7e445464d57a5360e84f55' },
+  'estimatorRolesGenerated.js': { size: 112580, sha256: '7f4e133a33bb79381426a4e92fb6d97aefc5c6935fe3e379ab3a329062d4b567' },
   'ffi.d.ts': { size: 2285, sha256: 'cc1f3aa4183c1e9565485d257af728b2881e1663f00c98949969be1443556a15' },
   'ffi.js': { size: 4655, sha256: '5c548af3c9ca606cd33b7cc5e4d3fd0fa0b05de2ae1393126e7c75df36feab45' },
-  'index.d.ts': { size: 2316, sha256: '2ba2079b34cbffcd990273607417149bb53bc0f6f5bf8ed7255bbfd4560e62c4' },
-  'index.js': { size: 2472, sha256: 'a14ec39781214211b4bc0b994b83099be72d186950c4280bb4151c49dec89b6f' },
+  'index.d.ts': { size: 2468, sha256: '86143fc4ad180161d794f51cc358d5257e22319827c7bfc2bcc5a8a6b2b2fc99' },
+  'index.js': { size: 2522, sha256: '093f255e511ede18cd89de847fbba80e1a46c0933a82ee6a756380ca127b7a27' },
   'methodResult.d.ts': { size: 1514, sha256: 'b75ef84c1fdfb73a3a20e342a4e83170ee350118d1d6bdc152c41569636e9cf4' },
   'methodResult.js': { size: 7244, sha256: 'b170d81532878c83cce9a13c14d9d7645c0368272106a905a297723fd001fb8d' },
   'model.d.ts': { size: 11450, sha256: '545e4dc89f7543d822d761ec503d6e6bb5d274501a6c6d0de8af3ab752dc0eba' },
   'model.js': { size: 28099, sha256: 'f39f2ca8e181cdc3193ca8cf0228faa084b937147ea1d8e3ebd471afa5326b4f' },
-  'n4m.js': { size: 181994, sha256: '37e5eb11b143e36e2bd96ad0f91619a5099b16eb5daf02601b026f659f899675' },
-  'n4m.wasm': { size: 2699290, sha256: 'cb8b7b525176ab44d6d870eb6d5176453abf6b534af5d14c2705c2999baf4ad6' },
+  'n4m.js': { size: 186006, sha256: '2865e22c361bfd496585814adfd60c9063990f21a998b01a73178e7b1d05ab43' },
+  'n4m.wasm': { size: 2742989, sha256: '946053cae1ca9ff7535b4b974eed92acd58b28d504f6d8d10a2c7cf0c73375c7' },
   'nativeAugmentation.d.ts': { size: 1340, sha256: '55e3f2d7692ec5da253c8b17c3e9b9efaa497c6a4a465e7c37cb6c224905aee2' },
   'nativeAugmentation.js': { size: 2479, sha256: 'f623004e281162862a3fa10095e9a3d162159663a53952235aa2333e0d5ae851' },
   'nativeModel.d.ts': { size: 735, sha256: 'e28d791d034cc030bf9501dd4b6b7a6adb522cda3bc8cba237f837f6f2468fd9' },
@@ -55,6 +55,8 @@ const EXPECTED_FILES = Object.freeze({
   'nativeSplitter.js': { size: 5272, sha256: '4277fe3a0bf0625b7b1c3e3417888017bd9746a3f2a4dcba42ef38807c5aa163' },
   'preprocessing.d.ts': { size: 985, sha256: '9408b9c93abdc74af2e0c8b042fdcd17ea1701961b6f6a746e0cc7ad1ed79a49' },
   'preprocessing.js': { size: 4726, sha256: 'e9714d38d9a744a706ff38c13c4b42fc737a3236dee6a1ccdf9e690db2519af8' },
+  'rolePipeline.d.ts': { size: 4411, sha256: 'ffe778c3e983b459363b9d242bf93a8f1fb30da59d56b412ce756c55362a772c' },
+  'rolePipeline.js': { size: 15921, sha256: '0e9be4942dd0a1150995916dc3dba2d7e35febecd76cc8fd504566401357df2b' },
   'selection.d.ts': { size: 508, sha256: 'b42f61adb1047978a3f719b109342d3be37850f7155a19993159c45393f1c01e' },
   'selection.js': { size: 11407, sha256: '112ba4aa0db523b9edcd46f62df36c0b28b4129adf7920e1822c30334a6eb237' },
   'serialization.d.ts': { size: 2028, sha256: '0ca1d47fb4b6d189b2fbfa270d4669ed3505c7896636b5607757c2a05c14ed0a' },
@@ -119,6 +121,21 @@ async function assertRuntimeWitness() {
   if (restored.methodId !== 'models.pls.pls_regression' || direct.some((value, index) => value !== replayed[index])) {
     throw new Error('Methods estimator-role N4ME round-trip witness failed')
   }
+  // A state that embeds training rows (kernel PLS) exports only with the explicit opt-in.
+  const kernel = new (module.methodClass('models.pls.kernel'))()
+  kernel.params = { n_components: 1 }
+  kernel.fit(X, Y)
+  let refused = false
+  try {
+    kernel.toN4me()
+  } catch {
+    refused = true
+  }
+  const shared = module.NativeEstimator.fromN4me(kernel.toN4me({ allowTrainingRows: true }))
+  const optIn = refused && kernel.containsTrainingRows() && shared.containsTrainingRows()
+  kernel.dispose()
+  shared.dispose()
+  if (!optIn) throw new Error('Methods training-row export opt-in witness failed')
 }
 
 if (!existsSync(receiptPath)) throw new Error(`missing nirs4all-methods WASM provenance: ${receiptPath}`)
@@ -142,6 +159,7 @@ if (
   receipt.witnesses?.abi_version !== true ||
   receipt.witnesses?.pls_fit_predict !== true ||
   receipt.witnesses?.estimator_role_n4me !== true ||
+  receipt.witnesses?.training_rows_opt_in !== true ||
   receipt.registry?.package !== `${EXPECTED.package}@${EXPECTED.version}` ||
   receipt.registry?.integrity !== EXPECTED.npmIntegrity ||
   receipt.registry?.byte_identical !== true ||
