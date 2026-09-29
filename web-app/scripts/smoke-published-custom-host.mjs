@@ -5,9 +5,9 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 
 const versions = {
-  nirs4all: process.env.N4A_PUBLISHED_NIRS4ALL_VERSION || '0.3.11',
-  ui: process.env.N4A_PUBLISHED_NIRS4ALL_UI_VERSION || '0.1.11',
-  methods: process.env.N4A_PUBLISHED_METHODS_VERSION || '1.0.9',
+  nirs4all: process.env.N4A_PUBLISHED_NIRS4ALL_VERSION || '0.4.0',
+  ui: process.env.N4A_PUBLISHED_NIRS4ALL_UI_VERSION || '0.1.14',
+  methods: process.env.N4A_PUBLISHED_METHODS_VERSION || '1.2.1',
   react: process.env.N4A_PUBLISHED_REACT_VERSION || '18.3.1',
   reactDom: process.env.N4A_PUBLISHED_REACT_DOM_VERSION || '18.3.1',
   vite: process.env.N4A_PUBLISHED_VITE_VERSION || '6.4.3',
