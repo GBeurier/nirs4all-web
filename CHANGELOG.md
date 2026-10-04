@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.0 — Unreleased
+## 0.4.0 — 2026-10-04
 
 - Run selected full refit and prediction through DAG-ML, binding the browser
   composite carrier to the native predictor artifact and retaining its lineage.
@@ -16,10 +16,9 @@
   retaining exact source and binary provenance. Core uses the public npm package;
   IO uses the verified release source build.
 - Qualification passes 287 unit tests, all 32 browser smokes, both builds and the
-  public custom-host smoke. Python comparisons use the local SDK 1.4.0 release
-  candidate with five public upstream wheels; SDK public-wheel identity and its
-  installed cohort are verified separately before deployment. Performance fixture
-  timings retain their historical provenance.
+  public custom-host smoke. Python comparisons use the installed public SDK 1.4.0
+  wheel with the five public upstream wheels. Performance fixture timings retain
+  their historical provenance.
 
 ## 0.3.1 — 2026-09-27
 
