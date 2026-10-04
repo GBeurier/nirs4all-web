@@ -55,7 +55,7 @@ export class MainEngine implements Engine {
     // Warn (or refuse) an oversized operator-adaptive screen before any compute,
     // so a heavy AOM/POP run is never silent (it runs in a worker, cancellable).
     assertAomBudget(ds, dsl, opts.onProgress, { mainThread: this.mainThread })
-    const portable = await tryRunPortableCore(ds, dsl, opts)
+    const portable = ds.groupIds || ds.originIds || ds.repetitionIds || ds.augmented ? null : await tryRunPortableCore(ds, dsl, opts)
     if (portable) {
       return withWasmRobustnessEvidencePublicationTrace(
         portable,
@@ -151,6 +151,9 @@ export class MainEngine implements Engine {
     if (isPortableCoreModel(model)) {
       return predictPortableCore(model, Xnew, nSamples, nFeatures, featureNames)
     }
+    if ((model.state as { nativeRefit?: unknown } | null)?.nativeRefit) {
+      return this.dagml.predict(model, Xnew, nSamples, nFeatures, featureNames)
+    }
     // A libn4m-fitted model MUST predict with libn4m — the model blob shape and the
     // preprocessing math differ from the JS backend, so never coerce it through JS.
     if (backendIdOf(model) === 'libn4m-wasm') {
@@ -177,6 +180,9 @@ export class MainEngine implements Engine {
     // subset stores PLS coefficients only.
     if (isArchiveV2Model(model)) throw new Error('An imported Archive V2 model is not re-exported by the web client.')
     if (isPortableCoreModel(model)) return model
+    if ((model.state as { nativeRefit?: unknown } | null)?.nativeRefit) {
+      return this.dagml.exportModel(model, { allowTrainingRows })
+    }
     const id = backendIdOf(model)
     const backend = id === 'libn4m-wasm' ? await loadLibn4mBackend() : id === 'mljs-classic' ? await loadMlJsBackend() : jsBackend
     return exportPipeline(model, allowTrainingRows, backend)

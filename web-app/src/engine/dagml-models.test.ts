@@ -6,12 +6,14 @@ import { RtErrorException } from './rt'
 import type { MaterializedDataset } from './types'
 import { initSync as initDagMl } from './wasm/dagml/dag_ml_wasm.js'
 import { initSync as initData } from './wasm/dagml-data/dag_ml_data_wasm.js'
+import { initSync as initDatasets } from './wasm/datasets/nirs4all_datasets_wasm.js'
 
 beforeAll(() => {
   // Node cannot fetch file:// WASM assets; initialize the same staged modules
   // from bytes before the aggregate's cached loaders are invoked.
   initDagMl({ module: readFileSync(new URL('./wasm/dagml/dag_ml_wasm_bg.wasm', import.meta.url)) })
   initData({ module: readFileSync(new URL('./wasm/dagml-data/dag_ml_data_wasm_bg.wasm', import.meta.url)) })
+  initDatasets({ module: readFileSync(new URL('./wasm/datasets/nirs4all_datasets_wasm_bg.wasm', import.meta.url)) })
 })
 
 describe('model-only classification through the real WASM scheduler', () => {

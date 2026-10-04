@@ -36,10 +36,16 @@ export interface MaterializedDataset {
   labelsRaw?: string[];
   /** stable per-sample identity — joins are keyed by this, never by row order */
   sampleIds: string[];
+  /** Explicit metadata roles, aligned with X; absent means undeclared. */
+  groupIds?: (string | null)[];
+  originIds?: (string | null)[];
+  repetitionIds?: (string | null)[];
+  augmented?: boolean[];
   /** per-sample partition assignment, length nSamples */
   partitions: Partition[];
   /** optional per-sample metadata columns (from an uploaded metadata file).
-   *  Explore-only — never enters X/y, the model path, or the dag-ml-data ABI;
+   *  Never enters X/y. Reserved relation columns also populate the explicit
+   *  group/origin/repetition roles used by dag-ml-data and native CV;
    *  used for colouring/inspection. Each column's `values` has length nSamples,
    *  in the same train-then-test row order as X. */
   metadata?: { name: string; kind: 'numeric' | 'categorical'; values: (number | string | null)[] }[];
@@ -185,7 +191,7 @@ export interface PipelineDSL {
    *  When ABSENT the run is REFIT-ONLY: the pipeline is fit on the train rows and
    *  scored on the test partition (or train if none) with no CV / OOF / CV score
    *  node. When present, dag-ml builds the KFold fold_set and runs FIT_CV. */
-  cv?: { folds: number; seed: number };
+  cv?: { folds: number; seed: number; strategy?: 'auto' | 'sample' | 'group' };
   /** @deprecated Legacy import-only field; runtime ignores it. */
   finetune?: FinetuneSpec;
   /** DSL-level cartesian/zip expansion → `generation_strategy` / `max_variants` */

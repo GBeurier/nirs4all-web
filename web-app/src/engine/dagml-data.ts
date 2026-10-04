@@ -10,6 +10,7 @@
 // in-memory matrices and records the degraded status in lineage (never silent).
 import { loadDagMlDataWasm } from './nirs4all-core'
 import type { MaterializedDataset } from './types'
+import { datasetRelations } from './relations'
 
 type DagMlDataMod = typeof import('@/engine/wasm/dagml-data/dag_ml_data_wasm.js')
 
@@ -29,6 +30,8 @@ export interface DataProviderResult {
   fingerprints: { schema: string; plan: string; relation: string | null }
   outputRepresentation: string
   version: string
+  /** Validated native data-plan authority, not a host reconstruction. */
+  envelopeJson: string
 }
 
 /** Is the dag-ml-data provider WASM loadable in this environment? */
@@ -160,18 +163,7 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
   const outputRepresentation = JSON.parse(dataPlanJson).output_representation as string
 
   const sampleRelations = {
-    rows: cids.map((sid) => ({
-      observation_id: sid,
-      sample_id: sid,
-      source_id: SOURCE_ID,
-      target_id: TARGET_ID,
-      group_id: null,
-      origin_id: null,
-      repetition_id: 'rep.0',
-      augmented: false,
-      excluded: false,
-      metadata: {},
-    })),
+    rows: datasetRelations(ds),
   }
   const sampleRelationsJson = JSON.stringify(sampleRelations)
   m.validate_sample_relation_table_json(sampleRelationsJson)
@@ -215,7 +207,7 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
       require_relations: true,
     }
     dataHandle = provider.materialize(JSON.stringify(matRequest))
-    viewHandle = provider.make_view(dataHandle, JSON.stringify({ sample_ids: cids, include_augmented: false }))
+    viewHandle = provider.make_view(dataHandle, JSON.stringify({ sample_ids: cids, include_augmented: true }))
 
     // Feature matrix via the TYPED path: a small layout JSON (ids + shape) plus
     // the flat row-major values as a Float64Array — no O(rows×cols) JSON string,
@@ -278,6 +270,7 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
       fingerprints: { schema: envelope.schema_fingerprint, plan: envelope.plan_fingerprint, relation: envelope.relation_fingerprint ?? null },
       outputRepresentation,
       version: m.dag_ml_data_version(),
+      envelopeJson,
     }
   } finally {
     try {

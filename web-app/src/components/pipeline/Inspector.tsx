@@ -122,6 +122,15 @@ export function Inspector({ pipeline, taskType, selected, onStepParam, onStepSwe
           K-fold validation drives model selection and the reported scores. Preprocessing is fit on each training fold only —
           no leakage into validation.
         </p>
+        <div className="space-y-1.5">
+          <Label htmlFor="cv-strategy">Validation unit</Label>
+          <select id="cv-strategy" value={cv.strategy ?? 'auto'} onChange={(e) => onCv({ strategy: e.target.value as 'auto' | 'sample' | 'group' })} className="h-9 w-full rounded-md border bg-background px-2">
+            <option value="auto">Groups when declared, otherwise samples</option>
+            <option value="group">Declared groups (native GroupKFold)</option>
+            <option value="sample">Samples</option>
+          </select>
+          <p className="text-xs text-muted-foreground">Upload group_id in metadata to keep each group entirely within a fold. Origins require augmented and origin_id; repetitions use repetition_id.</p>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label htmlFor="cv-folds" className="text-xs text-muted-foreground">Folds</Label>

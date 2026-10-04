@@ -1,3 +1,4 @@
+import { isRelationColumn, metadataRelations } from '@/engine/relations'
 // Build a MaterializedDataset (the engine contract) from uploaded CSV files,
 // following the nirs4all convention X_train/X_test + y_train/y_test (+ metadata).
 // Task type and class labels are inferred from y. The spectral axis is read from
@@ -130,7 +131,7 @@ function buildBlock(files: RawFile[], partition: Partition): Block | null {
   const metaFile = files.find((f) => isMeta(f.name))
   if (metaFile) {
     const mc = parseCsv(metaFile.text)
-    const idCol = mc.header.findIndex((h) => /id|sample|name/i.test(h))
+    const idCol = mc.header.findIndex((h) => /^(sample[_ ]?id|sample|id|name|code|key)$/i.test(h))
     // Only trust the metadata file if it aligns 1:1 with the spectra rows.
     if (mc.raw.length === dataRows.length) {
       if (idCol >= 0) ids = mc.raw.map((r, i) => r[idCol] || `${partition}-${i}`)
@@ -184,11 +185,11 @@ export function buildDataset(files: RawFile[], name = 'Uploaded dataset'): Mater
   const taskType = inferTaskType(Array.from(yRaw), labelsRaw)
   const { y, classes } = encodeTarget(yRaw, labelsRaw, taskType)
 
-  // Per-sample metadata (explore-only): the train block's columns define the
+  // Per-sample metadata: uploaded columns from all partitions define the
   // schema; concatenate each column's values block-by-block in the SAME row order
   // as X/y (null where a block lacks the column), then classify numeric vs
   // categorical from the non-null cells.
-  const schema = train.meta.map((c) => c.name)
+  const schema = [...new Set(blocks.flatMap((b) => b.meta.map((c) => c.name)))]
   const metadata = schema.length
     ? schema.map((nameCol) => {
         const raw: (string | null)[] = []
@@ -200,7 +201,7 @@ export function buildDataset(files: RawFile[], name = 'Uploaded dataset'): Mater
           }
         }
         const nonNull = raw.filter((v): v is string => v !== null)
-        const numeric = nonNull.length > 0 && nonNull.every((v) => Number.isFinite(Number(v)))
+        const numeric = !isRelationColumn(nameCol) && nonNull.length > 0 && nonNull.every((v) => Number.isFinite(Number(v)))
         return numeric
           ? { name: nameCol, kind: 'numeric' as const, values: raw.map((v) => (v === null ? null : Number(v))) }
           : { name: nameCol, kind: 'categorical' as const, values: raw.map((v) => (v === null ? null : String(v))) }
@@ -224,6 +225,7 @@ export function buildDataset(files: RawFile[], name = 'Uploaded dataset'): Mater
     sampleIds,
     partitions,
     metadata,
+    ...metadataRelations(metadata),
   }
 }
 

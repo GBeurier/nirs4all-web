@@ -2,13 +2,15 @@
 // (compiled to WASM) executes the cross-validation: it owns the fold loop, the
 // leakage-safe OOF assembly (by sampleId) and lineage, and invokes a JS
 // controller per fold that runs the actual preprocessing + PLS via libn4m WASM.
-// The refit (full-train) model is fit directly with libn4m. Compatibility
+// REFIT and PREDICT use native packages with a browser-owned composite sidecar. Compatibility
 // degrades exist only in the explicit transitional profile; strict-wasm fails closed.
 import { loadLibn4mBackend } from './backends'
 import { isMlJsModelType, loadMlJsBackend } from './mljs-backend'
 import { createDagMlModelManifest, createDagMlNodeResult } from './nirs4all-core'
 import { activeOrGenerator, compileWithDagMl, dagMlAvailable, dagMlRtSmokeForcedFailure, expandGeneratorVariants, hasUnsupportedGenerator, loadDagMl, toCompatDsl } from './dagml'
 import { materializeViaProvider } from './dagml-data'
+import { predictionResult, refitWithDagMl, replayWithDagMl, validateCarrierBinding, type NativeRefitState } from './dagml-refit'
+import { buildNativeFolds, nonAugmentedScoreRows, validatePartitionGroups } from './grouped-cv'
 import { applySplit, isSplitType } from './split'
 import type { Fold } from './kfold'
 import { testRowsOf, trainRowsOf } from './partition'
@@ -20,7 +22,6 @@ import {
   exportPipeline,
   type FittedState,
   type ModelBackend,
-  predictPipeline,
   runGeneratorOr,
   scoreNode,
   trainAndPredict,
@@ -270,6 +271,7 @@ export class DagMlEngine implements Engine {
     // and scored by the refit. Runs before classInfo so the class vocab is the
     // same regardless of split. ---
     if (dsl.split && isSplitType(dsl.split.type)) {
+      if (ds.groupIds || ds.originIds?.some((id) => id !== null)) throw new Error('A row-wise split cannot override declared groups/origins. Supply an explicit group-safe Train/Test partition.')
       onP?.({ phase: 'preprocess', pct: 7, message: `splitting via ${dsl.split.type}` })
       ds = await applySplit(ds, dsl.split)
       const nTrain = trainRowsOf(ds).length
@@ -277,6 +279,7 @@ export class DagMlEngine implements Engine {
       onP?.({ phase: 'preprocess', pct: 9, message: `split → train ${nTrain} / test ${nTest}` })
     }
 
+    validatePartitionGroups(ds)
     const { classNames, classIdx } = classInfo(ds)
     if (task === 'regression' && !trainRowsOf(ds).some((i) => Number.isFinite(ds.y[i]))) {
       throw new Error('No numeric targets in the training data.')
@@ -296,20 +299,13 @@ export class DagMlEngine implements Engine {
       const lineage = await compileWithDagMl(dsl)
       const trainIdx = trainIdxForMsg
       const testIdx = testRowsOf(ds)
-      const scoreIdx = testIdx.length > 0 ? testIdx : trainIdx
-      const { pred: refitPred, descriptors, branch, model } = trainAndPredict(ds, dsl, backend, trainIdx, scoreIdx)
+      const scoreIdx = nonAugmentedScoreRows(ds, testIdx.length > 0 ? testIdx : trainIdx)
+      const { pred: refitPred, fitted, packageFingerprint } = await refitWithDagMl(ds, dsl, backend, trainIdx, scoreIdx, signal)
       const refitRows = decodeRows(ds, classNames, classIdx, refitPred, scoreIdx)
       const refitNode = scoreNode('refit', testIdx.length > 0 ? 'Refit · test' : 'Refit · train', 'refit', refitRows, task, classNames)
       onP?.({ phase: 'done', pct: 100 })
       const scoreMetric: RunResult['scoreMetric'] = task === 'regression' ? 'rmse' : 'accuracy'
-      const fitted: FittedPipeline = {
-        dsl,
-        taskType: task,
-        nFeatures: ds.nFeatures,
-        features: datasetFeatureIdentity(ds),
-        classes: classNames.length ? classNames : undefined,
-        state: { chain: descriptors, branch, model, classNames: classNames.length ? classNames : undefined, backendId: backend.id } as FittedState,
-      }
+
       return {
         id: `run-${Date.now().toString(36)}`,
         pipelineName: dsl.name,
@@ -320,7 +316,7 @@ export class DagMlEngine implements Engine {
         seed: 0,
         engine: 'dag-ml-wasm + libn4m',
         scoreMetric,
-        lineage: { engine: 'dag-ml-wasm', compiled: lineage.compiled, executed: false, phase: 'REFIT', version: lineage.version, dataProvider },
+        lineage: { engine: 'dag-ml-wasm', compiled: lineage.compiled, executed: true, phase: 'REFIT+PREDICT', controllerProfile: 'browser-composite-host-sidecar-v1', packageFingerprint, version: lineage.version, dataProvider },
         model: fitted,
         createdAt: new Date().toISOString(),
       }
@@ -339,18 +335,7 @@ export class DagMlEngine implements Engine {
     const dagId = (row: number) => `s${row}`
     const rowOfDagId = (id: string) => Number(id.slice(1))
     const nSplits = Math.max(2, Math.min(cv.folds, trainUniverse.length))
-    const trainDagIds = trainUniverse.map(dagId)
-    const splitSpec = JSON.stringify({ n_splits: nSplits, shuffle: true, seed: cv.seed })
-    const foldSet = JSON.parse(
-      task !== 'regression'
-        ? dagml.stratified_kfold_split_json(
-            splitSpec,
-            JSON.stringify(trainDagIds),
-            JSON.stringify(Object.fromEntries(trainUniverse.map((i) => [dagId(i), ds.classes?.[i] ?? String(Math.round(ds.y[i]))]))),
-            'outer',
-          )
-        : dagml.kfold_split_json(splitSpec, JSON.stringify(trainDagIds), 'outer'),
-    ) as { id: string; sample_ids: string[]; folds: { fold_id: string; train_sample_ids: string[]; validation_sample_ids: string[]; metadata?: unknown }[]; sample_groups: Record<string, string> }
+    const foldSet = buildNativeFolds(dagml, ds, cv, trainUniverse)
     const folds = foldSet.folds
     const toIdx = (ids: string[]) => ids.map(rowOfDagId).filter((v) => Number.isInteger(v) && v >= 0)
     const foldByDagId = new Map(folds.map((f) => [f.fold_id, { trainIdx: toIdx(f.train_sample_ids), valIdx: toIdx(f.validation_sample_ids) }]))
@@ -619,20 +604,13 @@ export class DagMlEngine implements Engine {
     const trainIdx = trainUniverse
     const testIdx = testRowsOf(ds)
     onP?.({ phase: 'refit', pct: 86, message: `final fit on ${trainIdx.length} samples${testIdx.length ? ` · test ${testIdx.length}` : ''}` })
-    const scoreIdx = testIdx.length > 0 ? testIdx : trainIdx
-    const { pred: refitPred, descriptors, branch, model } = trainAndPredict(ds, winner.vDsl, backend, trainIdx, scoreIdx)
+    const scoreIdx = nonAugmentedScoreRows(ds, testIdx.length > 0 ? testIdx : trainIdx)
+    const { pred: refitPred, fitted, packageFingerprint } = await refitWithDagMl(ds, winner.vDsl, backend, trainIdx, scoreIdx, signal)
     const refitRows = decodeRows(ds, classNames, classIdx, refitPred, scoreIdx)
     const refitNode = scoreNode('refit', testIdx.length > 0 ? 'Refit · test' : 'Refit · train', 'refit', refitRows, task, classNames)
 
     onP?.({ phase: 'done', pct: 100 })
-    const fitted: FittedPipeline = {
-      dsl: winner.vDsl,
-      taskType: task,
-      nFeatures: ds.nFeatures,
-      features: datasetFeatureIdentity(ds),
-      classes: classNames.length ? classNames : undefined,
-      state: { chain: descriptors, branch, model, classNames: classNames.length ? classNames : undefined, backendId: backend.id } as FittedState,
-    }
+
     const variantSummaries = multiVariant
       ? evaluated.map((e, i) => ({ variantId: e.variant.variant_id, label: variantLabel(e.variant), metrics: e.cvNode.metrics, selected: i === winnerIdx }))
       : undefined
@@ -647,7 +625,7 @@ export class DagMlEngine implements Engine {
       seed: cv.seed,
       engine: 'dag-ml-wasm + libn4m',
       scoreMetric,
-      lineage: { engine: 'dag-ml-wasm', compiled: true, executed: true, schedulerFallback: schedulerFallback || undefined, phase: multiVariant ? 'FIT_CV+SELECT' : 'FIT_CV', variantCount: variants.length, selectedVariant: winner.variant.variant_id, folds: folds.length, version: dagml.dag_ml_version(), dataProvider },
+      lineage: { engine: 'dag-ml-wasm', compiled: true, executed: !multiNodeGraph && !schedulerFallback, refitExecuted: true, refitProfile: 'browser-composite-host-sidecar-v1', packageFingerprint, schedulerFallback: schedulerFallback || undefined, phase: multiVariant ? 'FIT_CV+SELECT+REFIT+PREDICT' : 'FIT_CV+REFIT+PREDICT', variantCount: variants.length, selectedVariant: winner.variant.variant_id, folds: folds.length, version: dagml.dag_ml_version(), dataProvider },
       model: fitted,
       createdAt: new Date().toISOString(),
       variantCount: variants.length,
@@ -659,13 +637,21 @@ export class DagMlEngine implements Engine {
   async predict(model: FittedPipeline, Xnew: Float64Array, nSamples: number, nFeatures: number, featureNames?: string[]): Promise<PredictResult> {
     const backend = (model.state as FittedState).backendId === 'mljs-classic'
       ? await loadMlJsBackend() : await loadLibn4mBackend()
-    return predictPipeline(model, Xnew, nSamples, nFeatures, backend, featureNames)
+    return predictionResult(model, await replayWithDagMl(model, Xnew, nSamples, nFeatures, backend, featureNames))
   }
 
   async exportModel(model: FittedPipeline, { allowTrainingRows }: ExportOptions): Promise<FittedPipeline> {
     const backend = (model.state as FittedState).backendId === 'mljs-classic'
       ? await loadMlJsBackend() : await loadLibn4mBackend()
-    return exportPipeline(model, allowTrainingRows, backend)
+    const prior = (model.state as FittedState & { nativeRefit?: NativeRefitState }).nativeRefit
+    if (prior) {
+      try { await validateCarrierBinding(model, backend) }
+      catch { throw new Error('Cannot export a modified browser REFIT sidecar') }
+    }
+    const exported = exportPipeline(model, allowTrainingRows, backend)
+    const state = exported.state as FittedState & { nativeRefit?: NativeRefitState }
+    if (state.nativeRefit) await validateCarrierBinding(exported, backend)
+    return exported
   }
 }
 

@@ -44,6 +44,52 @@ JavaScript/Python model or preprocessing fallback. Calibrated/conformal Archive
 V2 packages are not a Web execution surface yet; conformal fields remain
 metadata-only rather than a locally minted guarantee.
 
+## Native browser REFIT and grouped validation
+
+The DAG browser engine uses `execute_initial_full_refit_json` for a concrete
+selected pipeline and `replay_initial_full_refit_json` for its predictions.
+The original package JSON is retained verbatim, including exact native u64
+seeds. The browser controller fits the existing Methods/ML backend only inside
+the native REFIT task; PREDICT only replays fitted state. Its package explicitly
+uses a browser composite host sidecar, with pipeline/class-column vocabulary
+bound in native parameters and the learned carrier SHA-256 and byte length
+bound in the native artifact reference. It is not a RAW
+portable estimator package. Export applies the existing training-row consent
+policy and preserves the native package. Native checkpoint serialization
+normalizes consent flags for the binding check; exports cannot reseal changed
+learned state. Legacy imported `.n4a` models and the
+portable Core subset retain their explicit existing replay profiles.
+
+Metadata CSV roles `group_id`, `origin_id`, `repetition_id`, and `augmented` are
+preserved as identities, rather than numeric features. Leading zeros in group
+IDs survive CSV import. `origin_id` refers to an existing `sample_id` and requires
+an explicitly augmented row; no repetition is fabricated when undeclared.
+CV defaults to native GroupKFold when groups are declared. Its requested group
+count is never clipped, and absent/incomplete groups or native exports are
+refused. A group may not cross an explicit Train/Test partition. Upload a
+suitable partition instead of applying a row-wise split to grouped data.
+Declared groups must cover every Train/Test row, including REFIT-only runs.
+Augmented observations remain eligible for fitting on their native group folds,
+but never enter validation, OOF or Train/Test scores. The native fold contract
+uses its partial-validation (`resampled`) mode for these training-only IDs;
+each original observation is still validated exactly once. Each fold and each
+scoring cohort must contain an original observation.
+
+The existing preprocessing/feature-branch CV path still executes the browser
+operator chain on native folds; its lineage distinguishes that host CV from the
+native model-only scheduler. REFIT/PREDICT use the native package in both cases.
+This change does not introduce multi-source source-selection UI or an Archive
+V2 multi-source writer (WEB-03), nor a Python/browser server bridge.
+
+The current checked-in WASM remains historical until final qualification.
+Rebuild DAG WASM from the final reviewed sources (including the thin native
+GroupKFold export), stage its generated JS/d.ts and real artifact checksums,
+and update the existing staging/verifier source pins from actual proofs. Old
+DAG 0.3.23 binaries cannot satisfy these new mandatory exports. Run native
+`dagml-refit.native.test.ts`, the complete Web tests/typecheck/build and browser
+roundtrip/profile smokes only after that staging. Missing exports fail closed;
+there is no direct numerical REFIT fallback.
+
 ## Run
 
 ```bash

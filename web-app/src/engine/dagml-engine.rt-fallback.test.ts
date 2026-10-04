@@ -115,6 +115,16 @@ vi.mock('./orchestrate', async (importOriginal) => {
   return { ...actual, trainAndPredict }
 })
 
+// This file isolates CV fallback bookkeeping. Real REFIT/PREDICT and carrier
+// integrity are exercised separately by dagml-refit.native.test.ts.
+vi.mock('./dagml-refit', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./dagml-refit')>()
+  return { ...actual, refitWithDagMl: async (ds: MaterializedDataset, dsl: PipelineDSL, _backend: unknown, _train: number[], score: number[]) => ({
+    fitted: { dsl, taskType: ds.taskType, nFeatures: ds.nFeatures, state: { backendId: 'libn4m-wasm', chain: [], model: {} } },
+    pred: { data: Float64Array.from(score, (i) => ds.y[i]), rows: score.length, cols: 1 }, packageFingerprint: 'unit-test-refit-only',
+  }) }
+})
+
 // Import AFTER the mocks so DagMlEngine binds to the synthetic collaborators.
 const { DagMlEngine } = await import('./dagml-engine')
 

@@ -30,6 +30,9 @@ export async function collectRuntimeEvidence(page) {
     if (!r) return null
     const lineage = r.lineage && typeof r.lineage === 'object' ? r.lineage : {}
     const dataProvider = lineage.dataProvider && typeof lineage.dataProvider === 'object' ? lineage.dataProvider : null
+    const refit = r.model?.state?.nativeRefit
+    const pkg = refit?.packageJson ? JSON.parse(refit.packageJson) : null
+    const artifact = pkg?.artifacts?.length === 1 ? pkg.artifacts[0].record.artifact : null
     return {
       engine: r.engine ?? null,
       score_metric: r.scoreMetric ?? null,
@@ -37,6 +40,14 @@ export async function collectRuntimeEvidence(page) {
       lineage_version: lineage.version ?? null,
       lineage_compiled: lineage.compiled ?? null,
       lineage_executed: lineage.executed ?? null,
+      cv_execution: lineage.executed ? 'native_scheduler' : 'host_on_native_folds',
+      native_refit: {
+        executed: lineage.refitExecuted === true,
+        profile: lineage.refitProfile ?? null,
+        package_fingerprint: lineage.packageFingerprint ?? null,
+        package_matches: Boolean(pkg && pkg.package_fingerprint === lineage.packageFingerprint),
+        artifact_matches: Boolean(artifact && artifact.id === refit.artifactId && artifact.content_fingerprint === refit.carrierSha256),
+      },
       scheduler_fallback: Boolean(lineage.schedulerFallback),
       data_provider: dataProvider
         ? {
@@ -86,6 +97,22 @@ export async function collectRuntimeEvidence(page) {
     runtime_hash: runtimeHash,
     resources,
   }
+}
+
+// Preprocessing and branch CV still use the host on native folds. REFIT and
+// replay use the native composite-controller package for both CV profiles.
+// Require that package evidence explicitly instead of claiming native CV.
+export function assertNativeRefitExecution(runtime, label) {
+  if (runtime.lineage_engine !== 'dag-ml-wasm' || runtime.lineage_compiled !== true) {
+    throw new Error(`${label} did not compile through dag-ml`)
+  }
+  const refit = runtime.native_refit
+  if (!refit?.executed || refit.profile !== 'browser-composite-host-sidecar-v1'
+      || !/^[0-9a-f]{64}$/.test(refit.package_fingerprint ?? '')
+      || !refit.package_matches || !refit.artifact_matches) {
+    throw new Error(`${label} lacks its native REFIT package and bound browser state`)
+  }
+  if (runtime.scheduler_fallback) throw new Error(`${label} used a scheduler fallback`)
 }
 
 export async function assertResultsPanels(page) {

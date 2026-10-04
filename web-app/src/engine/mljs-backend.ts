@@ -89,7 +89,9 @@ export async function loadMlJsBackend(): Promise<ModelBackend> {
       estimator.fit(Xrows, y)
       return {
         provider: 'mljs', estimatorName, nFeatures: X.cols, nTargets: Y.cols,
-        artifact: estimator.toJSON(),
+        // CART leaves contain ml-matrix instances. Seal their JSON form before
+        // Worker transfer strips prototypes and changes the carrier bytes.
+        artifact: JSON.parse(JSON.stringify(estimator.toJSON())),
         containsTrainingRows: estimatorName === 'KNeighborsClassifier',
       } satisfies StoredMlJsModel
     },
