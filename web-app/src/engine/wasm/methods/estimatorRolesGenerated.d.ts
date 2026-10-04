@@ -3228,6 +3228,23 @@ export declare class SimpleScale extends NativeEstimator implements Transformer 
     constructor(params?: SimpleScaleParams);
     transform(X: Matrix): Matrix;
 }
+/** Parameters of StandardScale; unset values take the native defaults. */
+export interface StandardScaleParams {
+    /** Default true. */
+    with_mean?: boolean;
+    /** Default true. */
+    with_std?: boolean;
+}
+/** Native `preprocessing.scaling.standard_scale` (transformer). */
+export declare class StandardScale extends NativeEstimator implements Transformer {
+    readonly methodId = "preprocessing.scaling.standard_scale";
+    readonly paramTypes: {
+        readonly with_mean: "bool";
+        readonly with_std: "bool";
+    };
+    constructor(params?: StandardScaleParams);
+    transform(X: Matrix): Matrix;
+}
 /** Parameters of AreaNormalization; unset values take the native defaults. */
 export interface AreaNormalizationParams {
     /** Default "sum". */

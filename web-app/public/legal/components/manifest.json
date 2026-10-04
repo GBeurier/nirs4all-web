@@ -51,8 +51,8 @@
         },
         {
           "path": "PROVENANCE.md",
-          "size": 1076,
-          "sha256": "4c1dec51875cce88db9fdd353c281824a1ed0619f7ee17932eea471f5751ff0c"
+          "size": 942,
+          "sha256": "81b79f5eaf7fa410d8014146ebb8056a33836b11b45d96841d04e1ce815ea424"
         },
         {
           "path": "THIRD_PARTY_NOTICES.md",
@@ -106,8 +106,8 @@
         },
         {
           "path": "PROVENANCE.json",
-          "size": 4000,
-          "sha256": "f8abca991d6d2d3f580defe164babcea00c52fd09c5c0085e3649254bafa6031"
+          "size": 4356,
+          "sha256": "1da26f484cf8c96464331351f61b433d6043043c2ba80079c875e4ed40d5d31a"
         },
         {
           "path": "THIRD_PARTY_NOTICES.md",
@@ -241,8 +241,8 @@
       "files": [
         {
           "path": "COPY_PROVENANCE.md",
-          "size": 2652,
-          "sha256": "d2ba7d73b4e78530678c9ac411318dd8880b5ab6d43d828309815745e1590e41"
+          "size": 3133,
+          "sha256": "9046c670f0f2ffe119a8d9ad5286ad29bf5d89d620058a41283e454b5c05c015"
         },
         {
           "path": "LICENSE",
@@ -296,8 +296,8 @@
         },
         {
           "path": "PROVENANCE.json",
-          "size": 4576,
-          "sha256": "6ab5d50bf1da04174ab7d21cd8c23a45257c7d4d4e0c8f13313dbae8a4e1784e"
+          "size": 4575,
+          "sha256": "2786cb11ad0ab2f549d592e8943fe068526b52503b90377c2359fd77b8e387ec"
         },
         {
           "path": "THIRD_PARTY_NOTICES.md",
@@ -306,8 +306,8 @@
         },
         {
           "path": "nirs4all-io-wasm.cdx.json",
-          "size": 34123,
-          "sha256": "cc008cd42cfcb1bf0380ba6f7dd00abfa3eee2564cfebb9d5c19b14cffcf3a28"
+          "size": 34111,
+          "sha256": "55235cbdf448a6e67eff6543773c224715515848af096c9cfd7f87af65b3e4ce"
         }
       ]
     },
@@ -371,8 +371,8 @@
         },
         {
           "path": "PROVENANCE.json",
-          "size": 9123,
-          "sha256": "539bf77df397ffab7a1dfd5610bfd40824637665051a037dd16cf0a1985aa8f4"
+          "size": 10044,
+          "sha256": "b91fd2ef6d00e4f79388211d83a01d4bb103691ee110bc4fd1017e0cf9771d23"
         },
         {
           "path": "THIRD_PARTY_LICENSES.md",

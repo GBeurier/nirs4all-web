@@ -1,7 +1,6 @@
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import {
-  appendFileSync,
   copyFileSync,
   existsSync,
   mkdirSync,
@@ -17,9 +16,9 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED_SOURCE = Object.freeze({
-  commit: 'dafb8b6fb98f9d380d30559a3f4b868c91e5b5c4',
-  tree: '44a2c4a46911d2c49c33fe75418674bd0e129d5e',
-  version: '0.3.23',
+  "commit": "867f3576592ec390e2a16ced53cc027c022cde27",
+  "tree": "6ec170b5f8011ed09a88578b552df3f9c4ee47f4",
+  "version": "0.3.34"
 })
 const GENERATED_FILES = Object.freeze([
   'LICENSE',
@@ -48,7 +47,6 @@ const STAGED_FILES = Object.freeze([...GENERATED_FILES, ...Object.keys(CONTRACT_
 const scriptDir = dirname(fileURLToPath(import.meta.url))
 const appRoot = resolve(scriptDir, '..')
 const sourceRoot = resolve(process.env.NIRS4ALL_DAG_ML_ROOT ?? join(appRoot, '..', '..', 'dag-ml'))
-const n4mRoot = resolve(process.env.NIRS4ALL_N4M_CRATE_ROOT ?? join(appRoot, '..', '..', 'nirs4all-methods', 'bindings', 'rust', 'n4m'))
 const destination = join(appRoot, 'src', 'engine', 'wasm', 'dagml')
 const wasmPack = process.env.WASM_PACK_BIN ?? 'wasm-pack'
 const wasmPackMode = process.env.WASM_PACK_MODE
@@ -82,7 +80,6 @@ function filesRecursively(root, current = root) {
 }
 
 if (!existsSync(join(sourceRoot, 'crates', 'dag-ml-wasm'))) throw new Error(`dag-ml WASM crate not found: ${sourceRoot}`)
-if (!existsSync(join(n4mRoot, 'Cargo.toml'))) throw new Error(`n4m qualification crate not found: ${n4mRoot}`)
 if (git('status', '--porcelain') !== '') throw new Error(`dag-ml source must be clean: ${sourceRoot}`)
 for (const name of LICENSE_FILES) {
   if (!existsSync(join(sourceRoot, name))) throw new Error(`dag-ml license payload is incomplete: ${name}`)
@@ -104,16 +101,6 @@ try {
   mkdirSync(buildSourceRoot)
   command('git', ['-C', sourceRoot, 'archive', '--format=tar', `--output=${sourceArchive}`, 'HEAD'])
   command('tar', ['-xf', sourceArchive, '-C', buildSourceRoot])
-  appendFileSync(
-    join(buildSourceRoot, 'Cargo.toml'),
-    `\n[patch.crates-io]\nn4m = { path = ${JSON.stringify(n4mRoot)} }\n`,
-  )
-  command('cargo', [
-    'update',
-    '--manifest-path', join(buildSourceRoot, 'Cargo.toml'),
-    '-p', 'n4m',
-    '--precise', '0.1.4',
-  ])
   const crateRoot = join(buildSourceRoot, 'crates', 'dag-ml-wasm')
   for (const leg of ['a', 'b']) {
     const output = join(proofRoot, `out-${leg}`)
@@ -189,12 +176,16 @@ try {
       target: 'web',
       profile: 'release',
       cargo_locked: true,
-      qualification_patch: {
-        package: 'n4m',
-        version: '0.1.4',
-        source_commit: '48ad1e5a50844f68c2b99e93b02ad6a3b491c07b',
-        source_tree: 'f2eaa3c46629c26d11913a25bff723f9a9cefbc9',
-        persisted_in_release_lock: false,
+      registry_dependency: {
+        "package": "n4m",
+        "version": "0.4.0",
+        "source_commit": "5fba13ba7b13d51fdeed9c4f6c11612d70b3b755",
+        "source_tree": "89227d49462739b78f0ed5790fbe47a78acdc08c",
+        "binding_source_tree": "df7b08e828c49b8763985934b17bf2086ab4c58a",
+        "runtime_source_commit": "dcc570b3647f77cf0428dd346078f442ed5cd032",
+        "runtime_source_tree": "4b711a5cf7b0fb1e10a6ed99e1202bdd89917c42",
+        "runtime_binding_source_tree": "ebbc923de888648d217818c16eddda0ececc64c5",
+        "registry_checksum": "262224913fd9338e523dea8a55e688abab21eb131422a23fc3f2dfb32a4001f6"
       },
       source_date_epoch: source.epoch,
       tools: {

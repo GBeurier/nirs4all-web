@@ -30,6 +30,58 @@ export async function loadArchiveV2Native() {
 }
 
 /**
+ * Read the opaque payload inventory through Core's bounded native validator.
+ * This validates storage only. DAG-ML must validate package semantics and
+ * controller trust before using these bytes for a replay.
+ */
+export async function readPortableArchiveV2(archiveBytes) {
+  const bytes = bytesView(archiveBytes, 'Archive V2');
+  if (bytes.byteLength > MAX_ARCHIVE_BYTES) {
+    throw new RangeError('Archive V2 exceeds the canonical Core byte budget.');
+  }
+  const native = await loadArchiveV2Native();
+  if (typeof native?.ValidatedPortableArchiveV2 !== 'function') {
+    throw new TypeError('Core lacks the portable Archive V2 inventory bridge.');
+  }
+  const archive = new native.ValidatedPortableArchiveV2(bytes);
+  try {
+    const members = Object.create(null);
+    for (const path of JSON.parse(archive.member_paths_json())) {
+      members[path] = archive.member_bytes(path);
+    }
+    return Object.freeze({
+      archiveId: archive.archive_id,
+      archiveSha256: archive.archive_sha256,
+      manifest: JSON.parse(archive.manifest_json()),
+      members: Object.freeze(members),
+    });
+  } finally {
+    archive.free();
+  }
+}
+
+/** Write Core's exact stored-ZIP profile from DAG-ML-assembled payloads. */
+export async function writePortableArchiveV2(manifest, members) {
+  if (manifest === null || typeof manifest !== 'object' || Array.isArray(manifest)
+    || members === null || typeof members !== 'object' || Array.isArray(members)) {
+    throw new TypeError('Archive V2 manifest and members must be mappings.');
+  }
+  const native = await loadArchiveV2Native();
+  if (typeof native?.ArchiveV2Builder !== 'function') {
+    throw new TypeError('Core lacks the portable Archive V2 writer bridge.');
+  }
+  const builder = new native.ArchiveV2Builder(JSON.stringify(manifest));
+  try {
+    for (const path of Object.keys(members).sort()) {
+      builder.add_member(path, bytesView(members[path], `Archive V2 member ${path}`));
+    }
+    return builder.finish();
+  } finally {
+    builder.free();
+  }
+}
+
+/**
  * Replay the bounded Methods-only Archive V2 contract through libn4m WASM.
  *
  * Core Rust/WASM validates the complete stored-ZIP inventory and DAG-ML package

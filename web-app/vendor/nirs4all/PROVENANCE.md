@@ -1,20 +1,10 @@
 # Vendored nirs4all JavaScript/WASM payload
 
-This directory stages the public `nirs4all@0.3.35` npm tarball published from
-`nirs4all-core` commit `430edfcced7b34cb91fdc54099f2ac4427614884`
-(tree `955ff21c514d961d55ae77cc93b410dd7778e1b7`).
+Published nirs4all@0.4.1 from Core commit `68282900ab8314ab71182fd155b0493d896e4ee2` (tree `95ded435a72c1bf3a031b0d26b31e98847058ce5`).
 
-- Public registry tarball SHA-256:
-  `418179af48e5092a8e42f8816e118d223d72829bbead84b172c2572efa18b44c`
-- npm `dist.integrity`:
-  `sha512-4cqr8B9F5Bd54enmeTizbfL7ulzXav+9XvyjDyLWeJ6XEsYuMMfuMAYhHRH1vaumfrD9yVKK4fitK7POYUkwHw==`
-- Published Rust/WASM SHA-256:
-  `b4f15573714f6de1eb24d04eb1fb498e2d492563ef117c8a9060a9bb44b14911`
-- Archive V2 JavaScript surface SHA-256:
-  `69b613bce35ccb34ee328a4257f0254ce58719d95d6519ac38ff0eb81710b7e4`
+- Registry tarball SHA-256: `92fcbed30d6b8a9c47ccfbedec3543b9c7729ee63d7b3488905f99abb4ea95c3`
+- npm dist.integrity: `sha512-Uke9rlbKN/OpF4n4l6Gxz3nIY2IbDvjDLMNvyTlwJ458xsE+cl01Cx2E35UvY4dQ92lQTEeNZ68FlgvbEBbt2A==`
+- Native WASM SHA-256: `f9b89c4787f05239186d625955565509cd953ad576fe229febe3f5003fc3e22a`
+- Registry provenance reference: `https://registry.npmjs.org/-/npm/v1/attestations/nirs4all@0.4.1`
 
-The package passed the Core strict Methods parity gate before publication and
-carries signed GitHub Actions provenance. The registry tarball was downloaded
-and verified against npm's SHA-512 integrity before staging. Every staged file
-is pinned by SHA-256 in `scripts/sync-core-shim.mjs`; the source commit/tree and
-JavaScript/TypeScript source files are checked when that checkout is available.
+Registry integrity and gitHead checked; source files compared to the clean release checkout. Cryptographic registry-signature verification is a separate release gate, not claimed by this helper. Documented Web normalization affects only package.json/README.md/src/index.js when necessary; raw tar and staged file digests are retained in the audit packet.

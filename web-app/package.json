@@ -1,9 +1,9 @@
 {
   "name": "nirs4all-web",
   "private": true,
-  "version": "0.3.1",
+  "version": "0.4.0",
   "type": "module",
-  "description": "nirs4all-web — single-page, full-WASM nirs4all browser client (upload → configure → pipeline → run via dag-ml/libn4m → results → predict, all in the browser).",
+  "description": "nirs4all-web \u2014 single-page, full-WASM nirs4all browser client (upload \u2192 configure \u2192 pipeline \u2192 run via dag-ml/libn4m \u2192 results \u2192 predict, all in the browser).",
   "license": "(CECILL-2.1 OR AGPL-3.0-or-later)",
   "scripts": {
     "dev": "vite",

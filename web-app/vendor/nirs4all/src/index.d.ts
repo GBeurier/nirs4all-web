@@ -97,8 +97,9 @@ export interface PortableVariantResult {
 }
 
 export interface PortablePlsModel {
-  type: 'PLSRegression';
+  type: 'PLSRegression' | 'Ridge' | 'RidgePLS' | 'RobustPLS' | 'CPPLS' | 'SparseSIMPLS' | 'ECR' | 'ContinuumRegression' | 'MIRPLS' | 'FusedSparsePLS' | 'BaggingPLS' | 'BoostingPLS' | 'RandomSubspacePLS' | 'NPLS' | 'MBPLS' | 'GroupSparsePLS';
   n_components: number;
+  params?: number[];
   coefficients: number[];
   xMean: number[];
   yMean: number[];
@@ -112,7 +113,9 @@ export interface PortableExecutionResult {
   rows: number;
   cols: number;
   split: PortableSplitResult;
-  preprocessing: { type: string; params: number[] }[];
+  preprocessing: PortablePreprocessingStep[];
+  /** Training-only one-shot native X augmentation; never replayed at predict time. */
+  train_augmentation?: { kind: string; values: number[]; seed: number };
   variants: PortableVariantResult[];
   selected: PortableVariantResult;
   model: PortablePlsModel;
@@ -122,6 +125,17 @@ export interface PortableExecutionResult {
     scope: 'training' | 'selection_validation';
     independent_test: false;
   };
+}
+
+export interface PortablePreprocessingStep {
+  type: string;
+  params: number[] | {
+    method: string;
+    n_components: number;
+    method_params: Record<string, number | boolean | number[]>;
+  };
+  /** Fitted Methods state. Older stateless results may omit it. */
+  state?: number[];
 }
 
 export interface PortablePredictionResult {
@@ -334,12 +348,23 @@ export const methods: UpstreamProxy;
 export const dagMl: UpstreamProxy;
 export const dagMlData: UpstreamProxy;
 
-export function loadPipelineDefinition(source: string | unknown[] | Record<string, unknown>): PipelineDefinition;
+export function loadPipelineDefinition(
+  source: string | unknown[] | Record<string, unknown>,
+  options?: { methods?: unknown },
+): PipelineDefinition;
 export function portableClassNames(definition: PipelineDefinition | unknown[] | Record<string, unknown>): string[];
 export function parseExecutionPlan(source: string | PipelineDefinition | unknown[] | Record<string, unknown>): {
   splitter: { type: 'KennardStone'; params: Record<string, unknown> } | null;
-  preprocessing: { type: 'StandardNormalVariate' | 'SavitzkyGolay'; params: number[] }[];
+  trainAugmentation: {
+    kind: string;
+    methodsKind: string;
+    values: number[];
+    seed: number;
+  } | null;
+  preprocessing: PortablePreprocessingStep[];
   nComponents: number[];
+  modelType: PortablePlsModel['type'];
+  modelParams: number[];
 };
 export function runPortablePipeline(
   source: string | PipelineDefinition | unknown[] | Record<string, unknown>,
@@ -347,11 +372,25 @@ export function runPortablePipeline(
   options?: { methods?: unknown },
 ): Promise<PortableExecutionResult>;
 export function predictPortablePipeline(
-  fitted: PortableExecutionResult | { preprocessing?: { type: string; params: number[] }[]; model?: PortablePlsModel },
+  fitted: PortableExecutionResult | { preprocessing?: PortablePreprocessingStep[]; model?: PortablePlsModel },
   dataset: Omit<PortableMatrixDataset, 'y'>,
   options?: { methods?: unknown },
 ): Promise<PortablePredictionResult>;
 export function loadArchiveV2Native(): Promise<unknown>;
+/** Native-validated storage only; DAG-ML owns package semantics and trust. */
+export interface PortableArchiveV2Payloads {
+  archiveId: string;
+  archiveSha256: string;
+  manifest: Record<string, unknown>;
+  members: Readonly<Record<string, Uint8Array>>;
+}
+export function readPortableArchiveV2(
+  archiveBytes: ArrayBuffer | ArrayBufferView,
+): Promise<PortableArchiveV2Payloads>;
+export function writePortableArchiveV2(
+  manifest: Record<string, unknown>,
+  members: Readonly<Record<string, ArrayBuffer | ArrayBufferView>>,
+): Promise<Uint8Array>;
 export function inspectMethodsArchiveV2Predictors(
   archiveBytes: ArrayBuffer | ArrayBufferView,
 ): Promise<readonly NativePredictorDescriptorV1[]>;
@@ -359,3 +398,84 @@ export function replayMethodsArchiveV2(
   archiveBytes: ArrayBuffer | ArrayBufferView,
   dataset: ArchiveV2ReplayDataset,
 ): Promise<ArchiveV2ReplayResult>;
+
+/** Prefix of the language-neutral n4m role step token `n4m:<catalog method id>`. */
+export const N4M_ROLE_PREFIX: 'n4m:';
+/** Schema of the trained n4m role pipeline envelope shared with Python, R and Rust. */
+export const N4M_TRAINED_PIPELINE_SCHEMA: 'nirs4all.n4m.trained_pipeline.v8';
+
+/** A recipe step: `"n4m:<method id>"` or `{ class: "n4m:<method id>", params }`. */
+export type N4mRoleStep = string | { class: string; params?: Record<string, unknown> };
+
+export interface N4mRoleRecipe {
+  pipeline: N4mRoleStep[];
+}
+
+export interface N4mRoleState {
+  method_id: string;
+  n4me_base64: string;
+  sha256: string;
+  /** The state embeds training rows (exported only with `allowTrainingRows`); absent in older envelopes. */
+  contains_training_rows?: boolean;
+  class_names?: (string | number)[];
+}
+
+export interface N4mTrainedPipelineEnvelope {
+  schema: 'nirs4all.n4m.trained_pipeline.v8';
+  recipe: N4mRoleRecipe;
+  n_features: number;
+  /** Fitted input column names, in order, when the fit had names. */
+  feature_names?: string[];
+  states: N4mRoleState[];
+}
+
+export interface N4mRoleDataset {
+  X: Float64Array | number[] | readonly number[] | readonly (readonly number[])[];
+  rows: number;
+  cols: number;
+  /** Column names: stored at fit, then renamed or reordered columns are refused. Without them, columns are positional. */
+  featureNames?: string[];
+}
+
+export interface N4mRoleTrainingDataset extends N4mRoleDataset {
+  /**
+   * Responses of a final regressor (a vector, or one row of targets per sample) or labels of a
+   * final classifier (integer ids, or names mapped in sorted order).
+   */
+  y: Float64Array | readonly number[] | readonly (readonly number[])[] | readonly (string | number)[];
+}
+
+export type N4mRolePrediction =
+  | { data: number[]; rows: number; cols: number }
+  | { labels: (string | number)[]; rows: number };
+
+export interface N4mRoleCapability {
+  token: string;
+  methodId: string;
+  roles: string[];
+  nodeKinds: string[];
+  parameters: string[];
+}
+
+/**
+ * A fitted recipe of n4m role steps, portable as N4ME states. The recipe runs in the native
+ * Methods role pipeline (ABI 2.14); this class reads and writes the envelope.
+ */
+export class N4mRolePipeline {
+  readonly recipe: N4mRoleRecipe;
+  readonly nFeatures: number;
+  /** Fitted input column names, in order (undefined: positional input). */
+  readonly featureNames: string[] | undefined;
+  /** The fitted `@nirs4all/methods` RolePipeline (transform, decisionFunction, predictProba, stepsInfo). */
+  readonly pipeline: unknown;
+  static fit(recipe: N4mRoleRecipe, dataset: N4mRoleTrainingDataset, options?: { methods?: unknown }): Promise<N4mRolePipeline>;
+  static fromJSON(source: string | N4mTrainedPipelineEnvelope, options?: { methods?: unknown }): Promise<N4mRolePipeline>;
+  /** The envelope; a state embedding training rows is refused unless `allowTrainingRows` is set. */
+  toJSON(options?: { allowTrainingRows?: boolean } | string): N4mTrainedPipelineEnvelope;
+  predict(dataset: N4mRoleDataset): N4mRolePrediction;
+  retrain(dataset: N4mRoleTrainingDataset, options?: { methods?: unknown }): Promise<N4mRolePipeline>;
+  dispose(): void;
+}
+
+/** Methods estimators usable as role recipe steps, read from the Methods manifest. */
+export function n4mRoleCapabilities(options?: { methods?: unknown }): Promise<N4mRoleCapability[]>;

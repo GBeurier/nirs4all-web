@@ -16,15 +16,21 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED_SOURCE = Object.freeze({
-  commit: 'b8b942aea291102d974bb68eb09013f3453b0a86',
-  tree: '737178058bed3135d5b33de77388a1b709c7696c',
-  version: '1.2.1',
-  runtimeVersion: '1.2.1+abi.2.14.0',
-  abi: '2.14.0',
-  emscripten: '3.1.74',
+  "commit": "dcc570b3647f77cf0428dd346078f442ed5cd032",
+  "tree": "4b711a5cf7b0fb1e10a6ed99e1202bdd89917c42",
+  "version": "1.3.2",
+  "runtimeVersion": "1.3.2+abi.2.17.0",
+  "abi": "2.17.0",
+  "emscripten": "3.1.74"
 })
 const PACKAGE_NAME = '@nirs4all/methods'
 const GENERATED_FILES = Object.freeze([
+  'multimodalPipeline.d.ts',
+  'multimodalPipeline.js',
+  'optimization.d.ts',
+  'optimization.js',
+  'spectralEncoding.d.ts',
+  'spectralEncoding.js',
   'config.d.ts',
   'config.js',
   'context.d.ts',

@@ -4,36 +4,102 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED = Object.freeze({
-  commit: 'e41bf8f94a92356e98c215d4c41e907a7dfaf6ac',
-  tree: 'ba5323cce8833610d974b7aa84ac65057355a687',
-  version: '0.1.12',
-  package: '@nirs4all/io-wasm',
-  generatedPackage: 'nirs4all-io-wasm',
-  wasmBindgen: '0.2.122',
+  "commit": "b3baefc6ae69f036e4475e24ff1b971adf5b968e",
+  "tree": "873f8064cd50e5cc1811d3c73e23bbee16e1d3da",
+  "version": "0.2.4",
+  "wasmBindgen": "0.2.122",
+  "package": "@nirs4all/io-wasm",
+  "generatedPackage": "nirs4all-io-wasm"
 })
 const EXPECTED_FILES = Object.freeze({
-  'COPY_PROVENANCE.md': { size: 2652, sha256: 'd2ba7d73b4e78530678c9ac411318dd8880b5ab6d43d828309815745e1590e41' },
-  'LICENSE': { size: 34020, sha256: 'd8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee' },
-  'LICENSES/AGPL-3.0-or-later.txt': { size: 34020, sha256: 'd8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee' },
-  'LICENSES/Apache-2.0.txt': { size: 9723, sha256: '62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a' },
-  'LICENSES/BSD-3-Clause.txt': { size: 1459, sha256: '3cf06aba3588c41c514f6946bb2d757b413ff6491647d474800f55edca75dcb4' },
-  'LICENSES/COMMERCIAL-LICENSE.md': { size: 670, sha256: 'e62a66dc45d618d419706048b17a840f87d0c0c5c940eadd1cf6ea13c7eae08f' },
-  'LICENSES/COMMERCIAL-LICENSE_FR.md': { size: 759, sha256: '7d1fd841891d4cb53836a6aca2fbbf7f36ef3bca540a394a9d94633af34ea3d6' },
-  'LICENSES/CeCILL-2.1.txt': { size: 21778, sha256: '4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5' },
-  'LICENSES/MIT.txt': { size: 1078, sha256: 'b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5' },
-  'LICENSES/Unicode-3.0.txt': { size: 1995, sha256: 'f7db81051789b729fea528a63ec4c938fdcb93d9d61d97dc8cc2e9df6d47f2a1' },
-  'LICENSING.md': { size: 2113, sha256: 'b41ad1d4b8e62c89e42704fc4c9b5bb8a2099a0ad0680d72e95efb57c5d3326c' },
-  'README.md': { size: 7389, sha256: 'a00106a406c90a2be85bd1063c62744e6f096499aaef7ae86ffacd0b4fcccf13' },
-  'THIRD_PARTY_NOTICES.md': { size: 4935, sha256: '2d0aa4b2f137e77bad3d243bd908359c5e6bab37a3e9e29402f96e2103bb4932' },
-  'idiomatic.d.ts': { size: 2044, sha256: 'cca0b1700625d48c17232333702e3d788047b5dfb9b953c78326bce61f4a6094' },
-  'idiomatic.mjs': { size: 2684, sha256: 'a041c2304307eccbe805cfb97868eb2640fafe2fc51da8237e0a535135d1bfa3' },
-  'nirs4all-io-wasm.cdx.json': { size: 34123, sha256: 'cc008cd42cfcb1bf0380ba6f7dd00abfa3eee2564cfebb9d5c19b14cffcf3a28' },
-  'nirs4all_io_wasm.d.ts': { size: 5369, sha256: 'a4fe6564849d63e779e5899d7e61d43e3d63ae17950b0aac84793b11e0ad2e8f' },
-  'nirs4all_io_wasm.js': { size: 24322, sha256: '8fc4d75bc209f53db50aa2dc2ca1d5c159202bc2f10b4fe392b59963e12e005d' },
-  'nirs4all_io_wasm_bg.wasm': { size: 2339146, sha256: 'c576f9acc7f6f3e7d09ae22059b9db7263d564c7f4fb5aa05a6d828378a07a60' },
-  'nirs4all_io_wasm_bg.wasm.d.ts': { size: 1273, sha256: 'fd34bc545e2588f28a9d388e7ac3890e83d9af1a38e2861c4426bdd8a1fb1740' },
-  'package.json': { size: 1376, sha256: 'd7c4658efd2995d8830572539cf23670ea8895a58e06e77945475591c613036f' },
-  'types/nirs4all-io.d.ts': { size: 3923, sha256: 'b0384126ad078a6fbb35172cf7983e37259aa1c0b2a96e3fa256cb83b1d7a555' },
+  "COPY_PROVENANCE.md": {
+    "size": 3133,
+    "sha256": "9046c670f0f2ffe119a8d9ad5286ad29bf5d89d620058a41283e454b5c05c015"
+  },
+  "LICENSE": {
+    "size": 34020,
+    "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+  },
+  "LICENSES/AGPL-3.0-or-later.txt": {
+    "size": 34020,
+    "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+  },
+  "LICENSES/Apache-2.0.txt": {
+    "size": 9723,
+    "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+  },
+  "LICENSES/BSD-3-Clause.txt": {
+    "size": 1459,
+    "sha256": "3cf06aba3588c41c514f6946bb2d757b413ff6491647d474800f55edca75dcb4"
+  },
+  "LICENSES/COMMERCIAL-LICENSE.md": {
+    "size": 670,
+    "sha256": "e62a66dc45d618d419706048b17a840f87d0c0c5c940eadd1cf6ea13c7eae08f"
+  },
+  "LICENSES/COMMERCIAL-LICENSE_FR.md": {
+    "size": 759,
+    "sha256": "7d1fd841891d4cb53836a6aca2fbbf7f36ef3bca540a394a9d94633af34ea3d6"
+  },
+  "LICENSES/CeCILL-2.1.txt": {
+    "size": 21778,
+    "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+  },
+  "LICENSES/MIT.txt": {
+    "size": 1078,
+    "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+  },
+  "LICENSES/Unicode-3.0.txt": {
+    "size": 1995,
+    "sha256": "f7db81051789b729fea528a63ec4c938fdcb93d9d61d97dc8cc2e9df6d47f2a1"
+  },
+  "LICENSING.md": {
+    "size": 2113,
+    "sha256": "b41ad1d4b8e62c89e42704fc4c9b5bb8a2099a0ad0680d72e95efb57c5d3326c"
+  },
+  "README.md": {
+    "size": 7389,
+    "sha256": "2d3c64e66e6b6d9ba2161fdf58f12627dc829ef871c718776a4ef467e604166f"
+  },
+  "THIRD_PARTY_NOTICES.md": {
+    "size": 4935,
+    "sha256": "2d0aa4b2f137e77bad3d243bd908359c5e6bab37a3e9e29402f96e2103bb4932"
+  },
+  "idiomatic.d.ts": {
+    "size": 2044,
+    "sha256": "cca0b1700625d48c17232333702e3d788047b5dfb9b953c78326bce61f4a6094"
+  },
+  "idiomatic.mjs": {
+    "size": 2684,
+    "sha256": "a041c2304307eccbe805cfb97868eb2640fafe2fc51da8237e0a535135d1bfa3"
+  },
+  "nirs4all-io-wasm.cdx.json": {
+    "size": 34111,
+    "sha256": "55235cbdf448a6e67eff6543773c224715515848af096c9cfd7f87af65b3e4ce"
+  },
+  "nirs4all_io_wasm.d.ts": {
+    "size": 5369,
+    "sha256": "a4fe6564849d63e779e5899d7e61d43e3d63ae17950b0aac84793b11e0ad2e8f"
+  },
+  "nirs4all_io_wasm.js": {
+    "size": 24322,
+    "sha256": "8fc4d75bc209f53db50aa2dc2ca1d5c159202bc2f10b4fe392b59963e12e005d"
+  },
+  "nirs4all_io_wasm_bg.wasm": {
+    "size": 2355624,
+    "sha256": "f99c682f182e2df2f27f23d9a6b5d1d682e3d8e676e392e3dd7f22057d4aec78"
+  },
+  "nirs4all_io_wasm_bg.wasm.d.ts": {
+    "size": 1273,
+    "sha256": "fd34bc545e2588f28a9d388e7ac3890e83d9af1a38e2861c4426bdd8a1fb1740"
+  },
+  "package.json": {
+    "size": 1375,
+    "sha256": "c381e13d03c023a7776a2284901aaa3e5a052b2a40b5be21d8ed82ff2ceeaf9a"
+  },
+  "types/nirs4all-io.d.ts": {
+    "size": 3923,
+    "sha256": "b0384126ad078a6fbb35172cf7983e37259aa1c0b2a96e3fa256cb83b1d7a555"
+  }
 })
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'engine', 'wasm', 'io')
 const receiptPath = join(root, 'PROVENANCE.json')

@@ -2,19 +2,19 @@
   "schema": "nirs4all-web.wasm-provenance.v1",
   "component": "nirs4all-methods-wasm",
   "package": "@nirs4all/methods",
-  "version": "1.2.1",
-  "runtime_version": "1.2.1+abi.2.14.0",
-  "abi": "2.14.0",
+  "version": "1.3.2",
+  "runtime_version": "1.3.2+abi.2.17.0",
+  "abi": "2.17.0",
   "source": {
     "repository": "https://github.com/GBeurier/nirs4all-methods",
-    "commit": "b8b942aea291102d974bb68eb09013f3453b0a86",
-    "tree": "737178058bed3135d5b33de77388a1b709c7696c",
+    "commit": "dcc570b3647f77cf0428dd346078f442ed5cd032",
+    "tree": "4b711a5cf7b0fb1e10a6ed99e1202bdd89917c42",
     "clean": true
   },
   "build": {
     "target": "web",
     "profile": "release",
-    "source_date_epoch": 1790525478,
+    "source_date_epoch": 1791097386,
     "emscripten": "3.1.74",
     "cmake": "cmake version 4.4.2",
     "ninja": "1.13.0.git.kitware.jobserver-pipe-1",
@@ -25,10 +25,10 @@
     "byte_identical": true
   },
   "registry": {
-    "package": "@nirs4all/methods@1.2.1",
-    "tarball": "nirs4all-methods-1.2.1.tgz",
-    "integrity": "sha512-4BL8EiE4qJKqePC/Xj6JlCeeAfWzDj0cyMDaW0xKnTWzZyawyUKs6z6gh4ADYvc3LtWM+H4qmBPSf+DRMg9tkA==",
-    "shasum": "589ee3fa6eb16668972606e03494672d8706b5d1",
+    "package": "@nirs4all/methods@1.3.2",
+    "tarball": "nirs4all-methods-1.3.2.tgz",
+    "integrity": "sha512-EAahIiRbQYKsJkOZ78M8RU2eoa+K7dvgOpmIRLpILdqWP/7Dq5bqB0i9DDPuVTCIXk/I80eXpyTJeisx9KV92w==",
+    "shasum": "24c0bc3c3622338d58ae0d3b5001e2a4ba5ea630",
     "byte_identical": true
   },
   "witnesses": {
@@ -154,13 +154,13 @@
     },
     {
       "path": "estimatorRolesGenerated.d.ts",
-      "size": 166138,
-      "sha256": "c75a13f6f600adb0d23ce8f6c1be82e5b732c5f1eb7e445464d57a5360e84f55"
+      "size": 166757,
+      "sha256": "f47b9fc7d08226bf0828d9186570e1c733c5da5cf85c6bfd1fc0c1780695375e"
     },
     {
       "path": "estimatorRolesGenerated.js",
-      "size": 112580,
-      "sha256": "7f4e133a33bb79381426a4e92fb6d97aefc5c6935fe3e379ab3a329062d4b567"
+      "size": 113071,
+      "sha256": "07c58441f641782459f716c9ce2e07538968c7e3d5afd388d643581a838e4784"
     },
     {
       "path": "ffi.d.ts",
@@ -174,13 +174,13 @@
     },
     {
       "path": "index.d.ts",
-      "size": 2468,
-      "sha256": "86143fc4ad180161d794f51cc358d5257e22319827c7bfc2bcc5a8a6b2b2fc99"
+      "size": 2988,
+      "sha256": "8cc3b78cd8c435507fa4d0326fcd1965745220f7ae62dca1b5bbc834dd057f6c"
     },
     {
       "path": "index.js",
-      "size": 2522,
-      "sha256": "093f255e511ede18cd89de847fbba80e1a46c0933a82ee6a756380ca127b7a27"
+      "size": 2718,
+      "sha256": "26c7d18175e9212734c68af8a4364aa6e0c94c4348cf55b1f344c53c456b368e"
     },
     {
       "path": "methodResult.d.ts",
@@ -203,14 +203,24 @@
       "sha256": "f39f2ca8e181cdc3193ca8cf0228faa084b937147ea1d8e3ebd471afa5326b4f"
     },
     {
+      "path": "multimodalPipeline.d.ts",
+      "size": 2983,
+      "sha256": "8c22fec8585580e58ccbac637be206eaa460a0e89d0e684a9042b8a299428951"
+    },
+    {
+      "path": "multimodalPipeline.js",
+      "size": 28174,
+      "sha256": "c791bc9d50ed90a589a7ef888cc67046519bd90c39e2652b6d7281fe8ca79603"
+    },
+    {
       "path": "n4m.js",
-      "size": 186006,
-      "sha256": "2865e22c361bfd496585814adfd60c9063990f21a998b01a73178e7b1d05ab43"
+      "size": 191970,
+      "sha256": "0f7f56ad8b67ca7d78bc9ef1d9bac986d3dd99e1038a6a5ad2a6943396ebe6fd"
     },
     {
       "path": "n4m.wasm",
-      "size": 2742778,
-      "sha256": "030cf583a225ff6e095b4d0f8723ed174ed0752d389c653baa02db80a2686966"
+      "size": 2817247,
+      "sha256": "18e7ea2d3804b8eafb32a550c835982c1c9219667123cecdc69fb99a25e5d518"
     },
     {
       "path": "nativeAugmentation.d.ts",
@@ -253,6 +263,16 @@
       "sha256": "4277fe3a0bf0625b7b1c3e3417888017bd9746a3f2a4dcba42ef38807c5aa163"
     },
     {
+      "path": "optimization.d.ts",
+      "size": 4026,
+      "sha256": "1205fbd561a0d0121b3a08e5c2cbab5f4055d11e55d691f4f835d67708db3a19"
+    },
+    {
+      "path": "optimization.js",
+      "size": 29995,
+      "sha256": "04c0568d1cd84c0eb2d535e1c3b26abb10eae45aebb66a95db10e06aeb019bce"
+    },
+    {
       "path": "preprocessing.d.ts",
       "size": 985,
       "sha256": "9408b9c93abdc74af2e0c8b042fdcd17ea1701961b6f6a746e0cc7ad1ed79a49"
@@ -291,6 +311,16 @@
       "path": "serialization.js",
       "size": 5133,
       "sha256": "0bbb43cf63525293ff8675a4fb53c42b9aa36a940d1807a53ec9e4c84bd75474"
+    },
+    {
+      "path": "spectralEncoding.d.ts",
+      "size": 746,
+      "sha256": "93e20866de551a539a65d9e6597385d79c8343130d9cc7c2a5b2870cd391dff7"
+    },
+    {
+      "path": "spectralEncoding.js",
+      "size": 4096,
+      "sha256": "9e867f17b05949dd2581ad90c53bc86dc744c146490e25f4eb100b87703a81ac"
     },
     {
       "path": "types.d.ts",

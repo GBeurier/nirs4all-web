@@ -2,6 +2,17 @@
 /* eslint-disable */
 
 /**
+ * Bounded browser writer over the canonical Core stored-ZIP implementation.
+ */
+export class ArchiveV2Builder {
+    free(): void;
+    [Symbol.dispose](): void;
+    add_member(path: string, bytes: Uint8Array): void;
+    finish(): Uint8Array;
+    constructor(manifest_json: string);
+}
+
+/**
  * A fully validated, single-model Methods Archive V2 projection.
  */
 export class ValidatedMethodsArchiveV2 {
@@ -34,11 +45,31 @@ export class ValidatedMethodsArchiveV2 {
     readonly port_name: string;
 }
 
+/**
+ * Core-validated storage inventory, not a controller authorization.
+ * DAG-ML must validate the opaque package/member links before replay.
+ */
+export class ValidatedPortableArchiveV2 {
+    free(): void;
+    [Symbol.dispose](): void;
+    manifest_json(): string;
+    member_bytes(path: string): Uint8Array;
+    member_paths_json(): string;
+    constructor(archive_bytes: Uint8Array);
+    readonly archive_id: string;
+    readonly archive_sha256: string;
+}
+
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
+    readonly __wbg_archivev2builder_free: (a: number, b: number) => void;
     readonly __wbg_validatedmethodsarchivev2_free: (a: number, b: number) => void;
+    readonly __wbg_validatedportablearchivev2_free: (a: number, b: number) => void;
+    readonly archivev2builder_add_member: (a: number, b: number, c: number, d: number, e: number) => [number, number];
+    readonly archivev2builder_finish: (a: number) => [number, number, number, number];
+    readonly archivev2builder_new: (a: number, b: number) => [number, number, number];
     readonly validatedmethodsarchivev2_abi_min_minor: (a: number) => number;
     readonly validatedmethodsarchivev2_archive_id: (a: number) => [number, number];
     readonly validatedmethodsarchivev2_archive_sha256: (a: number) => [number, number];
@@ -52,10 +83,17 @@ export interface InitOutput {
     readonly validatedmethodsarchivev2_package_json: (a: number) => [number, number];
     readonly validatedmethodsarchivev2_port_name: (a: number) => [number, number];
     readonly validatedmethodsarchivev2_target_names_json: (a: number) => [number, number];
+    readonly validatedportablearchivev2_archive_id: (a: number) => [number, number];
+    readonly validatedportablearchivev2_archive_sha256: (a: number) => [number, number];
+    readonly validatedportablearchivev2_manifest_json: (a: number) => [number, number];
+    readonly validatedportablearchivev2_member_bytes: (a: number, b: number, c: number) => [number, number, number, number];
+    readonly validatedportablearchivev2_member_paths_json: (a: number) => [number, number];
+    readonly validatedportablearchivev2_new: (a: number, b: number) => [number, number, number];
     readonly __wbindgen_externrefs: WebAssembly.Table;
-    readonly __wbindgen_free: (a: number, b: number, c: number) => void;
-    readonly __externref_table_dealloc: (a: number) => void;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
+    readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
+    readonly __externref_table_dealloc: (a: number) => void;
+    readonly __wbindgen_free: (a: number, b: number, c: number) => void;
     readonly __wbindgen_start: () => void;
 }
 

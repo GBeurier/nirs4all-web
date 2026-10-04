@@ -1,7 +1,12 @@
 /* tslint:disable */
 /* eslint-disable */
 export const memory: WebAssembly.Memory;
+export const __wbg_archivev2builder_free: (a: number, b: number) => void;
 export const __wbg_validatedmethodsarchivev2_free: (a: number, b: number) => void;
+export const __wbg_validatedportablearchivev2_free: (a: number, b: number) => void;
+export const archivev2builder_add_member: (a: number, b: number, c: number, d: number, e: number) => [number, number];
+export const archivev2builder_finish: (a: number) => [number, number, number, number];
+export const archivev2builder_new: (a: number, b: number) => [number, number, number];
 export const validatedmethodsarchivev2_abi_min_minor: (a: number) => number;
 export const validatedmethodsarchivev2_archive_id: (a: number) => [number, number];
 export const validatedmethodsarchivev2_archive_sha256: (a: number) => [number, number];
@@ -15,8 +20,15 @@ export const validatedmethodsarchivev2_node_id: (a: number) => [number, number];
 export const validatedmethodsarchivev2_package_json: (a: number) => [number, number];
 export const validatedmethodsarchivev2_port_name: (a: number) => [number, number];
 export const validatedmethodsarchivev2_target_names_json: (a: number) => [number, number];
+export const validatedportablearchivev2_archive_id: (a: number) => [number, number];
+export const validatedportablearchivev2_archive_sha256: (a: number) => [number, number];
+export const validatedportablearchivev2_manifest_json: (a: number) => [number, number];
+export const validatedportablearchivev2_member_bytes: (a: number, b: number, c: number) => [number, number, number, number];
+export const validatedportablearchivev2_member_paths_json: (a: number) => [number, number];
+export const validatedportablearchivev2_new: (a: number, b: number) => [number, number, number];
 export const __wbindgen_externrefs: WebAssembly.Table;
-export const __wbindgen_free: (a: number, b: number, c: number) => void;
-export const __externref_table_dealloc: (a: number) => void;
 export const __wbindgen_malloc: (a: number, b: number) => number;
+export const __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
+export const __externref_table_dealloc: (a: number) => void;
+export const __wbindgen_free: (a: number, b: number, c: number) => void;
 export const __wbindgen_start: () => void;
