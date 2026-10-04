@@ -64,11 +64,11 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(existsSync(new URL('../../scripts/sync-core-shim.mjs', import.meta.url))).toBe(true)
     expect(existsSync(new URL('../../scripts/sync-lite-shim.mjs', import.meta.url))).toBe(false)
     expect(syncScript).not.toMatch(/NIRS4ALL_LITE|nirs4all-lite|sync-lite/)
-    expect(vendorPkg).toMatchObject({ name: 'nirs4all', version: '0.3.35' })
-    expect(provenance).toContain('430edfcced7b34cb91fdc54099f2ac4427614884')
-    expect(provenance).toContain('418179af48e5092a8e42f8816e118d223d72829bbead84b172c2572efa18b44c')
-    expect(syncScript).toContain('b4f15573714f6de1eb24d04eb1fb498e2d492563ef117c8a9060a9bb44b14911')
-    expect(syncScript).toContain('69b613bce35ccb34ee328a4257f0254ce58719d95d6519ac38ff0eb81710b7e4')
+    expect(vendorPkg).toMatchObject({ name: 'nirs4all', version: '0.4.1' })
+    expect(provenance).toContain('68282900ab8314ab71182fd155b0493d896e4ee2')
+    expect(provenance).toContain('92fcbed30d6b8a9c47ccfbedec3543b9c7729ee63d7b3488905f99abb4ea95c3')
+    expect(syncScript).toContain('f9b89c4787f05239186d625955565509cd953ad576fe229febe3f5003fc3e22a')
+    expect(syncScript).toContain('d8764ad63ceb6d7bbcb24b9eb302771ab2b22046f94fd46eece79df196d7be33')
   })
 
   it('accepts a newer optional Core sibling only after verifying the pinned package', () => {
@@ -83,7 +83,7 @@ describe('nirs4all-core aggregate loaders', () => {
 
     expect(optional.status).toBe(0)
     expect(optional.stderr).toContain('sibling identity mismatch')
-    expect(optional.stderr).toContain('verified pinned 0.3.35 package independently')
+    expect(optional.stderr).toContain('verified pinned 0.4.1 package independently')
 
     const required = spawnSync(process.execPath, [script, '--check'], {
       cwd,
@@ -114,7 +114,7 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(methods?.candidates).toEqual(['@nirs4all/methods'])
     expect(viteConfig).toContain("'@nirs4all/methods':")
     expect(vitestConfig).toContain("'@nirs4all/methods':")
-    expect(vendorPkg.peerDependencies['@nirs4all/methods']).toBe('^1.2.1')
+    expect(vendorPkg.peerDependencies['@nirs4all/methods']).toBe('^1.3.2')
     expect(vendorPkg.peerDependenciesMeta['@nirs4all/methods']).toBeTruthy()
     expect(viteConfig + vitestConfig + JSON.stringify(methods) + JSON.stringify(vendorPkg)).not.toContain('@nirs4all/methods' + '-wasm')
   })
@@ -248,13 +248,13 @@ describe('nirs4all-core aggregate loaders', () => {
     dagml.initSync({ module: wasm })
 
     const manifest = JSON.parse(dagml.contract_manifest_json()) as { crate: string; capabilities: string[] }
-    expect(dagml.dag_ml_version()).toBe('0.3.23')
+    expect(dagml.dag_ml_version()).toBe('0.3.34')
     expect(manifest.crate).toBe('dag-ml')
     expect(manifest.capabilities).toContain('execute_execution_plan_phase')
     expect(manifest.capabilities).toContain('loss_execution_attestation')
     expect(provenance).toMatchObject({
-      version: '0.3.23',
-      source: { commit: 'dafb8b6fb98f9d380d30559a3f4b868c91e5b5c4' },
+      version: '0.3.34',
+      source: { commit: '867f3576592ec390e2a16ced53cc027c022cde27' },
       reproducibility: { byte_identical: true },
     })
   })

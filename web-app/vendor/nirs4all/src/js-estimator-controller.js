@@ -16,19 +16,19 @@ function rowsFrom(input, label, requireTargets) {
     throw new TypeError(`${label}.sampleIds must contain unique nonempty strings.`);
   }
   const count = sampleIds.length;
+  const declared = input.cols ?? input.n_features;
   let X;
   if (Array.isArray(input.X) && Array.isArray(input.X[0])) {
     X = input.X.map((row) => Array.from(row));
   } else {
-    const cols = input.cols ?? input.n_features;
-    if (!Number.isInteger(cols) || cols < 1 || !input.X || input.X.length !== count * cols) {
+    if (!Number.isInteger(declared) || declared < 1 || !input.X || input.X.length !== count * declared) {
       throw new TypeError(`${label}.X must be rows or a flat matrix with cols.`);
     }
     X = Array.from({ length: count }, (_, row) =>
-      Array.from(input.X.slice(row * cols, (row + 1) * cols)));
+      Array.from(input.X.slice(row * declared, (row + 1) * declared)));
   }
   const cols = X[0]?.length;
-  if (X.length !== count || !Number.isInteger(cols) || cols < 1 ||
+  if (X.length !== count || !Number.isInteger(cols) || cols < 1 || (declared !== undefined && declared !== cols) ||
       X.some((row) => row.length !== cols || row.some((value) => !Number.isFinite(value)))) {
     throw new TypeError(`${label}.X must be a finite rectangular matrix aligned to sampleIds.`);
   }

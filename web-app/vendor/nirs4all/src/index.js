@@ -1,4 +1,6 @@
 import { parse as parseYaml } from 'yaml';
+import { NATIVE_X_AUGMENTATION_CLASS, parseTrainAugmentation } from './native-augmentation.js';
+import { n4mRoleMethodId, resolvesN4mRole } from './n4m-roles.js';
 
 export const upstreams = Object.freeze([
   {
@@ -41,6 +43,14 @@ export const portableOperatorClasses = Object.freeze([
   'nirs4all.operators.transforms.scalers.StandardNormalVariate',
   'nirs4all.operators.transforms.SavitzkyGolay',
   'nirs4all.operators.transforms.nirs.SavitzkyGolay',
+  'n4m.MSC',
+  'nirs4all.operators.transforms.MSC',
+  'nirs4all.operators.transforms.MultiplicativeScatterCorrection',
+  'nirs4all.operators.transforms.nirs.MultiplicativeScatterCorrection',
+  'n4m.SPA',
+  'n4m.SPASelector',
+  'pls4all.sklearn.SPASelector',
+  'n4m.Selector',
   'sklearn.cross_decomposition.PLSRegression',
   'sklearn.cross_decomposition._pls.PLSRegression',
   'n4m.KennardStone',
@@ -48,6 +58,21 @@ export const portableOperatorClasses = Object.freeze([
   'n4m.SavitzkyGolay',
   'n4m.PLS',
   'n4m.PLSRegression',
+  'n4m.Ridge',
+  'n4m.RidgePLS',
+  'n4m.RobustPLS',
+  'n4m.CPPLS',
+  'n4m.SparseSIMPLS',
+  'n4m.ECR',
+  'n4m.ContinuumRegression',
+  'n4m.MIRPLS',
+  'n4m.FusedSparsePLS',
+  'n4m.BaggingPLS',
+  'n4m.BoostingPLS',
+  'n4m.RandomSubspacePLS',
+  'n4m.NPLS',
+  'n4m.MBPLS',
+  'n4m.GroupSparsePLS',
 ]);
 
 export const runtimeSurfaces = Object.freeze([
@@ -169,6 +194,10 @@ const parityRuntime = Object.freeze(Object.fromEntries(
   runtimeSurfaces.map((surface) => [surface, 'parity-validated']),
 ));
 
+const localWasmRuntime = Object.freeze(Object.fromEntries(
+  runtimeSurfaces.map((surface) => [surface, surface === 'javascript_wasm' ? 'execute-local' : 'metadata']),
+));
+
 export const controllerCapabilities = Object.freeze([
   Object.freeze({
     id: 'split.kennard_stone',
@@ -226,6 +255,53 @@ export const controllerCapabilities = Object.freeze([
     executionPath: 'portable_pipeline',
   }),
   Object.freeze({
+    id: 'preprocess.msc',
+    kind: 'transform',
+    domain: 'methods',
+    label: 'Multiplicative scatter correction',
+    operatorClasses: Object.freeze([
+      'n4m.MSC',
+      'nirs4all.operators.transforms.MSC',
+      'nirs4all.operators.transforms.MultiplicativeScatterCorrection',
+      'nirs4all.operators.transforms.nirs.MultiplicativeScatterCorrection',
+    ]),
+    ports: Object.freeze({
+      inputs: Object.freeze(['X']),
+      outputs: Object.freeze(['X_transformed']),
+    }),
+    parameters: Object.freeze(['scale', 'copy']),
+    runtime: localWasmRuntime,
+    executionPath: 'portable_pipeline',
+  }),
+  Object.freeze({
+    id: 'select.spa',
+    kind: 'selector',
+    domain: 'methods',
+    label: 'Successive Projections Algorithm',
+    operatorClasses: Object.freeze(['n4m.SPA', 'n4m.SPASelector', 'pls4all.sklearn.SPASelector']),
+    ports: Object.freeze({
+      inputs: Object.freeze(['X', 'y']),
+      outputs: Object.freeze(['X_selected', 'selected_indices']),
+    }),
+    parameters: Object.freeze(['top_k', 'n_components']),
+    runtime: localWasmRuntime,
+    executionPath: 'portable_pipeline',
+  }),
+  Object.freeze({
+    id: 'select.n4m',
+    kind: 'selector',
+    domain: 'methods',
+    label: 'Native Methods selector',
+    operatorClasses: Object.freeze(['n4m.Selector']),
+    ports: Object.freeze({
+      inputs: Object.freeze(['X', 'y']),
+      outputs: Object.freeze(['X_selected', 'selected_indices']),
+    }),
+    parameters: Object.freeze(['method', 'n_components', 'method_params']),
+    runtime: localWasmRuntime,
+    executionPath: 'portable_pipeline',
+  }),
+  Object.freeze({
     id: 'model.pls_regression',
     kind: 'model',
     domain: 'methods',
@@ -242,6 +318,33 @@ export const controllerCapabilities = Object.freeze([
     }),
     parameters: Object.freeze(['n_components', '_range_']),
     runtime: parityRuntime,
+    executionPath: 'portable_pipeline',
+  }),
+  Object.freeze({
+    id: 'model.affine_methods',
+    kind: 'model',
+    domain: 'methods',
+    label: 'Methods affine regressors',
+    operatorClasses: Object.freeze([
+      'n4m.Ridge', 'n4m.RidgePLS', 'n4m.RobustPLS', 'n4m.CPPLS',
+      'n4m.SparseSIMPLS', 'n4m.ECR', 'n4m.ContinuumRegression', 'n4m.MIRPLS',
+      'n4m.FusedSparsePLS', 'n4m.BaggingPLS', 'n4m.BoostingPLS', 'n4m.RandomSubspacePLS',
+      'n4m.NPLS',
+      'n4m.MBPLS',
+      'n4m.GroupSparsePLS',
+    ]),
+    ports: Object.freeze({
+      inputs: Object.freeze(['X', 'y']),
+      outputs: Object.freeze(['predictions', 'model']),
+    }),
+    parameters: Object.freeze([
+      'n_components', '_range_', 'lambda', 'ridge_lambda', 'huber_k',
+      'max_irls_iter', 'gamma', 'sparsity_lambda', 'alpha', 'tau',
+      'l1_lambda', 'fusion_lambda', 'n_estimators', 'seed',
+      'learning_rate', 'features_per_subspace',
+      'mode_j', 'mode_k', 'block_sizes', 'group_lambda', 'group_assignment',
+    ]),
+    runtime: localWasmRuntime,
     executionPath: 'portable_pipeline',
   }),
   Object.freeze({
@@ -410,7 +513,7 @@ export async function loadPortableStack(keys = upstreams.map((item) => item.key)
   return loaded;
 }
 
-export function loadPipelineDefinition(source) {
+export function loadPipelineDefinition(source, options = {}) {
   const data = typeof source === 'string' ? parsePipelineText(source) : clone(source);
   const normalized = normalizePipelineRoot(data);
   const pipeline = normalized.pipeline;
@@ -427,10 +530,25 @@ export function loadPipelineDefinition(source) {
     definition.random_state = normalized.random_state;
   }
 
-  const unsupported = portableClassNames(definition).filter((name) => !portableOperatorSet.has(name));
+  const augmentationSteps = definition.pipeline.filter((step) => step && typeof step === 'object'
+    && !Array.isArray(step) && Object.prototype.hasOwnProperty.call(step, 'train_augmentation'));
+  for (const step of augmentationSteps) parseTrainAugmentation(step);
+
+  // Legacy class names use the portable subset; "n4m:<method id>" tokens
+  // resolve through the loaded Methods manifest.
+  const methods = options.methods ?? methodsModule;
+  const classes = portableClassNames(definition);
+  const augmentationClassCount = classes.filter((name) => name === NATIVE_X_AUGMENTATION_CLASS).length;
+  const unsupported = classes.filter((name) => !portableOperatorSet.has(name)
+    && !resolvesN4mRole(name, methods)
+    && !(name === NATIVE_X_AUGMENTATION_CLASS && augmentationSteps.length === 1
+      && augmentationClassCount === 1));
   if (unsupported.length > 0) {
+    const hint = !methods && unsupported.some((name) => n4mRoleMethodId(name) !== null)
+      ? ' (n4m:<method id> steps resolve through the Methods manifest: await loadMethodsWasm() or pass {methods})'
+      : '';
     throw new Error(
-      `Pipeline uses operators outside the current nirs4all-core portable subset: ${[...new Set(unsupported)].join(', ')}`,
+      `Pipeline uses operators outside the current nirs4all-core portable subset: ${[...new Set(unsupported)].join(', ')}${hint}`,
     );
   }
 
@@ -516,6 +634,9 @@ function isCommentStep(value) {
 function collectClasses(value, output) {
   if (Array.isArray(value)) {
     for (const item of value) {
+      if (n4mRoleMethodId(item) !== null) {
+        output.push(item);
+      }
       collectClasses(item, output);
     }
     return;
@@ -531,9 +652,17 @@ function collectClasses(value, output) {
 }
 
 export { parseExecutionPlan, predictPortablePipeline, runPortablePipeline } from './execution.js';
+export {
+  N4M_ROLE_PREFIX,
+  N4M_TRAINED_PIPELINE_SCHEMA,
+  N4mRolePipeline,
+  n4mRoleCapabilities,
+} from './n4m-roles.js';
 export { createAsyncJsEstimatorController, createDagMlModelManifest, createDagMlNodeResult, createJsEstimatorController, createN4mModelController, createRandomForestController } from './js-estimator-controller.js';
 export {
   inspectMethodsArchiveV2Predictors,
   loadArchiveV2Native,
+  readPortableArchiveV2,
+  writePortableArchiveV2,
   replayMethodsArchiveV2,
 } from './archive-v2.js';

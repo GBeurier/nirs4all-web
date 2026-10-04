@@ -16,10 +16,10 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED_SOURCE = Object.freeze({
-  commit: 'e41bf8f94a92356e98c215d4c41e907a7dfaf6ac',
-  tree: 'ba5323cce8833610d974b7aa84ac65057355a687',
-  version: '0.1.12',
-  wasmBindgen: '0.2.122',
+  "commit": "b3baefc6ae69f036e4475e24ff1b971adf5b968e",
+  "tree": "873f8064cd50e5cc1811d3c73e23bbee16e1d3da",
+  "version": "0.2.4",
+  "wasmBindgen": "0.2.122"
 })
 const PACKAGE_NAME = '@nirs4all/io-wasm'
 const GENERATED_PACKAGE_NAME = 'nirs4all-io-wasm'

@@ -2,19 +2,19 @@
   "schema": "nirs4all-web.wasm-provenance.v1",
   "component": "nirs4all-io-wasm",
   "package": "@nirs4all/io-wasm",
-  "version": "0.1.12",
+  "version": "0.2.4",
   "source": {
     "repository": "https://github.com/GBeurier/nirs4all-io",
-    "commit": "e41bf8f94a92356e98c215d4c41e907a7dfaf6ac",
-    "tree": "ba5323cce8833610d974b7aa84ac65057355a687",
+    "commit": "b3baefc6ae69f036e4475e24ff1b971adf5b968e",
+    "tree": "873f8064cd50e5cc1811d3c73e23bbee16e1d3da",
     "clean": true
   },
   "build": {
     "target": "web",
     "profile": "release",
     "cargo_locked": true,
-    "source_date_epoch": 1788409851,
-    "const_random_seed": "e41bf8f94a92356e98c215d4c41e907a7dfaf6ac",
+    "source_date_epoch": 1791092475,
+    "const_random_seed": "b3baefc6ae69f036e4475e24ff1b971adf5b968e",
     "wasm_bindgen_lock": "0.2.122",
     "package_name_normalization": {
       "from": "nirs4all-io-wasm",
@@ -40,8 +40,8 @@
   "files": [
     {
       "path": "COPY_PROVENANCE.md",
-      "size": 2652,
-      "sha256": "d2ba7d73b4e78530678c9ac411318dd8880b5ab6d43d828309815745e1590e41"
+      "size": 3133,
+      "sha256": "9046c670f0f2ffe119a8d9ad5286ad29bf5d89d620058a41283e454b5c05c015"
     },
     {
       "path": "LICENSE",
@@ -96,7 +96,7 @@
     {
       "path": "README.md",
       "size": 7389,
-      "sha256": "a00106a406c90a2be85bd1063c62744e6f096499aaef7ae86ffacd0b4fcccf13"
+      "sha256": "2d3c64e66e6b6d9ba2161fdf58f12627dc829ef871c718776a4ef467e604166f"
     },
     {
       "path": "THIRD_PARTY_NOTICES.md",
@@ -115,8 +115,8 @@
     },
     {
       "path": "nirs4all-io-wasm.cdx.json",
-      "size": 34123,
-      "sha256": "cc008cd42cfcb1bf0380ba6f7dd00abfa3eee2564cfebb9d5c19b14cffcf3a28"
+      "size": 34111,
+      "sha256": "55235cbdf448a6e67eff6543773c224715515848af096c9cfd7f87af65b3e4ce"
     },
     {
       "path": "nirs4all_io_wasm.d.ts",
@@ -130,8 +130,8 @@
     },
     {
       "path": "nirs4all_io_wasm_bg.wasm",
-      "size": 2339146,
-      "sha256": "c576f9acc7f6f3e7d09ae22059b9db7263d564c7f4fb5aa05a6d828378a07a60"
+      "size": 2355624,
+      "sha256": "f99c682f182e2df2f27f23d9a6b5d1d682e3d8e676e392e3dd7f22057d4aec78"
     },
     {
       "path": "nirs4all_io_wasm_bg.wasm.d.ts",
@@ -140,8 +140,8 @@
     },
     {
       "path": "package.json",
-      "size": 1376,
-      "sha256": "d7c4658efd2995d8830572539cf23670ea8895a58e06e77945475591c613036f"
+      "size": 1375,
+      "sha256": "c381e13d03c023a7776a2284901aaa3e5a052b2a40b5be21d8ed82ff2ceeaf9a"
     },
     {
       "path": "types/nirs4all-io.d.ts",
