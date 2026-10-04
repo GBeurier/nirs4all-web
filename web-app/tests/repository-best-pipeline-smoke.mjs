@@ -10,7 +10,7 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 import { chromium } from 'playwright-core'
-import { assertResultsPanels, collectRuntimeEvidence, runPredictionSummary, sha256File } from './smoke-evidence-helpers.mjs'
+import { assertNativeRefitExecution, assertResultsPanels, collectRuntimeEvidence, runPredictionSummary, sha256File } from './smoke-evidence-helpers.mjs'
 
 const APP_URL = process.env.SMOKE_URL || 'http://localhost:4355/'
 const EXE = process.env.CHROME || '/usr/bin/google-chrome'
@@ -20,7 +20,6 @@ const DATASET_DIR = process.env.N4A_REPOSITORY_DATASET_DIR || FIXTURE_DIR
 const DATASET_EXPECTED_BADGE = process.env.N4A_REPOSITORY_DATASET_EXPECTED_BADGE || '20 samples × 6 wavelengths'
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || join(tmpdir(), 'n4a-web-repository-best-pipeline-smoke')
 const WORKSPACE_ROOT = resolve(TEST_DIR, '..', '..', '..')
-const NIRS4ALL_PYTHON_SRC = join(WORKSPACE_ROOT, 'nirs4all')
 const REPOSITORY_BEST_PIPELINE_PATH =
   process.env.N4A_REPOSITORY_EVIDENCE ||
   process.env.REPOSITORY_BEST_PIPELINE_PATH ||
@@ -197,10 +196,7 @@ async function probeClientOnlyOracleSurface(page) {
 
 function assertRuntime(runtime) {
   if (!runtime || runtime.engine !== 'dag-ml-wasm + libn4m') throw new Error(`repository-best-pipeline did not use Web/WASM engine: ${runtime?.engine}`)
-  if (runtime.lineage_engine !== 'dag-ml-wasm' || runtime.lineage_compiled !== true || runtime.lineage_executed !== true) {
-    throw new Error('repository-best-pipeline did not compile and execute through dag-ml')
-  }
-  if (runtime.scheduler_fallback) throw new Error('repository-best-pipeline used a scheduler fallback')
+  assertNativeRefitExecution(runtime, 'repository-best-pipeline')
   const provider = runtime.data_provider
   if (!provider || provider.layer !== 'dag-ml-data' || provider.status !== 'materialized') throw new Error('dag-ml-data provider was not materialized')
 }
@@ -364,13 +360,12 @@ async function computePythonOracle(foldAssignments) {
   const attempted = []
   for (const executable of candidates) {
     try {
-      const { stdout, stderr } = await execFileAsync(executable, ['-c', PYTHON_ORACLE_SCRIPT, DATASET_DIR, REPOSITORY_BEST_PIPELINE_PATH, JSON.stringify(foldAssignments)], {
+      const { stdout, stderr } = await execFileAsync(executable, ['-I', '-B', '-c', PYTHON_ORACLE_SCRIPT, DATASET_DIR, REPOSITORY_BEST_PIPELINE_PATH, JSON.stringify(foldAssignments)], {
         cwd: WORKSPACE_ROOT,
         timeout: 20000,
         maxBuffer: 4 * 1024 * 1024,
         env: {
           ...process.env,
-          PYTHONPATH: [NIRS4ALL_PYTHON_SRC, process.env.PYTHONPATH].filter(Boolean).join(':'),
         },
       })
       return { ...JSON.parse(stdout), executable, stderr: stderr.trim() || null }

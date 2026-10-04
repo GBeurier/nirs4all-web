@@ -12,6 +12,7 @@ import { promisify } from 'node:util'
 import { chromium } from 'playwright-core'
 import {
   assertResultsPanels,
+  assertNativeRefitExecution,
   collectRuntimeEvidence,
   compareRunPredictionSummaries,
   runPredictionSummary,
@@ -28,7 +29,6 @@ const DATASET_EXPECTED_BADGE = process.env.N4A_REPOSITORY_DATASET_EXPECTED_BADGE
 const MANIFEST_PATH = join(FIXTURE_DIR, 'manifest.json')
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || join(tmpdir(), 'n4a-web-pipeline-repository-smoke')
 const WORKSPACE_ROOT = resolve(TEST_DIR, '..', '..', '..')
-const NIRS4ALL_PYTHON_SRC = join(WORKSPACE_ROOT, 'nirs4all')
 const execFileAsync = promisify(execFile)
 
 const evidence = {
@@ -278,8 +278,7 @@ function assertProviderRuntime(runtime, label) {
   if (!runtime || typeof runtime !== 'object') throw new Error(`${label} runtime evidence is missing`)
   if (runtime.engine !== 'dag-ml-wasm + libn4m') throw new Error(`${label} did not use the served Web/WASM engine: ${runtime.engine}`)
   if (runtime.lineage_engine !== 'dag-ml-wasm') throw new Error(`${label} lineage engine mismatch: ${runtime.lineage_engine}`)
-  if (runtime.lineage_compiled !== true || runtime.lineage_executed !== true) throw new Error(`${label} did not compile and execute through dag-ml`)
-  if (runtime.scheduler_fallback) throw new Error(`${label} used a scheduler fallback`)
+  assertNativeRefitExecution(runtime, label)
   if (runtime.diagnostics_count !== 0) throw new Error(`${label} emitted runtime diagnostics`)
   const provider = runtime.data_provider
   if (!provider || provider.layer !== 'dag-ml-data') throw new Error(`${label} has no dag-ml-data provider lineage`)
@@ -549,13 +548,12 @@ async function computePythonOracle(repository, foldAssignments) {
   const attempted = []
   for (const executable of candidates) {
     try {
-      const { stdout, stderr } = await execFileAsync(executable, ['-c', PYTHON_ORACLE_SCRIPT, DATASET_DIR, repository.pipelinePath, JSON.stringify(foldAssignments)], {
+      const { stdout, stderr } = await execFileAsync(executable, ['-I', '-B', '-c', PYTHON_ORACLE_SCRIPT, DATASET_DIR, repository.pipelinePath, JSON.stringify(foldAssignments)], {
         cwd: WORKSPACE_ROOT,
         timeout: 20000,
         maxBuffer: 4 * 1024 * 1024,
         env: {
           ...process.env,
-          PYTHONPATH: [NIRS4ALL_PYTHON_SRC, process.env.PYTHONPATH].filter(Boolean).join(':'),
         },
       })
       const parsed = JSON.parse(stdout)

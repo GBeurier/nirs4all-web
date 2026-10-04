@@ -437,11 +437,8 @@ export function predictPipeline(
   backend: ModelBackend,
   featureNames?: string[],
 ): PredictResult {
-  checkInputColumns(model, nFeatures, featureNames)
+  const pred = predictPipelineMatrix(model, Xnew, nSamples, nFeatures, backend, featureNames)
   const st = model.state as FittedState
-  const X: Mat = { data: Xnew, rows: nSamples, cols: nFeatures }
-  const named = model.features && model.dsl.model ? backend.predictNamed?.(st, model.dsl.model.type, X, model.features.names, featureNames) : undefined
-  const pred = named ?? replayPipeline(st, X, backend)
   if (model.taskType === 'regression') {
     return { values: Float64Array.from({ length: nSamples }, (_, i) => pred.data[i]) }
   }
@@ -460,6 +457,15 @@ export function predictPipeline(
     labels.push(names[best])
   }
   return { values, labels }
+}
+
+/** Actual backend prediction matrix; classification scores are not relabelled probabilities. */
+export function predictPipelineMatrix(model: FittedPipeline, Xnew: Float64Array, nSamples: number, nFeatures: number, backend: ModelBackend, featureNames?: string[]): Mat {
+  checkInputColumns(model, nFeatures, featureNames)
+  if (!Number.isSafeInteger(nSamples) || nSamples < 1 || Xnew.length !== nSamples * nFeatures) throw new Error('Prediction matrix shape does not match its buffer')
+  const st = model.state as FittedState
+  const X: Mat = { data: Xnew, rows: nSamples, cols: nFeatures }
+  return (model.features && model.dsl.model ? backend.predictNamed?.(st, model.dsl.model.type, X, model.features.names, featureNames) : undefined) ?? replayPipeline(st, X, backend)
 }
 
 /** Main chain → optional branch sub-chains → concat columns (mirrors training) → model. */

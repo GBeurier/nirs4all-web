@@ -43,7 +43,11 @@ describe('custom app host contract', () => {
       'split.kennard_stone',
       'preprocess.snv',
       'preprocess.savgol',
+      'preprocess.msc',
+      'select.spa',
+      'select.n4m',
       'model.pls_regression',
+      'model.affine_methods',
       'pipeline.portable_methods',
     ])
     expect(manifest.runtimeSurfaces).toEqual(runtimeSurfaces)

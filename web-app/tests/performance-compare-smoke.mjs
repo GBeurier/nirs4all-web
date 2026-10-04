@@ -149,13 +149,51 @@ function webDslFromSelectedCandidate(candidate, family) {
   }
 }
 
-function assertDagMlRun(value) {
+function assertRows(rows, expectedIds, dataset, label) {
+  if (!Array.isArray(rows) || rows.length !== expectedIds.length) throw new Error(`${label} must cover exactly ${expectedIds.length} observations`)
+  const ids = rows.map((row) => String(row.sampleId))
+  if (new Set(ids).size !== ids.length || ids.some((id) => !expectedIds.includes(id))) throw new Error(`${label} has duplicate or out-of-scope observation IDs`)
+  const bySample = new Map(dataset.sampleIds.map((id, i) => [String(id), i]))
+  for (const row of rows) {
+    const actual = assertNumber(row.actual, `${label}.actual`)
+    assertNumber(row.predicted, `${label}.predicted`)
+    assertNumber(row.residual, `${label}.residual`)
+    const expectedTarget = dataset.y[bySample.get(String(row.sampleId))]
+    // Targets cross the provider's JSON/serde binary64 boundary (features use a
+    // typed buffer). Permit only binary64 round-trip error, not float32 rounding
+    // or a different observation's target; prediction-oracle tolerances stay fixed.
+    if (Math.abs(actual - expectedTarget) > Number.EPSILON * Math.max(1, Math.abs(expectedTarget))) throw new Error(`${label} target differs from its dataset observation`)
+  }
+}
+
+function assertRegressionScore(node, label) {
+  if (node.status !== 'completed') throw new Error(`${label} must be completed`)
+  const rows = node.predictions
+  const squared = rows.reduce((sum, row) => sum + (row.predicted - row.actual) ** 2, 0)
+  const absolute = rows.reduce((sum, row) => sum + Math.abs(row.predicted - row.actual), 0)
+  for (const [metric, expected] of [['rmse', Math.sqrt(squared / rows.length)], ['mae', absolute / rows.length]]) {
+    const observed = assertNumber(node.metrics?.[metric], `${label}.${metric}`)
+    if (Math.abs(observed - expected) > 1e-10 * Math.max(1, expected)) throw new Error(`${label}.${metric} differs from its independent observation-level score`)
+  }
+  if (node.metrics?.n !== rows.length) throw new Error(`${label}.n differs from its prediction count`)
+}
+
+const stableJson = (value) => JSON.stringify(value, (_key, item) => item && typeof item === 'object' && !Array.isArray(item)
+  ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => a.localeCompare(b))) : item)
+
+function assertDagMlRun(value, dataset, pipeline) {
   const run = assertRecord(value, 'window.__n4aLastRun')
   if (run.engine !== 'dag-ml-wasm + libn4m') throw new Error(`web run engine must be dag-ml-wasm + libn4m, got ${JSON.stringify(run.engine)}`)
   const lineage = assertRecord(run.lineage, 'web run lineage')
   if (lineage.engine !== 'dag-ml-wasm') throw new Error(`web lineage engine must be dag-ml-wasm, got ${JSON.stringify(lineage.engine)}`)
   if (lineage.compiled !== true) throw new Error('web dag-ml lineage must report compiled=true')
-  if (lineage.executed !== true) throw new Error('web dag-ml lineage must report executed=true')
+  // This selected SNV+PLS pipeline deliberately uses the documented browser
+  // preprocessing CV chain over native folds, then native packaged REFIT/PREDICT.
+  // executed describes the model-only CV scheduler; it must remain honest here.
+  if (lineage.executed !== false) throw new Error('SNV+PLS lineage must report browser CV on native folds (executed=false)')
+  if (lineage.refitExecuted !== true || lineage.refitProfile !== 'browser-composite-host-sidecar-v1') throw new Error('SNV+PLS requires native composite REFIT/PREDICT, not a direct-fit fallback')
+  if (lineage.phase !== 'FIT_CV+REFIT+PREDICT' || lineage.variantCount !== 1 || lineage.folds !== pipeline.cv.folds) throw new Error('selected candidate phase, variant count or native fold count differs from the request')
+  if (lineage.dataProvider?.layer !== 'dag-ml-data' || lineage.dataProvider.status !== 'materialized') throw new Error('native data provider must materialize the declared dataset')
   if (lineage.schedulerFallback) throw new Error('web dag-ml run used schedulerFallback')
   if (Array.isArray(run.diagnostics) && run.diagnostics.length > 0) throw new Error(`web dag-ml run reported diagnostics: ${JSON.stringify(run.diagnostics.slice(0, 3))}`)
   const cv = assertRecord(run.cv, 'web run cv')
@@ -165,13 +203,47 @@ function assertDagMlRun(value) {
   const refitPredictions = Array.isArray(refit.predictions) ? refit.predictions : []
   if (refitPredictions.length === 0) throw new Error('web dag-ml run produced no refit predictions')
   const variantCount = assertNumber(run.variantCount, 'web run variantCount')
-  if (variantCount < 1) throw new Error(`web run variantCount must be >= 1, got ${variantCount}`)
+  if (variantCount !== 1) throw new Error(`selected concrete candidate must run one variant, got ${variantCount}`)
+  const trainRows = dataset.partitions.flatMap((partition, i) => partition === 'train' ? [i] : [])
+  const trainIds = trainRows.map((i) => String(dataset.sampleIds[i]))
+  const testIds = dataset.partitions.flatMap((partition, i) => partition === 'test' ? [String(dataset.sampleIds[i])] : [])
+  assertRows(cvPredictions, trainIds, dataset, 'CV')
+  assertRows(refitPredictions, testIds, dataset, 'REFIT Test')
+  if (!Array.isArray(run.folds) || run.folds.length !== pipeline.cv.folds) throw new Error('CV must retain every requested native fold')
+  const foldRows = run.folds.flatMap((fold) => {
+    if (!Array.isArray(fold.predictions) || !fold.predictions.length) throw new Error('native validation fold must be nonempty')
+    assertRows(fold.predictions, fold.predictions.map((row) => String(row.sampleId)), dataset, 'fold')
+    assertRegressionScore(fold, 'fold')
+    return fold.predictions
+  })
+  assertRows(foldRows, trainIds, dataset, 'native-fold CV universe')
+  const ordered = (rows) => [...rows].sort((a, b) => String(a.sampleId).localeCompare(String(b.sampleId)))
+  if (stableJson(ordered(foldRows)) !== stableJson(ordered(cvPredictions))) throw new Error('CV aggregate differs from the exact native-fold validation predictions')
+  assertRegressionScore(cv, 'CV')
+  assertRegressionScore(refit, 'REFIT Test')
+  const nativeRefit = assertRecord(run.nativeRefit, 'fitted native REFIT state')
+  const pkg = assertRecord(JSON.parse(nativeRefit.packageJson), 'native REFIT package')
+  if (nativeRefit.schemaVersion !== 1 || pkg.schema_version !== 1 || !/^[a-f0-9]{64}$/.test(pkg.package_fingerprint) || pkg.package_fingerprint !== lineage.packageFingerprint) throw new Error('native package fingerprint differs from REFIT lineage')
+  const expectedFitIds = trainRows.map((i) => `s${i}`).sort()
+  if (stableJson([...pkg.training_sample_ids].sort()) !== stableJson(expectedFitIds)) throw new Error('native package REFIT scope must contain exactly Train and no Test observation')
+  if (pkg.execution_root_seed !== pipeline.cv.seed || stableJson(nativeRefit.targetNames) !== stableJson([dataset.targetName])) throw new Error('native package seed or target identity differs from the request')
+  const plans = Object.values(pkg.effective_plan.node_plans)
+  const concretePipeline = { ...pipeline }
+  delete concretePipeline.cv
+  if (plans.length !== 1 || stableJson(plans[0].params.web_pipeline) !== stableJson(concretePipeline)) throw new Error('native REFIT package did not fit the selected concrete SNV+PLS candidate')
+  const artifact = pkg.artifacts.length === 1 ? pkg.artifacts[0].record.artifact : null
+  if (!artifact || artifact.controller_id !== 'controller:web.pipeline' || artifact.id !== nativeRefit.artifactId || artifact.content_fingerprint !== nativeRefit.carrierSha256 || !/^[a-f0-9]{64}$/.test(nativeRefit.carrierSha256)) throw new Error('native REFIT package does not bind the actual fitted browser sidecar')
+  if (pkg.outputs.length !== 1 || pkg.outputs[0].node_id !== pkg.artifacts[0].record.node_id || pkg.outputs[0].port_name !== 'oof') throw new Error('native PREDICT output must resolve the retained REFIT artifact')
   return {
     backend: run.engine,
     lineage: {
       engine: lineage.engine,
       compiled: lineage.compiled,
       executed: lineage.executed,
+      cvProfile: 'browser-chain-on-native-folds',
+      refitExecuted: lineage.refitExecuted,
+      refitProfile: lineage.refitProfile,
+      packageFingerprint: lineage.packageFingerprint,
       schedulerFallback: Boolean(lineage.schedulerFallback),
       phase: lineage.phase ?? null,
       variantCount: lineage.variantCount ?? null,
@@ -280,7 +352,7 @@ try {
   runtimeLedger.web.pipeline_run_seconds = (performance.now() - start) / 1000
   runtimeLedger.web.candidate_imported = true
 
-  const observedDagMl = assertDagMlRun(await page.evaluate(() => {
+  const observedRun = await page.evaluate(() => {
     const run = window.__n4aLastRun
     return run
       ? {
@@ -290,9 +362,14 @@ try {
           refit: run.refit,
           variantCount: run.variantCount,
           diagnostics: run.diagnostics,
+          folds: run.folds,
+          nativeRefit: run.model?.state?.nativeRefit,
         }
       : null
-  }))
+  })
+  // Persist genuine observations even when a scientific/lineage assertion fails.
+  runtimeLedger.web.observed_run = observedRun
+  const observedDagMl = assertDagMlRun(observedRun, webDataset, webDsl)
   runtimeLedger.web.backend = observedDagMl.backend
   runtimeLedger.web.rendered_cv_scores = observedDagMl.cv_predictions > 0
   runtimeLedger.web.dag_ml = {

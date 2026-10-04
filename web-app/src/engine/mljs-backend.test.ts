@@ -28,6 +28,8 @@ describe('Web ml.js backend', () => {
   ] as const)('fits and replays %s with a synchronous predictor', async (type, Y, cols, params) => {
     const backend = await loadMlJsBackend()
     const model = backend.fit({ type, params }, X, Y, 1)
+    const sealed = JSON.stringify(model)
+    expect(JSON.stringify(structuredClone(model))).toBe(sealed)
     const result = backend.predict(JSON.parse(JSON.stringify(model)), X)
     expect(result.rows).toBe(X.rows)
     expect(result.cols).toBe(cols)
@@ -46,7 +48,9 @@ describe('Web ml.js backend', () => {
       const expected = backend.predict(model, future)
       expect(backend.predict(transferred, future)).toEqual(expected)
       expect(backend.predict(JSON.parse(JSON.stringify(transferred)), future)).toEqual(expected)
+      expect(JSON.stringify(transferred)).toBe(sealed)
     }
+    expect(JSON.stringify(model)).toBe(sealed)
   })
 
 })

@@ -114,7 +114,7 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(methods?.candidates).toEqual(['@nirs4all/methods'])
     expect(viteConfig).toContain("'@nirs4all/methods':")
     expect(vitestConfig).toContain("'@nirs4all/methods':")
-    expect(vendorPkg.peerDependencies['@nirs4all/methods']).toBe('*')
+    expect(vendorPkg.peerDependencies['@nirs4all/methods']).toBe('^1.2.1')
     expect(vendorPkg.peerDependenciesMeta['@nirs4all/methods']).toBeTruthy()
     expect(viteConfig + vitestConfig + JSON.stringify(methods) + JSON.stringify(vendorPkg)).not.toContain('@nirs4all/methods' + '-wasm')
   })
@@ -203,7 +203,11 @@ describe('nirs4all-core aggregate loaders', () => {
       'split.kennard_stone',
       'preprocess.snv',
       'preprocess.savgol',
+      'preprocess.msc',
+      'select.spa',
+      'select.n4m',
       'model.pls_regression',
+      'model.affine_methods',
       'pipeline.portable_methods',
     ])
     expect(manifest.controllers).toEqual(controllerCapabilities)
@@ -213,7 +217,7 @@ describe('nirs4all-core aggregate loaders', () => {
     )
     expect(manifest.controllers[0].runtime.javascript_wasm).toBe('parity-validated')
     expect(manifest.controllers[1].parameters).toEqual([])
-    expect(manifest.controllers[3].parameters).toEqual(['n_components', '_range_'])
+    expect(manifest.controllers.find((item) => item.id === 'model.pls_regression')?.parameters).toEqual(['n_components', '_range_'])
   })
 
   it('loads the vendored datasets WASM artifact', async () => {

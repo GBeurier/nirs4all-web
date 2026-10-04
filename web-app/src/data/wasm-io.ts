@@ -1,3 +1,4 @@
+import { isRelationColumn, metadataRelations } from '@/engine/relations'
 // Real data stage powered by the vendored nirs4all-formats + nirs4all-io WASM:
 // decode ~58 vendor formats, infer dataset structure (DatasetPlan + DatasetSpec),
 // list the reader catalog, validate a DatasetSpec, and materialize X/y for the
@@ -206,7 +207,7 @@ export function mapAssembledToMaterialized(full: AssembledFull): MaterializedDat
     off += rows
   }
 
-  // per-sample metadata (explore-only): non-id columns nirs4all-io already parsed,
+  // per-sample metadata (including declared relation roles): non-id columns nirs4all-io already parsed,
   // aligned to X's row order (same partition iteration, same empty-block skip).
   const metaSchema: string[] = []
   for (const p of parts) {
@@ -225,7 +226,7 @@ export function mapAssembledToMaterialized(full: AssembledFull): MaterializedDat
           for (let r = 0; r < xm.n_rows; r++) vals.push(col ? col.values[r] ?? null : null)
         }
         const nonNull = vals.filter((v): v is number | string => v !== null)
-        const numeric = nonNull.length > 0 && nonNull.every((v) => Number.isFinite(Number(v)))
+        const numeric = !isRelationColumn(nameCol) && nonNull.length > 0 && nonNull.every((v) => Number.isFinite(Number(v)))
         return numeric
           ? { name: nameCol, kind: 'numeric' as const, values: vals.map((v) => (v === null ? null : Number(v))) }
           : { name: nameCol, kind: 'categorical' as const, values: vals.map((v) => (v === null ? null : String(v))) }
@@ -236,7 +237,7 @@ export function mapAssembledToMaterialized(full: AssembledFull): MaterializedDat
   // to train without targets, so an all-NaN y never silently produces a model.
   const taskType = inferTaskType(Array.from(yRaw), labelsRaw)
   const { y, classes } = encodeTarget(yRaw, labelsRaw, taskType)
-  return { X, nSamples, nFeatures, axis, axisUnit, ...(featureNames ? { featureNames } : {}), y, yRaw, labelsRaw, targetName, taskType, classes, sampleIds, partitions, metadata }
+  return { X, nSamples, nFeatures, axis, axisUnit, ...(featureNames ? { featureNames } : {}), y, yRaw, labelsRaw, targetName, taskType, classes, sampleIds, partitions, metadata, ...metadataRelations(metadata) }
 }
 
 /**

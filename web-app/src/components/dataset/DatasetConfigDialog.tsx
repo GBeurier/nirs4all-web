@@ -36,7 +36,7 @@ const TASK_OPTIONS: { value: TaskType; label: string }[] = [
  * the host applies it to the dataset — this component never mutates ds.
  */
 export function DatasetConfigDialog({ open, ds, analysis, onOpenChange, onApply }: DatasetConfigDialogProps) {
-  const needsSplit = !hasTestPartition(ds)
+  const needsSplit = !hasTestPartition(ds) && !ds.groupIds
   const [targetName, setTargetName] = useState(ds.targetName)
   const [taskType, setTaskType] = useState<TaskType>(ds.taskType)
   const [testFraction, setTestFraction] = useState(0.2)
@@ -88,6 +88,7 @@ export function DatasetConfigDialog({ open, ds, analysis, onOpenChange, onApply 
           <DialogDescription>
             Tune how the target is interpreted before building a pipeline.
           </DialogDescription>
+          {ds.groupIds ? <p className="text-xs text-muted-foreground">Declared groups are preserved for native grouped CV. Upload group-safe Train/Test files; the row-wise test-fraction split is disabled.</p> : null}
         </DialogHeader>
 
         <div className="space-y-5 py-1">
