@@ -1,214 +1,91 @@
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  readdirSync,
-  rmSync,
-  statSync,
-  writeFileSync,
-} from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, relative, resolve, sep } from 'node:path'
-import { fileURLToPath, pathToFileURL } from 'node:url'
+import { fileURLToPath } from 'node:url'
 
-const EXPECTED_SOURCE = Object.freeze({
-  "commit": "867f3576592ec390e2a16ced53cc027c022cde27",
-  "tree": "6ec170b5f8011ed09a88578b552df3f9c4ee47f4",
-  "version": "0.3.34"
-})
-const GENERATED_FILES = Object.freeze([
-  'LICENSE',
-  'README.md',
-  'dag_ml_wasm.d.ts',
-  'dag_ml_wasm.js',
-  'dag_ml_wasm_bg.wasm',
-  'dag_ml_wasm_bg.wasm.d.ts',
-  'package.json',
-])
-const CONTRACT_FILES = Object.freeze({
-  'native_predictor_descriptor.v1.schema.json': 'docs/contracts/native_predictor_descriptor.v1.schema.json',
-})
-const LICENSE_FILES = Object.freeze([
-  'LICENSING.md',
-  'LICENSING_FR.md',
-  'THIRD_PARTY_NOTICES.md',
-  'LICENSES/AGPL-3.0-or-later.txt',
-  'LICENSES/Apache-2.0.txt',
-  'LICENSES/BSD-3-Clause.txt',
-  'LICENSES/CeCILL-2.1.txt',
-  'LICENSES/MIT.txt',
-])
-const STAGED_FILES = Object.freeze([...GENERATED_FILES, ...Object.keys(CONTRACT_FILES), ...LICENSE_FILES].sort())
-
-const scriptDir = dirname(fileURLToPath(import.meta.url))
-const appRoot = resolve(scriptDir, '..')
-const sourceRoot = resolve(process.env.NIRS4ALL_DAG_ML_ROOT ?? join(appRoot, '..', '..', 'dag-ml'))
-const destination = join(appRoot, 'src', 'engine', 'wasm', 'dagml')
-const wasmPack = process.env.WASM_PACK_BIN ?? 'wasm-pack'
-const wasmPackMode = process.env.WASM_PACK_MODE
-
-function command(commandName, args, options = {}) {
-  const output = execFileSync(commandName, args, {
-    cwd: options.cwd ?? appRoot,
-    encoding: 'utf8',
-    stdio: options.capture ? ['ignore', 'pipe', 'pipe'] : 'inherit',
-    env: options.env ?? process.env,
-  })
-  return typeof output === 'string' ? output.trim() : ''
+const here = dirname(fileURLToPath(import.meta.url))
+const expected = JSON.parse(readFileSync(join(here, 'dagml-public-package.v1.json'), 'utf8'))
+const destination = resolve(here, '..', 'src', 'engine', 'wasm', 'dagml')
+const tarballPath = process.env.NIRS4ALL_DAG_ML_NPM_TARBALL
+const metadataPath = process.env.NIRS4ALL_DAG_ML_NPM_METADATA
+if (!tarballPath || !metadataPath) {
+  throw new Error('Set NIRS4ALL_DAG_ML_NPM_TARBALL and NIRS4ALL_DAG_ML_NPM_METADATA to the captured public npm tarball and version metadata; this command does not rebuild WASM.')
 }
-
-function git(...args) {
-  return command('git', ['-C', sourceRoot, ...args], { capture: true })
+const hash = (algorithm, bytes, encoding = 'hex') => createHash(algorithm).update(bytes).digest(encoding)
+const bytes = readFileSync(tarballPath)
+const metadataBytes = readFileSync(metadataPath)
+const metadata = JSON.parse(metadataBytes.toString('utf8'))
+if (metadata.name !== expected.package || metadata.version !== expected.version || metadata.gitHead !== expected.source.commit ||
+    metadata.dist?.tarball !== expected.registry.tarball_url || metadata.dist?.integrity !== expected.registry.integrity ||
+    metadata.dist?.shasum !== expected.registry.sha1 ||
+    bytes.length !== expected.registry.tarball_size || hash('sha256', bytes) !== expected.registry.sha256 ||
+    hash('sha1', bytes) !== expected.registry.sha1 || `sha512-${hash('sha512', bytes, 'base64')}` !== expected.registry.integrity) {
+  throw new Error('Captured public dag-ml npm metadata or tarball does not match the pinned release')
 }
-
-function sha256(path) {
-  return createHash('sha256').update(readFileSync(path)).digest('hex')
+const names = Object.keys(expected.public_files).sort()
+const listed = execFileSync('tar', ['-tzf', resolve(tarballPath)], { encoding: 'utf8' }).trim().split('\n').sort()
+if (JSON.stringify(listed) !== JSON.stringify(names.map((name) => `package/${name}`).sort())) {
+  throw new Error('Pinned public dag-ml tarball inventory differs')
 }
-
-function filesRecursively(root, current = root) {
-  if (!existsSync(current)) return []
-  return readdirSync(current, { withFileTypes: true })
-    .flatMap((entry) => {
-      const path = join(current, entry.name)
-      return entry.isDirectory() ? filesRecursively(root, path) : [relative(root, path).split(sep).join('/')]
-    })
-    .sort()
+function inventory(root, current = root) {
+  return readdirSync(current, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(current, entry.name)
+    if (entry.isDirectory()) return inventory(root, path)
+    if (!entry.isFile()) throw new Error(`unsupported staged entry: ${path}`)
+    return [relative(root, path).split(sep).join('/')]
+  }).sort()
 }
-
-if (!existsSync(join(sourceRoot, 'crates', 'dag-ml-wasm'))) throw new Error(`dag-ml WASM crate not found: ${sourceRoot}`)
-if (git('status', '--porcelain') !== '') throw new Error(`dag-ml source must be clean: ${sourceRoot}`)
-for (const name of LICENSE_FILES) {
-  if (!existsSync(join(sourceRoot, name))) throw new Error(`dag-ml license payload is incomplete: ${name}`)
+// These extra legal/contract files were verified against the exact release source.
+// Keep them byte-for-byte; the public npm package does not carry all of them.
+for (const [name, fact] of Object.entries(expected.source_files)) {
+  const bytes = readFileSync(join(destination, name))
+  if (bytes.length !== fact.size || hash('sha256', bytes) !== fact.sha256) {
+    throw new Error(`Additional source legal/contract file differs: ${name}`)
+  }
 }
-const source = {
-  commit: git('rev-parse', 'HEAD'),
-  tree: git('rev-parse', 'HEAD^{tree}'),
-  epoch: Number(git('log', '-1', '--format=%ct', 'HEAD')),
+const oldGeneratedDeclaration = 'dag_ml_wasm_bg.wasm.d.ts'
+const allowed = new Set([...names, ...Object.keys(expected.source_files), 'PROVENANCE.json', oldGeneratedDeclaration])
+for (const name of inventory(destination)) {
+  if (!allowed.has(name)) throw new Error(`refusing to replace unexpected dag-ml staged file: ${name}`)
 }
-if (source.commit !== EXPECTED_SOURCE.commit || source.tree !== EXPECTED_SOURCE.tree) {
-  throw new Error(`unexpected dag-ml source ${source.commit}/${source.tree}; expected ${EXPECTED_SOURCE.commit}/${EXPECTED_SOURCE.tree}`)
-}
-
-const proofRoot = mkdtempSync(join(tmpdir(), 'nirs4all-web-dagml-'))
-const outputs = []
+const temporary = mkdtempSync(join(tmpdir(), 'nirs4all-web-dagml-public-'))
 try {
-  const sourceArchive = join(proofRoot, 'dag-ml.tar')
-  const buildSourceRoot = join(proofRoot, 'source')
-  mkdirSync(buildSourceRoot)
-  command('git', ['-C', sourceRoot, 'archive', '--format=tar', `--output=${sourceArchive}`, 'HEAD'])
-  command('tar', ['-xf', sourceArchive, '-C', buildSourceRoot])
-  const crateRoot = join(buildSourceRoot, 'crates', 'dag-ml-wasm')
-  for (const leg of ['a', 'b']) {
-    const output = join(proofRoot, `out-${leg}`)
-    const args = ['build', crateRoot, '--target', 'web', '--release', '--out-dir', output]
-    if (wasmPackMode) args.push('--mode', wasmPackMode)
-    args.push('--', '--locked')
-    command(wasmPack, args, {
-      env: {
-        ...process.env,
-        CARGO_TARGET_DIR: join(proofRoot, `target-${leg}`),
-        SOURCE_DATE_EPOCH: String(source.epoch),
-      },
-    })
-    const actualFiles = readdirSync(output).filter((name) => name !== '.gitignore').sort()
-    if (JSON.stringify(actualFiles) !== JSON.stringify(GENERATED_FILES)) {
-      throw new Error(`unexpected wasm-pack output: ${actualFiles.join(', ')}`)
+  execFileSync('tar', ['-xzf', resolve(tarballPath), '-C', temporary])
+  for (const [name, fact] of Object.entries(expected.public_files)) {
+    const file = join(temporary, 'package', name)
+    const bytes = readFileSync(file)
+    if (bytes.length !== fact.size || hash('sha256', bytes) !== fact.sha256) throw new Error(`Public dag-ml file differs: ${name}`)
+  }
+  const obsolete = join(destination, oldGeneratedDeclaration)
+  if (existsSync(obsolete)) {
+    if (hash('sha256', readFileSync(obsolete)) !== '03c4e00fa4e380fcff24e0a7991a1cd5481dbc9dcbc41dcae51abff60f67d9bf') {
+      throw new Error('Obsolete private WASM declaration has unexpected bytes')
     }
-    outputs.push(output)
+    rmSync(obsolete)
   }
-
-  const hashesA = Object.fromEntries(GENERATED_FILES.map((name) => [name, sha256(join(outputs[0], name))]))
-  const hashesB = Object.fromEntries(GENERATED_FILES.map((name) => [name, sha256(join(outputs[1], name))]))
-  if (JSON.stringify(hashesA) !== JSON.stringify(hashesB)) throw new Error('dag-ml WASM A/B builds are not byte-identical')
-
-  const metadata = JSON.parse(readFileSync(join(outputs[0], 'package.json'), 'utf8'))
-  if (
-    metadata.name !== 'dag-ml-wasm' ||
-    metadata.version !== EXPECTED_SOURCE.version ||
-    metadata.license !== 'CECILL-2.1 OR AGPL-3.0-or-later'
-  ) {
-    throw new Error(`built package identity ${metadata.name}@${metadata.version} is not qualified`)
+  for (const name of names) {
+    mkdirSync(dirname(join(destination, name)), { recursive: true })
+    copyFileSync(join(temporary, 'package', name), join(destination, name))
   }
-  const module = await import(`${pathToFileURL(join(outputs[0], 'dag_ml_wasm.js')).href}?verify=${Date.now()}`)
-  module.initSync({ module: readFileSync(join(outputs[0], 'dag_ml_wasm_bg.wasm')) })
-  const manifest = JSON.parse(module.contract_manifest_json())
-  if (
-    module.dag_ml_version() !== EXPECTED_SOURCE.version ||
-    manifest.crate !== 'dag-ml' ||
-    !manifest.capabilities.includes('execute_execution_plan_phase') ||
-    !manifest.capabilities.includes('loss_execution_attestation')
-  ) {
-    throw new Error('dag-ml WASM runtime witness failed')
+  const files = [...names, ...Object.keys(expected.source_files)].sort().map((name) => ({
+    path: name, size: statSync(join(destination, name)).size, sha256: hash('sha256', readFileSync(join(destination, name))),
+  }))
+  const receipt = {
+    schema: 'nirs4all-web.public-wasm-acquisition.v1', component: expected.package, package: expected.package,
+    version: expected.version, source: { repository: 'https://github.com/GBeurier/dag-ml', ...expected.source },
+    acquisition: { metadata_url: expected.registry.metadata_url, tarball_url: expected.registry.tarball_url,
+      git_head: metadata.gitHead, tarball_size: bytes.length, sha256: hash('sha256', bytes), sha1: hash('sha1', bytes),
+      integrity: `sha512-${hash('sha512', bytes, 'base64')}`, metadata_sha256: hash('sha256', metadataBytes),
+      sha256_sha1_sri_verified: true },
+    reproducibility: { performed_by_web: false, independent_rebuild_claimed: false },
+    licensing: { expression: metadata.license, payload_source: 'public npm package plus pinned source legal and contract files' },
+    files,
   }
-
-  mkdirSync(destination, { recursive: true })
-  const allowed = new Set([...STAGED_FILES, 'PROVENANCE.json'])
-  const unexpected = filesRecursively(destination).filter((name) => !allowed.has(name))
-  if (unexpected.length > 0) throw new Error(`refusing to overwrite unexpected staged files: ${unexpected.join(', ')}`)
-  for (const name of GENERATED_FILES) copyFileSync(join(outputs[0], name), join(destination, name))
-  for (const [name, sourceName] of Object.entries(CONTRACT_FILES)) {
-    copyFileSync(join(sourceRoot, sourceName), join(destination, name))
-  }
-  for (const name of LICENSE_FILES) {
-    const target = join(destination, name)
-    mkdirSync(dirname(target), { recursive: true })
-    copyFileSync(join(sourceRoot, name), target)
-  }
-
-  const stagedHashes = Object.fromEntries(STAGED_FILES.map((name) => [name, sha256(join(destination, name))]))
-
-  const provenance = {
-    schema: 'nirs4all-web.wasm-provenance.v1',
-    component: 'dag-ml-wasm',
-    package: 'dag-ml-wasm',
-    version: EXPECTED_SOURCE.version,
-    source: {
-      repository: 'https://github.com/GBeurier/dag-ml',
-      commit: source.commit,
-      tree: source.tree,
-      clean: true,
-    },
-    build: {
-      target: 'web',
-      profile: 'release',
-      cargo_locked: true,
-      registry_dependency: {
-        "package": "n4m",
-        "version": "0.4.0",
-        "source_commit": "5fba13ba7b13d51fdeed9c4f6c11612d70b3b755",
-        "source_tree": "89227d49462739b78f0ed5790fbe47a78acdc08c",
-        "binding_source_tree": "df7b08e828c49b8763985934b17bf2086ab4c58a",
-        "runtime_source_commit": "dcc570b3647f77cf0428dd346078f442ed5cd032",
-        "runtime_source_tree": "4b711a5cf7b0fb1e10a6ed99e1202bdd89917c42",
-        "runtime_binding_source_tree": "ebbc923de888648d217818c16eddda0ececc64c5",
-        "registry_checksum": "262224913fd9338e523dea8a55e688abab21eb131422a23fc3f2dfb32a4001f6"
-      },
-      source_date_epoch: source.epoch,
-      tools: {
-        wasm_pack: command(wasmPack, ['--version'], { capture: true }),
-        cargo: command('cargo', ['--version'], { capture: true }),
-        rustc: command('rustc', ['--version'], { capture: true }),
-      },
-    },
-    reproducibility: { independent_target_directories: 2, byte_identical: true },
-    licensing: {
-      expression: metadata.license,
-      payload_source: 'qualified source tree',
-      files: ['LICENSE', ...LICENSE_FILES],
-    },
-    witnesses: { runtime_version: true, contract_manifest: true, native_predictor_descriptor_schema: true },
-    files: STAGED_FILES.map((name) => ({
-      path: name,
-      size: statSync(join(destination, name)).size,
-      sha256: stagedHashes[name],
-    })),
-  }
-  writeFileSync(join(destination, 'PROVENANCE.json'), `${JSON.stringify(provenance, null, 2)}\n`)
-  console.log(`staged dag-ml WASM ${EXPECTED_SOURCE.version} from ${source.commit}`)
+  writeFileSync(join(destination, 'PROVENANCE.json'), `${JSON.stringify(receipt, null, 2)}\n`)
+  await import('./verify-dagml-wasm.mjs')
+  console.log(`staged published dag-ml WASM ${expected.version}; no native rebuild performed`)
 } finally {
-  rmSync(proofRoot, { recursive: true, force: true })
+  rmSync(temporary, { recursive: true, force: true })
 }

@@ -80,6 +80,8 @@ export function derive_controller_manifest_list_json(host_controller_specs_json:
  */
 export function execute_campaign_phase_json(plan_id: string, graph_json: string, campaign_json: string, controller_manifests_json: string, run_id: string, root_seed: number, phase: string, js_invoke: Function): string;
 
+export function execute_campaign_phase_u64_json(plan_id: string, graph_json: string, campaign_json: string, controller_manifests_json: string, run_id: string, root_seed: string, phase: string, js_invoke: Function): string;
+
 /**
  * Execute one phase from a previously built and validated execution plan.
  *
@@ -89,6 +91,11 @@ export function execute_campaign_phase_json(plan_id: string, graph_json: string,
  * runtime registry before any callback is dispatched.
  */
 export function execute_execution_plan_phase_json(execution_plan_json: string, trusted_controller_manifests_json: string, run_id: string, root_seed: number, phase: string, js_invoke: Function): string;
+
+/**
+ * Full-width seed variant for JavaScript hosts. Pass an exact decimal u64 string.
+ */
+export function execute_execution_plan_phase_u64_json(execution_plan_json: string, trusted_controller_manifests_json: string, run_id: string, root_seed: string, phase: string, js_invoke: Function): string;
 
 /**
  * Execute a no-splitter REFIT once and return the closed package and node evidence.
@@ -162,6 +169,12 @@ export function loss_execution_attestation_json(training_loss_role_json: string,
  * (`n4m_method_manifest_json`).
  */
 export function n4m_host_controller_specs_json(manifest_json: string): string;
+
+/**
+ * Sign a descriptor whose native facts were inspected by the owning bridge.
+ * Consumers must reinspect N4ME bytes before accepting this descriptor.
+ */
+export function native_estimator_descriptor_json(json: string): string;
 
 /**
  * Validate a browser-persisted prepared terminal and seal interrupted trials
@@ -279,7 +292,9 @@ export interface InitOutput {
     readonly derive_controller_manifest_json: (a: number, b: number) => [number, number, number, number];
     readonly derive_controller_manifest_list_json: (a: number, b: number) => [number, number, number, number];
     readonly execute_campaign_phase_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: any) => [number, number, number, number];
+    readonly execute_campaign_phase_u64_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: any) => [number, number, number, number];
     readonly execute_execution_plan_phase_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: any) => [number, number, number, number];
+    readonly execute_execution_plan_phase_u64_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: any) => [number, number, number, number];
     readonly execute_initial_full_refit_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: any) => [number, number, number, number];
     readonly execute_training_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: any) => [number, number, number, number];
     readonly fold_set_fingerprint_json: (a: number, b: number) => [number, number, number, number];
@@ -305,6 +320,7 @@ export interface InitOutput {
     readonly localimplementationregistry_unregister_metric: (a: number, b: number, c: number) => [number, number, number];
     readonly loss_execution_attestation_json: (a: number, b: number, c: number, d: number) => [number, number, number, number];
     readonly n4m_host_controller_specs_json: (a: number, b: number) => [number, number, number, number];
+    readonly native_estimator_descriptor_json: (a: number, b: number) => [number, number, number, number];
     readonly recover_host_hpo_checkpoint_json: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number, number, number];
     readonly replay_initial_full_refit_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: any) => [number, number, number, number];
     readonly replay_training_package_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: any) => [number, number, number, number];
@@ -330,8 +346,8 @@ export interface InitOutput {
     readonly validate_graph_json: (a: number, b: number) => [number, number];
     readonly validate_initial_full_refit_package_json: (a: number, b: number) => [number, number];
     readonly validate_pipeline_dsl_json: (a: number, b: number) => [number, number];
-    readonly wasm_bindgen__convert__closures_____invoke__h39f5e773f0261fac: (a: number, b: number, c: any, d: any) => void;
-    readonly wasm_bindgen__convert__closures_____invoke__h9a8a5030d2f71e0f: (a: number, b: number, c: any) => [number, number];
+    readonly wasm_bindgen_dfd0b53baa41d632___convert__closures_____invoke___js_sys_6314793ba421de9a___Function_fn_wasm_bindgen_dfd0b53baa41d632___JsValue_____wasm_bindgen_dfd0b53baa41d632___sys__Undefined___js_sys_6314793ba421de9a___Function_fn_wasm_bindgen_dfd0b53baa41d632___JsValue_____wasm_bindgen_dfd0b53baa41d632___sys__Undefined_______true_: (a: number, b: number, c: any, d: any) => void;
+    readonly wasm_bindgen_dfd0b53baa41d632___convert__closures_____invoke___wasm_bindgen_dfd0b53baa41d632___JsValue__core_608f92abc48d28da___result__Result_____wasm_bindgen_dfd0b53baa41d632___JsError___true_: (a: number, b: number, c: any) => [number, number];
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_exn_store: (a: number) => void;

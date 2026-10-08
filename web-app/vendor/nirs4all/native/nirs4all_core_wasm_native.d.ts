@@ -60,6 +60,50 @@ export class ValidatedPortableArchiveV2 {
     readonly archive_sha256: string;
 }
 
+export function calibrate_workflow_replay_json(source: string, replay: string, relations: string, truth: string, coverages: string, small_sample_policy: string): string;
+
+export function calibrated_methods_points_json(_package: string, archive_sha: string, sample_ids: string, values: string, descriptor: string): string;
+
+export function calibrated_prediction_json(_package: string, request: string, replay: string): string;
+
+export function conformal_metrics_json(calibration: string, intervals: string, truth: string): string;
+
+export function frozen_methods_points_json(_package: string, archive_sha: string, sample_ids: string, values: string, descriptor: string): string;
+
+export function generate_variants_json(input: string): string;
+
+/**
+ * Validate the shared CPU/browser envelope in Rust before host presentation.
+ * JSON fragments stay strings so JavaScript never rounds native uint64 seeds.
+ */
+export function native_pipeline_fragments_json(input: string): string;
+
+/**
+ * Resolve public PLS controls through the native owner before host parameter transport.
+ */
+export function pls_role_pipeline_contract_json(input: string): string;
+
+export function project_training_predictions_json(outcome_json: string, dataset_label: string, task_type_label: string): string;
+
+export function robustness_methods_points_json(_package: string, scenarios: string, points: string, truth: string): string;
+
+export function robustness_report_json(_package: string, scenarios: string, replays: string, truth: string): string;
+
+/**
+ * Synchronous artifact hashing for native DAG controller callbacks.
+ */
+export function sha256_bytes(bytes: Uint8Array): string;
+
+/**
+ * Validate the complete native portable payload closure for any supported
+ * DAG predictor profile, without selecting a host execution backend.
+ */
+export function validate_portable_archive_v2(bytes: Uint8Array): string;
+
+export function validate_robustness_scenarios_json(scenarios: string): string;
+
+export function validate_training_predictions_json(outcome_json: string, predictions_json: string): void;
+
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
@@ -70,6 +114,21 @@ export interface InitOutput {
     readonly archivev2builder_add_member: (a: number, b: number, c: number, d: number, e: number) => [number, number];
     readonly archivev2builder_finish: (a: number) => [number, number, number, number];
     readonly archivev2builder_new: (a: number, b: number) => [number, number, number];
+    readonly calibrate_workflow_replay_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number) => [number, number, number, number];
+    readonly calibrated_methods_points_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => [number, number, number, number];
+    readonly calibrated_prediction_json: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number, number, number];
+    readonly conformal_metrics_json: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number, number, number];
+    readonly frozen_methods_points_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => [number, number, number, number];
+    readonly generate_variants_json: (a: number, b: number) => [number, number, number, number];
+    readonly native_pipeline_fragments_json: (a: number, b: number) => [number, number, number, number];
+    readonly pls_role_pipeline_contract_json: (a: number, b: number) => [number, number, number, number];
+    readonly project_training_predictions_json: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number, number, number];
+    readonly robustness_methods_points_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number, number, number];
+    readonly robustness_report_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number, number, number];
+    readonly sha256_bytes: (a: number, b: number) => [number, number];
+    readonly validate_portable_archive_v2: (a: number, b: number) => [number, number, number, number];
+    readonly validate_robustness_scenarios_json: (a: number, b: number) => [number, number, number, number];
+    readonly validate_training_predictions_json: (a: number, b: number, c: number, d: number) => [number, number];
     readonly validatedmethodsarchivev2_abi_min_minor: (a: number) => number;
     readonly validatedmethodsarchivev2_archive_id: (a: number) => [number, number];
     readonly validatedmethodsarchivev2_archive_sha256: (a: number) => [number, number];

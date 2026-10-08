@@ -4,26 +4,71 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED = Object.freeze({
-  commit: '1f60b920d34acda7c0fbc044b593bb6af1fab4c1',
-  tree: 'f2144d861642e81758dcef4f6ee76ec32c0961ff',
-  version: '0.2.10',
+  commit: '78719b68c8e9ffd4c2035792574b8da33387d237',
+  tree: '718aabf02fd704ee7d18aa6127c59ac1ffe3c2ec',
+  version: '0.2.13',
 })
 const EXPECTED_FILES = Object.freeze({
-  'LICENSE': { size: 34020, sha256: 'd8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee' },
-  'LICENSES/AGPL-3.0-or-later.txt': { size: 34020, sha256: 'd8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee' },
-  'LICENSES/Apache-2.0.txt': { size: 10280, sha256: '074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff' },
-  'LICENSES/BSD-3-Clause.txt': { size: 1460, sha256: '5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d' },
-  'LICENSES/CeCILL-2.1.txt': { size: 21778, sha256: '4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5' },
-  'LICENSES/MIT.txt': { size: 1078, sha256: 'b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5' },
-  'LICENSING.md': { size: 1421, sha256: 'de862d775334ff3cf60df5a4f2bde6a08bd0aac0add477212d94f82989e3a2a3' },
-  'LICENSING_FR.md': { size: 1536, sha256: 'cf4da85268262def2eb370b379d0d52d7bea3dc347a67ddc53ef108b914df68d' },
-  'README.md': { size: 2465, sha256: '471b5bc0070411c82674a24fb776efeb00a44f27d821a8327c6d9536145555b0' },
-  'THIRD_PARTY_NOTICES.md': { size: 1583, sha256: 'd4e03627160b905122799e578ed8e1288969a70f47488db402cf55c5e2bb633e' },
-  'dag_ml_data_wasm.d.ts': { size: 9920, sha256: 'f217d639f912a7d57827bb5aec8ee9d0d2a7f9ea77345dde13712d8b82de843a' },
-  'dag_ml_data_wasm.js': { size: 34118, sha256: '85e91d92faeb619abc1fe4682b648c499afd3bcff7d8f61825382c4a1f53e746' },
-  'dag_ml_data_wasm_bg.wasm': { size: 1202907, sha256: 'ae5475188fb29e3027ae041ce6c157d9cd87de79564022f80e5325d2497cb31b' },
-  'dag_ml_data_wasm_bg.wasm.d.ts': { size: 4363, sha256: '9f6716d8350aa14b8cbc2b57e0ff3bc987ca3849b6557447310db5041017390c' },
-  'package.json': { size: 621, sha256: '35364cd0376c83da5fd594b679aaefe62fdd321f99df44c6557dc02135810348' },
+  "LICENSE": {
+    "size": 34020,
+    "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+  },
+  "LICENSES/AGPL-3.0-or-later.txt": {
+    "size": 34020,
+    "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+  },
+  "LICENSES/Apache-2.0.txt": {
+    "size": 10280,
+    "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+  },
+  "LICENSES/BSD-3-Clause.txt": {
+    "size": 1460,
+    "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
+  },
+  "LICENSES/CeCILL-2.1.txt": {
+    "size": 21778,
+    "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+  },
+  "LICENSES/MIT.txt": {
+    "size": 1078,
+    "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+  },
+  "LICENSING.md": {
+    "size": 1421,
+    "sha256": "de862d775334ff3cf60df5a4f2bde6a08bd0aac0add477212d94f82989e3a2a3"
+  },
+  "LICENSING_FR.md": {
+    "size": 1536,
+    "sha256": "cf4da85268262def2eb370b379d0d52d7bea3dc347a67ddc53ef108b914df68d"
+  },
+  "README.md": {
+    "size": 2465,
+    "sha256": "471b5bc0070411c82674a24fb776efeb00a44f27d821a8327c6d9536145555b0"
+  },
+  "THIRD_PARTY_NOTICES.md": {
+    "size": 1583,
+    "sha256": "d4e03627160b905122799e578ed8e1288969a70f47488db402cf55c5e2bb633e"
+  },
+  "dag_ml_data_wasm.d.ts": {
+    "size": 9920,
+    "sha256": "f217d639f912a7d57827bb5aec8ee9d0d2a7f9ea77345dde13712d8b82de843a"
+  },
+  "dag_ml_data_wasm.js": {
+    "size": 34118,
+    "sha256": "85e91d92faeb619abc1fe4682b648c499afd3bcff7d8f61825382c4a1f53e746"
+  },
+  "dag_ml_data_wasm_bg.wasm": {
+    "size": 1657293,
+    "sha256": "7afa87e314e74e56294691e5a34e0584edaa4bab80cc2afa19636d15eb2fa905"
+  },
+  "dag_ml_data_wasm_bg.wasm.d.ts": {
+    "size": 4363,
+    "sha256": "9f6716d8350aa14b8cbc2b57e0ff3bc987ca3849b6557447310db5041017390c"
+  },
+  "package.json": {
+    "size": 621,
+    "sha256": "f0df8f05379c39b0211b6b934e542b78f7b3c1dead4f23f1a233b35f9a2e3d12"
+  }
 })
 const EXPECTED_LICENSE_FILES = Object.freeze([
   'LICENSE',
@@ -58,16 +103,20 @@ if (!existsSync(receiptPath)) {
 }
 const receipt = JSON.parse(readFileSync(receiptPath, 'utf8'))
 if (
-  receipt.schema !== 'nirs4all-web.wasm-provenance.v1' ||
+  receipt.schema !== 'nirs4all-web.wasm-single-build.v1' ||
   receipt.component !== 'dag-ml-data-wasm' ||
   receipt.version !== EXPECTED.version ||
   receipt.source?.commit !== EXPECTED.commit ||
   receipt.source?.tree !== EXPECTED.tree ||
   receipt.source?.clean !== true ||
   receipt.build?.cargo_locked !== true ||
+  receipt.build?.wasm_bindgen_lock !== '0.2.126' ||
+  receipt.build?.target !== 'web' ||
+  receipt.build?.profile !== 'release' ||
   JSON.stringify(receipt.build?.features) !== JSON.stringify(['provider']) ||
-  receipt.reproducibility?.independent_target_directories !== 2 ||
-  receipt.reproducibility?.byte_identical !== true ||
+  receipt.build?.executions !== 1 ||
+  receipt.reproducibility?.independent_rebuild_claimed !== false ||
+  receipt.reproducibility?.byte_identical_rebuild_claimed !== false ||
   receipt.licensing?.expression !== 'CECILL-2.1 OR AGPL-3.0-or-later' ||
   receipt.licensing?.payload_source !== 'qualified source tree' ||
   JSON.stringify(receipt.licensing?.files) !== JSON.stringify(EXPECTED_LICENSE_FILES)

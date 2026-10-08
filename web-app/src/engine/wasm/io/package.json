@@ -5,7 +5,7 @@
     "Gregory Beurier <gregory.beurier@cirad.fr>"
   ],
   "description": "wasm-bindgen binding for nirs4all-io: the fs-free JSON surface (to_spec / validate over a spec dict). Excluded from the cargo workspace; built with wasm-pack.",
-  "version": "0.2.4",
+  "version": "0.2.6",
   "license": "CECILL-2.1 OR AGPL-3.0-or-later",
   "repository": {
     "type": "git",
@@ -18,6 +18,8 @@
     "nirs4all_io_wasm.d.ts",
     "idiomatic.mjs",
     "idiomatic.d.ts",
+    "public-dataset.mjs",
+    "public-dataset.d.ts",
     "types/nirs4all-io.d.ts",
     "LICENSE",
     "LICENSES",
@@ -48,6 +50,11 @@
     },
     "./types": {
       "types": "./types/nirs4all-io.d.ts"
+    },
+    "./public-dataset": {
+      "types": "./public-dataset.d.ts",
+      "import": "./public-dataset.mjs",
+      "default": "./public-dataset.mjs"
     }
   }
 }

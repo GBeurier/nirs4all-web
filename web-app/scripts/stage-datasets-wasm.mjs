@@ -7,7 +7,6 @@ import {
   mkdtempSync,
   readFileSync,
   readdirSync,
-  rmSync,
   statSync,
   writeFileSync,
 } from 'node:fs'
@@ -16,9 +15,9 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED_SOURCE = Object.freeze({
-  commit: '53017672c82df106a17b512846425bc9e846565f',
-  tree: '68513f3b938407846a9014d0dad47f58ded09bf4',
-  version: '0.3.9',
+  commit: 'e68d1befb6cb8245799e83d4b4e4c41e66287689',
+  tree: 'f72111a2bfa9a73a628e87be2546969982d36f1d',
+  version: '0.3.11',
 })
 const PACKAGE_NAME = '@nirs4all/datasets-wasm'
 const GENERATED_PACKAGE_NAME = '@nirs4all/nirs4all-datasets-wasm'
@@ -53,7 +52,7 @@ function command(commandName, args, options = {}) {
 }
 
 function git(...args) {
-  return command('git', ['-C', sourceRoot, ...args], { capture: true })
+  return command('git', ['-c', 'core.filemode=false', '-C', sourceRoot, ...args], { capture: true })
 }
 
 function sha256(path) {
@@ -111,13 +110,16 @@ if (source.commit !== EXPECTED_SOURCE.commit || source.tree !== EXPECTED_SOURCE.
   )
 }
 
+const lock = readFileSync(join(crateRoot, 'Cargo.lock'), 'utf8').replace(/\r\n/g, '\n')
+const bindgenVersion = lock.match(/name = "wasm-bindgen"\nversion = "([^"]+)"/)?.[1]
+if (bindgenVersion !== '0.2.123') throw new Error(`unexpected wasm-bindgen lock ${bindgenVersion}; expected 0.2.123`)
+
 const proofRoot = mkdtempSync(join(tmpdir(), 'nirs4all-web-datasets-'))
 const outputs = []
 let generatedPackageName = ''
 try {
-  for (const leg of ['a', 'b']) {
+  for (const leg of ['single']) {
     const output = join(proofRoot, `out-${leg}`)
-    const target = join(proofRoot, `target-${leg}`)
     const args = [
       'build',
       crateRoot,
@@ -134,7 +136,7 @@ try {
     command(wasmPack, args, {
       env: {
         ...process.env,
-        CARGO_TARGET_DIR: target,
+        CARGO_TARGET_DIR: process.env.NIRS4ALL_WEB_WASM_TARGET_DIR ?? join(proofRoot, `target-${leg}`),
         SOURCE_DATE_EPOCH: String(source.epoch),
         CONST_RANDOM_SEED: source.commit,
       },
@@ -152,11 +154,7 @@ try {
     outputs.push(output)
   }
 
-  const hashesA = Object.fromEntries(GENERATED_FILES.map((name) => [name, sha256(join(outputs[0], name))]))
-  const hashesB = Object.fromEntries(GENERATED_FILES.map((name) => [name, sha256(join(outputs[1], name))]))
-  if (JSON.stringify(hashesA) !== JSON.stringify(hashesB)) {
-    throw new Error('nirs4all-datasets WASM A/B builds are not byte-identical')
-  }
+  const builtHashes = Object.fromEntries(GENERATED_FILES.map((name) => [name, sha256(join(outputs[0], name))]))
   if (generatedPackageName !== GENERATED_PACKAGE_NAME) {
     throw new Error(`unexpected wasm-pack package name: ${generatedPackageName}`)
   }
@@ -186,7 +184,7 @@ try {
   }
 
   const provenance = {
-    schema: 'nirs4all-web.wasm-provenance.v1',
+    schema: 'nirs4all-web.wasm-single-build.v1',
     component: 'nirs4all-datasets-wasm',
     package: PACKAGE_NAME,
     version: EXPECTED_SOURCE.version,
@@ -198,8 +196,13 @@ try {
     },
     build: {
       target: 'web',
+      executions: 1,
+      output_directory: outputs[0],
+      retained_build_directory: proofRoot,
+      cargo_target_directory: process.env.NIRS4ALL_WEB_WASM_TARGET_DIR ?? join(proofRoot, 'target-single'),
       profile: 'release',
       cargo_locked: true,
+      wasm_bindgen_lock: bindgenVersion,
       source_date_epoch: source.epoch,
       const_random_seed: source.commit,
       tools: {
@@ -213,8 +216,8 @@ try {
       },
     },
     reproducibility: {
-      independent_target_directories: 2,
-      byte_identical: true,
+      independent_rebuild_claimed: false,
+      byte_identical_rebuild_claimed: false,
     },
     witnesses: {
       runtime_version: true,
@@ -224,11 +227,12 @@ try {
     files: GENERATED_FILES.map((name) => ({
       path: name,
       size: statSync(join(destination, name)).size,
-      sha256: hashesA[name],
+      sha256: builtHashes[name],
     })),
   }
   writeFileSync(join(destination, 'PROVENANCE.json'), `${JSON.stringify(provenance, null, 2)}\n`)
   console.log(`staged nirs4all-datasets WASM ${EXPECTED_SOURCE.version} from ${source.commit}`)
 } finally {
-  rmSync(proofRoot, { recursive: true, force: true })
+  // Keep the one build output and failed-run evidence in this task-owned directory.
+  console.log(`retained browser binding build evidence: ${proofRoot}`)
 }

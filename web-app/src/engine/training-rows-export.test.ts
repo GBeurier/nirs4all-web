@@ -14,6 +14,7 @@ import type { MaterializedDataset, PipelineDSL, RunResult } from './types'
 import { WorkerEngine } from './worker-engine'
 
 let backend: ModelBackend
+let mljs: ModelBackend
 let ds: MaterializedDataset
 
 const pipeline = (model: string, params: Record<string, unknown>): PipelineDSL => ({
@@ -32,6 +33,7 @@ const testRows = (): { X: Float64Array; n: number } => {
 beforeAll(async () => {
   backend = await loadLibn4mBackend()
   ds = await loadSampleDataset('corn')
+  mljs = await loadMlJsBackend()
 })
 
 describe('training-row export policy', () => {
@@ -79,7 +81,6 @@ describe('training-row export policy', () => {
   })
 
   it('applies the same consent to an ml.js k-NN, whose artifact stores its training points', async () => {
-    const mljs = await loadMlJsBackend()
     const X: Mat = { data: Float64Array.from({ length: 16 }, (_, i) => i), rows: 8, cols: 2 }
     const Y: Mat = { data: Float64Array.from({ length: 16 }, (_, i) => ((i >> 1) < 4 ? i % 2 : 1 - (i % 2))), rows: 8, cols: 2 }
     const knn = mljs.fit({ type: 'MlJsKNeighborsClassifier', params: { n_neighbors: 3 } }, X, Y, 1)

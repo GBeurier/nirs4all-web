@@ -4,20 +4,41 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED = Object.freeze({
-  commit: '53017672c82df106a17b512846425bc9e846565f',
-  tree: '68513f3b938407846a9014d0dad47f58ded09bf4',
-  version: '0.3.9',
+  commit: 'e68d1befb6cb8245799e83d4b4e4c41e66287689',
+  tree: 'f72111a2bfa9a73a628e87be2546969982d36f1d',
+  version: '0.3.11',
   package: '@nirs4all/datasets-wasm',
   generatedPackage: '@nirs4all/nirs4all-datasets-wasm',
 })
 const EXPECTED_FILES = Object.freeze({
-  'LICENSE': { size: 1110, sha256: 'd013c19348cb484bf19db0406cafeecb8df2103fd3a8a55a9dc16ce948bcdb96' },
-  'README.md': { size: 1551, sha256: 'a9d335168cc534a9367661135d6db4fc8d9483b7ca1fa5cff7c72d5aeb3cb81f' },
-  'nirs4all_datasets_wasm.d.ts': { size: 2179, sha256: '56155de207a39df2f6687e37e47c29b25f130c60dc5e5106088d64fd7e20294d' },
-  'nirs4all_datasets_wasm.js': { size: 8680, sha256: 'c965911f3ba0289d5b9035b1a3b80abcae309f26f2322595dbfb08c44e36ec0e' },
-  'nirs4all_datasets_wasm_bg.wasm': { size: 195502, sha256: '9275834e88b052304b0258022956ab99373cd874b2c6167081faedf58ad20f0a' },
-  'nirs4all_datasets_wasm_bg.wasm.d.ts': { size: 688, sha256: '5306e0127507cd339d4039117701a8968eb69058658e01641ce0ba54378f1ae8' },
-  'package.json': { size: 707, sha256: 'ba0c18bd68a571b04223cb5f64df4d486f387e363817bd7e8d621077dfb3a791' },
+  "LICENSE": {
+    "size": 1110,
+    "sha256": "d013c19348cb484bf19db0406cafeecb8df2103fd3a8a55a9dc16ce948bcdb96"
+  },
+  "README.md": {
+    "size": 1551,
+    "sha256": "a9d335168cc534a9367661135d6db4fc8d9483b7ca1fa5cff7c72d5aeb3cb81f"
+  },
+  "nirs4all_datasets_wasm.d.ts": {
+    "size": 2179,
+    "sha256": "56155de207a39df2f6687e37e47c29b25f130c60dc5e5106088d64fd7e20294d"
+  },
+  "nirs4all_datasets_wasm.js": {
+    "size": 8680,
+    "sha256": "c965911f3ba0289d5b9035b1a3b80abcae309f26f2322595dbfb08c44e36ec0e"
+  },
+  "nirs4all_datasets_wasm_bg.wasm": {
+    "size": 195633,
+    "sha256": "af9694d04cf9c7c049b41e8316c5ca94e1cf73e19759de834eb1c895b6e62dfa"
+  },
+  "nirs4all_datasets_wasm_bg.wasm.d.ts": {
+    "size": 688,
+    "sha256": "5306e0127507cd339d4039117701a8968eb69058658e01641ce0ba54378f1ae8"
+  },
+  "package.json": {
+    "size": 708,
+    "sha256": "a360fa68a03ea5b91610c0b02fb294095cc262b84808eae176889722779b483c"
+  }
 })
 const scriptDir = dirname(fileURLToPath(import.meta.url))
 const bundleRoot = resolve(scriptDir, '..', 'src', 'engine', 'wasm', 'datasets')
@@ -58,7 +79,7 @@ if (!existsSync(receiptPath)) {
 }
 const receipt = JSON.parse(readFileSync(receiptPath, 'utf8'))
 if (
-  receipt.schema !== 'nirs4all-web.wasm-provenance.v1' ||
+  receipt.schema !== 'nirs4all-web.wasm-single-build.v1' ||
   receipt.component !== 'nirs4all-datasets-wasm' ||
   receipt.package !== EXPECTED.package ||
   receipt.version !== EXPECTED.version ||
@@ -68,11 +89,13 @@ if (
   receipt.build?.target !== 'web' ||
   receipt.build?.profile !== 'release' ||
   receipt.build?.cargo_locked !== true ||
+  receipt.build?.wasm_bindgen_lock !== '0.2.123' ||
   receipt.build?.const_random_seed !== EXPECTED.commit ||
   receipt.build?.package_name_normalization?.from !== EXPECTED.generatedPackage ||
   receipt.build?.package_name_normalization?.to !== EXPECTED.package ||
-  receipt.reproducibility?.independent_target_directories !== 2 ||
-  receipt.reproducibility?.byte_identical !== true ||
+  receipt.build?.executions !== 1 ||
+  receipt.reproducibility?.independent_rebuild_claimed !== false ||
+  receipt.reproducibility?.byte_identical_rebuild_claimed !== false ||
   receipt.witnesses?.runtime_version !== true ||
   receipt.witnesses?.sha256_abc !== true ||
   receipt.witnesses?.resolve_contract !== true

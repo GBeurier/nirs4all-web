@@ -21,8 +21,7 @@ npm run build
 ```
 
 The package uses file dependencies against `../../vendor/nirs4all` and the exact content-addressed
-`../../vendor/npm/nirs4all-ui-0.1.14.tgz` artifact, so it is tested against the same vendored release
-candidate as `web.nirs4all.org`.
+`../../vendor/npm/nirs4all-ui-0.1.15.tgz` artifact, so it is tested against the same published payload as `web.nirs4all.org`.
 
 ## Host Boundary
 

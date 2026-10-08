@@ -5,21 +5,65 @@
     "G. Beurier <beurier@cirad.fr>"
   ],
   "description": "WASM bindings for DAG-ML JSON contracts.",
-  "version": "0.3.34",
+  "version": "0.3.41",
   "license": "CECILL-2.1 OR AGPL-3.0-or-later",
   "repository": {
     "type": "git",
-    "url": "https://github.com/GBeurier/dag-ml"
+    "url": "git+https://github.com/GBeurier/dag-ml.git",
+    "directory": "crates/dag-ml-wasm"
   },
   "files": [
     "dag_ml_wasm_bg.wasm",
     "dag_ml_wasm.js",
-    "dag_ml_wasm.d.ts"
+    "dag_ml_wasm.d.ts",
+    "n4m_estimator_controller.mjs",
+    "n4m_estimator_controller.d.ts",
+    "n4m_controller.mjs",
+    "n4m_controller.d.ts",
+    "n4m_hpo_optimizer.mjs",
+    "n4m_hpo_optimizer.d.ts",
+    "n4m_multimodal_controller.mjs",
+    "multimodal_archive.mjs",
+    "multimodal_dataset_replay.mjs"
   ],
   "main": "dag_ml_wasm.js",
   "homepage": "https://github.com/GBeurier/dag-ml",
   "types": "dag_ml_wasm.d.ts",
   "sideEffects": [
     "./snippets/*"
-  ]
+  ],
+  "exports": {
+    ".": {
+      "types": "./dag_ml_wasm.d.ts",
+      "default": "./dag_ml_wasm.js"
+    },
+    "./n4m-estimator-controller": {
+      "types": "./n4m_estimator_controller.d.ts",
+      "import": "./n4m_estimator_controller.mjs"
+    },
+    "./n4m-controller": {
+      "types": "./n4m_controller.d.ts",
+      "import": "./n4m_controller.mjs"
+    },
+    "./n4m-optimizer": {
+      "types": "./n4m_hpo_optimizer.d.ts",
+      "import": "./n4m_hpo_optimizer.mjs"
+    },
+    "./multimodal_dataset_replay": {
+      "import": "./multimodal_dataset_replay.mjs"
+    },
+    "./*": "./*"
+  },
+  "peerDependencies": {
+    "@nirs4all/methods": "^1.2.1"
+  },
+  "peerDependenciesMeta": {
+    "@nirs4all/methods": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
 }

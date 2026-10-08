@@ -75,8 +75,8 @@ export interface InitOutput {
     readonly openWithSidecars: (a: number, b: number, c: number, d: number, e: any) => [number, number, number];
     readonly probeBytes: (a: number, b: number, c: number, d: number) => [number, number, number];
     readonly readerCatalog: () => [number, number, number];
+    readonly recommended_chunk_size_mb: () => number;
     readonly sidecarRequirements: (a: number, b: number, c: number, d: number) => [number, number, number];
-    readonly version: () => [number, number];
     readonly rust_zstd_wasm_shim_calloc: (a: number, b: number) => number;
     readonly rust_zstd_wasm_shim_free: (a: number) => void;
     readonly rust_zstd_wasm_shim_malloc: (a: number) => number;
@@ -85,14 +85,14 @@ export interface InitOutput {
     readonly rust_zstd_wasm_shim_memmove: (a: number, b: number, c: number) => number;
     readonly rust_zstd_wasm_shim_memset: (a: number, b: number, c: number) => number;
     readonly rust_zstd_wasm_shim_qsort: (a: number, b: number, c: number, d: number) => void;
-    readonly recommended_chunk_size_mb: () => number;
+    readonly version: () => [number, number];
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_exn_store: (a: number) => void;
     readonly __externref_table_alloc: () => number;
     readonly __wbindgen_externrefs: WebAssembly.Table;
-    readonly __externref_table_dealloc: (a: number) => void;
     readonly __wbindgen_free: (a: number, b: number, c: number) => void;
+    readonly __externref_table_dealloc: (a: number) => void;
     readonly __wbindgen_start: () => void;
 }
 

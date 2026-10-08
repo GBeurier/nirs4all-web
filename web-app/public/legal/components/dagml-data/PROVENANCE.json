@@ -1,21 +1,26 @@
 {
-  "schema": "nirs4all-web.wasm-provenance.v1",
+  "schema": "nirs4all-web.wasm-single-build.v1",
   "component": "dag-ml-data-wasm",
-  "version": "0.2.10",
+  "version": "0.2.13",
   "source": {
     "repository": "https://github.com/GBeurier/dag-ml-data",
-    "commit": "1f60b920d34acda7c0fbc044b593bb6af1fab4c1",
-    "tree": "f2144d861642e81758dcef4f6ee76ec32c0961ff",
+    "commit": "78719b68c8e9ffd4c2035792574b8da33387d237",
+    "tree": "718aabf02fd704ee7d18aa6127c59ac1ffe3c2ec",
     "clean": true
   },
   "build": {
     "target": "web",
+    "executions": 1,
+    "output_directory": "/mnt/c/Temp/n4a-downstream041-20261008/web041-actual-staging-sequential-v1/tmp/nirs4all-web-dagml-data-mW4oZE/out-single",
+    "retained_build_directory": "/mnt/c/Temp/n4a-downstream041-20261008/web041-actual-staging-sequential-v1/tmp/nirs4all-web-dagml-data-mW4oZE",
+    "cargo_target_directory": "/mnt/c/Temp/n4a-downstream041-20261008/web041-browser-cargo-target-v1",
     "profile": "release",
     "cargo_locked": true,
+    "wasm_bindgen_lock": "0.2.126",
     "features": [
       "provider"
     ],
-    "source_date_epoch": 1788363144,
+    "source_date_epoch": 1791230334,
     "tools": {
       "wasm_pack": "wasm-pack 0.15.0",
       "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
@@ -23,8 +28,8 @@
     }
   },
   "reproducibility": {
-    "independent_target_directories": 2,
-    "byte_identical": true
+    "independent_rebuild_claimed": false,
+    "byte_identical_rebuild_claimed": false
   },
   "licensing": {
     "expression": "CECILL-2.1 OR AGPL-3.0-or-later",
@@ -104,8 +109,8 @@
     },
     {
       "path": "dag_ml_data_wasm_bg.wasm",
-      "size": 1202907,
-      "sha256": "ae5475188fb29e3027ae041ce6c157d9cd87de79564022f80e5325d2497cb31b"
+      "size": 1657293,
+      "sha256": "7afa87e314e74e56294691e5a34e0584edaa4bab80cc2afa19636d15eb2fa905"
     },
     {
       "path": "dag_ml_data_wasm_bg.wasm.d.ts",
@@ -115,7 +120,7 @@
     {
       "path": "package.json",
       "size": 621,
-      "sha256": "35364cd0376c83da5fd594b679aaefe62fdd321f99df44c6557dc02135810348"
+      "sha256": "f0df8f05379c39b0211b6b934e542b78f7b3c1dead4f23f1a233b35f9a2e3d12"
     }
   ]
 }

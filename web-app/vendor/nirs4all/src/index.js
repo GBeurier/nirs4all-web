@@ -1,6 +1,14 @@
+export { runBrowserPipeline, loadBrowserPipeline, predictBrowserPipeline, BrowserNativePipeline } from './browser-native-pipeline.js';
 import { parse as parseYaml } from 'yaml';
 import { NATIVE_X_AUGMENTATION_CLASS, parseTrainAugmentation } from './native-augmentation.js';
 import { n4mRoleMethodId, resolvesN4mRole } from './n4m-roles.js';
+
+export { openExperiment } from './result-view.js';
+export { Workflow, run, predict, retrain, exportWorkflow, load } from './workflow.js';
+export { dataset, MultimodalPredictor } from './multimodal.js';
+export { generate, tune, NativeTuningResult, loadTuning } from './tuning.js';
+export { tuneBrowser, loadBrowserTuning, BrowserTuningResult } from './browser-tuning.js';
+export { CalibratedWorkflow, calibrate, predictCalibrated, conformalMetrics, exportCalibrated, loadCalibrated } from './conformal.js';
 
 export const upstreams = Object.freeze([
   {
@@ -490,7 +498,16 @@ function initializedWasmLoader(load, init) {
   };
 }
 
-export const loadDagMlWasm = initializedWasmLoader(loadDagMl);
+export const loadDagMlWasm = initializedWasmLoader(loadDagMl, async (mod) => {
+  if (typeof mod.default !== 'function') return;
+  if (typeof process !== 'undefined' && process?.versions?.node) {
+    const { readFile } = await import('node:fs/promises');
+    const bytes = await readFile(new URL(import.meta.resolve('dag-ml-wasm/dag_ml_wasm_bg.wasm')));
+    await mod.default({ module_or_path: bytes });
+  } else {
+    await mod.default();
+  }
+});
 export const loadDagMlDataWasm = initializedWasmLoader(loadDagMlData);
 export const loadDatasetsWasm = initializedWasmLoader(loadDatasets);
 
@@ -666,3 +683,12 @@ export {
   writePortableArchiveV2,
   replayMethodsArchiveV2,
 } from './archive-v2.js';
+
+export { robustness } from './robustness.js';
+
+export { predictMultimodalArchive } from './multimodal-archive.js';
+
+export { openWorkspace } from './workspace.js';
+export { NativePipeline, runPipeline } from "./native-pipeline.js";
+
+export { NativeMultimodal, runMultimodal } from "./native-multimodal.js";

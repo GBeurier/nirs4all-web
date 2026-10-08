@@ -5,7 +5,7 @@
     "G. Beurier <beurier@cirad.fr>"
   ],
   "description": "WASM bindings for dag-ml-data JSON contracts.",
-  "version": "0.2.10",
+  "version": "0.2.13",
   "license": "CECILL-2.1 OR AGPL-3.0-or-later",
   "repository": {
     "type": "git",
