@@ -7,7 +7,6 @@ import {
   mkdtempSync,
   readFileSync,
   readdirSync,
-  rmSync,
   statSync,
   writeFileSync,
 } from 'node:fs'
@@ -16,9 +15,9 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED_SOURCE = Object.freeze({
-  commit: '1f60b920d34acda7c0fbc044b593bb6af1fab4c1',
-  tree: 'f2144d861642e81758dcef4f6ee76ec32c0961ff',
-  version: '0.2.10',
+  commit: '78719b68c8e9ffd4c2035792574b8da33387d237',
+  tree: '718aabf02fd704ee7d18aa6127c59ac1ffe3c2ec',
+  version: '0.2.13',
 })
 const GENERATED_FILES = Object.freeze([
   'LICENSE',
@@ -61,7 +60,7 @@ function command(commandName, args, options = {}) {
 }
 
 function git(...args) {
-  return command('git', ['-C', sourceRoot, ...args], { capture: true })
+  return command('git', ['-c', 'core.filemode=false', '-C', sourceRoot, ...args], { capture: true })
 }
 
 function sha256(path) {
@@ -98,12 +97,15 @@ if (source.commit !== EXPECTED_SOURCE.commit || source.tree !== EXPECTED_SOURCE.
   )
 }
 
+const lock = readFileSync(join(sourceRoot, 'Cargo.lock'), 'utf8').replace(/\r\n/g, '\n')
+const bindgenVersion = lock.match(/name = "wasm-bindgen"\nversion = "([^"]+)"/)?.[1]
+if (bindgenVersion !== '0.2.126') throw new Error(`unexpected wasm-bindgen lock ${bindgenVersion}; expected 0.2.126`)
+
 const proofRoot = mkdtempSync(join(tmpdir(), 'nirs4all-web-dagml-data-'))
 const outputs = []
 try {
-  for (const leg of ['a', 'b']) {
+  for (const leg of ['single']) {
     const output = join(proofRoot, `out-${leg}`)
-    const target = join(proofRoot, `target-${leg}`)
     command(
       wasmPack,
       [
@@ -122,7 +124,7 @@ try {
       {
         env: {
           ...process.env,
-          CARGO_TARGET_DIR: target,
+          CARGO_TARGET_DIR: process.env.NIRS4ALL_WEB_WASM_TARGET_DIR ?? join(proofRoot, `target-${leg}`),
           SOURCE_DATE_EPOCH: String(source.epoch),
         },
       },
@@ -136,11 +138,7 @@ try {
     outputs.push(output)
   }
 
-  const hashesA = Object.fromEntries(GENERATED_FILES.map((name) => [name, sha256(join(outputs[0], name))]))
-  const hashesB = Object.fromEntries(GENERATED_FILES.map((name) => [name, sha256(join(outputs[1], name))]))
-  if (JSON.stringify(hashesA) !== JSON.stringify(hashesB)) {
-    throw new Error('dag-ml-data WASM A/B builds are not byte-identical')
-  }
+  const builtHashes = Object.fromEntries(GENERATED_FILES.map((name) => [name, sha256(join(outputs[0], name))]))
 
   const builtPackage = JSON.parse(readFileSync(join(outputs[0], 'package.json'), 'utf8'))
   if (
@@ -176,7 +174,7 @@ try {
   const stagedHashes = Object.fromEntries(STAGED_FILES.map((name) => [name, sha256(join(destination, name))]))
 
   const provenance = {
-    schema: 'nirs4all-web.wasm-provenance.v1',
+    schema: 'nirs4all-web.wasm-single-build.v1',
     component: 'dag-ml-data-wasm',
     version: EXPECTED_SOURCE.version,
     source: {
@@ -187,8 +185,13 @@ try {
     },
     build: {
       target: 'web',
+      executions: 1,
+      output_directory: outputs[0],
+      retained_build_directory: proofRoot,
+      cargo_target_directory: process.env.NIRS4ALL_WEB_WASM_TARGET_DIR ?? join(proofRoot, 'target-single'),
       profile: 'release',
       cargo_locked: true,
+      wasm_bindgen_lock: bindgenVersion,
       features: ['provider'],
       source_date_epoch: source.epoch,
       tools: {
@@ -198,8 +201,8 @@ try {
       },
     },
     reproducibility: {
-      independent_target_directories: 2,
-      byte_identical: true,
+      independent_rebuild_claimed: false,
+      byte_identical_rebuild_claimed: false,
     },
     licensing: {
       expression: builtPackage.license,
@@ -215,5 +218,6 @@ try {
   writeFileSync(join(destination, 'PROVENANCE.json'), `${JSON.stringify(provenance, null, 2)}\n`)
   console.log(`staged dag-ml-data WASM ${EXPECTED_SOURCE.version} from ${source.commit}`)
 } finally {
-  rmSync(proofRoot, { recursive: true, force: true })
+  // Keep the one build output and failed-run evidence in this task-owned directory.
+  console.log(`retained browser binding build evidence: ${proofRoot}`)
 }

@@ -4,9 +4,9 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED = Object.freeze({
-  "commit": "b3baefc6ae69f036e4475e24ff1b971adf5b968e",
-  "tree": "873f8064cd50e5cc1811d3c73e23bbee16e1d3da",
-  "version": "0.2.4",
+  "commit": "0e3190557bc848d9ae3756f6b7e75c179530ee40",
+  "tree": "5535e66a7d291b155d0f7fe7dcd27b21c1eb6106",
+  "version": "0.2.6",
   "wasmBindgen": "0.2.122",
   "package": "@nirs4all/io-wasm",
   "generatedPackage": "nirs4all-io-wasm"
@@ -74,7 +74,7 @@ const EXPECTED_FILES = Object.freeze({
   },
   "nirs4all-io-wasm.cdx.json": {
     "size": 34111,
-    "sha256": "55235cbdf448a6e67eff6543773c224715515848af096c9cfd7f87af65b3e4ce"
+    "sha256": "86514440a172e3ef77292fc15e2ff678587e02bd30af401e80764eff92c72e51"
   },
   "nirs4all_io_wasm.d.ts": {
     "size": 5369,
@@ -85,16 +85,24 @@ const EXPECTED_FILES = Object.freeze({
     "sha256": "8fc4d75bc209f53db50aa2dc2ca1d5c159202bc2f10b4fe392b59963e12e005d"
   },
   "nirs4all_io_wasm_bg.wasm": {
-    "size": 2355624,
-    "sha256": "f99c682f182e2df2f27f23d9a6b5d1d682e3d8e676e392e3dd7f22057d4aec78"
+    "size": 2352924,
+    "sha256": "ccb5daeb1e2d6df1753dfbb5e0c17cc33b6e4de92dead472eb9de2ed00941f6d"
   },
   "nirs4all_io_wasm_bg.wasm.d.ts": {
     "size": 1273,
     "sha256": "fd34bc545e2588f28a9d388e7ac3890e83d9af1a38e2861c4426bdd8a1fb1740"
   },
   "package.json": {
-    "size": 1375,
-    "sha256": "c381e13d03c023a7776a2284901aaa3e5a052b2a40b5be21d8ed82ff2ceeaf9a"
+    "size": 1581,
+    "sha256": "bffb54e9cea274f2036b62c7796c5a5ea31511d3addfb483e36787e06ca9f056"
+  },
+  "public-dataset.d.ts": {
+    "size": 4765,
+    "sha256": "c5f53b89e2ceb21bc9aafe0d6ed8bd2f037eda58f1a36997ca895ec638c181a8"
+  },
+  "public-dataset.mjs": {
+    "size": 31122,
+    "sha256": "4932c790129295a92ef6317d0d4958057c1c7bc4882f3b077f6bb4c1abb281b9"
   },
   "types/nirs4all-io.d.ts": {
     "size": 3923,
@@ -136,7 +144,7 @@ function assertRuntimeWitness(module) {
 if (!existsSync(receiptPath)) throw new Error(`missing nirs4all-io WASM provenance: ${receiptPath}`)
 const receipt = JSON.parse(readFileSync(receiptPath, 'utf8'))
 if (
-  receipt.schema !== 'nirs4all-web.wasm-provenance.v1' ||
+  receipt.schema !== 'nirs4all-web.wasm-single-build.v1' ||
   receipt.component !== 'nirs4all-io-wasm' ||
   receipt.package !== EXPECTED.package ||
   receipt.version !== EXPECTED.version ||
@@ -151,8 +159,9 @@ if (
   receipt.build?.package_name_normalization?.from !== EXPECTED.generatedPackage ||
   receipt.build?.package_name_normalization?.to !== EXPECTED.package ||
   receipt.build?.source_package_stager !== 'scripts/stage_wasm_package.mjs' ||
-  receipt.reproducibility?.independent_target_directories !== 2 ||
-  receipt.reproducibility?.byte_identical !== true ||
+  receipt.build?.executions !== 1 ||
+  receipt.reproducibility?.independent_rebuild_claimed !== false ||
+  receipt.reproducibility?.byte_identical_rebuild_claimed !== false ||
   receipt.witnesses?.runtime_version !== true ||
   receipt.witnesses?.to_spec_validate !== true ||
   receipt.witnesses?.infer_files !== true ||

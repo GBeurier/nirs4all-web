@@ -1,52 +1,140 @@
 {
-  "schema": "nirs4all-web.wasm-provenance.v1",
+  "schema": "nirs4all-web.wasm-pages-acquisition.v1",
   "component": "nirs4all-formats-wasm",
-  "package": "@nirs4all/formats-wasm",
-  "version": "0.2.9",
+  "package": "nirs4all-formats-wasm",
+  "version": "0.2.11",
   "source": {
     "repository": "https://github.com/GBeurier/nirs4all-formats",
-    "commit": "3e5a05674dfab4bbcebf23fe9d615d231ca4d551",
-    "tree": "3b9717258fc80791d80641633a4bbf6478e7256a",
-    "clean": true
+    "commit": "8c6acd6b02b0bb746ae8df43efa062515ef4a774",
+    "tree": "dbfb15e7a9f72921f374ad8e8ece77fff2813170",
+    "basis": "Captured public Pages deployment and successful official run at this source; legal extras read from its exact Git tree."
   },
-  "build": {
+  "acquisition": {
+    "base_url": "https://formats.nirs4all.org/",
+    "deployment_id": 6854695245,
+    "deployment_created_at": "2026-10-05T08:36:36Z",
+    "run_id": 37284171869,
+    "authority_files": {
+      "formats211-official-demo-run.json": {
+        "size": 12697,
+        "sha256": "96381bd4f54bec60e7e047d017529b938e4b00a57284d8dcbc508141c8cc4177"
+      },
+      "formats211-public-pages-deployment.json": {
+        "size": 3837,
+        "sha256": "e992b2bb51fb30fe96a57dd720e7d00d34415f419c151fe01e703263c1bd3d7e"
+      },
+      "formats211-public-pages-deployment-statuses.json": {
+        "size": 6681,
+        "sha256": "27d0a8254017a6e8ae813d4e05f5705145467d1062df6c63fc7aaae2617d5676"
+      }
+    },
+    "downloads_receipt": {
+      "size": 2088,
+      "sha256": "0fd0c490e956f84c7543f2135d39bc1d4bdb9b120546d82a857e4d3ad42e6bf1"
+    },
+    "published_files": {
+      "nirs4all_formats_wasm.js": {
+        "size": 24342,
+        "sha256": "0aa9d2846558f6bcdecb533d498c7f942209381173c07ecc4304409fa6c8d512",
+        "url": "https://formats.nirs4all.org/pkg/nirs4all_formats_wasm.js"
+      },
+      "README.md": {
+        "size": 2918,
+        "sha256": "724b92047f40593956684d2e0e58fced595df93eb01c953792bc5e43ef0345ee",
+        "url": "https://formats.nirs4all.org/pkg/README.md"
+      },
+      "nirs4all_formats_wasm.d.ts": {
+        "size": 5205,
+        "sha256": "8597d9efc46e53fa69616fb367a9408011d1b46ee83adc4741a0214fef03e4a4",
+        "url": "https://formats.nirs4all.org/pkg/nirs4all_formats_wasm.d.ts"
+      },
+      "nirs4all_formats_wasm_bg.wasm": {
+        "size": 5659774,
+        "sha256": "f6188c14eef3745e14e2120c455f779d2eb0d7fddac60af3cab63416ab66fe81",
+        "url": "https://formats.nirs4all.org/pkg/nirs4all_formats_wasm_bg.wasm"
+      },
+      "nirs4all_formats_wasm_bg.wasm.d.ts": {
+        "size": 1882,
+        "sha256": "b55b7d5f66ab0c6a974cadd0965e3c66fdea7908d71398428d55f39a84add466",
+        "url": "https://formats.nirs4all.org/pkg/nirs4all_formats_wasm_bg.wasm.d.ts"
+      },
+      "package.json": {
+        "size": 609,
+        "sha256": "d6180c53b998f20154568cff37a644fe8749eccbadd8c76987e7124b3d6b6f4a",
+        "url": "https://formats.nirs4all.org/pkg/package.json"
+      }
+    }
+  },
+  "public_workflow": {
     "target": "web",
     "profile": "release",
-    "cargo_locked": true,
-    "source_date_epoch": 1788439136,
-    "const_random_seed": "3e5a05674dfab4bbcebf23fe9d615d231ca4d551",
-    "wasm_bindgen_lock": "0.2.127",
-    "tools": {
-      "wasm_pack": "wasm-pack 0.15.0",
-      "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
-      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
-      "emcc": "emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 3.1.74 (1092ec30a3fb1d46b1782ff1b4db5094d3d06ae5)"
-    },
-    "package_name_normalization": {
-      "from": "nirs4all-formats-wasm",
-      "to": "@nirs4all/formats-wasm"
-    },
-    "supplemental_license_payload": [
-      "LICENSE",
-      "LICENSING.md",
-      "THIRD_PARTY_NOTICES.md",
-      "LICENSES/AGPL-3.0-or-later.txt",
-      "LICENSES/Apache-2.0.txt",
-      "LICENSES/BSD-3-Clause.txt",
-      "LICENSES/CeCILL-2.1.txt",
-      "LICENSES/MIT.txt"
-    ]
+    "features": [
+      "console-errors"
+    ],
+    "cargo_locked_flag_present": false
   },
   "reproducibility": {
-    "independent_target_directories": 2,
-    "byte_identical": true
+    "performed_by_web": false,
+    "independent_rebuild_claimed": false
   },
-  "witnesses": {
-    "runtime_version": true,
-    "feature_flags": true,
-    "reader_catalog_count": 44,
-    "chunk_size_mb": 4
-  },
+  "source_extra_files": [
+    {
+      "path": "LICENSE",
+      "source_path": "LICENSE",
+      "source_commit": "8c6acd6b02b0bb746ae8df43efa062515ef4a774",
+      "size": 34020,
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+    },
+    {
+      "path": "LICENSING.md",
+      "source_path": "LICENSING.md",
+      "source_commit": "8c6acd6b02b0bb746ae8df43efa062515ef4a774",
+      "size": 1436,
+      "sha256": "a002efcef5dd83e5612fbd38990b0265da5fef66a67bfc7c849bdf06860076fd"
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "source_path": "THIRD_PARTY_NOTICES.md",
+      "source_commit": "8c6acd6b02b0bb746ae8df43efa062515ef4a774",
+      "size": 1756,
+      "sha256": "9b775a48b4c988ea2d892a91df024be0fe97b7721325370ad1d1a051d7176fa8"
+    },
+    {
+      "path": "LICENSES/AGPL-3.0-or-later.txt",
+      "source_path": "LICENSES/AGPL-3.0-or-later.txt",
+      "source_commit": "8c6acd6b02b0bb746ae8df43efa062515ef4a774",
+      "size": 34020,
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+    },
+    {
+      "path": "LICENSES/Apache-2.0.txt",
+      "source_path": "LICENSES/Apache-2.0.txt",
+      "source_commit": "8c6acd6b02b0bb746ae8df43efa062515ef4a774",
+      "size": 10280,
+      "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+    },
+    {
+      "path": "LICENSES/BSD-3-Clause.txt",
+      "source_path": "LICENSES/BSD-3-Clause.txt",
+      "source_commit": "8c6acd6b02b0bb746ae8df43efa062515ef4a774",
+      "size": 1460,
+      "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
+    },
+    {
+      "path": "LICENSES/CeCILL-2.1.txt",
+      "source_path": "LICENSES/CeCILL-2.1.txt",
+      "source_commit": "8c6acd6b02b0bb746ae8df43efa062515ef4a774",
+      "size": 21778,
+      "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+    },
+    {
+      "path": "LICENSES/MIT.txt",
+      "source_path": "LICENSES/MIT.txt",
+      "source_commit": "8c6acd6b02b0bb746ae8df43efa062515ef4a774",
+      "size": 1078,
+      "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+    }
+  ],
   "files": [
     {
       "path": "LICENSE",
@@ -90,38 +178,33 @@
     },
     {
       "path": "THIRD_PARTY_NOTICES.md",
-      "size": 1424,
-      "sha256": "b1227b3159f26cd3af19c6f08fddc1662f1aab8118f964d7a968ce725d2e2b75"
+      "size": 1756,
+      "sha256": "9b775a48b4c988ea2d892a91df024be0fe97b7721325370ad1d1a051d7176fa8"
     },
     {
       "path": "nirs4all_formats_wasm.d.ts",
       "size": 5205,
-      "sha256": "de5bed954ea567a7a6b450920207c4edf582b07592c2e68f19d9ea6b05ee4feb"
+      "sha256": "8597d9efc46e53fa69616fb367a9408011d1b46ee83adc4741a0214fef03e4a4"
     },
     {
       "path": "nirs4all_formats_wasm.js",
-      "size": 23435,
-      "sha256": "1ee17efff92d71153517b983d6b190cea765c9092c4c3dcd1e6740d57de642fd"
+      "size": 24342,
+      "sha256": "0aa9d2846558f6bcdecb533d498c7f942209381173c07ecc4304409fa6c8d512"
     },
     {
       "path": "nirs4all_formats_wasm_bg.wasm",
-      "size": 6444993,
-      "sha256": "de0881dfc3ee53729b8c39c4214461660d4bec863a2e39455d797e09c2fffcd0"
+      "size": 5659774,
+      "sha256": "f6188c14eef3745e14e2120c455f779d2eb0d7fddac60af3cab63416ab66fe81"
     },
     {
       "path": "nirs4all_formats_wasm_bg.wasm.d.ts",
       "size": 1882,
-      "sha256": "6c37403e7702d32e7b9c62f50bc0ea8fe78083a56e3dcb98aaa47e70117bec68"
+      "sha256": "b55b7d5f66ab0c6a974cadd0965e3c66fdea7908d71398428d55f39a84add466"
     },
     {
       "path": "package.json",
       "size": 609,
-      "sha256": "69391aafbcccc7c1382a0a182ea04043211ad44fdf741dffe379148101f92541"
-    },
-    {
-      "path": "snippets/rds2rust-b87e702ea5d57172/wasm/decompress.js",
-      "size": 16502,
-      "sha256": "5258768404663b4b48572796afbe51e2a8669a89d3d5e21cf18c41830bf1d46b"
+      "sha256": "d6180c53b998f20154568cff37a644fe8749eccbadd8c76987e7124b3d6b6f4a"
     }
   ]
 }

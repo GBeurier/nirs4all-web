@@ -1,10 +1,25 @@
 # Archive V2 multi-target qualification fixture
 
-`multitarget-pls.n4a` is the canonical stored-ZIP Archive V2 fixture produced
-and qualified by `nirs4all-core` commit
-`7c3ed3fdaeec7dd01ee2a99a8b72bfa378676d66`.
+`multitarget-pls.n4a` is the current stored-ZIP Archive V2 transport produced by
+public DAG-ML 0.3.41 (`6f4044b45028a90a92d3f29287e67779bb5fd0b9`) through
+`build_archive_v2_native_portable_payloads_json`, then persisted and validated
+through public Core 0.4.5 (`5668796aaac9a02d8d0146ec05ead04f9c76657c`).
 
-- SHA-256: `994252030ff80129d0431995bae53eb473082f05825b65714379262b72af13fa`
+The original training outcome, portable predictor package and all seven payload
+members are byte-identical to the historical fixture qualified by Core
+`7c3ed3fdaeec7dd01ee2a99a8b72bfa378676d66`. No model was refitted. The actual
+current producer adds only the previously absent manifest field
+`payloads.methods.n4mm[0].abi_min_minor = 0`. The unchanged 352-byte N4MM model
+has SHA-256 `4c4aead1e669235595970ee40530315d02c2dad80a72845c6930424d1580edc4`.
+Actual Methods 1.3.4 WASM replay preserves all four numerical cells below exactly.
+
+The original transport remains byte-for-byte as `multitarget-pls-dag023.n4a`
+(SHA-256 `994252030ff80129d0431995bae53eb473082f05825b65714379262b72af13fa`).
+The negative test pins those historical bytes and requires the current Core
+validator to refuse their incomplete semantic closure. The format-2 companion
+below is unchanged.
+
+- Current SHA-256: `3a3ff44c6cb33579b561ef68008dbc04157ee0f779133de6b7fc3d67082210cf`
 - Model: one multi-target Methods N4MM PLS final refit
 - Targets: `protein`, `moisture`
 - Replay input: `[[1.5, 0.5], [3.5, 1.5]]`

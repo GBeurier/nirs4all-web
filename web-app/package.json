@@ -1,7 +1,7 @@
 {
   "name": "nirs4all-web",
   "private": true,
-  "version": "0.4.0",
+  "version": "0.4.1",
   "type": "module",
   "description": "nirs4all-web \u2014 single-page, full-WASM nirs4all browser client (upload \u2192 configure \u2192 pipeline \u2192 run via dag-ml/libn4m \u2192 results \u2192 predict, all in the browser).",
   "license": "(CECILL-2.1 OR AGPL-3.0-or-later)",
@@ -89,7 +89,7 @@
     "ml": "8.0.0",
     "next-themes": "0.4.6",
     "nirs4all": "file:./vendor/nirs4all",
-    "nirs4all-ui": "file:./vendor/npm/nirs4all-ui-0.1.14.tgz",
+    "nirs4all-ui": "file:./vendor/npm/nirs4all-ui-0.1.15.tgz",
     "react": "18.3.1",
     "react-day-picker": "8.10.1",
     "react-dom": "18.3.1",
@@ -112,6 +112,7 @@
     "typescript": "5.6.3",
     "vite": "6.4.3",
     "vite-plugin-singlefile": "2.1.0",
-    "vitest": "3.2.6"
+    "vitest": "3.2.6",
+    "dag-ml-wasm": "0.3.41"
   }
 }

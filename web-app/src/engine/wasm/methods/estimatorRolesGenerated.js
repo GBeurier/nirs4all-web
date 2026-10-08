@@ -3785,6 +3785,24 @@ export class QResiduals extends NativeProcedure {
     }
 }
 NativeMethod.register("utilities.q_residuals", QResiduals);
+/** Native `utilities.ragged_summary` (generic). */
+export class RaggedSummary extends NativeProcedure {
+    methodId = "utilities.ragged_summary";
+    paramTypes = {
+        offsets: "int_array",
+        presence: "int_array",
+        time_coordinates: "double_array",
+        missing_policy: "enum",
+    };
+    constructor(params = {}) {
+        super();
+        this.params = { ...params };
+    }
+    run(X, y, inputs = {}) {
+        return this.runOutputs(X, y, inputs);
+    }
+}
+NativeMethod.register("utilities.ragged_summary", RaggedSummary);
 /** Native `utilities.signal_type_detector` (generic). */
 export class SignalTypeDetector extends NativeProcedure {
     methodId = "utilities.signal_type_detector";

@@ -590,6 +590,50 @@ export function execute_campaign_phase_json(plan_id, graph_json, campaign_json, 
 }
 
 /**
+ * @param {string} plan_id
+ * @param {string} graph_json
+ * @param {string} campaign_json
+ * @param {string} controller_manifests_json
+ * @param {string} run_id
+ * @param {string} root_seed
+ * @param {string} phase
+ * @param {Function} js_invoke
+ * @returns {string}
+ */
+export function execute_campaign_phase_u64_json(plan_id, graph_json, campaign_json, controller_manifests_json, run_id, root_seed, phase, js_invoke) {
+    let deferred9_0;
+    let deferred9_1;
+    try {
+        const ptr0 = passStringToWasm0(plan_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(graph_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ptr2 = passStringToWasm0(campaign_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len2 = WASM_VECTOR_LEN;
+        const ptr3 = passStringToWasm0(controller_manifests_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len3 = WASM_VECTOR_LEN;
+        const ptr4 = passStringToWasm0(run_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len4 = WASM_VECTOR_LEN;
+        const ptr5 = passStringToWasm0(root_seed, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len5 = WASM_VECTOR_LEN;
+        const ptr6 = passStringToWasm0(phase, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len6 = WASM_VECTOR_LEN;
+        const ret = wasm.execute_campaign_phase_u64_json(ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3, ptr4, len4, ptr5, len5, ptr6, len6, js_invoke);
+        var ptr8 = ret[0];
+        var len8 = ret[1];
+        if (ret[3]) {
+            ptr8 = 0; len8 = 0;
+            throw takeFromExternrefTable0(ret[2]);
+        }
+        deferred9_0 = ptr8;
+        deferred9_1 = len8;
+        return getStringFromWasm0(ptr8, len8);
+    } finally {
+        wasm.__wbindgen_free(deferred9_0, deferred9_1, 1);
+    }
+}
+
+/**
  * Execute one phase from a previously built and validated execution plan.
  *
  * Unlike [`execute_campaign_phase_json`], this preserves native training-loss
@@ -628,6 +672,45 @@ export function execute_execution_plan_phase_json(execution_plan_json, trusted_c
         return getStringFromWasm0(ptr5, len5);
     } finally {
         wasm.__wbindgen_free(deferred6_0, deferred6_1, 1);
+    }
+}
+
+/**
+ * Full-width seed variant for JavaScript hosts. Pass an exact decimal u64 string.
+ * @param {string} execution_plan_json
+ * @param {string} trusted_controller_manifests_json
+ * @param {string} run_id
+ * @param {string} root_seed
+ * @param {string} phase
+ * @param {Function} js_invoke
+ * @returns {string}
+ */
+export function execute_execution_plan_phase_u64_json(execution_plan_json, trusted_controller_manifests_json, run_id, root_seed, phase, js_invoke) {
+    let deferred7_0;
+    let deferred7_1;
+    try {
+        const ptr0 = passStringToWasm0(execution_plan_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(trusted_controller_manifests_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ptr2 = passStringToWasm0(run_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len2 = WASM_VECTOR_LEN;
+        const ptr3 = passStringToWasm0(root_seed, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len3 = WASM_VECTOR_LEN;
+        const ptr4 = passStringToWasm0(phase, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len4 = WASM_VECTOR_LEN;
+        const ret = wasm.execute_execution_plan_phase_u64_json(ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3, ptr4, len4, js_invoke);
+        var ptr6 = ret[0];
+        var len6 = ret[1];
+        if (ret[3]) {
+            ptr6 = 0; len6 = 0;
+            throw takeFromExternrefTable0(ret[2]);
+        }
+        deferred7_0 = ptr6;
+        deferred7_1 = len6;
+        return getStringFromWasm0(ptr6, len6);
+    } finally {
+        wasm.__wbindgen_free(deferred7_0, deferred7_1, 1);
     }
 }
 
@@ -1038,6 +1121,33 @@ export function n4m_host_controller_specs_json(manifest_json) {
         const ptr0 = passStringToWasm0(manifest_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len0 = WASM_VECTOR_LEN;
         const ret = wasm.n4m_host_controller_specs_json(ptr0, len0);
+        var ptr2 = ret[0];
+        var len2 = ret[1];
+        if (ret[3]) {
+            ptr2 = 0; len2 = 0;
+            throw takeFromExternrefTable0(ret[2]);
+        }
+        deferred3_0 = ptr2;
+        deferred3_1 = len2;
+        return getStringFromWasm0(ptr2, len2);
+    } finally {
+        wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
+    }
+}
+
+/**
+ * Sign a descriptor whose native facts were inspected by the owning bridge.
+ * Consumers must reinspect N4ME bytes before accepting this descriptor.
+ * @param {string} json
+ * @returns {string}
+ */
+export function native_estimator_descriptor_json(json) {
+    let deferred3_0;
+    let deferred3_1;
+    try {
+        const ptr0 = passStringToWasm0(json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.native_estimator_descriptor_json(ptr0, len0);
         var ptr2 = ret[0];
         var len2 = ret[1];
         if (ret[3]) {
@@ -1653,7 +1763,7 @@ function __wbg_get_imports() {
                     const a = state0.a;
                     state0.a = 0;
                     try {
-                        return wasm_bindgen__convert__closures_____invoke__h39f5e773f0261fac(a, state0.b, arg0, arg1);
+                        return wasm_bindgen_dfd0b53baa41d632___convert__closures_____invoke___js_sys_6314793ba421de9a___Function_fn_wasm_bindgen_dfd0b53baa41d632___JsValue_____wasm_bindgen_dfd0b53baa41d632___sys__Undefined___js_sys_6314793ba421de9a___Function_fn_wasm_bindgen_dfd0b53baa41d632___JsValue_____wasm_bindgen_dfd0b53baa41d632___sys__Undefined_______true_(a, state0.b, arg0, arg1);
                     } finally {
                         state0.a = a;
                     }
@@ -1700,8 +1810,8 @@ function __wbg_get_imports() {
             return ret;
         },
         __wbindgen_generic_0000000000000001: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 442, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, wasm_bindgen__convert__closures_____invoke__h9a8a5030d2f71e0f);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 457, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, wasm_bindgen_dfd0b53baa41d632___convert__closures_____invoke___wasm_bindgen_dfd0b53baa41d632___JsValue__core_608f92abc48d28da___result__Result_____wasm_bindgen_dfd0b53baa41d632___JsError___true_);
             return ret;
         },
         __wbindgen_generic_0000000000000002: function(arg0, arg1) {
@@ -1725,15 +1835,15 @@ function __wbg_get_imports() {
     };
 }
 
-function wasm_bindgen__convert__closures_____invoke__h9a8a5030d2f71e0f(arg0, arg1, arg2) {
-    const ret = wasm.wasm_bindgen__convert__closures_____invoke__h9a8a5030d2f71e0f(arg0, arg1, arg2);
+function wasm_bindgen_dfd0b53baa41d632___convert__closures_____invoke___wasm_bindgen_dfd0b53baa41d632___JsValue__core_608f92abc48d28da___result__Result_____wasm_bindgen_dfd0b53baa41d632___JsError___true_(arg0, arg1, arg2) {
+    const ret = wasm.wasm_bindgen_dfd0b53baa41d632___convert__closures_____invoke___wasm_bindgen_dfd0b53baa41d632___JsValue__core_608f92abc48d28da___result__Result_____wasm_bindgen_dfd0b53baa41d632___JsError___true_(arg0, arg1, arg2);
     if (ret[1]) {
         throw takeFromExternrefTable0(ret[0]);
     }
 }
 
-function wasm_bindgen__convert__closures_____invoke__h39f5e773f0261fac(arg0, arg1, arg2, arg3) {
-    wasm.wasm_bindgen__convert__closures_____invoke__h39f5e773f0261fac(arg0, arg1, arg2, arg3);
+function wasm_bindgen_dfd0b53baa41d632___convert__closures_____invoke___js_sys_6314793ba421de9a___Function_fn_wasm_bindgen_dfd0b53baa41d632___JsValue_____wasm_bindgen_dfd0b53baa41d632___sys__Undefined___js_sys_6314793ba421de9a___Function_fn_wasm_bindgen_dfd0b53baa41d632___JsValue_____wasm_bindgen_dfd0b53baa41d632___sys__Undefined_______true_(arg0, arg1, arg2, arg3) {
+    wasm.wasm_bindgen_dfd0b53baa41d632___convert__closures_____invoke___js_sys_6314793ba421de9a___Function_fn_wasm_bindgen_dfd0b53baa41d632___JsValue_____wasm_bindgen_dfd0b53baa41d632___sys__Undefined___js_sys_6314793ba421de9a___Function_fn_wasm_bindgen_dfd0b53baa41d632___JsValue_____wasm_bindgen_dfd0b53baa41d632___sys__Undefined_______true_(arg0, arg1, arg2, arg3);
 }
 
 const LocalImplementationRegistryFinalization = (typeof FinalizationRegistry === 'undefined')

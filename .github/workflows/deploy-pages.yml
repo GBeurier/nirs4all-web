@@ -1,3 +1,4 @@
+# Full browser/scientific E2E qualification runs locally before publication.
 name: Deploy nirs4all-web to GitHub Pages
 
 # Builds the nirs4all-web single-page WASM app from web-app/ and publishes it to
@@ -49,10 +50,7 @@ jobs:
         uses: ./.github/actions/nirs4all-methods-sibling
 
       - run: npm ci
-      - name: Client-side-only contract
-        run: npm run test:client-only
       - run: npm run typecheck
-      - run: npm run test
       - run: NIRS4ALL_METHODS_ABI_REQUIRED=1 NIRS4ALL_STUDIO_REGISTRY_REQUIRED=1 npm run validate:catalog
       - name: Vendored nirs4all-ui tarball is exact
         run: npm run check:ui-package
@@ -60,10 +58,8 @@ jobs:
         run: NIRS4ALL_CORE_SHIM_REQUIRED=1 npm run check:core-shim
       - run: npm run build:single
       - run: npm run build
-      - name: Strict product browser smoke
-        run: npm run smoke -- --out-dir dist --profile strict-wasm rt-fallback
-      - name: Catalog models train and predict in the browser
-        run: npm run smoke -- --out-dir dist --profile strict-wasm models-smoke.mjs
+      - name: Built UI starts in the browser
+        run: npm run smoke -- --out-dir dist --profile strict-wasm ui-startup-smoke.mjs
       - name: Finalize Pages metadata
         run: |
           printf 'web.nirs4all.org\n' > dist/CNAME

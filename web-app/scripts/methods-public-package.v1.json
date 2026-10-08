@@ -1,0 +1,539 @@
+{
+  "component": "nirs4all-methods-wasm",
+  "package": "@nirs4all/methods",
+  "version": "1.3.4",
+  "runtimeVersion": "1.3.4+abi.2.17.0",
+  "abi": "2.17.0",
+  "commit": "19432db0739048d6c9f5dd9ab56caba26dc2b562",
+  "tree": "d559edb28cf6dd4510d6e6402c374cb4572170a8",
+  "registry_metadata_url": "https://registry.npmjs.org/@nirs4all%2fmethods/1.3.4",
+  "tarball_url": "https://registry.npmjs.org/@nirs4all/methods/-/methods-1.3.4.tgz",
+  "tarball_sha256": "4c415238bcf089eb4d976ad8ba70632e0c1455e3e48117d58d5b7cf6fbdf7e54",
+  "tarball_sha1": "b68becb68181eaa8da9c4e699768ca41dbb6fcd3",
+  "tarball_sri": "sha512-gVkgWPBOuTY6itPfNdjsh68Oqa9rRXNiOZIY7VJ174e6XOg6yi9Om+qB26VCsVSWgOlfDq3PU5q2erJED12nHQ==",
+  "tarball_size": 1040791,
+  "published_files": {
+    "README.md": {
+      "size": 10080,
+      "sha256": "3734df3b8a855cc188cadf91e379d65c751f62a5ba05b67bfa87d9167d5ad98b"
+    },
+    "dist/config.d.ts": {
+      "size": 512,
+      "sha256": "50baeef98dc3ed4e3840aeb2146c61d2a3c66ad598f4ef0818c2ea6c887ef7f9"
+    },
+    "dist/config.js": {
+      "size": 1982,
+      "sha256": "386dfd18890d81c815bb07ccaa1ae1dd8e9f0f6063a85bf8b90869e7a5938788"
+    },
+    "dist/context.d.ts": {
+      "size": 800,
+      "sha256": "701d7344a07f4f3f3487ce182a04e3493781f5818e0d69acdb2b11dfaf668ec6"
+    },
+    "dist/context.js": {
+      "size": 1572,
+      "sha256": "3a58b4044b0ddb86bbfdfc4127b8146b69bc087e043364ef402840d3ad4142c5"
+    },
+    "dist/estimatorRoles.d.ts": {
+      "size": 7845,
+      "sha256": "2389591087f0dbea32e6b252ac4f16b51e8bc513f8f1e9f440f50b94f531d38a"
+    },
+    "dist/estimatorRoles.js": {
+      "size": 26633,
+      "sha256": "632245bd3548e23aaf619a93a63e3d222d52e4b13395eafd8c023f1b98d32d66"
+    },
+    "dist/estimatorRolesGenerated.d.ts": {
+      "size": 167666,
+      "sha256": "b0c1cb977a6ff27ca445c5e753e4134bfccead24874aa71fbde56ad66b32f611"
+    },
+    "dist/estimatorRolesGenerated.js": {
+      "size": 113620,
+      "sha256": "85c5ea972fba95c544ca9ff97af5d056c212a0cc1135d2b94ba918b127ece0c8"
+    },
+    "dist/ffi.d.ts": {
+      "size": 2285,
+      "sha256": "cc1f3aa4183c1e9565485d257af728b2881e1663f00c98949969be1443556a15"
+    },
+    "dist/ffi.js": {
+      "size": 4655,
+      "sha256": "5c548af3c9ca606cd33b7cc5e4d3fd0fa0b05de2ae1393126e7c75df36feab45"
+    },
+    "dist/index.d.ts": {
+      "size": 2988,
+      "sha256": "8cc3b78cd8c435507fa4d0326fcd1965745220f7ae62dca1b5bbc834dd057f6c"
+    },
+    "dist/index.js": {
+      "size": 2718,
+      "sha256": "26c7d18175e9212734c68af8a4364aa6e0c94c4348cf55b1f344c53c456b368e"
+    },
+    "dist/methodResult.d.ts": {
+      "size": 1514,
+      "sha256": "b75ef84c1fdfb73a3a20e342a4e83170ee350118d1d6bdc152c41569636e9cf4"
+    },
+    "dist/methodResult.js": {
+      "size": 7244,
+      "sha256": "b170d81532878c83cce9a13c14d9d7645c0368272106a905a297723fd001fb8d"
+    },
+    "dist/model.d.ts": {
+      "size": 11450,
+      "sha256": "545e4dc89f7543d822d761ec503d6e6bb5d274501a6c6d0de8af3ab752dc0eba"
+    },
+    "dist/model.js": {
+      "size": 28099,
+      "sha256": "f39f2ca8e181cdc3193ca8cf0228faa084b937147ea1d8e3ebd471afa5326b4f"
+    },
+    "dist/multimodalPipeline.d.ts": {
+      "size": 2983,
+      "sha256": "8c22fec8585580e58ccbac637be206eaa460a0e89d0e684a9042b8a299428951"
+    },
+    "dist/multimodalPipeline.js": {
+      "size": 28174,
+      "sha256": "c791bc9d50ed90a589a7ef888cc67046519bd90c39e2652b6d7281fe8ca79603"
+    },
+    "dist/n4m.js": {
+      "size": 191970,
+      "sha256": "0f7f56ad8b67ca7d78bc9ef1d9bac986d3dd99e1038a6a5ad2a6943396ebe6fd"
+    },
+    "dist/n4m.wasm": {
+      "size": 2826694,
+      "sha256": "06c263ddb072dc852220ae2100df8b750172406cc07d1fcf3221267f19dfd94c"
+    },
+    "dist/nativeAugmentation.d.ts": {
+      "size": 1340,
+      "sha256": "55e3f2d7692ec5da253c8b17c3e9b9efaa497c6a4a465e7c37cb6c224905aee2"
+    },
+    "dist/nativeAugmentation.js": {
+      "size": 2479,
+      "sha256": "f623004e281162862a3fa10095e9a3d162159663a53952235aa2333e0d5ae851"
+    },
+    "dist/nativeModel.d.ts": {
+      "size": 735,
+      "sha256": "e28d791d034cc030bf9501dd4b6b7a6adb522cda3bc8cba237f837f6f2468fd9"
+    },
+    "dist/nativeModel.js": {
+      "size": 3890,
+      "sha256": "6de1d1ac18aed75fe3921460fd5f7e0c77322b89d69874d181b6222a620fed49"
+    },
+    "dist/nativePreprocessingPipeline.d.ts": {
+      "size": 1591,
+      "sha256": "7f264bf4dd9733450ad6ef3f64796f959c666e64c0e53030d7c44c91e7bb8469"
+    },
+    "dist/nativePreprocessingPipeline.js": {
+      "size": 11029,
+      "sha256": "3e3d2106b7eda95f3c0dce82d06d9a9947ed548e28858caf798f2a90c6b4538d"
+    },
+    "dist/nativeSplitter.d.ts": {
+      "size": 1040,
+      "sha256": "45523cf0dc068f8e61d2e30835b3f7249388a5949cb6061ad71e3c8728ca924d"
+    },
+    "dist/nativeSplitter.js": {
+      "size": 5272,
+      "sha256": "4277fe3a0bf0625b7b1c3e3417888017bd9746a3f2a4dcba42ef38807c5aa163"
+    },
+    "dist/optimization.d.ts": {
+      "size": 4026,
+      "sha256": "1205fbd561a0d0121b3a08e5c2cbab5f4055d11e55d691f4f835d67708db3a19"
+    },
+    "dist/optimization.js": {
+      "size": 29995,
+      "sha256": "04c0568d1cd84c0eb2d535e1c3b26abb10eae45aebb66a95db10e06aeb019bce"
+    },
+    "dist/preprocessing.d.ts": {
+      "size": 985,
+      "sha256": "9408b9c93abdc74af2e0c8b042fdcd17ea1701961b6f6a746e0cc7ad1ed79a49"
+    },
+    "dist/preprocessing.js": {
+      "size": 4726,
+      "sha256": "e9714d38d9a744a706ff38c13c4b42fc737a3236dee6a1ccdf9e690db2519af8"
+    },
+    "dist/rolePipeline.d.ts": {
+      "size": 4750,
+      "sha256": "ff7bff5b830f829f90e039cd543dd7c052c7835031bd8e3b7e777324564a1f41"
+    },
+    "dist/rolePipeline.js": {
+      "size": 20140,
+      "sha256": "8779166e0a71339e120d608cfdd0ecd03d1630e7b7f42c8bea38c4a881913033"
+    },
+    "dist/selection.d.ts": {
+      "size": 508,
+      "sha256": "b42f61adb1047978a3f719b109342d3be37850f7155a19993159c45393f1c01e"
+    },
+    "dist/selection.js": {
+      "size": 11407,
+      "sha256": "112ba4aa0db523b9edcd46f62df36c0b28b4129adf7920e1822c30334a6eb237"
+    },
+    "dist/serialization.d.ts": {
+      "size": 2028,
+      "sha256": "0ca1d47fb4b6d189b2fbfa270d4669ed3505c7896636b5607757c2a05c14ed0a"
+    },
+    "dist/serialization.js": {
+      "size": 5133,
+      "sha256": "0bbb43cf63525293ff8675a4fb53c42b9aa36a940d1807a53ec9e4c84bd75474"
+    },
+    "dist/spectralEncoding.d.ts": {
+      "size": 746,
+      "sha256": "93e20866de551a539a65d9e6597385d79c8343130d9cc7c2a5b2870cd391dff7"
+    },
+    "dist/spectralEncoding.js": {
+      "size": 4096,
+      "sha256": "9e867f17b05949dd2581ad90c53bc86dc744c146490e25f4eb100b87703a81ac"
+    },
+    "dist/types.d.ts": {
+      "size": 1817,
+      "sha256": "68f54b1ae5383ab23e80ee9e3e79d790581372418e6039453a6f3962a40a28b8"
+    },
+    "dist/types.js": {
+      "size": 3702,
+      "sha256": "a8c1310252eb6fe4e78fd55511b1976cd598653853c1ea060c44312fa929a60f"
+    },
+    "package.json": {
+      "size": 2291,
+      "sha256": "ece60e2d928035f91c4a8893ca2dde056c05f66749554cd81a97bb54d52c0dc6"
+    }
+  },
+  "published_to_staged": {
+    "dist/config.d.ts": "config.d.ts",
+    "dist/config.js": "config.js",
+    "dist/context.d.ts": "context.d.ts",
+    "dist/context.js": "context.js",
+    "dist/estimatorRoles.d.ts": "estimatorRoles.d.ts",
+    "dist/estimatorRoles.js": "estimatorRoles.js",
+    "dist/estimatorRolesGenerated.d.ts": "estimatorRolesGenerated.d.ts",
+    "dist/estimatorRolesGenerated.js": "estimatorRolesGenerated.js",
+    "dist/ffi.d.ts": "ffi.d.ts",
+    "dist/ffi.js": "ffi.js",
+    "dist/index.d.ts": "index.d.ts",
+    "dist/index.js": "index.js",
+    "dist/methodResult.d.ts": "methodResult.d.ts",
+    "dist/methodResult.js": "methodResult.js",
+    "dist/model.d.ts": "model.d.ts",
+    "dist/model.js": "model.js",
+    "dist/multimodalPipeline.d.ts": "multimodalPipeline.d.ts",
+    "dist/multimodalPipeline.js": "multimodalPipeline.js",
+    "dist/n4m.js": "n4m.js",
+    "dist/n4m.wasm": "n4m.wasm",
+    "dist/nativeAugmentation.d.ts": "nativeAugmentation.d.ts",
+    "dist/nativeAugmentation.js": "nativeAugmentation.js",
+    "dist/nativeModel.d.ts": "nativeModel.d.ts",
+    "dist/nativeModel.js": "nativeModel.js",
+    "dist/nativePreprocessingPipeline.d.ts": "nativePreprocessingPipeline.d.ts",
+    "dist/nativePreprocessingPipeline.js": "nativePreprocessingPipeline.js",
+    "dist/nativeSplitter.d.ts": "nativeSplitter.d.ts",
+    "dist/nativeSplitter.js": "nativeSplitter.js",
+    "dist/optimization.d.ts": "optimization.d.ts",
+    "dist/optimization.js": "optimization.js",
+    "dist/preprocessing.d.ts": "preprocessing.d.ts",
+    "dist/preprocessing.js": "preprocessing.js",
+    "dist/rolePipeline.d.ts": "rolePipeline.d.ts",
+    "dist/rolePipeline.js": "rolePipeline.js",
+    "dist/selection.d.ts": "selection.d.ts",
+    "dist/selection.js": "selection.js",
+    "dist/serialization.d.ts": "serialization.d.ts",
+    "dist/serialization.js": "serialization.js",
+    "dist/spectralEncoding.d.ts": "spectralEncoding.d.ts",
+    "dist/spectralEncoding.js": "spectralEncoding.js",
+    "dist/types.d.ts": "types.d.ts",
+    "dist/types.js": "types.js"
+  },
+  "source_extra_files": [
+    {
+      "path": "LICENSE",
+      "size": 34020,
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+      "source_path": "LICENSE"
+    },
+    {
+      "path": "LICENSES/AGPL-3.0-or-later.txt",
+      "size": 34020,
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+      "source_path": "LICENSES/AGPL-3.0-or-later.txt"
+    },
+    {
+      "path": "LICENSES/Apache-2.0.txt",
+      "size": 10280,
+      "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff",
+      "source_path": "LICENSES/Apache-2.0.txt"
+    },
+    {
+      "path": "LICENSES/BSD-3-Clause.txt",
+      "size": 1460,
+      "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d",
+      "source_path": "LICENSES/BSD-3-Clause.txt"
+    },
+    {
+      "path": "LICENSES/COMMERCIAL-LICENSE.md",
+      "size": 680,
+      "sha256": "f26f5d9ce50fbbebf089b921bcb44add711cb066ec4dbb767da450dc767a81a6",
+      "source_path": "LICENSES/COMMERCIAL-LICENSE.md"
+    },
+    {
+      "path": "LICENSES/COMMERCIAL-LICENSE_FR.md",
+      "size": 769,
+      "sha256": "d6cb8560f7f4ba35443d91e47280da0e9b2369ba05b597db9d812646cc4336ee",
+      "source_path": "LICENSES/COMMERCIAL-LICENSE_FR.md"
+    },
+    {
+      "path": "LICENSES/CeCILL-2.1.txt",
+      "size": 21778,
+      "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5",
+      "source_path": "LICENSES/CeCILL-2.1.txt"
+    },
+    {
+      "path": "LICENSES/MIT.txt",
+      "size": 1078,
+      "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5",
+      "source_path": "LICENSES/MIT.txt"
+    },
+    {
+      "path": "LICENSING.md",
+      "size": 2133,
+      "sha256": "674f3ab09bc6fca997bc765bbd5b710aabecb60d68f722ed4182bf40ec274bf1",
+      "source_path": "LICENSING.md"
+    },
+    {
+      "path": "LICENSING_FR.md",
+      "size": 2280,
+      "sha256": "6996c1e0385782ca1d6adf3a2fe07189a4bbcad8be727adb7cac0b85c71255a1",
+      "source_path": "LICENSING_FR.md"
+    },
+    {
+      "path": "NOTICE.md",
+      "size": 1190,
+      "sha256": "c85840381f10a962f85703c0cffbaadeaa22bd9e2ea607b360f9623baa2702a8",
+      "source_path": "NOTICE.md"
+    },
+    {
+      "path": "THIRD_PARTY_LICENSES.md",
+      "size": 4804,
+      "sha256": "0f61b74f895a6fa4c8026bf465da107037a3d291bc9f2fe5b3f030585b6f71c9",
+      "source_path": "THIRD_PARTY_LICENSES.md"
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "size": 1520,
+      "sha256": "d7cb88c7da4946046de190b23be0b747f10136f8423e3eda29d5d9c2a9b192e4",
+      "source_path": "THIRD_PARTY_NOTICES.md"
+    }
+  ],
+  "staged_files": {
+    "LICENSE": {
+      "size": 34020,
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+    },
+    "LICENSES/AGPL-3.0-or-later.txt": {
+      "size": 34020,
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+    },
+    "LICENSES/Apache-2.0.txt": {
+      "size": 10280,
+      "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+    },
+    "LICENSES/BSD-3-Clause.txt": {
+      "size": 1460,
+      "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
+    },
+    "LICENSES/COMMERCIAL-LICENSE.md": {
+      "size": 680,
+      "sha256": "f26f5d9ce50fbbebf089b921bcb44add711cb066ec4dbb767da450dc767a81a6"
+    },
+    "LICENSES/COMMERCIAL-LICENSE_FR.md": {
+      "size": 769,
+      "sha256": "d6cb8560f7f4ba35443d91e47280da0e9b2369ba05b597db9d812646cc4336ee"
+    },
+    "LICENSES/CeCILL-2.1.txt": {
+      "size": 21778,
+      "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+    },
+    "LICENSES/MIT.txt": {
+      "size": 1078,
+      "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+    },
+    "LICENSING.md": {
+      "size": 2133,
+      "sha256": "674f3ab09bc6fca997bc765bbd5b710aabecb60d68f722ed4182bf40ec274bf1"
+    },
+    "LICENSING_FR.md": {
+      "size": 2280,
+      "sha256": "6996c1e0385782ca1d6adf3a2fe07189a4bbcad8be727adb7cac0b85c71255a1"
+    },
+    "NOTICE.md": {
+      "size": 1190,
+      "sha256": "c85840381f10a962f85703c0cffbaadeaa22bd9e2ea607b360f9623baa2702a8"
+    },
+    "THIRD_PARTY_LICENSES.md": {
+      "size": 4804,
+      "sha256": "0f61b74f895a6fa4c8026bf465da107037a3d291bc9f2fe5b3f030585b6f71c9"
+    },
+    "THIRD_PARTY_NOTICES.md": {
+      "size": 1520,
+      "sha256": "d7cb88c7da4946046de190b23be0b747f10136f8423e3eda29d5d9c2a9b192e4"
+    },
+    "config.d.ts": {
+      "size": 512,
+      "sha256": "50baeef98dc3ed4e3840aeb2146c61d2a3c66ad598f4ef0818c2ea6c887ef7f9"
+    },
+    "config.js": {
+      "size": 1982,
+      "sha256": "386dfd18890d81c815bb07ccaa1ae1dd8e9f0f6063a85bf8b90869e7a5938788"
+    },
+    "context.d.ts": {
+      "size": 800,
+      "sha256": "701d7344a07f4f3f3487ce182a04e3493781f5818e0d69acdb2b11dfaf668ec6"
+    },
+    "context.js": {
+      "size": 1572,
+      "sha256": "3a58b4044b0ddb86bbfdfc4127b8146b69bc087e043364ef402840d3ad4142c5"
+    },
+    "estimatorRoles.d.ts": {
+      "size": 7845,
+      "sha256": "2389591087f0dbea32e6b252ac4f16b51e8bc513f8f1e9f440f50b94f531d38a"
+    },
+    "estimatorRoles.js": {
+      "size": 26633,
+      "sha256": "632245bd3548e23aaf619a93a63e3d222d52e4b13395eafd8c023f1b98d32d66"
+    },
+    "estimatorRolesGenerated.d.ts": {
+      "size": 167666,
+      "sha256": "b0c1cb977a6ff27ca445c5e753e4134bfccead24874aa71fbde56ad66b32f611"
+    },
+    "estimatorRolesGenerated.js": {
+      "size": 113620,
+      "sha256": "85c5ea972fba95c544ca9ff97af5d056c212a0cc1135d2b94ba918b127ece0c8"
+    },
+    "ffi.d.ts": {
+      "size": 2285,
+      "sha256": "cc1f3aa4183c1e9565485d257af728b2881e1663f00c98949969be1443556a15"
+    },
+    "ffi.js": {
+      "size": 4655,
+      "sha256": "5c548af3c9ca606cd33b7cc5e4d3fd0fa0b05de2ae1393126e7c75df36feab45"
+    },
+    "index.d.ts": {
+      "size": 2988,
+      "sha256": "8cc3b78cd8c435507fa4d0326fcd1965745220f7ae62dca1b5bbc834dd057f6c"
+    },
+    "index.js": {
+      "size": 2718,
+      "sha256": "26c7d18175e9212734c68af8a4364aa6e0c94c4348cf55b1f344c53c456b368e"
+    },
+    "methodResult.d.ts": {
+      "size": 1514,
+      "sha256": "b75ef84c1fdfb73a3a20e342a4e83170ee350118d1d6bdc152c41569636e9cf4"
+    },
+    "methodResult.js": {
+      "size": 7244,
+      "sha256": "b170d81532878c83cce9a13c14d9d7645c0368272106a905a297723fd001fb8d"
+    },
+    "model.d.ts": {
+      "size": 11450,
+      "sha256": "545e4dc89f7543d822d761ec503d6e6bb5d274501a6c6d0de8af3ab752dc0eba"
+    },
+    "model.js": {
+      "size": 28099,
+      "sha256": "f39f2ca8e181cdc3193ca8cf0228faa084b937147ea1d8e3ebd471afa5326b4f"
+    },
+    "multimodalPipeline.d.ts": {
+      "size": 2983,
+      "sha256": "8c22fec8585580e58ccbac637be206eaa460a0e89d0e684a9042b8a299428951"
+    },
+    "multimodalPipeline.js": {
+      "size": 28174,
+      "sha256": "c791bc9d50ed90a589a7ef888cc67046519bd90c39e2652b6d7281fe8ca79603"
+    },
+    "n4m.js": {
+      "size": 191970,
+      "sha256": "0f7f56ad8b67ca7d78bc9ef1d9bac986d3dd99e1038a6a5ad2a6943396ebe6fd"
+    },
+    "n4m.wasm": {
+      "size": 2826694,
+      "sha256": "06c263ddb072dc852220ae2100df8b750172406cc07d1fcf3221267f19dfd94c"
+    },
+    "nativeAugmentation.d.ts": {
+      "size": 1340,
+      "sha256": "55e3f2d7692ec5da253c8b17c3e9b9efaa497c6a4a465e7c37cb6c224905aee2"
+    },
+    "nativeAugmentation.js": {
+      "size": 2479,
+      "sha256": "f623004e281162862a3fa10095e9a3d162159663a53952235aa2333e0d5ae851"
+    },
+    "nativeModel.d.ts": {
+      "size": 735,
+      "sha256": "e28d791d034cc030bf9501dd4b6b7a6adb522cda3bc8cba237f837f6f2468fd9"
+    },
+    "nativeModel.js": {
+      "size": 3890,
+      "sha256": "6de1d1ac18aed75fe3921460fd5f7e0c77322b89d69874d181b6222a620fed49"
+    },
+    "nativePreprocessingPipeline.d.ts": {
+      "size": 1591,
+      "sha256": "7f264bf4dd9733450ad6ef3f64796f959c666e64c0e53030d7c44c91e7bb8469"
+    },
+    "nativePreprocessingPipeline.js": {
+      "size": 11029,
+      "sha256": "3e3d2106b7eda95f3c0dce82d06d9a9947ed548e28858caf798f2a90c6b4538d"
+    },
+    "nativeSplitter.d.ts": {
+      "size": 1040,
+      "sha256": "45523cf0dc068f8e61d2e30835b3f7249388a5949cb6061ad71e3c8728ca924d"
+    },
+    "nativeSplitter.js": {
+      "size": 5272,
+      "sha256": "4277fe3a0bf0625b7b1c3e3417888017bd9746a3f2a4dcba42ef38807c5aa163"
+    },
+    "optimization.d.ts": {
+      "size": 4026,
+      "sha256": "1205fbd561a0d0121b3a08e5c2cbab5f4055d11e55d691f4f835d67708db3a19"
+    },
+    "optimization.js": {
+      "size": 29995,
+      "sha256": "04c0568d1cd84c0eb2d535e1c3b26abb10eae45aebb66a95db10e06aeb019bce"
+    },
+    "preprocessing.d.ts": {
+      "size": 985,
+      "sha256": "9408b9c93abdc74af2e0c8b042fdcd17ea1701961b6f6a746e0cc7ad1ed79a49"
+    },
+    "preprocessing.js": {
+      "size": 4726,
+      "sha256": "e9714d38d9a744a706ff38c13c4b42fc737a3236dee6a1ccdf9e690db2519af8"
+    },
+    "rolePipeline.d.ts": {
+      "size": 4750,
+      "sha256": "ff7bff5b830f829f90e039cd543dd7c052c7835031bd8e3b7e777324564a1f41"
+    },
+    "rolePipeline.js": {
+      "size": 20140,
+      "sha256": "8779166e0a71339e120d608cfdd0ecd03d1630e7b7f42c8bea38c4a881913033"
+    },
+    "selection.d.ts": {
+      "size": 508,
+      "sha256": "b42f61adb1047978a3f719b109342d3be37850f7155a19993159c45393f1c01e"
+    },
+    "selection.js": {
+      "size": 11407,
+      "sha256": "112ba4aa0db523b9edcd46f62df36c0b28b4129adf7920e1822c30334a6eb237"
+    },
+    "serialization.d.ts": {
+      "size": 2028,
+      "sha256": "0ca1d47fb4b6d189b2fbfa270d4669ed3505c7896636b5607757c2a05c14ed0a"
+    },
+    "serialization.js": {
+      "size": 5133,
+      "sha256": "0bbb43cf63525293ff8675a4fb53c42b9aa36a940d1807a53ec9e4c84bd75474"
+    },
+    "spectralEncoding.d.ts": {
+      "size": 746,
+      "sha256": "93e20866de551a539a65d9e6597385d79c8343130d9cc7c2a5b2870cd391dff7"
+    },
+    "spectralEncoding.js": {
+      "size": 4096,
+      "sha256": "9e867f17b05949dd2581ad90c53bc86dc744c146490e25f4eb100b87703a81ac"
+    },
+    "types.d.ts": {
+      "size": 1817,
+      "sha256": "68f54b1ae5383ab23e80ee9e3e79d790581372418e6039453a6f3962a40a28b8"
+    },
+    "types.js": {
+      "size": 3702,
+      "sha256": "a8c1310252eb6fe4e78fd55511b1976cd598653853c1ea060c44312fa929a60f"
+    }
+  }
+}

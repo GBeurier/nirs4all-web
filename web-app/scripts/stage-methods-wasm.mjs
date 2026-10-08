@@ -1,306 +1,65 @@
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  readdirSync,
-  rmSync,
-  statSync,
-  writeFileSync,
-} from 'node:fs'
-import { tmpdir } from 'node:os'
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative, resolve, sep } from 'node:path'
+import { tmpdir } from 'node:os'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
-const EXPECTED_SOURCE = Object.freeze({
-  "commit": "dcc570b3647f77cf0428dd346078f442ed5cd032",
-  "tree": "4b711a5cf7b0fb1e10a6ed99e1202bdd89917c42",
-  "version": "1.3.2",
-  "runtimeVersion": "1.3.2+abi.2.17.0",
-  "abi": "2.17.0",
-  "emscripten": "3.1.74"
-})
-const PACKAGE_NAME = '@nirs4all/methods'
-const GENERATED_FILES = Object.freeze([
-  'multimodalPipeline.d.ts',
-  'multimodalPipeline.js',
-  'optimization.d.ts',
-  'optimization.js',
-  'spectralEncoding.d.ts',
-  'spectralEncoding.js',
-  'config.d.ts',
-  'config.js',
-  'context.d.ts',
-  'context.js',
-  'estimatorRoles.d.ts',
-  'estimatorRoles.js',
-  'estimatorRolesGenerated.d.ts',
-  'estimatorRolesGenerated.js',
-  'ffi.d.ts',
-  'ffi.js',
-  'index.d.ts',
-  'index.js',
-  'methodResult.d.ts',
-  'methodResult.js',
-  'model.d.ts',
-  'model.js',
-  'n4m.js',
-  'n4m.wasm',
-  'nativeAugmentation.d.ts',
-  'nativeAugmentation.js',
-  'nativeModel.d.ts',
-  'nativeModel.js',
-  'nativePreprocessingPipeline.d.ts',
-  'nativePreprocessingPipeline.js',
-  'nativeSplitter.d.ts',
-  'nativeSplitter.js',
-  'preprocessing.d.ts',
-  'preprocessing.js',
-  'rolePipeline.d.ts',
-  'rolePipeline.js',
-  'selection.d.ts',
-  'selection.js',
-  'serialization.d.ts',
-  'serialization.js',
-  'types.d.ts',
-  'types.js',
-].sort())
-const LEGAL_FILES = Object.freeze([
-  'LICENSE',
-  'LICENSING.md',
-  'LICENSING_FR.md',
-  'NOTICE.md',
-  'THIRD_PARTY_LICENSES.md',
-  'THIRD_PARTY_NOTICES.md',
-  'LICENSES/AGPL-3.0-or-later.txt',
-  'LICENSES/Apache-2.0.txt',
-  'LICENSES/BSD-3-Clause.txt',
-  'LICENSES/COMMERCIAL-LICENSE.md',
-  'LICENSES/COMMERCIAL-LICENSE_FR.md',
-  'LICENSES/CeCILL-2.1.txt',
-  'LICENSES/MIT.txt',
-].sort())
-const STAGED_FILES = Object.freeze([...GENERATED_FILES, ...LEGAL_FILES].sort())
-
 const scriptDir = dirname(fileURLToPath(import.meta.url))
-const appRoot = resolve(scriptDir, '..')
-const sourceRoot = resolve(process.env.NIRS4ALL_METHODS_ROOT ?? join(appRoot, '..', '..', 'nirs4all-methods'))
-const bindingRoot = join(sourceRoot, 'bindings', 'js')
-const destination = join(appRoot, 'src', 'engine', 'wasm', 'methods')
-const emsdk = process.env.EMSDK
-const tsc = join(appRoot, 'node_modules', 'typescript', 'bin', 'tsc')
-
-function command(commandName, args, options = {}) {
-  const output = execFileSync(commandName, args, {
-    cwd: options.cwd ?? appRoot,
-    encoding: 'utf8',
-    stdio: options.capture ? ['ignore', 'pipe', 'pipe'] : 'inherit',
-    env: options.env ?? process.env,
-  })
-  return typeof output === 'string' ? output.trim() : ''
+const pin = JSON.parse(readFileSync(join(scriptDir, 'methods-public-package.v1.json'), 'utf8'))
+const destination = resolve(scriptDir, '..', 'src', 'engine', 'wasm', 'methods')
+const tarball = process.env.NIRS4ALL_METHODS_NPM_TARBALL
+const metadataPath = process.env.NIRS4ALL_METHODS_NPM_METADATA
+if (!tarball || !metadataPath) throw new Error('Provide authenticated NIRS4ALL_METHODS_NPM_TARBALL and NIRS4ALL_METHODS_NPM_METADATA captures; no Methods rebuild is performed.')
+const hash = (bytes, algorithm = 'sha256', encoding = 'hex') => createHash(algorithm).update(bytes).digest(encoding)
+const archive = readFileSync(tarball)
+const metadataBytes = readFileSync(metadataPath)
+const metadata = JSON.parse(metadataBytes.toString('utf8'))
+if (metadata.name !== pin.package || metadata.version !== pin.version || metadata.gitHead !== pin.commit
+  || metadata.dist?.tarball !== pin.tarball_url || metadata.dist?.shasum !== pin.tarball_sha1
+  || metadata.dist?.integrity !== pin.tarball_sri || archive.length !== pin.tarball_size
+  || hash(archive) !== pin.tarball_sha256 || hash(archive, 'sha1') !== pin.tarball_sha1
+  || `sha512-${hash(archive, 'sha512', 'base64')}` !== pin.tarball_sri) {
+  throw new Error('Methods capture differs from the authenticated public package')
 }
-
-function git(...args) {
-  return command('git', ['-C', sourceRoot, ...args], { capture: true })
+const listing = execFileSync('tar', ['-tzf', tarball], { encoding: 'utf8' }).trim().split(/\r?\n/).sort()
+const expectedListing = Object.keys(pin.published_files).map((name) => `package/${name}`).sort()
+if (JSON.stringify(listing) !== JSON.stringify(expectedListing)) throw new Error('Methods tarball inventory differs from the pinned public files')
+for (const row of pin.source_extra_files) {
+  const bytes = readFileSync(join(destination, row.path))
+  if (bytes.length !== row.size || hash(bytes) !== row.sha256) throw new Error(`Methods source legal payload mismatch: ${row.path}`)
 }
-
-function sha256(path) {
-  return createHash('sha256').update(readFileSync(path)).digest('hex')
+function inventory(directory) {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(directory, entry.name)
+    return entry.isDirectory() ? inventory(path) : [relative(destination, path).split(sep).join('/')]
+  }).sort()
 }
-
-function inventory(root) {
-  const files = []
-  function visit(directory) {
-    for (const entry of readdirSync(directory, { withFileTypes: true })) {
-      const absolute = join(directory, entry.name)
-      if (entry.isDirectory()) visit(absolute)
-      else files.push(relative(root, absolute).split(sep).join('/'))
-    }
-  }
-  visit(root)
-  return files.sort()
-}
-
-function copyRelative(sourceBase, destinationBase, name) {
-  const output = join(destinationBase, name)
-  mkdirSync(dirname(output), { recursive: true })
-  copyFileSync(join(sourceBase, name), output)
-}
-
-async function assertRuntimeWitness(output) {
-  const module = await import(`${pathToFileURL(join(output, 'index.js')).href}?verify=${Date.now()}-${Math.random()}`)
-  await module.loadModule()
-  if (module.version() !== EXPECTED_SOURCE.runtimeVersion) {
-    throw new Error(`Methods runtime version ${module.version()} != ${EXPECTED_SOURCE.runtimeVersion}`)
-  }
-  if (module.abiVersion().join('.') !== EXPECTED_SOURCE.abi) {
-    throw new Error(`Methods ABI ${module.abiVersion().join('.')} != ${EXPECTED_SOURCE.abi}`)
-  }
-  const X = { data: Float64Array.from([0, 0, 1, 0, 0, 1, 1, 1]), rows: 4, cols: 2 }
-  const Y = { data: Float64Array.from([0, 1, 2, 3]), rows: 4, cols: 1 }
-  const fitted = module.fitPls(X, Y, 1)
-  const prediction = module.predictPls(fitted, X)
-  const expected = [0, 1, 2, 3]
-  const maxError = Math.max(...prediction.data.map((value, index) => Math.abs(value - expected[index])))
-  if (prediction.rows !== 4 || prediction.cols !== 1 || !Number.isFinite(maxError) || maxError > 1e-10) {
-    throw new Error(`Methods PLS fit/predict witness failed (max error ${maxError})`)
-  }
-  // Generic role API: fit by method id, export N4ME, re-import and predict identically.
-  const estimator = new (module.methodClass('models.pls.pls_regression'))()
-  estimator.params = { n_components: 1 }
-  estimator.fit(X, Y)
-  const restored = module.NativeEstimator.fromN4me(estimator.toN4me())
-  const direct = estimator.predict(X).data
-  const replayed = restored.predict(X).data
-  estimator.dispose()
-  restored.dispose()
-  if (restored.methodId !== 'models.pls.pls_regression' || direct.some((value, index) => value !== replayed[index])) {
-    throw new Error('Methods estimator-role N4ME round-trip witness failed')
-  }
-  // A state that embeds training rows (kernel PLS) exports only with the explicit opt-in.
-  const kernel = new (module.methodClass('models.pls.kernel'))()
-  kernel.params = { n_components: 1 }
-  kernel.fit(X, Y)
-  let refused = false
-  try {
-    kernel.toN4me()
-  } catch {
-    refused = true
-  }
-  const shared = module.NativeEstimator.fromN4me(kernel.toN4me({ allowTrainingRows: true }))
-  const optIn = refused && kernel.containsTrainingRows() && shared.containsTrainingRows()
-  kernel.dispose()
-  shared.dispose()
-  if (!optIn) throw new Error('Methods training-row export opt-in witness failed')
-}
-
-/** The published npm package must carry exactly the bytes built here. */
-function assertRegistryPackage(output) {
-  const packRoot = join(proofRoot, 'registry')
-  mkdirSync(packRoot, { recursive: true })
-  const [packed] = JSON.parse(command('npm', ['pack', `${PACKAGE_NAME}@${EXPECTED_SOURCE.version}`, '--json', '--pack-destination', packRoot], { cwd: packRoot, capture: true }))
-  command('tar', ['-xzf', join(packRoot, packed.filename), '-C', packRoot], { capture: true })
-  const published = inventory(join(packRoot, 'package', 'dist'))
-  if (JSON.stringify(published) !== JSON.stringify(GENERATED_FILES)) {
-    throw new Error(`published ${PACKAGE_NAME}@${EXPECTED_SOURCE.version} inventory differs: ${published.join(', ')}`)
-  }
-  for (const name of GENERATED_FILES) {
-    if (sha256(join(packRoot, 'package', 'dist', name)) !== sha256(join(output, name))) {
-      throw new Error(`published ${PACKAGE_NAME}@${EXPECTED_SOURCE.version} differs from the source build: ${name}`)
-    }
-  }
-  return { tarball: packed.filename, integrity: packed.integrity, shasum: packed.shasum, byte_identical: true }
-}
-
-if (!existsSync(bindingRoot)) throw new Error(`nirs4all-methods JS binding not found: ${bindingRoot}`)
-if (!existsSync(tsc)) throw new Error(`TypeScript compiler not installed: ${tsc}`)
-if (!emsdk) throw new Error('EMSDK must point to the qualified Emscripten SDK')
-const toolchain = join(emsdk, 'upstream', 'emscripten', 'cmake', 'Modules', 'Platform', 'Emscripten.cmake')
-if (!existsSync(toolchain)) throw new Error(`Emscripten CMake toolchain not found: ${toolchain}`)
-if (git('status', '--porcelain') !== '') throw new Error(`nirs4all-methods source must be clean: ${sourceRoot}`)
-const source = {
-  commit: git('rev-parse', 'HEAD'),
-  tree: git('rev-parse', 'HEAD^{tree}'),
-  epoch: Number(git('log', '-1', '--format=%ct', 'HEAD')),
-}
-if (source.commit !== EXPECTED_SOURCE.commit || source.tree !== EXPECTED_SOURCE.tree) {
-  throw new Error(`unexpected nirs4all-methods source ${source.commit}/${source.tree}; expected ${EXPECTED_SOURCE.commit}/${EXPECTED_SOURCE.tree}`)
-}
-const packageMetadata = JSON.parse(readFileSync(join(bindingRoot, 'package.json'), 'utf8'))
-if (packageMetadata.name !== PACKAGE_NAME || packageMetadata.version !== EXPECTED_SOURCE.version) {
-  throw new Error(`unexpected Methods package ${packageMetadata.name}@${packageMetadata.version}`)
-}
-const emccVersion = command('emcc', ['--version'], { capture: true })
-if (!emccVersion.split('\n')[0].includes(` ${EXPECTED_SOURCE.emscripten} `)) {
-  throw new Error(`unexpected Emscripten toolchain: ${emccVersion.split('\n')[0]}`)
-}
-
-const proofRoot = mkdtempSync(join(tmpdir(), 'nirs4all-web-methods-'))
-const outputs = []
+const allowed = new Set([...Object.keys(pin.staged_files), 'PROVENANCE.json'])
+if (inventory(destination).some((name) => !allowed.has(name))) throw new Error('Unexpected file in Methods destination; refusing overwrite')
+const temporary = mkdtempSync(join(tmpdir(), 'nirs4all-web-methods-public-'))
 try {
-  for (const leg of ['a', 'b']) {
-    const build = join(proofRoot, `build-${leg}`)
-    const output = join(proofRoot, `out-${leg}`)
-    mkdirSync(output, { recursive: true })
-    const buildEnv = {
-      ...process.env,
-      SOURCE_DATE_EPOCH: String(source.epoch),
-    }
-    command('cmake', [
-      '-S', sourceRoot,
-      '-B', build,
-      '-G', 'Ninja',
-      `-DCMAKE_TOOLCHAIN_FILE=${toolchain}`,
-      '-DCMAKE_BUILD_TYPE=Release',
-      '-DN4M_BUILD_BINDINGS_JS=ON',
-      '-DN4M_BUILD_SHARED=OFF',
-      '-DN4M_BUILD_STATIC=ON',
-      '-DN4M_BUILD_TESTS=OFF',
-      '-DN4M_BUILD_CLI=OFF',
-    ], { env: buildEnv })
-    command('cmake', ['--build', build, '--target', 'n4m_wasm', '--parallel'], { env: buildEnv })
-    command(process.execPath, [tsc, '-p', join(bindingRoot, 'tsconfig.json'), '--outDir', output], { env: buildEnv })
-    copyFileSync(join(build, 'bindings', 'js', 'n4m.js'), join(output, 'n4m.js'))
-    copyFileSync(join(build, 'bindings', 'js', 'n4m.wasm'), join(output, 'n4m.wasm'))
-    const actual = inventory(output)
-    if (JSON.stringify(actual) !== JSON.stringify(GENERATED_FILES)) {
-      throw new Error(`unexpected Methods build output: ${actual.join(', ')}`)
-    }
-    await assertRuntimeWitness(output)
-    outputs.push(output)
+  execFileSync('tar', ['-xzf', tarball, '-C', temporary, '--no-same-owner', '--no-same-permissions'])
+  for (const [name, expected] of Object.entries(pin.published_files)) {
+    const bytes = readFileSync(join(temporary, 'package', name))
+    if (bytes.length !== expected.size || hash(bytes) !== expected.sha256) throw new Error(`Methods public file hash mismatch: ${name}`)
   }
-
-  const hashesA = Object.fromEntries(GENERATED_FILES.map((name) => [name, sha256(join(outputs[0], name))]))
-  const hashesB = Object.fromEntries(GENERATED_FILES.map((name) => [name, sha256(join(outputs[1], name))]))
-  if (JSON.stringify(hashesA) !== JSON.stringify(hashesB)) {
-    throw new Error('nirs4all-methods WASM A/B builds are not byte-identical')
+  for (const [from, to] of Object.entries(pin.published_to_staged)) {
+    const path = join(destination, to)
+    mkdirSync(dirname(path), { recursive: true })
+    copyFileSync(join(temporary, 'package', from), path)
   }
-  const registry = assertRegistryPackage(outputs[0])
-
-  mkdirSync(destination, { recursive: true })
-  const allowed = new Set([...STAGED_FILES, 'PROVENANCE.json'])
-  const unexpected = inventory(destination).filter((name) => !allowed.has(name))
-  if (unexpected.length > 0) throw new Error(`refusing to overwrite unexpected staged files: ${unexpected.join(', ')}`)
-  for (const name of GENERATED_FILES) copyRelative(outputs[0], destination, name)
-  for (const name of LEGAL_FILES) copyRelative(sourceRoot, destination, name)
-
   const provenance = {
-    schema: 'nirs4all-web.wasm-provenance.v1',
-    component: 'nirs4all-methods-wasm',
-    package: PACKAGE_NAME,
-    version: EXPECTED_SOURCE.version,
-    runtime_version: EXPECTED_SOURCE.runtimeVersion,
-    abi: EXPECTED_SOURCE.abi,
-    source: {
-      repository: 'https://github.com/GBeurier/nirs4all-methods',
-      commit: source.commit,
-      tree: source.tree,
-      clean: true,
-    },
-    build: {
-      target: 'web',
-      profile: 'release',
-      source_date_epoch: source.epoch,
-      emscripten: EXPECTED_SOURCE.emscripten,
-      cmake: command('cmake', ['--version'], { capture: true }).split('\n')[0],
-      ninja: command('ninja', ['--version'], { capture: true }),
-      typescript: command(process.execPath, [tsc, '--version'], { capture: true }),
-    },
-    reproducibility: { independent_build_directories: 2, byte_identical: true },
-    registry: { package: `${PACKAGE_NAME}@${EXPECTED_SOURCE.version}`, ...registry },
-    witnesses: { runtime_version: true, abi_version: true, pls_fit_predict: true, estimator_role_n4me: true, training_rows_opt_in: true },
-    legal_payload: { included: true, files: LEGAL_FILES },
-    files: STAGED_FILES.map((name) => ({
-      path: name,
-      size: statSync(join(destination, name)).size,
-      sha256: sha256(join(destination, name)),
-    })),
+    schema: 'nirs4all-web.wasm-public-acquisition.v1', component: pin.component,
+    package: pin.package, version: pin.version, runtime_version: pin.runtimeVersion, abi: pin.abi,
+    source: { commit: pin.commit, tree: pin.tree, npm_git_head: metadata.gitHead, basis: 'Actual public registry gitHead and its Git tree; legal extras read from that exact tree.' },
+    acquisition: { registry_metadata_url: pin.registry_metadata_url, metadata_sha256: hash(metadataBytes), tarball_url: pin.tarball_url, tarball_sha256: pin.tarball_sha256, tarball_sha1: pin.tarball_sha1, tarball_sri: pin.tarball_sri, tarball_bytes: archive.length, sha256_sha1_sri_verified: true },
+    reproducibility: { performed_by_web: false, independent_rebuild_claimed: false },
+    source_extra_files: pin.source_extra_files,
+    files: Object.keys(pin.staged_files).sort().map((name) => ({ path: name, size: statSync(join(destination, name)).size, sha256: hash(readFileSync(join(destination, name))) })),
   }
-  writeFileSync(join(destination, 'PROVENANCE.json'), `${JSON.stringify(provenance, null, 2)}\n`)
-  console.log(`staged nirs4all-methods WASM ${EXPECTED_SOURCE.runtimeVersion} from ${source.commit}`)
+  writeFileSync(join(destination, 'PROVENANCE.json'), JSON.stringify(provenance, null, 2) + '\n')
+  await import(pathToFileURL(join(scriptDir, 'verify-methods-wasm.mjs')).href)
 } finally {
-  rmSync(proofRoot, { recursive: true, force: true })
+  rmSync(temporary, { recursive: true, force: true })
 }

@@ -1,0 +1,125 @@
+{
+  "package": "dag-ml-wasm",
+  "version": "0.3.41",
+  "source": {
+    "commit": "6f4044b45028a90a92d3f29287e67779bb5fd0b9",
+    "tree": "efadbc61f7a17a8ee74d6df126687c86df33fdb1"
+  },
+  "registry": {
+    "metadata_url": "https://registry.npmjs.org/dag-ml-wasm/0.3.41",
+    "tarball_url": "https://registry.npmjs.org/dag-ml-wasm/-/dag-ml-wasm-0.3.41.tgz",
+    "tarball_size": 3565019,
+    "sha256": "8ff188143033ee60bcddeb4d5466d05936042efa51c5a35883f0bcd2c61cf34c",
+    "sha1": "4035efff4ec1d5bf783361bbdd4540b1391e7c84",
+    "integrity": "sha512-AgJYKYMMxD4zdFVJjTGCVt3vPhHMJYT36PJezq2H9puw9wRSceagVJ3/+vdlcFuZ+cVFiUSY+ibDyG/9chWBHQ=="
+  },
+  "public_files": {
+    "LICENSE": {
+      "size": 34020,
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+    },
+    "dag_ml_wasm.js": {
+      "size": 82723,
+      "sha256": "02acb20861583e81f71d0b2057aac8f12679d94314b819d6676f4b577debb71d"
+    },
+    "package.json": {
+      "size": 1730,
+      "sha256": "4f366cb487a55f3d5b24995d6e26ca6aed0f3423da14da1eab55f824d683be40"
+    },
+    "README.md": {
+      "size": 6397,
+      "sha256": "235fc98b4aa19a29b365e88d9a76c23c8703ea2c413f7346cd7a8b7b47d2e25d"
+    },
+    "multimodal_archive.mjs": {
+      "size": 2089,
+      "sha256": "164bb4cc8730f723bfe6807ec7ce7e92e579a43627c9c61d01d51063446f9a1f"
+    },
+    "multimodal_dataset_replay.mjs": {
+      "size": 6033,
+      "sha256": "0305b6ae8ae75a33fc74d8ebc6f4e84b58911d973da3592da2f063d155923cdc"
+    },
+    "n4m_controller.mjs": {
+      "size": 20386,
+      "sha256": "a9d0bc6a0b05b502721517da55999ddf093133d605f56286b3e5944bbf1bb635"
+    },
+    "n4m_estimator_controller.mjs": {
+      "size": 18968,
+      "sha256": "2c40a06f2a62324f292139b454a677282c6661da4c551de7bab6dcfef335e8d8"
+    },
+    "n4m_hpo_optimizer.mjs": {
+      "size": 8917,
+      "sha256": "d68581fe58740df21652bdb9f47c448be49238b189dd4e7a7849958a6ea19d1a"
+    },
+    "n4m_multimodal_controller.mjs": {
+      "size": 25073,
+      "sha256": "9c5354d3dc0e6ff4f63be6f88640445c4ea3736c9759ef505672fa21d4ee2a63"
+    },
+    "dag_ml_wasm.d.ts": {
+      "size": 24612,
+      "sha256": "df49dc61facc41c40bf7bd0e299a43a0ae68c2bdcb55e5da1cfe87f780eda2f4"
+    },
+    "n4m_controller.d.ts": {
+      "size": 2135,
+      "sha256": "cb662945ea21493f5e727b66477d9ef971cfd9d37771b17ebb6aebc236872cf9"
+    },
+    "n4m_estimator_controller.d.ts": {
+      "size": 1019,
+      "sha256": "5bef931949ee5875f3089dc993660539597b6cc4979ef77b7e1c96a1fc8bb084"
+    },
+    "n4m_hpo_optimizer.d.ts": {
+      "size": 1201,
+      "sha256": "0e914686077faccf611ce9b97fa8fb90a902dbba9c71cb1cfd7a75538654b5f0"
+    },
+    "dag_ml_wasm_bg.wasm": {
+      "size": 10650598,
+      "sha256": "4cbdd0671aaf3f51b67f4d7e9161c34fc1effbaee4bc789a8751aef266917620"
+    }
+  },
+  "source_files": {
+    "LICENSING.md": {
+      "source_path": "LICENSING.md",
+      "size": 1406,
+      "sha256": "f9f26e32462eb28e350d0bd4db913ee5ccbd3a1eb88d97e78d187e1b35b86ae9"
+    },
+    "LICENSING_FR.md": {
+      "source_path": "LICENSING_FR.md",
+      "size": 1521,
+      "sha256": "6f907830be970cbd87723ebaa1e58ffd3dd3f69692a5b211edfc6ee964d93aff"
+    },
+    "THIRD_PARTY_NOTICES.md": {
+      "source_path": "THIRD_PARTY_NOTICES.md",
+      "size": 1573,
+      "sha256": "01a4064f18fa28336f49c40a4e2db4b40ebee4766160320174e5aaadc41304fd"
+    },
+    "LICENSES/AGPL-3.0-or-later.txt": {
+      "source_path": "LICENSES/AGPL-3.0-or-later.txt",
+      "size": 34020,
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+    },
+    "LICENSES/Apache-2.0.txt": {
+      "source_path": "LICENSES/Apache-2.0.txt",
+      "size": 10280,
+      "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+    },
+    "LICENSES/BSD-3-Clause.txt": {
+      "source_path": "LICENSES/BSD-3-Clause.txt",
+      "size": 1460,
+      "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
+    },
+    "LICENSES/CeCILL-2.1.txt": {
+      "source_path": "LICENSES/CeCILL-2.1.txt",
+      "size": 21778,
+      "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+    },
+    "LICENSES/MIT.txt": {
+      "source_path": "LICENSES/MIT.txt",
+      "size": 1078,
+      "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+    },
+    "native_predictor_descriptor.v1.schema.json": {
+      "source_path": "docs/contracts/native_predictor_descriptor.v1.schema.json",
+      "size": 4275,
+      "sha256": "b29746645106a88d7e014ff7ad8df242a967f0b60c85df259094063dab329c1d"
+    }
+  }
+}

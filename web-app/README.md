@@ -80,10 +80,10 @@ multi-target conformal presentation.
 
 The browser app also serves as the reference for a **client-side custom host** that composes:
 
-- `nirs4all` (vendored from `../../nirs4all-core/bindings/wasm`) for browser-safe runtime loaders
+- `nirs4all` (the exact published Core 0.4.5 npm payload in `vendor/nirs4all`) for browser-safe runtime loaders
   and the portable execution subset;
 - `nirs4all-ui` from the exact content-addressed
-  `vendor/npm/nirs4all-ui-0.1.14.tgz` artifact for reusable components, pure
+  `vendor/npm/nirs4all-ui-0.1.15.tgz` artifact for reusable components, pure
   view-model helpers, and shared brand assets. `npm run check:ui-package`
   verifies its SHA-256, npm integrity, source commit/tree, package exports, and
   provenance receipt before the app gate.
@@ -95,11 +95,31 @@ script (`npm run vendor:core`) and the content-addressed UI package check
 the runtime surface, UI subpath exports, and UI assets available without introducing any backend
 dependency.
 
-The staged Core, dag-ml, datasets and dag-ml-data packages are content-addressed release-candidate
-artifacts. `npm run check:core-shim` verifies the complete Core package inventory, while
-`npm run check:wasm-artifacts` verifies provenance, byte hashes and live runtime witnesses for the
-three WASM packages. Re-stage them reproducibly with their `npm run wasm:*` command and an exact
-upstream checkout.
+Core 0.4.5 and dag-ml 0.3.41 consume the actual published npm payloads without rebuilding native
+WASM. `npm run check:core-shim` pins the complete 51-file Core inventory; `npm run check:dagml-wasm`
+pins every published DAG file and its additional source legal/contract payload, then checks the
+live runtime version and capabilities. To re-stage DAG, capture the pinned public version metadata
+and tarball, set `NIRS4ALL_DAG_ML_NPM_METADATA` and `NIRS4ALL_DAG_ML_NPM_TARBALL` to those files,
+and run `npm run wasm:dagml`. The script checks gitHead, SHA-256, SHA-1, npm integrity and exact
+inventory. This is an acquisition check and makes no independent rebuild claim.
+
+Methods 1.3.4 also consumes its authenticated public npm payload: set
+`NIRS4ALL_METHODS_NPM_METADATA` and `NIRS4ALL_METHODS_NPM_TARBALL`, then run
+`npm run wasm:methods`. Formats 0.2.11 consumes the captured Web package from its
+official Pages deployment at the pinned public source; it records the deployment
+and captured file hashes, including its `console-errors` feature. It makes no
+local build or locked-build claim.
+
+Data 0.2.13, Datasets 0.3.11 and IO 0.2.6 use one local `wasm-pack --target web
+--release --locked` build at their exact public source commits. Data opts into
+the existing `provider` feature because the public npm default omits that
+surface; Datasets and IO require browser glue whereas their public npm payloads
+contain Node bindings. Set their `NIRS4ALL_*_ROOT` variables to clean pinned
+source checkouts and optionally `NIRS4ALL_WEB_WASM_TARGET_DIR` to a shared owned
+cache. Build outputs, including failed attempts, remain in task-owned `TMPDIR`
+directories. Their provenance records a single build and explicitly makes no
+independent or byte-identical rebuild claim. `npm run check:wasm-artifacts` pins
+all staged bytes and retains the existing functional and numerical witnesses.
 
 `examples/custom-app-host/` is a copy-out template for custom client-side hosts. It imports only the
 public `nirs4all` and `nirs4all-ui` package surfaces and is pinned by

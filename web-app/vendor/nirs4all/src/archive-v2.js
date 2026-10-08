@@ -89,7 +89,7 @@ export async function writePortableArchiveV2(manifest, members) {
  * arrays, marshals them into the public Methods C ABI and shapes the returned
  * multi-target result. It contains no estimator or prediction implementation.
  */
-export async function replayMethodsArchiveV2(archiveBytes, dataset) {
+export async function replayMethodsArchiveV2(archiveBytes, dataset, options = {}) {
   const bytes = bytesView(archiveBytes, 'Archive V2');
   if (bytes.byteLength > MAX_ARCHIVE_BYTES) {
     throw new RangeError('Archive V2 exceeds the canonical Core byte budget.');
@@ -110,7 +110,7 @@ export async function replayMethodsArchiveV2(archiveBytes, dataset) {
         || name.length > 128 || /[\u0000-\u001f\u007f]/.test(name))) {
       throw new Error('Archive V2 target names exceed the bounded output contract.');
     }
-    const methods = await loadMethodsWasm();
+    const methods = options.methods ?? await loadMethodsWasm();
     if (typeof methods.loadModule === 'function') {
       await methods.loadModule();
     }

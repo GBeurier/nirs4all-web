@@ -1,3 +1,9 @@
+export { runBrowserPipeline, loadBrowserPipeline, predictBrowserPipeline, BrowserNativePipeline } from './browser-native-pipeline.js';
+export { openExperiment } from './result-view.js';
+export type { ExperimentResult, NativePredictionRow, NativeResultReport } from './result-view.js';
+export { Workflow, run, predict, retrain, exportWorkflow, load } from './workflow.js';
+export type { WorkflowOptions, WorkflowExport, WorkflowPrediction, DagWorkflowReplayResult } from './workflow.js';
+
 export interface Upstream {
   key: 'dag_ml' | 'dag_ml_data' | 'formats' | 'io' | 'datasets' | 'methods';
   candidates: readonly string[];
@@ -397,6 +403,7 @@ export function inspectMethodsArchiveV2Predictors(
 export function replayMethodsArchiveV2(
   archiveBytes: ArrayBuffer | ArrayBufferView,
   dataset: ArchiveV2ReplayDataset,
+  options?: { methods?: unknown },
 ): Promise<ArchiveV2ReplayResult>;
 
 /** Prefix of the language-neutral n4m role step token `n4m:<catalog method id>`. */
@@ -479,3 +486,24 @@ export class N4mRolePipeline {
 
 /** Methods estimators usable as role recipe steps, read from the Methods manifest. */
 export function n4mRoleCapabilities(options?: { methods?: unknown }): Promise<N4mRoleCapability[]>;
+export { dataset, MultimodalPredictor } from './multimodal.js';
+export { generate, tune, NativeTuningResult, loadTuning } from './tuning.js';
+export { tuneBrowser, loadBrowserTuning, BrowserTuningResult } from './browser-tuning.js';
+export type { BrowserTuneOptions } from './browser-tuning.js';
+export type { GenerateOptions, GenerationConstraints, TuneOptions } from './tuning.js';
+export { CalibratedWorkflow, calibrate, predictCalibrated, conformalMetrics, exportCalibrated, loadCalibrated } from './conformal.js';
+export type { PublicDatasetRecord, PublicDataset, MultimodalOptions, MultimodalPrediction } from './multimodal.js';
+
+export { robustness } from './robustness.js';
+
+export { predictMultimodalArchive } from './multimodal-archive.js';
+
+export { openWorkspace } from './workspace.js';
+export type { WorkspaceSnapshot } from './workspace.js';
+export { NativePipeline, runPipeline } from "./native-pipeline.js";
+
+export { NativeMultimodal, runMultimodal } from "./native-multimodal.js";
+
+export type { NativePipelineStep, NativePipelineRecipe, NativePipelineOptions } from "./native-pipeline.js";
+export type { NativeSourcePolicy } from "./native-multimodal.js";
+export type { BrowserNativeDatasetRecord, BrowserNativeStep, BrowserNativeRecipe, BrowserNativePipelineOptions } from "./browser-native-pipeline.js";

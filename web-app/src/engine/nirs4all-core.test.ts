@@ -64,11 +64,11 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(existsSync(new URL('../../scripts/sync-core-shim.mjs', import.meta.url))).toBe(true)
     expect(existsSync(new URL('../../scripts/sync-lite-shim.mjs', import.meta.url))).toBe(false)
     expect(syncScript).not.toMatch(/NIRS4ALL_LITE|nirs4all-lite|sync-lite/)
-    expect(vendorPkg).toMatchObject({ name: 'nirs4all', version: '0.4.1' })
-    expect(provenance).toContain('68282900ab8314ab71182fd155b0493d896e4ee2')
-    expect(provenance).toContain('92fcbed30d6b8a9c47ccfbedec3543b9c7729ee63d7b3488905f99abb4ea95c3')
-    expect(syncScript).toContain('f9b89c4787f05239186d625955565509cd953ad576fe229febe3f5003fc3e22a')
-    expect(syncScript).toContain('d8764ad63ceb6d7bbcb24b9eb302771ab2b22046f94fd46eece79df196d7be33')
+    expect(vendorPkg).toMatchObject({ name: 'nirs4all', version: '0.4.5' })
+    expect(provenance).toContain('5668796aaac9a02d8d0146ec05ead04f9c76657c')
+    expect(provenance).toContain('4068294e29721796beaaac3f08d9ab54a3894601a569cf0f12f0b2dea8303d81')
+    expect(syncScript).toContain('00fd7c991f72fa495e0fa76da905ba885b41a243530ebac9436e7e98db2a1e04')
+    expect(syncScript).toContain('7265d648a9c3aa62781ad5a1f2dc879c9f1a8bc748be9627dccac1fbbeb24a31')
   })
 
   it('accepts a newer optional Core sibling only after verifying the pinned package', () => {
@@ -83,7 +83,7 @@ describe('nirs4all-core aggregate loaders', () => {
 
     expect(optional.status).toBe(0)
     expect(optional.stderr).toContain('sibling identity mismatch')
-    expect(optional.stderr).toContain('verified pinned 0.4.1 package independently')
+    expect(optional.stderr).toContain('verified pinned 0.4.5 package independently')
 
     const required = spawnSync(process.execPath, [script, '--check'], {
       cwd,
@@ -114,7 +114,7 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(methods?.candidates).toEqual(['@nirs4all/methods'])
     expect(viteConfig).toContain("'@nirs4all/methods':")
     expect(vitestConfig).toContain("'@nirs4all/methods':")
-    expect(vendorPkg.peerDependencies['@nirs4all/methods']).toBe('^1.3.2')
+    expect(vendorPkg.peerDependencies['@nirs4all/methods']).toBe('^1.3.4')
     expect(vendorPkg.peerDependenciesMeta['@nirs4all/methods']).toBeTruthy()
     expect(viteConfig + vitestConfig + JSON.stringify(methods) + JSON.stringify(vendorPkg)).not.toContain('@nirs4all/methods' + '-wasm')
   })
@@ -225,14 +225,16 @@ describe('nirs4all-core aggregate loaders', () => {
     const wasm = readFileSync(new URL('./wasm/datasets/nirs4all_datasets_wasm_bg.wasm', import.meta.url))
     const provenance = JSON.parse(
       readFileSync(new URL('./wasm/datasets/PROVENANCE.json', import.meta.url), 'utf8'),
-    ) as { version: string; source: { commit: string }; reproducibility: { byte_identical: boolean } }
+    ) as { version: string; source: { commit: string }; build: { executions: number }; reproducibility: { independent_rebuild_claimed: boolean; byte_identical_rebuild_claimed: boolean } }
     datasets.initSync({ module: wasm })
 
-    expect(datasets.abiVersion()).toBe('0.3.9')
+    expect(datasets.abiVersion()).toBe('0.3.11')
     expect(provenance).toMatchObject({
-      version: '0.3.9',
-      source: { commit: '53017672c82df106a17b512846425bc9e846565f' },
-      reproducibility: { byte_identical: true },
+      schema: 'nirs4all-web.wasm-single-build.v1',
+      version: '0.3.11',
+      source: { commit: 'e68d1befb6cb8245799e83d4b4e4c41e66287689' },
+      build: { target: 'web', cargo_locked: true, executions: 1, wasm_bindgen_lock: '0.2.123' },
+      reproducibility: { independent_rebuild_claimed: false, byte_identical_rebuild_claimed: false },
     })
     expect(datasets.sha256(new Uint8Array([97, 98, 99]))).toBe(
       'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
@@ -244,18 +246,18 @@ describe('nirs4all-core aggregate loaders', () => {
     const wasm = readFileSync(new URL('./wasm/dagml/dag_ml_wasm_bg.wasm', import.meta.url))
     const provenance = JSON.parse(
       readFileSync(new URL('./wasm/dagml/PROVENANCE.json', import.meta.url), 'utf8'),
-    ) as { version: string; source: { commit: string }; reproducibility: { byte_identical: boolean } }
+    ) as { version: string; source: { commit: string }; reproducibility: { performed_by_web: boolean; independent_rebuild_claimed: boolean } }
     dagml.initSync({ module: wasm })
 
     const manifest = JSON.parse(dagml.contract_manifest_json()) as { crate: string; capabilities: string[] }
-    expect(dagml.dag_ml_version()).toBe('0.3.34')
+    expect(dagml.dag_ml_version()).toBe('0.3.41')
     expect(manifest.crate).toBe('dag-ml')
     expect(manifest.capabilities).toContain('execute_execution_plan_phase')
     expect(manifest.capabilities).toContain('loss_execution_attestation')
     expect(provenance).toMatchObject({
-      version: '0.3.34',
-      source: { commit: '867f3576592ec390e2a16ced53cc027c022cde27' },
-      reproducibility: { byte_identical: true },
+      version: '0.3.41',
+      source: { commit: '6f4044b45028a90a92d3f29287e67779bb5fd0b9' },
+      reproducibility: { performed_by_web: false, independent_rebuild_claimed: false },
     })
   })
 

@@ -1,20 +1,25 @@
 {
-  "schema": "nirs4all-web.wasm-provenance.v1",
+  "schema": "nirs4all-web.wasm-single-build.v1",
   "component": "nirs4all-datasets-wasm",
   "package": "@nirs4all/datasets-wasm",
-  "version": "0.3.9",
+  "version": "0.3.11",
   "source": {
     "repository": "https://github.com/GBeurier/nirs4all-datasets",
-    "commit": "53017672c82df106a17b512846425bc9e846565f",
-    "tree": "68513f3b938407846a9014d0dad47f58ded09bf4",
+    "commit": "e68d1befb6cb8245799e83d4b4e4c41e66287689",
+    "tree": "f72111a2bfa9a73a628e87be2546969982d36f1d",
     "clean": true
   },
   "build": {
     "target": "web",
+    "executions": 1,
+    "output_directory": "/mnt/c/Temp/n4a-downstream041-20261008/web041-actual-staging-datasets-io-v3/tmp/nirs4all-web-datasets-hHtLB5/out-single",
+    "retained_build_directory": "/mnt/c/Temp/n4a-downstream041-20261008/web041-actual-staging-datasets-io-v3/tmp/nirs4all-web-datasets-hHtLB5",
+    "cargo_target_directory": "/mnt/c/Temp/n4a-downstream041-20261008/web041-browser-cargo-target-v1",
     "profile": "release",
     "cargo_locked": true,
-    "source_date_epoch": 1788377879,
-    "const_random_seed": "53017672c82df106a17b512846425bc9e846565f",
+    "wasm_bindgen_lock": "0.2.123",
+    "source_date_epoch": 1791300725,
+    "const_random_seed": "e68d1befb6cb8245799e83d4b4e4c41e66287689",
     "tools": {
       "wasm_pack": "wasm-pack 0.15.0",
       "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
@@ -26,8 +31,8 @@
     }
   },
   "reproducibility": {
-    "independent_target_directories": 2,
-    "byte_identical": true
+    "independent_rebuild_claimed": false,
+    "byte_identical_rebuild_claimed": false
   },
   "witnesses": {
     "runtime_version": true,
@@ -57,8 +62,8 @@
     },
     {
       "path": "nirs4all_datasets_wasm_bg.wasm",
-      "size": 195502,
-      "sha256": "9275834e88b052304b0258022956ab99373cd874b2c6167081faedf58ad20f0a"
+      "size": 195633,
+      "sha256": "af9694d04cf9c7c049b41e8316c5ca94e1cf73e19759de834eb1c895b6e62dfa"
     },
     {
       "path": "nirs4all_datasets_wasm_bg.wasm.d.ts",
@@ -67,8 +72,8 @@
     },
     {
       "path": "package.json",
-      "size": 707,
-      "sha256": "ba0c18bd68a571b04223cb5f64df4d486f387e363817bd7e8d621077dfb3a791"
+      "size": 708,
+      "sha256": "a360fa68a03ea5b91610c0b02fb294095cc262b84808eae176889722779b483c"
     }
   ]
 }

@@ -1,10 +1,11 @@
 # Vendored nirs4all JavaScript/WASM payload
 
-Published nirs4all@0.4.1 from Core commit `68282900ab8314ab71182fd155b0493d896e4ee2` (tree `95ded435a72c1bf3a031b0d26b31e98847058ce5`).
+Published nirs4all@0.4.5 from Core commit `5668796aaac9a02d8d0146ec05ead04f9c76657c` (tree `a738c8a76bf2faa356c6db06f7e9aab78c26c517`).
 
-- Registry tarball SHA-256: `92fcbed30d6b8a9c47ccfbedec3543b9c7729ee63d7b3488905f99abb4ea95c3`
-- npm dist.integrity: `sha512-Uke9rlbKN/OpF4n4l6Gxz3nIY2IbDvjDLMNvyTlwJ458xsE+cl01Cx2E35UvY4dQ92lQTEeNZ68FlgvbEBbt2A==`
-- Native WASM SHA-256: `f9b89c4787f05239186d625955565509cd953ad576fe229febe3f5003fc3e22a`
-- Registry provenance reference: `https://registry.npmjs.org/-/npm/v1/attestations/nirs4all@0.4.1`
+- Registry tarball: `https://registry.npmjs.org/nirs4all/-/nirs4all-0.4.5.tgz`
+- Registry tarball SHA-256: `4068294e29721796beaaac3f08d9ab54a3894601a569cf0f12f0b2dea8303d81`
+- npm dist.integrity: `sha512-HvvPwUTrNFzmHDkSpFLPB3D8AZdOgzDJqz792jsAyMgGhi/6lhQ9DH02GQybL/beD/fH+LxkJ2MA2i2MDsialQ==`
+- Native WASM SHA-256: `00fd7c991f72fa495e0fa76da905ba885b41a243530ebac9436e7e98db2a1e04`
+- Registry provenance reference: `https://registry.npmjs.org/-/npm/v1/attestations/nirs4all@0.4.5`
 
-Registry integrity and gitHead checked; source files compared to the clean release checkout. Cryptographic registry-signature verification is a separate release gate, not claimed by this helper. Documented Web normalization affects only package.json/README.md/src/index.js when necessary; raw tar and staged file digests are retained in the audit packet.
+The public registry metadata, gitHead and actual tarball SHA-256/SHA-1/SHA-512 integrity were checked on 2026-10-08. This Web update consumes the published package; it does not rebuild WASM or claim independent reproducibility. Cryptographic registry-signature verification is not claimed here. The verifier pins the complete 51-file published inventory. Source comparison uses only the existing documented package publishConfig normalization when needed; published binary bytes remain unchanged.

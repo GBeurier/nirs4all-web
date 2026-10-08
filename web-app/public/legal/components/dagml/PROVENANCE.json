@@ -1,59 +1,31 @@
 {
-  "schema": "nirs4all-web.wasm-provenance.v1",
+  "schema": "nirs4all-web.public-wasm-acquisition.v1",
   "component": "dag-ml-wasm",
   "package": "dag-ml-wasm",
-  "version": "0.3.34",
+  "version": "0.3.41",
   "source": {
     "repository": "https://github.com/GBeurier/dag-ml",
-    "commit": "867f3576592ec390e2a16ced53cc027c022cde27",
-    "tree": "6ec170b5f8011ed09a88578b552df3f9c4ee47f4",
-    "clean": true
+    "commit": "6f4044b45028a90a92d3f29287e67779bb5fd0b9",
+    "tree": "efadbc61f7a17a8ee74d6df126687c86df33fdb1"
   },
-  "build": {
-    "target": "web",
-    "profile": "release",
-    "cargo_locked": true,
-    "registry_dependency": {
-      "package": "n4m",
-      "version": "0.4.0",
-      "source_commit": "5fba13ba7b13d51fdeed9c4f6c11612d70b3b755",
-      "source_tree": "89227d49462739b78f0ed5790fbe47a78acdc08c",
-      "binding_source_tree": "df7b08e828c49b8763985934b17bf2086ab4c58a",
-      "runtime_source_commit": "dcc570b3647f77cf0428dd346078f442ed5cd032",
-      "runtime_source_tree": "4b711a5cf7b0fb1e10a6ed99e1202bdd89917c42",
-      "runtime_binding_source_tree": "ebbc923de888648d217818c16eddda0ececc64c5",
-      "registry_checksum": "262224913fd9338e523dea8a55e688abab21eb131422a23fc3f2dfb32a4001f6"
-    },
-    "source_date_epoch": 1791099062,
-    "tools": {
-      "wasm_pack": "wasm-pack 0.15.0",
-      "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
-      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)"
-    }
+  "acquisition": {
+    "metadata_url": "https://registry.npmjs.org/dag-ml-wasm/0.3.41",
+    "tarball_url": "https://registry.npmjs.org/dag-ml-wasm/-/dag-ml-wasm-0.3.41.tgz",
+    "git_head": "6f4044b45028a90a92d3f29287e67779bb5fd0b9",
+    "tarball_size": 3565019,
+    "sha256": "8ff188143033ee60bcddeb4d5466d05936042efa51c5a35883f0bcd2c61cf34c",
+    "sha1": "4035efff4ec1d5bf783361bbdd4540b1391e7c84",
+    "integrity": "sha512-AgJYKYMMxD4zdFVJjTGCVt3vPhHMJYT36PJezq2H9puw9wRSceagVJ3/+vdlcFuZ+cVFiUSY+ibDyG/9chWBHQ==",
+    "metadata_sha256": "c08501a1d1db29b8850734837bf071bdfa68689b68fa2efb7b6cf60bc1d3787c",
+    "sha256_sha1_sri_verified": true
   },
   "reproducibility": {
-    "independent_target_directories": 2,
-    "byte_identical": true
+    "performed_by_web": false,
+    "independent_rebuild_claimed": false
   },
   "licensing": {
     "expression": "CECILL-2.1 OR AGPL-3.0-or-later",
-    "payload_source": "qualified source tree",
-    "files": [
-      "LICENSE",
-      "LICENSING.md",
-      "LICENSING_FR.md",
-      "THIRD_PARTY_NOTICES.md",
-      "LICENSES/AGPL-3.0-or-later.txt",
-      "LICENSES/Apache-2.0.txt",
-      "LICENSES/BSD-3-Clause.txt",
-      "LICENSES/CeCILL-2.1.txt",
-      "LICENSES/MIT.txt"
-    ]
-  },
-  "witnesses": {
-    "runtime_version": true,
-    "contract_manifest": true,
-    "native_predictor_descriptor_schema": true
+    "payload_source": "public npm package plus pinned source legal and contract files"
   },
   "files": [
     {
@@ -108,23 +80,63 @@
     },
     {
       "path": "dag_ml_wasm.d.ts",
-      "size": 22892,
-      "sha256": "3c6f43cc0c067928e8ff3de0f5b745cdde28eacc204f8af7e25567221a04ae9c"
+      "size": 24612,
+      "sha256": "df49dc61facc41c40bf7bd0e299a43a0ae68c2bdcb55e5da1cfe87f780eda2f4"
     },
     {
       "path": "dag_ml_wasm.js",
-      "size": 76945,
-      "sha256": "2e94d019ad759a60a4d3709c48bde299b590794b4616f911b7480e19c4f8631c"
+      "size": 82723,
+      "sha256": "02acb20861583e81f71d0b2057aac8f12679d94314b819d6676f4b577debb71d"
     },
     {
       "path": "dag_ml_wasm_bg.wasm",
-      "size": 10386254,
-      "sha256": "1a3b653e8852289029070d925f8424d4d19697f6ae1f8d5f7622a3d3734b36a4"
+      "size": 10650598,
+      "sha256": "4cbdd0671aaf3f51b67f4d7e9161c34fc1effbaee4bc789a8751aef266917620"
     },
     {
-      "path": "dag_ml_wasm_bg.wasm.d.ts",
-      "size": 9231,
-      "sha256": "03c4e00fa4e380fcff24e0a7991a1cd5481dbc9dcbc41dcae51abff60f67d9bf"
+      "path": "multimodal_archive.mjs",
+      "size": 2089,
+      "sha256": "164bb4cc8730f723bfe6807ec7ce7e92e579a43627c9c61d01d51063446f9a1f"
+    },
+    {
+      "path": "multimodal_dataset_replay.mjs",
+      "size": 6033,
+      "sha256": "0305b6ae8ae75a33fc74d8ebc6f4e84b58911d973da3592da2f063d155923cdc"
+    },
+    {
+      "path": "n4m_controller.d.ts",
+      "size": 2135,
+      "sha256": "cb662945ea21493f5e727b66477d9ef971cfd9d37771b17ebb6aebc236872cf9"
+    },
+    {
+      "path": "n4m_controller.mjs",
+      "size": 20386,
+      "sha256": "a9d0bc6a0b05b502721517da55999ddf093133d605f56286b3e5944bbf1bb635"
+    },
+    {
+      "path": "n4m_estimator_controller.d.ts",
+      "size": 1019,
+      "sha256": "5bef931949ee5875f3089dc993660539597b6cc4979ef77b7e1c96a1fc8bb084"
+    },
+    {
+      "path": "n4m_estimator_controller.mjs",
+      "size": 18968,
+      "sha256": "2c40a06f2a62324f292139b454a677282c6661da4c551de7bab6dcfef335e8d8"
+    },
+    {
+      "path": "n4m_hpo_optimizer.d.ts",
+      "size": 1201,
+      "sha256": "0e914686077faccf611ce9b97fa8fb90a902dbba9c71cb1cfd7a75538654b5f0"
+    },
+    {
+      "path": "n4m_hpo_optimizer.mjs",
+      "size": 8917,
+      "sha256": "d68581fe58740df21652bdb9f47c448be49238b189dd4e7a7849958a6ea19d1a"
+    },
+    {
+      "path": "n4m_multimodal_controller.mjs",
+      "size": 25073,
+      "sha256": "9c5354d3dc0e6ff4f63be6f88640445c4ea3736c9759ef505672fa21d4ee2a63"
     },
     {
       "path": "native_predictor_descriptor.v1.schema.json",
@@ -133,8 +145,8 @@
     },
     {
       "path": "package.json",
-      "size": 576,
-      "sha256": "7aacaa7210185c1f2c42238a02949bdc850845474468d429334233e619d59263"
+      "size": 1730,
+      "sha256": "4f366cb487a55f3d5b24995d6e26ca6aed0f3423da14da1eab55f824d683be40"
     }
   ]
 }

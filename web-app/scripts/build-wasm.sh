@@ -1,40 +1,38 @@
 #!/usr/bin/env bash
 # Build/stage the WebAssembly packages web-app consumes into src/engine/wasm/.
 #
-#   formats  : nirs4all-formats (vendor-format decode, ~58 families)   [wasm-pack --target web]
+#   formats  : pinned public Formats Pages Web package               [no local rebuild]
 #   io       : nirs4all-io      (dataset inference + DatasetSpec)       [wasm-pack --target web]
-#   methods  : @nirs4all/methods (libn4m PLS engine)                   [Emscripten, A/B proved]
-#   dag-ml*  : dag-ml + dag-ml-data execution                          [WS1 — execute_* exports pending]
+#   methods  : pinned public @nirs4all/methods npm payload             [no local rebuild]
+#   dag-ml   : pinned published npm WASM (no local native rebuild)
+#   dag-ml-data: typed provider runtime                               [wasm-pack --target web]
 #
-# Toolchain is not on the default PATH here; we add nvm node, cargo, and emsdk.
+# Builds are required only for the browser IO/Datasets glue and Data provider.
+# Keep caller-selected Node; add Cargo when it is outside the default PATH.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP="$(cd "$HERE/.." && pwd)"
 ECO="$(cd "$APP/../.." && pwd)"   # the nirs4all ecosystem working tree
 OUT="$APP/src/engine/wasm"
 
-export PATH="$HOME/.nvm/versions/node/v22.21.1/bin:$HOME/.cargo/bin:$PATH"
-# emsdk provides emcc/emar for the zstd C shim used by the Parquet reader
-[ -f "$HOME/emsdk/emsdk_env.sh" ] && source "$HOME/emsdk/emsdk_env.sh" >/dev/null 2>&1 || true
-if command -v emcc >/dev/null 2>&1; then
-  export CC_wasm32_unknown_unknown="$(command -v emcc)"
-  export AR_wasm32_unknown_unknown="$(command -v emar)"
-  export CRATE_CC_NO_DEFAULTS=1
+if [ -z "${NIRS4ALL_DAG_ML_NPM_TARBALL:-}" ] || [ -z "${NIRS4ALL_DAG_ML_NPM_METADATA:-}" ]; then
+  echo "✗ capture the pinned public dag-ml npm tarball and version metadata, then set NIRS4ALL_DAG_ML_NPM_TARBALL and NIRS4ALL_DAG_ML_NPM_METADATA" >&2
+  exit 1
 fi
+
+export PATH="$HOME/.cargo/bin:$PATH"
 
 WASM_PACK="$(command -v wasm-pack || echo "$HOME/.cargo/bin/wasm-pack")"
 
 mkdir -p "$OUT"
-if [ -d "${NIRS4ALL_FORMATS_ROOT:-$ECO/nirs4all-formats}/bindings/wasm" ]; then
-  echo "▶ building and proving formats"
-  NIRS4ALL_FORMATS_ROOT="${NIRS4ALL_FORMATS_ROOT:-$ECO/nirs4all-formats}" \
-    WASM_PACK_BIN="$WASM_PACK" node "$HERE/stage-formats-wasm.mjs"
-else
-  echo "✗ formats crate not found" >&2
+if [ -z "${NIRS4ALL_FORMATS_PAGES_CAPTURE_DIR:-}" ] || [ -z "${NIRS4ALL_FORMATS_DEPLOYMENT_CAPTURE_DIR:-}" ]; then
+  echo "✗ provide the pinned public Formats Pages files and deployment captures" >&2
   exit 1
 fi
+echo "▶ staging pinned public formats"
+node "$HERE/stage-formats-wasm.mjs"
 if [ -d "${NIRS4ALL_IO_ROOT:-$ECO/nirs4all-io}/bindings/wasm" ]; then
-  echo "▶ building and proving io"
+  echo "▶ building browser io once"
   NIRS4ALL_IO_ROOT="${NIRS4ALL_IO_ROOT:-$ECO/nirs4all-io}" \
     WASM_PACK_BIN="$WASM_PACK" node "$HERE/stage-io-wasm.mjs"
 else
@@ -43,7 +41,7 @@ else
 fi
 
 if [ -d "${NIRS4ALL_DATASETS_ROOT:-$ECO/nirs4all-datasets}/bindings/wasm" ]; then
-  echo "▶ building and proving datasets"
+  echo "▶ building browser datasets once"
   NIRS4ALL_DATASETS_ROOT="${NIRS4ALL_DATASETS_ROOT:-$ECO/nirs4all-datasets}" \
     WASM_PACK_BIN="$WASM_PACK" node "$HERE/stage-datasets-wasm.mjs"
 else
@@ -51,29 +49,21 @@ else
   exit 1
 fi
 
-if [ -d "${NIRS4ALL_METHODS_ROOT:-$ECO/nirs4all-methods}/bindings/js" ]; then
-  echo "▶ building and proving methods"
-  NIRS4ALL_METHODS_ROOT="${NIRS4ALL_METHODS_ROOT:-$ECO/nirs4all-methods}" \
-    EMSDK="${EMSDK:-$HOME/emsdk}" node "$HERE/stage-methods-wasm.mjs"
-else
-  echo "✗ required Methods source not found" >&2
+if [ -z "${NIRS4ALL_METHODS_NPM_TARBALL:-}" ] || [ -z "${NIRS4ALL_METHODS_NPM_METADATA:-}" ]; then
+  echo "✗ provide the pinned public Methods npm tarball and version metadata" >&2
   exit 1
 fi
+echo "▶ staging pinned public methods"
+node "$HERE/stage-methods-wasm.mjs"
 
-if [ -d "${NIRS4ALL_DAG_ML_ROOT:-$ECO/dag-ml}/crates/dag-ml-wasm" ]; then
-  echo "▶ building and proving dag-ml"
-  NIRS4ALL_DAG_ML_ROOT="${NIRS4ALL_DAG_ML_ROOT:-$ECO/dag-ml}" \
-    WASM_PACK_BIN="$WASM_PACK" node "$HERE/stage-dagml-wasm.mjs"
-else
-  echo "✗ required dag-ml crate not found" >&2
-  exit 1
-fi
+echo "▶ staging pinned published dag-ml"
+node "$HERE/stage-dagml-wasm.mjs"
 
 # dag-ml-data provider: the typed data-contract layer. The `provider` feature
 # compiles WasmInMemoryProvider (materialize / make_view / feature_block /
 # target_block) into the wasm so the browser can serve X/y by sampleId.
 if [ -d "${NIRS4ALL_DAG_ML_DATA_ROOT:-$ECO/dag-ml-data}/crates/dag-ml-data-wasm" ]; then
-  echo "▶ building and proving dagml-data (provider feature)"
+  echo "▶ building browser dagml-data once (provider feature)"
   NIRS4ALL_DAG_ML_DATA_ROOT="${NIRS4ALL_DAG_ML_DATA_ROOT:-$ECO/dag-ml-data}" \
     WASM_PACK_BIN="$WASM_PACK" node "$HERE/stage-dagml-data-wasm.mjs"
 else

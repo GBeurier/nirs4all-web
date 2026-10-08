@@ -1,20 +1,27 @@
 {
-  "schema": "nirs4all-web.wasm-provenance.v1",
+  "schema": "nirs4all-web.wasm-single-build.v1",
   "component": "nirs4all-io-wasm",
   "package": "@nirs4all/io-wasm",
-  "version": "0.2.4",
+  "version": "0.2.6",
   "source": {
     "repository": "https://github.com/GBeurier/nirs4all-io",
-    "commit": "b3baefc6ae69f036e4475e24ff1b971adf5b968e",
-    "tree": "873f8064cd50e5cc1811d3c73e23bbee16e1d3da",
+    "commit": "0e3190557bc848d9ae3756f6b7e75c179530ee40",
+    "tree": "5535e66a7d291b155d0f7fe7dcd27b21c1eb6106",
     "clean": true
   },
   "build": {
     "target": "web",
+    "executions": 1,
+    "original_completed_compile_whole_stage_exit_code": 1,
+    "resumed_without_recompilation": true,
+    "original_completed_compile_directory": "/mnt/c/Temp/n4a-downstream041-20261008/web041-actual-staging-datasets-io-v3/tmp/nirs4all-web-io-qAgPPT/out-single",
+    "output_directory": "/mnt/c/Temp/n4a-downstream041-20261008/web041-io-stage-resume-real-v2/out-resumed",
+    "retained_build_directory": "/mnt/c/Temp/n4a-downstream041-20261008/web041-io-stage-resume-real-v2",
+    "cargo_target_directory": "/mnt/c/Temp/n4a-downstream041-20261008/web041-browser-cargo-target-v1",
     "profile": "release",
     "cargo_locked": true,
-    "source_date_epoch": 1791092475,
-    "const_random_seed": "b3baefc6ae69f036e4475e24ff1b971adf5b968e",
+    "source_date_epoch": 1791278806,
+    "const_random_seed": "0e3190557bc848d9ae3756f6b7e75c179530ee40",
     "wasm_bindgen_lock": "0.2.122",
     "package_name_normalization": {
       "from": "nirs4all-io-wasm",
@@ -28,8 +35,8 @@
     }
   },
   "reproducibility": {
-    "independent_target_directories": 2,
-    "byte_identical": true
+    "independent_rebuild_claimed": false,
+    "byte_identical_rebuild_claimed": false
   },
   "witnesses": {
     "runtime_version": true,
@@ -116,7 +123,7 @@
     {
       "path": "nirs4all-io-wasm.cdx.json",
       "size": 34111,
-      "sha256": "55235cbdf448a6e67eff6543773c224715515848af096c9cfd7f87af65b3e4ce"
+      "sha256": "86514440a172e3ef77292fc15e2ff678587e02bd30af401e80764eff92c72e51"
     },
     {
       "path": "nirs4all_io_wasm.d.ts",
@@ -130,8 +137,8 @@
     },
     {
       "path": "nirs4all_io_wasm_bg.wasm",
-      "size": 2355624,
-      "sha256": "f99c682f182e2df2f27f23d9a6b5d1d682e3d8e676e392e3dd7f22057d4aec78"
+      "size": 2352924,
+      "sha256": "ccb5daeb1e2d6df1753dfbb5e0c17cc33b6e4de92dead472eb9de2ed00941f6d"
     },
     {
       "path": "nirs4all_io_wasm_bg.wasm.d.ts",
@@ -140,8 +147,18 @@
     },
     {
       "path": "package.json",
-      "size": 1375,
-      "sha256": "c381e13d03c023a7776a2284901aaa3e5a052b2a40b5be21d8ed82ff2ceeaf9a"
+      "size": 1581,
+      "sha256": "bffb54e9cea274f2036b62c7796c5a5ea31511d3addfb483e36787e06ca9f056"
+    },
+    {
+      "path": "public-dataset.d.ts",
+      "size": 4765,
+      "sha256": "c5f53b89e2ceb21bc9aafe0d6ed8bd2f037eda58f1a36997ca895ec638c181a8"
+    },
+    {
+      "path": "public-dataset.mjs",
+      "size": 31122,
+      "sha256": "4932c790129295a92ef6317d0d4958057c1c7bc4882f3b077f6bb4c1abb281b9"
     },
     {
       "path": "types/nirs4all-io.d.ts",

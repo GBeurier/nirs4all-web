@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
@@ -12,6 +13,7 @@ import {
 import type { FittedPipeline } from './types'
 
 const fixtureUrl = new URL('./fixtures/archive-v2/multitarget-pls.n4a', import.meta.url)
+const historicalFixtureUrl = new URL('./fixtures/archive-v2/multitarget-pls-dag023.n4a', import.meta.url)
 const pipelineFixtureUrl = new URL('./fixtures/archive-v2/snv-savgol-pls.n4a', import.meta.url)
 const X = Float64Array.from([1.5, 0.5, 3.5, 1.5])
 const EXPECTED = [
@@ -29,6 +31,14 @@ const PIPELINE_EXPECTED = [
 ]
 
 describe('canonical Archive V2 Web consumer', () => {
+  it('retains and refuses the historical DAG 0.3.23 transport closure', async () => {
+    const bytes = readFileSync(historicalFixtureUrl)
+    expect(createHash('sha256').update(bytes).digest('hex')).toBe(
+      '994252030ff80129d0431995bae53eb473082f05825b65714379262b72af13fa',
+    )
+    await expect(importArchiveV2Model(bytes)).rejects.toThrow(/exact DAG-ML semantic closure/)
+  })
+
   it('replays one native multi-target model in strict and transitional profiles with exact ownership', async () => {
     const bytes = readFileSync(fixtureUrl)
     const native = await loadArchiveV2Native() as {
@@ -60,7 +70,7 @@ describe('canonical Archive V2 Web consumer', () => {
       expect(imported.model.nFeatures).toBe(2)
       expect(isArchiveV2Model(imported.model)).toBe(true)
       expect(imported.model.state.archiveSha256).toBe(
-        '994252030ff80129d0431995bae53eb473082f05825b65714379262b72af13fa',
+        '3a3ff44c6cb33579b561ef68008dbc04157ee0f779133de6b7fc3d67082210cf',
       )
       expect(imported.model.state.nativePredictorDescriptor).toMatchObject({
         descriptor_type: 'dagml.native_predictor_descriptor.v1',
@@ -92,7 +102,7 @@ describe('canonical Archive V2 Web consumer', () => {
           targetNames: ['protein', 'moisture'],
           engine: 'nirs4all-methods-wasm',
           fallback: false,
-          archiveSha256: '994252030ff80129d0431995bae53eb473082f05825b65714379262b72af13fa',
+          archiveSha256: '3a3ff44c6cb33579b561ef68008dbc04157ee0f779133de6b7fc3d67082210cf',
         })
       }
 

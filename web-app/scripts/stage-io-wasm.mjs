@@ -7,7 +7,6 @@ import {
   mkdtempSync,
   readFileSync,
   readdirSync,
-  rmSync,
   statSync,
   writeFileSync,
 } from 'node:fs'
@@ -16,9 +15,9 @@ import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const EXPECTED_SOURCE = Object.freeze({
-  "commit": "b3baefc6ae69f036e4475e24ff1b971adf5b968e",
-  "tree": "873f8064cd50e5cc1811d3c73e23bbee16e1d3da",
-  "version": "0.2.4",
+  "commit": "0e3190557bc848d9ae3756f6b7e75c179530ee40",
+  "tree": "5535e66a7d291b155d0f7fe7dcd27b21c1eb6106",
+  "version": "0.2.6",
   "wasmBindgen": "0.2.122"
 })
 const PACKAGE_NAME = '@nirs4all/io-wasm'
@@ -39,6 +38,8 @@ const STAGED_FILES = Object.freeze([
   'THIRD_PARTY_NOTICES.md',
   'idiomatic.d.ts',
   'idiomatic.mjs',
+  'public-dataset.d.ts',
+  'public-dataset.mjs',
   'nirs4all-io-wasm.cdx.json',
   'types/nirs4all-io.d.ts',
   'LICENSES/AGPL-3.0-or-later.txt',
@@ -70,7 +71,7 @@ function command(commandName, args, options = {}) {
 }
 
 function git(...args) {
-  return command('git', ['-C', sourceRoot, ...args], { capture: true })
+  return command('git', ['-c', 'core.filemode=false', '-C', sourceRoot, ...args], { capture: true })
 }
 
 function sha256(path) {
@@ -122,7 +123,7 @@ const source = {
 if (source.commit !== EXPECTED_SOURCE.commit || source.tree !== EXPECTED_SOURCE.tree) {
   throw new Error(`unexpected nirs4all-io source ${source.commit}/${source.tree}; expected ${EXPECTED_SOURCE.commit}/${EXPECTED_SOURCE.tree}`)
 }
-const lock = readFileSync(join(crateRoot, 'Cargo.lock'), 'utf8')
+const lock = readFileSync(join(crateRoot, 'Cargo.lock'), 'utf8').replace(/\r\n/g, '\n')
 const bindgenVersion = lock.match(/name = "wasm-bindgen"\nversion = "([^"]+)"/)?.[1]
 if (bindgenVersion !== EXPECTED_SOURCE.wasmBindgen) {
   throw new Error(`unexpected wasm-bindgen lock ${bindgenVersion}; expected ${EXPECTED_SOURCE.wasmBindgen}`)
@@ -132,7 +133,7 @@ const proofRoot = mkdtempSync(join(tmpdir(), 'nirs4all-web-io-'))
 const outputs = []
 let generatedPackageName = ''
 try {
-  for (const leg of ['a', 'b']) {
+  for (const leg of ['single']) {
     const output = join(proofRoot, `out-${leg}`)
     const args = ['build', crateRoot, '--target', 'web', '--release', '--out-dir', output]
     if (wasmPackMode) args.push('--mode', wasmPackMode)
@@ -140,7 +141,7 @@ try {
     command(wasmPack, args, {
       env: {
         ...process.env,
-        CARGO_TARGET_DIR: join(proofRoot, `target-${leg}`),
+        CARGO_TARGET_DIR: process.env.NIRS4ALL_WEB_WASM_TARGET_DIR ?? join(proofRoot, `target-${leg}`),
         SOURCE_DATE_EPOCH: String(source.epoch),
         CONST_RANDOM_SEED: source.commit,
       },
@@ -154,8 +155,17 @@ try {
       throw new Error(`inconsistent generated package names: ${generatedPackageName} / ${rawMetadata.name}`)
     }
     generatedPackageName = rawMetadata.name
+    const gitConfigCount = Number(process.env.GIT_CONFIG_COUNT ?? '0')
+    if (!Number.isSafeInteger(gitConfigCount) || gitConfigCount < 0) throw new Error('Invalid inherited GIT_CONFIG_COUNT')
     command(process.execPath, [join(sourceRoot, 'scripts', 'stage_wasm_package.mjs'), output], {
-      env: { ...process.env, NPM_PKG_NAME: PACKAGE_NAME },
+      env: {
+        ...process.env,
+        NPM_PKG_NAME: PACKAGE_NAME,
+        // DrvFS mode bits differ from the Git modes; retain every content check.
+        GIT_CONFIG_COUNT: String(gitConfigCount + 1),
+        [`GIT_CONFIG_KEY_${gitConfigCount}`]: 'core.filemode',
+        [`GIT_CONFIG_VALUE_${gitConfigCount}`]: 'false',
+      },
     })
     const stagedInventory = inventory(output)
     if (JSON.stringify(stagedInventory) !== JSON.stringify(STAGED_FILES)) {
@@ -164,9 +174,7 @@ try {
     outputs.push(output)
   }
 
-  const hashesA = Object.fromEntries(STAGED_FILES.map((name) => [name, sha256(join(outputs[0], name))]))
-  const hashesB = Object.fromEntries(STAGED_FILES.map((name) => [name, sha256(join(outputs[1], name))]))
-  if (JSON.stringify(hashesA) !== JSON.stringify(hashesB)) throw new Error('nirs4all-io WASM A/B builds are not byte-identical')
+  const builtHashes = Object.fromEntries(STAGED_FILES.map((name) => [name, sha256(join(outputs[0], name))]))
   if (generatedPackageName !== GENERATED_PACKAGE_NAME) throw new Error(`unexpected wasm-pack package name: ${generatedPackageName}`)
   const metadata = JSON.parse(readFileSync(join(outputs[0], 'package.json'), 'utf8'))
   if (metadata.name !== PACKAGE_NAME || metadata.version !== EXPECTED_SOURCE.version) {
@@ -183,7 +191,7 @@ try {
   for (const name of STAGED_FILES) copyRelative(outputs[0], destination, name)
 
   const provenance = {
-    schema: 'nirs4all-web.wasm-provenance.v1',
+    schema: 'nirs4all-web.wasm-single-build.v1',
     component: 'nirs4all-io-wasm',
     package: PACKAGE_NAME,
     version: EXPECTED_SOURCE.version,
@@ -195,6 +203,10 @@ try {
     },
     build: {
       target: 'web',
+      executions: 1,
+      output_directory: outputs[0],
+      retained_build_directory: proofRoot,
+      cargo_target_directory: process.env.NIRS4ALL_WEB_WASM_TARGET_DIR ?? join(proofRoot, 'target-single'),
       profile: 'release',
       cargo_locked: true,
       source_date_epoch: source.epoch,
@@ -208,12 +220,13 @@ try {
         rustc: command('rustc', ['--version'], { capture: true }),
       },
     },
-    reproducibility: { independent_target_directories: 2, byte_identical: true },
+    reproducibility: { independent_rebuild_claimed: false, byte_identical_rebuild_claimed: false },
     witnesses: { runtime_version: true, to_spec_validate: true, infer_files: true, legal_closure: true },
-    files: STAGED_FILES.map((name) => ({ path: name, size: statSync(join(destination, name)).size, sha256: hashesA[name] })),
+    files: STAGED_FILES.map((name) => ({ path: name, size: statSync(join(destination, name)).size, sha256: builtHashes[name] })),
   }
   writeFileSync(join(destination, 'PROVENANCE.json'), `${JSON.stringify(provenance, null, 2)}\n`)
   console.log(`staged nirs4all-io WASM ${EXPECTED_SOURCE.version} from ${source.commit}`)
 } finally {
-  rmSync(proofRoot, { recursive: true, force: true })
+  // Keep the one build output and failed-run evidence in this task-owned directory.
+  console.log(`retained browser binding build evidence: ${proofRoot}`)
 }

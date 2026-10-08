@@ -4657,6 +4657,29 @@ export declare class QResiduals extends NativeProcedure implements Procedure {
     constructor(params?: QResidualsParams);
     run(X: Matrix, y?: Matrix | Float64Array | ArrayLike<number>, inputs?: FitInputs): Record<string, ProcedureOutput>;
 }
+/** Parameters of RaggedSummary; unset values take the native defaults. */
+export interface RaggedSummaryParams {
+    /** Required. */
+    offsets?: number[];
+    /** Default []. */
+    presence?: number[];
+    /** Default []. */
+    time_coordinates?: number[];
+    /** Default "reject". */
+    missing_policy?: "reject" | "zero_with_indicator";
+}
+/** Native `utilities.ragged_summary` (generic). */
+export declare class RaggedSummary extends NativeProcedure implements Procedure {
+    readonly methodId = "utilities.ragged_summary";
+    readonly paramTypes: {
+        readonly offsets: "int_array";
+        readonly presence: "int_array";
+        readonly time_coordinates: "double_array";
+        readonly missing_policy: "enum";
+    };
+    constructor(params?: RaggedSummaryParams);
+    run(X: Matrix, y?: Matrix | Float64Array | ArrayLike<number>, inputs?: FitInputs): Record<string, ProcedureOutput>;
+}
 /** Parameters of SignalTypeDetector; unset values take the native defaults. */
 export interface SignalTypeDetectorParams {
     /** Default 0.7. */
