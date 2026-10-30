@@ -32,8 +32,17 @@ const baseName = (n: string) => n.replace(/\.[^.]+$/, '').toLowerCase()
 // convention the bare `[^a-z]x[^a-z]` rule misses.
 const isX = (n: string) => /(^|[^a-z])x([^a-z]|$)|^x(train|test|cal|val|valid|calib|pred|holdout)|spectr|features?/i.test(baseName(n))
 const isY = (n: string) => /(^|[^a-z])y([^a-z]|$)|^y(train|test|cal|val|valid|calib|pred|holdout)|target|label|conc|reference/i.test(baseName(n))
-const isMeta = (n: string) => /meta/i.test(baseName(n))
+const isMeta = (n: string) => /(^|[^a-z])m([^a-z]|$)|^m(train|test|cal|val|valid|calib|pred|holdout)|meta/i.test(baseName(n))
 const isTest = (n: string) => /test|valid|holdout/i.test(baseName(n))
+
+const spectraFile = <T extends { name: string }>(files: T[]): T | undefined =>
+  files.find((f) => isX(f.name) && !isY(f.name) && !isMeta(f.name))
+
+/** Name the feature input selected by the conventional CSV builder. */
+export function datasetInputName(files: { name: string }[]): string {
+  const trainFiles = files.filter((f) => !isTest(f.name))
+  return spectraFile(trainFiles.length ? trainFiles : files)?.name ?? 'Uploaded dataset'
+}
 
 export function inferTaskType(yNum: number[], labels: string[] | undefined): TaskType {
   if (labels && labels.some((l) => l !== '' && Number.isNaN(Number(l)))) {
@@ -108,13 +117,13 @@ interface Block {
 }
 
 function buildBlock(files: RawFile[], partition: Partition): Block | null {
-  const xFile = files.find((f) => isX(f.name) && !isY(f.name))
+  const xFile = spectraFile(files)
   if (!xFile) return null
   const { rows: dataRows, axis, axisUnit: unit, columnNames } = parseSpectraCsv(xFile.text)
 
   let yNum: number[] = []
   let yLabels: string[] = []
-  const yFile = files.find((f) => isY(f.name) && !isX(f.name))
+  const yFile = files.find((f) => isY(f.name) && !isX(f.name) && !isMeta(f.name))
   if (yFile) {
     const yc = parseCsv(yFile.text)
     // y is the first non-id column (or the only column)

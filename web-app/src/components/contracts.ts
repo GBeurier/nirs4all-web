@@ -63,6 +63,8 @@ export interface PredictionPanelProps {
   model: FittedPipeline
   /** display name of the model's source (pipeline / bundle name) */
   sourceName: string
+  /** scalar training target; matrix replay supplies its own target names */
+  targetName?: string
   engine: Engine
   /** swap in a different model from a .n4a bundle */
   onImportModel?: (file: File) => void

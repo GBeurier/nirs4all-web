@@ -19,6 +19,11 @@ export function downloadPipeline(dsl: PipelineDSL): void {
   downloadJson(`${slug(dsl.name)}.pipeline.json`, dsl)
 }
 
+/** Download the complete, validated Predict output using the shared local save path. */
+export function downloadPredictionsCsv(sourceName: string, csv: string): void {
+  save(`${slug(sourceName)}.predictions.csv`, csv, 'text/csv;charset=utf-8')
+}
+
 /** Export a run: metrics summary + per-sample predictions as CSV + the bundle JSON. */
 export function downloadRunCsv(run: RunResult): void {
   const rows = [['scope', 'sampleId', 'actual', 'predicted', 'residual']]

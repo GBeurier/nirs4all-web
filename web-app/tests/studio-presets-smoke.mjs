@@ -23,6 +23,8 @@ try {
     assert.equal(await gallery.getByRole('heading', { name: preset.name, exact: true }).count(), 1)
     for (const task of preset.available_variants) {
       assert.equal(await gallery.getByRole('button', { name: `${preset.name} — ${task}`, exact: true }).count(), 1)
+      assert.equal(await gallery.getByRole('link', { name: `${preset.name} — ${task} in Repository`, exact: true }).getAttribute('href'),
+        `https://repository.nirs4all.org/pipeline/studio_${preset.id}_${task}.html`)
     }
   }
   for (const width of [1440, 1024, 768, 390, 320]) {
@@ -53,6 +55,11 @@ try {
   await page.getByLabel('Search presets').fill('no matching preset')
   assert.equal(await gallery.locator('.n4-preset-card').count(), 0)
   await page.getByLabel('Search presets').fill('')
+  await page.getByRole('button', { name: 'Close' }).click()
+  const recipe = getStudioPipelinePresets().find((preset) => preset.id === 'simple_pls').variants.regression.pipeline
+  await page.locator('input[type=file]').last().setInputFiles({ name: 'pipeline.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ pipeline: recipe })) })
+  assert.equal(await page.getByLabel('Pipeline name').inputValue(), 'Simple PLS')
+  await page.getByRole('button', { name: 'Presets', exact: true }).click()
   await gallery.getByRole('button', { name: 'Simple PLS — regression', exact: true }).click()
   await page.getByRole('dialog').waitFor({ state: 'hidden' })
   assert.equal(await page.getByLabel('Pipeline name').inputValue(), 'Simple PLS')

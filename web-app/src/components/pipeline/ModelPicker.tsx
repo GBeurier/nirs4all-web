@@ -62,7 +62,7 @@ export function ModelPicker({ model, taskType, onChangeType, onChangeParam, rend
             </div>
           </div>
           {def.params.length > 0 ? (
-            <div className="mt-3 grid grid-cols-2 gap-3">
+            <div className="mt-3 grid grid-cols-1 gap-3">
               {def.params.map((p) =>
                 renderParam ? (
                   <div key={p.name}>{renderParam(p, model.params[p.name] ?? p.default)}</div>

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { Upload, FileText, FileUp, Loader2, ShieldCheck, Sparkles, AlertTriangle } from 'lucide-react'
-import { buildDataset, type RawFile } from '@/data/dataset'
+import { buildDataset, datasetInputName, type RawFile } from '@/data/dataset'
 import { SAMPLES } from '@/data/samples'
 import type { DatasetUploadProps } from '@/components/contracts'
 import { Button } from '@/app/components/ui/button'
@@ -26,7 +26,7 @@ export function DatasetUpload({ onDataset, onLoadSample, onImportModel, busy: bu
     setLocalError(null)
     const files = Array.from(fileList)
     if (files.length === 0) return
-    const name = files[0]?.name ?? 'Uploaded dataset'
+    const name = datasetInputName(files)
     const allText = files.every((f) => /\.(csv|tsv|txt)$/i.test(f.name))
     setBusyLocal(true)
     let fastPathError: unknown = null
@@ -48,14 +48,14 @@ export function DatasetUpload({ onDataset, onLoadSample, onImportModel, busy: bu
       // nirs4all-formats decode + nirs4all-io inference. nirs4all-io resolves the
       // dataset structure (roles, joins, partitions, axis, task type) more robustly
       // than the lightweight CSV fast-path.
-      const { analyzeFiles, assembleDataset } = await import('@/data/wasm-io')
+      const { analyzeFiles, assembleDataset, datasetSpecInputName } = await import('@/data/wasm-io')
       const withBytes = await Promise.all(files.map(async (f) => ({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) })))
       const analysis = await analyzeFiles(withBytes)
       const failed = analysis.decoded.filter((d) => !d.ok)
       if (analysis.decoded.every((d) => !d.ok)) {
         throw new Error(`No spectra could be decoded (${failed.map((d) => d.error).join('; ') || 'unsupported format'}).`)
       }
-      onDataset(await assembleDataset(analysis.decoded, analysis.plan, withBytes), name, analysis)
+      onDataset(await assembleDataset(analysis.decoded, analysis.plan, withBytes), datasetSpecInputName(analysis.plan) ?? name, analysis)
     } catch (e) {
       if (fastPathError) {
         const fast = fastPathError instanceof Error ? fastPathError.message : String(fastPathError)

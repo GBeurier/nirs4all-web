@@ -256,3 +256,7 @@ Web imports a recipe into the editor only when its complete operator choices and
 search settings can be represented by the staged browser runtime. Other variants
 remain visible with their full original recipe and a download action for Studio.
 The empty editor's starter model is independent of this preset catalogue.
+Each variant links to its Repository detail page. A recipe downloaded from that
+page can also be imported through the Pipeline editor's Import button: Web matches
+the complete original recipe to the shared catalogue and applies it only when the
+browser can represent it and the dataset task matches.

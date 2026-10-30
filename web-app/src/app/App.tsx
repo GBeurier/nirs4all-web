@@ -893,7 +893,7 @@ function StepPanel(props: StepPanelProps) {
   if (!predictModel || !predictName) return <LockedNote>Run a pipeline first, or load a saved .n4a model — then predict on new spectra.</LockedNote>
   return (
     <Panel title="Predict" subtitle="Score new spectra with the selected model — drag a CSV in, or load a saved .n4a model." icon={Sparkles}>
-      <PredictionPanel model={predictModel} sourceName={predictName} engine={engine} onImportModel={props.onImportModel} />
+      <PredictionPanel model={predictModel} sourceName={predictName} targetName={selectedRun?.targetName ?? loadedModel?.targetName} engine={engine} onImportModel={props.onImportModel} />
     </Panel>
   )
 }

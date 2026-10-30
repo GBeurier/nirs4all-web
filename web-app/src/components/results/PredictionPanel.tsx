@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from 'react'
-import { AlertCircle, CheckCircle2, FileUp, FlaskConical, Loader2, ShieldCheck, Target, Upload } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { AlertCircle, CheckCircle2, Download, FileUp, FlaskConical, Loader2, ShieldCheck, Target, Upload } from 'lucide-react'
 import {
   Bar,
   BarChart,
@@ -15,10 +15,12 @@ import {
 } from 'recharts'
 
 import type { PredictionPanelProps } from '@/components/contracts'
-import type { Confusion, Metrics, PredictResult, PredRow } from '@/engine/types'
+import type { Confusion, Engine, FittedPipeline, Metrics, PredictResult, PredRow } from '@/engine/types'
 import { columnContract, readPredictionCsv } from '@/data/prediction-input'
 import { classificationMetrics, regressionMetrics } from '@/engine/metrics'
 import { fmt } from '@/lib/format'
+import { downloadPredictionsCsv } from '@/lib/download'
+import { predictionCsv, validatePredictionResult } from '@/lib/prediction-csv'
 import { parseCsv } from '@/data/csv'
 import { Button } from '@/app/components/ui/button'
 import { cn } from '@/app/components/ui/utils'
@@ -36,6 +38,10 @@ const TOOLTIP_STYLE = {
 const axisTick = (value: string | number): string => (typeof value === 'number' ? fmt(value, 2) : value)
 
 interface PredState {
+  model: FittedPipeline
+  engine: Engine
+  sourceName: string
+  targetName?: string
   result: PredictResult
   nSamples: number
   /** when the spectra CSV carried an extra last column, its raw cells (length nSamples) become the auto-detected Y */
@@ -105,7 +111,7 @@ function readYCells(text: string, nSamples: number): string[] {
   return cells
 }
 
-export function PredictionPanel({ model, sourceName, engine, onImportModel }: PredictionPanelProps) {
+export function PredictionPanel({ model, sourceName, targetName, engine, onImportModel }: PredictionPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const n4aRef = useRef<HTMLInputElement>(null)
   const yInputRef = useRef<HTMLInputElement>(null)
@@ -113,7 +119,13 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
   const [dragging, setDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
-  const [pred, setPred] = useState<PredState | null>(null)
+  const [prediction, setPred] = useState<PredState | null>(null)
+  const request = useRef(0)
+  const context = useRef({ model, engine, sourceName, targetName })
+  context.current = { model, engine, sourceName, targetName }
+  // Hide an old model's result immediately, before the reset effect runs.
+  const pred = prediction?.model === model && prediction.engine === engine
+    && prediction.sourceName === sourceName && prediction.targetName === targetName ? prediction : null
   // Y reference upload (Mechanism 2 — dedicated zone), independent of the X flow
   const [yDragging, setYDragging] = useState(false)
   const [yFileName, setYFileName] = useState<string | null>(null)
@@ -123,7 +135,17 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
   const isRegression = model.taskType === 'regression'
   const nFeatures = model.nFeatures
 
+  useEffect(() => {
+    setPred(null)
+    setBusy(false)
+    setError(null)
+    setFileName(null)
+    resetY()
+    return () => { request.current++ }
+  }, [model, engine, sourceName, targetName])
+
   function resetY() {
+    setYBusy(false)
     setYCells(null)
     setYFileName(null)
     setYError(null)
@@ -131,6 +153,9 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
   }
 
   async function handleFile(file: File) {
+    const id = ++request.current
+    const isCurrent = () => id === request.current && context.current.model === model && context.current.engine === engine
+      && context.current.sourceName === sourceName && context.current.targetName === targetName
     setBusy(true)
     setError(null)
     setPred(null)
@@ -138,34 +163,47 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
     resetY()
     try {
       const text = await file.text()
+      if (!isCurrent()) return
       const input = readPredictionCsv(text, nFeatures)
       // the engine refuses named columns that differ from the model's; unnamed ones are positional
       const result = await engine.predict(model, input.X, input.nSamples, input.nFeatures, input.featureNames)
-      setPred({ result, nSamples: input.nSamples, autoY: input.autoY, columns: columnContract(model, input.featureNames) })
+      if (!isCurrent()) return
+      // Reject incomplete output before exposing it in the table or export button.
+      validatePredictionResult(result, input.nSamples, model.taskType)
+      setPred({ model, engine, sourceName, targetName, result, nSamples: input.nSamples, autoY: input.autoY, columns: columnContract(model, input.featureNames) })
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      if (isCurrent()) setError(e instanceof Error ? e.message : String(e))
     } finally {
-      setBusy(false)
-      if (inputRef.current) inputRef.current.value = ''
+      if (isCurrent()) {
+        setBusy(false)
+        if (inputRef.current) inputRef.current.value = ''
+      }
     }
   }
 
   async function handleYFile(file: File) {
     if (!pred) return
+    const id = request.current
+    const isCurrent = () => id === request.current && context.current.model === model && context.current.engine === engine
     setYBusy(true)
     setYError(null)
     setYCells(null)
     setYFileName(file.name)
     try {
       const text = await file.text()
+      if (!isCurrent()) return
       const cells = readYCells(text, pred.nSamples)
       setYCells(cells)
     } catch (e) {
-      setYError(e instanceof Error ? e.message : String(e))
-      setYFileName(null)
+      if (isCurrent()) {
+        setYError(e instanceof Error ? e.message : String(e))
+        setYFileName(null)
+      }
     } finally {
-      setYBusy(false)
-      if (yInputRef.current) yInputRef.current.value = ''
+      if (isCurrent()) {
+        setYBusy(false)
+        if (yInputRef.current) yInputRef.current.value = ''
+      }
     }
   }
 
@@ -232,24 +270,37 @@ export function PredictionPanel({ model, sourceName, engine, onImportModel }: Pr
             </p>
           </div>
         </div>
-        {onImportModel && (
-          <>
-            <input
-              ref={n4aRef}
-              type="file"
-              accept=".n4a,application/json"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0]
-                if (f) onImportModel(f)
-                e.target.value = ''
-              }}
-            />
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => n4aRef.current?.click()} title="Load a saved model (.n4a)">
-              <FileUp className="size-4" /> Load .n4a model
-            </Button>
-          </>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            disabled={busy || !pred}
+            onClick={() => {
+              if (pred && !busy) downloadPredictionsCsv(fileName?.replace(/\.[^.]+$/, '') ?? sourceName, predictionCsv(pred.result, pred.nSamples, model.taskType, targetName))
+            }}
+          >
+            <Download className="size-4" /> Export predictions
+          </Button>
+          {onImportModel && (
+            <>
+              <input
+                ref={n4aRef}
+                type="file"
+                accept=".n4a,application/json"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0]
+                  if (f) onImportModel(f)
+                  e.target.value = ''
+                }}
+              />
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => n4aRef.current?.click()} title="Load a saved model (.n4a)">
+                <FileUp className="size-4" /> Load .n4a model
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* drag-and-drop spectra zone */}

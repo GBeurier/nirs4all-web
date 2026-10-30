@@ -1,7 +1,9 @@
 // FEATURE 1 smoke: the model is OPTIONAL. The editor must let the user remove the
 // terminal model (leaving a preprocessing-only pipeline) — the Run button is then
 // replaced by a clear "add a model to run / score" guard and execution is blocked.
-// Re-adding a model restores the Run button. No console errors throughout.
+// Adding opens a searchable chooser without changing the pipeline; only an
+// explicit choice restores Run. Cancel/Escape retain the preprocessing-only DSL.
+import assert from 'node:assert/strict'
 import { chromium } from 'playwright-core'
 
 const URL = process.env.SMOKE_URL || 'http://localhost:4345/'
@@ -58,11 +60,70 @@ try {
   if (await page.locator('[data-add-model]').count()) console.log('✓ "Add a model" placeholder present on the canvas')
   else fail('expected an "Add a model" placeholder')
 
-  // re-add a model → the Run button returns
+  // Opening the chooser must not silently add its first entry.
   await page.locator('[data-add-model]').click()
-  await page.waitForTimeout(250)
-  if (await page.getByRole('button', { name: /Run pipeline/i }).count()) console.log('✓ Run button restored after re-adding a model')
-  else fail('expected the Run button to return after re-adding a model')
+  const chooser = page.getByRole('dialog', { name: 'Add a model', exact: true })
+  await chooser.waitFor()
+  assert.equal(await page.locator('[data-add-model]').count(), 1)
+  assert.equal(await page.locator('[data-run-guard]').count(), 1)
+  assert.equal(await page.getByRole('button', { name: /Run pipeline/i, includeHidden: true }).count(), 0)
+  assert.equal(await chooser.locator('[data-palette-bucket]').count(), 1)
+  assert.equal(await chooser.locator('[data-palette-bucket="model"]').getAttribute('aria-expanded'), 'true')
+  assert.ok(await chooser.getByRole('button', { name: 'Weighted PLS', exact: true }).isVisible())
+  // Regression must not offer a classifier-only estimator.
+  assert.equal(await chooser.getByRole('button', { name: 'KNN classifier (ml.js)', exact: true }).count(), 0)
+  await chooser.getByRole('button', { name: 'Cancel', exact: true }).click()
+  await chooser.waitFor({ state: 'hidden' })
+  assert.ok(await page.locator('[data-add-model]').isVisible())
+  assert.ok(await page.locator('[data-run-guard]').isVisible())
+  await page.waitForFunction(() => document.activeElement?.hasAttribute('data-add-model'))
+  console.log('✓ opening and cancelling the chooser keeps the pipeline without a model')
+
+  // Keyboard dismissal and unmatched search must also leave the model empty.
+  await page.locator('[data-add-model]').click()
+  await chooser.getByRole('textbox', { name: 'Search models' }).fill('no-estimator-matches-this-query')
+  await chooser.getByText(/No operator matches/).waitFor()
+  await page.keyboard.press('Escape')
+  await chooser.waitFor({ state: 'hidden' })
+  assert.ok(await page.locator('[data-add-model]').isVisible())
+  assert.equal(await page.getByRole('button', { name: /Run pipeline/i }).count(), 0)
+  await page.waitForFunction(() => document.activeElement?.hasAttribute('data-add-model'))
+
+  // The chooser is reachable on narrow screens, where the left palette is hidden.
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.locator('[data-add-model]').click()
+  const search = chooser.getByRole('textbox', { name: 'Search models' })
+  assert.equal(await search.inputValue(), '')
+  await search.fill('Weighted PLS')
+  const choice = chooser.getByRole('button', { name: 'Weighted PLS', exact: true })
+  await choice.scrollIntoViewIfNeeded()
+  const bounds = await choice.boundingBox()
+  assert.ok(bounds && bounds.x >= 0 && bounds.x + bounds.width <= 390 && bounds.y >= 0 && bounds.y + bounds.height <= 844)
+  await page.screenshot({ path: '/tmp/no_model_chooser_mobile.png', fullPage: true })
+  await choice.focus()
+  await page.keyboard.press('Enter')
+  await chooser.waitFor({ state: 'hidden' })
+  assert.equal(await page.locator('[data-add-model]').count(), 0)
+  assert.ok(await page.getByRole('button', { name: /Run pipeline/i }).isVisible())
+  assert.ok(await page.locator('#model-select').getByText('Weighted PLS', { exact: true }).isVisible())
+  const components = page.locator('#param-n_components')
+  await components.fill('3')
+  assert.equal(await components.inputValue(), '3')
+  console.log('✓ mobile search and explicit keyboard selection add the chosen model with editable parameters')
+
+  // Existing replacement and palette-add workflows still work after the choice.
+  await page.setViewportSize({ width: 1280, height: 720 })
+  await page.locator('#model-select').click()
+  await page.getByRole('option', { name: 'PLS Regression', exact: true }).click()
+  assert.equal(await components.inputValue(), '2') // Catalog default, independent of the initial preset.
+  const replacement = page.getByRole('button', { name: /PLS Regression/ }).filter({ has: page.getByRole('button', { name: 'Remove step' }) }).first()
+  await replacement.getByRole('button', { name: 'Remove step' }).click()
+  await page.locator('input[aria-label="Search operators"]:visible').fill('Weighted PLS')
+  await page.getByRole('button', { name: 'Weighted PLS', exact: true }).click()
+  assert.ok(await page.locator('#model-select').getByText('Weighted PLS', { exact: true }).isVisible())
+  assert.ok(await page.getByRole('button', { name: /Run pipeline/i }).isVisible())
+  assert.equal(await chooser.count(), 0)
+  console.log('✓ model replacement and explicit palette additions remain functional')
 
   await page.screenshot({ path: '/tmp/no_model_smoke.png', fullPage: true })
 

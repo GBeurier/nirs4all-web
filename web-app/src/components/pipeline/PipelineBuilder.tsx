@@ -5,9 +5,11 @@ import type { ParamValue } from '@/catalog/types'
 import type { ContainerNode, GeneratorMode, ParamSweep, PipelineDSL, PipelineStep, StepVariant } from '@/engine/types'
 import { countVariants } from '@/engine/dagml'
 import { dagNodeFor, defaultParams, modelsForTask, nodeByType } from '@/catalog/nodes'
+import { findStudioPresetRecipe, importStudioPreset } from '@/catalog/studioPresets'
 import { downloadPipeline } from '@/lib/download'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/app/components/ui/dialog'
 import { StudioPresetGallery } from './StudioPresetGallery'
 import { NodePalette } from './NodePalette'
 import { CanvasFlow, type Selection } from './CanvasFlow'
@@ -23,8 +25,10 @@ import { AlertTriangle } from 'lucide-react'
  */
 export function PipelineBuilder({ pipeline, taskType, datasetLabel, running, progress, runLog, onChange, onRun, onCancel }: PipelineBuilderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const editorRef = useRef<HTMLDivElement>(null)
   const [selected, setSelected] = useState<Selection>({ kind: 'model' })
   const [blockedNotice, setBlockedNotice] = useState<string | null>(null)
+  const [choosingModel, setChoosingModel] = useState(false)
 
   const update = (patch: Partial<PipelineDSL>) => onChange({ ...pipeline, ...patch })
   const setSteps = (steps: PipelineStep[]) => update({ steps })
@@ -120,19 +124,12 @@ export function PipelineBuilder({ pipeline, taskType, datasetLabel, running, pro
     else delete sweeps[param]
     update({ model: { ...pipeline.model, sweeps: Object.keys(sweeps).length ? sweeps : undefined } })
   }
-  // model is OPTIONAL — removing it leaves a preprocessing-only pipeline; adding
-  // one drops in the first model valid for the active task.
+  // Model is optional; opening the chooser must leave the pipeline unchanged.
   const removeModel = () => {
     onChange({ ...pipeline, model: undefined, finetune: undefined })
     if (selected.kind === 'model') setSelected(pipeline.steps.length ? { kind: 'step', id: pipeline.steps[pipeline.steps.length - 1].id } : { kind: 'cv' })
   }
-  const addModel = () => {
-    const models = modelsForTask(taskType)
-    const type = models[0]?.type
-    if (!type) return
-    update({ model: { id: newStepId(type), type, params: defaultParams(type) } })
-    setSelected({ kind: 'model' })
-  }
+  const addModel = () => setChoosingModel(true)
 
   // cross-validation (the SECOND split) is OPTIONAL ---------------------------
   const DEFAULT_CV = { folds: 5, seed: 42 }
@@ -247,6 +244,18 @@ export function PipelineBuilder({ pipeline, taskType, datasetLabel, running, pro
     reader.onload = () => {
       try {
         const parsed = JSON.parse(String(reader.result))
+        const studioRecipe = findStudioPresetRecipe(parsed)
+        if (studioRecipe) {
+          const imported = importStudioPreset(studioRecipe.preset, studioRecipe.variant)
+          if ((taskType === 'regression') !== (studioRecipe.variant === 'regression')) {
+            window.alert(`Load a ${studioRecipe.variant} dataset to use this recipe.`)
+          } else if (imported.kind === 'unavailable') {
+            window.alert(imported.reason)
+          } else {
+            applyPreset(imported.pipeline)
+          }
+          return
+        }
         const normalized = normalizeImportedPipeline(parsed)
         if (normalized) {
           onChange(sanitizeAutonomousPipeline(normalized))
@@ -261,7 +270,28 @@ export function PipelineBuilder({ pipeline, taskType, datasetLabel, running, pro
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div ref={editorRef} className="flex h-full flex-col gap-4">
+      <Dialog open={choosingModel} onOpenChange={setChoosingModel}>
+        <DialogContent onCloseAutoFocus={(event) => {
+          event.preventDefault()
+          // The canvas trigger disappears once a model is chosen.
+          editorRef.current?.querySelector<HTMLElement>('[data-add-model], #model-select')?.focus()
+        }}>
+          <DialogHeader>
+            <DialogTitle>Add a model</DialogTitle>
+            <DialogDescription>Choose an estimator for this {taskType} pipeline, or cancel to keep it without a model.</DialogDescription>
+          </DialogHeader>
+          <div className="h-[min(28rem,55dvh)] min-h-0">
+            <NodePalette category="model" taskType={taskType} onAdd={(type) => {
+              addOperator(type)
+              setChoosingModel(false)
+            }} />
+          </div>
+          <DialogFooter>
+            <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
@@ -308,7 +338,7 @@ export function PipelineBuilder({ pipeline, taskType, datasetLabel, running, pro
       )}
 
       {/* three-pane editor */}
-      <div className="grid min-h-[30rem] flex-1 gap-4 lg:grid-cols-[15rem_minmax(0,1fr)_19rem]">
+      <div className="grid min-h-[30rem] flex-1 grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[15rem_minmax(0,1fr)_19rem]">
         <aside className="hidden rounded-2xl border border-border bg-card/70 p-3 lg:block">
           <NodePalette onAdd={addOperator} taskType={taskType} />
         </aside>
@@ -342,7 +372,7 @@ export function PipelineBuilder({ pipeline, taskType, datasetLabel, running, pro
             onCancel={onCancel}
           />
         </section>
-        <aside className="rounded-2xl border border-border bg-card/70 p-4">
+        <aside className="min-w-0 rounded-2xl border border-border bg-card/70 p-4">
           <Inspector
             pipeline={pipeline}
             taskType={taskType}
