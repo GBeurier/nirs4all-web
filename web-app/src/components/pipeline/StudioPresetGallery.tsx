@@ -4,7 +4,7 @@ import { PipelinePresetCard } from 'nirs4all-ui/components'
 import { getPresetComplexityMeta, type PipelinePreset, type PipelinePresetVariantId } from 'nirs4all-ui/pipelines'
 import 'nirs4all-ui/assets/pipeline-presets.css'
 import { PRESETS } from '@/catalog/presets'
-import { importStudioPreset } from '@/catalog/studioPresets'
+import { importStudioPreset, repositoryPresetUrl } from '@/catalog/studioPresets'
 import type { PipelineDSL, TaskType } from '@/engine/types'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
@@ -73,10 +73,12 @@ export function StudioPresetGallery({ taskType, onSelect }: { taskType: TaskType
               templateIcon={<Icon />} complexityIcon={<ComplexityIcon />}
               complexityBadge={<span className={`n4-preset-complexity n4-preset-${meta.key}`}><ComplexityIcon />{preset.complexity}/10 <span>{meta.key}</span></span>}
               previewIcons={{ branch: <GitBranch />, model: <Cpu />, step: <Boxes />, generator: <Sparkles className="text-amber-500" /> }}
-              renderVariant={(variant) => <button type="button" className={`n4-preset-action n4-preset-action-${variant}`}
+              renderVariant={(variant) => <><button type="button" className={`n4-preset-action n4-preset-action-${variant}`}
                 aria-label={`${preset.name} — ${variant}`} onClick={() => choose(preset, variant)}>
                 {variant === 'regression' ? 'Regression' : 'Classification'}
-              </button>}
+              </button><a href={repositoryPresetUrl(preset, variant)} target="_blank" rel="noreferrer"
+                aria-label={`${preset.name} — ${variant} in Repository`}
+                className="mt-1 block text-center text-xs text-muted-foreground underline">Repository ↗</a></>}
             />
           })}
         </div>

@@ -47,7 +47,7 @@ function paramDef(method: N4mManifestMethod, param: NodeDefinition['parameters']
   const recorded = (method.params as readonly ManifestParam[]).find((p) => p.name === param.name)?.recorded
   return {
     name: param.name,
-    label: param.label,
+    label: param.name === 'n_components' ? 'Number of components' : param.label,
     type: param.type,
     ...(param.default !== undefined && { default: param.default }),
     ...(param.required && { required: true }),

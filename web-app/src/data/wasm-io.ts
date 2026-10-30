@@ -52,6 +52,12 @@ export interface DatasetSpec {
   [k: string]: unknown
 }
 
+/** Name the feature source declared by io, regardless of uploaded file order. */
+export function datasetSpecInputName(plan: DatasetPlan | null | undefined): string | undefined {
+  const input = plan?.resolved_spec?.sources?.find((source) => source.role === 'features')?.input
+  return Array.isArray(input) ? input[0] : input
+}
+
 type FormatsMod = typeof import('@/engine/wasm/formats/nirs4all_formats_wasm.js')
 type IoMod = typeof import('@/engine/wasm/io/nirs4all_io_wasm.js')
 

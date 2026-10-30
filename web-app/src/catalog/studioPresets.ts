@@ -1,10 +1,36 @@
 import { getPresetPipeline, type PipelinePreset, type PipelinePresetVariantId } from 'nirs4all-ui/pipelines'
 import { nodeByType } from './nodes'
 import type { ContainerNode, PipelineDSL, PipelineStep } from '@/engine/types'
+import { PRESETS } from './presets'
 
 type PresetImport = { kind: 'ready'; pipeline: PipelineDSL } | { kind: 'unavailable'; reason: string }
 const record = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null
+
+export function repositoryPresetUrl(preset: PipelinePreset, task: PipelinePresetVariantId): string {
+  return `https://repository.nirs4all.org/pipeline/studio_${preset.id}_${task}.html`
+}
+
+// Repository publishes the original Studio recipe as { pipeline: [...] }. Match
+// the full recipe, not a filename or a partial operator list, before adapting it.
+function canonical(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`
+  const object = record(value)
+  if (object) return `{${Object.keys(object).sort().map((key) => `${JSON.stringify(key)}:${canonical(object[key])}`).join(',')}}`
+  return JSON.stringify(value) ?? 'null'
+}
+
+export function findStudioPresetRecipe(value: unknown): { preset: PipelinePreset; variant: PipelinePresetVariantId } | null {
+  const pipeline = record(value)?.pipeline
+  if (!Array.isArray(pipeline)) return null
+  const recipe = canonical(pipeline)
+  for (const preset of PRESETS) {
+    for (const variant of preset.available_variants ?? []) {
+      if (canonical(getPresetPipeline(preset, variant)) === recipe) return { preset, variant }
+    }
+  }
+  return null
+}
 
 // Only existing native equivalents are adapted. Other recipes stay canonical.
 const TRANSFORMS: Record<string, string> = {
@@ -19,7 +45,12 @@ function transform(value: unknown, id: string): PipelineStep | null {
   if (typeof path !== 'string' || !TRANSFORMS[path] || !nodeByType(TRANSFORMS[path])) return null
   if (item && Object.keys(item).some((key) => !['class', 'params'].includes(key))) return null
   if (item?.params !== undefined && !record(item.params)) return null
-  return { id, type: TRANSFORMS[path], params: { ...record(item?.params) } }
+  // Studio's Python wrapper uses scipy's interpolated SG edges; n4m defaults
+  // to mirrored edges and has different window/polynomial defaults.
+  const defaults = path === 'nirs4all.operators.transforms.nirs.SavitzkyGolay'
+    ? { window_length: 11, polyorder: 3, deriv: 0, delta: 1, mode: 'interp' }
+    : {}
+  return { id, type: TRANSFORMS[path], params: { ...defaults, ...record(item?.params) } }
 }
 
 /** Adapt only complete, faithfully representable recipes to the current Web editor. */

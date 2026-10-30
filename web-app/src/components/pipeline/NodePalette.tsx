@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ChevronRight, Plus, Search, Sparkles } from 'lucide-react'
 import { AUGMENTATION_NODES, DAG_NODES, FILTER_NODES, modelsForTask, PREPROCESSING_NODES, SPLIT_NODES } from '@/catalog/nodes'
-import type { NodeDef } from '@/catalog/types'
+import type { NodeCategory, NodeDef } from '@/catalog/types'
 import type { TaskType } from '@/engine/types'
 import { Input } from '@/app/components/ui/input'
 import { cn } from '@/app/components/ui/utils'
@@ -10,6 +10,8 @@ import { DND_NEW_NODE, iconByName } from './_helpers'
 export interface NodePaletteProps {
   onAdd: (type: string) => void
   taskType: TaskType
+  /** Limit the catalog to one category when used as an explicit chooser. */
+  category?: NodeCategory
 }
 
 // Top-level buckets, in pipeline order: Split → Sample filters → Augmentation →
@@ -43,13 +45,22 @@ const SUBCAT_LABEL: Record<string, string> = {
  * "auto" badge so users don't stack redundant preprocessing on them.
  * Styling echoes the nirs4all-formats demo (mono eyebrows, pill counts, glass).
  */
-export function NodePalette({ onAdd, taskType }: NodePaletteProps) {
+export function NodePalette({ onAdd, taskType, category }: NodePaletteProps) {
   const [q, setQ] = useState('')
   // Keep the catalog compact on first render. An expanded preprocessing family
   // can be taller than the canvas and push its Run action below the viewport.
   const [openManual, setOpenManual] = useState<Record<string, boolean>>({})
 
   const models = useMemo(() => modelsForTask(taskType), [taskType])
+  const catalog = useMemo(() => ({
+    split: SPLIT_NODES,
+    filter: FILTER_NODES,
+    augmentation: AUGMENTATION_NODES,
+    preprocessing: PREPROCESSING_NODES,
+    model: models,
+    dag: DAG_NODES,
+  }), [models])
+  const buckets = category ? BUCKETS.filter((b) => b.key === category) : BUCKETS
 
   const matched = useMemo(() => {
     const query = q.trim().toLowerCase()
@@ -59,20 +70,13 @@ export function NodePalette({ onAdd, taskType }: NodePaletteProps) {
       n.subcategory?.toLowerCase().includes(query) ||
       n.category.toLowerCase().includes(query) ||
       n.description.toLowerCase().includes(query)
-    return {
-      split: SPLIT_NODES.filter(match),
-      filter: FILTER_NODES.filter(match),
-      augmentation: AUGMENTATION_NODES.filter(match),
-      preprocessing: PREPROCESSING_NODES.filter(match),
-      model: models.filter(match),
-      dag: DAG_NODES.filter(match),
-    } as Record<BucketKey, NodeDef[]>
-  }, [q, models])
+    return Object.fromEntries(Object.entries(catalog).map(([key, nodes]) => [key, nodes.filter(match)])) as Record<BucketKey, NodeDef[]>
+  }, [q, catalog])
 
-  const total = SPLIT_NODES.length + FILTER_NODES.length + AUGMENTATION_NODES.length + PREPROCESSING_NODES.length + models.length + DAG_NODES.length
+  const total = buckets.reduce((count, bucket) => count + catalog[bucket.key].length, 0)
   const searching = q.trim().length > 0
-  const isOpen = (key: string) => (searching ? true : openManual[key] ?? false)
-  const toggle = (key: string) => setOpenManual((s) => ({ ...s, [key]: !(s[key] ?? false) }))
+  const isOpen = (key: string) => (searching ? true : openManual[key] ?? Boolean(category))
+  const toggle = (key: string) => setOpenManual((s) => ({ ...s, [key]: !(s[key] ?? Boolean(category)) }))
 
   const renderOp = (node: NodeDef, accent: string) => {
     const Icon = iconByName(node.icon)
@@ -111,22 +115,22 @@ export function NodePalette({ onAdd, taskType }: NodePaletteProps) {
     <div className="flex h-full flex-col gap-3">
       <div>
         <div className="flex items-center gap-2">
-          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-teal">Operators</span>
+          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-teal">{category ? buckets[0]?.label : 'Operators'}</span>
           <span className="rounded-full bg-brand-teal/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-brand-teal">{total}</span>
         </div>
-        <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">Split → filters / augmentation → preprocessings → model → DAG structure. Search, or open a family; drag or click to add.</p>
+        <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{category ? 'Search the catalog and choose an operator to add.' : 'Split → filters / augmentation → preprocessings → model → DAG structure. Search, or open a family; drag or click to add.'}</p>
       </div>
 
       <div className="relative">
         <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search operators…" className="h-8 pl-8 text-xs" aria-label="Search operators" />
+        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={category === 'model' ? 'Search models…' : 'Search operators…'} className="h-8 pl-8 text-xs" aria-label={category === 'model' ? 'Search models' : 'Search operators'} />
       </div>
 
       <div className="-mr-1 flex-1 space-y-1 overflow-y-auto pr-1">
-        {BUCKETS.every((b) => matched[b.key].length === 0) ? (
+        {buckets.every((b) => matched[b.key].length === 0) ? (
           <p className="px-1 py-6 text-center text-xs text-muted-foreground">No operator matches “{q}”.</p>
         ) : (
-          BUCKETS.filter((b) => matched[b.key].length > 0).map((b) => {
+          buckets.filter((b) => matched[b.key].length > 0).map((b) => {
             const nodes = matched[b.key]
             const open = isOpen(b.key)
             // preprocessing, augmentation + dag sub-group by subcategory family with captions

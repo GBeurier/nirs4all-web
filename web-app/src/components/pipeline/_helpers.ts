@@ -397,6 +397,7 @@ export function normalizeImportedPipeline(value: unknown): PipelineDSL | null {
   else {
     const cvRaw = v.cv && typeof v.cv === 'object' ? (v.cv as Record<string, unknown>) : {}
     cv = { folds: clampInt(cvRaw.folds, 2, 10, 5), seed: clampInt(cvRaw.seed, -2147483648, 2147483647, 42) }
+    if (cvRaw.strategy === 'auto' || cvRaw.strategy === 'sample' || cvRaw.strategy === 'group') cv.strategy = cvRaw.strategy
   }
   return {
     name: typeof v.name === 'string' && v.name.trim() ? v.name : 'Imported pipeline',

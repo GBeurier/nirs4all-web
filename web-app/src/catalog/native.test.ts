@@ -66,7 +66,7 @@ describe('native catalog generated from the n4m manifest', () => {
       expect(seed?.required, token).toBeUndefined()
     }
     const pls = nodeByType(n4mToken('models.pls.pls_regression'))!
-    expect(pls.params.find((p) => p.name === 'n_components')?.recorded).toBe(true)
+    expect(pls.params.find((p) => p.name === 'n_components')).toMatchObject({ label: 'Number of components', type: 'int', default: 2, recorded: true })
     expect(nodeByType('n4m:preprocessing.derivatives.savitzky_golay')!.params.some((p) => p.recorded)).toBe(false)
   })
 

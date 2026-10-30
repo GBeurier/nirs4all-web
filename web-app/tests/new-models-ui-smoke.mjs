@@ -32,6 +32,25 @@ try {
   await page.locator('[data-step="pipeline"]').click()
   await page.waitForTimeout(300)
 
+  const components = page.getByLabel('Number of components', { exact: true })
+  if (!(await components.isVisible()) || await components.inputValue() !== '12') throw new Error('PLS component count is missing or has the wrong initial value')
+  await components.fill('3')
+  if (await components.inputValue() !== '3') throw new Error('PLS component count did not update')
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 720 })
+    for (const name of ['n_components', 'solver', 'center_x', 'scale_x', 'center_y', 'scale_y']) {
+      const control = page.locator(`#param-${name}`)
+      await control.scrollIntoViewIfNeeded()
+      const bounds = await control.boundingBox()
+      if (!bounds || bounds.width < 24 || bounds.x < 0 || bounds.x + bounds.width > width || bounds.y < 0 || bounds.y + bounds.height > 720) {
+        throw new Error(`PLS ${name} control is clipped at viewport width ${width}`)
+      }
+    }
+    if (await components.inputValue() !== '3') throw new Error('PLS component count was lost during reflow')
+  }
+  await page.setViewportSize({ width: 1280, height: 720 })
+  console.log('✓ PLS parameters are editable and reachable at desktop and narrow widths')
+
   // select the terminal model node, then switch the estimator to Weighted PLS
   await page.getByRole('button', { name: /PLS Regression/ }).first().click()
   await page.waitForTimeout(200)

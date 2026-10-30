@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { type AssembledFull, mapAssembledToMaterialized } from './wasm-io'
+import { type AssembledFull, datasetSpecInputName, mapAssembledToMaterialized } from './wasm-io'
 
 // nirs4all-io now assembles X/y (roles, joins, partitions) in Rust → WASM; studio
 // only maps its AssembledDataset.to_full_value() onto MaterializedDataset. These
@@ -20,6 +20,21 @@ const block = (b: Partial<AssembledFull['blocks'][string]>): AssembledFull['bloc
   ...b,
 })
 const full = (blocks: AssembledFull['blocks']): AssembledFull => ({ name: 'd', task_type: 'regression', signal_type: 'absorbance', n_sources: 1, blocks, folds: [] })
+
+describe('datasetSpecInputName', () => {
+  it('uses the resolved feature role when metadata and targets are listed first', () => {
+    expect(datasetSpecInputName({ resolved_spec: { sources: [
+      { id: 'm', role: 'metadata', input: 'Mtrain.csv' },
+      { id: 'y', role: 'targets', input: 'Ytrain.csv' },
+      { id: 'x', role: 'features', input: ['spectra.spc', 'more-spectra.spc'] },
+    ] } })).toBe('spectra.spc')
+  })
+
+  it('accepts a scalar feature input and leaves missing inference unnamed', () => {
+    expect(datasetSpecInputName({ resolved_spec: { sources: [{ id: 'x', role: 'features', input: 'spectra.spc' }] } })).toBe('spectra.spc')
+    expect(datasetSpecInputName(null)).toBeUndefined()
+  })
+})
 
 describe('mapAssembledToMaterialized', () => {
   it('maps a single-partition regression block (X + numeric y + axis)', () => {

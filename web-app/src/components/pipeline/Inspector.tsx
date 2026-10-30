@@ -72,7 +72,7 @@ function InspectorShell({ icon, eyebrow, title, children }: { icon: React.ReactN
           <h3 className="font-display text-sm font-semibold leading-tight text-foreground">{title}</h3>
         </div>
       </div>
-      <div className="-mr-1 flex-1 space-y-4 overflow-y-auto pr-1">{children}</div>
+      <div className="-mr-1 min-w-0 flex-1 space-y-4 overflow-y-auto break-words pr-1">{children}</div>
     </div>
   )
 }

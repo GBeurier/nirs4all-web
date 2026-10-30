@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildDataset, inferTaskType, summarize, type RawFile } from './dataset'
+import { buildDataset, datasetInputName, inferTaskType, summarize, type RawFile } from './dataset'
 
 const xTrain = '1000;1010;1020;1030\n0.10;0.12;0.15;0.14\n0.11;0.13;0.16;0.15\n0.09;0.11;0.14;0.13\n0.12;0.14;0.17;0.16'
 const yTrain = 'protein\n11.2\n10.7\n14.1\n9.8'
@@ -7,6 +7,29 @@ const xTest = '1000;1010;1020;1030\n0.10;0.12;0.15;0.14\n0.11;0.13;0.16;0.15'
 const yTest = 'protein\n11.0\n10.9'
 
 describe('buildDataset', () => {
+  it.each(['Mtrain.csv', 'M_train.csv', 'metadata.csv', 'M_features_train.csv', 'M_reference_train.csv'])('names and reads X when %s and targets precede spectra', (metadataName) => {
+    const files: RawFile[] = [
+      { name: metadataName, text: 'sample_id;batch\nS1;1\nS2;2\nS3;1\nS4;2' },
+      { name: 'Ytrain.csv', text: yTrain },
+      { name: 'Xtest.csv', text: xTest },
+      { name: 'Xtrain.csv', text: xTrain },
+      { name: 'Ytest.csv', text: yTest },
+    ]
+    const ds = buildDataset(files)
+    expect(datasetInputName(files)).toBe('Xtrain.csv')
+    expect(ds.nFeatures).toBe(4)
+    expect(ds.axis).toEqual([1000, 1010, 1020, 1030])
+    expect(Array.from(ds.X.slice(0, 4))).toEqual([0.10, 0.12, 0.15, 0.14])
+    expect(Array.from(ds.y)).toEqual([11.2, 10.7, 14.1, 9.8, 11.0, 10.9])
+    expect(ds.sampleIds.slice(0, 4)).toEqual(['S1', 'S2', 'S3', 'S4'])
+    expect(ds.metadata).toEqual([{ name: 'batch', kind: 'numeric', values: [1, 2, 1, 2, null, null] }])
+  })
+
+  it.each(['Mango_spectra.csv', 'Mixture_spectra.csv'])('keeps %s as a feature file', (name) => {
+    expect(datasetInputName([{ name }])).toBe(name)
+    expect(buildDataset([{ name, text: xTrain }]).nFeatures).toBe(4)
+  })
+
   it('assembles train/test from the X/y convention with a wavelength axis', () => {
     const files: RawFile[] = [
       { name: 'X_train.csv', text: xTrain },
