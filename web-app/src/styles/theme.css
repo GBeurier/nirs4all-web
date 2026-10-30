@@ -306,3 +306,12 @@
   .n4a-spectrum-strip, .n4a-reveal, .n4a-float { animation: none; }
   .n4a-card { transition: none; }
 }
+
+/* Shared Studio preset cards follow Web's active theme. */
+.n4-preset-card {
+  --n4-color-text: var(--foreground);
+  --n4-color-muted: var(--muted-foreground);
+  --n4-color-border: var(--border);
+  --n4-color-surface: var(--card);
+  --n4-color-primary: var(--primary);
+}

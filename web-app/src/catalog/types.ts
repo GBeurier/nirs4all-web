@@ -79,13 +79,3 @@ export interface NodeDef {
     studioNodeType: string
   }
 }
-
-export interface Preset {
-  id: string
-  name: string
-  description: string
-  task: TaskType | 'any'
-  /** ordered preprocessing `type` tokens + the model token, with default params */
-  steps: { type: string; params?: Record<string, unknown> }[]
-  model: { type: string; params?: Record<string, unknown> }
-}

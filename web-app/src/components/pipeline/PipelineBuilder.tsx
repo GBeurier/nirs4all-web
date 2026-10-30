@@ -1,26 +1,18 @@
 import { useRef, useState } from 'react'
-import { Download, Sparkles, Upload } from 'lucide-react'
+import { Download, Upload } from 'lucide-react'
 import type { PipelineBuilderProps } from '@/components/contracts'
-import type { Preset, ParamValue } from '@/catalog/types'
+import type { ParamValue } from '@/catalog/types'
 import type { ContainerNode, GeneratorMode, ParamSweep, PipelineDSL, PipelineStep, StepVariant } from '@/engine/types'
 import { countVariants } from '@/engine/dagml'
-import { PRESETS } from '@/catalog/presets'
 import { dagNodeFor, defaultParams, modelsForTask, nodeByType } from '@/catalog/nodes'
 import { downloadPipeline } from '@/lib/download'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/app/components/ui/dropdown-menu'
+import { StudioPresetGallery } from './StudioPresetGallery'
 import { NodePalette } from './NodePalette'
 import { CanvasFlow, type Selection } from './CanvasFlow'
 import { Inspector } from './Inspector'
-import { isAutonomousPipeline, newBranchId, newContainer, newStepId, normalizeImportedPipeline, pipelineFromPreset, pipelineWarnings, sanitizeAutonomousPipeline } from './_helpers'
+import { isAutonomousPipeline, newBranchId, newContainer, newStepId, normalizeImportedPipeline, pipelineWarnings, sanitizeAutonomousPipeline } from './_helpers'
 import { AlertTriangle } from 'lucide-react'
 
 /**
@@ -241,8 +233,8 @@ export function PipelineBuilder({ pipeline, taskType, datasetLabel, running, pro
   const warnings = pipelineWarnings(pipeline)
   const shownWarnings = blockedNotice ? [blockedNotice, ...warnings] : warnings
 
-  const applyPreset = (preset: Preset) => {
-    onChange(sanitizeAutonomousPipeline(pipelineFromPreset(preset)))
+  const applyPreset = (preset: PipelineDSL) => {
+    onChange(preset)
     setBlockedNotice(null)
     setSelected({ kind: 'model' })
   }
@@ -267,8 +259,6 @@ export function PipelineBuilder({ pipeline, taskType, datasetLabel, running, pro
     }
     reader.readAsText(file)
   }
-
-  const presets = PRESETS.filter((p) => p.task === 'any' || p.task === taskType)
 
   return (
     <div className="flex h-full flex-col gap-4">
@@ -295,23 +285,7 @@ export function PipelineBuilder({ pipeline, taskType, datasetLabel, running, pro
           ) : null}
         </div>
         <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5">
-                <Sparkles className="size-4 text-brand-teal" /> Presets
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-72">
-              <DropdownMenuLabel>Start from a preset</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {presets.map((p) => (
-                <DropdownMenuItem key={p.id} onSelect={() => applyPreset(p)} className="flex-col items-start gap-0.5 py-2">
-                  <span className="text-sm font-medium text-foreground">{p.name}</span>
-                  <span className="text-[11px] leading-snug text-muted-foreground">{p.description}</span>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <StudioPresetGallery taskType={taskType} onSelect={applyPreset} />
           <input ref={fileInputRef} type="file" accept="application/json,.json" className="hidden" onChange={handleImport} />
           <Button variant="outline" size="sm" className="gap-1.5" onClick={() => fileInputRef.current?.click()} title="Import pipeline (.json)">
             <Upload className="size-4" /> <span className="hidden sm:inline">Import</span>
