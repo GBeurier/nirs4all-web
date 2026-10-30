@@ -1,6 +1,5 @@
 import * as Icons from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import type { Preset } from '@/catalog/types'
 import { defaultParams, MAIN_CHAIN_CATEGORIES, nodeByType } from '@/catalog/nodes'
 import type {
   ContainerNode,
@@ -75,26 +74,6 @@ export function migrateLegacyBranch(dsl: PipelineDSL): PipelineDSL {
   if (!dsl.branch) return dsl
   const migrated: ContainerNode = { id: newContainerId(), container: 'branch', branches: dsl.branch.branches }
   return { ...dsl, branch: undefined, containers: [...(dsl.containers ?? []), migrated] }
-}
-
-/** Build an editable PipelineDSL from a preset, merging defaults with preset params. */
-export function pipelineFromPreset(preset: Preset): PipelineDSL {
-  const steps: PipelineStep[] = preset.steps.map((s) => ({
-    id: newStepId(s.type),
-    type: s.type,
-    params: { ...defaultParams(s.type), ...(s.params ?? {}) },
-  }))
-  const model: PipelineStep = {
-    id: newStepId(preset.model.type),
-    type: preset.model.type,
-    params: { ...defaultParams(preset.model.type), ...(preset.model.params ?? {}) },
-  }
-  return {
-    name: preset.name,
-    steps,
-    model,
-    cv: { folds: 5, seed: 42 },
-  }
 }
 
 export function isAutonomousPipeline(dsl: PipelineDSL): boolean {

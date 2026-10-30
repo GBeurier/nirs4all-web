@@ -83,7 +83,7 @@ The browser app also serves as the reference for a **client-side custom host** t
 - `nirs4all` (the exact published Core 0.4.5 npm payload in `vendor/nirs4all`) for browser-safe runtime loaders
   and the portable execution subset;
 - `nirs4all-ui` from the exact content-addressed
-  `vendor/npm/nirs4all-ui-0.1.15.tgz` artifact for reusable components, pure
+  `vendor/npm/nirs4all-ui-0.1.17.tgz` artifact for reusable components, pure
   view-model helpers, and shared brand assets. `npm run check:ui-package`
   verifies its SHA-256, npm integrity, source commit/tree, package exports, and
   provenance receipt before the app gate.
@@ -243,3 +243,16 @@ target/task/split edits); continued visual polish.
 (regression load→run→results→predict), `tests/classification-smoke.mjs` (PLS-DA → confusion),
 `tests/wasm-upload-smoke.mjs` (vendor SPC decode). All pass on both the served build and the
 `file://` single-file build.
+
+### Studio preset parity
+
+The Presets gallery uses the ten Studio defaults from `nirs4all-ui/pipelines`,
+with the same canonical recipes, task variants, complexity scores, statistics,
+and shared `PipelinePresetCard` presentation as Repository and Studio. Studio's
+YAML files remain authoritative; its `check:ui-package` gate verifies their hashes
+against the shared snapshot.
+
+Web imports a recipe into the editor only when its complete operator choices and
+search settings can be represented by the staged browser runtime. Other variants
+remain visible with their full original recipe and a download action for Studio.
+The empty editor's starter model is independent of this preset catalogue.
