@@ -82,6 +82,14 @@ try {
   if (selected === 1) console.log('✓ exactly one variant marked as best/selected')
   else fail(`expected exactly one selected variant, got ${selected}`)
 
+  // a click on a variant row reveals its full (untruncated) pipeline label
+  const firstRow = rows.first()
+  await firstRow.click()
+  const expanded = await firstRow.getAttribute('aria-expanded')
+  const labelClass = await firstRow.locator('[data-variant-label]').getAttribute('class')
+  if (expanded === 'true' && !/\btruncate\b/.test(labelClass ?? '')) console.log('✓ clicking a variant row shows its full pipeline label')
+  else fail(`expected the clicked variant row to expand its label (aria-expanded=${expanded}, class="${labelClass}")`)
+
   // --- BUG #5 PROOF: a single execute_campaign_phase_json runs dag-ml's WHOLE
   // variant plan (the scheduler loops all variants). The earlier code called it
   // once PER variant, so each variant's OOF was duplicated ×variantCount. Assert
