@@ -123,8 +123,9 @@ export class MainEngine implements Engine {
         expandGeneratorVariants(dsl),
         metric,
         minimize,
-        (candidate) => runPipeline(ds, candidate, opts, backend),
+        (candidate, onProgress) => runPipeline(ds, candidate, { ...opts, onProgress }, backend),
         async (ranked) => ranked.reduce((best, r) => ((minimize ? r.metric < best.metric : r.metric > best.metric) ? r : best)).id,
+        opts.onProgress,
       )
       return withWasmRobustnessEvidencePublicationTrace(
         result,

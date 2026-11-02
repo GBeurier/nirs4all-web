@@ -60,10 +60,24 @@ try {
   if (chip && /3/.test(chip)) console.log(`✓ variant chip present (${chip.trim()})`)
   else fail('expected a ×N variants chip in the toolbar')
 
+  // record the overall progress bar and the variant counter while the run is live
+  await page.evaluate(() => {
+    const seen = { bar: false, variants: new Set() }
+    window.__n4aProgressSeen = seen
+    new MutationObserver(() => {
+      if (document.querySelector('[data-run-progress] [data-slot="progress"]')) seen.bar = true
+      for (const el of document.querySelectorAll('[data-run-variant]')) seen.variants.add(el.textContent.trim())
+    }).observe(document.body, { subtree: true, childList: true, characterData: true })
+  })
+
   // run the pipeline
   await page.getByRole('button', { name: /Run pipeline/i }).click()
   await page.waitForSelector('text=/CV Scores/', { timeout: 90000 })
   console.log('✓ pipeline executed (CV Scores rendered)')
+
+  const progressSeen = await page.evaluate(() => ({ bar: window.__n4aProgressSeen.bar, variants: [...window.__n4aProgressSeen.variants] }))
+  if (progressSeen.bar && progressSeen.variants.some((v) => /^variant \d+\/3$/.test(v))) console.log(`✓ overall progress bar shown with the variant counter (${progressSeen.variants.join(', ')})`)
+  else fail(`expected the overall progress bar and a variant n/3 counter during the run (got ${JSON.stringify(progressSeen)})`)
 
   // results: a "{n} variants" chip and per-variant rows with a selected best
   const resultsChip = await page.locator('[data-variant-chip]').first().textContent().catch(() => '')
