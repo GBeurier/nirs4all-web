@@ -176,17 +176,35 @@ export function effectiveContainers(dsl: PipelineDSL): ContainerNode[] {
 /** The single OR-generator container in a pipeline, if exactly one runnable one is
  *  present (≥2 alternatives). v1 executes ONE generator-OR per pipeline. */
 export function activeOrGenerator(dsl: PipelineDSL): ContainerNode | undefined {
-  const gens = effectiveContainers(dsl).filter((c) => c.container === 'generator' && c.mode !== 'cartesian' && c.branches.length >= 2)
+  const gens = effectiveContainers(dsl).filter(isRunnableGenerator)
   return gens.length === 1 ? gens[0] : undefined
+}
+
+const isRunnableGenerator = (c: ContainerNode): boolean =>
+  c.container === 'generator' && (c.mode === 'cartesian' ? c.branches.length >= 1 : c.branches.length >= 2)
+
+/** Cartesian generator: every combination of one alternative per axis (an
+ *  optional axis also offers "no step"), sampled to `count` with a fixed seed. */
+function cartesianCombinations(c: ContainerNode): PipelineStep[][] {
+  let combos: PipelineStep[][] = [[]]
+  for (const axis of c.branches) {
+    const choices: PipelineStep[][] = [...(axis.optional ? [[]] : []), ...axis.steps.map((s) => [s])]
+    combos = combos.flatMap((left) => choices.map((right) => [...left, ...right]))
+  }
+  if (c.count === undefined || combos.length <= c.count) return combos
+  let seed = 42
+  const rand = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 ** 32)
+  for (let i = combos.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1))
+    ;[combos[i], combos[j]] = [combos[j], combos[i]]
+  }
+  return combos.slice(0, c.count)
 }
 
 /** True when the pipeline contains a generator the host can't yet execute
  *  (a Cartesian generator, or >1 OR generator). The engine surfaces a clear guard. */
 export function hasUnsupportedGenerator(dsl: PipelineDSL): boolean {
-  const gens = effectiveContainers(dsl).filter((c) => c.container === 'generator' && c.branches.length >= 2)
-  const cartesian = gens.some((c) => c.mode === 'cartesian')
-  const ors = gens.filter((c) => c.mode !== 'cartesian')
-  return cartesian || ors.length > 1
+  return effectiveContainers(dsl).filter(isRunnableGenerator).length > 1
 }
 
 /** Expand a generator-OR container into one effective PipelineDSL per alternative.
@@ -202,7 +220,9 @@ export function expandGeneratorVariants(dsl: PipelineDSL): { label: string; dsl:
   const others = (dsl.containers ?? []).filter((c) => c.id !== gen.id)
   // also fold a migrated legacy branch back in (it lives outside `containers`)
   const keepLegacyBranch = dsl.branch
-  return gen.branches.map((b, i) => {
+  const alternatives = gen.mode === 'cartesian' ? cartesianCombinations(gen) : gen.branches.map((b) => b.steps)
+  return alternatives.map((steps, i) => {
+    const b = { steps }
     const altSteps = b.steps.map((s) => ({ ...s, params: { ...s.params } }))
     const label = b.steps.length ? b.steps.map((s) => s.type).join('+') : `option ${i + 1}`
     return {
@@ -245,7 +265,8 @@ function compatOrStep(c: ContainerNode): unknown {
  *  branch of the container is one AXIS holding alternatives; we wrap each axis as
  *  an `_or_` stage. (Single-alternative axes are still valid stages.) */
 function compatCartesianStep(c: ContainerNode): unknown {
-  return { _cartesian_: c.branches.map((b) => ({ _or_: [b.steps.map(compatStepEntry)] })) }
+  const axes = c.branches.map((b) => ({ _or_: [...(b.optional ? [null] : []), ...b.steps.map(compatStepEntry)] }))
+  return c.count === undefined ? { _cartesian_: axes } : { _cartesian_: axes, count: c.count }
 }
 
 /** Lower one container to its nirs4all-compat pipeline entry. */

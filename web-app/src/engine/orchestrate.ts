@@ -311,12 +311,23 @@ export async function runGeneratorOr(
   select: (ranked: { id: string; metric: number }[]) => Promise<string>,
 ): Promise<RunResult> {
   const results: { variantId: string; label: string; run: RunResult; metric: number }[] = []
+  let firstError: unknown
   for (let i = 0; i < candidates.length; i++) {
     const { label, dsl: cdsl } = candidates[i]
-    const run = await runOne(cdsl)
+    let run: RunResult
+    try {
+      run = await runOne(cdsl)
+    } catch (error) {
+      // A candidate that cannot be fitted is dropped from the search, as in
+      // nirs4all; the run fails only when no candidate fits.
+      if (error instanceof DOMException && error.name === 'AbortError') throw error
+      firstError ??= error
+      continue
+    }
     const m = run.cv?.metrics[scoreMetric] ?? run.refit.metrics[scoreMetric]
     results.push({ variantId: `variant:${i}`, label, run, metric: Number(m ?? (minimize ? Infinity : -Infinity)) })
   }
+  if (results.length === 0) throw firstError
   const ranked = results.filter((r) => Number.isFinite(r.metric)).map((r) => ({ id: r.variantId, metric: r.metric }))
   let winnerId = results[0]?.variantId
   if (ranked.length > 0) winnerId = await select(ranked)

@@ -196,7 +196,7 @@ export class DagMlEngine implements Engine {
     if (!dsl.model) throw new Error('This pipeline has no model — add a model to run / score.')
     // Cartesian / multiple OR generators are not schedulable yet — clear guard.
     if (hasUnsupportedGenerator(dsl)) {
-      throw new Error('Cartesian generators (and more than one OR generator) are not executable yet — use a single OR generator, or move param sweeps onto the model.')
+      throw new Error('Only one generator (OR or Cartesian) per pipeline is executable — merge the generators into one.')
     }
     const backend = isMlJsModelType(dsl.model.type) ? await loadMlJsBackend() : await loadLibn4mBackend()
     // GENERATOR: OR — expand the alternatives into candidate pipelines, run each
@@ -488,29 +488,42 @@ export class DagMlEngine implements Engine {
     // dag-ml's folds through the leakage-honest libn4m chain DIRECTLY (folds stay
     // dag-ml's, numerics stay libn4m) — the same orchestration the scheduler's
     // catch-block fallback uses, chosen up front so we never hit the legacy-PLS hang.
+    const failedVariants = new Set<string>()
     const runChainOverFolds = () => {
       const prebuilt: Fold[] = [...foldByDagId.entries()].map(([, v], i) => ({ foldId: i + 1, trainIdx: v.trainIdx, valIdx: v.valIdx }))
       const total = Math.max(1, variants.length * folds.length)
       let done = 0
       // Loop EVERY variant over the SAME fold set, bucketing OOF per variant_id so
       // each variant is scored over exactly the validation rows (≈ nSamples), once.
+      let firstError: unknown
       for (let vIdx = 0; vIdx < variants.length; vIdx++) {
         const variant = variants[vIdx]
         const vDsl = baseDslByVariant.get(variant.variant_id) ?? dsl
         const buckets = foldRowsByVariant.get(variant.variant_id)!
-        for (let i = 0; i < folds.length; i++) {
-          if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError')
-          // announce the STARTING task; pct reflects work already completed.
-          const label = multiVariant
-            ? `fold ${i + 1}/${folds.length} · variant ${vIdx + 1}/${variants.length}`
-            : `fold ${i + 1}/${folds.length}`
-          onP?.({ phase: 'fit_cv', pct: Math.min(76, 12 + Math.round((64 * done) / total)), message: label })
-          const f = prebuilt[i]
-          const { pred } = trainAndPredict(ds, vDsl, backend, f.trainIdx, f.valIdx)
-          buckets[i].push(...decodeRows(ds, classNames, classIdx, pred, f.valIdx))
-          done++
+        try {
+          for (let i = 0; i < folds.length; i++) {
+            if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError')
+            // announce the STARTING task; pct reflects work already completed.
+            const label = multiVariant
+              ? `fold ${i + 1}/${folds.length} · variant ${vIdx + 1}/${variants.length}`
+              : `fold ${i + 1}/${folds.length}`
+            onP?.({ phase: 'fit_cv', pct: Math.min(76, 12 + Math.round((64 * done) / total)), message: label })
+            const f = prebuilt[i]
+            const { pred } = trainAndPredict(ds, vDsl, backend, f.trainIdx, f.valIdx)
+            buckets[i].push(...decodeRows(ds, classNames, classIdx, pred, f.valIdx))
+            done++
+          }
+        } catch (error) {
+          // A variant that cannot be fitted (e.g. too many PLS components for a
+          // fold) is dropped from the search, as in nirs4all; the run fails only
+          // when no variant fits.
+          if (!multiVariant || (error instanceof DOMException && error.name === 'AbortError')) throw error
+          firstError ??= error
+          failedVariants.add(variant.variant_id)
+          for (const bucket of buckets) bucket.length = 0
         }
       }
+      if (failedVariants.size === variants.length) throw firstError
     }
     if (multiNodeGraph) {
       // Multi-node pipelines aren't schedulable by dag-ml's WASM scheduler in-browser
@@ -572,6 +585,7 @@ export class DagMlEngine implements Engine {
     // --- score each variant's OOF → one CandidateScore per variant_id ---
     const evaluated: { variant: VariantPlan; vDsl: PipelineDSL; oof: PredRow[]; foldRows: PredRow[][]; cvNode: ReturnType<typeof scoreNode>; metric: number }[] = []
     for (const variant of variants) {
+      if (failedVariants.has(variant.variant_id)) continue
       const foldRows = foldRowsByVariant.get(variant.variant_id)!
       const oof = foldRows.flat()
       if (oof.length === 0) throw new Error('dag-ml produced no OOF predictions')

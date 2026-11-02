@@ -1,13 +1,13 @@
 import { getPresetPipeline, type PipelinePreset, type PipelinePresetVariantId } from 'nirs4all-ui/pipelines'
 import { PRESETS } from './presets'
 import { nodeByType } from './nodes'
-import type { ParamSweep, PipelineDSL, PipelineStep, TaskType } from '@/engine/types'
+import type { ContainerNode, ParamSweep, PipelineDSL, PipelineStep, TaskType } from '@/engine/types'
 
 // The Studio presets as ready-to-run browser pipelines: the same preprocessing
 // search, CV and models, with every model the browser cannot run removed. The Web
 // engine runs one model per pipeline, so a Studio preset yields one entry per
-// browser-compatible model. A Cartesian preprocessing search becomes one OR
-// generator over its combinations, sampled to the Studio `count`.
+// browser-compatible model. The Studio `_cartesian_` / `_or_` searches map onto the
+// Web Cartesian / OR generator nodes.
 export interface WebPreset {
   id: string
   /** the Studio preset it comes from, and the model it keeps */
@@ -74,19 +74,6 @@ function alternatives(axis: unknown, id: string): PipelineStep[][] | null {
   return out
 }
 
-/** Deterministic sample of `count` items (seeded shuffle, Studio-style cap). */
-function sample<T>(items: T[], count: number): T[] {
-  if (items.length <= count) return items
-  let seed = 42
-  const rand = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 ** 32)
-  const copy = [...items]
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1))
-    ;[copy[i], copy[j]] = [copy[j], copy[i]]
-  }
-  return copy.slice(0, count)
-}
-
 /** Studio finetune ranges → small explicit grids on the node's own parameters
  *  (the browser has no Optuna). */
 function sweeps(finetune: unknown, type: string): Record<string, ParamSweep> | undefined {
@@ -105,7 +92,7 @@ function sweeps(finetune: unknown, type: string): Record<string, ParamSweep> | u
 }
 
 function build(presetId: string, presetName: string, description: string, task: PipelinePresetVariantId, recipe: unknown[]): WebPreset[] {
-  let combos: PipelineStep[][] | null = null
+  let search: ContainerNode | null = null
   const trailing: PipelineStep[] = []
   let cv: PipelineDSL['cv']
   const models: { name: string; step: PipelineStep }[] = []
@@ -115,13 +102,13 @@ function build(presetId: string, presetName: string, description: string, task: 
     if (item && Array.isArray(item._cartesian_)) {
       const axes = item._cartesian_.map((axis, a) => alternatives(axis, `${id}-${a}`))
       if (axes.some((axis) => !axis)) return []
-      let product: PipelineStep[][] = [[]]
-      for (const axis of axes as PipelineStep[][][]) product = product.flatMap((left) => axis.map((right) => [...left, ...right]))
-      combos = sample(product.filter((c) => c.length > 0), typeof item.count === 'number' ? item.count : product.length)
+      search = { id: `${id}-cartesian`, container: 'generator', mode: 'cartesian',
+        branches: (axes as PipelineStep[][][]).map((axis, a) => ({ id: `${id}-axis${a}`, steps: axis.flat(), optional: axis.some((alt) => alt.length === 0) })),
+        ...(typeof item.count === 'number' ? { count: item.count } : {}) }
     } else if (item && Array.isArray(item._or_)) {
       const alts = alternatives(item, id)
       if (!alts) return []
-      combos = alts
+      search = { id: `${id}-or`, container: 'generator', mode: 'or', branches: alts.map((steps, b) => ({ id: `${id}-alt${b}`, steps })) }
     } else if (item?.model !== undefined) {
       const model = obj(item.model)
       const path = typeof item.model === 'string' ? item.model : model?.class
@@ -147,11 +134,13 @@ function build(presetId: string, presetName: string, description: string, task: 
     const autonomous = !!nodeByType(step.type)?.autonomous
     const pipeline: PipelineDSL = { name: `${presetName} · ${name}`, steps: [], model: step, cv }
     if (!autonomous) {
-      // Studio runs the trailing steps (e.g. centering) after the search: append them to every alternative.
-      if (combos && combos.length > 1) {
-        pipeline.containers = [{ id: `${presetId}-${task}-search`, container: 'generator', mode: 'or',
-          branches: combos.map((steps, b) => ({ id: `${presetId}-${task}-alt${b}`, steps: [...steps, ...trailing].map((s, k) => ({ ...s, id: `${s.id}-b${b}-${k}` })) })) }]
-      } else pipeline.steps = [...(combos?.[0] ?? []), ...trailing]
+      if (!search) pipeline.steps = trailing
+      else if (search.mode === 'cartesian') {
+        // Studio runs the trailing steps (e.g. centering) after the search: one fixed axis each.
+        pipeline.containers = [{ ...search, branches: [...search.branches, ...trailing.map((s) => ({ id: `${s.id}-axis`, steps: [s] }))] }]
+      } else {
+        pipeline.containers = [{ ...search, branches: search.branches.map((b) => ({ ...b, steps: [...b.steps, ...trailing] })) }]
+      }
     }
     return { id: `${presetId}-${task}-${m}`, presetId, model: name, name: pipeline.name, description, task, pipeline }
   })

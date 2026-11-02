@@ -146,8 +146,11 @@ export type MergeOutput = 'features' | 'predictions';
  *  Maps to dag-ml's PipelineDslConcatBranch / PipelineDslBranch (id + steps). */
 export interface PipelineBranch {
   id: string;
-  /** a (possibly empty) preprocessing sub-chain; the recursive step tree lives here */
+  /** a (possibly empty) preprocessing sub-chain; the recursive step tree lives here.
+   *  In a Cartesian generator the branch is an AXIS and each step is one alternative. */
   steps: PipelineStep[];
+  /** Cartesian axis only: "no step" is also an alternative (nirs4all `null`) */
+  optional?: boolean;
 }
 
 /** ONE structural container node in the recursive pipeline tree. It is applied
@@ -163,6 +166,8 @@ export interface ContainerNode {
   mode?: GeneratorMode;
   /** merge only: combine branch outputs as feature concat (default) or predictions */
   output?: MergeOutput;
+  /** Cartesian generator only: sample this many combinations (nirs4all `count`) */
+  count?: number;
 }
 
 /** v1 back-compat shim: the old single inline feature-union block (one branch

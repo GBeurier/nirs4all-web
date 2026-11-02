@@ -171,13 +171,25 @@ describe('toCompatDsl DAG containers', () => {
   })
   it('lowers a Cartesian generator container to a `_cartesian_` step (dsl.rs:1874)', () => {
     const gen: ContainerNode = { id: 'g', container: 'generator', mode: 'cartesian', branches: [
-      { id: 'ax1', steps: [{ id: 'a', type: 'n4m:preprocessing.scatter.snv', params: {} }] },
+      { id: 'ax1', optional: true, steps: [{ id: 'a', type: 'n4m:preprocessing.scatter.snv', params: {} }, { id: 'a2', type: 'n4m:preprocessing.scatter.msc', params: {} }] },
+      { id: 'ax2', steps: [{ id: 'b', type: 'n4m:preprocessing.baselines.detrend', params: { polyorder: 1 } }] },
+    ], count: 2 }
+    const out = toCompatDsl(basePipeline({ containers: [gen] })) as { pipeline: Record<string, unknown>[] }
+    const cart = out.pipeline.find((s) => '_cartesian_' in s) as { _cartesian_: unknown[]; count: number }
+    expect(cart._cartesian_).toHaveLength(2)
+    // each axis is a set of alternatives; an optional axis also offers "no step"
+    expect(cart._cartesian_[0]).toEqual({ _or_: [null, 'SNV', 'MSC'] })
+    expect(cart.count).toBe(2)
+  })
+
+  it('expands a Cartesian generator into one candidate per combination, sampled to count', () => {
+    const gen: ContainerNode = { id: 'g', container: 'generator', mode: 'cartesian', branches: [
+      { id: 'ax1', optional: true, steps: [{ id: 'a', type: 'n4m:preprocessing.scatter.snv', params: {} }, { id: 'a2', type: 'n4m:preprocessing.scatter.msc', params: {} }] },
       { id: 'ax2', steps: [{ id: 'b', type: 'n4m:preprocessing.baselines.detrend', params: { polyorder: 1 } }] },
     ] }
-    const out = toCompatDsl(basePipeline({ containers: [gen] })) as { pipeline: Record<string, unknown>[] }
-    const cart = out.pipeline.find((s) => '_cartesian_' in s) as { _cartesian_: unknown[] }
-    expect(cart._cartesian_).toHaveLength(2)
-    expect(cart._cartesian_[0]).toEqual({ _or_: [['SNV']] })
+    const all = expandGeneratorVariants(basePipeline({ containers: [gen] }))
+    expect(all.map((c) => c.dsl.steps.map((s) => s.id))).toEqual([['b'], ['a', 'b'], ['a2', 'b']])
+    expect(expandGeneratorVariants(basePipeline({ containers: [{ ...gen, count: 2 }] }))).toHaveLength(2)
   })
 })
 
@@ -201,9 +213,10 @@ describe('generator container variant expansion / guards', () => {
     expect(cands[1].dsl.steps.map((s) => s.type)).toEqual(['n4m:preprocessing.baselines.detrend', 'n4m:preprocessing.scatter.msc'])
     expect(cands.every((c) => !c.dsl.containers || c.dsl.containers.every((x) => x.container !== 'generator'))).toBe(true)
   })
-  it('flags Cartesian + multiple OR generators as unsupported (clear guard)', () => {
+  it('runs one generator (OR or Cartesian) and flags more than one as unsupported', () => {
     const cart: ContainerNode = { ...orGen, id: 'g2', mode: 'cartesian' }
-    expect(hasUnsupportedGenerator(basePipeline({ containers: [cart] }))).toBe(true)
+    expect(hasUnsupportedGenerator(basePipeline({ containers: [cart] }))).toBe(false)
+    expect(hasUnsupportedGenerator(basePipeline({ containers: [orGen, cart] }))).toBe(true)
     expect(hasUnsupportedGenerator(basePipeline({ containers: [orGen, { ...orGen, id: 'g2' }] }))).toBe(true)
     expect(hasUnsupportedGenerator(basePipeline({ containers: [orGen] }))).toBe(false)
   })
