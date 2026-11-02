@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.3 — 2026-11-02
+
+### Fixed
+
+- The Presets dialog opens runnable presets again. Since 0.4.2 only one Studio
+  variant could be opened; the others only offered a recipe download. A new
+  "Ready to run in the browser" section lists the Studio presets built from n4m
+  nodes, with the same preprocessing search, cross-validation and models, minus
+  the models the browser cannot run (random forests, extra trees, gradient
+  boosting, LightGBM, XGBoost, TabPFN, NICON, OPLS). The Web engine runs one model
+  per pipeline, so a multi-model Studio preset appears once per compatible model;
+  Studio tuning ranges become small explicit grids.
+
 ## 0.4.2 — 2026-11-02
 
 ### Fixed
