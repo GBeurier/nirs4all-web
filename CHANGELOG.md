@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.4.2 — 2026-11-02
+
+### Fixed
+
+- Missing targets no longer reach calibration as zero. The dag-ml-data target
+  table carried a missing target (`NaN`) as JSON `null`, which was read back as
+  `0`, so unlabelled samples were fitted, cross-validated and scored as y = 0.
+  Rows without a target are now marked `excluded` in the sample relations, kept
+  out of fitting, CV, scoring and split operators, and still predicted. The run
+  reports how many were excluded.
+- A missing label (`NA`, `N/A`, `NaN`, `null`, `none`, empty) is not a class: a
+  regression target with `NA` cells stays a regression, and classification never
+  creates an `NA` class or maps a missing label to the first class.
+- Datasets with repeated sample identifiers (replicate scans) load again. Web
+  0.4.0 required unique sample ids and refused them; only internal row
+  identities need to be unique, and the original ids stay visible.
+- `Xval` / `Yval` / `Mval` files (the NIRS cal/val naming) are read as the
+  held-out test partition instead of being silently dropped.
+
+### Added
+
+- Opt-in repetition column in Configure dataset (`repetition`, as in the Python
+  library), default none. When set, cross-validation keeps every scan of a
+  physical sample in the same fold; the grouping is scoped per partition, so a
+  sample code reused between cal and val sets is not linked. A repetition column
+  inferred by nirs4all-io is never applied without the user's choice.
+
+### Changed
+
+- The Presets gallery shows the ten Studio default pipelines from the shared
+  `nirs4all-ui` 0.1.17 catalogue, imports a recipe only when the browser runtime
+  can represent it, and offers the original recipe for download otherwise.
+- The Predict panel exports predictions as CSV (regression values,
+  classification labels, multi-target matrices with sample ids).
+
 ## 0.4.0 — 2026-10-04
 
 - Run selected full refit and prediction through DAG-ML, binding the browser
