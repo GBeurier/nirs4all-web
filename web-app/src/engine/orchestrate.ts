@@ -310,7 +310,7 @@ export async function runGeneratorOr(
   runOne: (candidate: PipelineDSL) => Promise<RunResult>,
   select: (ranked: { id: string; metric: number }[]) => Promise<string>,
 ): Promise<RunResult> {
-  const results: { variantId: string; label: string; run: RunResult; metric: number }[] = []
+  const results: { variantId: string; label: string; pipeline: PipelineDSL; run: RunResult; metric: number }[] = []
   let firstError: unknown
   for (let i = 0; i < candidates.length; i++) {
     const { label, dsl: cdsl } = candidates[i]
@@ -325,7 +325,9 @@ export async function runGeneratorOr(
       continue
     }
     const m = run.cv?.metrics[scoreMetric] ?? run.refit.metrics[scoreMetric]
-    results.push({ variantId: `variant:${i}`, label, run, metric: Number(m ?? (minimize ? Infinity : -Infinity)) })
+    // an alternative that itself swept parameters reports its selected inner variant
+    const pipeline = run.variants?.find((v) => v.selected)?.pipeline ?? cdsl
+    results.push({ variantId: `variant:${i}`, label, pipeline, run, metric: Number(m ?? (minimize ? Infinity : -Infinity)) })
   }
   if (results.length === 0) throw firstError
   const ranked = results.filter((r) => Number.isFinite(r.metric)).map((r) => ({ id: r.variantId, metric: r.metric }))
@@ -337,7 +339,7 @@ export async function runGeneratorOr(
     ...winner.run,
     pipelineName: dsl.name,
     variantCount: candidates.length,
-    variants: results.map((r, i) => ({ variantId: r.variantId, label: r.label, metrics: r.run.cv?.metrics ?? r.run.refit.metrics, selected: i === winnerIdx })),
+    variants: results.map((r, i) => ({ variantId: r.variantId, label: r.label, metrics: r.run.cv?.metrics ?? r.run.refit.metrics, selected: i === winnerIdx, pipeline: r.pipeline })),
   }
 }
 

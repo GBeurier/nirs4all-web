@@ -631,7 +631,7 @@ export class DagMlEngine implements Engine {
     onP?.({ phase: 'done', pct: 100 })
 
     const variantSummaries = multiVariant
-      ? evaluated.map((e, i) => ({ variantId: e.variant.variant_id, label: variantLabel(e.variant), metrics: e.cvNode.metrics, selected: i === winnerIdx }))
+      ? evaluated.map((e, i) => ({ variantId: e.variant.variant_id, label: variantLabel(e.variant), metrics: e.cvNode.metrics, selected: i === winnerIdx, pipeline: e.vDsl }))
       : undefined
     return {
       id: `run-${Date.now().toString(36)}`,
