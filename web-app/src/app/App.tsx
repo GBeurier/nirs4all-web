@@ -25,6 +25,7 @@ import { type DatasetSummary, reencodeTarget, summarize } from '@/data/dataset'
 import { loadSampleDataset, SAMPLES, type SampleId } from '@/data/samples'
 import { type LoadedModel, parseN4aFile } from '@/lib/n4a'
 import { applyTheme, loadSession, loadTheme, saveSession, type Theme } from '@/lib/persist'
+import { Progress } from '@/app/components/ui/progress'
 import { cn } from '@/app/components/ui/utils'
 import { formatRuntimeErrorForUi } from '@/app/runtimeErrors'
 import { RuntimeEngineBadge } from 'nirs4all-ui/components'
@@ -725,7 +726,19 @@ function DatasetSessionBanner({
           )}
         </div>
       </div>
-      {running && progress?.message ? <p className="mt-2 truncate font-mono text-[11px] text-muted-foreground">{progress.message}</p> : null}
+      {running ? (
+        <div className="mt-3 space-y-1.5" data-run-progress>
+          <Progress value={progress?.pct ?? 0} aria-label="Overall run progress" />
+          <div className="flex items-center justify-between gap-3 text-[11px] text-muted-foreground">
+            <span className="min-w-0 truncate font-mono">{progress?.message ?? ''}</span>
+            {progress?.variant ? (
+              <span className="shrink-0 font-semibold tabular-nums text-foreground" data-run-variant>
+                variant {progress.variant.index}/{progress.variant.total}
+              </span>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

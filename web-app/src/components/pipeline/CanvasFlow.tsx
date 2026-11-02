@@ -570,6 +570,11 @@ export function CanvasFlow({
                 {progress.message ? <span className="ml-1 font-normal text-muted-foreground">— {progress.message}</span> : null}
               </span>
               <div className="flex items-center gap-3">
+                {progress.variant ? (
+                  <span className="rounded-full bg-muted px-2 py-0.5 font-mono text-xs tabular-nums text-foreground">
+                    variant {progress.variant.index}/{progress.variant.total}
+                  </span>
+                ) : null}
                 <span className="font-mono text-sm tabular-nums text-muted-foreground">{Math.round(progress.pct)}%</span>
                 <Button variant="outline" size="sm" className="gap-1.5" onClick={onCancel}>
                   <Square className="size-3.5" /> Cancel

@@ -379,8 +379,10 @@ export interface RobustnessEvidenceSidecarOptions {
 // ---------------------------------------------------------------------------
 export interface RunProgress {
   phase: 'preprocess' | 'fit_cv' | 'select' | 'refit' | 'predict' | 'done';
-  pct: number; // 0..100
+  pct: number; // 0..100 — over the whole run, every variant included
   message?: string;
+  /** the variant being evaluated (1-based) when the run explores several */
+  variant?: { index: number; total: number };
 }
 /** One entry in the live execution log — every onProgress call becomes an entry. */
 export interface RunLogEntry {

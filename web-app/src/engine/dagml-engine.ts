@@ -212,13 +212,14 @@ export class DagMlEngine implements Engine {
         expandGeneratorVariants(dsl),
         metric,
         minimize,
-        (candidate) => this.runViaDagMl(ds, candidate, opts, backend),
+        (candidate, onProgress) => this.runViaDagMl(ds, candidate, { ...opts, onProgress }, backend),
         async (ranked) => {
           const policy = { id: 'sel:n4a-gen', metric: { name: metric, objective: minimize ? 'minimize' : 'maximize' } }
           const candidates = ranked.map((r) => ({ candidate_id: r.id, metrics: { [metric]: r.metric } }))
           const decision = JSON.parse(dagml.select_candidates_json(JSON.stringify(policy), JSON.stringify(candidates), undefined)) as { selected_candidate_id: string }
           return decision.selected_candidate_id
         },
+        opts.onProgress,
       )
     }
     // Served path REQUIRES libn4m + dag-ml — no silent shadow engine. Both the
@@ -457,7 +458,7 @@ export class DagMlEngine implements Engine {
           : multiVariant && vNo !== undefined
             ? `fold ${foldNo + 1}/${folds.length} · variant ${vNo + 1}/${variants.length}`
             : `fold ${foldNo + 1}/${folds.length}`
-      onP?.({ phase: 'fit_cv', pct: Math.min(foldPct, 76), message: foldLabel })
+      onP?.({ phase: 'fit_cv', pct: Math.min(foldPct, 76), message: foldLabel, ...(multiVariant && vNo !== undefined ? { variant: { index: vNo + 1, total: variants.length } } : {}) })
       // Fit THIS task's variant (by id): use the variant's effective DSL so the
       // overlaid model/preprocessing params drive libn4m. (dag-ml also overlays the
       // params onto np.params; we re-derive from the variant id for parity with the
@@ -507,7 +508,7 @@ export class DagMlEngine implements Engine {
             const label = multiVariant
               ? `fold ${i + 1}/${folds.length} · variant ${vIdx + 1}/${variants.length}`
               : `fold ${i + 1}/${folds.length}`
-            onP?.({ phase: 'fit_cv', pct: Math.min(76, 12 + Math.round((64 * done) / total)), message: label })
+            onP?.({ phase: 'fit_cv', pct: Math.min(76, 12 + Math.round((64 * done) / total)), message: label, ...(multiVariant ? { variant: { index: vIdx + 1, total: variants.length } } : {}) })
             const f = prebuilt[i]
             const { pred } = trainAndPredict(ds, vDsl, backend, f.trainIdx, f.valIdx)
             buckets[i].push(...decodeRows(ds, classNames, classIdx, pred, f.valIdx))

@@ -21,6 +21,7 @@ import type {
   PredRow,
   PredictResult,
   RunOptions,
+  RunProgress,
   RunResult,
   ScoreKind,
   ScoreNode,
@@ -307,16 +308,27 @@ export async function runGeneratorOr(
   candidates: { label: string; dsl: PipelineDSL }[],
   scoreMetric: keyof Metrics,
   minimize: boolean,
-  runOne: (candidate: PipelineDSL) => Promise<RunResult>,
+  runOne: (candidate: PipelineDSL, onProgress: (p: RunProgress) => void) => Promise<RunResult>,
   select: (ranked: { id: string; metric: number }[]) => Promise<string>,
+  onProgress?: (p: RunProgress) => void,
 ): Promise<RunResult> {
   const results: { variantId: string; label: string; pipeline: PipelineDSL; run: RunResult; metric: number }[] = []
   let firstError: unknown
   for (let i = 0; i < candidates.length; i++) {
     const { label, dsl: cdsl } = candidates[i]
+    // each candidate reports 0→100 of its own run; rescale it into this
+    // candidate's share of the whole search so the overall progress never rewinds
+    const variant = { index: i + 1, total: candidates.length }
+    const candidateProgress = (p: RunProgress) =>
+      onProgress?.({
+        phase: p.phase === 'done' ? 'fit_cv' : p.phase,
+        pct: (100 * i + Math.min(p.pct, 95)) / candidates.length,
+        message: `variant ${variant.index}/${variant.total} · ${p.message ?? label}`,
+        variant,
+      })
     let run: RunResult
     try {
-      run = await runOne(cdsl)
+      run = await runOne(cdsl, candidateProgress)
     } catch (error) {
       // A candidate that cannot be fitted is dropped from the search, as in
       // nirs4all; the run fails only when no candidate fits.
@@ -330,11 +342,13 @@ export async function runGeneratorOr(
     results.push({ variantId: `variant:${i}`, label, pipeline, run, metric: Number(m ?? (minimize ? Infinity : -Infinity)) })
   }
   if (results.length === 0) throw firstError
+  onProgress?.({ phase: 'select', pct: 99, message: `selecting from ${results.length} variants` })
   const ranked = results.filter((r) => Number.isFinite(r.metric)).map((r) => ({ id: r.variantId, metric: r.metric }))
   let winnerId = results[0]?.variantId
   if (ranked.length > 0) winnerId = await select(ranked)
   const winnerIdx = Math.max(0, results.findIndex((r) => r.variantId === winnerId))
   const winner = results[winnerIdx]
+  onProgress?.({ phase: 'done', pct: 100 })
   return {
     ...winner.run,
     pipelineName: dsl.name,
