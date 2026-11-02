@@ -1,4 +1,4 @@
-import { getPresetPipeline, type PipelinePresetVariantId } from 'nirs4all-ui/pipelines'
+import { getPresetPipeline, type PipelinePreset, type PipelinePresetVariantId } from 'nirs4all-ui/pipelines'
 import { PRESETS } from './presets'
 import { nodeByType } from './nodes'
 import type { ParamSweep, PipelineDSL, PipelineStep, TaskType } from '@/engine/types'
@@ -10,6 +10,9 @@ import type { ParamSweep, PipelineDSL, PipelineStep, TaskType } from '@/engine/t
 // generator over its combinations, sampled to the Studio `count`.
 export interface WebPreset {
   id: string
+  /** the Studio preset it comes from, and the model it keeps */
+  presetId: string
+  model: string
   name: string
   description: string
   task: 'regression' | 'classification'
@@ -150,8 +153,21 @@ function build(presetId: string, presetName: string, description: string, task: 
           branches: combos.map((steps, b) => ({ id: `${presetId}-${task}-alt${b}`, steps: [...steps, ...trailing].map((s, k) => ({ ...s, id: `${s.id}-b${b}-${k}` })) })) }]
       } else pipeline.steps = [...(combos?.[0] ?? []), ...trailing]
     }
-    return { id: `${presetId}-${task}-${m}`, name: pipeline.name, description, task, pipeline }
+    return { id: `${presetId}-${task}-${m}`, presetId, model: name, name: pipeline.name, description, task, pipeline }
   })
+}
+
+/** A browser-compatible model entry of a Studio recipe. */
+function browserModel(item: Obj | null): boolean {
+  if (item?.model === undefined) return true
+  const path = typeof item.model === 'string' ? item.model : obj(item.model)?.class
+  return typeof path === 'string' && !!MODELS[path]
+}
+
+/** The Studio preset as shown in the browser gallery: one task, impossible models removed. */
+export function browserPreset(preset: PipelinePreset, task: PipelinePresetVariantId): PipelinePreset {
+  const pipeline = getPresetPipeline(preset, task).filter((item) => browserModel(obj(item)))
+  return { ...preset, available_variants: [task], variants: { [task]: { ...preset.variants?.[task], pipeline } } } as PipelinePreset
 }
 
 export const WEB_PRESETS: WebPreset[] = PRESETS.flatMap((preset) =>
