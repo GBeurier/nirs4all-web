@@ -113,7 +113,7 @@ export class MainEngine implements Engine {
     // best by the canonical metric (host argmin/argmax — dag-ml scheduling is off
     // under file://).
     if (hasUnsupportedGenerator(dsl)) {
-      throw new Error('Cartesian generators (and more than one OR generator) are not executable yet — use a single OR generator.')
+      throw new Error('Only one generator (OR or Cartesian) per pipeline is executable — merge the generators into one.')
     }
     if (activeOrGenerator(dsl)) {
       const minimize = ds.taskType === 'regression'
