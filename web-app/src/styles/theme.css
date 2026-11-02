@@ -315,3 +315,13 @@
   --n4-color-surface: var(--card);
   --n4-color-primary: var(--primary);
 }
+
+/* Host tokens for the shared nirs4all-ui step chips (StepChips) shown outside a
+ * workbench shell, which is where nirs4all-ui otherwise scopes them. */
+.n4a-variant-steps {
+  --wb-border: var(--border);
+  --wb-surface: var(--card);
+  --wb-mono: var(--font-mono);
+  --wb-warning: var(--warning);
+}
+.n4a-variant-steps .n4ins-step-token { overflow-wrap: anywhere; font-weight: 500; }

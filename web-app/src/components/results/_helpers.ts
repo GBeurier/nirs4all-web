@@ -1,4 +1,9 @@
-import type { Metrics, PredRow, ScoreNode, TaskType } from '@/engine/types'
+import type { ChainStepRole } from 'nirs4all-ui/chains'
+import type { InspectorChain } from 'nirs4all-ui/inspector'
+
+import { nodeByType } from '@/catalog/nodes'
+import type { NodeCategory } from '@/catalog/types'
+import type { Metrics, PipelineStep, PredRow, RunResult, ScoreNode, TaskType } from '@/engine/types'
 import { primaryMetric } from '@/lib/format'
 
 /** Chart palette mirroring theme --chart-1..5. recharts needs concrete colors. */
@@ -92,4 +97,73 @@ export function primaryValue(task: TaskType, metrics: Metrics): number | undefin
 /** Per-fold primary-metric series for a bar chart. */
 export function foldSeries(task: TaskType, folds: ScoreNode[]): { fold: string; value: number; id: string }[] {
   return folds.map((f) => ({ fold: f.name, value: primaryValue(task, f.metrics) ?? NaN, id: f.id }))
+}
+
+type VariantPipeline = NonNullable<NonNullable<RunResult['variants']>[number]['pipeline']>
+type VariantStep = { token: string; label: string; role: ChainStepRole }
+
+const ROLE_BY_CATEGORY: Record<NodeCategory, ChainStepRole> = {
+  split: 'split',
+  preprocessing: 'preprocess',
+  filter: 'other',
+  augmentation: 'augmentation',
+  model: 'model',
+  dag: 'feature',
+}
+
+function paramText(value: unknown): string {
+  if (Array.isArray(value)) return value.length <= 4 ? `[${value.map(paramText).join(', ')}]` : `[${value.length} values]`
+  if (typeof value === 'number') return Number.isInteger(value) ? String(value) : String(Number(value.toPrecision(4)))
+  return String(value)
+}
+
+function stepText(step: PipelineStep): string {
+  const name = nodeByType(step.type)?.name ?? step.type
+  const params = Object.entries(step.params)
+    .filter(([, v]) => v !== undefined && v !== null && v !== '')
+    .map(([k, v]) => `${k}=${paramText(v)}`)
+  return params.length ? `${name} (${params.join(', ')})` : name
+}
+
+/** A variant's effective pipeline as ordered steps with their parameters, in
+ *  pipeline order: split → main chain → feature containers → model. */
+function variantSteps(dsl: VariantPipeline): VariantStep[] {
+  const steps: VariantStep[] = []
+  const add = (key: string, step: PipelineStep) =>
+    steps.push({ token: key, label: stepText(step), role: ROLE_BY_CATEGORY[nodeByType(step.type)?.category ?? 'preprocessing'] })
+  if (dsl.split) add('split', dsl.split)
+  dsl.steps.forEach((s, i) => add(`step:${i}`, s))
+  for (const c of dsl.containers ?? []) {
+    const lanes = c.branches.map((b) => b.steps.map(stepText).join(' → ') || '∅').join(' | ')
+    steps.push({ token: `container:${c.id}`, label: `${c.container} [${lanes}]`, role: 'feature' })
+  }
+  if (dsl.model) add('model', dsl.model)
+  return steps
+}
+
+/** Each variant's steps, plus the step slots whose content differs across the
+ *  variants (the swept parameters / alternatives), for highlighting. */
+export function variantChains(
+  variants: NonNullable<RunResult['variants']>,
+  task: TaskType,
+): { chains: Map<string, InspectorChain>; differing: Set<string> } {
+  const chains = new Map<string, InspectorChain>()
+  const labelsBySlot = new Map<string, Set<string>>()
+  for (const v of variants) {
+    if (!v.pipeline) continue
+    const steps = variantSteps(v.pipeline)
+    for (const s of steps) labelsBySlot.set(s.token, (labelsBySlot.get(s.token) ?? new Set()).add(s.label))
+    chains.set(v.variantId, {
+      id: v.variantId,
+      task: task === 'regression' ? 'regression' : 'classification',
+      model: v.pipeline.model ? (nodeByType(v.pipeline.model.type)?.name ?? v.pipeline.model.type) : '',
+      steps,
+      scores: {},
+    })
+  }
+  const differing = new Set<string>()
+  for (const [slot, labels] of labelsBySlot) {
+    if (labels.size > 1 || [...chains.values()].some((c) => !c.steps.some((s) => s.token === slot))) differing.add(slot)
+  }
+  return { chains, differing }
 }

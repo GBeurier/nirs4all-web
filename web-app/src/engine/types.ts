@@ -291,8 +291,10 @@ export interface RunResult {
   createdAt: string;
   /** number of variants dag-ml expanded + evaluated (omitted / 1 for a single-variant run) */
   variantCount?: number;
-  /** per-variant CV scores; the winner dag-ml's selection picked has `selected: true` */
-  variants?: { variantId: string; label: string; metrics: Metrics; selected: boolean }[];
+  /** per-variant CV scores; the winner dag-ml's selection picked has `selected: true`.
+   *  `pipeline` is the variant's effective pipeline (its swept / alternative values
+   *  applied), absent when only an imported result's variant id is known. */
+  variants?: { variantId: string; label: string; metrics: Metrics; selected: boolean; pipeline?: PipelineDSL }[];
   /** Train/Test rows left out of FIT, CV and scoring because their target is
    *  missing (omitted when every row has a target). They remain predictable. */
   missingTargets?: number;

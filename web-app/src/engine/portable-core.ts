@@ -82,6 +82,7 @@ export async function tryRunPortableCore(ds: MaterializedDataset, dsl: PipelineD
             label: `n_components=${variant.n_components}`,
             metrics: { rmse: variant.rmse, n: result.targets.length },
             selected: variant.n_components === result.selected.n_components,
+            pipeline: selectedDsl(dsl, variant.n_components),
           }))
         : undefined,
   }

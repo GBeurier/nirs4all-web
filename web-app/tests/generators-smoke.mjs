@@ -82,13 +82,19 @@ try {
   if (selected === 1) console.log('✓ exactly one variant marked as best/selected')
   else fail(`expected exactly one selected variant, got ${selected}`)
 
-  // a click on a variant row reveals its full (untruncated) pipeline label
+  // a click on a variant row reveals its full label and its effective pipeline:
+  // shared nirs4all-ui step chips with parameters, the swept step highlighted
   const firstRow = rows.first()
-  await firstRow.click()
-  const expanded = await firstRow.getAttribute('aria-expanded')
+  await firstRow.locator('button[aria-expanded]').click()
+  const expanded = await firstRow.locator('button[aria-expanded]').getAttribute('aria-expanded')
   const labelClass = await firstRow.locator('[data-variant-label]').getAttribute('class')
-  if (expanded === 'true' && !/\btruncate\b/.test(labelClass ?? '')) console.log('✓ clicking a variant row shows its full pipeline label')
+  if (expanded === 'true' && !/\btruncate\b/.test(labelClass ?? '')) console.log('✓ clicking a variant row shows its full label')
   else fail(`expected the clicked variant row to expand its label (aria-expanded=${expanded}, class="${labelClass}")`)
+  const chips = firstRow.locator('[data-variant-steps] .n4ins-step')
+  const chipTexts = await chips.allTextContents()
+  const diffCount = await firstRow.locator('[data-variant-steps] .n4ins-step.is-diff').count()
+  if (chipTexts.length >= 1 && chipTexts.some((t) => t.includes('=')) && diffCount >= 1) console.log(`✓ variant pipeline shown as ${chipTexts.length} step chips with params, ${diffCount} swept step highlighted`)
+  else fail(`expected step chips with params and a highlighted swept step (chips=${JSON.stringify(chipTexts)}, diff=${diffCount})`)
 
   // --- BUG #5 PROOF: a single execute_campaign_phase_json runs dag-ml's WHOLE
   // variant plan (the scheduler loops all variants). The earlier code called it

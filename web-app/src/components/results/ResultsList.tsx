@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { StepChips } from 'nirs4all-ui/inspector'
+import 'nirs4all-ui/assets/workbench.css'
 import { AlertCircle, CheckCircle2, ChevronDown, ChevronRight, Cpu, Download, GitBranch, Layers, Loader2, Sparkles, Target, Trophy } from 'lucide-react'
 
 import type { ResultsListProps } from '@/components/contracts'
@@ -29,7 +31,7 @@ import {
 import { cn } from '@/app/components/ui/utils'
 import { downloadN4a, downloadPipeline, downloadRunCsv, downloadRunJson } from '@/lib/download'
 
-import { formatDate } from './_helpers'
+import { formatDate, variantChains } from './_helpers'
 
 function StatusIcon({ status }: { status: ScoreNode['status'] }) {
   if (status === 'running') return <Loader2 className="size-4 animate-spin text-brand-teal" />
@@ -107,6 +109,7 @@ function VariantRows({ run }: { run: RunResult }) {
   const [open, setOpen] = useState(false)
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set())
   const variants = run.variants
+  const { chains, differing } = useMemo(() => variantChains(variants ?? [], run.taskType), [variants, run.taskType])
   if (!variants || variants.length <= 1) return null
   const pm = primaryMetric(run.taskType)
   return (
@@ -126,39 +129,52 @@ function VariantRows({ run }: { run: RunResult }) {
       <CollapsibleContent className="mt-2 space-y-1.5">
         {variants.map((v) => {
           const isExpanded = expanded.has(v.variantId)
+          const chain = chains.get(v.variantId)
           return (
-            <button
-              type="button"
+            <div
               key={v.variantId}
               data-variant-row
               data-variant-selected={v.selected ? 'true' : 'false'}
-              aria-expanded={isExpanded}
-              title={isExpanded ? undefined : v.label}
-              onClick={() =>
-                setExpanded((prev) => {
-                  const next = new Set(prev)
-                  if (!next.delete(v.variantId)) next.add(v.variantId)
-                  return next
-                })
-              }
               className={cn(
-                'flex w-full justify-between gap-3 rounded-lg border px-3 py-2 text-left transition-colors',
-                isExpanded ? 'items-start' : 'items-center',
-                v.selected ? 'border-primary bg-primary/5 ring-1 ring-primary/30' : 'border-border bg-card hover:bg-muted/40',
+                'rounded-lg border',
+                v.selected ? 'border-primary bg-primary/5 ring-1 ring-primary/30' : 'border-border bg-card',
               )}
             >
-              <span className={cn('flex min-w-0 gap-2', isExpanded ? 'items-start' : 'items-center')}>
-                {v.selected ? <Trophy className="size-3.5 shrink-0 text-amber-500" /> : <GitBranch className="size-3.5 shrink-0 text-muted-foreground/60" />}
-                <span className={cn('font-mono text-xs text-foreground', isExpanded ? 'whitespace-normal [overflow-wrap:anywhere]' : 'truncate')} data-variant-label>
-                  {v.label}
+              <button
+                type="button"
+                aria-expanded={isExpanded}
+                title={isExpanded ? undefined : v.label}
+                onClick={() =>
+                  setExpanded((prev) => {
+                    const next = new Set(prev)
+                    if (!next.delete(v.variantId)) next.add(v.variantId)
+                    return next
+                  })
+                }
+                className={cn(
+                  'flex w-full justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-muted/40',
+                  isExpanded ? 'items-start' : 'items-center',
+                )}
+              >
+                <span className={cn('flex min-w-0 gap-2', isExpanded ? 'items-start' : 'items-center')}>
+                  {isExpanded ? <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" /> : <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />}
+                  {v.selected ? <Trophy className="size-3.5 shrink-0 text-amber-500" /> : <GitBranch className="size-3.5 shrink-0 text-muted-foreground/60" />}
+                  <span className={cn('font-mono text-xs text-foreground', isExpanded ? 'whitespace-normal [overflow-wrap:anywhere]' : 'truncate')} data-variant-label>
+                    {v.label}
+                  </span>
+                  {v.selected ? <span className="shrink-0 rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">best</span> : null}
                 </span>
-                {v.selected ? <span className="shrink-0 rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">best</span> : null}
-              </span>
-              <span className="inline-flex shrink-0 items-baseline gap-1 rounded-md bg-muted px-2 py-0.5 text-xs">
-                <span className="text-muted-foreground">{pm.label}</span>
-                <span className="font-mono font-medium text-foreground">{fmt(v.metrics[pm.key])}</span>
-              </span>
-            </button>
+                <span className="inline-flex shrink-0 items-baseline gap-1 rounded-md bg-muted px-2 py-0.5 text-xs">
+                  <span className="text-muted-foreground">{pm.label}</span>
+                  <span className="font-mono font-medium text-foreground">{fmt(v.metrics[pm.key])}</span>
+                </span>
+              </button>
+              {isExpanded && chain ? (
+                <div className="n4a-variant-steps px-3 pb-3" data-variant-steps>
+                  <StepChips chain={chain} highlight={differing} />
+                </div>
+              ) : null}
+            </div>
           )
         })}
       </CollapsibleContent>
