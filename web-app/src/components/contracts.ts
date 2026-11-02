@@ -27,8 +27,11 @@ export interface DatasetConfigDialogProps {
   /** present when the dataset was loaded through the formats/io WASM stack */
   analysis?: Analysis | null
   onOpenChange: (open: boolean) => void
-  onApply: (patch: { targetName?: string; taskType?: TaskType; testFraction?: number }) => void
+  onApply: (patch: DatasetConfigPatch) => void
 }
+
+/** `repetition`: the nirs4all repetition column; null clears it. */
+export interface DatasetConfigPatch { targetName?: string; taskType?: TaskType; testFraction?: number; repetition?: string | null }
 
 export type { Analysis }
 

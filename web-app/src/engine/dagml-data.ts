@@ -25,7 +25,8 @@ async function mod(): Promise<DagMlDataMod> {
 export interface DataProviderResult {
   /** features served by the provider, row-major nSamples×nFeatures, in dataset order */
   X: Float64Array
-  /** target served by the provider, in dataset order */
+  /** target served by the provider, in dataset order; NaN where the target is
+   *  missing (those rows are `excluded` and absent from the target table) */
   y: Float64Array
   fingerprints: { schema: string; plan: string; relation: string | null }
   outputRepresentation: string
@@ -173,7 +174,11 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
   const envelope = JSON.parse(envelopeJson)
 
   // target table (keyed by sample_id) — small (one value per sample), stays JSON.
-  const targetTables = [{ target_id: TARGET_ID, values: cids.map((sid, i) => ({ sample_id: sid, value: ds.y[i] })) }]
+  // Only finite targets enter it: a missing target never crosses the boundary
+  // (JSON would turn NaN into null). Its row is `excluded` in the relations, so
+  // the training view below drops it while the feature view keeps it.
+  const labeled = cids.filter((_, i) => Number.isFinite(ds.y[i]))
+  const targetTables = labeled.length ? [{ target_id: TARGET_ID, values: labeled.map((sid) => ({ sample_id: sid, value: ds.y[rowOfCanonical(sid)] })) }] : null
   // Feature matrix: only the METADATA goes as JSON; the flat row-major values
   // cross as a typed Float64Array (one memcpy in WASM), never through
   // `JSON.stringify` + a boxed array. ds.X is already row-major in dataset
@@ -187,9 +192,10 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
     observation_ids: cids,
   }
 
-  const provider = m.WasmInMemoryProvider.withF64Features(envelopeJson, JSON.stringify(targetTables), JSON.stringify(featureMeta), ds.X)
+  const provider = m.WasmInMemoryProvider.withF64Features(envelopeJson, targetTables && JSON.stringify(targetTables), JSON.stringify(featureMeta), ds.X)
   let dataHandle: string | null = null
   let viewHandle: string | null = null
+  let trainingViewHandle: string | null = null
   try {
     const matRequest = {
       run_id: 'run:web',
@@ -207,7 +213,7 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
       require_relations: true,
     }
     dataHandle = provider.materialize(JSON.stringify(matRequest))
-    viewHandle = provider.make_view(dataHandle, JSON.stringify({ sample_ids: cids, include_augmented: true }))
+    viewHandle = provider.make_view(dataHandle, JSON.stringify({ sample_ids: cids, include_augmented: true, include_excluded: true }))
 
     // Feature matrix via the TYPED path: a small layout JSON (ids + shape) plus
     // the flat row-major values as a Float64Array — no O(rows×cols) JSON string,
@@ -218,7 +224,6 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
     const fLayoutStr = fblock.layout
     const fValues = fblock.into_values() // consumes the block; flat row-major, length n_rows*n_cols
     const fLayout = JSON.parse(fLayoutStr) as { sample_ids: string[]; n_rows: number; n_cols: number }
-    const tblock = JSON.parse(provider.target_block(viewHandle, TARGET_ID)) as { sample_ids: string[]; values: number[] }
 
     // reconstruct in dataset order, asserting exact 1:1 coverage — never train on
     // zero-filled rows. Any gap/dup/width mismatch throws → visible degraded path.
@@ -230,7 +235,6 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
     if (fLayout.sample_ids.length !== ds.nSamples) throw new Error(`provider feature block covered ${fLayout.sample_ids.length}/${ds.nSamples} samples`)
     if (fLayout.n_cols !== ds.nFeatures) throw new Error(`provider feature block has ${fLayout.n_cols}/${ds.nFeatures} features`)
     if (fValues.length !== ds.nSamples * ds.nFeatures) throw new Error(`provider feature block has ${fValues.length} values, expected ${ds.nSamples * ds.nFeatures}`)
-    if (tblock.sample_ids.length !== ds.nSamples) throw new Error(`provider target block covered ${tblock.sample_ids.length}/${ds.nSamples} samples`)
 
     // The provider serves rows in relation order, which we registered as
     // s0..s{n-1} — when it echoes that identity ordering (the steady state),
@@ -255,13 +259,22 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
         X.set(fValues.subarray(r * ds.nFeatures, (r + 1) * ds.nFeatures), i * ds.nFeatures)
       }
     }
-    const y = new Float64Array(ds.nSamples)
-    const seenY = new Uint8Array(ds.nSamples)
-    for (let r = 0; r < tblock.sample_ids.length; r++) {
-      const i = at(tblock.sample_ids[r])
-      if (seenY[i]) throw new Error(`provider returned duplicate target sample id ${tblock.sample_ids[r]}`)
-      seenY[i] = 1
-      y[i] = Number(tblock.values[r])
+    // Targets come from the training view (excluded rows dropped natively) and
+    // must cover exactly the labeled rows with finite numbers — never coerced.
+    const y = new Float64Array(ds.nSamples).fill(NaN)
+    if (labeled.length) {
+      trainingViewHandle = provider.make_view(dataHandle, JSON.stringify({ sample_ids: cids, include_augmented: true, include_excluded: false }))
+      const tblock = JSON.parse(provider.target_block(trainingViewHandle, TARGET_ID)) as { sample_ids: string[]; values: unknown[] }
+      if (tblock.sample_ids.length !== labeled.length) throw new Error(`provider target block covered ${tblock.sample_ids.length}/${labeled.length} labeled samples`)
+      const seenY = new Uint8Array(ds.nSamples)
+      for (let r = 0; r < tblock.sample_ids.length; r++) {
+        const i = at(tblock.sample_ids[r])
+        const value = tblock.values[r]
+        if (seenY[i]) throw new Error(`provider returned duplicate target sample id ${tblock.sample_ids[r]}`)
+        if (typeof value !== 'number' || !Number.isFinite(value) || !Number.isFinite(ds.y[i])) throw new Error(`provider served an invalid target for sample ${tblock.sample_ids[r]}`)
+        seenY[i] = 1
+        y[i] = value
+      }
     }
 
     return {
@@ -274,6 +287,7 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
     }
   } finally {
     try {
+      if (trainingViewHandle !== null) provider.release(trainingViewHandle)
       if (viewHandle !== null) provider.release(viewHandle)
       if (dataHandle !== null) provider.release(dataHandle)
       provider.free?.()

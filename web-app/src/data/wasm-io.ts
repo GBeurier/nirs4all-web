@@ -8,7 +8,7 @@ import { isRelationColumn, metadataRelations } from '@/engine/relations'
 import type { MaterializedDataset, Partition } from '@/engine/types'
 import { loadDataIoWasm } from '@/engine/nirs4all-core'
 import { columnName } from '@/engine/feature-identity'
-import { encodeTarget, inferTaskType } from './dataset'
+import { encodeTarget, inferTaskType, isTestName } from './dataset'
 
 export interface DecodedFile {
   ok: boolean
@@ -148,12 +148,12 @@ export interface AssembledFull {
 }
 
 const ID_COL = /^(sample[_ ]?id|sampleid|sample|id|name|code|ref(erence)?|key)$/i
-function metaIdColumn(b: IoBlock): (number | string | null)[] | null {
-  const col = (b.metadata?.columns ?? []).find((c) => ID_COL.test(c.name))
-  return col ? col.values : null
+/** The block's sample-id column; its values may repeat (replicate scans). */
+function metaIdColumn(b: IoBlock): { name: string; values: (number | string | null)[] } | undefined {
+  return (b.metadata?.columns ?? []).find((c) => ID_COL.test(c.name))
 }
 const toPartition = (name: string): Partition =>
-  /test|valid|holdout/i.test(name) ? 'test' : /predict|infer|unknown/i.test(name) ? 'predict' : 'train'
+  isTestName(name) ? 'test' : /predict|infer|unknown/i.test(name) ? 'predict' : 'train'
 
 /**
  * Map io's `AssembledDataset` (per-partition feature/target blocks) onto the
@@ -186,6 +186,7 @@ export function mapAssembledToMaterialized(full: AssembledFull): MaterializedDat
   const labelsRaw: string[] = []
   const partitions: Partition[] = []
   const sampleIds: string[] = []
+  let sampleIdColumn: string | undefined
   let off = 0
   for (const p of parts) {
     const b = full.blocks[p]
@@ -196,11 +197,12 @@ export function mapAssembledToMaterialized(full: AssembledFull): MaterializedDat
     X.set(Float64Array.from(xm.data.slice(0, rows * nFeatures)), off * nFeatures)
     const part = toPartition(p)
     const idCol = metaIdColumn(b)
+    sampleIdColumn ??= idCol?.name
     const cats = b.y_categorical && Object.keys(b.y_categorical).length ? Object.values(b.y_categorical)[0]?.categories ?? null : null
     const yCols = b.y?.n_cols ?? 0
     for (let r = 0; r < rows; r++) {
       partitions.push(part)
-      sampleIds.push(idCol && idCol[r] != null ? String(idCol[r]) : `${p}#${r}`)
+      sampleIds.push(idCol && idCol.values[r] != null ? String(idCol.values[r]) : `${p}#${r}`)
       if (b.y && yCols > 0) {
         const v = b.y.data[r * yCols] // first target column
         yRaw[off + r] = v
@@ -243,7 +245,7 @@ export function mapAssembledToMaterialized(full: AssembledFull): MaterializedDat
   // to train without targets, so an all-NaN y never silently produces a model.
   const taskType = inferTaskType(Array.from(yRaw), labelsRaw)
   const { y, classes } = encodeTarget(yRaw, labelsRaw, taskType)
-  return { X, nSamples, nFeatures, axis, axisUnit, ...(featureNames ? { featureNames } : {}), y, yRaw, labelsRaw, targetName, taskType, classes, sampleIds, partitions, metadata, ...metadataRelations(metadata) }
+  return { X, nSamples, nFeatures, axis, axisUnit, ...(featureNames ? { featureNames } : {}), y, yRaw, labelsRaw, targetName, taskType, classes, sampleIds, ...(sampleIdColumn ? { sampleIdColumn } : {}), partitions, metadata, ...metadataRelations(metadata) }
 }
 
 /**
@@ -264,6 +266,15 @@ export async function assembleDataset(
   const okNames = new Set(decoded.filter((d) => d.ok && d.records?.length).map((d) => d.file))
   const recordSets = decoded.filter((d) => d.ok && d.records?.length).map((d) => ({ source: d.file, records: d.records! }))
   const byteFiles = files.filter((f) => !okNames.has(f.name)).map((f) => ({ name: f.name, bytes: f.bytes }))
-  const full = io.assembleDataset(byteFiles, recordSets, JSON.stringify(spec)) as AssembledFull
+  // io inference may name a per-scan column (`rep`, `scan_id`) as the repetition
+  // (also via sample_index.repetition_id). Repetition is the physical-sample
+  // column (nirs4all `repetition`) and only the user declares it, in the dataset
+  // configuration, so the inferred one never reaches assembly.
+  const { repetition: _inferred, ...assemblySpec } = spec
+  if (assemblySpec.sample_index && typeof assemblySpec.sample_index === 'object') {
+    const { repetition_id: _scan, ...sampleIndex } = assemblySpec.sample_index as Record<string, unknown>
+    assemblySpec.sample_index = sampleIndex
+  }
+  const full = io.assembleDataset(byteFiles, recordSets, JSON.stringify(assemblySpec)) as AssembledFull
   return mapAssembledToMaterialized(full)
 }

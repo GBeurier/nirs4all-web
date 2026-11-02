@@ -9,6 +9,7 @@ import { isArchiveV2Model, predictArchiveV2 } from './archive-v2'
 import { DagMlEngine } from './dagml-engine'
 import { activeOrGenerator, dagMlAvailable, expandGeneratorVariants, hasUnsupportedGenerator } from './dagml'
 import { assertAomBudget } from './guard'
+import { missingTargetCount } from './partition'
 import { backendIdOf, exportPipeline, predictPipeline, runGeneratorOr, runPipeline } from './orchestrate'
 import { isPortableCoreModel, predictPortableCore, tryRunPortableCore } from './portable-core'
 import { withWasmRobustnessEvidencePublicationTrace } from './robustness-evidence'
@@ -55,7 +56,7 @@ export class MainEngine implements Engine {
     // Warn (or refuse) an oversized operator-adaptive screen before any compute,
     // so a heavy AOM/POP run is never silent (it runs in a worker, cancellable).
     assertAomBudget(ds, dsl, opts.onProgress, { mainThread: this.mainThread })
-    const portable = ds.groupIds || ds.originIds || ds.repetitionIds || ds.augmented ? null : await tryRunPortableCore(ds, dsl, opts)
+    const portable = ds.groupIds || ds.originIds || ds.repetitionIds || ds.augmented || missingTargetCount(ds) ? null : await tryRunPortableCore(ds, dsl, opts)
     if (portable) {
       return withWasmRobustnessEvidencePublicationTrace(
         portable,

@@ -1,10 +1,21 @@
-import { describe, expect, it } from 'vitest'
-import { type AssembledFull, datasetSpecInputName, mapAssembledToMaterialized } from './wasm-io'
+import { describe, expect, it, vi } from 'vitest'
+import { type AssembledFull, assembleDataset, datasetSpecInputName, mapAssembledToMaterialized } from './wasm-io'
 
 // nirs4all-io now assembles X/y (roles, joins, partitions) in Rust → WASM; studio
 // only maps its AssembledDataset.to_full_value() onto MaterializedDataset. These
 // test that mapping (pure data shaping) — the assembly semantics themselves are
 // covered by io's own Rust goldens + the io-assemble browser/node path.
+const assembled = vi.hoisted(() => ({ specs: [] as string[] }))
+vi.mock('@/engine/nirs4all-core', () => ({
+  loadDataIoWasm: async () => ({ formats: {}, io: { assembleDataset: (_files: unknown, _records: unknown, spec: string) => {
+    assembled.specs.push(spec)
+    return { name: 'd', task_type: 'regression', signal_type: 'absorbance', n_sources: 1, folds: [], blocks: {
+      cal: { n_samples: 2, x: [{ data: [1, 2, 3, 4], n_rows: 2, n_cols: 2 }], feature_headers: [['1000', '1010']], header_units: ['nm'], signal_types: [], y: { data: [1, NaN], n_rows: 2, n_cols: 1 }, y_headers: ['y'], metadata: { n_rows: 2, columns: [{ name: 'Sample_ID', values: ['A', 'A'] }, { name: 'Rep', values: ['r1', 'r2'] }] }, weights: null, weights_header: null },
+      val: { n_samples: 1, x: [{ data: [5, 6], n_rows: 1, n_cols: 2 }], feature_headers: [['1000', '1010']], header_units: ['nm'], signal_types: [], y: { data: [3], n_rows: 1, n_cols: 1 }, y_headers: ['y'], metadata: { n_rows: 1, columns: [{ name: 'Sample_ID', values: ['A'] }, { name: 'Rep', values: ['r1'] }] }, weights: null, weights_header: null },
+    } }
+  } } }),
+}))
+
 const mat = (data: number[], n_rows: number, n_cols: number) => ({ data, n_rows, n_cols })
 const block = (b: Partial<AssembledFull['blocks'][string]>): AssembledFull['blocks'][string] => ({
   n_samples: 0,
@@ -142,5 +153,19 @@ describe('mapAssembledToMaterialized', () => {
     )
     expect(ds.nFeatures).toBe(2) // first source
     expect(Array.from(ds.X)).toEqual([1, 2, 3, 4])
+  })
+})
+
+describe('assembleDataset', () => {
+  it('never lets an io-inferred per-scan repetition reach assembly, keeps repeated ids and a val test partition', async () => {
+    const ds = await assembleDataset([], { resolved_spec: { sources: [], repetition: 'Rep', sample_index: { by: 'id', key: 'Sample_ID', repetition_id: 'Rep' } } }, [])
+    const spec = JSON.parse(assembled.specs[0])
+    expect(spec.repetition).toBeUndefined()
+    expect(spec.sample_index).toEqual({ by: 'id', key: 'Sample_ID' })
+    expect(ds.repetition).toBeUndefined()
+    expect(ds.sampleIds).toEqual(['A', 'A', 'A'])
+    expect(ds.sampleIdColumn).toBe('Sample_ID')
+    expect(ds.partitions).toEqual(['train', 'train', 'test'])
+    expect(Number.isNaN(ds.y[1])).toBe(true)
   })
 })

@@ -29,6 +29,7 @@ import { cn } from '@/app/components/ui/utils'
 import { formatRuntimeErrorForUi } from '@/app/runtimeErrors'
 import { RuntimeEngineBadge } from 'nirs4all-ui/components'
 import type { Analysis } from '@/data/wasm-io'
+import type { DatasetConfigPatch } from '@/components/contracts'
 import type { DagMlLineage } from '@/engine/dagml'
 import type { MaterializedDataset, PipelineDSL, Partition, RunLogEntry, RunProgress, RunResult, ScoreNode, TaskType } from '@/engine/types'
 
@@ -179,10 +180,10 @@ export default function App() {
   }, [])
 
   const applyConfigPatch = useCallback(
-    (patch: { targetName?: string; taskType?: TaskType; testFraction?: number }) => {
+    (patch: DatasetConfigPatch) => {
       // a target/task/partition change invalidates any prior run — abort, drop
       // stale results & their fitted models, and send the user back to the pipeline
-      if (patch.taskType !== undefined || patch.testFraction != null) {
+      if (patch.taskType !== undefined || patch.testFraction != null || patch.repetition !== undefined) {
         abortRef.current?.abort()
         abortRef.current = null
         runTokenRef.current++
@@ -209,6 +210,8 @@ export default function App() {
           const cut = Math.floor(prev.nSamples * (1 - patch.testFraction))
           next.partitions = prev.partitions.map((_, i) => (i < cut ? 'train' : 'test') as Partition)
         }
+        if (patch.repetition === null) delete next.repetition
+        else if (patch.repetition !== undefined) next.repetition = patch.repetition
         setSummary(summarize(next))
         return next
       })
@@ -750,7 +753,7 @@ interface StepPanelProps {
   onImportModel: (file: File) => void
   onOpenConfig: () => void
   onConfigOpenChange: (open: boolean) => void
-  onApplyConfig: (patch: { targetName?: string; taskType?: TaskType; testFraction?: number }) => void
+  onApplyConfig: (patch: DatasetConfigPatch) => void
   onChangePipeline: (p: PipelineDSL) => void
   onRun: () => void
   onCancel: () => void

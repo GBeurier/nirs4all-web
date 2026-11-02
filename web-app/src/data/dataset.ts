@@ -33,7 +33,11 @@ const baseName = (n: string) => n.replace(/\.[^.]+$/, '').toLowerCase()
 const isX = (n: string) => /(^|[^a-z])x([^a-z]|$)|^x(train|test|cal|val|valid|calib|pred|holdout)|spectr|features?/i.test(baseName(n))
 const isY = (n: string) => /(^|[^a-z])y([^a-z]|$)|^y(train|test|cal|val|valid|calib|pred|holdout)|target|label|conc|reference/i.test(baseName(n))
 const isMeta = (n: string) => /(^|[^a-z])m([^a-z]|$)|^m(train|test|cal|val|valid|calib|pred|holdout)|meta/i.test(baseName(n))
-const isTest = (n: string) => /test|valid|holdout/i.test(baseName(n))
+/** A held-out partition name: test / valid / holdout, or `val` as a token (Xval,
+ *  Y_val, val.csv) so the NIRS cal/val convention is honoured — never `interval`.
+ *  `cal` (Xcal) and every other name is the train partition. */
+export const isTestName = (n: string) => /test|valid|holdout|(^|[^a-z])val([^a-z]|$)|^[xym]val([^a-z]|$)/i.test(n)
+const isTest = (n: string) => isTestName(baseName(n))
 
 const spectraFile = <T extends { name: string }>(files: T[]): T | undefined =>
   files.find((f) => isX(f.name) && !isY(f.name) && !isMeta(f.name))
@@ -44,9 +48,12 @@ export function datasetInputName(files: { name: string }[]): string {
   return spectraFile(trainFiles.length ? trainFiles : files)?.name ?? 'Uploaded dataset'
 }
 
+/** Empty and conventional NA cells mark a missing target — never a value or a class. */
+export const isMissingLabel = (label: string): boolean => /^(|na|n\/a|nan|null|none)$/i.test(label.trim())
+
 export function inferTaskType(yNum: number[], labels: string[] | undefined): TaskType {
-  if (labels && labels.some((l) => l !== '' && Number.isNaN(Number(l)))) {
-    const uniq = new Set(labels)
+  if (labels && labels.some((l) => !isMissingLabel(l) && Number.isNaN(Number(l)))) {
+    const uniq = new Set(labels.filter((l) => !isMissingLabel(l)))
     return uniq.size <= 2 ? 'binary' : 'multiclass'
   }
   const vals = yNum.filter((v) => Number.isFinite(v))
@@ -112,6 +119,8 @@ interface Block {
   yNum: number[]
   yLabels: string[]
   ids: string[]
+  /** header of the metadata column the ids were read from */
+  idColumn?: string
   /** raw (string) per-row values of each non-id metadata column, length == X rows */
   meta: { name: string; values: string[] }[]
 }
@@ -136,6 +145,7 @@ function buildBlock(files: RawFile[], partition: Partition): Block | null {
   }
 
   let ids = dataRows.map((_, i) => `${partition}-${i}`)
+  let idColumn: string | undefined
   let meta: { name: string; values: string[] }[] = []
   const metaFile = files.find((f) => isMeta(f.name))
   if (metaFile) {
@@ -143,14 +153,18 @@ function buildBlock(files: RawFile[], partition: Partition): Block | null {
     const idCol = mc.header.findIndex((h) => /^(sample[_ ]?id|sample|id|name|code|key)$/i.test(h))
     // Only trust the metadata file if it aligns 1:1 with the spectra rows.
     if (mc.raw.length === dataRows.length) {
-      if (idCol >= 0) ids = mc.raw.map((r, i) => r[idCol] || `${partition}-${i}`)
+      // ids may repeat (replicate scans of one sample); rows stay distinct
+      if (idCol >= 0) {
+        ids = mc.raw.map((r, i) => r[idCol] || `${partition}-${i}`)
+        idColumn = mc.header[idCol]
+      }
       meta = mc.header
         .map((h, c) => ({ name: h || `col${c + 1}`, idx: c }))
         .filter(({ idx }) => idx !== idCol)
         .map(({ name, idx }) => ({ name, values: mc.raw.map((r) => r[idx] ?? '') }))
     }
   }
-  return { X: dataRows, axis, axisUnit: unit, columnNames, yNum, yLabels, ids, meta }
+  return { X: dataRows, axis, axisUnit: unit, columnNames, yNum, yLabels, ids, idColumn, meta }
 }
 
 export function buildDataset(files: RawFile[], name = 'Uploaded dataset'): MaterializedDataset {
@@ -232,19 +246,24 @@ export function buildDataset(files: RawFile[], name = 'Uploaded dataset'): Mater
     taskType,
     classes,
     sampleIds,
+    ...(train.idColumn ?? test?.idColumn ? { sampleIdColumn: train.idColumn ?? test?.idColumn } : {}),
     partitions,
     metadata,
     ...metadataRelations(metadata),
   }
 }
 
-/** Encode the raw target into the model target (y) + class labels for a task type. */
+/** Encode the raw target into the model target (y) + class labels for a task type.
+ *  A missing label is not a class: its y is NaN and its class label is ''. */
 export function encodeTarget(yRaw: Float64Array, labelsRaw: string[], task: TaskType): { y: Float64Array; classes?: string[] } {
   if (task === 'regression') return { y: Float64Array.from(yRaw), classes: undefined }
-  const classes = labelsRaw.map((l, i) => (l !== '' && Number.isNaN(Number(l)) ? l : String(Math.round(yRaw[i]))))
-  const vocab = [...new Set(classes)].sort()
+  const classes = labelsRaw.map((l, i) => {
+    if (!isMissingLabel(l) && Number.isNaN(Number(l))) return l
+    return Number.isFinite(yRaw[i]) ? String(Math.round(yRaw[i])) : ''
+  })
+  const vocab = [...new Set(classes)].filter((c) => c !== '').sort()
   const idx = new Map(vocab.map((v, i) => [v, i]))
-  const y = Float64Array.from(classes, (c) => idx.get(c) ?? 0)
+  const y = Float64Array.from(classes, (c) => idx.get(c) ?? NaN)
   return { y, classes }
 }
 
@@ -280,7 +299,7 @@ export function summarize(ds: MaterializedDataset): DatasetSummary {
     }
   } else if (ds.classes) {
     const counts = new Map<string, number>()
-    for (const c of ds.classes) counts.set(c, (counts.get(c) ?? 0) + 1)
+    for (const c of ds.classes) if (c !== '') counts.set(c, (counts.get(c) ?? 0) + 1)
     summary.classes = [...counts.entries()].map(([label, count]) => ({ label, count })).sort((a, b) => a.label.localeCompare(b.label))
   }
   return summary

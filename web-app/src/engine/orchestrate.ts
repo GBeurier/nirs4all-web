@@ -7,7 +7,7 @@ import { nodeByType } from '@/catalog/nodes'
 import { type Mat, mat, selectRows } from './algo/linalg'
 import { type FittedTransformer, isRowOperator, type Preprocessor, type StepState } from './methods/preproc'
 import { buildFolds, type Fold } from './kfold'
-import { testRowsOf, trainRowsOf } from './partition'
+import { missingTargetCount, missingTargetMessage, testRowsOf, trainRowsOf } from './partition'
 import { applySplit, isSplitType } from './split'
 import { classificationMetrics, regressionMetrics } from './metrics'
 import { checkInputColumns, datasetFeatureIdentity } from './feature-identity'
@@ -91,21 +91,23 @@ function concatCols(mats: Mat[]): Mat {
 
 export function classInfo(ds: MaterializedDataset): { classNames: string[]; classIdx: Int32Array } {
   if (ds.taskType === 'regression') return { classNames: [], classIdx: new Int32Array(0) }
+  // A missing label ('' / NaN y) is not a class; its index is -1 and its row
+  // never reaches FIT or scoring (partition.ts hasTarget).
   if (ds.classes && ds.classes.length === ds.nSamples) {
     const names: string[] = []
     const seen = new Set<string>()
-    for (const c of ds.classes) if (!seen.has(c)) seen.add(c), names.push(c)
+    for (const c of ds.classes) if (c !== '' && !seen.has(c)) seen.add(c), names.push(c)
     names.sort()
     const idxMap = new Map(names.map((n, i) => [n, i]))
     const classIdx = new Int32Array(ds.nSamples)
-    for (let i = 0; i < ds.nSamples; i++) classIdx[i] = idxMap.get(ds.classes[i]) ?? 0
+    for (let i = 0; i < ds.nSamples; i++) classIdx[i] = idxMap.get(ds.classes[i]) ?? -1
     return { classNames: names, classIdx }
   }
   let maxc = 0
-  for (let i = 0; i < ds.nSamples; i++) maxc = Math.max(maxc, Math.round(ds.y[i]))
+  for (let i = 0; i < ds.nSamples; i++) if (Number.isFinite(ds.y[i])) maxc = Math.max(maxc, Math.round(ds.y[i]))
   const names = Array.from({ length: maxc + 1 }, (_, i) => `Class ${i}`)
   const classIdx = new Int32Array(ds.nSamples)
-  for (let i = 0; i < ds.nSamples; i++) classIdx[i] = Math.round(ds.y[i])
+  for (let i = 0; i < ds.nSamples; i++) classIdx[i] = Number.isFinite(ds.y[i]) ? Math.round(ds.y[i]) : -1
   return { classNames: names, classIdx }
 }
 
@@ -354,8 +356,11 @@ export async function runPipeline(
   }
   const { classNames, classIdx } = classInfo(ds)
 
-  // refuse to train on missing targets rather than producing a meaningless model
+  // refuse to train on missing targets rather than producing a meaningless model;
+  // rows whose target is missing are left out of FIT and scoring (trainRowsOf)
   const trainRowsIdx = trainRowsOf(ds)
+  const missingTargets = missingTargetCount(ds)
+  if (missingTargets) onP?.({ phase: 'preprocess', pct: 2, message: missingTargetMessage(missingTargets) })
   if (task === 'regression' && !trainRowsIdx.some((i) => Number.isFinite(ds.y[i]))) {
     throw new Error('No numeric targets in the training data — add a y / reference file before running.')
   }
@@ -423,6 +428,7 @@ export async function runPipeline(
     scoreMetric,
     model: fitted,
     createdAt: new Date().toISOString(),
+    ...(missingTargets ? { missingTargets } : {}),
   }
 }
 

@@ -1,4 +1,5 @@
 import { shuffledIndices } from './algo/linalg'
+import { trainRowsOf } from './partition'
 import type { MaterializedDataset } from './types'
 
 export interface Fold {
@@ -15,9 +16,7 @@ export interface Fold {
  * by row order.
  */
 export function buildFolds(ds: MaterializedDataset, k: number, seed: number): Fold[] {
-  const trainRows: number[] = []
-  for (let i = 0; i < ds.nSamples; i++) if (ds.partitions[i] === 'train') trainRows.push(i)
-  if (trainRows.length === 0) for (let i = 0; i < ds.nSamples; i++) if (ds.partitions[i] !== 'predict') trainRows.push(i)
+  const trainRows = trainRowsOf(ds)
 
   if (ds.folds && ds.folds.length > 0) {
     const idOf = new Map(ds.sampleIds.map((id, i) => [id, i]))

@@ -34,8 +34,15 @@ export interface MaterializedDataset {
   yRaw?: Float64Array
   /** original raw target cells as strings (length nSamples) */
   labelsRaw?: string[];
-  /** stable per-sample identity — joins are keyed by this, never by row order */
+  /** user-visible sample identity (UI, exports). Replicate scans may repeat it;
+   *  the engine addresses rows by their canonical row identity (`s{row}`). */
   sampleIds: string[];
+  /** header of the column `sampleIds` were read from (absent: generated ids) */
+  sampleIdColumn?: string;
+  /** repetition column (nirs4all `repetition`): the metadata column — or
+   *  `sampleIdColumn` — naming the physical sample of each spectrum. Opt-in;
+   *  when set, CV keeps a sample's repetitions in one fold. */
+  repetition?: string;
   /** Explicit metadata roles, aligned with X; absent means undeclared. */
   groupIds?: (string | null)[];
   originIds?: (string | null)[];
@@ -281,6 +288,9 @@ export interface RunResult {
   variantCount?: number;
   /** per-variant CV scores; the winner dag-ml's selection picked has `selected: true` */
   variants?: { variantId: string; label: string; metrics: Metrics; selected: boolean }[];
+  /** Train/Test rows left out of FIT, CV and scoring because their target is
+   *  missing (omitted when every row has a target). They remain predictable. */
+  missingTargets?: number;
   /** typed runtime diagnostics (B-018) — e.g. "ran the libn4m fold chain because the
    *  dag-ml scheduler failed". Present only when the engine degraded; a clean dag-ml
    *  run omits it. Lets runtime consumers tell a fallback from a native execution. */
