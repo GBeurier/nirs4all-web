@@ -5,6 +5,7 @@ import { getPresetComplexityMeta, type PipelinePreset, type PipelinePresetVarian
 import 'nirs4all-ui/assets/pipeline-presets.css'
 import { PRESETS } from '@/catalog/presets'
 import { importStudioPreset, repositoryPresetUrl } from '@/catalog/studioPresets'
+import { webPresetsFor } from '@/catalog/webPresets'
 import type { PipelineDSL, TaskType } from '@/engine/types'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
@@ -64,6 +65,19 @@ export function StudioPresetGallery({ taskType, onSelect }: { taskType: TaskType
             <pre className="mt-2 max-h-60 overflow-auto rounded bg-muted p-3 text-xs">{JSON.stringify({ pipeline: notice.preset.variants?.[notice.variant]?.pipeline }, null, 2)}</pre>
           </details>
         </section>}
+        <section className="mb-6" data-web-preset-gallery>
+          <h3 className="mb-2 font-semibold">Ready to run in the browser</h3>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {webPresetsFor(taskType).filter((preset) => `${preset.name} ${preset.description}`.toLowerCase().includes(search.toLowerCase())).map((preset) =>
+              <button key={preset.id} type="button" data-web-preset={preset.id}
+                className="rounded-lg border border-border bg-card p-3 text-left transition-colors hover:border-brand-teal hover:bg-accent/40"
+                onClick={() => { onSelect(structuredClone(preset.pipeline)); setNotice(null); setOpen(false) }}>
+                <span className="block font-medium">{preset.name}</span>
+                <span className="mt-1 block text-xs text-muted-foreground">{preset.description}</span>
+              </button>)}
+          </div>
+          <h3 className="mb-2 mt-6 font-semibold">Studio presets</h3>
+        </section>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" data-studio-preset-gallery>
           {presets.map((preset) => {
             const Icon = icons[preset.id as keyof typeof icons] ?? GitBranch
