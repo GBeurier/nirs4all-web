@@ -1,5 +1,5 @@
 import type { DagMlMod } from './dagml'
-import { datasetRelations } from './relations'
+import { datasetRelations, hasCvGroups } from './relations'
 import type { MaterializedDataset, PipelineDSL } from './types'
 
 interface FoldSet {
@@ -55,7 +55,7 @@ export function nonAugmentedScoreRows(ds: MaterializedDataset, selected: number[
 export function buildNativeFolds(dagml: DagMlMod, ds: MaterializedDataset, cv: NonNullable<PipelineDSL['cv']>, trainRows: number[]): FoldSet {
   validatePartitionGroups(ds)
   const relations = datasetRelations(ds)
-  const grouped = cv.strategy === 'group' || (cv.strategy !== 'sample' && ds.groupIds !== undefined)
+  const grouped = cv.strategy === 'group' || (cv.strategy !== 'sample' && hasCvGroups(ds))
   if (ds.augmented?.some(Boolean) && !grouped) throw new Error('Augmented observations require explicit origin-safe groups for browser CV')
   const sampleIds = trainRows.map((i) => `s${i}`)
   const requested = cv.folds

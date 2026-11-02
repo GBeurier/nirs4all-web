@@ -8,6 +8,7 @@
 import { nodeByType } from '@/catalog/nodes'
 import { splitRows } from './methods/n4m'
 import { loadMethodsWasm } from './nirs4all-core'
+import { hasTarget } from './partition'
 import type { MaterializedDataset, PipelineStep, Partition } from './types'
 
 /** True for a catalog split operator (engine dispatch + UI). */
@@ -16,7 +17,7 @@ export function isSplitType(type: string): boolean {
 }
 
 /**
- * Compute the split for `step` over the dataset's non-predict rows and return a
+ * Compute the split for `step` over the dataset's labeled non-predict rows and return a
  * NEW dataset with `partitions` overridden to train/test from the splitter's first
  * fold. Rows already marked `predict` keep that role and are excluded from the
  * split. For classification, y-reading splitters see the encoded class index.
@@ -25,10 +26,12 @@ export async function applySplit(ds: MaterializedDataset, step: PipelineStep): P
   if (!isSplitType(step.type)) throw new Error(`Unknown split operator: ${step.type}`)
   await loadMethodsWasm()
 
-  // Address only the non-predict universe; map split rows back to original indices.
+  // Address only the labeled non-predict universe (y-reading splitters need a
+  // target); map split rows back to original indices. Rows without a target keep
+  // their partition and stay out of fitting and scoring.
   const universe: number[] = []
-  for (let i = 0; i < ds.nSamples; i++) if (ds.partitions[i] !== 'predict') universe.push(i)
-  if (universe.length < 2) throw new Error('Split needs at least 2 non-predict samples.')
+  for (let i = 0; i < ds.nSamples; i++) if (ds.partitions[i] !== 'predict' && hasTarget(ds, i)) universe.push(i)
+  if (universe.length < 2) throw new Error('Split needs at least 2 non-predict samples with a target.')
 
   const nu = universe.length
   const p = ds.nFeatures

@@ -23,6 +23,9 @@ import {
   SelectValue,
 } from '@/app/components/ui/select'
 import { hasTestPartition } from './_helpers'
+import { repetitionCandidates } from '@/engine/relations'
+
+const NO_REPETITION = '__none__'
 
 const TASK_OPTIONS: { value: TaskType; label: string }[] = [
   { value: 'regression', label: 'Regression' },
@@ -40,6 +43,8 @@ export function DatasetConfigDialog({ open, ds, analysis, onOpenChange, onApply 
   const [targetName, setTargetName] = useState(ds.targetName)
   const [taskType, setTaskType] = useState<TaskType>(ds.taskType)
   const [testFraction, setTestFraction] = useState(0.2)
+  const [repetition, setRepetition] = useState(ds.repetition ?? NO_REPETITION)
+  const candidates = repetitionCandidates(ds)
   const [specValid, setSpecValid] = useState<{ ok: boolean; error?: string } | null>(null)
 
   const plan = analysis?.plan ?? null
@@ -50,6 +55,7 @@ export function DatasetConfigDialog({ open, ds, analysis, onOpenChange, onApply 
       setTargetName(ds.targetName)
       setTaskType(ds.taskType)
       setTestFraction(0.2)
+      setRepetition(ds.repetition ?? NO_REPETITION)
     }
   }, [open, ds])
 
@@ -71,6 +77,7 @@ export function DatasetConfigDialog({ open, ds, analysis, onOpenChange, onApply 
       targetName: targetName.trim() || ds.targetName,
       taskType,
       ...(needsSplit ? { testFraction } : {}),
+      ...(repetition !== (ds.repetition ?? NO_REPETITION) ? { repetition: repetition === NO_REPETITION ? null : repetition } : {}),
     })
     onOpenChange(false)
   }
@@ -123,6 +130,28 @@ export function DatasetConfigDialog({ open, ds, analysis, onOpenChange, onApply 
               Regression predicts a continuous value; classification predicts a class.
             </p>
           </div>
+
+          {candidates.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="config-repetition">Repetition column</Label>
+              <Select value={repetition} onValueChange={setRepetition}>
+                <SelectTrigger id="config-repetition" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_REPETITION}>None</SelectItem>
+                  {candidates.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                The column naming the physical sample of each spectrum. Its repetitions stay in one cross-validation fold, within each partition.
+              </p>
+            </div>
+          )}
 
           {needsSplit && (
             <div className="space-y-3">

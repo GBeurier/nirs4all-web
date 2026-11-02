@@ -13,7 +13,7 @@ import { predictionResult, refitWithDagMl, replayWithDagMl, validateCarrierBindi
 import { buildNativeFolds, nonAugmentedScoreRows, validatePartitionGroups } from './grouped-cv'
 import { applySplit, isSplitType } from './split'
 import type { Fold } from './kfold'
-import { testRowsOf, trainRowsOf } from './partition'
+import { missingTargetCount, missingTargetMessage, testRowsOf, trainRowsOf } from './partition'
 import { datasetFeatureIdentity } from './feature-identity'
 import type { Mat } from './algo/linalg'
 import {
@@ -280,6 +280,10 @@ export class DagMlEngine implements Engine {
     }
 
     validatePartitionGroups(ds)
+    // Rows whose target is missing never enter FIT, CV or scoring (trainRowsOf /
+    // testRowsOf); the run states how many were left out.
+    const missingTargets = missingTargetCount(ds)
+    if (missingTargets) onP?.({ phase: 'preprocess', pct: 9, message: missingTargetMessage(missingTargets) })
     const { classNames, classIdx } = classInfo(ds)
     if (task === 'regression' && !trainRowsOf(ds).some((i) => Number.isFinite(ds.y[i]))) {
       throw new Error('No numeric targets in the training data.')
@@ -319,6 +323,7 @@ export class DagMlEngine implements Engine {
         lineage: { engine: 'dag-ml-wasm', compiled: lineage.compiled, executed: true, phase: 'REFIT+PREDICT', controllerProfile: 'browser-composite-host-sidecar-v1', packageFingerprint, version: lineage.version, dataProvider },
         model: fitted,
         createdAt: new Date().toISOString(),
+        ...(missingTargets ? { missingTargets } : {}),
       }
     }
 
@@ -630,6 +635,7 @@ export class DagMlEngine implements Engine {
       createdAt: new Date().toISOString(),
       variantCount: variants.length,
       variants: variantSummaries,
+      ...(missingTargets ? { missingTargets } : {}),
       ...(diagnostics.length ? { diagnostics } : {}),
     }
   }

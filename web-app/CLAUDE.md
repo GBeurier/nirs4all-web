@@ -62,7 +62,9 @@ nothing, the consented bundle records `containsTrainingRows` and re-imports iden
 column identity at predict (`column-identity`: matching header checked, permuted columns refused,
 header-less file stated as positional), the broad model pack (`new-pack` engine-level + `new-pack-ui` for ECR / O2PLS / AOM
 Ridge blender / AOM operator-PLS stack and the SPlit twinning / SystematicCircular splits), the
-Explore playground (`explore` — preprocessing preview + client PCA), the `palette`, and `persistence`
+Explore playground (`explore` — preprocessing preview + client PCA), the `palette`, `replicates` (a
+Xcal/Xval upload with repeated Sample_IDs and NA targets: val held out, missing targets excluded and
+counted, repetition column), and `persistence`
 + `n4a-roundtrip` (session and `.n4a` bundle round-trips; the latter checks the v2 bundle carries
 N4ME states and the re-imported model predicts identically). `tests/aom-cassava-timing.mjs` is a one-off
 `fitAom` wall-time probe, **not** part of the gate (and is excluded by the `*smoke.mjs` glob). Each

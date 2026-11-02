@@ -32,13 +32,13 @@ describe('declared browser relation identities', () => {
     const ds = cohort(); delete ds.repetitionIds
     expect(datasetRelations(ds).every((r) => r.repetition_id === null)).toBe(true)
   })
-  it.each(['missing-origin', 'unmarked', 'cross-group', 'misaligned', 'duplicate-id'])('refuses malformed relation %s before native/model calls', (kind) => {
+  it.each(['missing-origin', 'unmarked', 'cross-group', 'misaligned', 'ambiguous-origin'])('refuses malformed relation %s before native/model calls', (kind) => {
     const ds = cohort()
     if (kind === 'missing-origin') ds.originIds![3] = 'unknown'
     if (kind === 'unmarked') ds.augmented![3] = false
     if (kind === 'cross-group') ds.groupIds![3] = '001'
     if (kind === 'misaligned') ds.groupIds!.pop()
-    if (kind === 'duplicate-id') ds.sampleIds[1] = ds.sampleIds[0]
+    if (kind === 'ambiguous-origin') ds.sampleIds[1] = ds.sampleIds[2]
     expect(() => datasetRelations(ds)).toThrow()
   })
   it('refuses a group leaking across an explicit held-out partition', () => {

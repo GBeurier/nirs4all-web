@@ -237,6 +237,11 @@ function RunCard({
                 {run.variantCount} variants
               </Badge>
             ) : null}
+            {run.missingTargets ? (
+              <Badge variant="outline" className="border-brand-amber/40 text-brand-amber" data-missing-targets>
+                {run.missingTargets} without target excluded
+              </Badge>
+            ) : null}
             <span>{formatDate(run.createdAt)}</span>
           </div>
         </div>
