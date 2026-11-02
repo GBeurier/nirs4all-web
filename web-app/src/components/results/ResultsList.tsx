@@ -105,6 +105,7 @@ function ScoreRow({ run, node, selected, onSelect, accent, icon, indent, childre
 /** Collapsible list of dag-ml's evaluated variants, the selected winner highlighted. */
 function VariantRows({ run }: { run: RunResult }) {
   const [open, setOpen] = useState(false)
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set())
   const variants = run.variants
   if (!variants || variants.length <= 1) return null
   const pm = primaryMetric(run.taskType)
@@ -123,27 +124,43 @@ function VariantRows({ run }: { run: RunResult }) {
         </button>
       </CollapsibleTrigger>
       <CollapsibleContent className="mt-2 space-y-1.5">
-        {variants.map((v) => (
-          <div
-            key={v.variantId}
-            data-variant-row
-            data-variant-selected={v.selected ? 'true' : 'false'}
-            className={cn(
-              'flex items-center justify-between gap-3 rounded-lg border px-3 py-2',
-              v.selected ? 'border-primary bg-primary/5 ring-1 ring-primary/30' : 'border-border bg-card',
-            )}
-          >
-            <span className="flex min-w-0 items-center gap-2">
-              {v.selected ? <Trophy className="size-3.5 shrink-0 text-amber-500" /> : <GitBranch className="size-3.5 shrink-0 text-muted-foreground/60" />}
-              <span className="truncate font-mono text-xs text-foreground">{v.label}</span>
-              {v.selected ? <span className="shrink-0 rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">best</span> : null}
-            </span>
-            <span className="inline-flex shrink-0 items-baseline gap-1 rounded-md bg-muted px-2 py-0.5 text-xs">
-              <span className="text-muted-foreground">{pm.label}</span>
-              <span className="font-mono font-medium text-foreground">{fmt(v.metrics[pm.key])}</span>
-            </span>
-          </div>
-        ))}
+        {variants.map((v) => {
+          const isExpanded = expanded.has(v.variantId)
+          return (
+            <button
+              type="button"
+              key={v.variantId}
+              data-variant-row
+              data-variant-selected={v.selected ? 'true' : 'false'}
+              aria-expanded={isExpanded}
+              title={isExpanded ? undefined : v.label}
+              onClick={() =>
+                setExpanded((prev) => {
+                  const next = new Set(prev)
+                  if (!next.delete(v.variantId)) next.add(v.variantId)
+                  return next
+                })
+              }
+              className={cn(
+                'flex w-full justify-between gap-3 rounded-lg border px-3 py-2 text-left transition-colors',
+                isExpanded ? 'items-start' : 'items-center',
+                v.selected ? 'border-primary bg-primary/5 ring-1 ring-primary/30' : 'border-border bg-card hover:bg-muted/40',
+              )}
+            >
+              <span className={cn('flex min-w-0 gap-2', isExpanded ? 'items-start' : 'items-center')}>
+                {v.selected ? <Trophy className="size-3.5 shrink-0 text-amber-500" /> : <GitBranch className="size-3.5 shrink-0 text-muted-foreground/60" />}
+                <span className={cn('font-mono text-xs text-foreground', isExpanded ? 'whitespace-normal [overflow-wrap:anywhere]' : 'truncate')} data-variant-label>
+                  {v.label}
+                </span>
+                {v.selected ? <span className="shrink-0 rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">best</span> : null}
+              </span>
+              <span className="inline-flex shrink-0 items-baseline gap-1 rounded-md bg-muted px-2 py-0.5 text-xs">
+                <span className="text-muted-foreground">{pm.label}</span>
+                <span className="font-mono font-medium text-foreground">{fmt(v.metrics[pm.key])}</span>
+              </span>
+            </button>
+          )
+        })}
       </CollapsibleContent>
     </Collapsible>
   )
