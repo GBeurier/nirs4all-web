@@ -346,7 +346,7 @@ export async function runGeneratorOr(
     }
     const m = run.cv?.metrics[scoreMetric] ?? run.refit.metrics[scoreMetric]
     // an alternative that itself swept parameters reports its selected inner variant
-    const pipeline = run.variants?.find((v) => v.selected)?.pipeline ?? cdsl
+    const pipeline = run.variants?.find((v) => v.selected)?.pipeline ?? run.model.dsl
     results.push({ variantId: `variant:${i}`, label, pipeline, run, metric: Number(m ?? (minimize ? Infinity : -Infinity)) })
   }
   if (results.length === 0) throw firstError

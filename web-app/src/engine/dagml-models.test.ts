@@ -114,3 +114,24 @@ it('continues a native preprocessing generator after an invalid training transfo
   expect(result.variants).toHaveLength(1)
   expect(result.model.dsl.steps.map((step) => step.type)).toEqual(['n4m:preprocessing.scatter.snv'])
 })
+
+
+it('records resolved parameters for outer generator variants with a single-choice inner sweep', async () => {
+  const ds = await loadSampleDataset('corn')
+  const result = await new DagMlEngine({ profile: 'strict-wasm' }).run(ds, {
+    name: 'resolved generator metadata', steps: [],
+    containers: [{ id: 'g', container: 'generator', mode: 'or', branches: [
+      { id: 'raw', steps: [] },
+      { id: 'snv', steps: [{ id: 'snv', type: 'n4m:preprocessing.scatter.snv', params: {} }] },
+    ] }],
+    model: { id: 'm', type: 'n4m:models.pls.pls_regression', params: { n_components: 10 },
+      sweeps: { n_components: { type: 'or', choices: [2] } } },
+    cv: { folds: 3, seed: 42 },
+  })
+  expect(result.variants).toHaveLength(2)
+  for (const variant of result.variants!) {
+    expect(variant.pipeline!.model!.params.n_components).toBe(2)
+    expect(variant.pipeline!.model!.sweeps).toBeUndefined()
+  }
+  expect(result.model.dsl.model!.params.n_components).toBe(2)
+})
