@@ -135,7 +135,7 @@ interface IoBlock {
   y_headers: string[]
   y_categorical?: Record<string, { categories?: string[] }>
   metadata: { n_rows: number; columns: { name: string; values: (number | string | null)[] }[] } | null
-  weights: number[] | null
+  weights: Float64Array | null
   weights_header: string | null
 }
 export interface AssembledFull {
