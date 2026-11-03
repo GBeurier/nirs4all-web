@@ -1,3 +1,4 @@
+import { isFitRefusal } from './fit-refusal'
 // Pipeline orchestration shared by every engine, parameterized by a ModelBackend
 // (the actual PLS fit/predict). The JS backend uses NIPALS; the libn4m backend
 // uses the real nirs4all-methods C++ engine compiled to WASM. Orchestration
@@ -322,7 +323,7 @@ export async function runGeneratorOr(
     const candidateProgress = (p: RunProgress) =>
       onProgress?.({
         phase: p.phase === 'done' ? 'fit_cv' : p.phase,
-        pct: (100 * i + Math.min(p.pct, 95)) / candidates.length,
+        pct: 95 * (i + Math.min(100, Math.max(0, p.pct)) / 100) / candidates.length,
         message: `variant ${variant.index}/${variant.total} · ${p.message ?? label}`,
         variant,
       })
@@ -332,7 +333,7 @@ export async function runGeneratorOr(
     } catch (error) {
       // A candidate that cannot be fitted is dropped from the search, as in
       // nirs4all; the run fails only when no candidate fits.
-      if (error instanceof DOMException && error.name === 'AbortError') throw error
+      if (!isFitRefusal(error)) throw error
       firstError ??= error
       continue
     }
