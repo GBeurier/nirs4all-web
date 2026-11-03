@@ -1455,6 +1455,16 @@
         "source_path": "THIRD_PARTY_NOTICES.md",
         "size": 1714,
         "sha256": "4106fb2caf597b5392140d24ddce905c6e4e990521aea68c7c10c7a817024933"
+      },
+      "LICENSING_FR.md": {
+        "size": 2280,
+        "sha256": "6996c1e0385782ca1d6adf3a2fe07189a4bbcad8be727adb7cac0b85c71255a1",
+        "source_path": "LICENSING_FR.md"
+      },
+      "NOTICE.md": {
+        "size": 1818,
+        "sha256": "ccb385dfd092825e9c4638f44f4803a15b1f3a0a47cffe80632294b6344beced",
+        "source_path": "NOTICE.md"
       }
     },
     "files": {
@@ -1689,6 +1699,14 @@
       "types.js": {
         "size": 4906,
         "sha256": "2711cd0c790d2b6de7827c86299481fd64bb39736419d931f482066193bf9f92"
+      },
+      "LICENSING_FR.md": {
+        "size": 2280,
+        "sha256": "6996c1e0385782ca1d6adf3a2fe07189a4bbcad8be727adb7cac0b85c71255a1"
+      },
+      "NOTICE.md": {
+        "size": 1818,
+        "sha256": "ccb385dfd092825e9c4638f44f4803a15b1f3a0a47cffe80632294b6344beced"
       }
     }
   },
