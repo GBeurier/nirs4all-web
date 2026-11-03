@@ -69,15 +69,18 @@ function isLegalPayload(path) {
 
 function legalInventory(root) {
   const files = []
-  for (const entry of readdirSync(root, { withFileTypes: true })) {
-    const absolute = join(root, entry.name)
-    const metadata = lstatSync(absolute)
-    if (metadata.isSymbolicLink()) throw new Error(`staged legal payload must not contain symlinks: ${absolute}`)
-    if (metadata.isFile() && isLegalPayload(entry.name)) files.push(entry.name)
-    if (metadata.isDirectory() && entry.name === 'LICENSES') {
-      files.push(...inventory(absolute).map((path) => `LICENSES/${path}`))
+  function visit(directory) {
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      if (entry.name === 'node_modules') continue
+      const absolute = join(directory, entry.name)
+      const metadata = lstatSync(absolute)
+      const path = toPortablePath(relative(root, absolute))
+      if (metadata.isSymbolicLink()) throw new Error(`staged legal payload must not contain symlinks: ${absolute}`)
+      if (metadata.isDirectory()) visit(absolute)
+      else if (metadata.isFile() && isLegalPayload(path)) files.push(path)
     }
   }
+  visit(root)
   return files.sort()
 }
 

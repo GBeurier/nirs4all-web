@@ -238,6 +238,36 @@
           "path": "THIRD_PARTY_NOTICES.md",
           "size": 2630,
           "sha256": "39e06e5ca05c5bc5bab725d15f2eb28bfde7c33d79906c9f38534b7bb731a34a"
+        },
+        {
+          "path": "reader-backports/hdf5-reader/LICENSE-APACHE",
+          "size": 8464,
+          "sha256": "7e1c4927d7c8765c73e234c2da19c423dfafc9c662e6d028277f9e77476445bb"
+        },
+        {
+          "path": "reader-backports/hdf5-reader/LICENSE-MIT",
+          "size": 1067,
+          "sha256": "24a4eeee33afc227bd3e796f772741250b2c93eae1cdba65e775ef8005dfb4b1"
+        },
+        {
+          "path": "reader-backports/hdf5-reader/PROVENANCE.json",
+          "size": 5845,
+          "sha256": "f568cb1ca6c529b6723e56a614a955343b52dea1bd38e3616673d3a867c0a779"
+        },
+        {
+          "path": "reader-backports/netcdf-reader/LICENSE-APACHE",
+          "size": 8464,
+          "sha256": "7e1c4927d7c8765c73e234c2da19c423dfafc9c662e6d028277f9e77476445bb"
+        },
+        {
+          "path": "reader-backports/netcdf-reader/LICENSE-MIT",
+          "size": 1067,
+          "sha256": "24a4eeee33afc227bd3e796f772741250b2c93eae1cdba65e775ef8005dfb4b1"
+        },
+        {
+          "path": "reader-backports/netcdf-reader/PROVENANCE.json",
+          "size": 3357,
+          "sha256": "d35cc18475750fd1edffb52ea5daec0f85eabd640e64c8978e8af05105bc5c54"
         }
       ]
     },
