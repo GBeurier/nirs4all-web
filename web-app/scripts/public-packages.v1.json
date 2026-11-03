@@ -1,0 +1,1785 @@
+{
+  "core": {
+    "package": "nirs4all",
+    "version": "0.4.7",
+    "destination": "vendor/nirs4all",
+    "source": {
+      "repository": "https://github.com/GBeurier/nirs4all-core",
+      "commit": "1dffd9f4472551cc09ad9d99ed9d40814bd003cc",
+      "tree": "3990c98a44a49c2c3827f61daad78915e33e948a"
+    },
+    "registry": {
+      "metadata_url": "https://registry.npmjs.org/nirs4all/0.4.7",
+      "tarball_url": "https://registry.npmjs.org/nirs4all/-/nirs4all-0.4.7.tgz",
+      "size": 2286839,
+      "sha256": "6e6df6bf0ad685402cc4596709b4840cc66a7819587e9e730f5c72c62b07f55f",
+      "sha1": "8aaa708abfe956fae93ba1259f80163e43f50750",
+      "integrity": "sha512-kvsQDusORopSiA3lw1J4iGfkymgyNUnJ2jxAGYMnNw/vnCB0MnKP7690zYL7zvKnFjIHXYI8XYbLgcd2Cra7Kg=="
+    },
+    "projection": {
+      "package.json": "package.json",
+      "README.md": "README.md",
+      "LICENSING.md": "LICENSING.md",
+      "LICENSE": "LICENSE",
+      "THIRD_PARTY_NOTICES.md": "THIRD_PARTY_NOTICES.md",
+      "src/js-estimator-controller.js": "src/js-estimator-controller.js",
+      "src/native-multimodal.d.ts": "src/native-multimodal.d.ts",
+      "src/multimodal-archive.d.ts": "src/multimodal-archive.d.ts",
+      "src/multimodal-archive.js": "src/multimodal-archive.js",
+      "src/browser-tuning.js": "src/browser-tuning.js",
+      "src/conformal.js": "src/conformal.js",
+      "src/workflow.js": "src/workflow.js",
+      "src/robustness.js": "src/robustness.js",
+      "src/classic-ml.d.ts": "src/classic-ml.d.ts",
+      "src/tuning.d.ts": "src/tuning.d.ts",
+      "src/uncertainty-cohort.js": "src/uncertainty-cohort.js",
+      "src/workflow.d.ts": "src/workflow.d.ts",
+      "src/browser-native-pipeline.js": "src/browser-native-pipeline.js",
+      "src/browser-tuning.d.ts": "src/browser-tuning.d.ts",
+      "src/result-view.d.ts": "src/result-view.d.ts",
+      "src/ml-estimator-adapters.js": "src/ml-estimator-adapters.js",
+      "src/native-multimodal.js": "src/native-multimodal.js",
+      "src/tuning.js": "src/tuning.js",
+      "src/archive-v2.js": "src/archive-v2.js",
+      "src/robustness.d.ts": "src/robustness.d.ts",
+      "src/workspace.d.ts": "src/workspace.d.ts",
+      "src/native-augmentation.js": "src/native-augmentation.js",
+      "src/browser-native-pipeline.d.ts": "src/browser-native-pipeline.d.ts",
+      "src/execution.js": "src/execution.js",
+      "src/conformal.d.ts": "src/conformal.d.ts",
+      "src/index.d.ts": "src/index.d.ts",
+      "src/multimodal.js": "src/multimodal.js",
+      "src/multimodal.d.ts": "src/multimodal.d.ts",
+      "src/native-pipeline.js": "src/native-pipeline.js",
+      "src/n4m-roles.js": "src/n4m-roles.js",
+      "src/workspace.js": "src/workspace.js",
+      "src/index.js": "src/index.js",
+      "src/result-view.js": "src/result-view.js",
+      "src/native-pipeline.d.ts": "src/native-pipeline.d.ts",
+      "LICENSES/AGPL-3.0-or-later.txt": "LICENSES/AGPL-3.0-or-later.txt",
+      "LICENSES/COMMERCIAL-LICENSE.md": "LICENSES/COMMERCIAL-LICENSE.md",
+      "LICENSES/Apache-2.0.txt": "LICENSES/Apache-2.0.txt",
+      "LICENSES/COMMERCIAL-LICENSE_FR.md": "LICENSES/COMMERCIAL-LICENSE_FR.md",
+      "LICENSES/BSD-3-Clause.txt": "LICENSES/BSD-3-Clause.txt",
+      "LICENSES/CeCILL-2.1.txt": "LICENSES/CeCILL-2.1.txt",
+      "LICENSES/MIT.txt": "LICENSES/MIT.txt",
+      "native/nirs4all_core_wasm_native.js": "native/nirs4all_core_wasm_native.js",
+      "native/nirs4all_core_wasm_native.d.ts": "native/nirs4all_core_wasm_native.d.ts",
+      "native/nirs4all_core_wasm_native_bg.wasm.d.ts": "native/nirs4all_core_wasm_native_bg.wasm.d.ts",
+      "native/nirs4all_core_wasm_native_bg.wasm": "native/nirs4all_core_wasm_native_bg.wasm",
+      "native/package.json": "native/package.json"
+    },
+    "source_files": {},
+    "files": {
+      "LICENSE": {
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+      },
+      "LICENSES/AGPL-3.0-or-later.txt": {
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+      },
+      "LICENSES/Apache-2.0.txt": {
+        "size": 10280,
+        "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+      },
+      "LICENSES/BSD-3-Clause.txt": {
+        "size": 1460,
+        "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
+      },
+      "LICENSES/COMMERCIAL-LICENSE.md": {
+        "size": 674,
+        "sha256": "4340124a3a1d3c82577ea3aebc834cb9d37ee196d83fbf320af218a751449702"
+      },
+      "LICENSES/COMMERCIAL-LICENSE_FR.md": {
+        "size": 763,
+        "sha256": "e05393d17534ba7129cd04f51c2ebe00448a4b427a50204f52ea37e906bf115a"
+      },
+      "LICENSES/CeCILL-2.1.txt": {
+        "size": 21778,
+        "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+      },
+      "LICENSES/MIT.txt": {
+        "size": 1078,
+        "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+      },
+      "LICENSING.md": {
+        "size": 2058,
+        "sha256": "46c57e67ed1e40c98a714f32a968b343650b02df3627744c28e9ceba011b7447"
+      },
+      "README.md": {
+        "size": 18407,
+        "sha256": "dbc1ec5452a2bc4e62bbfacb2f20d609c0bbde3f8f4b49fd776ce5b8721664bc"
+      },
+      "THIRD_PARTY_NOTICES.md": {
+        "size": 1582,
+        "sha256": "36239a5e2cfb203f0f9b1a4d78578e938b35fc696e7bedc613e4030954ba14ac"
+      },
+      "native/nirs4all_core_wasm_native.d.ts": {
+        "size": 10955,
+        "sha256": "bc41410de95d94b72940509f61a1f6a3a142dc1dbe1977a79141468478a53c31"
+      },
+      "native/nirs4all_core_wasm_native.js": {
+        "size": 37524,
+        "sha256": "2e6e4032f1a6e1b1e31d64d60a074d223d8a9020b914d258b0d4c68c06d55189"
+      },
+      "native/nirs4all_core_wasm_native_bg.wasm": {
+        "size": 6371271,
+        "sha256": "860ce804e13e914912e9180a82651b2bfff7939f6ead8c451b6a2cd2bbad13a4"
+      },
+      "native/nirs4all_core_wasm_native_bg.wasm.d.ts": {
+        "size": 5144,
+        "sha256": "34267cab914657e5011c69cb838f54d983426adeee4bda72d0aa093d7866082e"
+      },
+      "native/package.json": {
+        "size": 570,
+        "sha256": "2b821e55ad23d592c20868e6b4ee49573c78819425af6cd88ab883f686051201"
+      },
+      "package.json": {
+        "size": 2825,
+        "sha256": "ef9d10d54c8d8a2789abd3ae85b22227afbcdb809bcfd806b1aca689ab72768d"
+      },
+      "src/archive-v2.js": {
+        "size": 17077,
+        "sha256": "7265d648a9c3aa62781ad5a1f2dc879c9f1a8bc748be9627dccac1fbbeb24a31"
+      },
+      "src/browser-native-pipeline.d.ts": {
+        "size": 2185,
+        "sha256": "cea682b9d91d29ed1ecf4dc4c7ccc88eac68973c4999b6583140791a6b871f59"
+      },
+      "src/browser-native-pipeline.js": {
+        "size": 17016,
+        "sha256": "9ad929007ac34f8c4fb698818d22c6672beb3b2b8a416894e94c280a33bcf3cb"
+      },
+      "src/browser-tuning.d.ts": {
+        "size": 1444,
+        "sha256": "14b3c9ef1ccb7eb1d22fb4e694e7ad6a325abaca1183e964df86525cc127b56a"
+      },
+      "src/browser-tuning.js": {
+        "size": 15666,
+        "sha256": "fdd989ca9e7416840c47fd4fb9b08d9a58ed872d2b626a10d0fb8e193ec9b84a"
+      },
+      "src/classic-ml.d.ts": {
+        "size": 3492,
+        "sha256": "84b0bb294a01dba395b31dec48813d866014df0e635f0e71c4ec8b084f00cd04"
+      },
+      "src/conformal.d.ts": {
+        "size": 1012,
+        "sha256": "5d58fd90afa24990b7b06ff081f0c8db718f85854bc4bd8d4a017a75bb9cc9e7"
+      },
+      "src/conformal.js": {
+        "size": 13791,
+        "sha256": "40806e5288e1f669967a8a7d4c93a527c865aa5e145e7f0c28c388a7e0563606"
+      },
+      "src/execution.js": {
+        "size": 34768,
+        "sha256": "dcc35fbe1a741764864c75786172362949e79815c862a014a08eafe535bee962"
+      },
+      "src/index.d.ts": {
+        "size": 19968,
+        "sha256": "708156db6bdc5d7c83ae97ee6eb7d0f9073e4dba6cf7e78dffb22fbe306f9389"
+      },
+      "src/index.js": {
+        "size": 23970,
+        "sha256": "f854343eff23b56926e7169d74f7d6d1f064fc6a71759a99f1053008fa3ded24"
+      },
+      "src/js-estimator-controller.js": {
+        "size": 24069,
+        "sha256": "24166d1a8694c8afc9bfd104e574422ac3e08cd9e02dd069bc06bcac64236061"
+      },
+      "src/ml-estimator-adapters.js": {
+        "size": 11340,
+        "sha256": "530e3081a3caba6e4f726f21fff7aaa48b0b95b10680e60c4d70531e0f399701"
+      },
+      "src/multimodal-archive.d.ts": {
+        "size": 560,
+        "sha256": "5673c776ec1c95445f5373456f5e4774c5b550f223108e4c7710a5d8236dbae5"
+      },
+      "src/multimodal-archive.js": {
+        "size": 1275,
+        "sha256": "8c09b672d9b100dc14e585ba048b48bd8851041da06121c4eb4b2dc4d499608a"
+      },
+      "src/multimodal.d.ts": {
+        "size": 1028,
+        "sha256": "ba31be8aa9d3c1e3bfb5424802d79e33a8314a0a13f84f604840baeb3eaa4ff5"
+      },
+      "src/multimodal.js": {
+        "size": 3732,
+        "sha256": "05cd920a4d6dafe7ec2cf12ee1b8b8bd6919ec36e68a89ce1e888fd49a337e13"
+      },
+      "src/n4m-roles.js": {
+        "size": 13593,
+        "sha256": "8e7564714f4bca0795ef6024b512ed85bc6cb2e719b6360e4ccf734e4b7d3abb"
+      },
+      "src/native-augmentation.js": {
+        "size": 2784,
+        "sha256": "eefca27e7d15c711e87f78a5661357f0db5afda6de8d7446cfefffa997d3ac2a"
+      },
+      "src/native-multimodal.d.ts": {
+        "size": 962,
+        "sha256": "ebca23e4145e1d74d6dbc2dfa129170cb82ab93a50204bea72fadd056a907a1f"
+      },
+      "src/native-multimodal.js": {
+        "size": 4137,
+        "sha256": "61c80287661219c83ccb0597b9a4841e78351521fa39dc0d79d30cbc426ece1f"
+      },
+      "src/native-pipeline.d.ts": {
+        "size": 1078,
+        "sha256": "77fabecf16226777dba55ae40d86a848f523f996158ffa87ff72aa62e47f7232"
+      },
+      "src/native-pipeline.js": {
+        "size": 4060,
+        "sha256": "9ee7dfe9713c6713fc6a4b1fe2104b9813263ae4b8812edc3af2a7bab7f07159"
+      },
+      "src/result-view.d.ts": {
+        "size": 2364,
+        "sha256": "fde34ced1775a9ffa798bf1bf9f4aa5ea52459bcf5cb4d8fc3e553066c8d1e17"
+      },
+      "src/result-view.js": {
+        "size": 13051,
+        "sha256": "a15a53d07d2f18a78fa80b4c2ab07cc1cf1035500c4b758b9a7c63125f7fef25"
+      },
+      "src/robustness.d.ts": {
+        "size": 496,
+        "sha256": "d7c3a95e21508d90a058ceb010f448e28e48d7f65b1acb159c0142bd13dd27f0"
+      },
+      "src/robustness.js": {
+        "size": 4449,
+        "sha256": "f68204e9c2550d7eec979d253476ecd39e2240f20854b434ec9ba5ea2ea79129"
+      },
+      "src/tuning.d.ts": {
+        "size": 1877,
+        "sha256": "3f2b3e31175e912c8d68730f29bf1e50a7cec1fa9f72723b6efdd418966b50c0"
+      },
+      "src/tuning.js": {
+        "size": 7946,
+        "sha256": "c1c35e4d43b31799dff295a617f4791fc4a3b915a15a1fd9806caee2359dcaf9"
+      },
+      "src/uncertainty-cohort.js": {
+        "size": 588,
+        "sha256": "3d6326a86bbaa19bccae17e1f6a236bce3a214437960cdbbc4f3ca3070d897ce"
+      },
+      "src/workflow.d.ts": {
+        "size": 1790,
+        "sha256": "cae8a9d196e0eeca446cc38cd4a8dea3748e9dfe59e1aa2dda4c3122e44ccd14"
+      },
+      "src/workflow.js": {
+        "size": 23787,
+        "sha256": "b9d6cb052547b1e90312d1493023f09ae3ec57bddb94d4b45d7df57e25701f81"
+      },
+      "src/workspace.d.ts": {
+        "size": 988,
+        "sha256": "e40aff470aaef6d599952d9a35bda8eb25e8052bc215bd38ba77588348452107"
+      },
+      "src/workspace.js": {
+        "size": 4481,
+        "sha256": "5a862b1bf551ecfa161856b21dc085c5292d45223c68b94ff193b587a9a2fc17"
+      }
+    }
+  },
+  "dagml": {
+    "package": "dag-ml-wasm",
+    "version": "0.3.44",
+    "destination": "src/engine/wasm/dagml",
+    "source": {
+      "repository": "https://github.com/GBeurier/dag-ml",
+      "commit": "01226120552529aad45e5ba60d3f6327894adc67",
+      "tree": "14f02a3278e74e953a94f482dc4a4f8800c85f54"
+    },
+    "registry": {
+      "metadata_url": "https://registry.npmjs.org/dag-ml-wasm/0.3.44",
+      "tarball_url": "https://registry.npmjs.org/dag-ml-wasm/-/dag-ml-wasm-0.3.44.tgz",
+      "size": 3653607,
+      "sha256": "eb37342b5183a41783dacf0557a48bc65daa74a395a8e55fb8047e470664d666",
+      "sha1": "b1c4b9844f45c17c772ab1c8332c585f9a81012a",
+      "integrity": "sha512-2Bl6ZLmpJv2918vEt2d1kUtmpl2OiIEoVLWu3+U0C/Q+I35zBPi83pyZeBC8jGdPz70sUF7WMRcgmsBvoF0uCg=="
+    },
+    "projection": {
+      "dag_ml_wasm_bg.wasm": "dag_ml_wasm_bg.wasm",
+      "n4m_controller.d.ts": "n4m_controller.d.ts",
+      "n4m_hpo_optimizer.mjs": "n4m_hpo_optimizer.mjs",
+      "n4m_controller.mjs": "n4m_controller.mjs",
+      "multimodal_dataset_replay.mjs": "multimodal_dataset_replay.mjs",
+      "dag_ml_wasm.js": "dag_ml_wasm.js",
+      "n4m_multimodal_controller.mjs": "n4m_multimodal_controller.mjs",
+      "n4m_estimator_controller.d.ts": "n4m_estimator_controller.d.ts",
+      "package.json": "package.json",
+      "multimodal_archive.mjs": "multimodal_archive.mjs",
+      "n4m_estimator_controller.mjs": "n4m_estimator_controller.mjs",
+      "README.md": "README.md",
+      "dag_ml_wasm.d.ts": "dag_ml_wasm.d.ts",
+      "n4m_hpo_optimizer.d.ts": "n4m_hpo_optimizer.d.ts",
+      "LICENSE": "LICENSE"
+    },
+    "source_files": {
+      "LICENSES/AGPL-3.0-or-later.txt": {
+        "source_path": "LICENSES/AGPL-3.0-or-later.txt",
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+      },
+      "LICENSES/Apache-2.0.txt": {
+        "source_path": "LICENSES/Apache-2.0.txt",
+        "size": 10280,
+        "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+      },
+      "LICENSES/BSD-3-Clause.txt": {
+        "source_path": "LICENSES/BSD-3-Clause.txt",
+        "size": 1460,
+        "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
+      },
+      "LICENSES/CeCILL-2.1.txt": {
+        "source_path": "LICENSES/CeCILL-2.1.txt",
+        "size": 21778,
+        "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+      },
+      "LICENSES/MIT.txt": {
+        "source_path": "LICENSES/MIT.txt",
+        "size": 1078,
+        "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+      },
+      "LICENSING.md": {
+        "source_path": "LICENSING.md",
+        "size": 1406,
+        "sha256": "f9f26e32462eb28e350d0bd4db913ee5ccbd3a1eb88d97e78d187e1b35b86ae9"
+      },
+      "THIRD_PARTY_NOTICES.md": {
+        "source_path": "THIRD_PARTY_NOTICES.md",
+        "size": 1573,
+        "sha256": "01a4064f18fa28336f49c40a4e2db4b40ebee4766160320174e5aaadc41304fd"
+      },
+      "LICENSING_FR.md": {
+        "size": 1521,
+        "sha256": "6f907830be970cbd87723ebaa1e58ffd3dd3f69692a5b211edfc6ee964d93aff",
+        "source_path": "LICENSING_FR.md"
+      }
+    },
+    "files": {
+      "LICENSE": {
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+      },
+      "LICENSES/AGPL-3.0-or-later.txt": {
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+      },
+      "LICENSES/Apache-2.0.txt": {
+        "size": 10280,
+        "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+      },
+      "LICENSES/BSD-3-Clause.txt": {
+        "size": 1460,
+        "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
+      },
+      "LICENSES/CeCILL-2.1.txt": {
+        "size": 21778,
+        "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+      },
+      "LICENSES/MIT.txt": {
+        "size": 1078,
+        "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+      },
+      "LICENSING.md": {
+        "size": 1406,
+        "sha256": "f9f26e32462eb28e350d0bd4db913ee5ccbd3a1eb88d97e78d187e1b35b86ae9"
+      },
+      "README.md": {
+        "size": 6397,
+        "sha256": "235fc98b4aa19a29b365e88d9a76c23c8703ea2c413f7346cd7a8b7b47d2e25d"
+      },
+      "THIRD_PARTY_NOTICES.md": {
+        "size": 1573,
+        "sha256": "01a4064f18fa28336f49c40a4e2db4b40ebee4766160320174e5aaadc41304fd"
+      },
+      "dag_ml_wasm.d.ts": {
+        "size": 26749,
+        "sha256": "8c156ba0ac178e4457e68a0058280e1ead759d82013efa2af1bcf19623158e78"
+      },
+      "dag_ml_wasm.js": {
+        "size": 87206,
+        "sha256": "f4dce7451b4bb60a61aeb5f291cd434848d10cc72415a0bc0c71650339ee5699"
+      },
+      "dag_ml_wasm_bg.wasm": {
+        "size": 10863620,
+        "sha256": "9329ecd5f1d1a4f77829c3023690d5b1d48421eec33322bae831b9d47a781e73"
+      },
+      "multimodal_archive.mjs": {
+        "size": 2089,
+        "sha256": "164bb4cc8730f723bfe6807ec7ce7e92e579a43627c9c61d01d51063446f9a1f"
+      },
+      "multimodal_dataset_replay.mjs": {
+        "size": 6033,
+        "sha256": "0305b6ae8ae75a33fc74d8ebc6f4e84b58911d973da3592da2f063d155923cdc"
+      },
+      "n4m_controller.d.ts": {
+        "size": 2135,
+        "sha256": "cb662945ea21493f5e727b66477d9ef971cfd9d37771b17ebb6aebc236872cf9"
+      },
+      "n4m_controller.mjs": {
+        "size": 20386,
+        "sha256": "a9d0bc6a0b05b502721517da55999ddf093133d605f56286b3e5944bbf1bb635"
+      },
+      "n4m_estimator_controller.d.ts": {
+        "size": 1019,
+        "sha256": "5bef931949ee5875f3089dc993660539597b6cc4979ef77b7e1c96a1fc8bb084"
+      },
+      "n4m_estimator_controller.mjs": {
+        "size": 18968,
+        "sha256": "2c40a06f2a62324f292139b454a677282c6661da4c551de7bab6dcfef335e8d8"
+      },
+      "n4m_hpo_optimizer.d.ts": {
+        "size": 1201,
+        "sha256": "0e914686077faccf611ce9b97fa8fb90a902dbba9c71cb1cfd7a75538654b5f0"
+      },
+      "n4m_hpo_optimizer.mjs": {
+        "size": 8917,
+        "sha256": "d68581fe58740df21652bdb9f47c448be49238b189dd4e7a7849958a6ea19d1a"
+      },
+      "n4m_multimodal_controller.mjs": {
+        "size": 25073,
+        "sha256": "9c5354d3dc0e6ff4f63be6f88640445c4ea3736c9759ef505672fa21d4ee2a63"
+      },
+      "package.json": {
+        "size": 1730,
+        "sha256": "dba65617c1697c3d07fc0a7537220e0590f62c4c153c8dd070c1116c57686aab"
+      },
+      "LICENSING_FR.md": {
+        "size": 1521,
+        "sha256": "6f907830be970cbd87723ebaa1e58ffd3dd3f69692a5b211edfc6ee964d93aff"
+      }
+    }
+  },
+  "dagml-data": {
+    "package": "dag-ml-data-wasm",
+    "version": "0.2.16",
+    "destination": "src/engine/wasm/dagml-data",
+    "source": {
+      "repository": "https://github.com/GBeurier/dag-ml-data",
+      "commit": "eb2ad7835ca85feebf6f626d9f43f61575a1c9a9",
+      "tree": "8bbccfcf7194f33eea6df14c9bb64bea2e262d63"
+    },
+    "registry": {
+      "metadata_url": "https://registry.npmjs.org/dag-ml-data-wasm/0.2.16",
+      "tarball_url": "https://registry.npmjs.org/dag-ml-data-wasm/-/dag-ml-data-wasm-0.2.16.tgz",
+      "size": 413308,
+      "sha256": "77404d717d139d96f4a2d4a1af4f5f36f206f538d0fdf0fa25ea2e6820f88c48",
+      "sha1": "70fc78644661a394f5a1d0194313cff8c11154a8",
+      "integrity": "sha512-fBgbZHiBfNvd82kJnrhV2l1xVUPM9jJ9i0ftg/Hkqe0s3CGlTl+LfNc1vBa2Y1Yct4+EFJXa4PK76w+PCy//ZA=="
+    },
+    "projection": {
+      "package.json": "package.json",
+      "README.md": "README.md",
+      "LICENSE": "LICENSE"
+    },
+    "source_files": {
+      "LICENSES/AGPL-3.0-or-later.txt": {
+        "source_path": "LICENSES/AGPL-3.0-or-later.txt",
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+      },
+      "LICENSES/Apache-2.0.txt": {
+        "source_path": "LICENSES/Apache-2.0.txt",
+        "size": 10280,
+        "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+      },
+      "LICENSES/BSD-3-Clause.txt": {
+        "source_path": "LICENSES/BSD-3-Clause.txt",
+        "size": 1460,
+        "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
+      },
+      "LICENSES/CeCILL-2.1.txt": {
+        "source_path": "LICENSES/CeCILL-2.1.txt",
+        "size": 21778,
+        "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+      },
+      "LICENSES/MIT.txt": {
+        "source_path": "LICENSES/MIT.txt",
+        "size": 1078,
+        "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+      },
+      "LICENSING.md": {
+        "source_path": "LICENSING.md",
+        "size": 1421,
+        "sha256": "de862d775334ff3cf60df5a4f2bde6a08bd0aac0add477212d94f82989e3a2a3"
+      },
+      "THIRD_PARTY_NOTICES.md": {
+        "source_path": "THIRD_PARTY_NOTICES.md",
+        "size": 1583,
+        "sha256": "d4e03627160b905122799e578ed8e1288969a70f47488db402cf55c5e2bb633e"
+      },
+      "LICENSING_FR.md": {
+        "size": 1536,
+        "sha256": "cf4da85268262def2eb370b379d0d52d7bea3dc347a67ddc53ef108b914df68d",
+        "source_path": "LICENSING_FR.md"
+      }
+    },
+    "files": {
+      "LICENSE": {
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+      },
+      "LICENSES/AGPL-3.0-or-later.txt": {
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+      },
+      "LICENSES/Apache-2.0.txt": {
+        "size": 10280,
+        "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+      },
+      "LICENSES/BSD-3-Clause.txt": {
+        "size": 1460,
+        "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
+      },
+      "LICENSES/CeCILL-2.1.txt": {
+        "size": 21778,
+        "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+      },
+      "LICENSES/MIT.txt": {
+        "size": 1078,
+        "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+      },
+      "LICENSING.md": {
+        "size": 1421,
+        "sha256": "de862d775334ff3cf60df5a4f2bde6a08bd0aac0add477212d94f82989e3a2a3"
+      },
+      "README.md": {
+        "size": 2465,
+        "sha256": "471b5bc0070411c82674a24fb776efeb00a44f27d821a8327c6d9536145555b0"
+      },
+      "THIRD_PARTY_NOTICES.md": {
+        "size": 1583,
+        "sha256": "d4e03627160b905122799e578ed8e1288969a70f47488db402cf55c5e2bb633e"
+      },
+      "dag_ml_data_wasm.d.ts": {
+        "size": 9920,
+        "sha256": "f217d639f912a7d57827bb5aec8ee9d0d2a7f9ea77345dde13712d8b82de843a"
+      },
+      "dag_ml_data_wasm.js": {
+        "size": 34259,
+        "sha256": "5be5dc737cbd978badb261c60e7e8fd6bf511109018f7f73ce0f1084417eed5d"
+      },
+      "dag_ml_data_wasm_bg.wasm": {
+        "size": 2090928,
+        "sha256": "7e135079d4e27b0290eb88313122a9d79faa98c178f70caf0575949721d47965"
+      },
+      "package.json": {
+        "size": 746,
+        "sha256": "75f08000f3be730d900048452cdded440acb6ff083c734e60dd5922136d7055d"
+      },
+      "dag_ml_data_wasm_bg.wasm.d.ts": {
+        "size": 4363,
+        "sha256": "9f6716d8350aa14b8cbc2b57e0ff3bc987ca3849b6557447310db5041017390c"
+      },
+      "LICENSING_FR.md": {
+        "size": 1536,
+        "sha256": "cf4da85268262def2eb370b379d0d52d7bea3dc347a67ddc53ef108b914df68d"
+      }
+    },
+    "build": {
+      "target": "web",
+      "profile": "release",
+      "cargo_locked": true,
+      "manifest": "crates/dag-ml-data-wasm/Cargo.toml",
+      "features": [
+        "provider"
+      ],
+      "wasm_bindgen": "0.2.126",
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "lock_sha256": "2e9c8ce5da8e72060595679772b578cd9994c5b89a8160611cde1dff1dd2aa2a",
+      "executions": 1,
+      "independent_rebuild_claimed": false
+    }
+  },
+  "io": {
+    "package": "@nirs4all/io-wasm",
+    "version": "0.2.14",
+    "destination": "src/engine/wasm/io",
+    "source": {
+      "repository": "https://github.com/GBeurier/nirs4all-io",
+      "commit": "172a7acfcc029742f45fbcf477f55f46dc7fbafe",
+      "tree": "b238838b7efec55a09de146fc5b103743f700787"
+    },
+    "registry": {
+      "metadata_url": "https://registry.npmjs.org/@nirs4all/io-wasm/0.2.14",
+      "tarball_url": "https://registry.npmjs.org/@nirs4all/io-wasm/-/io-wasm-0.2.14.tgz",
+      "size": 914560,
+      "sha256": "9bff14859f877ba9ce8ed5cbbd4b9de772230e53409e58732df02bea6a0e532e",
+      "sha1": "5be79547e167f750e05c93e3a3c88803c03e9a20",
+      "integrity": "sha512-zjF4zpf/Shoae4AUJU8uHCTW/i0KZZWJByvgkVRLfVkRZGT/OAKyV1mHqPi51h1XuSqHAaKLXczwKczen03qKg=="
+    },
+    "projection": {
+      "COPY_PROVENANCE.md": "COPY_PROVENANCE.md",
+      "public-dataset.mjs": "public-dataset.mjs",
+      "public-dataset.d.ts": "public-dataset.d.ts",
+      "nirs4all-io-wasm.cdx.json": "nirs4all-io-wasm.cdx.json",
+      "idiomatic.d.ts": "idiomatic.d.ts",
+      "LICENSING.md": "LICENSING.md",
+      "idiomatic.mjs": "idiomatic.mjs",
+      "LICENSE": "LICENSE",
+      "THIRD_PARTY_NOTICES.md": "THIRD_PARTY_NOTICES.md",
+      "LICENSES/AGPL-3.0-or-later.txt": "LICENSES/AGPL-3.0-or-later.txt",
+      "LICENSES/COMMERCIAL-LICENSE.md": "LICENSES/COMMERCIAL-LICENSE.md",
+      "LICENSES/Apache-2.0.txt": "LICENSES/Apache-2.0.txt",
+      "LICENSES/COMMERCIAL-LICENSE_FR.md": "LICENSES/COMMERCIAL-LICENSE_FR.md",
+      "LICENSES/BSD-3-Clause.txt": "LICENSES/BSD-3-Clause.txt",
+      "LICENSES/CeCILL-2.1.txt": "LICENSES/CeCILL-2.1.txt",
+      "LICENSES/Unicode-3.0.txt": "LICENSES/Unicode-3.0.txt",
+      "LICENSES/MIT.txt": "LICENSES/MIT.txt",
+      "types/nirs4all-io.d.ts": "types/nirs4all-io.d.ts"
+    },
+    "source_files": {
+      "README.md": {
+        "size": 7389,
+        "sha256": "2d3c64e66e6b6d9ba2161fdf58f12627dc829ef871c718776a4ef467e604166f",
+        "source_path": "web/pkg/io/README.md"
+      },
+      "nirs4all_io_wasm.d.ts": {
+        "size": 5661,
+        "sha256": "0c49821343968535cc5a4fa82ee68303f95c2909ca3fb081cbcca2adf63ffc5f",
+        "source_path": "web/pkg/io/nirs4all_io_wasm.d.ts"
+      },
+      "nirs4all_io_wasm.js": {
+        "size": 25415,
+        "sha256": "89bd589e3b3c1b059591489080f8432c04e7148902bd7626943d5835845fd1a3",
+        "source_path": "web/pkg/io/nirs4all_io_wasm.js"
+      },
+      "nirs4all_io_wasm_bg.wasm": {
+        "size": 2343181,
+        "sha256": "61e81e5ce06def80d221d473cbb6d9c726a7cdf9c87aa03a213f83199ae6e46c",
+        "source_path": "web/pkg/io/nirs4all_io_wasm_bg.wasm"
+      },
+      "nirs4all_io_wasm_bg.wasm.d.ts": {
+        "size": 1273,
+        "sha256": "fd34bc545e2588f28a9d388e7ac3890e83d9af1a38e2861c4426bdd8a1fb1740",
+        "source_path": "web/pkg/io/nirs4all_io_wasm_bg.wasm.d.ts"
+      },
+      "package.json": {
+        "size": 690,
+        "sha256": "fd4d36e68a47d8b17e672b5a2a99adc42908e189c109b09103b7e323e75c0a46",
+        "source_path": "web/pkg/io/package.json"
+      }
+    },
+    "files": {
+      "COPY_PROVENANCE.md": {
+        "size": 3133,
+        "sha256": "9046c670f0f2ffe119a8d9ad5286ad29bf5d89d620058a41283e454b5c05c015"
+      },
+      "LICENSE": {
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+      },
+      "LICENSES/AGPL-3.0-or-later.txt": {
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+      },
+      "LICENSES/Apache-2.0.txt": {
+        "size": 9723,
+        "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+      },
+      "LICENSES/BSD-3-Clause.txt": {
+        "size": 1459,
+        "sha256": "3cf06aba3588c41c514f6946bb2d757b413ff6491647d474800f55edca75dcb4"
+      },
+      "LICENSES/COMMERCIAL-LICENSE.md": {
+        "size": 670,
+        "sha256": "e62a66dc45d618d419706048b17a840f87d0c0c5c940eadd1cf6ea13c7eae08f"
+      },
+      "LICENSES/COMMERCIAL-LICENSE_FR.md": {
+        "size": 759,
+        "sha256": "7d1fd841891d4cb53836a6aca2fbbf7f36ef3bca540a394a9d94633af34ea3d6"
+      },
+      "LICENSES/CeCILL-2.1.txt": {
+        "size": 21778,
+        "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+      },
+      "LICENSES/MIT.txt": {
+        "size": 1078,
+        "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+      },
+      "LICENSES/Unicode-3.0.txt": {
+        "size": 1995,
+        "sha256": "f7db81051789b729fea528a63ec4c938fdcb93d9d61d97dc8cc2e9df6d47f2a1"
+      },
+      "LICENSING.md": {
+        "size": 2113,
+        "sha256": "b41ad1d4b8e62c89e42704fc4c9b5bb8a2099a0ad0680d72e95efb57c5d3326c"
+      },
+      "README.md": {
+        "size": 7389,
+        "sha256": "2d3c64e66e6b6d9ba2161fdf58f12627dc829ef871c718776a4ef467e604166f"
+      },
+      "THIRD_PARTY_NOTICES.md": {
+        "size": 5732,
+        "sha256": "c2f5c9061e7bc5a259a2d630330930ce9438f157e9646724824730ce516a5179"
+      },
+      "idiomatic.d.ts": {
+        "size": 2044,
+        "sha256": "cca0b1700625d48c17232333702e3d788047b5dfb9b953c78326bce61f4a6094"
+      },
+      "idiomatic.mjs": {
+        "size": 2684,
+        "sha256": "a041c2304307eccbe805cfb97868eb2640fafe2fc51da8237e0a535135d1bfa3"
+      },
+      "nirs4all-io-wasm.cdx.json": {
+        "size": 34808,
+        "sha256": "3a86cfebaa19ffe93cd6e9085d8a7c26cb191f81d6333dfb39e8eb7e474c5786"
+      },
+      "nirs4all_io_wasm.d.ts": {
+        "size": 5661,
+        "sha256": "0c49821343968535cc5a4fa82ee68303f95c2909ca3fb081cbcca2adf63ffc5f"
+      },
+      "nirs4all_io_wasm.js": {
+        "size": 25415,
+        "sha256": "89bd589e3b3c1b059591489080f8432c04e7148902bd7626943d5835845fd1a3"
+      },
+      "nirs4all_io_wasm_bg.wasm": {
+        "size": 2343181,
+        "sha256": "61e81e5ce06def80d221d473cbb6d9c726a7cdf9c87aa03a213f83199ae6e46c"
+      },
+      "package.json": {
+        "size": 690,
+        "sha256": "fd4d36e68a47d8b17e672b5a2a99adc42908e189c109b09103b7e323e75c0a46"
+      },
+      "public-dataset.d.ts": {
+        "size": 4765,
+        "sha256": "c5f53b89e2ceb21bc9aafe0d6ed8bd2f037eda58f1a36997ca895ec638c181a8"
+      },
+      "public-dataset.mjs": {
+        "size": 31122,
+        "sha256": "4932c790129295a92ef6317d0d4958057c1c7bc4882f3b077f6bb4c1abb281b9"
+      },
+      "types/nirs4all-io.d.ts": {
+        "size": 4920,
+        "sha256": "9e7a028b443cf2a093ee54e191be1571b3b44d76c49b13784c55cd6b67106e95"
+      },
+      "nirs4all_io_wasm_bg.wasm.d.ts": {
+        "size": 1273,
+        "sha256": "fd34bc545e2588f28a9d388e7ac3890e83d9af1a38e2861c4426bdd8a1fb1740"
+      }
+    },
+    "staged_package": "nirs4all-io-wasm"
+  },
+  "formats": {
+    "package": "@nirs4all/formats-wasm",
+    "version": "0.2.14",
+    "destination": "src/engine/wasm/formats",
+    "source": {
+      "repository": "https://github.com/GBeurier/nirs4all-formats",
+      "commit": "051fe9c0433160f26e8090566418dbc7546c4f96",
+      "tree": "52f49b394558bf40196ec8b69fb5dc819207dc2f"
+    },
+    "registry": {
+      "metadata_url": "https://registry.npmjs.org/@nirs4all/formats-wasm/0.2.14",
+      "tarball_url": "https://registry.npmjs.org/@nirs4all/formats-wasm/-/formats-wasm-0.2.14.tgz",
+      "size": 2177875,
+      "sha256": "6050057c065d3fd9020cc8f781736ff1074d5d09f33512e50ccfa0d09940c7ea",
+      "sha1": "238c3c64ba0bd2cf005b60e47200ecf295c152ab",
+      "integrity": "sha512-rwM8oZOhvLUA14JsfKxGklvTfsFo+mzsaeXFprU9aV44kIm+tKhZgVjTVp5l2IhITLYvWlwecj2UtREL27QSYA=="
+    },
+    "projection": {
+      "THIRD_PARTY_NOTICES.md": "THIRD_PARTY_NOTICES.md",
+      "reader-backports/netcdf-reader/Cargo.toml": "reader-backports/netcdf-reader/Cargo.toml",
+      "reader-backports/netcdf-reader/UPSTREAM-VCS.json": "reader-backports/netcdf-reader/UPSTREAM-VCS.json",
+      "reader-backports/netcdf-reader/LICENSE-MIT": "reader-backports/netcdf-reader/LICENSE-MIT",
+      "reader-backports/netcdf-reader/PROVENANCE.json": "reader-backports/netcdf-reader/PROVENANCE.json",
+      "reader-backports/netcdf-reader/UPSTREAM-Cargo.toml": "reader-backports/netcdf-reader/UPSTREAM-Cargo.toml",
+      "reader-backports/netcdf-reader/README.md": "reader-backports/netcdf-reader/README.md",
+      "reader-backports/netcdf-reader/LICENSE-APACHE": "reader-backports/netcdf-reader/LICENSE-APACHE",
+      "reader-backports/netcdf-reader/src/lib.rs": "reader-backports/netcdf-reader/src/lib.rs",
+      "reader-backports/netcdf-reader/src/error.rs": "reader-backports/netcdf-reader/src/error.rs",
+      "reader-backports/netcdf-reader/src/masked.rs": "reader-backports/netcdf-reader/src/masked.rs",
+      "reader-backports/netcdf-reader/src/user_defined.rs": "reader-backports/netcdf-reader/src/user_defined.rs",
+      "reader-backports/netcdf-reader/src/types.rs": "reader-backports/netcdf-reader/src/types.rs",
+      "reader-backports/netcdf-reader/src/unpack.rs": "reader-backports/netcdf-reader/src/unpack.rs",
+      "reader-backports/netcdf-reader/src/cf/time.rs": "reader-backports/netcdf-reader/src/cf/time.rs",
+      "reader-backports/netcdf-reader/src/cf/bounds.rs": "reader-backports/netcdf-reader/src/cf/bounds.rs",
+      "reader-backports/netcdf-reader/src/cf/crs.rs": "reader-backports/netcdf-reader/src/cf/crs.rs",
+      "reader-backports/netcdf-reader/src/cf/mod.rs": "reader-backports/netcdf-reader/src/cf/mod.rs",
+      "reader-backports/netcdf-reader/src/cf/axes.rs": "reader-backports/netcdf-reader/src/cf/axes.rs",
+      "reader-backports/netcdf-reader/src/nc4/attributes.rs": "reader-backports/netcdf-reader/src/nc4/attributes.rs",
+      "reader-backports/netcdf-reader/src/nc4/groups.rs": "reader-backports/netcdf-reader/src/nc4/groups.rs",
+      "reader-backports/netcdf-reader/src/nc4/types.rs": "reader-backports/netcdf-reader/src/nc4/types.rs",
+      "reader-backports/netcdf-reader/src/nc4/mod.rs": "reader-backports/netcdf-reader/src/nc4/mod.rs",
+      "reader-backports/netcdf-reader/src/nc4/dimensions.rs": "reader-backports/netcdf-reader/src/nc4/dimensions.rs",
+      "reader-backports/netcdf-reader/src/nc4/variables.rs": "reader-backports/netcdf-reader/src/nc4/variables.rs",
+      "reader-backports/netcdf-reader/src/classic/data.rs": "reader-backports/netcdf-reader/src/classic/data.rs",
+      "reader-backports/netcdf-reader/src/classic/variable.rs": "reader-backports/netcdf-reader/src/classic/variable.rs",
+      "reader-backports/netcdf-reader/src/classic/types.rs": "reader-backports/netcdf-reader/src/classic/types.rs",
+      "reader-backports/netcdf-reader/src/classic/mod.rs": "reader-backports/netcdf-reader/src/classic/mod.rs",
+      "reader-backports/netcdf-reader/src/classic/storage.rs": "reader-backports/netcdf-reader/src/classic/storage.rs",
+      "reader-backports/netcdf-reader/src/classic/header.rs": "reader-backports/netcdf-reader/src/classic/header.rs",
+      "reader-backports/hdf5-reader/Cargo.toml": "reader-backports/hdf5-reader/Cargo.toml",
+      "reader-backports/hdf5-reader/UPSTREAM-VCS.json": "reader-backports/hdf5-reader/UPSTREAM-VCS.json",
+      "reader-backports/hdf5-reader/LICENSE-MIT": "reader-backports/hdf5-reader/LICENSE-MIT",
+      "reader-backports/hdf5-reader/PROVENANCE.json": "reader-backports/hdf5-reader/PROVENANCE.json",
+      "reader-backports/hdf5-reader/UPSTREAM-Cargo.toml": "reader-backports/hdf5-reader/UPSTREAM-Cargo.toml",
+      "reader-backports/hdf5-reader/README.md": "reader-backports/hdf5-reader/README.md",
+      "reader-backports/hdf5-reader/LICENSE-APACHE": "reader-backports/hdf5-reader/LICENSE-APACHE",
+      "reader-backports/hdf5-reader/src/object_header.rs": "reader-backports/hdf5-reader/src/object_header.rs",
+      "reader-backports/hdf5-reader/src/fixed_array.rs": "reader-backports/hdf5-reader/src/fixed_array.rs",
+      "reader-backports/hdf5-reader/src/extensible_array.rs": "reader-backports/hdf5-reader/src/extensible_array.rs",
+      "reader-backports/hdf5-reader/src/lib.rs": "reader-backports/hdf5-reader/src/lib.rs",
+      "reader-backports/hdf5-reader/src/checksum.rs": "reader-backports/hdf5-reader/src/checksum.rs",
+      "reader-backports/hdf5-reader/src/error.rs": "reader-backports/hdf5-reader/src/error.rs",
+      "reader-backports/hdf5-reader/src/btree_v1.rs": "reader-backports/hdf5-reader/src/btree_v1.rs",
+      "reader-backports/hdf5-reader/src/group.rs": "reader-backports/hdf5-reader/src/group.rs",
+      "reader-backports/hdf5-reader/src/dataset.rs": "reader-backports/hdf5-reader/src/dataset.rs",
+      "reader-backports/hdf5-reader/src/superblock.rs": "reader-backports/hdf5-reader/src/superblock.rs",
+      "reader-backports/hdf5-reader/src/io.rs": "reader-backports/hdf5-reader/src/io.rs",
+      "reader-backports/hdf5-reader/src/chunk_index.rs": "reader-backports/hdf5-reader/src/chunk_index.rs",
+      "reader-backports/hdf5-reader/src/local_heap.rs": "reader-backports/hdf5-reader/src/local_heap.rs",
+      "reader-backports/hdf5-reader/src/reference.rs": "reader-backports/hdf5-reader/src/reference.rs",
+      "reader-backports/hdf5-reader/src/cache.rs": "reader-backports/hdf5-reader/src/cache.rs",
+      "reader-backports/hdf5-reader/src/fractal_heap.rs": "reader-backports/hdf5-reader/src/fractal_heap.rs",
+      "reader-backports/hdf5-reader/src/shared_message_table.rs": "reader-backports/hdf5-reader/src/shared_message_table.rs",
+      "reader-backports/hdf5-reader/src/global_heap.rs": "reader-backports/hdf5-reader/src/global_heap.rs",
+      "reader-backports/hdf5-reader/src/attribute_api.rs": "reader-backports/hdf5-reader/src/attribute_api.rs",
+      "reader-backports/hdf5-reader/src/symbol_table.rs": "reader-backports/hdf5-reader/src/symbol_table.rs",
+      "reader-backports/hdf5-reader/src/btree_v2.rs": "reader-backports/hdf5-reader/src/btree_v2.rs",
+      "reader-backports/hdf5-reader/src/storage.rs": "reader-backports/hdf5-reader/src/storage.rs",
+      "reader-backports/hdf5-reader/src/datatype_api.rs": "reader-backports/hdf5-reader/src/datatype_api.rs",
+      "reader-backports/hdf5-reader/src/messages/symbol_table_msg.rs": "reader-backports/hdf5-reader/src/messages/symbol_table_msg.rs",
+      "reader-backports/hdf5-reader/src/messages/external_files.rs": "reader-backports/hdf5-reader/src/messages/external_files.rs",
+      "reader-backports/hdf5-reader/src/messages/continuation.rs": "reader-backports/hdf5-reader/src/messages/continuation.rs",
+      "reader-backports/hdf5-reader/src/messages/datatype.rs": "reader-backports/hdf5-reader/src/messages/datatype.rs",
+      "reader-backports/hdf5-reader/src/messages/shared.rs": "reader-backports/hdf5-reader/src/messages/shared.rs",
+      "reader-backports/hdf5-reader/src/messages/attribute.rs": "reader-backports/hdf5-reader/src/messages/attribute.rs",
+      "reader-backports/hdf5-reader/src/messages/layout.rs": "reader-backports/hdf5-reader/src/messages/layout.rs",
+      "reader-backports/hdf5-reader/src/messages/group_info.rs": "reader-backports/hdf5-reader/src/messages/group_info.rs",
+      "reader-backports/hdf5-reader/src/messages/modification_time.rs": "reader-backports/hdf5-reader/src/messages/modification_time.rs",
+      "reader-backports/hdf5-reader/src/messages/fill_value.rs": "reader-backports/hdf5-reader/src/messages/fill_value.rs",
+      "reader-backports/hdf5-reader/src/messages/dataspace.rs": "reader-backports/hdf5-reader/src/messages/dataspace.rs",
+      "reader-backports/hdf5-reader/src/messages/link.rs": "reader-backports/hdf5-reader/src/messages/link.rs",
+      "reader-backports/hdf5-reader/src/messages/filter_pipeline.rs": "reader-backports/hdf5-reader/src/messages/filter_pipeline.rs",
+      "reader-backports/hdf5-reader/src/messages/attribute_info.rs": "reader-backports/hdf5-reader/src/messages/attribute_info.rs",
+      "reader-backports/hdf5-reader/src/messages/mod.rs": "reader-backports/hdf5-reader/src/messages/mod.rs",
+      "reader-backports/hdf5-reader/src/messages/link_info.rs": "reader-backports/hdf5-reader/src/messages/link_info.rs",
+      "reader-backports/hdf5-reader/src/messages/shared_table.rs": "reader-backports/hdf5-reader/src/messages/shared_table.rs",
+      "reader-backports/hdf5-reader/src/messages/btree_k.rs": "reader-backports/hdf5-reader/src/messages/btree_k.rs",
+      "reader-backports/hdf5-reader/src/filters/shuffle.rs": "reader-backports/hdf5-reader/src/filters/shuffle.rs",
+      "reader-backports/hdf5-reader/src/filters/fletcher32.rs": "reader-backports/hdf5-reader/src/filters/fletcher32.rs",
+      "reader-backports/hdf5-reader/src/filters/scaleoffset.rs": "reader-backports/hdf5-reader/src/filters/scaleoffset.rs",
+      "reader-backports/hdf5-reader/src/filters/deflate.rs": "reader-backports/hdf5-reader/src/filters/deflate.rs",
+      "reader-backports/hdf5-reader/src/filters/lz4.rs": "reader-backports/hdf5-reader/src/filters/lz4.rs",
+      "reader-backports/hdf5-reader/src/filters/mod.rs": "reader-backports/hdf5-reader/src/filters/mod.rs",
+      "reader-backports/hdf5-reader/src/filters/nbit.rs": "reader-backports/hdf5-reader/src/filters/nbit.rs"
+    },
+    "source_files": {
+      "LICENSE": {
+        "source_path": "LICENSE",
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+      },
+      "LICENSES/AGPL-3.0-or-later.txt": {
+        "source_path": "LICENSES/AGPL-3.0-or-later.txt",
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+      },
+      "LICENSES/Apache-2.0.txt": {
+        "source_path": "LICENSES/Apache-2.0.txt",
+        "size": 10280,
+        "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+      },
+      "LICENSES/BSD-3-Clause.txt": {
+        "source_path": "LICENSES/BSD-3-Clause.txt",
+        "size": 1460,
+        "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
+      },
+      "LICENSES/CeCILL-2.1.txt": {
+        "source_path": "LICENSES/CeCILL-2.1.txt",
+        "size": 21778,
+        "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+      },
+      "LICENSES/MIT.txt": {
+        "source_path": "LICENSES/MIT.txt",
+        "size": 1078,
+        "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+      },
+      "LICENSING.md": {
+        "source_path": "LICENSING.md",
+        "size": 1436,
+        "sha256": "a002efcef5dd83e5612fbd38990b0265da5fef66a67bfc7c849bdf06860076fd"
+      }
+    },
+    "files": {
+      "LICENSE": {
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+      },
+      "LICENSES/AGPL-3.0-or-later.txt": {
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+      },
+      "LICENSES/Apache-2.0.txt": {
+        "size": 10280,
+        "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+      },
+      "LICENSES/BSD-3-Clause.txt": {
+        "size": 1460,
+        "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
+      },
+      "LICENSES/CeCILL-2.1.txt": {
+        "size": 21778,
+        "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+      },
+      "LICENSES/MIT.txt": {
+        "size": 1078,
+        "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+      },
+      "LICENSING.md": {
+        "size": 1436,
+        "sha256": "a002efcef5dd83e5612fbd38990b0265da5fef66a67bfc7c849bdf06860076fd"
+      },
+      "README.md": {
+        "size": 2918,
+        "sha256": "724b92047f40593956684d2e0e58fced595df93eb01c953792bc5e43ef0345ee"
+      },
+      "THIRD_PARTY_NOTICES.md": {
+        "size": 2630,
+        "sha256": "39e06e5ca05c5bc5bab725d15f2eb28bfde7c33d79906c9f38534b7bb731a34a"
+      },
+      "nirs4all_formats_wasm.d.ts": {
+        "size": 5249,
+        "sha256": "a1e7f3f502168cd814404b9f8c11a642b5387926fbea4cabe6323b51efc05432"
+      },
+      "nirs4all_formats_wasm.js": {
+        "size": 25648,
+        "sha256": "580d48c9387721e25d3852ee9384a729cf8a1c825d593fac7b70680d699f30da"
+      },
+      "nirs4all_formats_wasm_bg.wasm": {
+        "size": 5815814,
+        "sha256": "17c1bb6e1a79b1fd08d376fe2a4410320c18501deb6355a4c8cede0e253f1722"
+      },
+      "package.json": {
+        "size": 609,
+        "sha256": "3ec19b2500ad81b27fc052aca4eb2546d0206f508177fb65ec9bbbbf45217d6e"
+      },
+      "reader-backports/hdf5-reader/Cargo.toml": {
+        "size": 2346,
+        "sha256": "e6449fc3b32f5baac92428e3f2e6b6b8a55e7ff1f0d33e8091704402ced8a756"
+      },
+      "reader-backports/hdf5-reader/LICENSE-APACHE": {
+        "size": 8464,
+        "sha256": "7e1c4927d7c8765c73e234c2da19c423dfafc9c662e6d028277f9e77476445bb"
+      },
+      "reader-backports/hdf5-reader/LICENSE-MIT": {
+        "size": 1067,
+        "sha256": "24a4eeee33afc227bd3e796f772741250b2c93eae1cdba65e775ef8005dfb4b1"
+      },
+      "reader-backports/hdf5-reader/PROVENANCE.json": {
+        "size": 5845,
+        "sha256": "f568cb1ca6c529b6723e56a614a955343b52dea1bd38e3616673d3a867c0a779"
+      },
+      "reader-backports/hdf5-reader/README.md": {
+        "size": 12583,
+        "sha256": "fe4b38a268a3ca02d2789b94bca3656a488553b4281b4e682f33201664faedf5"
+      },
+      "reader-backports/hdf5-reader/UPSTREAM-Cargo.toml": {
+        "size": 1036,
+        "sha256": "d7e2698d77e55a8110db93aef086b17e844b7de158f446437860b41dc6201fd9"
+      },
+      "reader-backports/hdf5-reader/UPSTREAM-VCS.json": {
+        "size": 105,
+        "sha256": "7dfc117addc40f7073a8453b35ce86397924fc1f6b3b19bf0fa6d7dc6aacaeda"
+      },
+      "reader-backports/hdf5-reader/src/attribute_api.rs": {
+        "size": 28630,
+        "sha256": "d450a87a0923a5e835dcdb283c1c7d45e63652a28b500a49f1e2d9f41081ea83"
+      },
+      "reader-backports/hdf5-reader/src/btree_v1.rs": {
+        "size": 24646,
+        "sha256": "6aac11fdb8911480fc638348659eeaed246cbbff5dd127cad957ada9f78a3d9c"
+      },
+      "reader-backports/hdf5-reader/src/btree_v2.rs": {
+        "size": 68060,
+        "sha256": "36897aef9439121921dfbd573edbd446a6f13d9393c9dd4f8e70221e5c91e60a"
+      },
+      "reader-backports/hdf5-reader/src/cache.rs": {
+        "size": 11376,
+        "sha256": "91552122c2d4a378e4e9830cdf9de704d196f2d072a4d4d74164bc6b7134a1ac"
+      },
+      "reader-backports/hdf5-reader/src/checksum.rs": {
+        "size": 1872,
+        "sha256": "4697049349b0f9f1131e4bfa96b81dc45e9584158fc31432489491d04fbc9419"
+      },
+      "reader-backports/hdf5-reader/src/chunk_index.rs": {
+        "size": 13644,
+        "sha256": "10a777aae588702777aa15f68ce00c76de5ec0a089546b231d8d24b14a135bc9"
+      },
+      "reader-backports/hdf5-reader/src/dataset.rs": {
+        "size": 173310,
+        "sha256": "13683760cf0f9a393909517feeb3467dc0896a3570d738cf0db29ef85a9eead2"
+      },
+      "reader-backports/hdf5-reader/src/datatype_api.rs": {
+        "size": 17498,
+        "sha256": "49fee0dd72f083644848eec5a768b0f6ca5ce742f088fdbb0b8cdc6efbfed06a"
+      },
+      "reader-backports/hdf5-reader/src/error.rs": {
+        "size": 4703,
+        "sha256": "3d07709e476dc3fcecdfa15fbd5be215b1a7c8e5bc7f8e61bcc4e2ff0e2585c3"
+      },
+      "reader-backports/hdf5-reader/src/extensible_array.rs": {
+        "size": 62873,
+        "sha256": "2bd54463b5c602f702f3bb515008301d44ac8875b51e7cfc9740d9e00a582fde"
+      },
+      "reader-backports/hdf5-reader/src/filters/deflate.rs": {
+        "size": 3598,
+        "sha256": "49e14030b7d1656aa0c193d91be5a6cb670d4eaf94b652be3327ba5cde0cf045"
+      },
+      "reader-backports/hdf5-reader/src/filters/fletcher32.rs": {
+        "size": 1438,
+        "sha256": "80ac50c90bc0f5aff947a71cb0d47027174c154da1819463a1d8df9ff8cc4ba0"
+      },
+      "reader-backports/hdf5-reader/src/filters/lz4.rs": {
+        "size": 6701,
+        "sha256": "40f9bb810b0501b5c640905164b23e9056d44fae8a552deb60b050914d918d07"
+      },
+      "reader-backports/hdf5-reader/src/filters/mod.rs": {
+        "size": 11075,
+        "sha256": "8dac60a949d3855b00324eb30d68bc353ccb96605b5c1069201fd7994db29068"
+      },
+      "reader-backports/hdf5-reader/src/filters/nbit.rs": {
+        "size": 18874,
+        "sha256": "60cfaf1abfd736bbd9b5a9bb07ac1f2d4e4121a3dd8dad1152565bf0760a07ff"
+      },
+      "reader-backports/hdf5-reader/src/filters/scaleoffset.rs": {
+        "size": 25405,
+        "sha256": "e6a83219a4a4746fba76df6f31d2f9fd26b0f725f9271e1f62045c0650517cd0"
+      },
+      "reader-backports/hdf5-reader/src/filters/shuffle.rs": {
+        "size": 2914,
+        "sha256": "511351d5459beb770bfca11725606e3c6658ce47d89e2971fb98cf66ae2fc1be"
+      },
+      "reader-backports/hdf5-reader/src/fixed_array.rs": {
+        "size": 25157,
+        "sha256": "7b45164967fed5c98b3e5a0c94543b2ba5ea0c328424c0d387e1f826b86aefa7"
+      },
+      "reader-backports/hdf5-reader/src/fractal_heap.rs": {
+        "size": 78695,
+        "sha256": "8438ecd7ed1c314c8b57d42773838e8a484924eef19910d98b055d4547f526ec"
+      },
+      "reader-backports/hdf5-reader/src/global_heap.rs": {
+        "size": 9783,
+        "sha256": "887e8a63e462053d77475ee6b87f09a19ac8d387822a55e699a557dbcb4951f7"
+      },
+      "reader-backports/hdf5-reader/src/group.rs": {
+        "size": 27108,
+        "sha256": "dd19cfdcf4efbe3fedd600110203dd95e85305abbc15c3abe81acc3751ddbb1a"
+      },
+      "reader-backports/hdf5-reader/src/io.rs": {
+        "size": 12400,
+        "sha256": "589621880155b776b5cbd3aa637675e7b9df39fd0d95c39adc00922ae2704f7b"
+      },
+      "reader-backports/hdf5-reader/src/lib.rs": {
+        "size": 31334,
+        "sha256": "8a7806b8fd93e9cfbdf65abe2a8461ec689dae059ef79dfead83c6c5dd6d23b4"
+      },
+      "reader-backports/hdf5-reader/src/local_heap.rs": {
+        "size": 9217,
+        "sha256": "b3d6fc565e7d9ff7b2599d6961f5cee884595b821f4d9a5081556b75e4d21a01"
+      },
+      "reader-backports/hdf5-reader/src/messages/attribute.rs": {
+        "size": 9848,
+        "sha256": "f02842e5878982785f0b64cd5b4a0d927a9a438ba10392857610f12b422ec5d6"
+      },
+      "reader-backports/hdf5-reader/src/messages/attribute_info.rs": {
+        "size": 2857,
+        "sha256": "95bd3648eb7d4388b9de9ed4a1e72d12a7c2f1b3d0c71482fae6221315d262a0"
+      },
+      "reader-backports/hdf5-reader/src/messages/btree_k.rs": {
+        "size": 956,
+        "sha256": "fe9649fd0d398575ae9347c92384dd0dccd9fb53cae7f3a1fcbca2906afa6cd8"
+      },
+      "reader-backports/hdf5-reader/src/messages/continuation.rs": {
+        "size": 1270,
+        "sha256": "6a462c49154ad7f176a493d5c8fecc950e1c772b14ab0692a7f5bfdb3ee8dee8"
+      },
+      "reader-backports/hdf5-reader/src/messages/dataspace.rs": {
+        "size": 7688,
+        "sha256": "24054741d6b8fc9b7ab5f2cbfbcedc762d0f3104d899f5810917d92fd16f6fa3"
+      },
+      "reader-backports/hdf5-reader/src/messages/datatype.rs": {
+        "size": 33601,
+        "sha256": "42437abb94aba788374ad8769c284cac94c053a71265b3cc123e2ab01aa22018"
+      },
+      "reader-backports/hdf5-reader/src/messages/external_files.rs": {
+        "size": 1472,
+        "sha256": "0e660d862e619276ef6d4fa0f307862a08a18d03f1a0dc819794eeee5e209788"
+      },
+      "reader-backports/hdf5-reader/src/messages/fill_value.rs": {
+        "size": 6654,
+        "sha256": "182ae332c7e11b21db97d1e427593e46a2573b846b638f2d69e10ab759f7b8dc"
+      },
+      "reader-backports/hdf5-reader/src/messages/filter_pipeline.rs": {
+        "size": 4559,
+        "sha256": "3ef8bf0f99a54655a049c2617e176db57f69731957c3d01b992fdcdb41005059"
+      },
+      "reader-backports/hdf5-reader/src/messages/group_info.rs": {
+        "size": 3093,
+        "sha256": "f028d7afb028f981cadfb75cd23413c1e61d80b6aac30b2dcb14900345abba0e"
+      },
+      "reader-backports/hdf5-reader/src/messages/layout.rs": {
+        "size": 15999,
+        "sha256": "261bc049a8f4566785f4ea7484b8f7645423206ccdc1364ab541237fc559b474"
+      },
+      "reader-backports/hdf5-reader/src/messages/link.rs": {
+        "size": 5202,
+        "sha256": "7b4ab91992e1abd5a2cf2a1f4abf4404782cc9da5733cff3cead7427e76bd136"
+      },
+      "reader-backports/hdf5-reader/src/messages/link_info.rs": {
+        "size": 4099,
+        "sha256": "4ac49bd26b47d98ca4d585369f5dd779eac1421e0254b67d2c62d5c1dea4a81d"
+      },
+      "reader-backports/hdf5-reader/src/messages/mod.rs": {
+        "size": 13501,
+        "sha256": "379f35317e81da9aa10d994adb4c8d7e6a34228440e31d3f03480dcb9c54a39b"
+      },
+      "reader-backports/hdf5-reader/src/messages/modification_time.rs": {
+        "size": 2415,
+        "sha256": "2fa9f219f8f7c6fde7dd3fadf6b37fa5701f3e9105021edfdcfccf904aa3d9dd"
+      },
+      "reader-backports/hdf5-reader/src/messages/shared.rs": {
+        "size": 5180,
+        "sha256": "f80431faf089e51534f3147b9eae81c33353a431aef8c1459929370bd16ad503"
+      },
+      "reader-backports/hdf5-reader/src/messages/shared_table.rs": {
+        "size": 1835,
+        "sha256": "78027dc7d53d80e081d3e4a4892afa501eff9aea4ba2123ac6ba9467bba90c5c"
+      },
+      "reader-backports/hdf5-reader/src/messages/symbol_table_msg.rs": {
+        "size": 1381,
+        "sha256": "f7cb628336027e04f5b47c056e24ccf1643497a9d30ed6e995d53749173ca576"
+      },
+      "reader-backports/hdf5-reader/src/object_header.rs": {
+        "size": 65658,
+        "sha256": "bff85df33715d386f0a534d3046705bde979597c78f1b5d91f7f3402b823f0c2"
+      },
+      "reader-backports/hdf5-reader/src/reference.rs": {
+        "size": 2853,
+        "sha256": "690a8bc74bf9ae47ba1441e6b2b91641606f6b4e5a0f837fd58eedd8fa09c259"
+      },
+      "reader-backports/hdf5-reader/src/shared_message_table.rs": {
+        "size": 14080,
+        "sha256": "50128adef484709e57a4b953ff5dbe93790efbbf2b49fb26177fd684cfc2d8cf"
+      },
+      "reader-backports/hdf5-reader/src/storage.rs": {
+        "size": 16418,
+        "sha256": "2f43fe73dec3cd89367378dcf67e4d517813e7c6b5f5533f84261e4c62f45058"
+      },
+      "reader-backports/hdf5-reader/src/superblock.rs": {
+        "size": 9712,
+        "sha256": "64c28f4b45ab80fc434b0f5f1dac83ff6fafb63577db6c15f405136440ff0fed"
+      },
+      "reader-backports/hdf5-reader/src/symbol_table.rs": {
+        "size": 10047,
+        "sha256": "b553ba1f5859b187bc22aa146cbec1b1b6e38c611d4ffa92b183f8e327985753"
+      },
+      "reader-backports/netcdf-reader/Cargo.toml": {
+        "size": 2803,
+        "sha256": "3051261e393e6867b065f6740e8b8570b7f95f1d55df6d3d66c88a0e6f077f33"
+      },
+      "reader-backports/netcdf-reader/LICENSE-APACHE": {
+        "size": 8464,
+        "sha256": "7e1c4927d7c8765c73e234c2da19c423dfafc9c662e6d028277f9e77476445bb"
+      },
+      "reader-backports/netcdf-reader/LICENSE-MIT": {
+        "size": 1067,
+        "sha256": "24a4eeee33afc227bd3e796f772741250b2c93eae1cdba65e775ef8005dfb4b1"
+      },
+      "reader-backports/netcdf-reader/PROVENANCE.json": {
+        "size": 3357,
+        "sha256": "d35cc18475750fd1edffb52ea5daec0f85eabd640e64c8978e8af05105bc5c54"
+      },
+      "reader-backports/netcdf-reader/README.md": {
+        "size": 12583,
+        "sha256": "fe4b38a268a3ca02d2789b94bca3656a488553b4281b4e682f33201664faedf5"
+      },
+      "reader-backports/netcdf-reader/UPSTREAM-Cargo.toml": {
+        "size": 1347,
+        "sha256": "b635e183e487fd53652f069dc6d8b5b6eee28eeee1417ea015c9f88f73865a8d"
+      },
+      "reader-backports/netcdf-reader/UPSTREAM-VCS.json": {
+        "size": 107,
+        "sha256": "0350ca7a38aff0f50597114289ce104840e38a31ebf10c184b58267eeaf19eb6"
+      },
+      "reader-backports/netcdf-reader/src/cf/axes.rs": {
+        "size": 12767,
+        "sha256": "13be78f68255b727b21941495b1683d11a6f0ce731a17965935adbed59b42031"
+      },
+      "reader-backports/netcdf-reader/src/cf/bounds.rs": {
+        "size": 3217,
+        "sha256": "17ffc45db0989c808d80f3919984ba42f9590c9122408befc06a47e1e477698f"
+      },
+      "reader-backports/netcdf-reader/src/cf/crs.rs": {
+        "size": 9677,
+        "sha256": "2f87cc8f517446768b3ba84e1acb236bcf6746eb1bab8148e81bfd7c8a05230a"
+      },
+      "reader-backports/netcdf-reader/src/cf/mod.rs": {
+        "size": 1408,
+        "sha256": "29d0eed5f2c4d110a7182900ffb8e61e35a4da2f9523ee9b48d4c25dd5f2007f"
+      },
+      "reader-backports/netcdf-reader/src/cf/time.rs": {
+        "size": 37776,
+        "sha256": "b92b330af8d76d64573e63136e0801542f33510854df6853dea4bc213ae4e6b7"
+      },
+      "reader-backports/netcdf-reader/src/classic/data.rs": {
+        "size": 51616,
+        "sha256": "1a32f780ad522b7624ceee94d5ea76f7c294e7dd088dd82921aee6347a006e8e"
+      },
+      "reader-backports/netcdf-reader/src/classic/header.rs": {
+        "size": 37154,
+        "sha256": "a428b834edbbace63c725f1ebc08ef3683ea5eac07ee056818a4e1ec2d09d18d"
+      },
+      "reader-backports/netcdf-reader/src/classic/mod.rs": {
+        "size": 7584,
+        "sha256": "129aaa7626e40116bc715f71cd5c53201c8f31b114524a11a8de643f7fdc2bc1"
+      },
+      "reader-backports/netcdf-reader/src/classic/storage.rs": {
+        "size": 6397,
+        "sha256": "79bade957e26c5cfb2a28e8da0eca569c2dc3c52d8ced7a3146354160b72b27b"
+      },
+      "reader-backports/netcdf-reader/src/classic/types.rs": {
+        "size": 3028,
+        "sha256": "9fe2dd3a7aceb863cd3bef4870aac29c02064d2f830611a04d1989924c3ac8c3"
+      },
+      "reader-backports/netcdf-reader/src/classic/variable.rs": {
+        "size": 39531,
+        "sha256": "c5c8d3e8cdbd621b01660ec1561bdbe01984a1ed58f84085f61d5992c3aad4ac"
+      },
+      "reader-backports/netcdf-reader/src/error.rs": {
+        "size": 1519,
+        "sha256": "eb2f0ad3ffd310804e1bba665713799a01677c87e6868a52522609cf65a8b4b1"
+      },
+      "reader-backports/netcdf-reader/src/lib.rs": {
+        "size": 57396,
+        "sha256": "3bd98abd9d48643b976ada4f7160c408d9b3d7f3524e85f2216f81089a1ac855"
+      },
+      "reader-backports/netcdf-reader/src/masked.rs": {
+        "size": 5384,
+        "sha256": "a1a4b5b691bfa859c4be977329d236af5114286571121f43661f8afa27716435"
+      },
+      "reader-backports/netcdf-reader/src/nc4/attributes.rs": {
+        "size": 6699,
+        "sha256": "85e0f6fabf31d2e5fd6299e03b75dd634d708aa2b80bd132f0bcab999f3180ef"
+      },
+      "reader-backports/netcdf-reader/src/nc4/dimensions.rs": {
+        "size": 4616,
+        "sha256": "39e387a9cfa7b659882f12fa813124a70ccab3d64a752f7ad212f29fcf33cb77"
+      },
+      "reader-backports/netcdf-reader/src/nc4/groups.rs": {
+        "size": 9821,
+        "sha256": "7ee002d6fc6f9dfc95cd8979f311bdfcaefb0df410adb5f9b852630274d523b9"
+      },
+      "reader-backports/netcdf-reader/src/nc4/mod.rs": {
+        "size": 20685,
+        "sha256": "d063257a5f6ff5163cb3335e7c6c1d6c9a278d21ea0e14b7c15be5f2baabea95"
+      },
+      "reader-backports/netcdf-reader/src/nc4/types.rs": {
+        "size": 9953,
+        "sha256": "8935f3302299de580f1953eb2ff4f74433d648f8554e72bdda650f62eade9750"
+      },
+      "reader-backports/netcdf-reader/src/nc4/variables.rs": {
+        "size": 14030,
+        "sha256": "c3dce236701c59be9c77da5ed3806b3884db149caf369c494493bed618daef67"
+      },
+      "reader-backports/netcdf-reader/src/types.rs": {
+        "size": 763,
+        "sha256": "63905e39f6928a08f535394e770d577b880bda9195fcf76759e63ae19032ef20"
+      },
+      "reader-backports/netcdf-reader/src/unpack.rs": {
+        "size": 3409,
+        "sha256": "389a13a47a282ed95dcfcdb3df07ba039a3c66603d966b4eacd2f6ff8b634977"
+      },
+      "reader-backports/netcdf-reader/src/user_defined.rs": {
+        "size": 20136,
+        "sha256": "45803f57ab037a2fcb24e6ad7b5a8f7fb1cf6e50d8f60ad34c8133e1782f7ba2"
+      },
+      "nirs4all_formats_wasm_bg.wasm.d.ts": {
+        "size": 1882,
+        "sha256": "5ec7880fb0e0d5b871eb0861dedd607460c97195d1db3773064b0a44c4fbe916"
+      }
+    },
+    "browser_files": {
+      "package.json": {
+        "size": 609,
+        "sha256": "3ec19b2500ad81b27fc052aca4eb2546d0206f508177fb65ec9bbbbf45217d6e",
+        "url": "https://formats.nirs4all.org/pkg/package.json"
+      },
+      "nirs4all_formats_wasm.js": {
+        "size": 25648,
+        "sha256": "580d48c9387721e25d3852ee9384a729cf8a1c825d593fac7b70680d699f30da",
+        "url": "https://formats.nirs4all.org/pkg/nirs4all_formats_wasm.js"
+      },
+      "nirs4all_formats_wasm.d.ts": {
+        "size": 5249,
+        "sha256": "a1e7f3f502168cd814404b9f8c11a642b5387926fbea4cabe6323b51efc05432",
+        "url": "https://formats.nirs4all.org/pkg/nirs4all_formats_wasm.d.ts"
+      },
+      "nirs4all_formats_wasm_bg.wasm": {
+        "size": 5815814,
+        "sha256": "17c1bb6e1a79b1fd08d376fe2a4410320c18501deb6355a4c8cede0e253f1722",
+        "url": "https://formats.nirs4all.org/pkg/nirs4all_formats_wasm_bg.wasm"
+      },
+      "nirs4all_formats_wasm_bg.wasm.d.ts": {
+        "size": 1882,
+        "sha256": "5ec7880fb0e0d5b871eb0861dedd607460c97195d1db3773064b0a44c4fbe916",
+        "url": "https://formats.nirs4all.org/pkg/nirs4all_formats_wasm_bg.wasm.d.ts"
+      },
+      "README.md": {
+        "size": 2918,
+        "sha256": "724b92047f40593956684d2e0e58fced595df93eb01c953792bc5e43ef0345ee",
+        "url": "https://formats.nirs4all.org/pkg/README.md"
+      }
+    },
+    "browser_deployment": {
+      "id": 7480703764,
+      "sha": "051fe9c0433160f26e8090566418dbc7546c4f96",
+      "run_url": "https://github.com/GBeurier/nirs4all-formats/actions/runs/41361634577",
+      "base_url": "https://formats.nirs4all.org/"
+    },
+    "staged_package": "nirs4all-formats-wasm",
+    "runtime_catalog": {
+      "count": 46,
+      "json_sha256": "4c74d3aa55dd9563e157c42cdac145250af2d658901da53c0155959df2cf58ed"
+    }
+  },
+  "methods": {
+    "package": "@nirs4all/methods",
+    "version": "1.3.14",
+    "destination": "src/engine/wasm/methods",
+    "source": {
+      "repository": "https://github.com/GBeurier/nirs4all-methods",
+      "commit": "6a6ba8cf5e4930953d2fc10c80748547805fc87d",
+      "tree": "36d69c3c80b1e07d29264a59b1acb5c66a0cb933"
+    },
+    "registry": {
+      "metadata_url": "https://registry.npmjs.org/@nirs4all/methods/1.3.14",
+      "tarball_url": "https://registry.npmjs.org/@nirs4all/methods/-/methods-1.3.14.tgz",
+      "size": 1192577,
+      "sha256": "6ccb9a9387d0e0c1fa9c85297996acaa21e734e15b3fc3c159034dc66834990d",
+      "sha1": "c50cd0bcb2bc653ffb2e814b16c3471d39d6a8a9",
+      "integrity": "sha512-f6xDeOohtFBebWGosyJvMQiZnwuLij9njzYqfUoZkUfiwhut5RrOLxRuawZiORObLuJho44pu3rvCbvCAxfF+w=="
+    },
+    "projection": {
+      "package.json": "package.json",
+      "LICENSE-CeCILL-2.1": "LICENSE-CeCILL-2.1",
+      "README.md": "README.md",
+      "LICENSE": "LICENSE",
+      "estimatorRolesGenerated.d.ts": "dist/estimatorRolesGenerated.d.ts",
+      "selection.d.ts": "dist/selection.d.ts",
+      "selection.js": "dist/selection.js",
+      "context.d.ts": "dist/context.d.ts",
+      "ffi.d.ts": "dist/ffi.d.ts",
+      "methodResult.js": "dist/methodResult.js",
+      "types.js": "dist/types.js",
+      "multimodalPipeline.d.ts": "dist/multimodalPipeline.d.ts",
+      "preprocessing.js": "dist/preprocessing.js",
+      "nativeSplitter.d.ts": "dist/nativeSplitter.d.ts",
+      "preflightDiagnostics.d.ts": "dist/preflightDiagnostics.d.ts",
+      "estimatorRoles.d.ts": "dist/estimatorRoles.d.ts",
+      "n4m.js": "dist/n4m.js",
+      "spectralEncoding.d.ts": "dist/spectralEncoding.d.ts",
+      "nativeAugmentation.d.ts": "dist/nativeAugmentation.d.ts",
+      "nativeSplitter.js": "dist/nativeSplitter.js",
+      "ffi.js": "dist/ffi.js",
+      "model.d.ts": "dist/model.d.ts",
+      "nativePreprocessingPipeline.d.ts": "dist/nativePreprocessingPipeline.d.ts",
+      "preprocessing.d.ts": "dist/preprocessing.d.ts",
+      "preflightDiagnostics.js": "dist/preflightDiagnostics.js",
+      "estimatorRoles.js": "dist/estimatorRoles.js",
+      "multimodalPipeline.js": "dist/multimodalPipeline.js",
+      "optimization.d.ts": "dist/optimization.d.ts",
+      "types.d.ts": "dist/types.d.ts",
+      "THIRD_PARTY_LICENSES.md": "dist/THIRD_PARTY_LICENSES.md",
+      "config.d.ts": "dist/config.d.ts",
+      "methodResult.d.ts": "dist/methodResult.d.ts",
+      "serialization.js": "dist/serialization.js",
+      "index.d.ts": "dist/index.d.ts",
+      "nativeModel.js": "dist/nativeModel.js",
+      "config.js": "dist/config.js",
+      "context.js": "dist/context.js",
+      "nativeModel.d.ts": "dist/nativeModel.d.ts",
+      "rolePipeline.d.ts": "dist/rolePipeline.d.ts",
+      "spectralEncoding.js": "dist/spectralEncoding.js",
+      "nativeAugmentation.js": "dist/nativeAugmentation.js",
+      "optimization.js": "dist/optimization.js",
+      "rolePipeline.js": "dist/rolePipeline.js",
+      "nativePreprocessingPipeline.js": "dist/nativePreprocessingPipeline.js",
+      "n4m.wasm": "dist/n4m.wasm",
+      "serialization.d.ts": "dist/serialization.d.ts",
+      "estimatorRolesGenerated.js": "dist/estimatorRolesGenerated.js",
+      "index.js": "dist/index.js",
+      "model.js": "dist/model.js"
+    },
+    "source_files": {
+      "LICENSES/AGPL-3.0-or-later.txt": {
+        "source_path": "LICENSES/AGPL-3.0-or-later.txt",
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+      },
+      "LICENSES/Apache-2.0.txt": {
+        "source_path": "LICENSES/Apache-2.0.txt",
+        "size": 10280,
+        "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+      },
+      "LICENSES/BSD-3-Clause.txt": {
+        "source_path": "LICENSES/BSD-3-Clause.txt",
+        "size": 1460,
+        "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
+      },
+      "LICENSES/COMMERCIAL-LICENSE.md": {
+        "source_path": "LICENSES/COMMERCIAL-LICENSE.md",
+        "size": 680,
+        "sha256": "f26f5d9ce50fbbebf089b921bcb44add711cb066ec4dbb767da450dc767a81a6"
+      },
+      "LICENSES/COMMERCIAL-LICENSE_FR.md": {
+        "source_path": "LICENSES/COMMERCIAL-LICENSE_FR.md",
+        "size": 769,
+        "sha256": "d6cb8560f7f4ba35443d91e47280da0e9b2369ba05b597db9d812646cc4336ee"
+      },
+      "LICENSES/CeCILL-2.1.txt": {
+        "source_path": "LICENSES/CeCILL-2.1.txt",
+        "size": 21778,
+        "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+      },
+      "LICENSES/MIT.txt": {
+        "source_path": "LICENSES/MIT.txt",
+        "size": 1078,
+        "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+      },
+      "LICENSING.md": {
+        "source_path": "LICENSING.md",
+        "size": 2133,
+        "sha256": "674f3ab09bc6fca997bc765bbd5b710aabecb60d68f722ed4182bf40ec274bf1"
+      },
+      "THIRD_PARTY_NOTICES.md": {
+        "source_path": "THIRD_PARTY_NOTICES.md",
+        "size": 1714,
+        "sha256": "4106fb2caf597b5392140d24ddce905c6e4e990521aea68c7c10c7a817024933"
+      },
+      "LICENSING_FR.md": {
+        "size": 2280,
+        "sha256": "6996c1e0385782ca1d6adf3a2fe07189a4bbcad8be727adb7cac0b85c71255a1",
+        "source_path": "LICENSING_FR.md"
+      },
+      "NOTICE.md": {
+        "size": 1818,
+        "sha256": "ccb385dfd092825e9c4638f44f4803a15b1f3a0a47cffe80632294b6344beced",
+        "source_path": "NOTICE.md"
+      }
+    },
+    "files": {
+      "LICENSE": {
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+      },
+      "LICENSE-CeCILL-2.1": {
+        "size": 21778,
+        "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+      },
+      "LICENSES/AGPL-3.0-or-later.txt": {
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+      },
+      "LICENSES/Apache-2.0.txt": {
+        "size": 10280,
+        "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+      },
+      "LICENSES/BSD-3-Clause.txt": {
+        "size": 1460,
+        "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
+      },
+      "LICENSES/COMMERCIAL-LICENSE.md": {
+        "size": 680,
+        "sha256": "f26f5d9ce50fbbebf089b921bcb44add711cb066ec4dbb767da450dc767a81a6"
+      },
+      "LICENSES/COMMERCIAL-LICENSE_FR.md": {
+        "size": 769,
+        "sha256": "d6cb8560f7f4ba35443d91e47280da0e9b2369ba05b597db9d812646cc4336ee"
+      },
+      "LICENSES/CeCILL-2.1.txt": {
+        "size": 21778,
+        "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+      },
+      "LICENSES/MIT.txt": {
+        "size": 1078,
+        "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+      },
+      "LICENSING.md": {
+        "size": 2133,
+        "sha256": "674f3ab09bc6fca997bc765bbd5b710aabecb60d68f722ed4182bf40ec274bf1"
+      },
+      "README.md": {
+        "size": 10080,
+        "sha256": "37275ead30b225f317abe055eec1a9e279c1ed80d98a21ae86ad8feb14144e52"
+      },
+      "THIRD_PARTY_LICENSES.md": {
+        "size": 6727,
+        "sha256": "01db4c791ed3a5fbdd7bc6efcc9f5bf75f6a879b63f0ceb6c52098fa4732f850"
+      },
+      "THIRD_PARTY_NOTICES.md": {
+        "size": 1714,
+        "sha256": "4106fb2caf597b5392140d24ddce905c6e4e990521aea68c7c10c7a817024933"
+      },
+      "config.d.ts": {
+        "size": 512,
+        "sha256": "50baeef98dc3ed4e3840aeb2146c61d2a3c66ad598f4ef0818c2ea6c887ef7f9"
+      },
+      "config.js": {
+        "size": 2003,
+        "sha256": "12cc0e1a9cb3d598abe8e4d9e08df659227b3d95006e8bbb424f8569a882d8fd"
+      },
+      "context.d.ts": {
+        "size": 800,
+        "sha256": "701d7344a07f4f3f3487ce182a04e3493781f5818e0d69acdb2b11dfaf668ec6"
+      },
+      "context.js": {
+        "size": 1750,
+        "sha256": "653fe6020f043ff47264076ee05d8eaf6b59cfb8fa9fb6ad6697e1b3a799e532"
+      },
+      "estimatorRoles.d.ts": {
+        "size": 7845,
+        "sha256": "2389591087f0dbea32e6b252ac4f16b51e8bc513f8f1e9f440f50b94f531d38a"
+      },
+      "estimatorRoles.js": {
+        "size": 26654,
+        "sha256": "c41be79a155bf30f9caa34e0b19e2aee4d3af38748c2708451cf7c0ac17dd250"
+      },
+      "estimatorRolesGenerated.d.ts": {
+        "size": 171904,
+        "sha256": "d1ebff2dc88f9ac0040a1a1a3f40293c8ca82903e57ad0a93c9e1e066fcc1747"
+      },
+      "estimatorRolesGenerated.js": {
+        "size": 116370,
+        "sha256": "54ff86c89146cefb132668eef64b4c1f513a1ab45c744f5ad1c34235524ce866"
+      },
+      "ffi.d.ts": {
+        "size": 2285,
+        "sha256": "cc1f3aa4183c1e9565485d257af728b2881e1663f00c98949969be1443556a15"
+      },
+      "ffi.js": {
+        "size": 5296,
+        "sha256": "f763414344bdfbef14b7ee0532598d0c85d8218cbe48658debc90b2b91032758"
+      },
+      "index.d.ts": {
+        "size": 4406,
+        "sha256": "b1d0105f2b5de1897e05022520323bda58fc9bc52589e2f278e74c85f7b1ec23"
+      },
+      "index.js": {
+        "size": 3439,
+        "sha256": "9b09508f7b2e7dbb665147b1c49b153a7637e82c8f8366e8cad2f48f37547fee"
+      },
+      "methodResult.d.ts": {
+        "size": 1514,
+        "sha256": "b75ef84c1fdfb73a3a20e342a4e83170ee350118d1d6bdc152c41569636e9cf4"
+      },
+      "methodResult.js": {
+        "size": 7265,
+        "sha256": "ff8099d98acdf5b44bbe319ddf90692adae86e6774a13339c3292b0b02d384e2"
+      },
+      "model.d.ts": {
+        "size": 11450,
+        "sha256": "545e4dc89f7543d822d761ec503d6e6bb5d274501a6c6d0de8af3ab752dc0eba"
+      },
+      "model.js": {
+        "size": 28120,
+        "sha256": "7fdf14864a402895fdcc253762b0e5387f9adbf24d514497e1adf678f5516466"
+      },
+      "multimodalPipeline.d.ts": {
+        "size": 2983,
+        "sha256": "8c22fec8585580e58ccbac637be206eaa460a0e89d0e684a9042b8a299428951"
+      },
+      "multimodalPipeline.js": {
+        "size": 28195,
+        "sha256": "f378c2a72c7894980a00194c2c1d7715166b706a85edec8191012d0a4563e98d"
+      },
+      "n4m.js": {
+        "size": 196966,
+        "sha256": "256aca1d6d03d210a053d08de99a01a1a63fd19aba3512cc402b8ac13c1e3023"
+      },
+      "n4m.wasm": {
+        "size": 3119339,
+        "sha256": "f965154ea02427ae30a1b017474dc5491ea8eab394c34ef2e0b9bde6db78e48f"
+      },
+      "nativeAugmentation.d.ts": {
+        "size": 1340,
+        "sha256": "55e3f2d7692ec5da253c8b17c3e9b9efaa497c6a4a465e7c37cb6c224905aee2"
+      },
+      "nativeAugmentation.js": {
+        "size": 2500,
+        "sha256": "a91934e77c01fcdf9c9cc5771d9a30eb9283de4259dedbc572b11044f85542fd"
+      },
+      "nativeModel.d.ts": {
+        "size": 1755,
+        "sha256": "0c4d44c2f7eb93bf896f29e5661ce81374880457c4869f3958e19b6b0006c1e1"
+      },
+      "nativeModel.js": {
+        "size": 5033,
+        "sha256": "6cfe1fdc6c0ff3b7868295e2b17a039eadefe8dfd45879197717dea1fe3cf2e3"
+      },
+      "nativePreprocessingPipeline.d.ts": {
+        "size": 1591,
+        "sha256": "7f264bf4dd9733450ad6ef3f64796f959c666e64c0e53030d7c44c91e7bb8469"
+      },
+      "nativePreprocessingPipeline.js": {
+        "size": 11050,
+        "sha256": "f11d93d683d54cace9454deeedda640b94c2558593f0c8d504b5c61e7b49f267"
+      },
+      "nativeSplitter.d.ts": {
+        "size": 1040,
+        "sha256": "45523cf0dc068f8e61d2e30835b3f7249388a5949cb6061ad71e3c8728ca924d"
+      },
+      "nativeSplitter.js": {
+        "size": 5293,
+        "sha256": "7da33f7a960e6d5cd2dcbf3ca16e6e04a5479396030c381f512d69e1ee5e1262"
+      },
+      "optimization.d.ts": {
+        "size": 4026,
+        "sha256": "1205fbd561a0d0121b3a08e5c2cbab5f4055d11e55d691f4f835d67708db3a19"
+      },
+      "optimization.js": {
+        "size": 30016,
+        "sha256": "1b61274b88e8680758e779c58995fbb035fce8f1330c6d8c482cebb3f2ce0128"
+      },
+      "package.json": {
+        "size": 2828,
+        "sha256": "001443143f7c5281776ab408bde23acf1f3a1b6faaeced283fd725c3dcac19a3"
+      },
+      "preflightDiagnostics.d.ts": {
+        "size": 20381,
+        "sha256": "ce9dae1b279f1c3cf763d6057c20bdbd4565fd6cb3b9d951f680b30ed2989ceb"
+      },
+      "preflightDiagnostics.js": {
+        "size": 49992,
+        "sha256": "b96242fc5cba7a8b53178ccdad321425522a920ad329bff3dffabb64e359fce7"
+      },
+      "preprocessing.d.ts": {
+        "size": 985,
+        "sha256": "9408b9c93abdc74af2e0c8b042fdcd17ea1701961b6f6a746e0cc7ad1ed79a49"
+      },
+      "preprocessing.js": {
+        "size": 4747,
+        "sha256": "fc974fee5d75c314328941cf10482ebd0b5ca16ba999275ece6f1905046ed730"
+      },
+      "rolePipeline.d.ts": {
+        "size": 4750,
+        "sha256": "ff7bff5b830f829f90e039cd543dd7c052c7835031bd8e3b7e777324564a1f41"
+      },
+      "rolePipeline.js": {
+        "size": 20161,
+        "sha256": "03dabc465b21515add432601b378bd17eae7d962d020f18f7cff4d2346343fbc"
+      },
+      "selection.d.ts": {
+        "size": 508,
+        "sha256": "b42f61adb1047978a3f719b109342d3be37850f7155a19993159c45393f1c01e"
+      },
+      "selection.js": {
+        "size": 11428,
+        "sha256": "876fba576bf819d3bce54cb8d00f8a3804b324dc5379179b78b7a12c5f56cdbc"
+      },
+      "serialization.d.ts": {
+        "size": 2028,
+        "sha256": "0ca1d47fb4b6d189b2fbfa270d4669ed3505c7896636b5607757c2a05c14ed0a"
+      },
+      "serialization.js": {
+        "size": 5154,
+        "sha256": "1292128d6e7eb30fbbdd1b6490bfc543c1769c4b29af9a8f4548377b8640a4a8"
+      },
+      "spectralEncoding.d.ts": {
+        "size": 746,
+        "sha256": "93e20866de551a539a65d9e6597385d79c8343130d9cc7c2a5b2870cd391dff7"
+      },
+      "spectralEncoding.js": {
+        "size": 4117,
+        "sha256": "f86bf17ecd8e06d23d961a6c1cfce171899e1976d68ac1ebc58bb5958b06288d"
+      },
+      "types.d.ts": {
+        "size": 2367,
+        "sha256": "e3f5fc4c2fbc2d6eec69620f0b94b36f8f32c5116edd8ed42332798fb03ff482"
+      },
+      "types.js": {
+        "size": 4906,
+        "sha256": "2711cd0c790d2b6de7827c86299481fd64bb39736419d931f482066193bf9f92"
+      },
+      "LICENSING_FR.md": {
+        "size": 2280,
+        "sha256": "6996c1e0385782ca1d6adf3a2fe07189a4bbcad8be727adb7cac0b85c71255a1"
+      },
+      "NOTICE.md": {
+        "size": 1818,
+        "sha256": "ccb385dfd092825e9c4638f44f4803a15b1f3a0a47cffe80632294b6344beced"
+      }
+    }
+  },
+  "datasets": {
+    "package": "@nirs4all/datasets-wasm",
+    "version": "0.3.18",
+    "destination": "src/engine/wasm/datasets",
+    "source": {
+      "repository": "https://github.com/GBeurier/nirs4all-datasets",
+      "commit": "15fe4ce830f4985e5b628bcaf49d4106f45fa1e1",
+      "tree": "467e588e437338c723a0f0e69414d57a9f96dbd2"
+    },
+    "registry": {
+      "metadata_url": "https://registry.npmjs.org/@nirs4all/datasets-wasm/0.3.18",
+      "tarball_url": "https://registry.npmjs.org/@nirs4all/datasets-wasm/-/datasets-wasm-0.3.18.tgz",
+      "size": 107761,
+      "sha256": "0105502a65eb173bb3c7a34a6b77cef61c367d19adeaa7290f46f2f695a6da89",
+      "sha1": "67374d55aeb73b21c979712e40f1aa89cef317ba",
+      "integrity": "sha512-dB2k/03YAQ0c2c5p2jPQlzQzOHIYBWpfuiEMEiBoCGpSmQxh6QkvThZr0ZKJqdCeaDpDvSDsdiy2247m2dnxYg=="
+    },
+    "projection": {
+      "package.json": "package.json",
+      "LICENSE-CeCILL-2.1": "LICENSE-CeCILL-2.1",
+      "README.md": "README.md",
+      "LICENSE": "LICENSE"
+    },
+    "source_files": {},
+    "files": {
+      "LICENSE": {
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+      },
+      "LICENSE-CeCILL-2.1": {
+        "size": 21778,
+        "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+      },
+      "README.md": {
+        "size": 1551,
+        "sha256": "a9d335168cc534a9367661135d6db4fc8d9483b7ca1fa5cff7c72d5aeb3cb81f"
+      },
+      "nirs4all_datasets_wasm.d.ts": {
+        "size": 2179,
+        "sha256": "56155de207a39df2f6687e37e47c29b25f130c60dc5e5106088d64fd7e20294d"
+      },
+      "nirs4all_datasets_wasm.js": {
+        "size": 8824,
+        "sha256": "4a24dc7a06c03d5316cdcb036697b3988b202629d93cd08ef5312c5d6f4ccd4f"
+      },
+      "nirs4all_datasets_wasm_bg.wasm": {
+        "size": 237165,
+        "sha256": "d7bbaa6ae836092a68d205d8966154866a0754be08fd2b85df9fbcd136e92368"
+      },
+      "package.json": {
+        "size": 845,
+        "sha256": "e40899e17e7ff2acf798d3a3e6198a2b1c5b75439e2c1fe7b5ececf5dc6c63d0"
+      },
+      "nirs4all_datasets_wasm_bg.wasm.d.ts": {
+        "size": 688,
+        "sha256": "5306e0127507cd339d4039117701a8968eb69058658e01641ce0ba54378f1ae8"
+      }
+    },
+    "build": {
+      "target": "web",
+      "profile": "release",
+      "cargo_locked": true,
+      "manifest": "bindings/wasm/Cargo.toml",
+      "features": [],
+      "wasm_bindgen": "0.2.129",
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "lock_sha256": "55e3caa9faac908d80923bbcbc9c184acc939a6f1f6fa52a9371111057a638af",
+      "executions": 1,
+      "independent_rebuild_claimed": false
+    },
+    "package_type_normalization": "module"
+  }
+}

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: CECILL-2.1
+// SPDX-License-Identifier: CECILL-2.1 OR AGPL-3.0-or-later
 // Native predict-only model promoted from an affine MethodResult.
-import { checkStatus, getModule, makeMatrixView } from "./ffi.js";
+import { checkStatus, getModule, makeMatrixView, readArrayView } from "./ffi.js";
+import { ModelArray } from "./types.js";
 export class NativeModel {
     _ptr;
     _ctx;
@@ -68,6 +69,32 @@ export class NativeModel {
         finally {
             m._free(targetsPtr);
         }
+    }
+    /** Copy one fitted-model array (n4m_model_get_array). */
+    getArray(kind) {
+        const m = getModule();
+        const out = m._malloc(4);
+        try {
+            m.setValue(out, 0, "i32");
+            checkStatus(m.ccall("n4m_model_get_array", "number", ["number", "number", "number", "number"], [this._ctx.handle, this._ptr, kind, out]), this._ctx.handle);
+            const arr = m.getValue(out, "i32");
+            try {
+                return readArrayView(arr);
+            }
+            finally {
+                m.ccall("n4m_array_free", null, ["number"], [arr]);
+            }
+        }
+        finally {
+            m._free(out);
+        }
+    }
+    /** Component resolution and unresolved flags; throws N4mError
+     *  (unsupported) for models that do not record them. */
+    componentResolution() {
+        const resolution = this.getArray(ModelArray.COMPONENT_RESOLUTION).data[0];
+        const flags = this.getArray(ModelArray.UNRESOLVED_COMPONENTS).data;
+        return { resolution, unresolved: Array.from(flags, (v) => v !== 0) };
     }
     /** Export the complete native model as N4MM bytes. */
     toN4mm() {

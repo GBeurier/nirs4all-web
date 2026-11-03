@@ -106,7 +106,7 @@ describe('declared browser relation identities', () => {
     const native = vi.fn(() => JSON.stringify({ id: 'outer', sample_ids: [], folds: [], sample_groups: {} }))
     const ds = cohort()
     buildNativeFolds({ group_kfold_split_json: native } as unknown as DagMlMod, ds, { folds: 3, seed: 42 }, [0, 1, 2, 3])
-    expect(native).toHaveBeenCalledWith('{"n_splits":3}', JSON.stringify({ s0: 'g0', s1: 'g0', s2: 'g1', s3: 'g1' }), 'outer')
+    expect(native).toHaveBeenCalledWith('{"n_splits":3}', JSON.stringify({ s0: 'g0', s1: 'g0', s2: 'g1', s3: 'g1' }), 'outer', undefined)
   })
   it('does not fallback to row KFold when groups or the native export are missing', () => {
     const rowSplit = vi.fn()

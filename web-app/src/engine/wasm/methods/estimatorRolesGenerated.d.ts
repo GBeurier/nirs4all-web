@@ -1658,6 +1658,26 @@ export declare class ApproximatePress extends NativeProcedure implements Procedu
     constructor(params?: ApproximatePressParams);
     run(X: Matrix, y?: Matrix | Float64Array | ArrayLike<number>, inputs?: FitInputs): Record<string, ProcedureOutput>;
 }
+/** Parameters of LocalDensity; unset values take the native defaults. */
+export interface LocalDensityParams {
+    /** Default []. */
+    valid_mask?: number[];
+    /** Default "training". */
+    mode?: "training" | "novelty";
+    /** Default 20. */
+    n_neighbors?: number;
+}
+/** Native `diagnostics.local_density` (generic). */
+export declare class LocalDensity extends NativeProcedure implements Procedure {
+    readonly methodId = "diagnostics.local_density";
+    readonly paramTypes: {
+        readonly valid_mask: "int_array";
+        readonly mode: "enum";
+        readonly n_neighbors: "int";
+    };
+    constructor(params?: LocalDensityParams);
+    run(X: Matrix, y?: Matrix | Float64Array | ArrayLike<number>, inputs?: FitInputs): Record<string, ProcedureOutput>;
+}
 /** Parameters of ModelSelection; unset values take the native defaults. */
 export interface ModelSelectionParams {
 }
@@ -1666,6 +1686,23 @@ export declare class ModelSelection extends NativeProcedure implements Procedure
     readonly methodId = "diagnostics.model_selection";
     readonly paramTypes: {};
     constructor(params?: ModelSelectionParams);
+    run(X: Matrix, y?: Matrix | Float64Array | ArrayLike<number>, inputs?: FitInputs): Record<string, ProcedureOutput>;
+}
+/** Parameters of PCAReferenceQc; unset values take the native defaults. */
+export interface PCAReferenceQcParams {
+    /** Default []. */
+    valid_mask?: number[];
+    /** Default 5. */
+    n_components?: number;
+}
+/** Native `diagnostics.pca_reference_qc` (generic). Required inputs: target_domain. */
+export declare class PCAReferenceQc extends NativeProcedure implements Procedure {
+    readonly methodId = "diagnostics.pca_reference_qc";
+    readonly paramTypes: {
+        readonly valid_mask: "int_array";
+        readonly n_components: "int";
+    };
+    constructor(params?: PCAReferenceQcParams);
     run(X: Matrix, y?: Matrix | Float64Array | ArrayLike<number>, inputs?: FitInputs): Record<string, ProcedureOutput>;
 }
 /** Parameters of PLSDiagnostics; unset values take the native defaults. */
@@ -1731,6 +1768,72 @@ export declare class RegressionMetrics extends NativeProcedure implements Proced
     readonly methodId = "diagnostics.regression_metrics";
     readonly paramTypes: {};
     constructor(params?: RegressionMetricsParams);
+    run(X: Matrix, y?: Matrix | Float64Array | ArrayLike<number>, inputs?: FitInputs): Record<string, ProcedureOutput>;
+}
+/** Parameters of SpectralEventsQc; unset values take the native defaults. */
+export interface SpectralEventsQcParams {
+    /** Default []. */
+    valid_mask?: number[];
+    /** Default "index". */
+    axis_basis?: "index" | "physical";
+    /** Default []. */
+    axis_values?: number[];
+    /** Default 8. */
+    outlier_threshold?: number;
+    /** Optional: unset by default. */
+    clip_lower?: number;
+    /** Optional: unset by default. */
+    clip_upper?: number;
+    /** Default 0. */
+    clip_tolerance?: number;
+}
+/** Native `diagnostics.spectral_events_qc` (generic). */
+export declare class SpectralEventsQc extends NativeProcedure implements Procedure {
+    readonly methodId = "diagnostics.spectral_events_qc";
+    readonly paramTypes: {
+        readonly valid_mask: "int_array";
+        readonly axis_basis: "enum";
+        readonly axis_values: "double_array";
+        readonly outlier_threshold: "double";
+        readonly clip_lower: "double";
+        readonly clip_upper: "double";
+        readonly clip_tolerance: "double";
+    };
+    constructor(params?: SpectralEventsQcParams);
+    run(X: Matrix, y?: Matrix | Float64Array | ArrayLike<number>, inputs?: FitInputs): Record<string, ProcedureOutput>;
+}
+/** Parameters of SpectralNoiseProxy; unset values take the native defaults. */
+export interface SpectralNoiseProxyParams {
+    /** Default []. */
+    valid_mask?: number[];
+}
+/** Native `diagnostics.spectral_noise_proxy` (generic). */
+export declare class SpectralNoiseProxy extends NativeProcedure implements Procedure {
+    readonly methodId = "diagnostics.spectral_noise_proxy";
+    readonly paramTypes: {
+        readonly valid_mask: "int_array";
+    };
+    constructor(params?: SpectralNoiseProxyParams);
+    run(X: Matrix, y?: Matrix | Float64Array | ArrayLike<number>, inputs?: FitInputs): Record<string, ProcedureOutput>;
+}
+/** Parameters of SpectralReferenceQc; unset values take the native defaults. */
+export interface SpectralReferenceQcParams {
+    /** Default []. */
+    valid_mask?: number[];
+    /** Default "dataset_mean". */
+    reference_mode?: "dataset_mean" | "supplied";
+    /** Default []. */
+    reference_valid_mask?: number[];
+}
+/** Native `diagnostics.spectral_reference_qc` (generic). */
+export declare class SpectralReferenceQc extends NativeProcedure implements Procedure {
+    readonly methodId = "diagnostics.spectral_reference_qc";
+    readonly paramTypes: {
+        readonly valid_mask: "int_array";
+        readonly reference_mode: "enum";
+        readonly reference_valid_mask: "int_array";
+    };
+    constructor(params?: SpectralReferenceQcParams);
     run(X: Matrix, y?: Matrix | Float64Array | ArrayLike<number>, inputs?: FitInputs): Record<string, ProcedureOutput>;
 }
 /** Parameters of CorrelationFilter; unset values take the native defaults. */

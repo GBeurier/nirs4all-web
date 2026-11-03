@@ -1,3 +1,5 @@
+import { isFitRefusal } from './fit-refusal'
+import { nativePlanForVariant } from './native-plan'
 // DagMlEngine — the real WASM coordinator path. dag-ml's SequentialScheduler
 // (compiled to WASM) executes the cross-validation: it owns the fold loop, the
 // leakage-safe OOF assembly (by sampleId) and lineage, and invokes a JS
@@ -135,7 +137,7 @@ function expandSweepVariants(dsl: PipelineDSL): VariantPlan[] {
     if (!sweeps) return
     for (const [param, sweep] of Object.entries(sweeps)) {
       const values = sweepValues(sweep)
-      if (values.length > 1) dims.push({ nodeId, param, values })
+      if (values.length > 0) dims.push({ nodeId, param, values })
     }
   }
   dsl.steps.forEach((s, i) => collect(s.sweeps, stepIds[i]))
@@ -366,6 +368,7 @@ export class DagMlEngine implements Engine {
     // and run dag-ml's folds through the leakage-honest libn4m chain below. The
     // scheduler is reserved for model-only (single-node) graphs, which it runs cleanly.
     const multiNodeGraph = dsl.steps.length > 0 || (dsl.containers?.some((c) => c.container !== 'generator' && c.branches.length >= 2) ?? false) || !!dsl.branch
+    let nativePlanJson: string | undefined
     let variants: VariantPlan[]
     if (multiNodeGraph) {
       // dag-ml can't plan a multi-node graph in-browser (no per-node controller is
@@ -379,9 +382,8 @@ export class DagMlEngine implements Engine {
       try {
         const forcedPlanningFailure = dagMlRtSmokeForcedFailure('planning')
         if (forcedPlanningFailure) throw forcedPlanningFailure
-        const plan = JSON.parse(
-          dagml.build_execution_plan_json('plan:n4a', JSON.stringify(graph), JSON.stringify(campaign), manifestsJson),
-        ) as { variants: VariantPlan[] }
+        nativePlanJson = dagml.build_execution_plan_json('plan:n4a', JSON.stringify(graph), JSON.stringify(campaign), manifestsJson)
+        const plan = JSON.parse(nativePlanJson) as { variants: VariantPlan[] }
         variants = plan.variants.length ? plan.variants : [baseVariant]
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
@@ -518,7 +520,7 @@ export class DagMlEngine implements Engine {
           // A variant that cannot be fitted (e.g. too many PLS components for a
           // fold) is dropped from the search, as in nirs4all; the run fails only
           // when no variant fits.
-          if (!multiVariant || (error instanceof DOMException && error.name === 'AbortError')) throw error
+          if (!multiVariant || !isFitRefusal(error)) throw error
           firstError ??= error
           failedVariants.add(variant.variant_id)
           for (const bucket of buckets) bucket.length = 0
@@ -537,9 +539,33 @@ export class DagMlEngine implements Engine {
       try {
         const forcedSchedulerFailure = dagMlRtSmokeForcedFailure('scheduler')
         if (forcedSchedulerFailure) throw forcedSchedulerFailure
-        nodeResults = JSON.parse(
-          dagml.execute_campaign_phase_json('plan:n4a', JSON.stringify(graph), JSON.stringify(campaign), manifestsJson, 'run:n4a', cv.seed >>> 0, 'FIT_CV', invoke),
-        )
+        if (multiVariant && nativePlanJson) {
+          // Schedule each native-enumerated variant exactly once. An estimator
+          // refusal discards that variant's partial results; scheduler failures
+          // still fail closed under the strict profile.
+          nodeResults = []
+          let firstFitError: unknown
+          for (const variant of variants) {
+            controllerError = undefined
+            try {
+              const results = JSON.parse(dagml.execute_execution_plan_phase_json(
+                nativePlanForVariant(nativePlanJson, variant.variant_id), manifestsJson,
+                'run:n4a', cv.seed >>> 0, 'FIT_CV', invoke,
+              )) as NodeRes[]
+              nodeResults.push(...results)
+            } catch (error) {
+              if (signal?.aborted || !isFitRefusal(controllerError)) throw error
+              firstFitError ??= controllerError
+              failedVariants.add(variant.variant_id)
+            }
+          }
+          if (failedVariants.size === variants.length) throw firstFitError
+          controllerError = undefined
+        } else {
+          nodeResults = JSON.parse(
+            dagml.execute_campaign_phase_json('plan:n4a', JSON.stringify(graph), JSON.stringify(campaign), manifestsJson, 'run:n4a', cv.seed >>> 0, 'FIT_CV', invoke),
+          )
+        }
       } catch (err) {
         // A cancel mid-schedule surfaces as the JS controller's AbortError wrapped
         // in a dag-ml runtime_validation error — normalize it back to a clean

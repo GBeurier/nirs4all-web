@@ -121,7 +121,7 @@ export async function validateSpec(spec: DatasetSpec): Promise<{ ok: boolean; er
 
 /** AssembledDataset.to_full_value() as returned by io's `assembleDataset`. */
 interface IoMatrix {
-  data: number[]
+  data: Float64Array
   n_rows: number
   n_cols: number
 }
@@ -135,7 +135,7 @@ interface IoBlock {
   y_headers: string[]
   y_categorical?: Record<string, { categories?: string[] }>
   metadata: { n_rows: number; columns: { name: string; values: (number | string | null)[] }[] } | null
-  weights: number[] | null
+  weights: Float64Array | null
   weights_header: string | null
 }
 export interface AssembledFull {
@@ -206,7 +206,7 @@ export function mapAssembledToMaterialized(full: AssembledFull): MaterializedDat
       if (b.y && yCols > 0) {
         const v = b.y.data[r * yCols] // first target column
         yRaw[off + r] = v
-        labelsRaw.push(cats ? cats[Math.round(v)] ?? String(v) : Number.isFinite(v) ? String(v) : '')
+        labelsRaw.push(Number.isFinite(v) ? (cats ? cats[Math.round(v)] ?? String(v) : String(v)) : '')
       } else {
         yRaw[off + r] = NaN
         labelsRaw.push('')

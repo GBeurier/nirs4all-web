@@ -18,6 +18,7 @@
 // a model with recorded columns predicts through `predictNamedPipeline`, one
 // native RolePipeline rebuilt from the same states that holds the fitted names
 // and checks the input's.
+import { identifyNativeFitRefusal } from '../fit-refusal'
 import { nodeByType } from '@/catalog/nodes'
 import type { NativeMethodRef, NodeDef } from '@/catalog/types'
 import type { Mat } from '../algo/linalg'
@@ -112,8 +113,14 @@ const matrix = (m: Mat): Mat => ({ data: m.data, rows: m.rows, cols: m.cols })
 export function fitEstimator(type: string, params: Record<string, unknown>, X: Mat, ctx: FitContext): NativeEstimator {
   const def = nativeNode(type)
   const est = create<NativeEstimator>(def, params) as NativeEstimator
-  est.fit(matrix(X), fitTarget(def.native, ctx.Y), fitInputs(def.native, X, ctx.axis))
-  return est
+  try {
+    est.fit(matrix(X), fitTarget(def.native, ctx.Y), fitInputs(def.native, X, ctx.axis))
+    return est
+  } catch (error) {
+    identifyNativeFitRefusal(error, def.native.methodId)
+    est.dispose()
+    throw error
+  }
 }
 
 /** Reload a fitted estimator from its N4ME bytes. */

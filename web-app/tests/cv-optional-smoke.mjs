@@ -44,8 +44,9 @@ try {
 
   // run the refit-only pipeline
   await page.getByRole('button', { name: /Run pipeline/i }).click()
-  await page.waitForSelector('text=/Refit/', { timeout: 60000 })
-  await page.waitForTimeout(400)
+  // The editor already says 'refit-only'; wait for the completed engine result.
+  await page.waitForFunction(() => window.__n4aLastRun?.refit && !window.__n4aLastRun.cv, null, { timeout: 60000 })
+  await page.waitForSelector('text=/Refit ·/', { timeout: 10000 })
   const body1 = (await page.textContent('body')) || ''
   if (/CV Scores/.test(body1)) fail('refit-only run must NOT produce "CV Scores"')
   else console.log('✓ refit-only run produced no CV Scores')

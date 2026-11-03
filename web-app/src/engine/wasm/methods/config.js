@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: CECILL-2.1
+// SPDX-License-Identifier: CECILL-2.1 OR AGPL-3.0-or-later
 import { checkStatus, getModule } from "./ffi.js";
 /** RAII wrapper around n4m_config_t. */
 export class Config {

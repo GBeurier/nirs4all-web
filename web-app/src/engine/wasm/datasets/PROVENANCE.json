@@ -1,79 +1,68 @@
 {
-  "schema": "nirs4all-web.wasm-single-build.v1",
-  "component": "nirs4all-datasets-wasm",
+  "schema": "nirs4all-web.public-npm-acquisition.v1",
   "package": "@nirs4all/datasets-wasm",
-  "version": "0.3.11",
+  "version": "0.3.18",
   "source": {
     "repository": "https://github.com/GBeurier/nirs4all-datasets",
-    "commit": "e68d1befb6cb8245799e83d4b4e4c41e66287689",
-    "tree": "f72111a2bfa9a73a628e87be2546969982d36f1d",
-    "clean": true
+    "commit": "15fe4ce830f4985e5b628bcaf49d4106f45fa1e1",
+    "tree": "467e588e437338c723a0f0e69414d57a9f96dbd2"
   },
-  "build": {
-    "target": "web",
-    "executions": 1,
-    "output_directory": "/mnt/c/Temp/n4a-downstream041-20261008/web041-actual-staging-datasets-io-v3/tmp/nirs4all-web-datasets-hHtLB5/out-single",
-    "retained_build_directory": "/mnt/c/Temp/n4a-downstream041-20261008/web041-actual-staging-datasets-io-v3/tmp/nirs4all-web-datasets-hHtLB5",
-    "cargo_target_directory": "/mnt/c/Temp/n4a-downstream041-20261008/web041-browser-cargo-target-v1",
-    "profile": "release",
-    "cargo_locked": true,
-    "wasm_bindgen_lock": "0.2.123",
-    "source_date_epoch": 1791300725,
-    "const_random_seed": "e68d1befb6cb8245799e83d4b4e4c41e66287689",
-    "tools": {
-      "wasm_pack": "wasm-pack 0.15.0",
-      "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
-      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)"
-    },
-    "package_name_normalization": {
-      "from": "@nirs4all/nirs4all-datasets-wasm",
-      "to": "@nirs4all/datasets-wasm"
-    }
+  "acquisition": {
+    "metadata_url": "https://registry.npmjs.org/@nirs4all/datasets-wasm/0.3.18",
+    "tarball_url": "https://registry.npmjs.org/@nirs4all/datasets-wasm/-/datasets-wasm-0.3.18.tgz",
+    "size": 107761,
+    "sha256": "0105502a65eb173bb3c7a34a6b77cef61c367d19adeaa7290f46f2f695a6da89",
+    "sha1": "67374d55aeb73b21c979712e40f1aa89cef317ba",
+    "integrity": "sha512-dB2k/03YAQ0c2c5p2jPQlzQzOHIYBWpfuiEMEiBoCGpSmQxh6QkvThZr0ZKJqdCeaDpDvSDsdiy2247m2dnxYg=="
   },
   "reproducibility": {
-    "independent_rebuild_claimed": false,
-    "byte_identical_rebuild_claimed": false
+    "performed_by_web": true,
+    "independent_rebuild_claimed": false
   },
-  "witnesses": {
-    "runtime_version": true,
-    "sha256_abc": true,
-    "resolve_contract": true
-  },
-  "files": [
-    {
-      "path": "LICENSE",
-      "size": 1110,
-      "sha256": "d013c19348cb484bf19db0406cafeecb8df2103fd3a8a55a9dc16ce948bcdb96"
+  "files": {
+    "LICENSE": {
+      "size": 34020,
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
     },
-    {
-      "path": "README.md",
+    "LICENSE-CeCILL-2.1": {
+      "size": 21778,
+      "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+    },
+    "README.md": {
       "size": 1551,
       "sha256": "a9d335168cc534a9367661135d6db4fc8d9483b7ca1fa5cff7c72d5aeb3cb81f"
     },
-    {
-      "path": "nirs4all_datasets_wasm.d.ts",
+    "nirs4all_datasets_wasm.d.ts": {
       "size": 2179,
       "sha256": "56155de207a39df2f6687e37e47c29b25f130c60dc5e5106088d64fd7e20294d"
     },
-    {
-      "path": "nirs4all_datasets_wasm.js",
-      "size": 8680,
-      "sha256": "c965911f3ba0289d5b9035b1a3b80abcae309f26f2322595dbfb08c44e36ec0e"
+    "nirs4all_datasets_wasm.js": {
+      "size": 8824,
+      "sha256": "4a24dc7a06c03d5316cdcb036697b3988b202629d93cd08ef5312c5d6f4ccd4f"
     },
-    {
-      "path": "nirs4all_datasets_wasm_bg.wasm",
-      "size": 195633,
-      "sha256": "af9694d04cf9c7c049b41e8316c5ca94e1cf73e19759de834eb1c895b6e62dfa"
+    "nirs4all_datasets_wasm_bg.wasm": {
+      "size": 237165,
+      "sha256": "d7bbaa6ae836092a68d205d8966154866a0754be08fd2b85df9fbcd136e92368"
     },
-    {
-      "path": "nirs4all_datasets_wasm_bg.wasm.d.ts",
+    "package.json": {
+      "size": 845,
+      "sha256": "e40899e17e7ff2acf798d3a3e6198a2b1c5b75439e2c1fe7b5ececf5dc6c63d0"
+    },
+    "nirs4all_datasets_wasm_bg.wasm.d.ts": {
       "size": 688,
       "sha256": "5306e0127507cd339d4039117701a8968eb69058658e01641ce0ba54378f1ae8"
-    },
-    {
-      "path": "package.json",
-      "size": 708,
-      "sha256": "a360fa68a03ea5b91610c0b02fb294095cc262b84808eae176889722779b483c"
     }
-  ]
+  },
+  "build": {
+    "target": "web",
+    "profile": "release",
+    "cargo_locked": true,
+    "manifest": "bindings/wasm/Cargo.toml",
+    "features": [],
+    "wasm_bindgen": "0.2.129",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "lock_sha256": "55e3caa9faac908d80923bbcbc9c184acc939a6f1f6fa52a9371111057a638af",
+    "executions": 1,
+    "independent_rebuild_claimed": false
+  }
 }

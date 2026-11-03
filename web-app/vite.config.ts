@@ -1,5 +1,7 @@
 import { defineConfig } from 'vite'
 import path from 'node:path'
+import packageJson from './package.json'
+import publicPackages from './scripts/public-packages.v1.json'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { viteSingleFile } from 'vite-plugin-singlefile'
@@ -30,6 +32,15 @@ export default defineConfig(({ mode }) => {
         generateBundle() {
           this.emitFile({
             type: 'asset',
+            fileName: 'nirs4all-web-version.json',
+            source: `${JSON.stringify({
+              version: packageJson.version,
+              upstreams: Object.fromEntries(Object.entries(publicPackages).map(([key, pin]) => [key, pin.version])),
+              ui: '0.2.1',
+            }, null, 2)}\n`,
+          })
+          this.emitFile({
+            type: 'asset',
             fileName: 'nirs4all-web-profile.v1.json',
             source: `${JSON.stringify({
               contract: 'nirs4all.web-runtime-profile.v1',
@@ -58,8 +69,6 @@ export default defineConfig(({ mode }) => {
         'dag-ml-wasm/multimodal_dataset_replay.mjs': path.resolve(__dirname, './src/engine/wasm/dagml/multimodal_dataset_replay.mjs'),
         'dag-ml-wasm/dag_ml_wasm_bg.wasm': path.resolve(__dirname, './src/engine/wasm/dagml/dag_ml_wasm_bg.wasm'),
         'dag-ml-wasm': path.resolve(__dirname, './src/engine/wasm/dagml/dag_ml_wasm.js'),
-        'nirs4all-formats-wasm': path.resolve(__dirname, './src/engine/wasm/formats/nirs4all_formats_wasm.js'),
-        'nirs4all-io-wasm': path.resolve(__dirname, './src/engine/wasm/io/nirs4all_io_wasm.js'),
         '@nirs4all/datasets-wasm': path.resolve(
           __dirname,
           './src/engine/wasm/datasets/nirs4all_datasets_wasm.js',

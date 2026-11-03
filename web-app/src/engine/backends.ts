@@ -1,3 +1,4 @@
+import { identifyNativeFitRefusal, isFitRefusal, markFitRefusal } from './fit-refusal'
 import type { Mat } from './algo/linalg'
 import { type PlsModel, plsFit, plsPredict } from './algo/pls'
 import {
@@ -58,7 +59,12 @@ export async function loadLibn4mBackend(): Promise<ModelBackend> {
       }
       // Canonical/SVD PLS extract joint X/Y directions, so their component
       // count is bounded by Y as well as X.
-      return n4m.fitModel(spec.type, X, Y, Math.min(nComp, Y.cols), [])
+      try {
+        return n4m.fitModel(spec.type, X, Y, Math.min(nComp, Y.cols), [])
+      } catch (error) {
+        identifyNativeFitRefusal(error)
+        throw error
+      }
     },
     predict: (model, X) => {
       if (isNativeModelState(model)) return predictNativeModel(model, X)
@@ -91,7 +97,7 @@ export async function loadLibn4mBackend(): Promise<ModelBackend> {
       } catch (error) {
         if (!(error instanceof n4m.N4mError)) throw error
         const numerical = error.status === n4m.Status.ERR_NUMERICAL_FAILURE || /convergence failed/i.test(error.message)
-        throw new RtErrorException(makeRtError({
+        const diagnostic = new RtErrorException(makeRtError({
           verb: 'run',
           cause: error.status === n4m.Status.ERR_INVALID_ARGUMENT ? 'invalid_request' : 'runtime_error',
           message: `${nodeByType(spec.type)?.name ?? spec.type} could not fit ${X.rows} samples × ${X.cols} features${'n_components' in spec.params ? ` with ${nComp} components` : ''}: ${error.message}.`,
@@ -100,6 +106,7 @@ export async function loadLibn4mBackend(): Promise<ModelBackend> {
             : 'Check this model’s parameters and the dataset dimensions.',
           detail: error.stack,
         }))
+        throw isFitRefusal(error) ? markFitRefusal(diagnostic) : diagnostic
       }
     },
   }
