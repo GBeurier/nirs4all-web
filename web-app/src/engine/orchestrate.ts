@@ -1,4 +1,4 @@
-import { isFitRefusal } from './fit-refusal'
+import { identifyNativeFitRefusal, isFitRefusal } from './fit-refusal'
 // Pipeline orchestration shared by every engine, parameterized by a ModelBackend
 // (the actual PLS fit/predict). The JS backend uses NIPALS; the libn4m backend
 // uses the real nirs4all-methods C++ engine compiled to WASM. Orchestration
@@ -251,7 +251,14 @@ function fitChain(
       }
       const t = preproc.fit(s.type, s.params, cur, { Y, axis }) // fit-on-train, in libn4m
       transformers.push(t)
-      cur = t.apply(cur)
+      try {
+        cur = t.apply(cur)
+      } catch (error) {
+        // Applying a newly fitted transformer to TRAIN rows is part of fitting
+        // this candidate. Replay/prediction transforms are never marked here.
+        identifyNativeFitRefusal(error)
+        throw error
+      }
       descriptors.push({ type: s.type, params: s.params, state: t.state, containsTrainingRows: t.containsTrainingRows })
     }
   } catch (e) {

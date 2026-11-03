@@ -97,3 +97,20 @@ it('stops a native variant search on backend failure instead of trying another v
     expect(fit).toHaveBeenCalledTimes(1)
   } finally { fit.mockRestore() }
 })
+
+it('continues a native preprocessing generator after an invalid training transform', async () => {
+  const corn = await loadSampleDataset('corn')
+  const ds = { ...corn, nFeatures: 6, axis: corn.axis.slice(0, 6),
+    X: Float64Array.from({ length: corn.nSamples * 6 }, (_, i) => corn.X[Math.floor(i / 6) * corn.nFeatures + i % 6]) }
+  const result = await new DagMlEngine({ profile: 'strict-wasm' }).run(ds, {
+    name: 'mixed preprocessing variants', steps: [],
+    containers: [{ id: 'g', container: 'generator', mode: 'or', branches: [
+      { id: 'invalid', steps: [{ id: 'sg', type: 'n4m:preprocessing.derivatives.savitzky_golay', params: { window_length: 17, polyorder: 2, mode: 'interp' } }] },
+      { id: 'valid', steps: [{ id: 'snv', type: 'n4m:preprocessing.scatter.snv', params: {} }] },
+    ] }],
+    model: { id: 'm', type: 'n4m:models.regularized.ridge', params: { alpha: 1 } }, cv: { folds: 3, seed: 42 },
+  })
+  expect(result.variantCount).toBe(2)
+  expect(result.variants).toHaveLength(1)
+  expect(result.model.dsl.steps.map((step) => step.type)).toEqual(['n4m:preprocessing.scatter.snv'])
+})
