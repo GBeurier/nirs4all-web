@@ -121,7 +121,7 @@ export async function validateSpec(spec: DatasetSpec): Promise<{ ok: boolean; er
 
 /** AssembledDataset.to_full_value() as returned by io's `assembleDataset`. */
 interface IoMatrix {
-  data: Float64Array | number[]
+  data: Float64Array
   n_rows: number
   n_cols: number
 }
