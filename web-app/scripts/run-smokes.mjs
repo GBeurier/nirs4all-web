@@ -100,6 +100,7 @@ const remember = (buf) => {
 
 let previewExited = null
 let previewAnnounced = false
+let previewAnnouncement = ''
 function startPreview() {
   // `detached` so we can signal the whole process group (vite spawns children); `--host`
   // pins the interface so readiness polling and the smokes address the same origin.
@@ -111,7 +112,9 @@ function startPreview() {
   })
   child.stdout.on('data', (buffer) => {
     remember(buffer)
-    if (String(buffer).includes(APP_URL)) previewAnnounced = true
+    previewAnnouncement = (previewAnnouncement + String(buffer)).slice(-4096)
+    const plain = previewAnnouncement.replace(/\u001b\[[0-?]*[ -/]*[@-~]/g, '')
+    if (plain.includes(APP_URL)) previewAnnounced = true
   })
   child.stderr.on('data', remember)
   child.on('exit', (code) => {
