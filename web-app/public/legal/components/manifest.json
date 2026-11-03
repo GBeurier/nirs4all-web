@@ -180,6 +180,11 @@
           "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
         },
         {
+          "path": "LICENSE-CeCILL-2.1",
+          "size": 21778,
+          "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+        },
+        {
           "path": "PROVENANCE.json",
           "size": 2425,
           "sha256": "49e4a090ae5b1f3797ceb9c443d2b9a8da51b7540fe12b4be197adfe2147a4e9"
@@ -318,6 +323,11 @@
           "path": "LICENSE",
           "size": 34020,
           "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+        },
+        {
+          "path": "LICENSE-CeCILL-2.1",
+          "size": 21778,
+          "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
         },
         {
           "path": "LICENSES/AGPL-3.0-or-later.txt",
