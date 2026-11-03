@@ -5,7 +5,7 @@
 ### Added
 
 - Run Cartesian pipeline generators with complete alternative subchains, continue
-  past failing variants in both native and host CV, and show each
+  past identified estimator-fit refusals in both native and host CV, and show each
   successful variant’s full pipeline and parameters. Progress covers the whole search.
 - Curated browser-ready Studio preset cards.
 
@@ -24,6 +24,8 @@
   tarball integrity, staged file hashes and source provenance. Browser-only
   provider/Datasets bindings are built from pinned release sources.
 - Refresh the catalog from the staged Methods runtime (ABI 2.20.0).
+- Stop generator searches on runtime or contract failures and keep overall progress
+  monotonic through selection, including searches with six or more candidates.
 
 ## 0.4.3 — 2026-11-02
 

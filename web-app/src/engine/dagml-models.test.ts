@@ -1,5 +1,6 @@
+import { loadMethodsWasm } from './nirs4all-core'
 import { readFileSync } from 'node:fs'
-import { beforeAll, describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { DagMlEngine } from './dagml-engine'
 import { loadSampleDataset } from '@/data/samples'
 import type { MaterializedDataset } from './types'
@@ -78,4 +79,21 @@ it('continues native model-only sweeps after a failing variant without duplicati
   expect(new Set(ids).size).toBe(ids.length)
   expect(result.lineage).toMatchObject({ executed: true })
   expect(result.lineage).not.toMatchObject({ schedulerFallback: true })
+})
+
+
+it('stops a native variant search on backend failure instead of trying another variant', async () => {
+  const methods = await loadMethodsWasm()
+  const failure = new methods.N4mError(methods.Status.ERR_BACKEND_UNAVAILABLE, 'backend unavailable')
+  const fit = vi.spyOn(methods.NativeEstimator.prototype, 'fit').mockImplementationOnce(() => { throw failure })
+  try {
+    const ds = await loadSampleDataset('corn')
+    await expect(new DagMlEngine({ profile: 'strict-wasm' }).run(ds, {
+      name: 'fatal native variants', steps: [],
+      model: { id: 'model', type: 'n4m:models.regularized.ridge_pls', params: { n_components: 2 },
+        sweeps: { ridge_lambda: { type: 'or', choices: [0.1, 1] } } },
+      cv: { folds: 3, seed: 42 },
+    })).rejects.toMatchObject({ name: 'RtErrorException', rtError: { message: expect.stringContaining('backend unavailable') } })
+    expect(fit).toHaveBeenCalledTimes(1)
+  } finally { fit.mockRestore() }
 })

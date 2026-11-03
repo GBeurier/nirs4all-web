@@ -1,3 +1,4 @@
+import { isFitRefusal } from './fit-refusal'
 import { nativePlanForVariant } from './native-plan'
 // DagMlEngine — the real WASM coordinator path. dag-ml's SequentialScheduler
 // (compiled to WASM) executes the cross-validation: it owns the fold loop, the
@@ -519,7 +520,7 @@ export class DagMlEngine implements Engine {
           // A variant that cannot be fitted (e.g. too many PLS components for a
           // fold) is dropped from the search, as in nirs4all; the run fails only
           // when no variant fits.
-          if (!multiVariant || (error instanceof DOMException && error.name === 'AbortError')) throw error
+          if (!multiVariant || !isFitRefusal(error)) throw error
           firstError ??= error
           failedVariants.add(variant.variant_id)
           for (const bucket of buckets) bucket.length = 0
@@ -553,7 +554,7 @@ export class DagMlEngine implements Engine {
               )) as NodeRes[]
               nodeResults.push(...results)
             } catch (error) {
-              if (signal?.aborted || controllerError === undefined) throw error
+              if (signal?.aborted || !isFitRefusal(controllerError)) throw error
               firstFitError ??= controllerError
               failedVariants.add(variant.variant_id)
             }
