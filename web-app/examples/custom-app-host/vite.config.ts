@@ -23,8 +23,6 @@ export default defineConfig({
       '@nirs4all/io-wasm': path.resolve(webAppRoot, './src/engine/wasm/io/nirs4all_io_wasm.js'),
       'dag-ml-data-wasm': path.resolve(webAppRoot, './src/engine/wasm/dagml-data/dag_ml_data_wasm.js'),
       'dag-ml-wasm': path.resolve(webAppRoot, './src/engine/wasm/dagml/dag_ml_wasm.js'),
-      'nirs4all-formats-wasm': path.resolve(webAppRoot, './src/engine/wasm/formats/nirs4all_formats_wasm.js'),
-      'nirs4all-io-wasm': path.resolve(webAppRoot, './src/engine/wasm/io/nirs4all_io_wasm.js'),
     },
   },
   build: {
