@@ -277,7 +277,8 @@ export interface NativePredictorDescriptorV1 {
   artifact_sha256: string;
   owner_controller: 'controller:methods.pls' | 'controller:methods.ridge';
   format: 'N4MM';
-  format_version: 1 | 2;
+  /** Format 3 requires an attested writer/runtime ABI of at least 2.20. */
+  format_version: 1 | 2 | 3;
   writer_abi: Readonly<{ major: number; minor: number; patch: number }>;
   storage_algorithm: number;
   capabilities: number;

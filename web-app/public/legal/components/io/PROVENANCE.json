@@ -1,169 +1,120 @@
 {
-  "schema": "nirs4all-web.wasm-single-build.v1",
-  "component": "nirs4all-io-wasm",
+  "schema": "nirs4all-web.public-npm-acquisition.v1",
   "package": "@nirs4all/io-wasm",
-  "version": "0.2.6",
+  "version": "0.2.14",
   "source": {
     "repository": "https://github.com/GBeurier/nirs4all-io",
-    "commit": "0e3190557bc848d9ae3756f6b7e75c179530ee40",
-    "tree": "5535e66a7d291b155d0f7fe7dcd27b21c1eb6106",
-    "clean": true
+    "commit": "172a7acfcc029742f45fbcf477f55f46dc7fbafe",
+    "tree": "b238838b7efec55a09de146fc5b103743f700787"
   },
-  "build": {
-    "target": "web",
-    "executions": 1,
-    "original_completed_compile_whole_stage_exit_code": 1,
-    "resumed_without_recompilation": true,
-    "original_completed_compile_directory": "/mnt/c/Temp/n4a-downstream041-20261008/web041-actual-staging-datasets-io-v3/tmp/nirs4all-web-io-qAgPPT/out-single",
-    "output_directory": "/mnt/c/Temp/n4a-downstream041-20261008/web041-io-stage-resume-real-v2/out-resumed",
-    "retained_build_directory": "/mnt/c/Temp/n4a-downstream041-20261008/web041-io-stage-resume-real-v2",
-    "cargo_target_directory": "/mnt/c/Temp/n4a-downstream041-20261008/web041-browser-cargo-target-v1",
-    "profile": "release",
-    "cargo_locked": true,
-    "source_date_epoch": 1791278806,
-    "const_random_seed": "0e3190557bc848d9ae3756f6b7e75c179530ee40",
-    "wasm_bindgen_lock": "0.2.122",
-    "package_name_normalization": {
-      "from": "nirs4all-io-wasm",
-      "to": "@nirs4all/io-wasm"
-    },
-    "source_package_stager": "scripts/stage_wasm_package.mjs",
-    "tools": {
-      "wasm_pack": "wasm-pack 0.15.0",
-      "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
-      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)"
-    }
+  "acquisition": {
+    "metadata_url": "https://registry.npmjs.org/@nirs4all/io-wasm/0.2.14",
+    "tarball_url": "https://registry.npmjs.org/@nirs4all/io-wasm/-/io-wasm-0.2.14.tgz",
+    "size": 914560,
+    "sha256": "9bff14859f877ba9ce8ed5cbbd4b9de772230e53409e58732df02bea6a0e532e",
+    "sha1": "5be79547e167f750e05c93e3a3c88803c03e9a20",
+    "integrity": "sha512-zjF4zpf/Shoae4AUJU8uHCTW/i0KZZWJByvgkVRLfVkRZGT/OAKyV1mHqPi51h1XuSqHAaKLXczwKczen03qKg=="
   },
   "reproducibility": {
-    "independent_rebuild_claimed": false,
-    "byte_identical_rebuild_claimed": false
+    "performed_by_web": false,
+    "independent_rebuild_claimed": false
   },
-  "witnesses": {
-    "runtime_version": true,
-    "to_spec_validate": true,
-    "infer_files": true,
-    "legal_closure": true
-  },
-  "files": [
-    {
-      "path": "COPY_PROVENANCE.md",
+  "files": {
+    "COPY_PROVENANCE.md": {
       "size": 3133,
       "sha256": "9046c670f0f2ffe119a8d9ad5286ad29bf5d89d620058a41283e454b5c05c015"
     },
-    {
-      "path": "LICENSE",
+    "LICENSE": {
       "size": 34020,
       "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
     },
-    {
-      "path": "LICENSES/AGPL-3.0-or-later.txt",
+    "LICENSES/AGPL-3.0-or-later.txt": {
       "size": 34020,
       "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
     },
-    {
-      "path": "LICENSES/Apache-2.0.txt",
+    "LICENSES/Apache-2.0.txt": {
       "size": 9723,
       "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
     },
-    {
-      "path": "LICENSES/BSD-3-Clause.txt",
+    "LICENSES/BSD-3-Clause.txt": {
       "size": 1459,
       "sha256": "3cf06aba3588c41c514f6946bb2d757b413ff6491647d474800f55edca75dcb4"
     },
-    {
-      "path": "LICENSES/COMMERCIAL-LICENSE.md",
+    "LICENSES/COMMERCIAL-LICENSE.md": {
       "size": 670,
       "sha256": "e62a66dc45d618d419706048b17a840f87d0c0c5c940eadd1cf6ea13c7eae08f"
     },
-    {
-      "path": "LICENSES/COMMERCIAL-LICENSE_FR.md",
+    "LICENSES/COMMERCIAL-LICENSE_FR.md": {
       "size": 759,
       "sha256": "7d1fd841891d4cb53836a6aca2fbbf7f36ef3bca540a394a9d94633af34ea3d6"
     },
-    {
-      "path": "LICENSES/CeCILL-2.1.txt",
+    "LICENSES/CeCILL-2.1.txt": {
       "size": 21778,
       "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
     },
-    {
-      "path": "LICENSES/MIT.txt",
+    "LICENSES/MIT.txt": {
       "size": 1078,
       "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
     },
-    {
-      "path": "LICENSES/Unicode-3.0.txt",
+    "LICENSES/Unicode-3.0.txt": {
       "size": 1995,
       "sha256": "f7db81051789b729fea528a63ec4c938fdcb93d9d61d97dc8cc2e9df6d47f2a1"
     },
-    {
-      "path": "LICENSING.md",
+    "LICENSING.md": {
       "size": 2113,
       "sha256": "b41ad1d4b8e62c89e42704fc4c9b5bb8a2099a0ad0680d72e95efb57c5d3326c"
     },
-    {
-      "path": "README.md",
+    "README.md": {
       "size": 7389,
       "sha256": "2d3c64e66e6b6d9ba2161fdf58f12627dc829ef871c718776a4ef467e604166f"
     },
-    {
-      "path": "THIRD_PARTY_NOTICES.md",
-      "size": 4935,
-      "sha256": "2d0aa4b2f137e77bad3d243bd908359c5e6bab37a3e9e29402f96e2103bb4932"
+    "THIRD_PARTY_NOTICES.md": {
+      "size": 5732,
+      "sha256": "c2f5c9061e7bc5a259a2d630330930ce9438f157e9646724824730ce516a5179"
     },
-    {
-      "path": "idiomatic.d.ts",
+    "idiomatic.d.ts": {
       "size": 2044,
       "sha256": "cca0b1700625d48c17232333702e3d788047b5dfb9b953c78326bce61f4a6094"
     },
-    {
-      "path": "idiomatic.mjs",
+    "idiomatic.mjs": {
       "size": 2684,
       "sha256": "a041c2304307eccbe805cfb97868eb2640fafe2fc51da8237e0a535135d1bfa3"
     },
-    {
-      "path": "nirs4all-io-wasm.cdx.json",
-      "size": 34111,
-      "sha256": "86514440a172e3ef77292fc15e2ff678587e02bd30af401e80764eff92c72e51"
+    "nirs4all-io-wasm.cdx.json": {
+      "size": 34808,
+      "sha256": "3a86cfebaa19ffe93cd6e9085d8a7c26cb191f81d6333dfb39e8eb7e474c5786"
     },
-    {
-      "path": "nirs4all_io_wasm.d.ts",
-      "size": 5369,
-      "sha256": "a4fe6564849d63e779e5899d7e61d43e3d63ae17950b0aac84793b11e0ad2e8f"
+    "nirs4all_io_wasm.d.ts": {
+      "size": 5661,
+      "sha256": "0c49821343968535cc5a4fa82ee68303f95c2909ca3fb081cbcca2adf63ffc5f"
     },
-    {
-      "path": "nirs4all_io_wasm.js",
-      "size": 24322,
-      "sha256": "8fc4d75bc209f53db50aa2dc2ca1d5c159202bc2f10b4fe392b59963e12e005d"
+    "nirs4all_io_wasm.js": {
+      "size": 25415,
+      "sha256": "89bd589e3b3c1b059591489080f8432c04e7148902bd7626943d5835845fd1a3"
     },
-    {
-      "path": "nirs4all_io_wasm_bg.wasm",
-      "size": 2352924,
-      "sha256": "ccb5daeb1e2d6df1753dfbb5e0c17cc33b6e4de92dead472eb9de2ed00941f6d"
+    "nirs4all_io_wasm_bg.wasm": {
+      "size": 2343181,
+      "sha256": "61e81e5ce06def80d221d473cbb6d9c726a7cdf9c87aa03a213f83199ae6e46c"
     },
-    {
-      "path": "nirs4all_io_wasm_bg.wasm.d.ts",
-      "size": 1273,
-      "sha256": "fd34bc545e2588f28a9d388e7ac3890e83d9af1a38e2861c4426bdd8a1fb1740"
+    "package.json": {
+      "size": 690,
+      "sha256": "fd4d36e68a47d8b17e672b5a2a99adc42908e189c109b09103b7e323e75c0a46"
     },
-    {
-      "path": "package.json",
-      "size": 1581,
-      "sha256": "bffb54e9cea274f2036b62c7796c5a5ea31511d3addfb483e36787e06ca9f056"
-    },
-    {
-      "path": "public-dataset.d.ts",
+    "public-dataset.d.ts": {
       "size": 4765,
       "sha256": "c5f53b89e2ceb21bc9aafe0d6ed8bd2f037eda58f1a36997ca895ec638c181a8"
     },
-    {
-      "path": "public-dataset.mjs",
+    "public-dataset.mjs": {
       "size": 31122,
       "sha256": "4932c790129295a92ef6317d0d4958057c1c7bc4882f3b077f6bb4c1abb281b9"
     },
-    {
-      "path": "types/nirs4all-io.d.ts",
-      "size": 3923,
-      "sha256": "b0384126ad078a6fbb35172cf7983e37259aa1c0b2a96e3fa256cb83b1d7a555"
+    "types/nirs4all-io.d.ts": {
+      "size": 4920,
+      "sha256": "9e7a028b443cf2a093ee54e191be1571b3b44d76c49b13784c55cd6b67106e95"
+    },
+    "nirs4all_io_wasm_bg.wasm.d.ts": {
+      "size": 1273,
+      "sha256": "fd34bc545e2588f28a9d388e7ac3890e83d9af1a38e2861c4426bdd8a1fb1740"
     }
-  ]
+  }
 }

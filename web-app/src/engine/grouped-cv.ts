@@ -1,13 +1,15 @@
 import type { DagMlMod } from './dagml'
+import { hasTarget } from './partition'
 import { datasetRelations, hasCvGroups } from './relations'
 import type { MaterializedDataset, PipelineDSL } from './types'
 
 interface FoldSet {
   id: string; sample_ids: string[]; sample_groups: Record<string, string>
   partition_mode?: 'resampled'
+  target_missing_sample_ids?: string[]
   folds: { fold_id: string; train_sample_ids: string[]; validation_sample_ids: string[] }[]
 }
-type GroupRuntime = { group_kfold_split_json(spec: string, groups: string, id: string): string }
+type GroupRuntime = { group_kfold_split_json(spec: string, groups: string, id: string, targetMissing?: string): string }
 export function validatePartitionGroups(ds: MaterializedDataset): void {
   const relations = datasetRelations(ds)
   // This check must precede trimming relations to the REFIT cohort: prediction
@@ -57,18 +59,24 @@ export function buildNativeFolds(dagml: DagMlMod, ds: MaterializedDataset, cv: N
   const relations = datasetRelations(ds)
   const grouped = cv.strategy === 'group' || (cv.strategy !== 'sample' && hasCvGroups(ds))
   if (ds.augmented?.some(Boolean) && !grouped) throw new Error('Augmented observations require explicit origin-safe groups for browser CV')
-  const sampleIds = trainRows.map((i) => `s${i}`)
+  // Native FoldSet records excluded targets outside its CV universe. Pass the
+  // original training cohort so the native splitter owns this exclusion.
+  const missingRows = Array.from({ length: ds.nSamples }, (_, i) => i)
+    .filter((i) => ds.partitions[i] === 'train' && !hasTarget(ds, i))
+  const cohort = [...trainRows, ...missingRows]
+  const sampleIds = cohort.map((i) => `s${i}`)
+  const missingJson = missingRows.length ? JSON.stringify(missingRows.map((i) => `s${i}`)) : undefined
   const requested = cv.folds
   if (!Number.isInteger(requested) || requested < 2) throw new Error('Cross-validation requires at least two folds')
   if (grouped) {
     const runtime = dagml as DagMlMod & Partial<GroupRuntime>
     if (typeof runtime.group_kfold_split_json !== 'function') throw new Error('The staged DAG-ML WASM lacks native GroupKFold; rebuild it before grouped CV')
-    const groups = Object.fromEntries(trainRows.map((i) => {
+    const groups = Object.fromEntries(cohort.map((i) => {
       if (!relations[i].group_id) throw new Error('Grouped CV requires a nonempty group_id for every training row')
       return [`s${i}`, relations[i].group_id]
     }))
     // No clipping to the group count: native refusal preserves the requested CV.
-    const folds = JSON.parse(runtime.group_kfold_split_json(JSON.stringify({ n_splits: requested }), JSON.stringify(groups), 'outer')) as FoldSet
+    const folds = JSON.parse(runtime.group_kfold_split_json(JSON.stringify({ n_splits: requested }), JSON.stringify(groups), 'outer', missingJson)) as FoldSet
     const augmented = new Set(trainRows.filter((i) => relations[i].augmented).map((i) => `s${i}`))
     if (augmented.size) {
       // Preserve native group assignments and their training scopes. The native
@@ -84,6 +92,6 @@ export function buildNativeFolds(dagml: DagMlMod, ds: MaterializedDataset, cv: N
   }
   const spec = JSON.stringify({ n_splits: Math.min(requested, trainRows.length), shuffle: true, seed: cv.seed })
   return JSON.parse(ds.taskType === 'regression'
-    ? dagml.kfold_split_json(spec, JSON.stringify(sampleIds), 'outer')
-    : dagml.stratified_kfold_split_json(spec, JSON.stringify(sampleIds), JSON.stringify(Object.fromEntries(trainRows.map((i) => [`s${i}`, ds.classes?.[i] ?? String(Math.round(ds.y[i]))]))), 'outer')) as FoldSet
+    ? dagml.kfold_split_json(spec, JSON.stringify(sampleIds), 'outer', missingJson)
+    : dagml.stratified_kfold_split_json(spec, JSON.stringify(sampleIds), JSON.stringify(Object.fromEntries(trainRows.map((i) => [`s${i}`, ds.classes?.[i] ?? String(Math.round(ds.y[i]))]))), 'outer', missingJson)) as FoldSet
 }

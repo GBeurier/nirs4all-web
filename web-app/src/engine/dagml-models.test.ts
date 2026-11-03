@@ -1,8 +1,8 @@
+import { loadMethodsWasm } from './nirs4all-core'
 import { readFileSync } from 'node:fs'
-import { beforeAll, describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { DagMlEngine } from './dagml-engine'
 import { loadSampleDataset } from '@/data/samples'
-import { RtErrorException } from './rt'
 import type { MaterializedDataset } from './types'
 import { initSync as initDagMl } from './wasm/dagml/dag_ml_wasm.js'
 import { initSync as initData } from './wasm/dagml-data/dag_ml_data_wasm.js'
@@ -54,17 +54,84 @@ describe('model-only classification through the real WASM scheduler', () => {
   it('preserves a native fit refusal across the scheduler callback instead of claiming fallback success', async () => {
     const ds = await loadSampleDataset('corn')
     await expect(new DagMlEngine({ profile: 'strict-wasm' }).run(ds, {
-      name: 'Ridge PLS numerical refusal', steps: [],
-      model: { id: 'model', type: 'n4m:models.regularized.ridge_pls', params: { n_components: 10, ridge_lambda: 1 } },
+      name: 'Ridge PLS invalid regularization', steps: [],
+      model: { id: 'model', type: 'n4m:models.regularized.ridge_pls', params: { n_components: 10, ridge_lambda: -1 } },
       cv: { folds: 5, seed: 42 },
-    })).rejects.toMatchObject({
-      name: 'RtErrorException',
-      rtError: {
-        verb: 'run',
-        cause: 'runtime_error',
-        message: expect.stringContaining('Ridge PLS could not fit'),
-        mitigation: expect.stringContaining('fewer components'),
-      },
-    } satisfies Partial<RtErrorException>)
+    })).rejects.toThrow(/invalid value for parameter 'ridge_lambda'/)
   })
+})
+
+
+it('continues native model-only sweeps after a failing variant without duplicating OOF', async () => {
+  const ds = await loadSampleDataset('corn')
+  const result = await new DagMlEngine({ profile: 'strict-wasm' }).run(ds, {
+    name: 'mixed native variants', steps: [],
+    model: { id: 'model', type: 'n4m:models.regularized.ridge_pls', params: { n_components: 2 },
+      sweeps: { ridge_lambda: { type: 'or', choices: [-1, 1] } } },
+    cv: { folds: 3, seed: 42 },
+  })
+  expect(result.variantCount).toBe(2)
+  expect(result.variants).toHaveLength(1)
+  expect(result.variants![0].selected).toBe(true)
+  expect(result.model.dsl.model?.params.ridge_lambda).toBe(1)
+  const ids = result.cv!.predictions.map((row) => row.sampleId)
+  expect(ids.length).toBe(ds.partitions.filter((part) => part === 'train').length)
+  expect(new Set(ids).size).toBe(ids.length)
+  expect(result.lineage).toMatchObject({ executed: true })
+  expect(result.lineage).not.toMatchObject({ schedulerFallback: true })
+})
+
+
+it('stops a native variant search on backend failure instead of trying another variant', async () => {
+  const methods = await loadMethodsWasm()
+  const failure = new methods.N4mError(methods.Status.ERR_BACKEND_UNAVAILABLE, 'backend unavailable')
+  const fit = vi.spyOn(methods.NativeEstimator.prototype, 'fit').mockImplementationOnce(() => { throw failure })
+  try {
+    const ds = await loadSampleDataset('corn')
+    await expect(new DagMlEngine({ profile: 'strict-wasm' }).run(ds, {
+      name: 'fatal native variants', steps: [],
+      model: { id: 'model', type: 'n4m:models.regularized.ridge_pls', params: { n_components: 2 },
+        sweeps: { ridge_lambda: { type: 'or', choices: [0.1, 1] } } },
+      cv: { folds: 3, seed: 42 },
+    })).rejects.toMatchObject({ name: 'RtErrorException', rtError: { message: expect.stringContaining('backend unavailable') } })
+    expect(fit).toHaveBeenCalledTimes(1)
+  } finally { fit.mockRestore() }
+})
+
+it('continues a native preprocessing generator after an invalid training transform', async () => {
+  const corn = await loadSampleDataset('corn')
+  const ds = { ...corn, nFeatures: 6, axis: corn.axis.slice(0, 6),
+    X: Float64Array.from({ length: corn.nSamples * 6 }, (_, i) => corn.X[Math.floor(i / 6) * corn.nFeatures + i % 6]) }
+  const result = await new DagMlEngine({ profile: 'strict-wasm' }).run(ds, {
+    name: 'mixed preprocessing variants', steps: [],
+    containers: [{ id: 'g', container: 'generator', mode: 'or', branches: [
+      { id: 'invalid', steps: [{ id: 'sg', type: 'n4m:preprocessing.derivatives.savitzky_golay', params: { window_length: 17, polyorder: 2, mode: 'interp' } }] },
+      { id: 'valid', steps: [{ id: 'snv', type: 'n4m:preprocessing.scatter.snv', params: {} }] },
+    ] }],
+    model: { id: 'm', type: 'n4m:models.regularized.ridge', params: { alpha: 1 } }, cv: { folds: 3, seed: 42 },
+  })
+  expect(result.variantCount).toBe(2)
+  expect(result.variants).toHaveLength(1)
+  expect(result.model.dsl.steps.map((step) => step.type)).toEqual(['n4m:preprocessing.scatter.snv'])
+})
+
+
+it('records resolved parameters for outer generator variants with a single-choice inner sweep', async () => {
+  const ds = await loadSampleDataset('corn')
+  const result = await new DagMlEngine({ profile: 'strict-wasm' }).run(ds, {
+    name: 'resolved generator metadata', steps: [],
+    containers: [{ id: 'g', container: 'generator', mode: 'or', branches: [
+      { id: 'raw', steps: [] },
+      { id: 'snv', steps: [{ id: 'snv', type: 'n4m:preprocessing.scatter.snv', params: {} }] },
+    ] }],
+    model: { id: 'm', type: 'n4m:models.pls.pls_regression', params: { n_components: 10 },
+      sweeps: { n_components: { type: 'or', choices: [2] } } },
+    cv: { folds: 3, seed: 42 },
+  })
+  expect(result.variants).toHaveLength(2)
+  for (const variant of result.variants!) {
+    expect(variant.pipeline!.model!.params.n_components).toBe(2)
+    expect(variant.pipeline!.model!.sweeps).toBeUndefined()
+  }
+  expect(result.model.dsl.model!.params.n_components).toBe(2)
 })

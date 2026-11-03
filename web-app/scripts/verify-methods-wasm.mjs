@@ -1,20 +1,10 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { createHash } from 'node:crypto'
-import { readFileSync, readdirSync, statSync } from 'node:fs'
-import { dirname, join, relative, resolve, sep } from 'node:path'
-import { fileURLToPath, pathToFileURL } from 'node:url'
-
-const scriptDir = dirname(fileURLToPath(import.meta.url))
-const EXPECTED = JSON.parse(readFileSync(join(scriptDir, 'methods-public-package.v1.json'), 'utf8'))
-const EXPECTED_FILES = EXPECTED.staged_files
-const root = resolve(scriptDir, '..', 'src', 'engine', 'wasm', 'methods')
-const sha256 = (path) => createHash('sha256').update(readFileSync(path)).digest('hex')
-function inventory(directory) {
-  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-    const path = join(directory, entry.name)
-    return entry.isDirectory() ? inventory(path) : [relative(root, path).split(sep).join('/')]
-  }).sort()
-}
-
+import { verifyPackage } from './public-package.mjs'
+const { pin, root } = verifyPackage('methods')
+const EXPECTED = { ...pin, runtimeVersion: '1.3.14+abi.2.20.0', abi: '2.20.0' }
 async function assertRuntimeWitness() {
   const module = await import(`${pathToFileURL(join(root, 'index.js')).href}?verify=${Date.now()}`)
   await module.loadModule()
@@ -56,37 +46,4 @@ async function assertRuntimeWitness() {
   if (!optIn) throw new Error('Methods training-row export opt-in witness failed')
 }
 
-const receipt = JSON.parse(readFileSync(join(root, 'PROVENANCE.json'), 'utf8'))
-if (receipt.schema !== 'nirs4all-web.wasm-public-acquisition.v1'
-  || receipt.component !== EXPECTED.component || receipt.package !== EXPECTED.package
-  || receipt.version !== EXPECTED.version || receipt.runtime_version !== EXPECTED.runtimeVersion
-  || receipt.abi !== EXPECTED.abi || receipt.source?.commit !== EXPECTED.commit
-  || receipt.source?.tree !== EXPECTED.tree || receipt.source?.npm_git_head !== EXPECTED.commit
-  || receipt.acquisition?.registry_metadata_url !== EXPECTED.registry_metadata_url
-  || receipt.acquisition?.tarball_url !== EXPECTED.tarball_url
-  || receipt.acquisition?.tarball_sha256 !== EXPECTED.tarball_sha256
-  || receipt.acquisition?.tarball_sha1 !== EXPECTED.tarball_sha1
-  || receipt.acquisition?.tarball_sri !== EXPECTED.tarball_sri
-  || receipt.acquisition?.tarball_bytes !== EXPECTED.tarball_size
-  || !/^[0-9a-f]{64}$/.test(receipt.acquisition?.metadata_sha256 ?? '')
-  || receipt.acquisition?.sha256_sha1_sri_verified !== true
-  || receipt.reproducibility?.performed_by_web !== false
-  || receipt.reproducibility?.independent_rebuild_claimed !== false
-  || JSON.stringify(receipt.source_extra_files) !== JSON.stringify(EXPECTED.source_extra_files)) {
-  throw new Error('Methods public acquisition provenance mismatch')
-}
-const names = Object.keys(EXPECTED_FILES).sort()
-if (JSON.stringify(receipt.files?.map(({ path }) => path).sort()) !== JSON.stringify(names)
-  || JSON.stringify(inventory(root).filter((name) => name !== 'PROVENANCE.json')) !== JSON.stringify(names)) {
-  throw new Error('Methods staged inventory differs from the authenticated public projection')
-}
-for (const row of receipt.files) {
-  const pin = EXPECTED_FILES[row.path]
-  const path = join(root, row.path)
-  if (row.size !== pin.size || row.sha256 !== pin.sha256
-    || statSync(path).size !== pin.size || sha256(path) !== pin.sha256) {
-    throw new Error(`Methods file differs from authenticated bytes: ${row.path}`)
-  }
-}
 await assertRuntimeWitness()
-console.log(`Methods ${EXPECTED.runtimeVersion} authenticated public bytes and existing runtime witnesses verified`)

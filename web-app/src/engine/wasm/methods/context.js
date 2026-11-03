@@ -1,5 +1,6 @@
-// SPDX-License-Identifier: CECILL-2.1
+// SPDX-License-Identifier: CECILL-2.1 OR AGPL-3.0-or-later
 import { checkStatus, getModule } from "./ffi.js";
+import { N4mError, Status } from "./types.js";
 /** RAII wrapper around n4m_context_t. */
 export class Context {
     _ptr;
@@ -10,6 +11,8 @@ export class Context {
     static create() {
         const m = getModule();
         const out = m._malloc(4);
+        if (out === 0)
+            throw new N4mError(Status.ERR_OUT_OF_MEMORY, "context allocation failed");
         try {
             const status = m.ccall("n4m_context_create", "number", ["number"], [out]);
             checkStatus(status);

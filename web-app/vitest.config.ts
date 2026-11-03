@@ -12,9 +12,9 @@ const require = createRequire(pathToFileURL(path.resolve(__dirname, 'package.jso
 const dagAsset = require.resolve('dag-ml-wasm/dag_ml_wasm_bg.wasm')
 const stagedDagAsset = path.resolve(__dirname, './src/engine/wasm/dagml/dag_ml_wasm_bg.wasm')
 const digest = (file: string) => createHash('sha256').update(readFileSync(file)).digest('hex')
-const expectedDagSha = '4cbdd0671aaf3f51b67f4d7e9161c34fc1effbaee4bc789a8751aef266917620'
+const expectedDagSha = '9329ecd5f1d1a4f77829c3023690d5b1d48421eec33322bae831b9d47a781e73'
 if (digest(dagAsset) !== expectedDagSha || digest(stagedDagAsset) !== expectedDagSha) {
-  throw new Error('Vitest DAG npm asset and staged browser asset must match authenticated DAG 0.3.41 bytes.')
+  throw new Error('Vitest DAG npm asset and staged browser asset must match authenticated DAG 0.3.44 bytes.')
 }
 const coreIndex = path.resolve(__dirname, './vendor/nirs4all/src/index.js')
 const nodeAssetCall = "import.meta.resolve('dag-ml-wasm/dag_ml_wasm_bg.wasm')"
@@ -27,7 +27,7 @@ export default defineConfig({
     transform(code, id) {
       if (id.split('?')[0] !== coreIndex) return null
       if (code.split(nodeAssetCall).length !== 2) {
-        throw new Error('Expected the published Core 0.4.5 Node DAG asset resolver exactly once.')
+        throw new Error('Expected the published Core 0.4.7 Node DAG asset resolver exactly once.')
       }
       return { code: code.replace(nodeAssetCall, JSON.stringify(pathToFileURL(dagAsset).href)), map: null }
     },
@@ -48,8 +48,6 @@ export default defineConfig({
       'dag-ml-wasm/multimodal_dataset_replay.mjs': path.resolve(__dirname, './src/engine/wasm/dagml/multimodal_dataset_replay.mjs'),
       'dag-ml-wasm/dag_ml_wasm_bg.wasm': path.resolve(__dirname, './src/engine/wasm/dagml/dag_ml_wasm_bg.wasm'),
       'dag-ml-wasm': path.resolve(__dirname, './src/engine/wasm/dagml/dag_ml_wasm.js'),
-      'nirs4all-formats-wasm': path.resolve(__dirname, './src/engine/wasm/formats/nirs4all_formats_wasm.js'),
-      'nirs4all-io-wasm': path.resolve(__dirname, './src/engine/wasm/io/nirs4all_io_wasm.js'),
       '@': path.resolve(__dirname, './src'),
     },
   },
