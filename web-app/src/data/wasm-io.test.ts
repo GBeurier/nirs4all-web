@@ -10,13 +10,13 @@ vi.mock('@/engine/nirs4all-core', () => ({
   loadDataIoWasm: async () => ({ formats: {}, io: { assembleDataset: (_files: unknown, _records: unknown, spec: string) => {
     assembled.specs.push(spec)
     return { name: 'd', task_type: 'regression', signal_type: 'absorbance', n_sources: 1, folds: [], blocks: {
-      cal: { n_samples: 2, x: [{ data: [1, 2, 3, 4], n_rows: 2, n_cols: 2 }], feature_headers: [['1000', '1010']], header_units: ['nm'], signal_types: [], y: { data: [1, NaN], n_rows: 2, n_cols: 1 }, y_headers: ['y'], metadata: { n_rows: 2, columns: [{ name: 'Sample_ID', values: ['A', 'A'] }, { name: 'Rep', values: ['r1', 'r2'] }] }, weights: null, weights_header: null },
-      val: { n_samples: 1, x: [{ data: [5, 6], n_rows: 1, n_cols: 2 }], feature_headers: [['1000', '1010']], header_units: ['nm'], signal_types: [], y: { data: [3], n_rows: 1, n_cols: 1 }, y_headers: ['y'], metadata: { n_rows: 1, columns: [{ name: 'Sample_ID', values: ['A'] }, { name: 'Rep', values: ['r1'] }] }, weights: null, weights_header: null },
+      cal: { n_samples: 2, x: [{ data: Float64Array.from([1, 2, 3, 4]), n_rows: 2, n_cols: 2 }], feature_headers: [['1000', '1010']], header_units: ['nm'], signal_types: [], y: { data: Float64Array.from([1, NaN]), n_rows: 2, n_cols: 1 }, y_headers: ['y'], metadata: { n_rows: 2, columns: [{ name: 'Sample_ID', values: ['A', 'A'] }, { name: 'Rep', values: ['r1', 'r2'] }] }, weights: null, weights_header: null },
+      val: { n_samples: 1, x: [{ data: Float64Array.from([5, 6]), n_rows: 1, n_cols: 2 }], feature_headers: [['1000', '1010']], header_units: ['nm'], signal_types: [], y: { data: Float64Array.from([3]), n_rows: 1, n_cols: 1 }, y_headers: ['y'], metadata: { n_rows: 1, columns: [{ name: 'Sample_ID', values: ['A'] }, { name: 'Rep', values: ['r1'] }] }, weights: null, weights_header: null },
     } }
   } } }),
 }))
 
-const mat = (data: number[], n_rows: number, n_cols: number) => ({ data, n_rows, n_cols })
+const mat = (data: number[], n_rows: number, n_cols: number) => ({ data: Float64Array.from(data), n_rows, n_cols })
 const block = (b: Partial<AssembledFull['blocks'][string]>): AssembledFull['blocks'][string] => ({
   n_samples: 0,
   x: [],
