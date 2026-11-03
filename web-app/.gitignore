@@ -3,3 +3,5 @@ node_modules
 /dist-single
 *.log
 .DS_Store
+/dist-strict
+/dist-transitional

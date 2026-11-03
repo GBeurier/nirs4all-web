@@ -1,3 +1,4 @@
+import { cartesianCombinations } from '@/engine/dagml'
 import { getPresetPipeline, type PipelinePreset, type PipelinePresetVariantId } from 'nirs4all-ui/pipelines'
 import { PRESETS } from './presets'
 import { nodeByType } from './nodes'
@@ -67,9 +68,9 @@ function alternatives(axis: unknown, id: string): PipelineStep[][] | null {
   const out: PipelineStep[][] = []
   for (const [i, choice] of or.entries()) {
     if (choice === null) { out.push([]); continue }
-    const step = transform(choice, `${id}-${i}`)
-    if (!step) return null
-    out.push([step])
+    const chain = (Array.isArray(choice) ? choice : [choice]).map((value, j) => transform(value, `${id}-${i}-${j}`))
+    if (chain.some((step) => !step)) return null
+    out.push(chain as PipelineStep[])
   }
   return out
 }
@@ -91,7 +92,7 @@ function sweeps(finetune: unknown, type: string): Record<string, ParamSweep> | u
   return Object.keys(out).length ? out : undefined
 }
 
-function build(presetId: string, presetName: string, description: string, task: PipelinePresetVariantId, recipe: unknown[]): WebPreset[] {
+export function buildWebPresets(presetId: string, presetName: string, description: string, task: PipelinePresetVariantId, recipe: unknown[]): WebPreset[] {
   let search: ContainerNode | null = null
   const trailing: PipelineStep[] = []
   let cv: PipelineDSL['cv']
@@ -102,9 +103,18 @@ function build(presetId: string, presetName: string, description: string, task: 
     if (item && Array.isArray(item._cartesian_)) {
       const axes = item._cartesian_.map((axis, a) => alternatives(axis, `${id}-${a}`))
       if (axes.some((axis) => !axis)) return []
-      search = { id: `${id}-cartesian`, container: 'generator', mode: 'cartesian',
-        branches: (axes as PipelineStep[][][]).map((axis, a) => ({ id: `${id}-axis${a}`, steps: axis.flat(), optional: axis.some((alt) => alt.length === 0) })),
-        ...(typeof item.count === 'number' ? { count: item.count } : {}) }
+      const choices = axes as PipelineStep[][][]
+      if (choices.some((axis) => axis.some((chain) => chain.length > 1))) {
+        // The editor's Cartesian axes contain single steps. Represent subchains
+        // as complete OR alternatives so editing and execution preserve them.
+        const combinations = cartesianCombinations(choices, typeof item.count === 'number' ? item.count : undefined)
+        search = { id: `${id}-or`, container: 'generator', mode: 'or',
+          branches: combinations.map((steps, b) => ({ id: `${id}-alt${b}`, steps })) }
+      } else {
+        search = { id: `${id}-cartesian`, container: 'generator', mode: 'cartesian',
+          branches: choices.map((axis, a) => ({ id: `${id}-axis${a}`, steps: axis.flat(), optional: axis.some((alt) => alt.length === 0) })),
+          ...(typeof item.count === 'number' ? { count: item.count } : {}) }
+      }
     } else if (item && Array.isArray(item._or_)) {
       const alts = alternatives(item, id)
       if (!alts) return []
@@ -160,7 +170,7 @@ export function browserPreset(preset: PipelinePreset, task: PipelinePresetVarian
 }
 
 export const WEB_PRESETS: WebPreset[] = PRESETS.flatMap((preset) =>
-  (preset.available_variants ?? []).flatMap((task) => build(preset.id, preset.name, preset.description, task, getPresetPipeline(preset, task))))
+  (preset.available_variants ?? []).flatMap((task) => buildWebPresets(preset.id, preset.name, preset.description, task, getPresetPipeline(preset, task))))
 
 export const webPresetsFor = (task: TaskType): WebPreset[] =>
   WEB_PRESETS.filter((preset) => (preset.task === 'regression') === (task === 'regression'))

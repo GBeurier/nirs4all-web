@@ -1,5 +1,5 @@
 {
-  "abi": "2.17.0",
+  "abi": "2.20.0",
   "methods": [
     {
       "method_id": "aom_pop.aom_chain_fixed_fit",
@@ -5547,6 +5547,63 @@
       ]
     },
     {
+      "method_id": "diagnostics.local_density",
+      "fq_name": "n4m.diagnostics.local_density",
+      "kind": "procedure",
+      "roles": [
+        "generic"
+      ],
+      "node_kinds": [],
+      "capabilities": [],
+      "state_format": "",
+      "inputs": {
+        "y": "none",
+        "labels": "none",
+        "sample_weight": "none",
+        "groups": "none",
+        "feature_groups": "none",
+        "blocks": "none",
+        "axis": "none",
+        "target_domain": "optional",
+        "fold_ids": "none"
+      },
+      "params": [
+        {
+          "name": "valid_mask",
+          "type": "int_array",
+          "required": false,
+          "default": [],
+          "min": 0,
+          "max": 1,
+          "choices": [],
+          "recorded": false
+        },
+        {
+          "name": "mode",
+          "type": "enum",
+          "required": false,
+          "default": "training",
+          "min": null,
+          "max": null,
+          "choices": [
+            "training",
+            "novelty"
+          ],
+          "recorded": false
+        },
+        {
+          "name": "n_neighbors",
+          "type": "int",
+          "required": false,
+          "default": 20,
+          "min": 1,
+          "max": 2147483647,
+          "choices": [],
+          "recorded": false
+        }
+      ]
+    },
+    {
       "method_id": "diagnostics.model_selection",
       "fq_name": "n4m.metrics.scoring.one_se_rule",
       "kind": "procedure",
@@ -5568,6 +5625,50 @@
         "fold_ids": "none"
       },
       "params": []
+    },
+    {
+      "method_id": "diagnostics.pca_reference_qc",
+      "fq_name": "n4m.diagnostics.pca_reference_qc",
+      "kind": "procedure",
+      "roles": [
+        "generic"
+      ],
+      "node_kinds": [],
+      "capabilities": [],
+      "state_format": "",
+      "inputs": {
+        "y": "none",
+        "labels": "none",
+        "sample_weight": "none",
+        "groups": "none",
+        "feature_groups": "none",
+        "blocks": "none",
+        "axis": "none",
+        "target_domain": "required",
+        "fold_ids": "none"
+      },
+      "params": [
+        {
+          "name": "valid_mask",
+          "type": "int_array",
+          "required": false,
+          "default": [],
+          "min": 0,
+          "max": 1,
+          "choices": [],
+          "recorded": false
+        },
+        {
+          "name": "n_components",
+          "type": "int",
+          "required": false,
+          "default": 5,
+          "min": 1,
+          "max": 2147483647,
+          "choices": [],
+          "recorded": false
+        }
+      ]
     },
     {
       "method_id": "diagnostics.pls_diagnostics",
@@ -5749,6 +5850,194 @@
         "fold_ids": "none"
       },
       "params": []
+    },
+    {
+      "method_id": "diagnostics.spectral_events_qc",
+      "fq_name": "n4m.diagnostics.spectral_events_qc",
+      "kind": "procedure",
+      "roles": [
+        "generic"
+      ],
+      "node_kinds": [],
+      "capabilities": [],
+      "state_format": "",
+      "inputs": {
+        "y": "none",
+        "labels": "none",
+        "sample_weight": "none",
+        "groups": "none",
+        "feature_groups": "none",
+        "blocks": "none",
+        "axis": "none",
+        "target_domain": "none",
+        "fold_ids": "none"
+      },
+      "params": [
+        {
+          "name": "valid_mask",
+          "type": "int_array",
+          "required": false,
+          "default": [],
+          "min": 0,
+          "max": 1,
+          "choices": [],
+          "recorded": false
+        },
+        {
+          "name": "axis_basis",
+          "type": "enum",
+          "required": false,
+          "default": "index",
+          "min": null,
+          "max": null,
+          "choices": [
+            "index",
+            "physical"
+          ],
+          "recorded": false
+        },
+        {
+          "name": "axis_values",
+          "type": "double_array",
+          "required": false,
+          "default": [],
+          "min": null,
+          "max": null,
+          "choices": [],
+          "recorded": false
+        },
+        {
+          "name": "outlier_threshold",
+          "type": "double",
+          "required": false,
+          "default": 8,
+          "min": 0,
+          "max": null,
+          "choices": [],
+          "recorded": false
+        },
+        {
+          "name": "clip_lower",
+          "type": "double",
+          "required": false,
+          "default": null,
+          "min": null,
+          "max": null,
+          "choices": [],
+          "recorded": false
+        },
+        {
+          "name": "clip_upper",
+          "type": "double",
+          "required": false,
+          "default": null,
+          "min": null,
+          "max": null,
+          "choices": [],
+          "recorded": false
+        },
+        {
+          "name": "clip_tolerance",
+          "type": "double",
+          "required": false,
+          "default": 0,
+          "min": 0,
+          "max": null,
+          "choices": [],
+          "recorded": false
+        }
+      ]
+    },
+    {
+      "method_id": "diagnostics.spectral_noise_proxy",
+      "fq_name": "n4m.diagnostics.spectral_noise_proxy",
+      "kind": "procedure",
+      "roles": [
+        "generic"
+      ],
+      "node_kinds": [],
+      "capabilities": [],
+      "state_format": "",
+      "inputs": {
+        "y": "none",
+        "labels": "none",
+        "sample_weight": "none",
+        "groups": "none",
+        "feature_groups": "none",
+        "blocks": "none",
+        "axis": "none",
+        "target_domain": "none",
+        "fold_ids": "none"
+      },
+      "params": [
+        {
+          "name": "valid_mask",
+          "type": "int_array",
+          "required": false,
+          "default": [],
+          "min": 0,
+          "max": 1,
+          "choices": [],
+          "recorded": false
+        }
+      ]
+    },
+    {
+      "method_id": "diagnostics.spectral_reference_qc",
+      "fq_name": "n4m.diagnostics.spectral_reference_qc",
+      "kind": "procedure",
+      "roles": [
+        "generic"
+      ],
+      "node_kinds": [],
+      "capabilities": [],
+      "state_format": "",
+      "inputs": {
+        "y": "none",
+        "labels": "none",
+        "sample_weight": "none",
+        "groups": "none",
+        "feature_groups": "none",
+        "blocks": "none",
+        "axis": "none",
+        "target_domain": "optional",
+        "fold_ids": "none"
+      },
+      "params": [
+        {
+          "name": "valid_mask",
+          "type": "int_array",
+          "required": false,
+          "default": [],
+          "min": 0,
+          "max": 1,
+          "choices": [],
+          "recorded": false
+        },
+        {
+          "name": "reference_mode",
+          "type": "enum",
+          "required": false,
+          "default": "dataset_mean",
+          "min": null,
+          "max": null,
+          "choices": [
+            "dataset_mean",
+            "supplied"
+          ],
+          "recorded": false
+        },
+        {
+          "name": "reference_valid_mask",
+          "type": "int_array",
+          "required": false,
+          "default": [],
+          "min": 0,
+          "max": 1,
+          "choices": [],
+          "recorded": false
+        }
+      ]
     },
     {
       "method_id": "filters.correlation",
@@ -14429,6 +14718,73 @@
           "min": 0,
           "max": 1,
           "choices": [],
+          "recorded": false
+        }
+      ]
+    },
+    {
+      "method_id": "utilities.ragged_summary",
+      "fq_name": "n4m.utilities.ragged_summary",
+      "kind": "procedure",
+      "roles": [
+        "generic"
+      ],
+      "node_kinds": [],
+      "capabilities": [],
+      "state_format": "",
+      "inputs": {
+        "y": "none",
+        "labels": "none",
+        "sample_weight": "none",
+        "groups": "none",
+        "feature_groups": "none",
+        "blocks": "none",
+        "axis": "none",
+        "target_domain": "none",
+        "fold_ids": "none"
+      },
+      "params": [
+        {
+          "name": "offsets",
+          "type": "int_array",
+          "required": true,
+          "default": null,
+          "min": 0,
+          "max": null,
+          "choices": [],
+          "recorded": false
+        },
+        {
+          "name": "presence",
+          "type": "int_array",
+          "required": false,
+          "default": [],
+          "min": 0,
+          "max": 1,
+          "choices": [],
+          "recorded": false
+        },
+        {
+          "name": "time_coordinates",
+          "type": "double_array",
+          "required": false,
+          "default": [],
+          "min": null,
+          "max": null,
+          "choices": [],
+          "recorded": false
+        },
+        {
+          "name": "missing_policy",
+          "type": "enum",
+          "required": false,
+          "default": "reject",
+          "min": null,
+          "max": null,
+          "choices": [
+            "reject",
+            "zero_with_indicator"
+          ],
           "recorded": false
         }
       ]

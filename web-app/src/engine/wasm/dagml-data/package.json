@@ -5,11 +5,12 @@
     "G. Beurier <beurier@cirad.fr>"
   ],
   "description": "WASM bindings for dag-ml-data JSON contracts.",
-  "version": "0.2.13",
+  "version": "0.2.16",
   "license": "CECILL-2.1 OR AGPL-3.0-or-later",
   "repository": {
     "type": "git",
-    "url": "https://github.com/GBeurier/dag-ml-data"
+    "url": "git+https://github.com/GBeurier/dag-ml-data.git",
+    "directory": "crates/dag-ml-data-wasm"
   },
   "files": [
     "dag_ml_data_wasm_bg.wasm",
@@ -21,5 +22,9 @@
   "types": "dag_ml_data_wasm.d.ts",
   "sideEffects": [
     "./snippets/*"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
 }

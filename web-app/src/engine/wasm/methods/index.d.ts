@@ -2,11 +2,12 @@ export { SpectralEncoder, type SpectralEncodingOptions } from "./spectralEncodin
 export { Optimizer, type OptimizerOptions, type OptimizerTrial, type BatchResult, type OptimizerTrialRecord, type SearchAxis, type SearchConstraint, type TrialValue } from "./optimization.js";
 export { loadModule, getModule, makeMatrixView, readArrayView } from "./ffi.js";
 export { Context } from "./context.js";
+export { preflightPca, preflightRepeatability, preflightSummary, preflightNearestNeighbors, preflightLocalContrast, preflightNoiseProxy, preflightSnv, preflightPairsWithinTolerance, preflightFactorAssociation, preflightHolmAdjust, preflightAdjustedRandIndex, statsCorrelationTest, statsBhAdjust, statsFactorAssociationExact, statsCorrelationExact, statsPermanova, statsPermdisp, statsPermanovaFreedmanLane, statsEnergyDistance, statsPcaMonitor, statsVarianceComponentsReml, statsVarianceComponentsIntervals, statsGroupMeans, statsRegressionScores, clusterHdbscan, clusterJaccardMatrix, linearSumAssignment, randomPermutations, randomMultivariateNormal, type PreflightPcaResult, type PreflightRepeatabilityResult, type PreflightNeighborResult, type PreflightLocalContrastResult, type PreflightNoiseProxyResult, type PreflightSnvResult, type PreflightPairsResult, type PreflightFactorAssociationResult, type StatsCorrelationTestResult, type StatsExactPermutationResult, type PermanovaResult, type PermdispResult, type FreedmanLaneResult, type StatsEnergyDistanceResult, type StatsPcaMonitorResult, type VarianceComponentsRemlResult, type VarianceComponentsIntervalsResult, type GroupMeansResult, type RegressionScoresResult, type HdbscanOptions, type HdbscanTreeNode, type HdbscanResult, type ClusterJaccardResult, type LinearSumAssignmentResult } from "./preflightDiagnostics.js";
 export { Config } from "./config.js";
 export { Model, fitPls, predictPls, fitModel, predictModel, fitAom, fitAomChain, fitPop, fitAomRidge, fitAomStack, computeSplit, computeSplitIndices, type PlsModel, type FittedModel, type AomModel, type AomChainDescriptor, type AomChainModel, type PopModel, type AomRidgeOptions, type AomStackOptions, type SplitKind, type SplitOptions, type SplitIndices } from "./model.js";
 export { ppCreate, ppFit, ppTransform, ppGetState, ppSetState, ppDestroy, type PpOperator, } from "./preprocessing.js";
 export { MethodResult } from "./methodResult.js";
-export { NativeModel } from "./nativeModel.js";
+export { NativeModel, type ComponentResolution } from "./nativeModel.js";
 export { NativeEstimator, NativeMethod, NativeProcedure, manifest, methodClass, type Augmenter, type Classifier, type FitInputs, type Fold, type ParamType, type ParamValue, type ProbabilisticClassifier, type Procedure, type ProcedureOutput, type Regressor, type SampleFilter, type Selector, type Splitter, type TargetMixingAugmenter, type Transformer } from "./estimatorRoles.js";
 export * from "./estimatorRolesGenerated.js";
 export { RolePipeline, type ClassLabel, type PipelineRole, type RolePipelineState, type RolePipelineStepInfo, type RoleStep } from "./rolePipeline.js";
@@ -16,7 +17,7 @@ export { augmentNative, type NativeAugmentationKind } from "./nativeAugmentation
 export { NativePreprocessingPipeline, PipelineOperatorKind, type PipelineStep, } from "./nativePreprocessingPipeline.js";
 export { selectSpa, selectVariables, selectorMethods } from "./selection.js";
 export { inspectN4mm, SERIALIZED_MODEL_INFO_SCHEMA_V1, SERIALIZED_MODEL_CAPABILITY_PREDICT, SERIALIZED_MODEL_CAPABILITY_TRANSFORM, SERIALIZED_MODEL_CAPABILITY_AFFINE, SERIALIZED_MODEL_CAPABILITY_PIPELINE, PipelineFingerprintAlgorithm, PipelineSemanticProfile, SerializedSavitzkyGolayMode, SerializedPipelineOperatorKind, type SerializedModelInfo, type SerializedPipelineInfo, } from "./serialization.js";
-export { Status, Dtype, Algorithm, Solver, Deflation, N4mError, type Matrix, } from "./types.js";
+export { Status, Dtype, Algorithm, Solver, Deflation, ModelArray, N4mError, type Matrix, } from "./types.js";
 /** ABI / project version reported by the loaded WASM module. */
 export declare function version(): string;
 /** ABI MAJOR.MINOR.PATCH triple. */

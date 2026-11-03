@@ -81,14 +81,13 @@ native model-only scheduler. REFIT/PREDICT use the native package in both cases.
 This change does not introduce multi-source source-selection UI or an Archive
 V2 multi-source writer (WEB-03), nor a Python/browser server bridge.
 
-The current checked-in WASM remains historical until final qualification.
-Rebuild DAG WASM from the final reviewed sources (including the thin native
-GroupKFold export), stage its generated JS/d.ts and real artifact checksums,
-and update the existing staging/verifier source pins from actual proofs. Old
-DAG 0.3.23 binaries cannot satisfy these new mandatory exports. Run native
-`dagml-refit.native.test.ts`, the complete Web tests/typecheck/build and browser
-roundtrip/profile smokes only after that staging. Missing exports fail closed;
-there is no direct numerical REFIT fallback.
+The staged browser cohort is pinned in `web-app/scripts/public-packages.v1.json`.
+Published npm payloads are integrity-checked before projection; Formats uses its
+successful release Pages build, IO uses its checked-in release browser package,
+and DAG Data's provider and Datasets' web bindings are built from exact release
+sources with locked dependencies. Receipts distinguish acquisitions from local
+builds and make no independent reproducibility claim. `npm run check:wasm-artifacts`
+checks the complete inventories and native runtime witnesses.
 
 ## Run
 

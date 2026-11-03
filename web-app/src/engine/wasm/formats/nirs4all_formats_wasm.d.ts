@@ -21,7 +21,7 @@ export function features(): any;
  * Single-file HDF5 / NetCDF payloads decode directly through this entry
  * point now that `fmt-hdf5` is on.
  */
-export function openBytes(filename: string, bytes: Uint8Array): any;
+export function openBytes(filename: string, bytes: Uint8Array | number[]): any;
 
 /**
  * Decode a file by name + bytes plus a map of sidecar names → byte
@@ -30,7 +30,7 @@ export function openBytes(filename: string, bytes: Uint8Array): any;
  * AVIRIS/ERDAS LAN and the HDF5-backed sidecar formats (FGI XML+HDF5,
  * NetCDF MFRSR with its QC YAML) now that `fmt-hdf5` is on.
  */
-export function openWithSidecars(filename: string, bytes: Uint8Array, sidecars: any): any;
+export function openWithSidecars(filename: string, bytes: Uint8Array | number[], sidecars: any): any;
 
 /**
  * Probe a file by name + bytes. Returns the ordered candidate readers.
@@ -40,7 +40,7 @@ export function openWithSidecars(filename: string, bytes: Uint8Array, sidecars: 
  * inspected; pass the entire buffer or just the head — the implementation is
  * the same.
  */
-export function probeBytes(filename: string, bytes: Uint8Array): any;
+export function probeBytes(filename: string, bytes: Uint8Array | number[]): any;
 
 /**
  * Readers compiled into this WASM bundle.
@@ -58,7 +58,7 @@ export function recommended_chunk_size_mb(): number;
  * payload. The rules live inside each format module; this binding only
  * serializes them for browser UIs.
  */
-export function sidecarRequirements(filename: string, bytes: Uint8Array): any;
+export function sidecarRequirements(filename: string, bytes: Uint8Array | number[]): any;
 
 /**
  * Crate version exposed to JS.
@@ -88,10 +88,10 @@ export interface InitOutput {
     readonly version: () => [number, number];
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
+    readonly __wbindgen_free: (a: number, b: number, c: number) => void;
     readonly __wbindgen_exn_store: (a: number) => void;
     readonly __externref_table_alloc: () => number;
     readonly __wbindgen_externrefs: WebAssembly.Table;
-    readonly __wbindgen_free: (a: number, b: number, c: number) => void;
     readonly __externref_table_dealloc: (a: number) => void;
     readonly __wbindgen_start: () => void;
 }

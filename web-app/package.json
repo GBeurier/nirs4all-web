@@ -1,7 +1,7 @@
 {
   "name": "nirs4all-web",
   "private": true,
-  "version": "0.4.3",
+  "version": "0.5.0",
   "type": "module",
   "description": "nirs4all-web \u2014 single-page, full-WASM nirs4all browser client (upload \u2192 configure \u2192 pipeline \u2192 run via dag-ml/libn4m \u2192 results \u2192 predict, all in the browser).",
   "license": "(CECILL-2.1 OR AGPL-3.0-or-later)",
@@ -38,7 +38,7 @@
     "legal:components": "node scripts/sync-component-legal.mjs",
     "check:legal-components": "node scripts/sync-component-legal.mjs --check",
     "check:ui-package": "node scripts/check-ui-package.mjs",
-    "check:wasm-artifacts": "npm run check:core-shim && npm run check:formats-wasm && npm run check:io-wasm && npm run check:dagml-wasm && npm run check:dagml-data-wasm && npm run check:datasets-wasm && npm run check:methods-wasm && npm run check:legal-components",
+    "check:wasm-artifacts": "npm run check:ui-package && npm run check:core-shim && npm run check:formats-wasm && npm run check:io-wasm && npm run check:dagml-wasm && npm run check:dagml-data-wasm && npm run check:datasets-wasm && npm run check:methods-wasm && npm run check:legal-components",
     "check:formats-wasm": "node scripts/verify-formats-wasm.mjs",
     "check:io-wasm": "node scripts/verify-io-wasm.mjs",
     "check:dagml-wasm": "node scripts/verify-dagml-wasm.mjs",
@@ -89,7 +89,7 @@
     "ml": "8.0.0",
     "next-themes": "0.4.6",
     "nirs4all": "file:./vendor/nirs4all",
-    "nirs4all-ui": "file:./vendor/npm/nirs4all-ui-0.1.17.tgz",
+    "nirs4all-ui": "file:./vendor/npm/nirs4all-ui-0.2.1.tgz",
     "react": "18.3.1",
     "react-day-picker": "8.10.1",
     "react-dom": "18.3.1",
@@ -113,6 +113,6 @@
     "vite": "6.4.3",
     "vite-plugin-singlefile": "2.1.0",
     "vitest": "3.2.6",
-    "dag-ml-wasm": "0.3.41"
+    "dag-ml-wasm": "0.3.44"
   }
 }

@@ -14,7 +14,9 @@ const here = dirname(fileURLToPath(import.meta.url))
 const root = join(here, '..')
 
 const manifestAbi = JSON.parse(readFileSync(join(root, 'src/catalog/n4m-manifest.json'), 'utf8')).abi
-const stagedAbi = JSON.parse(readFileSync(join(root, 'src/engine/wasm/methods/PROVENANCE.json'), 'utf8')).abi
+const methods = await import('../src/engine/wasm/methods/index.js')
+await methods.loadModule()
+const stagedAbi = methods.abiVersion().join('.')
 if (manifestAbi !== stagedAbi) {
   console.error(`✗ src/catalog/n4m-manifest.json is ABI ${manifestAbi} but the staged methods WASM is ABI ${stagedAbi}.`)
   process.exit(1)

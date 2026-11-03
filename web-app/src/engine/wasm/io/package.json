@@ -1,60 +1,24 @@
 {
-  "name": "@nirs4all/io-wasm",
+  "name": "nirs4all-io-wasm",
   "type": "module",
   "collaborators": [
     "Gregory Beurier <gregory.beurier@cirad.fr>"
   ],
   "description": "wasm-bindgen binding for nirs4all-io: the fs-free JSON surface (to_spec / validate over a spec dict). Excluded from the cargo workspace; built with wasm-pack.",
-  "version": "0.2.6",
+  "version": "0.2.14",
   "license": "CECILL-2.1 OR AGPL-3.0-or-later",
   "repository": {
     "type": "git",
-    "url": "https://github.com/GBeurier/nirs4all-io.git",
-    "directory": "bindings/wasm"
+    "url": "https://github.com/GBeurier/nirs4all-io"
   },
   "files": [
     "nirs4all_io_wasm_bg.wasm",
     "nirs4all_io_wasm.js",
-    "nirs4all_io_wasm.d.ts",
-    "idiomatic.mjs",
-    "idiomatic.d.ts",
-    "public-dataset.mjs",
-    "public-dataset.d.ts",
-    "types/nirs4all-io.d.ts",
-    "LICENSE",
-    "LICENSES",
-    "LICENSING.md",
-    "THIRD_PARTY_NOTICES.md",
-    "COPY_PROVENANCE.md",
-    "nirs4all-io-wasm.cdx.json"
+    "nirs4all_io_wasm.d.ts"
   ],
   "main": "nirs4all_io_wasm.js",
   "types": "nirs4all_io_wasm.d.ts",
   "sideEffects": [
     "./snippets/*"
-  ],
-  "publishConfig": {
-    "access": "public",
-    "provenance": true
-  },
-  "exports": {
-    ".": {
-      "types": "./nirs4all_io_wasm.d.ts",
-      "require": "./nirs4all_io_wasm.js",
-      "default": "./nirs4all_io_wasm.js"
-    },
-    "./idiomatic": {
-      "types": "./idiomatic.d.ts",
-      "import": "./idiomatic.mjs",
-      "default": "./idiomatic.mjs"
-    },
-    "./types": {
-      "types": "./types/nirs4all-io.d.ts"
-    },
-    "./public-dataset": {
-      "types": "./public-dataset.d.ts",
-      "import": "./public-dataset.mjs",
-      "default": "./public-dataset.mjs"
-    }
-  }
+  ]
 }

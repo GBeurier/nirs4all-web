@@ -13,6 +13,9 @@ import { jsBackend } from './backends'
 import { materializeViaProvider } from './dagml-data'
 import { DagMlEngine } from './dagml-engine'
 import { runPipeline } from './orchestrate'
+import { buildNativeFolds } from './grouped-cv'
+import * as dagml from './wasm/dagml/dag_ml_wasm.js'
+import { trainRowsOf } from './partition'
 import { datasetRelations } from './relations'
 import type { MaterializedDataset, PipelineDSL, RunResult } from './types'
 
@@ -148,4 +151,20 @@ describe('replicate scans (duplicate Sample_IDs)', () => {
     expect(relations[29].group_id).toBe(relations[0].group_id)
     expect(relations[1].group_id).not.toBe(relations[0].group_id)
   })
+})
+
+
+it('records missing training targets in the native FoldSet and keeps them predictable', async () => {
+  const ds = withMissing()
+  const folds = buildNativeFolds(dagml, ds, { folds: 3, seed: 42 }, trainRowsOf(ds))
+  expect(folds.target_missing_sample_ids).toEqual(['s11', 's3'])
+  for (const fold of folds.folds) {
+    expect([...fold.train_sample_ids, ...fold.validation_sample_ids]).not.toContain('s3')
+    expect([...fold.train_sample_ids, ...fold.validation_sample_ids]).not.toContain('s11')
+  }
+  const engine = new DagMlEngine({ profile: 'strict-wasm' })
+  const run = await engine.run(ds, ridge)
+  const prediction = await engine.predict(run.model, ds.X, ds.nSamples, ds.nFeatures)
+  expect(prediction.values.length).toBe(ds.nSamples)
+  expect(Number.isFinite(prediction.values[3])).toBe(true)
 })

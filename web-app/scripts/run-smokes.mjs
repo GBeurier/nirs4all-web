@@ -99,6 +99,7 @@ const remember = (buf) => {
 }
 
 let previewExited = null
+let previewAnnounced = false
 function startPreview() {
   // `detached` so we can signal the whole process group (vite spawns children); `--host`
   // pins the interface so readiness polling and the smokes address the same origin.
@@ -108,7 +109,10 @@ function startPreview() {
     detached: true,
     stdio: ['ignore', 'pipe', 'pipe'],
   })
-  child.stdout.on('data', remember)
+  child.stdout.on('data', (buffer) => {
+    remember(buffer)
+    if (String(buffer).includes(APP_URL)) previewAnnounced = true
+  })
   child.stderr.on('data', remember)
   child.on('exit', (code) => {
     previewExited = code ?? 0
@@ -132,6 +136,7 @@ function stopPreview(child) {
 async function waitForServer(deadline) {
   while (Date.now() < deadline) {
     if (previewExited !== null) return false // strictPort clash or crash — do not run against a stale server
+    if (!previewAnnounced) { await sleep(100); continue }
     try {
       const res = await fetch(APP_URL, { signal: AbortSignal.timeout(2000) })
       if (res.ok) return true
