@@ -137,7 +137,7 @@ function expandSweepVariants(dsl: PipelineDSL): VariantPlan[] {
     if (!sweeps) return
     for (const [param, sweep] of Object.entries(sweeps)) {
       const values = sweepValues(sweep)
-      if (values.length > 1) dims.push({ nodeId, param, values })
+      if (values.length > 0) dims.push({ nodeId, param, values })
     }
   }
   dsl.steps.forEach((s, i) => collect(s.sweeps, stepIds[i]))

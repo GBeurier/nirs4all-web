@@ -11,6 +11,8 @@
 
 ### Fixed
 
+- Resolve single-choice sweeps on both native and host CV paths, and report the
+  fitted parameters in outer generator summaries.
 - Preserve Float64Array NaN values from IO, including missing categorical targets.
   Keep unlabelled rows at load and prediction; native DAG FoldSets record missing
   training targets and exclude them from fitting, validation and scoring.

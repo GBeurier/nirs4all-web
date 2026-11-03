@@ -21,7 +21,7 @@ describe('runGeneratorOr progress', () => {
         // each candidate run reports its own 0 → 100
         for (const pct of [0, 40, 80]) onProgress({ phase: 'fit_cv', pct, message: `fold ${pct}` })
         onProgress({ phase: 'done', pct: 100 })
-        return { cv: { metrics: { rmse: 1 } }, refit: { metrics: {} } } as unknown as RunResult
+        return { cv: { metrics: { rmse: 1 } }, refit: { metrics: {} }, model: { dsl } } as unknown as RunResult
       },
       async (ranked) => ranked[0].id,
       (p) => seen.push(p),
@@ -36,7 +36,7 @@ describe('runGeneratorOr progress', () => {
 })
 
 
-const completedRun = { cv: { metrics: { rmse: 1 } }, refit: { metrics: {} } } as unknown as RunResult
+const completedRun = { cv: { metrics: { rmse: 1 } }, refit: { metrics: {} }, model: { dsl } } as unknown as RunResult
 const chooseFirst = async (ranked: { id: string }[]) => ranked[0].id
 
 it('does not hide a strict infrastructure failure after a successful candidate', async () => {
