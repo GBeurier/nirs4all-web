@@ -48,8 +48,6 @@ export default defineConfig({
       'dag-ml-wasm/multimodal_dataset_replay.mjs': path.resolve(__dirname, './src/engine/wasm/dagml/multimodal_dataset_replay.mjs'),
       'dag-ml-wasm/dag_ml_wasm_bg.wasm': path.resolve(__dirname, './src/engine/wasm/dagml/dag_ml_wasm_bg.wasm'),
       'dag-ml-wasm': path.resolve(__dirname, './src/engine/wasm/dagml/dag_ml_wasm.js'),
-      'nirs4all-formats-wasm': path.resolve(__dirname, './src/engine/wasm/formats/nirs4all_formats_wasm.js'),
-      'nirs4all-io-wasm': path.resolve(__dirname, './src/engine/wasm/io/nirs4all_io_wasm.js'),
       '@': path.resolve(__dirname, './src'),
     },
   },
