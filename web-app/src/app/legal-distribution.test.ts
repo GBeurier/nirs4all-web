@@ -21,6 +21,7 @@ const componentSources = [
 function filesRecursively(root: string, current = root): string[] {
   return readdirSync(current, { withFileTypes: true })
     .flatMap((entry) => {
+      if (entry.name === 'node_modules') return []
       const path = join(current, entry.name)
       return entry.isDirectory() ? filesRecursively(root, path) : [relative(root, path)]
     })
@@ -45,16 +46,7 @@ function isLegalPayload(path: string): boolean {
 }
 
 function legalFiles(root: string): string[] {
-  const topLevel = readdirSync(root, { withFileTypes: true })
-    .filter((entry) => entry.isFile() && isLegalPayload(entry.name))
-    .map((entry) => entry.name)
-  const licenses = readdirSync(root, { withFileTypes: true }).find(
-    (entry) => entry.isDirectory() && entry.name === 'LICENSES',
-  )
-  if (licenses) {
-    topLevel.push(...filesRecursively(join(root, 'LICENSES')).map((path) => join('LICENSES', path)))
-  }
-  return topLevel.sort()
+  return filesRecursively(root).filter(isLegalPayload)
 }
 
 describe('distributed legal notices', () => {
@@ -89,6 +81,12 @@ describe('distributed legal notices', () => {
       expect(paths).toContain('LICENSE')
       if (name === 'io') expect(paths).toContain('nirs4all-io-wasm.cdx.json')
       if (name === 'datasets') expect(paths).toContain('LICENSE-CeCILL-2.1')
+      if (name === 'formats') {
+        for (const reader of ['hdf5-reader', 'netcdf-reader']) {
+          expect(paths).toContain(`reader-backports/${reader}/LICENSE-MIT`)
+          expect(paths).toContain(`reader-backports/${reader}/LICENSE-APACHE`)
+        }
+      }
       const declaration = manifest.components.find((component: { name: string }) => component.name === name)
       expect(declaration.files.map(({ path }: { path: string }) => path)).toEqual(paths)
 
