@@ -32,6 +32,7 @@ function isLegalPayload(path: string): boolean {
   return (
     path.startsWith('LICENSES/') ||
     basename === 'LICENSE' ||
+    basename?.startsWith('LICENSE-') === true ||
     basename === 'LICENSING.md' ||
     basename === 'LICENSING_FR.md' ||
     basename === 'COPY_PROVENANCE.md' ||
@@ -87,6 +88,7 @@ describe('distributed legal notices', () => {
       const paths = legalFiles(source)
       expect(paths).toContain('LICENSE')
       if (name === 'io') expect(paths).toContain('nirs4all-io-wasm.cdx.json')
+      if (name === 'datasets') expect(paths).toContain('LICENSE-CeCILL-2.1')
       const declaration = manifest.components.find((component: { name: string }) => component.name === name)
       expect(declaration.files.map(({ path }: { path: string }) => path)).toEqual(paths)
 

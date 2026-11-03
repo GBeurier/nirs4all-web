@@ -54,6 +54,7 @@ function isLegalPayload(path) {
   return (
     path.startsWith('LICENSES/') ||
     basename === 'LICENSE' ||
+    basename?.startsWith('LICENSE-') === true ||
     basename === 'THIRD_PARTY_NOTICES.md' ||
     basename === 'LICENSING.md' ||
     basename === 'LICENSING_FR.md' ||
