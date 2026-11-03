@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.5.0 — 2026-11-03
+
+### Added
+
+- Run Cartesian pipeline generators with complete alternative subchains, continue
+  past failing variants in both native and host CV, and show each
+  successful variant’s full pipeline and parameters. Progress covers the whole search.
+- Curated browser-ready Studio preset cards.
+
+### Fixed
+
+- Preserve Float64Array NaN values from IO, including missing categorical targets.
+  Keep unlabelled rows at load and prediction; native DAG FoldSets record missing
+  training targets and exclude them from fitting, validation and scoring.
+- Refresh Datasets metadata and distributed license texts to the dual license
+  `CECILL-2.1 OR AGPL-3.0-or-later`.
+
+### Changed
+
+- Consume Core 0.4.7, DAG 0.3.44, DAG Data 0.2.16, IO 0.2.14, Methods 1.3.14,
+  Formats 0.2.14, Datasets 0.3.18 and shared UI 0.2.1. Verify exact published
+  tarball integrity, staged file hashes and source provenance. Browser-only
+  provider/Datasets bindings are built from pinned release sources.
+- Refresh the catalog from the staged Methods runtime (ABI 2.20.0).
+
 ## 0.4.3 — 2026-11-02
 
 ### Fixed

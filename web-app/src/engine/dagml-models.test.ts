@@ -2,7 +2,6 @@ import { readFileSync } from 'node:fs'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { DagMlEngine } from './dagml-engine'
 import { loadSampleDataset } from '@/data/samples'
-import { RtErrorException } from './rt'
 import type { MaterializedDataset } from './types'
 import { initSync as initDagMl } from './wasm/dagml/dag_ml_wasm.js'
 import { initSync as initData } from './wasm/dagml-data/dag_ml_data_wasm.js'
@@ -54,17 +53,29 @@ describe('model-only classification through the real WASM scheduler', () => {
   it('preserves a native fit refusal across the scheduler callback instead of claiming fallback success', async () => {
     const ds = await loadSampleDataset('corn')
     await expect(new DagMlEngine({ profile: 'strict-wasm' }).run(ds, {
-      name: 'Ridge PLS numerical refusal', steps: [],
-      model: { id: 'model', type: 'n4m:models.regularized.ridge_pls', params: { n_components: 10, ridge_lambda: 1 } },
+      name: 'Ridge PLS invalid regularization', steps: [],
+      model: { id: 'model', type: 'n4m:models.regularized.ridge_pls', params: { n_components: 10, ridge_lambda: -1 } },
       cv: { folds: 5, seed: 42 },
-    })).rejects.toMatchObject({
-      name: 'RtErrorException',
-      rtError: {
-        verb: 'run',
-        cause: 'runtime_error',
-        message: expect.stringContaining('Ridge PLS could not fit'),
-        mitigation: expect.stringContaining('fewer components'),
-      },
-    } satisfies Partial<RtErrorException>)
+    })).rejects.toThrow(/invalid value for parameter 'ridge_lambda'/)
   })
+})
+
+
+it('continues native model-only sweeps after a failing variant without duplicating OOF', async () => {
+  const ds = await loadSampleDataset('corn')
+  const result = await new DagMlEngine({ profile: 'strict-wasm' }).run(ds, {
+    name: 'mixed native variants', steps: [],
+    model: { id: 'model', type: 'n4m:models.regularized.ridge_pls', params: { n_components: 2 },
+      sweeps: { ridge_lambda: { type: 'or', choices: [-1, 1] } } },
+    cv: { folds: 3, seed: 42 },
+  })
+  expect(result.variantCount).toBe(2)
+  expect(result.variants).toHaveLength(1)
+  expect(result.variants![0].selected).toBe(true)
+  expect(result.model.dsl.model?.params.ridge_lambda).toBe(1)
+  const ids = result.cv!.predictions.map((row) => row.sampleId)
+  expect(ids.length).toBe(ds.partitions.filter((part) => part === 'train').length)
+  expect(new Set(ids).size).toBe(ids.length)
+  expect(result.lineage).toMatchObject({ executed: true })
+  expect(result.lineage).not.toMatchObject({ schedulerFallback: true })
 })

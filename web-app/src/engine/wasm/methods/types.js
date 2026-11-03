@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: CECILL-2.1
+// SPDX-License-Identifier: CECILL-2.1 OR AGPL-3.0-or-later
 /** Mirror of the C enum n4m_status_t (cpp/include/n4m/n4m.h). */
 export var Status;
 (function (Status) {
@@ -59,6 +59,26 @@ export var Solver;
     Solver[Solver["POWER"] = 6] = "POWER";
     Solver[Solver["RANDOMIZED_SVD"] = 7] = "RANDOMIZED_SVD";
 })(Solver || (Solver = {}));
+/** Mirror of n4m_model_array_t (n4m_model_get_array tags). */
+export var ModelArray;
+(function (ModelArray) {
+    ModelArray[ModelArray["COEFFICIENTS"] = 0] = "COEFFICIENTS";
+    ModelArray[ModelArray["INTERCEPT"] = 1] = "INTERCEPT";
+    ModelArray[ModelArray["X_MEAN"] = 2] = "X_MEAN";
+    ModelArray[ModelArray["X_SCALE"] = 3] = "X_SCALE";
+    ModelArray[ModelArray["Y_MEAN"] = 4] = "Y_MEAN";
+    ModelArray[ModelArray["Y_SCALE"] = 5] = "Y_SCALE";
+    ModelArray[ModelArray["WEIGHTS_W"] = 6] = "WEIGHTS_W";
+    ModelArray[ModelArray["LOADINGS_P"] = 7] = "LOADINGS_P";
+    ModelArray[ModelArray["Y_LOADINGS_Q"] = 8] = "Y_LOADINGS_Q";
+    ModelArray[ModelArray["ROTATIONS_R"] = 9] = "ROTATIONS_R";
+    ModelArray[ModelArray["SCORES_T"] = 10] = "SCORES_T";
+    ModelArray[ModelArray["Y_SCORES_U"] = 11] = "Y_SCORES_U";
+    /** ABI 2.20: (1, 1) X-Y cross-covariance resolution of the components. */
+    ModelArray[ModelArray["COMPONENT_RESOLUTION"] = 12] = "COMPONENT_RESOLUTION";
+    /** ABI 2.20: (1, n_components), 1 for a numerically unresolved component. */
+    ModelArray[ModelArray["UNRESOLVED_COMPONENTS"] = 13] = "UNRESOLVED_COMPONENTS";
+})(ModelArray || (ModelArray = {}));
 /** Mirror of n4m_deflation_t. */
 export var Deflation;
 (function (Deflation) {

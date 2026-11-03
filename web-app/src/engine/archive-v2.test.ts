@@ -218,8 +218,9 @@ describe('canonical Archive V2 Web consumer', () => {
 
       const result = await new MainEngine({ profile: 'strict-wasm' })
         .predict(imported.model, PIPELINE_X, 2, 3)
+      result.values.forEach((value, i) => expect(value).toBeCloseTo(PIPELINE_EXPECTED[i], 12))
       expect(result).toEqual({
-        values: Float64Array.from(PIPELINE_EXPECTED),
+        values: expect.any(Float64Array),
         rows: 2,
         cols: 2,
         sampleIds: ['sample.0', 'sample.1'],

@@ -50,9 +50,9 @@
           "sha256": "46c57e67ed1e40c98a714f32a968b343650b02df3627744c28e9ceba011b7447"
         },
         {
-          "path": "PROVENANCE.md",
-          "size": 1163,
-          "sha256": "29da8be0555a344ae4d2d1ca39fd7e33333fcf5eeb2ed8af0b6825816afcef0e"
+          "path": "PROVENANCE.json",
+          "size": 8105,
+          "sha256": "cb19d5b49158f3ff16f783ca259b19686b7e02d6a129fa405123e15cb1d3a5c7"
         },
         {
           "path": "THIRD_PARTY_NOTICES.md",
@@ -106,8 +106,8 @@
         },
         {
           "path": "PROVENANCE.json",
-          "size": 4987,
-          "sha256": "2efbff208f60c28dfd7b8bfc32357afc3448a3b8fa4483ee7c2fc5e75b06e05b"
+          "size": 4099,
+          "sha256": "ad00397f1c07a5cc69ee223e9aabe8134377e9d31fdffeb820904ca5891a2af6"
         },
         {
           "path": "THIRD_PARTY_NOTICES.md",
@@ -161,8 +161,8 @@
         },
         {
           "path": "PROVENANCE.json",
-          "size": 3952,
-          "sha256": "a3b3234ff3a630f33f1d0ca59baf6014006ef7030098b9d2a1ce77fef05c7006"
+          "size": 3402,
+          "sha256": "92f464323fb3cc0c788d77e32cedcd080fe96a21da7a8df96394f76581a3ab7f"
         },
         {
           "path": "THIRD_PARTY_NOTICES.md",
@@ -176,13 +176,13 @@
       "files": [
         {
           "path": "LICENSE",
-          "size": 1110,
-          "sha256": "d013c19348cb484bf19db0406cafeecb8df2103fd3a8a55a9dc16ce948bcdb96"
+          "size": 34020,
+          "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
         },
         {
           "path": "PROVENANCE.json",
-          "size": 2638,
-          "sha256": "e825b9d79e3794b6882093b56087262e611784033bd0d50e6d6f8bfec82ab4d8"
+          "size": 2425,
+          "sha256": "49e4a090ae5b1f3797ceb9c443d2b9a8da51b7540fe12b4be197adfe2147a4e9"
         }
       ]
     },
@@ -226,13 +226,13 @@
         },
         {
           "path": "PROVENANCE.json",
-          "size": 7344,
-          "sha256": "046f6f2a34e7c8a1ca0a8dff240706e042ac8946bb53d9f594cb23a6686bccac"
+          "size": 17458,
+          "sha256": "9ec6d0022b84213c7c36416e9127bb352cef13b94453218c99046bd6450f0f25"
         },
         {
           "path": "THIRD_PARTY_NOTICES.md",
-          "size": 1756,
-          "sha256": "9b775a48b4c988ea2d892a91df024be0fe97b7721325370ad1d1a051d7176fa8"
+          "size": 2630,
+          "sha256": "39e06e5ca05c5bc5bab725d15f2eb28bfde7c33d79906c9f38534b7bb731a34a"
         }
       ]
     },
@@ -296,18 +296,18 @@
         },
         {
           "path": "PROVENANCE.json",
-          "size": 5502,
-          "sha256": "443bbf2d111382f6d3a382aa8b4b6345948a4ebf79913b5fd48253519805d0c6"
+          "size": 4258,
+          "sha256": "aff0ec7dfb9f4e08972bbbfda69d76cb9a6f19013f8fce59e3eab7cc31e1d1f6"
         },
         {
           "path": "THIRD_PARTY_NOTICES.md",
-          "size": 4935,
-          "sha256": "2d0aa4b2f137e77bad3d243bd908359c5e6bab37a3e9e29402f96e2103bb4932"
+          "size": 5732,
+          "sha256": "c2f5c9061e7bc5a259a2d630330930ce9438f157e9646724824730ce516a5179"
         },
         {
           "path": "nirs4all-io-wasm.cdx.json",
-          "size": 34111,
-          "sha256": "86514440a172e3ef77292fc15e2ff678587e02bd30af401e80764eff92c72e51"
+          "size": 34808,
+          "sha256": "3a86cfebaa19ffe93cd6e9085d8a7c26cb191f81d6333dfb39e8eb7e474c5786"
         }
       ]
     },
@@ -360,29 +360,19 @@
           "sha256": "674f3ab09bc6fca997bc765bbd5b710aabecb60d68f722ed4182bf40ec274bf1"
         },
         {
-          "path": "LICENSING_FR.md",
-          "size": 2280,
-          "sha256": "6996c1e0385782ca1d6adf3a2fe07189a4bbcad8be727adb7cac0b85c71255a1"
-        },
-        {
-          "path": "NOTICE.md",
-          "size": 1190,
-          "sha256": "c85840381f10a962f85703c0cffbaadeaa22bd9e2ea607b360f9623baa2702a8"
-        },
-        {
           "path": "PROVENANCE.json",
-          "size": 12204,
-          "sha256": "8eaaf2ef3129d07909361808f1781141d49f65ea06ec323ea0e8cdeef547f9b3"
+          "size": 8859,
+          "sha256": "0d99959f201e95ff43f729d80cd3f8b8aa74171ce5c644d8ba8778b46dc3565a"
         },
         {
           "path": "THIRD_PARTY_LICENSES.md",
-          "size": 4804,
-          "sha256": "0f61b74f895a6fa4c8026bf465da107037a3d291bc9f2fe5b3f030585b6f71c9"
+          "size": 6727,
+          "sha256": "01db4c791ed3a5fbdd7bc6efcc9f5bf75f6a879b63f0ceb6c52098fa4732f850"
         },
         {
           "path": "THIRD_PARTY_NOTICES.md",
-          "size": 1520,
-          "sha256": "d7cb88c7da4946046de190b23be0b747f10136f8423e3eda29d5d9c2a9b192e4"
+          "size": 1714,
+          "sha256": "4106fb2caf597b5392140d24ddce905c6e4e990521aea68c7c10c7a817024933"
         }
       ]
     }

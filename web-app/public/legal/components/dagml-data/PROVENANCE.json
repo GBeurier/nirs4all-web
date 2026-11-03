@@ -1,126 +1,98 @@
 {
-  "schema": "nirs4all-web.wasm-single-build.v1",
-  "component": "dag-ml-data-wasm",
-  "version": "0.2.13",
+  "schema": "nirs4all-web.public-npm-acquisition.v1",
+  "package": "dag-ml-data-wasm",
+  "version": "0.2.16",
   "source": {
     "repository": "https://github.com/GBeurier/dag-ml-data",
-    "commit": "78719b68c8e9ffd4c2035792574b8da33387d237",
-    "tree": "718aabf02fd704ee7d18aa6127c59ac1ffe3c2ec",
-    "clean": true
+    "commit": "eb2ad7835ca85feebf6f626d9f43f61575a1c9a9",
+    "tree": "8bbccfcf7194f33eea6df14c9bb64bea2e262d63"
   },
-  "build": {
-    "target": "web",
-    "executions": 1,
-    "output_directory": "/mnt/c/Temp/n4a-downstream041-20261008/web041-actual-staging-sequential-v1/tmp/nirs4all-web-dagml-data-mW4oZE/out-single",
-    "retained_build_directory": "/mnt/c/Temp/n4a-downstream041-20261008/web041-actual-staging-sequential-v1/tmp/nirs4all-web-dagml-data-mW4oZE",
-    "cargo_target_directory": "/mnt/c/Temp/n4a-downstream041-20261008/web041-browser-cargo-target-v1",
-    "profile": "release",
-    "cargo_locked": true,
-    "wasm_bindgen_lock": "0.2.126",
-    "features": [
-      "provider"
-    ],
-    "source_date_epoch": 1791230334,
-    "tools": {
-      "wasm_pack": "wasm-pack 0.15.0",
-      "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
-      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)"
-    }
+  "acquisition": {
+    "metadata_url": "https://registry.npmjs.org/dag-ml-data-wasm/0.2.16",
+    "tarball_url": "https://registry.npmjs.org/dag-ml-data-wasm/-/dag-ml-data-wasm-0.2.16.tgz",
+    "size": 413308,
+    "sha256": "77404d717d139d96f4a2d4a1af4f5f36f206f538d0fdf0fa25ea2e6820f88c48",
+    "sha1": "70fc78644661a394f5a1d0194313cff8c11154a8",
+    "integrity": "sha512-fBgbZHiBfNvd82kJnrhV2l1xVUPM9jJ9i0ftg/Hkqe0s3CGlTl+LfNc1vBa2Y1Yct4+EFJXa4PK76w+PCy//ZA=="
   },
   "reproducibility": {
-    "independent_rebuild_claimed": false,
-    "byte_identical_rebuild_claimed": false
+    "performed_by_web": true,
+    "independent_rebuild_claimed": false
   },
-  "licensing": {
-    "expression": "CECILL-2.1 OR AGPL-3.0-or-later",
-    "payload_source": "qualified source tree",
-    "files": [
-      "LICENSE",
-      "LICENSING.md",
-      "LICENSING_FR.md",
-      "THIRD_PARTY_NOTICES.md",
-      "LICENSES/AGPL-3.0-or-later.txt",
-      "LICENSES/Apache-2.0.txt",
-      "LICENSES/BSD-3-Clause.txt",
-      "LICENSES/CeCILL-2.1.txt",
-      "LICENSES/MIT.txt"
-    ]
-  },
-  "files": [
-    {
-      "path": "LICENSE",
+  "files": {
+    "LICENSE": {
       "size": 34020,
       "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
     },
-    {
-      "path": "LICENSES/AGPL-3.0-or-later.txt",
+    "LICENSES/AGPL-3.0-or-later.txt": {
       "size": 34020,
       "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
     },
-    {
-      "path": "LICENSES/Apache-2.0.txt",
+    "LICENSES/Apache-2.0.txt": {
       "size": 10280,
       "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
     },
-    {
-      "path": "LICENSES/BSD-3-Clause.txt",
+    "LICENSES/BSD-3-Clause.txt": {
       "size": 1460,
       "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
     },
-    {
-      "path": "LICENSES/CeCILL-2.1.txt",
+    "LICENSES/CeCILL-2.1.txt": {
       "size": 21778,
       "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
     },
-    {
-      "path": "LICENSES/MIT.txt",
+    "LICENSES/MIT.txt": {
       "size": 1078,
       "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
     },
-    {
-      "path": "LICENSING.md",
+    "LICENSING.md": {
       "size": 1421,
       "sha256": "de862d775334ff3cf60df5a4f2bde6a08bd0aac0add477212d94f82989e3a2a3"
     },
-    {
-      "path": "LICENSING_FR.md",
-      "size": 1536,
-      "sha256": "cf4da85268262def2eb370b379d0d52d7bea3dc347a67ddc53ef108b914df68d"
-    },
-    {
-      "path": "README.md",
+    "README.md": {
       "size": 2465,
       "sha256": "471b5bc0070411c82674a24fb776efeb00a44f27d821a8327c6d9536145555b0"
     },
-    {
-      "path": "THIRD_PARTY_NOTICES.md",
+    "THIRD_PARTY_NOTICES.md": {
       "size": 1583,
       "sha256": "d4e03627160b905122799e578ed8e1288969a70f47488db402cf55c5e2bb633e"
     },
-    {
-      "path": "dag_ml_data_wasm.d.ts",
+    "dag_ml_data_wasm.d.ts": {
       "size": 9920,
       "sha256": "f217d639f912a7d57827bb5aec8ee9d0d2a7f9ea77345dde13712d8b82de843a"
     },
-    {
-      "path": "dag_ml_data_wasm.js",
-      "size": 34118,
-      "sha256": "85e91d92faeb619abc1fe4682b648c499afd3bcff7d8f61825382c4a1f53e746"
+    "dag_ml_data_wasm.js": {
+      "size": 34259,
+      "sha256": "5be5dc737cbd978badb261c60e7e8fd6bf511109018f7f73ce0f1084417eed5d"
     },
-    {
-      "path": "dag_ml_data_wasm_bg.wasm",
-      "size": 1657293,
-      "sha256": "7afa87e314e74e56294691e5a34e0584edaa4bab80cc2afa19636d15eb2fa905"
+    "dag_ml_data_wasm_bg.wasm": {
+      "size": 2090928,
+      "sha256": "7e135079d4e27b0290eb88313122a9d79faa98c178f70caf0575949721d47965"
     },
-    {
-      "path": "dag_ml_data_wasm_bg.wasm.d.ts",
+    "package.json": {
+      "size": 746,
+      "sha256": "75f08000f3be730d900048452cdded440acb6ff083c734e60dd5922136d7055d"
+    },
+    "dag_ml_data_wasm_bg.wasm.d.ts": {
       "size": 4363,
       "sha256": "9f6716d8350aa14b8cbc2b57e0ff3bc987ca3849b6557447310db5041017390c"
     },
-    {
-      "path": "package.json",
-      "size": 621,
-      "sha256": "f0df8f05379c39b0211b6b934e542b78f7b3c1dead4f23f1a233b35f9a2e3d12"
+    "LICENSING_FR.md": {
+      "size": 1536,
+      "sha256": "cf4da85268262def2eb370b379d0d52d7bea3dc347a67ddc53ef108b914df68d"
     }
-  ]
+  },
+  "build": {
+    "target": "web",
+    "profile": "release",
+    "cargo_locked": true,
+    "manifest": "crates/dag-ml-data-wasm/Cargo.toml",
+    "features": [
+      "provider"
+    ],
+    "wasm_bindgen": "0.2.126",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "lock_sha256": "2e9c8ce5da8e72060595679772b578cd9994c5b89a8160611cde1dff1dd2aa2a",
+    "executions": 1,
+    "independent_rebuild_claimed": false
+  }
 }

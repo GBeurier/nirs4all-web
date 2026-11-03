@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: CECILL-2.1
+// SPDX-License-Identifier: CECILL-2.1 OR AGPL-3.0-or-later
 //
 // Public TypeScript API for the @nirs4all/methods binding — a
 // non-idiomatic function library over libn4m (raw typed arrays in/out). See
@@ -14,6 +14,7 @@ export { SpectralEncoder } from "./spectralEncoding.js";
 export { Optimizer } from "./optimization.js";
 export { loadModule, getModule, makeMatrixView, readArrayView } from "./ffi.js";
 export { Context } from "./context.js";
+export { preflightPca, preflightRepeatability, preflightSummary, preflightNearestNeighbors, preflightLocalContrast, preflightNoiseProxy, preflightSnv, preflightPairsWithinTolerance, preflightFactorAssociation, preflightHolmAdjust, preflightAdjustedRandIndex, statsCorrelationTest, statsBhAdjust, statsFactorAssociationExact, statsCorrelationExact, statsPermanova, statsPermdisp, statsPermanovaFreedmanLane, statsEnergyDistance, statsPcaMonitor, statsVarianceComponentsReml, statsVarianceComponentsIntervals, statsGroupMeans, statsRegressionScores, clusterHdbscan, clusterJaccardMatrix, linearSumAssignment, randomPermutations, randomMultivariateNormal } from "./preflightDiagnostics.js";
 export { Config } from "./config.js";
 export { Model, fitPls, predictPls, fitModel, predictModel, fitAom, fitAomChain, fitPop, fitAomRidge, fitAomStack, computeSplit, computeSplitIndices } from "./model.js";
 export { ppCreate, ppFit, ppTransform, ppGetState, ppSetState, ppDestroy, } from "./preprocessing.js";
@@ -28,7 +29,7 @@ export { augmentNative } from "./nativeAugmentation.js";
 export { NativePreprocessingPipeline, PipelineOperatorKind, } from "./nativePreprocessingPipeline.js";
 export { selectSpa, selectVariables, selectorMethods } from "./selection.js";
 export { inspectN4mm, SERIALIZED_MODEL_INFO_SCHEMA_V1, SERIALIZED_MODEL_CAPABILITY_PREDICT, SERIALIZED_MODEL_CAPABILITY_TRANSFORM, SERIALIZED_MODEL_CAPABILITY_AFFINE, SERIALIZED_MODEL_CAPABILITY_PIPELINE, PipelineFingerprintAlgorithm, PipelineSemanticProfile, SerializedSavitzkyGolayMode, SerializedPipelineOperatorKind, } from "./serialization.js";
-export { Status, Dtype, Algorithm, Solver, Deflation, N4mError, } from "./types.js";
+export { Status, Dtype, Algorithm, Solver, Deflation, ModelArray, N4mError, } from "./types.js";
 /** ABI / project version reported by the loaded WASM module. */
 export function version() {
     const m = getModule();

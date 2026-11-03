@@ -3,7 +3,6 @@ import { defaultParams } from '@/catalog/nodes'
 import { loadSampleDataset } from '@/data/samples'
 import { loadLibn4mBackend } from './backends'
 import { trainAndPredict } from './orchestrate'
-import { RtErrorException } from './rt'
 
 describe('catalog model defaults against staged WASM', () => {
   it.each(['corn', 'beer'] as const)('fits the previously failing regression models on %s', async (sample) => {
@@ -25,23 +24,14 @@ describe('catalog model defaults against staged WASM', () => {
     }
   })
 
-  it('explains a numerical failure without silently changing the requested Ridge PLS fit', async () => {
+  it('preserves native parameter validation instead of changing the requested Ridge PLS fit', async () => {
     const ds = await loadSampleDataset('corn')
     const backend = await loadLibn4mBackend()
     const train = ds.partitions.flatMap((part, i) => part === 'train' ? [i] : [])
-    try {
-      trainAndPredict(ds, {
-        name: 'too many components', steps: [],
-        model: { id: 'model', type: 'n4m:models.regularized.ridge_pls', params: { n_components: 10, ridge_lambda: 1 } },
-      }, backend, train, [0])
-      expect.fail('expected the native numerical refusal')
-    } catch (error) {
-      expect(error).toBeInstanceOf(RtErrorException)
-      const diagnostic = (error as RtErrorException).rtError
-      expect(diagnostic.message).toContain('Ridge PLS')
-      expect(diagnostic.message).toContain('10 components')
-      expect(diagnostic.mitigation).toContain('fewer components')
-    }
+    expect(() => trainAndPredict(ds, {
+      name: 'invalid regularization', steps: [],
+      model: { id: 'model', type: 'n4m:models.regularized.ridge_pls', params: { n_components: 10, ridge_lambda: -1 } },
+    }, backend, train, [0])).toThrow(/invalid value for parameter 'ridge_lambda'/)
   })
 
   it('fits ECR after the classification preset’s SNV and second derivative', async () => {

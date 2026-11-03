@@ -65,6 +65,14 @@ export function derive_controller_manifest_json(host_controller_spec_json: strin
 export function derive_controller_manifest_list_json(host_controller_specs_json: string): string;
 
 /**
+ * Narrow a host-supplied `FoldSet` by removing target-missing samples (JSON array of ids) from
+ * its universe, folds and groups and declaring them in `target_missing_sample_ids`. A fold that
+ * loses all of its validation or training samples is refused with a `target_missing_exclusion`
+ * error instead of being emitted.
+ */
+export function exclude_target_missing_json(fold_set_json: string, target_missing_json: string): string;
+
+/**
  * Execute one phase of a campaign with the in-process [`SequentialScheduler`],
  * invoking host operators through the supplied JS callback.
  *
@@ -104,6 +112,17 @@ export function execute_execution_plan_phase_u64_json(execution_plan_json: strin
 export function execute_initial_full_refit_json(plan_json: string, trusted_controller_manifests_json: string, envelope_json: string, training_sample_ids_json: string, package_id: string, run_id: string, root_seed: string, js_invoke: Function): string;
 
 /**
+ * Run `execute_nested_selection` with JS controllers in the same worker.
+ * `trusted_controller_manifests_json` resolves the request's graph nodes and
+ * registers one bridge controller per manifest; `js_invoke` is
+ * `(controllerId, taskJson, exactSeed) => nodeResultJson`. The envelope must
+ * attest the request campaign's data bindings. The optional `js_metrics`
+ * computes the selection and pooled metrics (`mse`, `rmse`, `mae`); without
+ * it the DAG-ML metric registry is used. Returns the outcome JSON.
+ */
+export function execute_nested_selection_json(request_json: string, trusted_controller_manifests_json: string, data_envelope_json: string, js_invoke: Function, js_metrics?: Function | null): string;
+
+/**
  * Execute native CV/SELECT/REFIT and capture a self-contained predictor package.
  * This synchronous lane derives influence in the core and requires every
  * fitted artifact to be native-portable. Caller-owned controllers are closed
@@ -116,8 +135,9 @@ export function fold_set_fingerprint_json(json: string): string;
 /**
  * Build a native group-disjoint FoldSet from explicit sample -> group identities.
  * No group inference, clipping, randomization or feature values occur in the binding.
+ * `target_missing_json` behaves as in [`kfold_split_json`].
  */
-export function group_kfold_split_json(spec_json: string, sample_groups_json: string, id: string): string;
+export function group_kfold_split_json(spec_json: string, sample_groups_json: string, id: string, target_missing_json?: string | null): string;
 
 /**
  * Evaluate one FIT_CV fold only, then return to the browser coordinator for
@@ -159,8 +179,13 @@ export function initial_full_refit_predict_envelope_json(package_json: string, c
 /**
  * Build a K-fold `FoldSet` from a `KFoldSpec` JSON + a JSON array of sample ids.
  * dag-ml owns the split — the host stops building folds itself.
+ *
+ * `target_missing_json` (optional JSON array of sample ids) names samples whose target is
+ * missing: they are kept out of every fold and declared in the returned
+ * `FoldSet.target_missing_sample_ids`, so they never train or get scored but stay eligible for
+ * PREDICT. Too few target-observed samples is refused with a `target_missing_exclusion` error.
  */
-export function kfold_split_json(spec_json: string, sample_ids_json: string, id: string): string;
+export function kfold_split_json(spec_json: string, sample_ids_json: string, id: string, target_missing_json?: string | null): string;
 
 export function loss_execution_attestation_json(training_loss_role_json: string, phase: string): string;
 
@@ -239,8 +264,9 @@ export function stacking_fold_weights_json(request_json: string): string;
  * Build a stratified K-fold `FoldSet`: same OOF-once guarantee as K-fold, but
  * balanced by a per-sample class label. `strata_json` is a JSON object mapping
  * sample id → class label (identity-keyed metadata, never feature values).
+ * `target_missing_json` behaves as in [`kfold_split_json`]; those samples need no label.
  */
-export function stratified_kfold_split_json(spec_json: string, sample_ids_json: string, strata_json: string, id: string): string;
+export function stratified_kfold_split_json(spec_json: string, sample_ids_json: string, strata_json: string, id: string, target_missing_json?: string | null): string;
 
 /**
  * Derive an identity from an attested binding/envelope, without host hashing.
@@ -291,20 +317,22 @@ export interface InitOutput {
     readonly dag_ml_version: () => [number, number];
     readonly derive_controller_manifest_json: (a: number, b: number) => [number, number, number, number];
     readonly derive_controller_manifest_list_json: (a: number, b: number) => [number, number, number, number];
+    readonly exclude_target_missing_json: (a: number, b: number, c: number, d: number) => [number, number, number, number];
     readonly execute_campaign_phase_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: any) => [number, number, number, number];
     readonly execute_campaign_phase_u64_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: any) => [number, number, number, number];
     readonly execute_execution_plan_phase_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: any) => [number, number, number, number];
     readonly execute_execution_plan_phase_u64_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: any) => [number, number, number, number];
     readonly execute_initial_full_refit_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: any) => [number, number, number, number];
+    readonly execute_nested_selection_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: any, h: number) => [number, number, number, number];
     readonly execute_training_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: any) => [number, number, number, number];
     readonly fold_set_fingerprint_json: (a: number, b: number) => [number, number, number, number];
-    readonly group_kfold_split_json: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number, number, number];
+    readonly group_kfold_split_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number, number, number];
     readonly host_hpo_evaluate_worker_fold_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: any) => [number, number, number, number];
     readonly host_hpo_evaluate_worker_task_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: any) => [number, number, number, number];
     readonly host_hpo_search_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: any, l: any) => [number, number, number, number];
     readonly host_hpo_search_parallel_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: any, m: any) => any;
     readonly initial_full_refit_predict_envelope_json: (a: number, b: number, c: number, d: number) => [number, number, number, number];
-    readonly kfold_split_json: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number, number, number];
+    readonly kfold_split_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number, number, number];
     readonly localimplementationregistry_bind_training_loss: (a: number, b: number, c: number, d: any) => [number, number, number];
     readonly localimplementationregistry_clear: (a: number) => void;
     readonly localimplementationregistry_descriptors_json: (a: number) => [number, number, number, number];
@@ -332,7 +360,7 @@ export interface InitOutput {
     readonly sign_training_replay_request_json: (a: number, b: number) => [number, number, number, number];
     readonly sign_training_request_json: (a: number, b: number) => [number, number, number, number];
     readonly stacking_fold_weights_json: (a: number, b: number) => [number, number, number, number];
-    readonly stratified_kfold_split_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number, number, number];
+    readonly stratified_kfold_split_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => [number, number, number, number];
     readonly training_data_identity_json: (a: number, b: number, c: number, d: number) => [number, number, number, number];
     readonly traininglossbinding_invoke: (a: number) => any;
     readonly traininglossbinding_required_attestation_json: (a: number) => [number, number];
@@ -346,8 +374,8 @@ export interface InitOutput {
     readonly validate_graph_json: (a: number, b: number) => [number, number];
     readonly validate_initial_full_refit_package_json: (a: number, b: number) => [number, number];
     readonly validate_pipeline_dsl_json: (a: number, b: number) => [number, number];
-    readonly wasm_bindgen_dfd0b53baa41d632___convert__closures_____invoke___js_sys_6314793ba421de9a___Function_fn_wasm_bindgen_dfd0b53baa41d632___JsValue_____wasm_bindgen_dfd0b53baa41d632___sys__Undefined___js_sys_6314793ba421de9a___Function_fn_wasm_bindgen_dfd0b53baa41d632___JsValue_____wasm_bindgen_dfd0b53baa41d632___sys__Undefined_______true_: (a: number, b: number, c: any, d: any) => void;
-    readonly wasm_bindgen_dfd0b53baa41d632___convert__closures_____invoke___wasm_bindgen_dfd0b53baa41d632___JsValue__core_608f92abc48d28da___result__Result_____wasm_bindgen_dfd0b53baa41d632___JsError___true_: (a: number, b: number, c: any) => [number, number];
+    readonly wasm_bindgen_6d8b02b35ac3a954___convert__closures_____invoke___js_sys_baa5e4b942bda068___Function_fn_wasm_bindgen_6d8b02b35ac3a954___JsValue_____wasm_bindgen_6d8b02b35ac3a954___sys__Undefined___js_sys_baa5e4b942bda068___Function_fn_wasm_bindgen_6d8b02b35ac3a954___JsValue_____wasm_bindgen_6d8b02b35ac3a954___sys__Undefined_______true_: (a: number, b: number, c: any, d: any) => void;
+    readonly wasm_bindgen_6d8b02b35ac3a954___convert__closures_____invoke___wasm_bindgen_6d8b02b35ac3a954___JsValue__core_37ee0ce0c4cd57d5___result__Result_____wasm_bindgen_6d8b02b35ac3a954___JsError___true_: (a: number, b: number, c: any) => [number, number];
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_exn_store: (a: number) => void;

@@ -169,3 +169,20 @@ describe('assembleDataset', () => {
     expect(Number.isNaN(ds.y[1])).toBe(true)
   })
 })
+
+
+describe('typed IO matrices', () => {
+  it('preserves NaN features and missing categorical targets without inventing a class', () => {
+    const ds = mapAssembledToMaterialized(full({ train: block({
+      n_samples: 4,
+      x: [{ data: Float64Array.from([1, NaN, 3, 4]), n_rows: 4, n_cols: 1 }],
+      y: { data: Float64Array.from([0, NaN, 1, 0]), n_rows: 4, n_cols: 1 },
+      y_categorical: { label: { categories: ['apple', 'pear'] } },
+    }) }))
+    expect(ds.nSamples).toBe(4)
+    expect(Number.isNaN(ds.X[1])).toBe(true)
+    expect(Number.isNaN(ds.y[1])).toBe(true)
+    expect(ds.labelsRaw).toEqual(['apple', '', 'pear', 'apple'])
+    expect(ds.classes).toEqual(['apple', '', 'pear', 'apple'])
+  })
+})

@@ -536,6 +536,38 @@ export function derive_controller_manifest_list_json(host_controller_specs_json)
 }
 
 /**
+ * Narrow a host-supplied `FoldSet` by removing target-missing samples (JSON array of ids) from
+ * its universe, folds and groups and declaring them in `target_missing_sample_ids`. A fold that
+ * loses all of its validation or training samples is refused with a `target_missing_exclusion`
+ * error instead of being emitted.
+ * @param {string} fold_set_json
+ * @param {string} target_missing_json
+ * @returns {string}
+ */
+export function exclude_target_missing_json(fold_set_json, target_missing_json) {
+    let deferred4_0;
+    let deferred4_1;
+    try {
+        const ptr0 = passStringToWasm0(fold_set_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(target_missing_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ret = wasm.exclude_target_missing_json(ptr0, len0, ptr1, len1);
+        var ptr3 = ret[0];
+        var len3 = ret[1];
+        if (ret[3]) {
+            ptr3 = 0; len3 = 0;
+            throw takeFromExternrefTable0(ret[2]);
+        }
+        deferred4_0 = ptr3;
+        deferred4_1 = len3;
+        return getStringFromWasm0(ptr3, len3);
+    } finally {
+        wasm.__wbindgen_free(deferred4_0, deferred4_1, 1);
+    }
+}
+
+/**
  * Execute one phase of a campaign with the in-process [`SequentialScheduler`],
  * invoking host operators through the supplied JS callback.
  *
@@ -761,6 +793,46 @@ export function execute_initial_full_refit_json(plan_json, trusted_controller_ma
 }
 
 /**
+ * Run `execute_nested_selection` with JS controllers in the same worker.
+ * `trusted_controller_manifests_json` resolves the request's graph nodes and
+ * registers one bridge controller per manifest; `js_invoke` is
+ * `(controllerId, taskJson, exactSeed) => nodeResultJson`. The envelope must
+ * attest the request campaign's data bindings. The optional `js_metrics`
+ * computes the selection and pooled metrics (`mse`, `rmse`, `mae`); without
+ * it the DAG-ML metric registry is used. Returns the outcome JSON.
+ * @param {string} request_json
+ * @param {string} trusted_controller_manifests_json
+ * @param {string} data_envelope_json
+ * @param {Function} js_invoke
+ * @param {Function | null} [js_metrics]
+ * @returns {string}
+ */
+export function execute_nested_selection_json(request_json, trusted_controller_manifests_json, data_envelope_json, js_invoke, js_metrics) {
+    let deferred5_0;
+    let deferred5_1;
+    try {
+        const ptr0 = passStringToWasm0(request_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(trusted_controller_manifests_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ptr2 = passStringToWasm0(data_envelope_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len2 = WASM_VECTOR_LEN;
+        const ret = wasm.execute_nested_selection_json(ptr0, len0, ptr1, len1, ptr2, len2, js_invoke, isLikeNone(js_metrics) ? 0 : addToExternrefTable0(js_metrics));
+        var ptr4 = ret[0];
+        var len4 = ret[1];
+        if (ret[3]) {
+            ptr4 = 0; len4 = 0;
+            throw takeFromExternrefTable0(ret[2]);
+        }
+        deferred5_0 = ptr4;
+        deferred5_1 = len4;
+        return getStringFromWasm0(ptr4, len4);
+    } finally {
+        wasm.__wbindgen_free(deferred5_0, deferred5_1, 1);
+    }
+}
+
+/**
  * Execute native CV/SELECT/REFIT and capture a self-contained predictor package.
  * This synchronous lane derives influence in the core and requires every
  * fitted artifact to be native-portable. Caller-owned controllers are closed
@@ -836,14 +908,16 @@ export function fold_set_fingerprint_json(json) {
 /**
  * Build a native group-disjoint FoldSet from explicit sample -> group identities.
  * No group inference, clipping, randomization or feature values occur in the binding.
+ * `target_missing_json` behaves as in [`kfold_split_json`].
  * @param {string} spec_json
  * @param {string} sample_groups_json
  * @param {string} id
+ * @param {string | null} [target_missing_json]
  * @returns {string}
  */
-export function group_kfold_split_json(spec_json, sample_groups_json, id) {
-    let deferred5_0;
-    let deferred5_1;
+export function group_kfold_split_json(spec_json, sample_groups_json, id, target_missing_json) {
+    let deferred6_0;
+    let deferred6_1;
     try {
         const ptr0 = passStringToWasm0(spec_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len0 = WASM_VECTOR_LEN;
@@ -851,18 +925,20 @@ export function group_kfold_split_json(spec_json, sample_groups_json, id) {
         const len1 = WASM_VECTOR_LEN;
         const ptr2 = passStringToWasm0(id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len2 = WASM_VECTOR_LEN;
-        const ret = wasm.group_kfold_split_json(ptr0, len0, ptr1, len1, ptr2, len2);
-        var ptr4 = ret[0];
-        var len4 = ret[1];
+        var ptr3 = isLikeNone(target_missing_json) ? 0 : passStringToWasm0(target_missing_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        var len3 = WASM_VECTOR_LEN;
+        const ret = wasm.group_kfold_split_json(ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3);
+        var ptr5 = ret[0];
+        var len5 = ret[1];
         if (ret[3]) {
-            ptr4 = 0; len4 = 0;
+            ptr5 = 0; len5 = 0;
             throw takeFromExternrefTable0(ret[2]);
         }
-        deferred5_0 = ptr4;
-        deferred5_1 = len4;
-        return getStringFromWasm0(ptr4, len4);
+        deferred6_0 = ptr5;
+        deferred6_1 = len5;
+        return getStringFromWasm0(ptr5, len5);
     } finally {
-        wasm.__wbindgen_free(deferred5_0, deferred5_1, 1);
+        wasm.__wbindgen_free(deferred6_0, deferred6_1, 1);
     }
 }
 
@@ -1050,14 +1126,20 @@ export function initial_full_refit_predict_envelope_json(package_json, cohort_js
 /**
  * Build a K-fold `FoldSet` from a `KFoldSpec` JSON + a JSON array of sample ids.
  * dag-ml owns the split — the host stops building folds itself.
+ *
+ * `target_missing_json` (optional JSON array of sample ids) names samples whose target is
+ * missing: they are kept out of every fold and declared in the returned
+ * `FoldSet.target_missing_sample_ids`, so they never train or get scored but stay eligible for
+ * PREDICT. Too few target-observed samples is refused with a `target_missing_exclusion` error.
  * @param {string} spec_json
  * @param {string} sample_ids_json
  * @param {string} id
+ * @param {string | null} [target_missing_json]
  * @returns {string}
  */
-export function kfold_split_json(spec_json, sample_ids_json, id) {
-    let deferred5_0;
-    let deferred5_1;
+export function kfold_split_json(spec_json, sample_ids_json, id, target_missing_json) {
+    let deferred6_0;
+    let deferred6_1;
     try {
         const ptr0 = passStringToWasm0(spec_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len0 = WASM_VECTOR_LEN;
@@ -1065,18 +1147,20 @@ export function kfold_split_json(spec_json, sample_ids_json, id) {
         const len1 = WASM_VECTOR_LEN;
         const ptr2 = passStringToWasm0(id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len2 = WASM_VECTOR_LEN;
-        const ret = wasm.kfold_split_json(ptr0, len0, ptr1, len1, ptr2, len2);
-        var ptr4 = ret[0];
-        var len4 = ret[1];
+        var ptr3 = isLikeNone(target_missing_json) ? 0 : passStringToWasm0(target_missing_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        var len3 = WASM_VECTOR_LEN;
+        const ret = wasm.kfold_split_json(ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3);
+        var ptr5 = ret[0];
+        var len5 = ret[1];
         if (ret[3]) {
-            ptr4 = 0; len4 = 0;
+            ptr5 = 0; len5 = 0;
             throw takeFromExternrefTable0(ret[2]);
         }
-        deferred5_0 = ptr4;
-        deferred5_1 = len4;
-        return getStringFromWasm0(ptr4, len4);
+        deferred6_0 = ptr5;
+        deferred6_1 = len5;
+        return getStringFromWasm0(ptr5, len5);
     } finally {
-        wasm.__wbindgen_free(deferred5_0, deferred5_1, 1);
+        wasm.__wbindgen_free(deferred6_0, deferred6_1, 1);
     }
 }
 
@@ -1504,15 +1588,17 @@ export function stacking_fold_weights_json(request_json) {
  * Build a stratified K-fold `FoldSet`: same OOF-once guarantee as K-fold, but
  * balanced by a per-sample class label. `strata_json` is a JSON object mapping
  * sample id → class label (identity-keyed metadata, never feature values).
+ * `target_missing_json` behaves as in [`kfold_split_json`]; those samples need no label.
  * @param {string} spec_json
  * @param {string} sample_ids_json
  * @param {string} strata_json
  * @param {string} id
+ * @param {string | null} [target_missing_json]
  * @returns {string}
  */
-export function stratified_kfold_split_json(spec_json, sample_ids_json, strata_json, id) {
-    let deferred6_0;
-    let deferred6_1;
+export function stratified_kfold_split_json(spec_json, sample_ids_json, strata_json, id, target_missing_json) {
+    let deferred7_0;
+    let deferred7_1;
     try {
         const ptr0 = passStringToWasm0(spec_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len0 = WASM_VECTOR_LEN;
@@ -1522,18 +1608,20 @@ export function stratified_kfold_split_json(spec_json, sample_ids_json, strata_j
         const len2 = WASM_VECTOR_LEN;
         const ptr3 = passStringToWasm0(id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len3 = WASM_VECTOR_LEN;
-        const ret = wasm.stratified_kfold_split_json(ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3);
-        var ptr5 = ret[0];
-        var len5 = ret[1];
+        var ptr4 = isLikeNone(target_missing_json) ? 0 : passStringToWasm0(target_missing_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        var len4 = WASM_VECTOR_LEN;
+        const ret = wasm.stratified_kfold_split_json(ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3, ptr4, len4);
+        var ptr6 = ret[0];
+        var len6 = ret[1];
         if (ret[3]) {
-            ptr5 = 0; len5 = 0;
+            ptr6 = 0; len6 = 0;
             throw takeFromExternrefTable0(ret[2]);
         }
-        deferred6_0 = ptr5;
-        deferred6_1 = len5;
-        return getStringFromWasm0(ptr5, len5);
+        deferred7_0 = ptr6;
+        deferred7_1 = len6;
+        return getStringFromWasm0(ptr6, len6);
     } finally {
-        wasm.__wbindgen_free(deferred6_0, deferred6_1, 1);
+        wasm.__wbindgen_free(deferred7_0, deferred7_1, 1);
     }
 }
 
@@ -1763,7 +1851,7 @@ function __wbg_get_imports() {
                     const a = state0.a;
                     state0.a = 0;
                     try {
-                        return wasm_bindgen_dfd0b53baa41d632___convert__closures_____invoke___js_sys_6314793ba421de9a___Function_fn_wasm_bindgen_dfd0b53baa41d632___JsValue_____wasm_bindgen_dfd0b53baa41d632___sys__Undefined___js_sys_6314793ba421de9a___Function_fn_wasm_bindgen_dfd0b53baa41d632___JsValue_____wasm_bindgen_dfd0b53baa41d632___sys__Undefined_______true_(a, state0.b, arg0, arg1);
+                        return wasm_bindgen_6d8b02b35ac3a954___convert__closures_____invoke___js_sys_baa5e4b942bda068___Function_fn_wasm_bindgen_6d8b02b35ac3a954___JsValue_____wasm_bindgen_6d8b02b35ac3a954___sys__Undefined___js_sys_baa5e4b942bda068___Function_fn_wasm_bindgen_6d8b02b35ac3a954___JsValue_____wasm_bindgen_6d8b02b35ac3a954___sys__Undefined_______true_(a, state0.b, arg0, arg1);
                     } finally {
                         state0.a = a;
                     }
@@ -1810,8 +1898,8 @@ function __wbg_get_imports() {
             return ret;
         },
         __wbindgen_generic_0000000000000001: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 457, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
-            const ret = makeMutClosure(arg0, arg1, wasm_bindgen_dfd0b53baa41d632___convert__closures_____invoke___wasm_bindgen_dfd0b53baa41d632___JsValue__core_608f92abc48d28da___result__Result_____wasm_bindgen_dfd0b53baa41d632___JsError___true_);
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 467, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            const ret = makeMutClosure(arg0, arg1, wasm_bindgen_6d8b02b35ac3a954___convert__closures_____invoke___wasm_bindgen_6d8b02b35ac3a954___JsValue__core_37ee0ce0c4cd57d5___result__Result_____wasm_bindgen_6d8b02b35ac3a954___JsError___true_);
             return ret;
         },
         __wbindgen_generic_0000000000000002: function(arg0, arg1) {
@@ -1835,15 +1923,15 @@ function __wbg_get_imports() {
     };
 }
 
-function wasm_bindgen_dfd0b53baa41d632___convert__closures_____invoke___wasm_bindgen_dfd0b53baa41d632___JsValue__core_608f92abc48d28da___result__Result_____wasm_bindgen_dfd0b53baa41d632___JsError___true_(arg0, arg1, arg2) {
-    const ret = wasm.wasm_bindgen_dfd0b53baa41d632___convert__closures_____invoke___wasm_bindgen_dfd0b53baa41d632___JsValue__core_608f92abc48d28da___result__Result_____wasm_bindgen_dfd0b53baa41d632___JsError___true_(arg0, arg1, arg2);
+function wasm_bindgen_6d8b02b35ac3a954___convert__closures_____invoke___wasm_bindgen_6d8b02b35ac3a954___JsValue__core_37ee0ce0c4cd57d5___result__Result_____wasm_bindgen_6d8b02b35ac3a954___JsError___true_(arg0, arg1, arg2) {
+    const ret = wasm.wasm_bindgen_6d8b02b35ac3a954___convert__closures_____invoke___wasm_bindgen_6d8b02b35ac3a954___JsValue__core_37ee0ce0c4cd57d5___result__Result_____wasm_bindgen_6d8b02b35ac3a954___JsError___true_(arg0, arg1, arg2);
     if (ret[1]) {
         throw takeFromExternrefTable0(ret[0]);
     }
 }
 
-function wasm_bindgen_dfd0b53baa41d632___convert__closures_____invoke___js_sys_6314793ba421de9a___Function_fn_wasm_bindgen_dfd0b53baa41d632___JsValue_____wasm_bindgen_dfd0b53baa41d632___sys__Undefined___js_sys_6314793ba421de9a___Function_fn_wasm_bindgen_dfd0b53baa41d632___JsValue_____wasm_bindgen_dfd0b53baa41d632___sys__Undefined_______true_(arg0, arg1, arg2, arg3) {
-    wasm.wasm_bindgen_dfd0b53baa41d632___convert__closures_____invoke___js_sys_6314793ba421de9a___Function_fn_wasm_bindgen_dfd0b53baa41d632___JsValue_____wasm_bindgen_dfd0b53baa41d632___sys__Undefined___js_sys_6314793ba421de9a___Function_fn_wasm_bindgen_dfd0b53baa41d632___JsValue_____wasm_bindgen_dfd0b53baa41d632___sys__Undefined_______true_(arg0, arg1, arg2, arg3);
+function wasm_bindgen_6d8b02b35ac3a954___convert__closures_____invoke___js_sys_baa5e4b942bda068___Function_fn_wasm_bindgen_6d8b02b35ac3a954___JsValue_____wasm_bindgen_6d8b02b35ac3a954___sys__Undefined___js_sys_baa5e4b942bda068___Function_fn_wasm_bindgen_6d8b02b35ac3a954___JsValue_____wasm_bindgen_6d8b02b35ac3a954___sys__Undefined_______true_(arg0, arg1, arg2, arg3) {
+    wasm.wasm_bindgen_6d8b02b35ac3a954___convert__closures_____invoke___js_sys_baa5e4b942bda068___Function_fn_wasm_bindgen_6d8b02b35ac3a954___JsValue_____wasm_bindgen_6d8b02b35ac3a954___sys__Undefined___js_sys_baa5e4b942bda068___Function_fn_wasm_bindgen_6d8b02b35ac3a954___JsValue_____wasm_bindgen_6d8b02b35ac3a954___sys__Undefined_______true_(arg0, arg1, arg2, arg3);
 }
 
 const LocalImplementationRegistryFinalization = (typeof FinalizationRegistry === 'undefined')

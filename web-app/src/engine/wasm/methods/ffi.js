@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: CECILL-2.1
+// SPDX-License-Identifier: CECILL-2.1 OR AGPL-3.0-or-later
 //
 // Thin ccall/cwrap wrappers around the Emscripten module.
 import { Status, N4mError } from "./types.js";
@@ -69,12 +69,36 @@ export function makeMatrixView(data, rows, cols, dtype = 1 /* N4M_DTYPE_F64 */) 
         throw new Error(`matrix data length ${data.length} != rows*cols (${expected})`);
     }
     const bytes = Math.max(1, data.length) * 8;
+    if (!Number.isSafeInteger(bytes) || bytes > 0x7fffffff) {
+        throw new RangeError("matrix exceeds WASM allocation limit");
+    }
     const dataPtr = m._malloc(bytes);
+    if (dataPtr === 0)
+        throw new N4mError(Status.ERR_OUT_OF_MEMORY, "matrix allocation failed");
     if (data.length > 0) {
         m.HEAPF64.set(data, dataPtr / 8);
     }
-    const viewPtr = m._malloc(MATRIX_VIEW_SIZE);
-    const status = m.ccall("n4m_matrix_view_init_rowmajor", "number", ["number", "number", "i64", "i64", "number"], [viewPtr, dataPtr, BigInt(rows), BigInt(cols), dtype]);
+    let viewPtr;
+    try {
+        viewPtr = m._malloc(MATRIX_VIEW_SIZE);
+    }
+    catch (error) {
+        m._free(dataPtr);
+        throw error;
+    }
+    if (viewPtr === 0) {
+        m._free(dataPtr);
+        throw new N4mError(Status.ERR_OUT_OF_MEMORY, "matrix view allocation failed");
+    }
+    let status;
+    try {
+        status = m.ccall("n4m_matrix_view_init_rowmajor", "number", ["number", "number", "i64", "i64", "number"], [viewPtr, dataPtr, BigInt(rows), BigInt(cols), dtype]);
+    }
+    catch (error) {
+        m._free(viewPtr);
+        m._free(dataPtr);
+        throw error;
+    }
     if (status !== Status.OK) {
         m._free(dataPtr);
         m._free(viewPtr);
