@@ -360,9 +360,19 @@
           "sha256": "674f3ab09bc6fca997bc765bbd5b710aabecb60d68f722ed4182bf40ec274bf1"
         },
         {
+          "path": "LICENSING_FR.md",
+          "size": 2280,
+          "sha256": "6996c1e0385782ca1d6adf3a2fe07189a4bbcad8be727adb7cac0b85c71255a1"
+        },
+        {
+          "path": "NOTICE.md",
+          "size": 1818,
+          "sha256": "ccb385dfd092825e9c4638f44f4803a15b1f3a0a47cffe80632294b6344beced"
+        },
+        {
           "path": "PROVENANCE.json",
-          "size": 8859,
-          "sha256": "0d99959f201e95ff43f729d80cd3f8b8aa74171ce5c644d8ba8778b46dc3565a"
+          "size": 9123,
+          "sha256": "26e8af4b7b6735288f8fd24c6d470404ab638c2d369dd0b3d98c974139800413"
         },
         {
           "path": "THIRD_PARTY_LICENSES.md",
