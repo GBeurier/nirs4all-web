@@ -1,6 +1,8 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code when working with this repository.
+@AGENTS.md
+
+This file provides guidance to Claude Code when working with this repository. Local obligations are in `AGENTS.md` and `web-app/AGENTS.md`; this file keeps the repository layout, toolchain and deployment notes.
 
 ## What This Repo Is
 
@@ -13,8 +15,8 @@ nirs4all-formats -> nirs4all-io -> dag-ml-data -> dag-ml -> nirs4all-methods/lib
 ```
 
 Do not add distribution packaging, R/MATLAB/Python bindings, or release-factory logic here;
-those belong in the `nirs4all-core` repository. This repo is only the client-side Web/WASM
-product surface.
+those are not owned here: `nirs4all-core` owns the portable aggregate and the R product/host is
+`nirs4all-r`. This repo is only the client-side Web/WASM product surface.
 
 The cardinal ecosystem rule still applies: **never reimplement NIRS parsing, dataset assembly, DAG
 execution, or numerical methods here.** Fixes belong upstream in `../nirs4all-formats`,
@@ -24,14 +26,14 @@ execution, or numerical methods here.** Fixes belong upstream in `../nirs4all-fo
 
 | Directory | Role | Authoritative doc |
 | --- | --- | --- |
-| `web-app/` | Active browser/WASM app and GitHub Pages deliverable. Upload -> explore/configure -> build pipeline -> run CV/refit -> results -> predict -> export. | `web-app/CLAUDE.md` |
+| `web-app/` | Active browser/WASM app and GitHub Pages deliverable. Upload -> explore/configure -> build pipeline -> run CV/refit -> results -> predict -> export. | `web-app/AGENTS.md`, `web-app/docs/AGENT_OPERATIONS.md` |
 
 The older `single-page-WASM/` prototype has been removed from the working tree. Do not revive it
 unless explicitly asked; new browser work belongs in `web-app/`.
 
 ## Build / Test / Run
 
-Read `web-app/CLAUDE.md` before changing app code. The short command set is:
+Read `web-app/AGENTS.md` and `web-app/docs/AGENT_OPERATIONS.md` before changing app code. The short command set is:
 
 ```bash
 cd web-app
@@ -48,10 +50,12 @@ Use the browser smoke tests for UI, engine, WASM, or persistence changes:
 
 ```bash
 export CHROME=${CHROME:-/usr/bin/google-chrome}
-nohup npm run preview -- --port 4345 --strictPort >/tmp/n4a-web-preview.log 2>&1 & sleep 4
+nohup npm run preview -- --port 4345 --strictPort >/tmp/n4a-web-preview.log 2>&1 &
+PREVIEW_PID=$!; sleep 4
 for t in tests/*smoke.mjs; do SMOKE_URL="http://localhost:4345/" node "$t" || break; done
-pkill -f "vite preview"
 ```
+
+Stop the preview server only by its own recorded PID/process group: use the `PREVIEW_PID` recorded at launch, verify that it is still your process, and signal only that PID/group; never use broad pattern kills such as `pkill -f`.
 
 ## Toolchain PATH Trap
 

@@ -38,4 +38,20 @@ Recent history uses concise conventional-style commits such as `fix(web-app): ..
 
 ## Agent-Specific Instructions
 
-See `CLAUDE.md` for deeper architecture notes, workstation PATH details, and the full green-gate workflow. Preserve the no-backend model: data should remain local in the browser unless a change is explicitly approved.
+`nirs4all-web` is a full-WASM browser client with **no Python and no backend**. It consumes formats, io, dag-ml-data, dag-ml and methods as prebuilt/staged WASM and **never reimplements NIRS, IO, dataset assembly, DAG execution or numerical logic**; fixes belong in the owner repositories. Data stays local in the browser unless a change is explicitly approved. Use shadcn primitives and the brand theme already in the repo; fonts are local/system stacks only (`src/styles/fonts.css`), never remote font imports.
+
+Scientific and privacy rules that must survive any edit (details in `docs/AGENT_OPERATIONS.md`):
+
+- Preprocessing fits on the train fold only; out-of-fold predictions are joined by `sampleId`, never row order; the test partition is held out of CV; the engine refuses to train without targets.
+- Never set `allowTrainingRows` implicitly: the `.n4a` export asks for explicit consent whenever a model contains training rows.
+- Predict refuses named columns that differ in names, order or count; header-less input is stated as positional.
+- Classification class vocabularies are sorted consistently in `dataset.ts`/`samples.ts` and `orchestrate.ts`; `n_components` stays clamped to `min(n_components, n, p)`.
+- dag-ml controllers echo `task.seed` as exact digits; never round-trip a u64 seed through a JS `Number`.
+- Engine compute stays in the Web Worker in the served build; do not move it to the main thread.
+- Smoke tests depend on exact UI strings (`Run pipeline`, `CV Scores`, the samples×wavelengths badge, demo-sample names, `compiled by dag-ml`); update `tests/*.mjs` with any rename.
+
+Toolchain trap: Node, cargo, wasm-pack and emcc are not on the non-interactive PATH, and the plain `node`/`npm` first on PATH may be Windows binaries under `/mnt/c`; use `export PATH="$HOME/.nvm/versions/node/v22.21.1/bin:$HOME/.cargo/bin:$PATH"`. The green gate is typecheck + test + validate:catalog + build + build:single + every `tests/*smoke.mjs` with no console errors (`vite build` does not typecheck). Full commands, smoke inventory, architecture and gotchas: `docs/AGENT_OPERATIONS.md`. Repository `../AGENTS.md` and workspace `../../AGENTS.md`, when present, add shared policy.
+
+## Language Policy
+
+All application and project content must be in English, including UI text, subtitles, tooltips, errors, documentation, comments and docstrings, test and fixture prose, reports, pull requests, commits, and generated content. Conversation with the maintainer may be in French. Preserve proper names, identifiers, filenames, source quotations, and historical or provenance records where translation would change their meaning or provenance.
