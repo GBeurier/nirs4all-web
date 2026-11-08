@@ -3719,6 +3719,7 @@ export class KennardStone extends NativeProcedure {
     methodId = "splitters.kennard_stone";
     paramTypes = {
         test_size: "double",
+        n_train: "int",
     };
     constructor(params = {}) {
         super();

@@ -8,11 +8,11 @@
     "base_commit_sha": "1dffd9f4472551cc09ad9d99ed9d40814bd003cc",
     "base_tree_sha": "3990c98a44a49c2c3827f61daad78915e33e948a",
     "working_tree_dirty": true,
-    "artifact_origin": "Local release WASM (wasm32 release, wasm-bindgen 0.2.129) embedding the current DAG score-family outcome reader and IO N1; JS/d.ts companions byte-identical to the prior cohort; not an immutable source rebuild claim"
+    "artifact_origin": "Local release WASM (wasm32 release, wasm-bindgen 0.2.129) embedding the current DAG score-family outcome reader and IO N1; src/execution.js has a guarded JS-only n_train refusal successor; other JS/d.ts companions unchanged; native payload unchanged; not an immutable source rebuild claim"
   },
   "acquisition": {
     "kind": "local-unpublished",
-    "note": "Exact frozen local owner artifacts; release native WASM (score-family reader + IO N1), no registry identity, no numerical rebuild by Web. Source and platform qualification remain separately scoped.",
+    "note": "Exact frozen local owner artifacts; release native WASM (score-family reader + IO N1), no registry identity, no numerical rebuild by Web. Source and platform qualification remain separately scoped. Local guarded src/execution.js refusal successor; native payload unchanged.",
     "files": {
       "LICENSE": {
         "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/LICENSE",
@@ -145,9 +145,9 @@
         "sha256": "1f587895ff94b4757476f9efb51c8864886c13c87e7e90a6d57d8a8f4692ad75"
       },
       "src/execution.js": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/execution.js",
-        "size": 34768,
-        "sha256": "dcc35fbe1a741764864c75786172362949e79815c862a014a08eafe535bee962"
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase3-methods-n-train-build-20261108/host-k4-stage/core-count-refusal/implementation/source/nirs4all-core/bindings/wasm/src/execution.js",
+        "size": 35076,
+        "sha256": "d82bc5001c142208daf0d35c1e12757fb46f480902264c04bf78754656d1942a"
       },
       "src/index.d.ts": {
         "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/index.d.ts",
@@ -396,8 +396,8 @@
       "sha256": "1f587895ff94b4757476f9efb51c8864886c13c87e7e90a6d57d8a8f4692ad75"
     },
     "src/execution.js": {
-      "size": 34768,
-      "sha256": "dcc35fbe1a741764864c75786172362949e79815c862a014a08eafe535bee962"
+      "size": 35076,
+      "sha256": "d82bc5001c142208daf0d35c1e12757fb46f480902264c04bf78754656d1942a"
     },
     "src/index.d.ts": {
       "size": 22826,

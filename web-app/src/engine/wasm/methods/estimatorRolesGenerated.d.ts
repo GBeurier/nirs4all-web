@@ -4599,14 +4599,17 @@ export declare class KBinsStratified extends NativeProcedure implements Splitter
 }
 /** Parameters of KennardStone; unset values take the native defaults. */
 export interface KennardStoneParams {
-    /** Default 0.25. */
+    /** Optional: unset by default. */
     test_size?: number;
+    /** Optional: unset by default. */
+    n_train?: number;
 }
 /** Native `splitters.kennard_stone` (splitter). */
 export declare class KennardStone extends NativeProcedure implements Splitter {
     readonly methodId = "splitters.kennard_stone";
     readonly paramTypes: {
         readonly test_size: "double";
+        readonly n_train: "int";
     };
     constructor(params?: KennardStoneParams);
     split(X: Matrix, y?: Float64Array | ArrayLike<number>, groups?: number[]): Fold[];
