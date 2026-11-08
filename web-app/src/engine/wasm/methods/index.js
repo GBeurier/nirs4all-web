@@ -45,3 +45,5 @@ export function abiVersion() {
         m.ccall("n4m_get_abi_version_patch", "number", [], []),
     ];
 }
+export { rank } from "./ranking.js";
+export { mixedEffects, fanova, normalizeLoss } from "./componentAnalysis.js";

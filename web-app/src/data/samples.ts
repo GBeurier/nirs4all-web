@@ -21,11 +21,11 @@ export const SAMPLES: SampleInfo[] = [
 ]
 
 interface DemoMeta {
-  /** display name passed to buildDataset */
+  /** display name of the dataset */
   name: string
   /** human target label (overrides the raw Y header) */
   targetName: string
-  /** lazy loader → the four RawFiles buildDataset consumes (X/Y train+test) */
+  /** lazy loader → the four shipped CSV files (X/Y train+test) */
   load: () => Promise<RawFile[]>
 }
 
@@ -72,10 +72,23 @@ const DEMOS: Record<SampleId, DemoMeta> = {
   },
 }
 
+/** The bundled sample, assembled by nirs4all-io (Formats + IO WASM) from its shipped CSV bytes.
+ *  Task type (regression vs binary/multiclass) is inferred from the targets by the shared
+ *  `inferTaskType`. io's refusals (`IoIngestionRefusal`) propagate; there is no local fallback. */
 export async function loadSampleDataset(id: SampleId = 'corn'): Promise<MaterializedDataset> {
   const meta = DEMOS[id]
-  // task type (regression vs binary/multiclass) is inferred from the integer-vs-float
-  // targets by buildDataset → inferTaskType, which is correct for all four corpora.
+  const encoder = new TextEncoder()
+  const files = (await meta.load()).map((f) => ({ name: f.name, bytes: encoder.encode(f.text) }))
+  const { ingestFiles } = await import('./wasm-io')
+  const { dataset } = await ingestFiles(files, meta.name)
+  dataset.targetName = meta.targetName
+  return dataset
+}
+
+/** TEST ORACLE ONLY: the former local CSV builder output of a bundled sample, kept for the
+ *  io-vs-CSV parity check until that parity is established. Never an application fallback. */
+export async function loadSampleDatasetOracle(id: SampleId = 'corn'): Promise<MaterializedDataset> {
+  const meta = DEMOS[id]
   const ds = buildDataset(await meta.load(), meta.name)
   ds.targetName = meta.targetName
   return ds

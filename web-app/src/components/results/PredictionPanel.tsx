@@ -16,12 +16,11 @@ import {
 
 import type { PredictionPanelProps } from '@/components/contracts'
 import type { Confusion, Engine, FittedPipeline, Metrics, PredictResult, PredRow } from '@/engine/types'
-import { columnContract, readPredictionCsv } from '@/data/prediction-input'
+import { columnContract, type PredictionInput, readPredictionFile, readReferenceFile } from '@/data/prediction-input'
 import { classificationMetrics, regressionMetrics } from '@/engine/metrics'
 import { fmt } from '@/lib/format'
 import { downloadPredictionsCsv } from '@/lib/download'
 import { predictionCsv, validatePredictionResult } from '@/lib/prediction-csv'
-import { parseCsv } from '@/data/csv'
 import { Button } from '@/app/components/ui/button'
 import { cn } from '@/app/components/ui/utils'
 
@@ -48,6 +47,8 @@ interface PredState {
   autoY: string[] | null
   /** how the file's columns met the model's: checked by name and order, or positional */
   columns: { checked: boolean; message: string }
+  /** the matrix as read by nirs4all-io, with its retained owner record, spec and input bytes */
+  input: PredictionInput
 }
 
 /** Equal-axis extent across actual & predicted for a parity scatter (mirrors _helpers.parityExtent). */
@@ -94,23 +95,6 @@ function buildRows(
   return { rows, error: null }
 }
 
-/** Read raw Y cells from a standalone reference CSV: one value per row, or the column whose length matches nSamples. */
-function readYCells(text: string, nSamples: number): string[] {
-  const pc = parseCsv(text)
-  // Bug fix: pc.raw already contains all data rows regardless of hasHeader; [pc.header,...pc.raw] was wrong
-  const rawRows = pc.raw
-  if (rawRows.length === 0) throw new Error('No reference values found in the file.')
-  // Use first-row width to pick the column (avoid a trailing delimiter on any row expanding col to an empty cell)
-  const width = rawRows[0]?.length ?? 1
-  // single column → that column; multiple columns → the LAST one (the y_train convention), validated against count
-  const col = width > 1 ? width - 1 : 0
-  const cells = rawRows.map((r) => (r[col] ?? r[0] ?? '').trim())
-  if (cells.length !== nSamples) {
-    throw new Error(`Reference count mismatch: ${cells.length} value${cells.length === 1 ? '' : 's'} in the file but ${nSamples} prediction${nSamples === 1 ? '' : 's'}.`)
-  }
-  return cells
-}
-
 export function PredictionPanel({ model, sourceName, targetName, engine, onImportModel }: PredictionPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const n4aRef = useRef<HTMLInputElement>(null)
@@ -119,6 +103,7 @@ export function PredictionPanel({ model, sourceName, targetName, engine, onImpor
   const [dragging, setDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
+  const [headerChoice, setHeaderChoice] = useState<'' | 'yes' | 'no'>('')
   const [prediction, setPred] = useState<PredState | null>(null)
   const request = useRef(0)
   const context = useRef({ model, engine, sourceName, targetName })
@@ -140,6 +125,7 @@ export function PredictionPanel({ model, sourceName, targetName, engine, onImpor
     setBusy(false)
     setError(null)
     setFileName(null)
+    setHeaderChoice('')
     resetY()
     return () => { request.current++ }
   }, [model, engine, sourceName, targetName])
@@ -162,15 +148,14 @@ export function PredictionPanel({ model, sourceName, targetName, engine, onImpor
     setFileName(file.name)
     resetY()
     try {
-      const text = await file.text()
+      const input = await readPredictionFile(file, nFeatures, headerChoice === '' ? undefined : headerChoice === 'yes')
       if (!isCurrent()) return
-      const input = readPredictionCsv(text, nFeatures)
       // the engine refuses named columns that differ from the model's; unnamed ones are positional
       const result = await engine.predict(model, input.X, input.nSamples, input.nFeatures, input.featureNames)
       if (!isCurrent()) return
       // Reject incomplete output before exposing it in the table or export button.
       validatePredictionResult(result, input.nSamples, model.taskType)
-      setPred({ model, engine, sourceName, targetName, result, nSamples: input.nSamples, autoY: input.autoY, columns: columnContract(model, input.featureNames) })
+      setPred({ model, engine, sourceName, targetName, result, nSamples: input.nSamples, autoY: input.autoY, columns: columnContract(model, input.featureNames), input })
     } catch (e) {
       if (isCurrent()) setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -190,9 +175,8 @@ export function PredictionPanel({ model, sourceName, targetName, engine, onImpor
     setYCells(null)
     setYFileName(file.name)
     try {
-      const text = await file.text()
+      const cells = await readReferenceFile(pred.input, file)
       if (!isCurrent()) return
-      const cells = readYCells(text, pred.nSamples)
       setYCells(cells)
     } catch (e) {
       if (isCurrent()) {
@@ -287,7 +271,7 @@ export function PredictionPanel({ model, sourceName, targetName, engine, onImpor
               <input
                 ref={n4aRef}
                 type="file"
-                accept=".n4a,application/json"
+                accept=".n4a"
                 className="hidden"
                 onChange={(e) => {
                   const f = e.target.files?.[0]
@@ -302,6 +286,30 @@ export function PredictionPanel({ model, sourceName, targetName, engine, onImpor
           )}
         </div>
       </div>
+
+      <label className="mb-4 block space-y-1.5 text-sm">
+        <span className="font-medium text-foreground">Does the spectra file have a header row?</span>
+        <select
+          aria-label="Spectra header row"
+          value={headerChoice}
+          disabled={busy}
+          onChange={(event) => {
+            request.current++
+            setHeaderChoice(event.target.value as '' | 'yes' | 'no')
+            setPred(null)
+            setFileName(null)
+            setError(null)
+            setBusy(false)
+            resetY()
+            if (inputRef.current) inputRef.current.value = ''
+          }}
+          className="block h-9 w-full rounded-md border border-border bg-background px-2"
+        >
+          <option value="">Use IO proposal</option>
+          <option value="yes">Yes — the first row contains column names</option>
+          <option value="no">No — the first row contains spectrum values</option>
+        </select>
+      </label>
 
       {/* drag-and-drop spectra zone */}
       <div

@@ -50,9 +50,14 @@
           "sha256": "46c57e67ed1e40c98a714f32a968b343650b02df3627744c28e9ceba011b7447"
         },
         {
+          "path": "LICENSING_FR.md",
+          "size": 2205,
+          "sha256": "ef7b9eb2c9ff741218f6f4538578abb843b635376010a72443b06c1b3c0820ff"
+        },
+        {
           "path": "PROVENANCE.json",
-          "size": 8105,
-          "sha256": "cb19d5b49158f3ff16f783ca259b19686b7e02d6a129fa405123e15cb1d3a5c7"
+          "size": 25840,
+          "sha256": "dae5699a8c74edecf8cfe622318b3b38740589403b199c013807e6dfe1e3590f"
         },
         {
           "path": "THIRD_PARTY_NOTICES.md",
@@ -106,8 +111,8 @@
         },
         {
           "path": "PROVENANCE.json",
-          "size": 4099,
-          "sha256": "ad00397f1c07a5cc69ee223e9aabe8134377e9d31fdffeb820904ca5891a2af6"
+          "size": 11879,
+          "sha256": "dec3a2197a1ae6054b6474cce2443724fc6305ab7b9e3500bd4a7ed36dbb8707"
         },
         {
           "path": "THIRD_PARTY_NOTICES.md",
@@ -276,8 +281,8 @@
       "files": [
         {
           "path": "COPY_PROVENANCE.md",
-          "size": 3133,
-          "sha256": "9046c670f0f2ffe119a8d9ad5286ad29bf5d89d620058a41283e454b5c05c015"
+          "size": 36034,
+          "sha256": "16493b8d06437f2e5a34ac2e4d9af7d72735104781ddc544a087c2590bb8a3d0"
         },
         {
           "path": "LICENSE",
@@ -331,8 +336,8 @@
         },
         {
           "path": "PROVENANCE.json",
-          "size": 4258,
-          "sha256": "aff0ec7dfb9f4e08972bbbfda69d76cb9a6f19013f8fce59e3eab7cc31e1d1f6"
+          "size": 12766,
+          "sha256": "364942696bc96578e9d1a5cb6fd64f8a3b01d82a112c49decaba17d93ffc5e9c"
         },
         {
           "path": "THIRD_PARTY_NOTICES.md",
@@ -341,8 +346,8 @@
         },
         {
           "path": "nirs4all-io-wasm.cdx.json",
-          "size": 34808,
-          "sha256": "3a86cfebaa19ffe93cd6e9085d8a7c26cb191f81d6333dfb39e8eb7e474c5786"
+          "size": 35568,
+          "sha256": "d1273320302fa9cb0d014843e68ab926a38c958ed970dd62b46f43bd083927d8"
         }
       ]
     },
@@ -395,6 +400,36 @@
           "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
         },
         {
+          "path": "LICENSES/mixeff-dependencies.txt",
+          "size": 714749,
+          "sha256": "615134447ecde123ee8d7476751381df67685530bfa146558b1f49207371169b"
+        },
+        {
+          "path": "LICENSES/mixeff-rs.txt",
+          "size": 1074,
+          "sha256": "5ebc3be0ec21c6767ecbb21c9ba42ee10b644cc02a6c012335aac24bd5ab5903"
+        },
+        {
+          "path": "LICENSES/rfr-cereal.txt",
+          "size": 1519,
+          "sha256": "18fd7618c44c9fe28b5f54cd19747df3c0472ed33e8507fea571e2acf6e72f34"
+        },
+        {
+          "path": "LICENSES/rfr-rapidjson.txt",
+          "size": 5152,
+          "sha256": "a140e5d46fe734a1c78f1a3c3ef207871dd75648be71fdda8e309b23ab8b1f32"
+        },
+        {
+          "path": "LICENSES/rfr.txt",
+          "size": 1748,
+          "sha256": "36b7da08b417f0378297391cf06b2c886739475d0d9b36263539fe424e2bc79a"
+        },
+        {
+          "path": "LICENSES/rust-standard-library.txt",
+          "size": 424296,
+          "sha256": "5b87c6cf33f65fa1a3093c03b106954cd38ec40f7d9a8d96c5ddc0df36617db0"
+        },
+        {
           "path": "LICENSING.md",
           "size": 2133,
           "sha256": "674f3ab09bc6fca997bc765bbd5b710aabecb60d68f722ed4182bf40ec274bf1"
@@ -411,13 +446,13 @@
         },
         {
           "path": "PROVENANCE.json",
-          "size": 9123,
-          "sha256": "26e8af4b7b6735288f8fd24c6d470404ab638c2d369dd0b3d98c974139800413"
+          "size": 28815,
+          "sha256": "666f815b37a0aaaf4e9fe917ec11eaeedd23dac23912fa69b8824234c28477d9"
         },
         {
           "path": "THIRD_PARTY_LICENSES.md",
-          "size": 6727,
-          "sha256": "01db4c791ed3a5fbdd7bc6efcc9f5bf75f6a879b63f0ceb6c52098fa4732f850"
+          "size": 7437,
+          "sha256": "3da01033fea5f1efe31a5865693d294c7c378aad51d81f1e5dc9c07e668f752f"
         },
         {
           "path": "THIRD_PARTY_NOTICES.md",

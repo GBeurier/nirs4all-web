@@ -10,13 +10,13 @@ import { fileURLToPath } from 'node:url'
 const here = dirname(fileURLToPath(import.meta.url))
 const root = resolve(here, '..')
 const packageName = 'nirs4all-ui'
-const version = '0.2.1'
+const version = '0.2.2-local.20261107.2'
 const filename = `${packageName}-${version}.tgz`
 const tarballPath = resolve(root, 'vendor', 'npm', filename)
 const receiptPath = resolve(root, 'vendor', 'npm', `${packageName}-${version}.provenance.json`)
 const legacyShimPath = resolve(root, 'vendor', packageName)
-const expectedSha256 = '6506dee02968378cb116bd6d6fe858b4ef34424b0d5764173c4a789594f25505'
-const expectedIntegrity = 'sha512-ghuJQADFkn2nPCFYZn2hbS+Q0UBNkFnlB4wP+rMm+8UGtAVIKtjKcDtkUNToiOAGceyDhKM/RYS0MppSIaxaxQ=='
+const expectedSha256 = '237a3bf306bdb6fec5088783c425381bcf125540ba7ad25e1aec0604198d7728'
+const expectedIntegrity = 'sha512-mgqNsWzwV7WMtsAI9kcwik2/4lLakm3R8mmhSs4nRMl37wdzbA61tz1lUxsVMaMVeyZLm5+DFSkgKQKU4BVI7w=='
 
 function fail(message) {
   throw new Error(`[check-ui-package] ${message}`)
@@ -64,8 +64,9 @@ if (integrity !== expectedIntegrity) fail(`npm integrity mismatch: ${integrity}`
 
 const receipt = JSON.parse(readFileSync(receiptPath, 'utf8'))
 if (receipt.package?.name !== packageName || receipt.package?.version !== version) fail('receipt package identity mismatch')
-if (receipt.source?.commit_sha !== '8bfc5f51600b59fc5cc899cd93f58da98fb2f851') fail('receipt source commit mismatch')
-if (receipt.source?.tree_sha !== '661969ee14dd00330aa50e58bab254fe68a048a3') fail('receipt source tree mismatch')
+if (receipt.source?.base_commit_sha !== '8bfc5f51600b59fc5cc899cd93f58da98fb2f851') fail('receipt source commit mismatch')
+if (receipt.source?.base_tree_sha !== '661969ee14dd00330aa50e58bab254fe68a048a3') fail('receipt source tree mismatch')
+if (receipt.source?.kind !== 'local-private-full-source-export' || receipt.source?.overlay_manifest_sha256 !== '72d4a4ecddf1f82508bc0db2abc98cf9ddf127486e3d78da620cf80baf479a6e') fail('receipt local source overlay mismatch')
 if (receipt.artifact?.filename !== filename || receipt.artifact?.size !== bytes.length) fail('receipt artifact identity mismatch')
 if (receipt.artifact?.sha256 !== sha256 || receipt.artifact?.npm_integrity !== integrity) fail('receipt digest mismatch')
 
@@ -91,7 +92,7 @@ for (const licenseFile of receipt.license_files ?? []) {
 
 const rootPackage = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'))
 const lock = JSON.parse(readFileSync(resolve(root, 'package-lock.json'), 'utf8'))
-const dependency = `file:./vendor/npm/${filename}`
+const dependency = `file:vendor/npm/${filename}`
 if (rootPackage.dependencies?.[packageName] !== dependency) fail('package.json does not select the exact vendored tarball')
 if (lock.packages?.['']?.dependencies?.[packageName] !== dependency) fail('package-lock root dependency differs')
 const locked = lock.packages?.[`node_modules/${packageName}`]

@@ -9,10 +9,8 @@ import { buildDataset, type RawFile } from '@/data/dataset'
 import { initSync as initDagMl } from './wasm/dagml/dag_ml_wasm.js'
 import { initSync as initData } from './wasm/dagml-data/dag_ml_data_wasm.js'
 import { initSync as initDatasets } from './wasm/datasets/nirs4all_datasets_wasm.js'
-import { jsBackend } from './backends'
 import { materializeViaProvider } from './dagml-data'
 import { DagMlEngine } from './dagml-engine'
-import { runPipeline } from './orchestrate'
 import { buildNativeFolds } from './grouped-cv'
 import * as dagml from './wasm/dagml/dag_ml_wasm.js'
 import { trainRowsOf } from './partition'
@@ -39,7 +37,6 @@ function csv(prefix: string, rows: number[], y: (i: number) => string, ids?: (i:
 }
 const range = (from: number, to: number) => Array.from({ length: to - from }, (_, k) => from + k)
 const ridge: PipelineDSL = { name: 'ridge', steps: [], model: { id: 'm', type: 'n4m:models.regularized.ridge', params: { alpha: 0.1 } }, cv: { folds: 4, seed: 7 } }
-const pls: PipelineDSL = { name: 'pls', steps: [], model: { id: 'm', type: 'n4m:models.pls.pls_regression', params: { n_components: 3 } }, cv: { folds: 4, seed: 7 } }
 const MISSING = new Set([3, 11, 33])
 const withMissing = () => buildDataset([...csv('cal', range(0, 30), (i) => (MISSING.has(i) ? 'NA' : target(i))), ...csv('val', range(30, 40), (i) => (MISSING.has(i) ? 'NA' : target(i)))])
 const labeledOnly = () => buildDataset([...csv('cal', range(0, 30).filter((i) => !MISSING.has(i)), target), ...csv('val', range(30, 40).filter((i) => !MISSING.has(i)), target)])
@@ -54,7 +51,8 @@ describe('missing targets never become 0 and never enter FIT or scoring', () => 
     expect(Number.isNaN(served.y[3])).toBe(true)
     expect(Number.isNaN(served.y[33])).toBe(true)
     expect(served.y[0]).toBeCloseTo(Number(target(0)))
-    expect(datasetRelations(ds).filter((r) => r.excluded).map((r) => r.sample_id)).toEqual(['s3', 's11', 's33'])
+    expect(datasetRelations(ds).filter((r) => r.excluded).map((r) => r.sample_id)).toEqual(['p3', 'p11', 'p33'])
+    expect(datasetRelations(ds).filter((r) => r.excluded).map((r) => r.observation_id)).toEqual(['s3', 's11', 's33'])
   })
 
   it('excludes missing-target rows from dag-ml CV and REFIT, counts them, and fits as if they were absent', async () => {
@@ -69,15 +67,6 @@ describe('missing targets never become 0 and never enter FIT or scoring', () => 
     // REFIT sees exactly the labeled training rows: identical held-out predictions.
     run.refit.predictions.forEach((r, k) => expect(r.predicted).toBeCloseTo(reference.refit.predictions[k].predicted, 10))
     expect(run.refit.metrics.rmse).toBeCloseTo(reference.refit.metrics.rmse!, 10)
-  })
-
-  it('excludes missing-target rows on the direct orchestrate path', async () => {
-    const run = await runPipeline(withMissing(), pls, {}, jsBackend)
-    const reference = await runPipeline(labeledOnly(), pls, {}, jsBackend)
-    expect(run.missingTargets).toBe(3)
-    expect(run.cv!.predictions).toHaveLength(28)
-    expect(run.refit.predictions.map((r) => r.actual)).toEqual(reference.refit.predictions.map((r) => r.actual))
-    run.refit.predictions.forEach((r, k) => expect(r.predicted).toBeCloseTo(reference.refit.predictions[k].predicted, 10))
   })
 
   it('does not turn a missing class label into a class', async () => {
@@ -100,6 +89,10 @@ describe('missing targets never become 0 and never enter FIT or scoring', () => 
   })
 })
 
+// The original replicate fixture is kept byte-for-byte: its scans of one Sample_ID carry
+// DIFFERENT targets and its val file reuses cal Sample_IDs. Both violate the declared owner
+// identity contract (one target per physical sample; one physical sample never both trained
+// on and held out), so they are failure regressions now, never relabelled into rows.
 describe('replicate scans (duplicate Sample_IDs)', () => {
   // 30 cal rows = 10 physical samples x 3 scans; val reuses codes for other samples.
   const replicates = (): MaterializedDataset => buildDataset([
@@ -107,38 +100,34 @@ describe('replicate scans (duplicate Sample_IDs)', () => {
     ...csv('val', range(30, 40), target, (i) => `BGE${i - 30}`),
   ])
 
-  it('loads Xcal/Xval with repeated ids and runs (regression of 326b996)', async () => {
+  it('loads Xcal/Xval with repeated ids and refuses to run a sample shared by cal and val (regression of 326b996)', async () => {
     const ds = replicates()
     expect(ds.partitions.filter((p) => p === 'train')).toHaveLength(30)
     expect(ds.partitions.filter((p) => p === 'test')).toHaveLength(10)
     expect(ds.sampleIds.slice(0, 3)).toEqual(['BGE0', 'BGE0', 'BGE0'])
     expect(ds.sampleIdColumn).toBe('Sample_ID')
     expect(ds.repetition).toBeUndefined()
-    const run = await new DagMlEngine({ profile: 'strict-wasm' }).run(ds, ridge)
-    expect(run.cv!.predictions).toHaveLength(30)
-    expect(run.refit.predictions.map((r) => r.sampleId)).toEqual(range(0, 10).map((i) => `BGE${i}`))
+    await expect(new DagMlEngine({ profile: 'strict-wasm' }).run(ds, ridge)).rejects.toThrow(/Physical sample "BGE0" has scans in Train .* held-out Test partition/)
   })
 
-  it('keeps every repetition of a physical sample in one fold once a repetition column is declared', async () => {
+  it('refuses the same shared sample when the repetition column is declared', async () => {
     const ds = { ...replicates(), repetition: 'Sample_ID' }
-    const run = await new DagMlEngine({ profile: 'strict-wasm' }).run(ds, ridge)
-    const foldOf = new Map<string, Set<number>>()
-    run.folds.forEach((fold, k) => fold.predictions.forEach((r) => foldOf.set(r.sampleId, (foldOf.get(r.sampleId) ?? new Set()).add(k))))
-    expect(foldOf.size).toBe(10)
-    for (const folds of foldOf.values()) expect(folds.size).toBe(1)
-    expect(run.cv!.predictions).toHaveLength(30)
-    expect(run.refit.predictions).toHaveLength(10)
+    await expect(new DagMlEngine({ profile: 'strict-wasm' }).run(ds, ridge)).rejects.toThrow(/held-out Test partition/)
   })
 
-  it('groups by a metadata repetition column scoped per partition, without refusing cal/val code reuse', () => {
+  it('refuses scans of one physical sample with different targets even without a held-out reuse', () => {
+    const ds = replicates()
+    ds.partitions = ds.partitions.map(() => 'train' as const)
+    expect(() => datasetRelations(ds)).toThrow(/Physical sample "BGE0" has different targets on its scans/)
+  })
+
+  it('never detaches cal/val code reuse with a partition prefix, and still names a missing repetition column', () => {
     const ds = { ...replicates(), repetition: 'Sample_ID' }
-    const groups = datasetRelations(ds).map((r) => r.group_id)
-    expect(new Set(groups.slice(0, 30)).size).toBe(10)
-    expect(new Set(groups).size).toBe(20)
-    expect(() => datasetRelations({ ...ds, repetition: 'Batch' })).toThrow('Repetition column not found in the dataset metadata: Batch')
+    expect(() => datasetRelations(ds)).toThrow(/held-out Test partition/)
+    expect(() => datasetRelations({ ...withMissing(), repetition: 'Batch' })).toThrow('Repetition column not found in the dataset metadata: Batch')
   })
 
-  it('keeps an augmentation in its origin group under a repetition column', () => {
+  it('refuses the shared sample before relations even with an augmentation', () => {
     const base = replicates()
     const ds = {
       ...base,
@@ -147,9 +136,7 @@ describe('replicate scans (duplicate Sample_IDs)', () => {
       originIds: base.sampleIds.map((_, i) => (i === 29 ? 'ORIGIN' : null)),
       augmented: base.sampleIds.map((_, i) => i === 29),
     }
-    const relations = datasetRelations(ds)
-    expect(relations[29].group_id).toBe(relations[0].group_id)
-    expect(relations[1].group_id).not.toBe(relations[0].group_id)
+    expect(() => datasetRelations(ds)).toThrow(/held-out Test partition/)
   })
 })
 
@@ -157,10 +144,10 @@ describe('replicate scans (duplicate Sample_IDs)', () => {
 it('records missing training targets in the native FoldSet and keeps them predictable', async () => {
   const ds = withMissing()
   const folds = buildNativeFolds(dagml, ds, { folds: 3, seed: 42 }, trainRowsOf(ds))
-  expect(folds.target_missing_sample_ids).toEqual(['s11', 's3'])
+  expect(folds.target_missing_sample_ids).toEqual(['p11', 'p3'])
   for (const fold of folds.folds) {
-    expect([...fold.train_sample_ids, ...fold.validation_sample_ids]).not.toContain('s3')
-    expect([...fold.train_sample_ids, ...fold.validation_sample_ids]).not.toContain('s11')
+    expect([...fold.train_sample_ids, ...fold.validation_sample_ids]).not.toContain('p3')
+    expect([...fold.train_sample_ids, ...fold.validation_sample_ids]).not.toContain('p11')
   }
   const engine = new DagMlEngine({ profile: 'strict-wasm' })
   const run = await engine.run(ds, ridge)

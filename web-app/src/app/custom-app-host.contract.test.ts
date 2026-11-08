@@ -5,14 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { DatasetPreviewCard, MetricValueBadge, RuntimeEngineBadge } from 'nirs4all-ui/components'
 import { buildDatasetPreview } from 'nirs4all-ui/dataset'
 import { buildRuntimeEngineStatus, runtimeEngineLabel } from 'nirs4all-ui/runtime'
-import {
-  artifactContracts,
-  capabilityManifest,
-  controllerCapabilities,
-  requiredKeywordRegistryEntries,
-  runtimeContracts,
-  runtimeSurfaces,
-} from '@/engine/nirs4all-core'
+import * as nirs4allCore from '@/engine/nirs4all-core'
 import { isPortableCoreModel, predictPortableCore, tryRunPortableCore } from '@/engine/portable-core'
 import type { MaterializedDataset, PipelineDSL } from '@/engine/types'
 
@@ -37,104 +30,22 @@ describe('custom app host contract', () => {
     }
     const expected = oracle.cases.find((item) => item.name === 'portable_methods_pipeline')
     expect(expected).toBeTruthy()
-    const manifest = capabilityManifest()
-    expect(manifest.schema).toBe('nirs4all-core.capabilities.v1')
-    expect(manifest.controllers.map((item) => item.id)).toEqual([
-      'split.kennard_stone',
-      'preprocess.snv',
-      'preprocess.savgol',
-      'preprocess.msc',
-      'select.spa',
-      'select.n4m',
-      'model.pls_regression',
-      'model.affine_methods',
-      'pipeline.portable_methods',
-    ])
-    expect(manifest.runtimeSurfaces).toEqual(runtimeSurfaces)
-    expect(manifest.runtimeContracts).toEqual(runtimeContracts)
-    expect(manifest.artifactContracts).toEqual(artifactContracts)
-    expect(artifactContracts.map((item) => item.id)).toEqual([
-      'conformal.calibrated_result',
-      'robustness.summary',
-      'tuning.summary',
-      'tuning.ordered_search_space',
-      'keyword.registry',
-    ])
-    expect(artifactContracts.find((item) => item.id === 'robustness.summary')?.optionalPayloadFields).toEqual([
-      'conformal_guarantee_status',
-      'spectral_replay',
-    ])
-    expect(artifactContracts.find((item) => item.id === 'tuning.summary')?.optionalPayloadFields).toEqual([
-      'sampler',
-      'pruner',
-      'seed',
-      'persistence',
-      'trials[*].diagnostics',
-    ])
-    expect(artifactContracts.find((item) => item.id === 'tuning.ordered_search_space')).toMatchObject({
-      schema: 'https://nirs4all.org/schemas/tuning-ordered-search-space/v1',
-      portableClaim: 'search-space-json-contract-only',
-      requiredRegistryEntries: ['run.tuning.space', 'run.tuning.force_params'],
-    })
-    expect(requiredKeywordRegistryEntries).toEqual([
-      'run.tuning',
-      'run.tuning.engine',
-      'run.tuning.space',
-      'run.tuning.force_params',
-      'run.tuning.score_data',
-      'run.tuning.score_data.conformal_calibration',
-      'predict.coverage',
-      'predict.all_predictions',
-      'robustness.scenarios.kind',
-      'robustness.scenarios.severity',
-      'robustness.scenarios.distribution',
-      'robustness.X',
-      'robustness.predictor',
-      'robustness.predictor_bundle',
-    ])
-    expect(artifactContracts.find((item) => item.id === 'keyword.registry')?.requiredRegistryEntries).toEqual(
-      requiredKeywordRegistryEntries,
-    )
-    expect(artifactContracts.find((item) => item.id === 'keyword.registry')?.publishedConstants).toEqual({
-      ROBUSTNESS_SCENARIO_DISTRIBUTIONS: ['normal', 'uniform'],
-    })
-    expect(artifactContracts.every((item) => item.consumerLevel.javascript_wasm === 'metadata')).toBe(true)
-    expect(runtimeContracts.map((item) => item.surface)).toEqual(runtimeSurfaces)
-    expect(runtimeContracts.filter((item) => item.serializedModelPredict).map((item) => item.surface)).toEqual([
-      'javascript_wasm', 'rust',
-    ])
-    expect(runtimeContracts.find((item) => item.surface === 'javascript_wasm')?.predictEntrypoint).toBe(
-      'predictPortablePipeline',
-    )
-    expect(manifest.controllers).toEqual(controllerCapabilities)
-    expect(runtimeSurfaces).toContain('javascript_wasm')
-    expect(controllerCapabilities.find((item) => item.id === 'pipeline.portable_methods')?.composes).toEqual([
-      'split.kennard_stone',
-      'preprocess.snv',
-      'preprocess.savgol',
-      'model.pls_regression',
-    ])
-    expect(controllerCapabilities.find((item) => item.id === 'pipeline.portable_methods')?.runtime.javascript_wasm).toBe('parity-validated')
-    const serializedModelPredictSurfaces = runtimeContracts
-      .filter((item) => item.serializedModelPredict)
-      .map((item) => item.surface)
-    const wasmPredictEntrypoint = runtimeContracts.find((item) => item.surface === 'javascript_wasm')?.predictEntrypoint
-    const expectedSerializedModelPredictSurfaces = ['javascript_wasm', 'rust']
-    const expectedWasmPredictEntrypoint = 'predictPortablePipeline'
-    const runtimeContractChecks = {
-      serialized_predict_surface_count_absolute_delta: Math.abs(
-        serializedModelPredictSurfaces.length - expectedSerializedModelPredictSurfaces.length,
-      ),
-      serialized_predict_surface_count_tolerance: 0,
-      wasm_predict_entrypoint_absolute_delta: wasmPredictEntrypoint === expectedWasmPredictEntrypoint ? 0 : 1,
-      wasm_predict_entrypoint_tolerance: 0,
+    // The wrapper publishes no coarse capability metadata: the retired contracts are not
+    // exported, and the run below reads only the native profile definitions.
+    for (const retired of ['artifactContracts', 'capabilityManifest', 'controllerCapabilities',
+      'requiredKeywordRegistryEntries', 'runtimeContracts', 'runtimeSurfaces']) {
+      expect(retired in nirs4allCore).toBe(false)
     }
-    expect(runtimeContractChecks).toEqual({
-      serialized_predict_surface_count_absolute_delta: 0,
-      serialized_predict_surface_count_tolerance: 0,
-      wasm_predict_entrypoint_absolute_delta: 0,
-      wasm_predict_entrypoint_tolerance: 0,
-    })
+    const definitions = nirs4allCore.coreExecutionProfileDefinitions()
+    // Full owner profile set (nirs4all-core capability-profiles, all version 1), in owner order.
+    expect(definitions.profiles.map((item) => `${item.id}@${item.version}`)).toEqual([
+      'native-workflow@1',
+      'native-conformal@1',
+      'native-methods-package@1',
+      'native-n4a-canonical@1',
+      'n4a-container@1',
+    ])
+    expect(definitions.runtime_surfaces).toContain('javascript_wasm')
 
     const dataset: MaterializedDataset = {
       X: Float64Array.from(oracle.dataset.X),
@@ -190,7 +101,6 @@ describe('custom app host contract', () => {
     const engineStatus = buildRuntimeEngineStatus({ engine: run!.engine, requestedEngine: 'nirs4all-core-wasm' })
     expect(engineStatus?.badgeLabel.toLowerCase()).toContain('nirs4all core wasm')
     expect(runtimeEngineLabel({ compiled: true, executed: true })).toBe('executed by dag-ml')
-    expect(manifest.controllers.find((item) => item.id === 'pipeline.portable_methods')?.executionPath).toBe('run_portable_pipeline')
 
     const datasetCard = DatasetPreviewCard({ view: preview, className: 'custom-host-dataset' }) as ReactElement<{ className: string }>
     const engineBadge = RuntimeEngineBadge({ status: engineStatus, className: 'custom-host-engine' }) as ReactElement<{ className: string }>
@@ -227,17 +137,6 @@ describe('custom app host contract', () => {
           prediction_rows: heldOut.length,
           max_abs_delta: maxAbsDiff(Array.from(heldOut), expected!.selected.predictions),
           tolerance: oracle.metadata.tolerances.predictions_abs,
-        }, null, 2),
-      )
-      writeFileSync(
-        join(artifactsDir, 'custom-host-runtime-contracts.json'),
-        JSON.stringify({
-          status: 'passed',
-          schema: manifest.schema,
-          runtime_surfaces: runtimeSurfaces,
-          serialized_model_predict_surfaces: serializedModelPredictSurfaces,
-          wasm_predict_entrypoint: wasmPredictEntrypoint,
-          runtime_contract_checks: runtimeContractChecks,
         }, null, 2),
       )
       writeFileSync(

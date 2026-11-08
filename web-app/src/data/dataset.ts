@@ -1,8 +1,10 @@
 import { isRelationColumn, metadataRelations } from '@/engine/relations'
-// Build a MaterializedDataset (the engine contract) from uploaded CSV files,
-// following the nirs4all convention X_train/X_test + y_train/y_test (+ metadata).
-// Task type and class labels are inferred from y. The spectral axis is read from
-// the X header when numeric. Vendor formats route through wasm-io.ts instead.
+// TEST ORACLE ONLY. Active ingestion (uploads, bundled samples) goes through
+// nirs4all-io via wasm-io.ts; `buildDataset` is kept solely as the temporary
+// reference for CSV parity checks and unit fixtures, never as a runtime fallback,
+// and is removed once that parity is established. It builds a MaterializedDataset
+// from CSV files following the nirs4all convention X_train/X_test + y_train/y_test
+// (+ metadata). `encodeTarget`/`inferTaskType`/`summarize` remain shared with wasm-io.ts.
 import type { MaterializedDataset, Partition, TaskType } from '@/engine/types'
 import { columnMismatch, columnName } from '@/engine/feature-identity'
 import { parseCsv } from './csv'

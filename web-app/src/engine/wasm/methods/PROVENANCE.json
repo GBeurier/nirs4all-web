@@ -1,19 +1,370 @@
 {
   "schema": "nirs4all-web.public-npm-acquisition.v1",
   "package": "@nirs4all/methods",
-  "version": "1.3.14",
+  "version": "1.3.15",
   "source": {
+    "kind": "local-clean-commit-export",
     "repository": "https://github.com/GBeurier/nirs4all-methods",
-    "commit": "6a6ba8cf5e4930953d2fc10c80748547805fc87d",
-    "tree": "36d69c3c80b1e07d29264a59b1acb5c66a0cb933"
+    "commit": "475e9cbc08ef5e54f73f66e6c2481513dd0ed5f3",
+    "tree": "d8b5db431d3ed9f53a3ecab1c162426a26ea5fc0",
+    "source_archive_sha256": "ca0a25a861a163fd784895bb67f6c4b781c895b662e447ea02489252ba715b65",
+    "artifact_origin": "Local Emscripten analysis WASM built from the clean commit above (Methods 1.3.15+abi.2.22.0); JS/TS staged by the standard stage:wasm script; not published, no registry identity; qualification limited to the recorded SG operations on local Linux native and Node 24.16.0 WASM profiles"
   },
   "acquisition": {
-    "metadata_url": "https://registry.npmjs.org/@nirs4all/methods/1.3.14",
-    "tarball_url": "https://registry.npmjs.org/@nirs4all/methods/-/methods-1.3.14.tgz",
-    "size": 1192577,
-    "sha256": "6ccb9a9387d0e0c1fa9c85297996acaa21e734e15b3fc3c159034dc66834990d",
-    "sha1": "c50cd0bcb2bc653ffb2e814b16c3471d39d6a8a9",
-    "integrity": "sha512-f6xDeOohtFBebWGosyJvMQiZnwuLij9njzYqfUoZkUfiwhut5RrOLxRuawZiORObLuJho44pu3rvCbvCAxfF+w=="
+    "kind": "local-unpublished",
+    "note": "Exact local Methods SG 1.3.15 artifacts (wasm e63a5dff…, glue bafa1610…); package.json, README and licence files come from the same clean source export. No registry identity and no numerical rebuild by Web. Evidence: sg-1315-build HANDOFF.md and RESULTS.json.",
+    "files": {
+      "LICENSE": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/source/bindings/js/LICENSE",
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+      },
+      "LICENSE-CeCILL-2.1": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/source/bindings/js/LICENSE-CeCILL-2.1",
+        "size": 21778,
+        "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+      },
+      "LICENSES/AGPL-3.0-or-later.txt": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/LICENSES/AGPL-3.0-or-later.txt",
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+      },
+      "LICENSES/Apache-2.0.txt": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/LICENSES/Apache-2.0.txt",
+        "size": 10280,
+        "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+      },
+      "LICENSES/BSD-3-Clause.txt": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/LICENSES/BSD-3-Clause.txt",
+        "size": 1460,
+        "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
+      },
+      "LICENSES/COMMERCIAL-LICENSE.md": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/LICENSES/COMMERCIAL-LICENSE.md",
+        "size": 680,
+        "sha256": "f26f5d9ce50fbbebf089b921bcb44add711cb066ec4dbb767da450dc767a81a6"
+      },
+      "LICENSES/COMMERCIAL-LICENSE_FR.md": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/LICENSES/COMMERCIAL-LICENSE_FR.md",
+        "size": 769,
+        "sha256": "d6cb8560f7f4ba35443d91e47280da0e9b2369ba05b597db9d812646cc4336ee"
+      },
+      "LICENSES/CeCILL-2.1.txt": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/LICENSES/CeCILL-2.1.txt",
+        "size": 21778,
+        "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+      },
+      "LICENSES/MIT.txt": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/LICENSES/MIT.txt",
+        "size": 1078,
+        "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+      },
+      "LICENSES/mixeff-dependencies.txt": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/LICENSES/mixeff-dependencies.txt",
+        "size": 714749,
+        "sha256": "615134447ecde123ee8d7476751381df67685530bfa146558b1f49207371169b"
+      },
+      "LICENSES/mixeff-rs.txt": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/LICENSES/mixeff-rs.txt",
+        "size": 1074,
+        "sha256": "5ebc3be0ec21c6767ecbb21c9ba42ee10b644cc02a6c012335aac24bd5ab5903"
+      },
+      "LICENSES/rfr-cereal.txt": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/LICENSES/rfr-cereal.txt",
+        "size": 1519,
+        "sha256": "18fd7618c44c9fe28b5f54cd19747df3c0472ed33e8507fea571e2acf6e72f34"
+      },
+      "LICENSES/rfr-rapidjson.txt": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/LICENSES/rfr-rapidjson.txt",
+        "size": 5152,
+        "sha256": "a140e5d46fe734a1c78f1a3c3ef207871dd75648be71fdda8e309b23ab8b1f32"
+      },
+      "LICENSES/rfr.txt": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/LICENSES/rfr.txt",
+        "size": 1748,
+        "sha256": "36b7da08b417f0378297391cf06b2c886739475d0d9b36263539fe424e2bc79a"
+      },
+      "LICENSES/rust-standard-library.txt": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/LICENSES/rust-standard-library.txt",
+        "size": 424296,
+        "sha256": "5b87c6cf33f65fa1a3093c03b106954cd38ec40f7d9a8d96c5ddc0df36617db0"
+      },
+      "LICENSING.md": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/source/LICENSING.md",
+        "size": 2133,
+        "sha256": "674f3ab09bc6fca997bc765bbd5b710aabecb60d68f722ed4182bf40ec274bf1"
+      },
+      "LICENSING_FR.md": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/source/LICENSING_FR.md",
+        "size": 2280,
+        "sha256": "6996c1e0385782ca1d6adf3a2fe07189a4bbcad8be727adb7cac0b85c71255a1"
+      },
+      "NOTICE.md": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/source/NOTICE.md",
+        "size": 1818,
+        "sha256": "ccb385dfd092825e9c4638f44f4803a15b1f3a0a47cffe80632294b6344beced"
+      },
+      "README.md": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/source/bindings/js/README.md",
+        "size": 19516,
+        "sha256": "752ef6c5434c8e32e58c26de605ae39ec83a2d72a6c1f4d3e8196d560540ca83"
+      },
+      "THIRD_PARTY_LICENSES.md": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/THIRD_PARTY_LICENSES.md",
+        "size": 7437,
+        "sha256": "3da01033fea5f1efe31a5865693d294c7c378aad51d81f1e5dc9c07e668f752f"
+      },
+      "THIRD_PARTY_NOTICES.md": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/source/THIRD_PARTY_NOTICES.md",
+        "size": 1714,
+        "sha256": "4106fb2caf597b5392140d24ddce905c6e4e990521aea68c7c10c7a817024933"
+      },
+      "componentAnalysis.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/componentAnalysis.d.ts",
+        "size": 2144,
+        "sha256": "e657072ac46657296bce3b70a6b73f7253e59f35b7541c2e9a4eda24500c1014"
+      },
+      "componentAnalysis.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/componentAnalysis.js",
+        "size": 11087,
+        "sha256": "671b3c0ceeb9f00a202c87f9a21932279c623885192d4850c922e257c35925fe"
+      },
+      "config.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/config.d.ts",
+        "size": 512,
+        "sha256": "50baeef98dc3ed4e3840aeb2146c61d2a3c66ad598f4ef0818c2ea6c887ef7f9"
+      },
+      "config.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/config.js",
+        "size": 2003,
+        "sha256": "12cc0e1a9cb3d598abe8e4d9e08df659227b3d95006e8bbb424f8569a882d8fd"
+      },
+      "context.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/context.d.ts",
+        "size": 800,
+        "sha256": "701d7344a07f4f3f3487ce182a04e3493781f5818e0d69acdb2b11dfaf668ec6"
+      },
+      "context.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/context.js",
+        "size": 1750,
+        "sha256": "653fe6020f043ff47264076ee05d8eaf6b59cfb8fa9fb6ad6697e1b3a799e532"
+      },
+      "estimatorRoles.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/estimatorRoles.d.ts",
+        "size": 7845,
+        "sha256": "2389591087f0dbea32e6b252ac4f16b51e8bc513f8f1e9f440f50b94f531d38a"
+      },
+      "estimatorRoles.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/estimatorRoles.js",
+        "size": 27380,
+        "sha256": "fdf36a65d49049b2390deea222b37528ce85a9aef402270478561c2b0ba25d7a"
+      },
+      "estimatorRolesGenerated.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/estimatorRolesGenerated.d.ts",
+        "size": 171904,
+        "sha256": "d1ebff2dc88f9ac0040a1a1a3f40293c8ca82903e57ad0a93c9e1e066fcc1747"
+      },
+      "estimatorRolesGenerated.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/estimatorRolesGenerated.js",
+        "size": 116370,
+        "sha256": "6e5ee8edbe455dd7aba740243e437be22d951bf59ba56343276b5fbd4a0d914a"
+      },
+      "ffi.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/ffi.d.ts",
+        "size": 2285,
+        "sha256": "cc1f3aa4183c1e9565485d257af728b2881e1663f00c98949969be1443556a15"
+      },
+      "ffi.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/ffi.js",
+        "size": 5296,
+        "sha256": "f763414344bdfbef14b7ee0532598d0c85d8218cbe48658debc90b2b91032758"
+      },
+      "index.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/index.d.ts",
+        "size": 4695,
+        "sha256": "128901b9116de922ff10fe44b595e22e7c5dae922f0c01ae1c81ee6cbcd12222"
+      },
+      "index.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/index.js",
+        "size": 3554,
+        "sha256": "640d0a40e2ec64d5109b774bc71aab6d77ab004c4873b57697c168af2477962c"
+      },
+      "methodResult.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/methodResult.d.ts",
+        "size": 1514,
+        "sha256": "b75ef84c1fdfb73a3a20e342a4e83170ee350118d1d6bdc152c41569636e9cf4"
+      },
+      "methodResult.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/methodResult.js",
+        "size": 7265,
+        "sha256": "ff8099d98acdf5b44bbe319ddf90692adae86e6774a13339c3292b0b02d384e2"
+      },
+      "model.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/model.d.ts",
+        "size": 11450,
+        "sha256": "545e4dc89f7543d822d761ec503d6e6bb5d274501a6c6d0de8af3ab752dc0eba"
+      },
+      "model.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/model.js",
+        "size": 28120,
+        "sha256": "7fdf14864a402895fdcc253762b0e5387f9adbf24d514497e1adf678f5516466"
+      },
+      "multimodalPipeline.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/multimodalPipeline.d.ts",
+        "size": 2983,
+        "sha256": "8c22fec8585580e58ccbac637be206eaa460a0e89d0e684a9042b8a299428951"
+      },
+      "multimodalPipeline.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/multimodalPipeline.js",
+        "size": 28195,
+        "sha256": "f378c2a72c7894980a00194c2c1d7715166b706a85edec8191012d0a4563e98d"
+      },
+      "n4m.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/n4m.js",
+        "size": 253158,
+        "sha256": "bafa16109c344fcefcca5ca993591d1377a85fc7370e6d352693f5d63d875500"
+      },
+      "n4m.wasm": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/n4m.wasm",
+        "size": 4981171,
+        "sha256": "e63a5dffbe7837dd856177967a546fcbe4ef992778d8eaa6d9b6f83c9e958891"
+      },
+      "nativeAugmentation.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/nativeAugmentation.d.ts",
+        "size": 1340,
+        "sha256": "55e3f2d7692ec5da253c8b17c3e9b9efaa497c6a4a465e7c37cb6c224905aee2"
+      },
+      "nativeAugmentation.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/nativeAugmentation.js",
+        "size": 2500,
+        "sha256": "a91934e77c01fcdf9c9cc5771d9a30eb9283de4259dedbc572b11044f85542fd"
+      },
+      "nativeModel.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/nativeModel.d.ts",
+        "size": 1755,
+        "sha256": "0c4d44c2f7eb93bf896f29e5661ce81374880457c4869f3958e19b6b0006c1e1"
+      },
+      "nativeModel.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/nativeModel.js",
+        "size": 5033,
+        "sha256": "6cfe1fdc6c0ff3b7868295e2b17a039eadefe8dfd45879197717dea1fe3cf2e3"
+      },
+      "nativePreprocessingPipeline.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/nativePreprocessingPipeline.d.ts",
+        "size": 1591,
+        "sha256": "7f264bf4dd9733450ad6ef3f64796f959c666e64c0e53030d7c44c91e7bb8469"
+      },
+      "nativePreprocessingPipeline.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/nativePreprocessingPipeline.js",
+        "size": 11050,
+        "sha256": "f11d93d683d54cace9454deeedda640b94c2558593f0c8d504b5c61e7b49f267"
+      },
+      "nativeSplitter.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/nativeSplitter.d.ts",
+        "size": 1040,
+        "sha256": "45523cf0dc068f8e61d2e30835b3f7249388a5949cb6061ad71e3c8728ca924d"
+      },
+      "nativeSplitter.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/nativeSplitter.js",
+        "size": 5293,
+        "sha256": "7da33f7a960e6d5cd2dcbf3ca16e6e04a5479396030c381f512d69e1ee5e1262"
+      },
+      "optimization.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/optimization.d.ts",
+        "size": 4026,
+        "sha256": "1205fbd561a0d0121b3a08e5c2cbab5f4055d11e55d691f4f835d67708db3a19"
+      },
+      "optimization.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/optimization.js",
+        "size": 30016,
+        "sha256": "1b61274b88e8680758e779c58995fbb035fce8f1330c6d8c482cebb3f2ce0128"
+      },
+      "package.json": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/source/bindings/js/package.json",
+        "size": 3225,
+        "sha256": "6cf53bbdd956fb537c80d947ad3e18850dee3247c9ec39181a095a3fd9a56cc9"
+      },
+      "preflightDiagnostics.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/preflightDiagnostics.d.ts",
+        "size": 20381,
+        "sha256": "ce9dae1b279f1c3cf763d6057c20bdbd4565fd6cb3b9d951f680b30ed2989ceb"
+      },
+      "preflightDiagnostics.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/preflightDiagnostics.js",
+        "size": 49992,
+        "sha256": "b96242fc5cba7a8b53178ccdad321425522a920ad329bff3dffabb64e359fce7"
+      },
+      "preprocessing.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/preprocessing.d.ts",
+        "size": 985,
+        "sha256": "9408b9c93abdc74af2e0c8b042fdcd17ea1701961b6f6a746e0cc7ad1ed79a49"
+      },
+      "preprocessing.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/preprocessing.js",
+        "size": 4988,
+        "sha256": "8bcca5b102afc2add3d56f83fc615f3da7e729754040aeb16e4195a820559bd9"
+      },
+      "ranking.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/ranking.d.ts",
+        "size": 2029,
+        "sha256": "42ffed59d1d217a449b0e8a763466cb4c81b4d44eb37b4f384020ce9c1742ebb"
+      },
+      "ranking.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/ranking.js",
+        "size": 6683,
+        "sha256": "19a485f244638219bef70debdd9e2b51d6871c87262c53a7c92a49cd4036239b"
+      },
+      "rolePipeline.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/rolePipeline.d.ts",
+        "size": 4750,
+        "sha256": "ff7bff5b830f829f90e039cd543dd7c052c7835031bd8e3b7e777324564a1f41"
+      },
+      "rolePipeline.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/rolePipeline.js",
+        "size": 20161,
+        "sha256": "03dabc465b21515add432601b378bd17eae7d962d020f18f7cff4d2346343fbc"
+      },
+      "selection.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/selection.d.ts",
+        "size": 508,
+        "sha256": "b42f61adb1047978a3f719b109342d3be37850f7155a19993159c45393f1c01e"
+      },
+      "selection.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/selection.js",
+        "size": 11428,
+        "sha256": "876fba576bf819d3bce54cb8d00f8a3804b324dc5379179b78b7a12c5f56cdbc"
+      },
+      "serialization.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/serialization.d.ts",
+        "size": 2028,
+        "sha256": "0ca1d47fb4b6d189b2fbfa270d4669ed3505c7896636b5607757c2a05c14ed0a"
+      },
+      "serialization.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/serialization.js",
+        "size": 5154,
+        "sha256": "1292128d6e7eb30fbbdd1b6490bfc543c1769c4b29af9a8f4548377b8640a4a8"
+      },
+      "spectralEncoding.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/spectralEncoding.d.ts",
+        "size": 746,
+        "sha256": "93e20866de551a539a65d9e6597385d79c8343130d9cc7c2a5b2870cd391dff7"
+      },
+      "spectralEncoding.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/spectralEncoding.js",
+        "size": 4117,
+        "sha256": "f86bf17ecd8e06d23d961a6c1cfce171899e1976d68ac1ebc58bb5958b06288d"
+      },
+      "types.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/types.d.ts",
+        "size": 2367,
+        "sha256": "e3f5fc4c2fbc2d6eec69620f0b94b36f8f32c5116edd8ed42332798fb03ff482"
+      },
+      "types.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/methods-sg-1315/js-dist/types.js",
+        "size": 4906,
+        "sha256": "2711cd0c790d2b6de7827c86299481fd64bb39736419d931f482066193bf9f92"
+      }
+    }
   },
   "reproducibility": {
     "performed_by_web": false,
@@ -56,21 +407,61 @@
       "size": 1078,
       "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
     },
+    "LICENSES/mixeff-dependencies.txt": {
+      "size": 714749,
+      "sha256": "615134447ecde123ee8d7476751381df67685530bfa146558b1f49207371169b"
+    },
+    "LICENSES/mixeff-rs.txt": {
+      "size": 1074,
+      "sha256": "5ebc3be0ec21c6767ecbb21c9ba42ee10b644cc02a6c012335aac24bd5ab5903"
+    },
+    "LICENSES/rfr-cereal.txt": {
+      "size": 1519,
+      "sha256": "18fd7618c44c9fe28b5f54cd19747df3c0472ed33e8507fea571e2acf6e72f34"
+    },
+    "LICENSES/rfr-rapidjson.txt": {
+      "size": 5152,
+      "sha256": "a140e5d46fe734a1c78f1a3c3ef207871dd75648be71fdda8e309b23ab8b1f32"
+    },
+    "LICENSES/rfr.txt": {
+      "size": 1748,
+      "sha256": "36b7da08b417f0378297391cf06b2c886739475d0d9b36263539fe424e2bc79a"
+    },
+    "LICENSES/rust-standard-library.txt": {
+      "size": 424296,
+      "sha256": "5b87c6cf33f65fa1a3093c03b106954cd38ec40f7d9a8d96c5ddc0df36617db0"
+    },
     "LICENSING.md": {
       "size": 2133,
       "sha256": "674f3ab09bc6fca997bc765bbd5b710aabecb60d68f722ed4182bf40ec274bf1"
     },
+    "LICENSING_FR.md": {
+      "size": 2280,
+      "sha256": "6996c1e0385782ca1d6adf3a2fe07189a4bbcad8be727adb7cac0b85c71255a1"
+    },
+    "NOTICE.md": {
+      "size": 1818,
+      "sha256": "ccb385dfd092825e9c4638f44f4803a15b1f3a0a47cffe80632294b6344beced"
+    },
     "README.md": {
-      "size": 10080,
-      "sha256": "37275ead30b225f317abe055eec1a9e279c1ed80d98a21ae86ad8feb14144e52"
+      "size": 19516,
+      "sha256": "752ef6c5434c8e32e58c26de605ae39ec83a2d72a6c1f4d3e8196d560540ca83"
     },
     "THIRD_PARTY_LICENSES.md": {
-      "size": 6727,
-      "sha256": "01db4c791ed3a5fbdd7bc6efcc9f5bf75f6a879b63f0ceb6c52098fa4732f850"
+      "size": 7437,
+      "sha256": "3da01033fea5f1efe31a5865693d294c7c378aad51d81f1e5dc9c07e668f752f"
     },
     "THIRD_PARTY_NOTICES.md": {
       "size": 1714,
       "sha256": "4106fb2caf597b5392140d24ddce905c6e4e990521aea68c7c10c7a817024933"
+    },
+    "componentAnalysis.d.ts": {
+      "size": 2144,
+      "sha256": "e657072ac46657296bce3b70a6b73f7253e59f35b7541c2e9a4eda24500c1014"
+    },
+    "componentAnalysis.js": {
+      "size": 11087,
+      "sha256": "671b3c0ceeb9f00a202c87f9a21932279c623885192d4850c922e257c35925fe"
     },
     "config.d.ts": {
       "size": 512,
@@ -93,8 +484,8 @@
       "sha256": "2389591087f0dbea32e6b252ac4f16b51e8bc513f8f1e9f440f50b94f531d38a"
     },
     "estimatorRoles.js": {
-      "size": 26654,
-      "sha256": "c41be79a155bf30f9caa34e0b19e2aee4d3af38748c2708451cf7c0ac17dd250"
+      "size": 27380,
+      "sha256": "fdf36a65d49049b2390deea222b37528ce85a9aef402270478561c2b0ba25d7a"
     },
     "estimatorRolesGenerated.d.ts": {
       "size": 171904,
@@ -102,7 +493,7 @@
     },
     "estimatorRolesGenerated.js": {
       "size": 116370,
-      "sha256": "54ff86c89146cefb132668eef64b4c1f513a1ab45c744f5ad1c34235524ce866"
+      "sha256": "6e5ee8edbe455dd7aba740243e437be22d951bf59ba56343276b5fbd4a0d914a"
     },
     "ffi.d.ts": {
       "size": 2285,
@@ -113,12 +504,12 @@
       "sha256": "f763414344bdfbef14b7ee0532598d0c85d8218cbe48658debc90b2b91032758"
     },
     "index.d.ts": {
-      "size": 4406,
-      "sha256": "b1d0105f2b5de1897e05022520323bda58fc9bc52589e2f278e74c85f7b1ec23"
+      "size": 4695,
+      "sha256": "128901b9116de922ff10fe44b595e22e7c5dae922f0c01ae1c81ee6cbcd12222"
     },
     "index.js": {
-      "size": 3439,
-      "sha256": "9b09508f7b2e7dbb665147b1c49b153a7637e82c8f8366e8cad2f48f37547fee"
+      "size": 3554,
+      "sha256": "640d0a40e2ec64d5109b774bc71aab6d77ab004c4873b57697c168af2477962c"
     },
     "methodResult.d.ts": {
       "size": 1514,
@@ -145,12 +536,12 @@
       "sha256": "f378c2a72c7894980a00194c2c1d7715166b706a85edec8191012d0a4563e98d"
     },
     "n4m.js": {
-      "size": 196966,
-      "sha256": "256aca1d6d03d210a053d08de99a01a1a63fd19aba3512cc402b8ac13c1e3023"
+      "size": 253158,
+      "sha256": "bafa16109c344fcefcca5ca993591d1377a85fc7370e6d352693f5d63d875500"
     },
     "n4m.wasm": {
-      "size": 3119339,
-      "sha256": "f965154ea02427ae30a1b017474dc5491ea8eab394c34ef2e0b9bde6db78e48f"
+      "size": 4981171,
+      "sha256": "e63a5dffbe7837dd856177967a546fcbe4ef992778d8eaa6d9b6f83c9e958891"
     },
     "nativeAugmentation.d.ts": {
       "size": 1340,
@@ -193,8 +584,8 @@
       "sha256": "1b61274b88e8680758e779c58995fbb035fce8f1330c6d8c482cebb3f2ce0128"
     },
     "package.json": {
-      "size": 2828,
-      "sha256": "001443143f7c5281776ab408bde23acf1f3a1b6faaeced283fd725c3dcac19a3"
+      "size": 3225,
+      "sha256": "6cf53bbdd956fb537c80d947ad3e18850dee3247c9ec39181a095a3fd9a56cc9"
     },
     "preflightDiagnostics.d.ts": {
       "size": 20381,
@@ -209,8 +600,16 @@
       "sha256": "9408b9c93abdc74af2e0c8b042fdcd17ea1701961b6f6a746e0cc7ad1ed79a49"
     },
     "preprocessing.js": {
-      "size": 4747,
-      "sha256": "fc974fee5d75c314328941cf10482ebd0b5ca16ba999275ece6f1905046ed730"
+      "size": 4988,
+      "sha256": "8bcca5b102afc2add3d56f83fc615f3da7e729754040aeb16e4195a820559bd9"
+    },
+    "ranking.d.ts": {
+      "size": 2029,
+      "sha256": "42ffed59d1d217a449b0e8a763466cb4c81b4d44eb37b4f384020ce9c1742ebb"
+    },
+    "ranking.js": {
+      "size": 6683,
+      "sha256": "19a485f244638219bef70debdd9e2b51d6871c87262c53a7c92a49cd4036239b"
     },
     "rolePipeline.d.ts": {
       "size": 4750,
@@ -251,14 +650,6 @@
     "types.js": {
       "size": 4906,
       "sha256": "2711cd0c790d2b6de7827c86299481fd64bb39736419d931f482066193bf9f92"
-    },
-    "LICENSING_FR.md": {
-      "size": 2280,
-      "sha256": "6996c1e0385782ca1d6adf3a2fe07189a4bbcad8be727adb7cac0b85c71255a1"
-    },
-    "NOTICE.md": {
-      "size": 1818,
-      "sha256": "ccb385dfd092825e9c4638f44f4803a15b1f3a0a47cffe80632294b6344beced"
     }
   }
 }

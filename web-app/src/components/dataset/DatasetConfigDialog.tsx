@@ -148,7 +148,7 @@ export function DatasetConfigDialog({ open, ds, analysis, onOpenChange, onApply 
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                The column naming the physical sample of each spectrum. Its repetitions stay in one cross-validation fold, within each partition.
+                The column naming the physical sample of each spectrum, across the whole dataset. Its scans stay in one cross-validation fold and are scored as one sample; a sample in both Train and Test is refused, and every fitted or scored scan needs a value.
               </p>
             </div>
           )}

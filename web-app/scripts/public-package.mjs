@@ -1,4 +1,5 @@
-// Verify published bytes and the explicitly recorded browser builds for this release.
+// Verify the pinned bytes — published registry tarballs, explicitly recorded browser builds, or
+// (pin.local) truthfully recorded local-unpublished artifacts with no registry identity.
 import { createHash } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import { readFileSync, readdirSync, mkdtempSync, rmSync, mkdirSync, copyFileSync, writeFileSync } from 'node:fs'
@@ -20,25 +21,63 @@ function inventory(root, directory = root) {
   }).sort()
 }
 function check(bytes, fact, name) {
-  if (bytes.length !== fact.size || hash('sha256', bytes) !== fact.sha256) throw new Error(`Published bytes differ: ${name}`)
+  if (bytes.length !== fact.size || hash('sha256', bytes) !== fact.sha256) throw new Error(`Pinned bytes differ: ${name}`)
 }
 export function verifyPackage(key) {
   const pin = pins[key]
   const root = resolve(app, pin.destination)
   const receipt = JSON.parse(readFileSync(join(root, 'PROVENANCE.json'), 'utf8'))
   const expected = { schema: 'nirs4all-web.public-npm-acquisition.v1', package: pin.package, version: pin.version,
-    source: pin.source, acquisition: pin.registry, reproducibility: { performed_by_web: Boolean(pin.build), independent_rebuild_claimed: false }, files: pin.files, ...(pin.browser_deployment ? { browser_deployment: pin.browser_deployment } : {}), ...(pin.build ? { build: pin.build } : {}) }
+    source: pin.source, acquisition: pin.local ?? pin.registry, reproducibility: { performed_by_web: Boolean(pin.build), independent_rebuild_claimed: false }, files: pin.files, ...(pin.browser_deployment ? { browser_deployment: pin.browser_deployment } : {}), ...(pin.build ? { build: pin.build } : {}) }
   if (JSON.stringify(receipt) !== JSON.stringify(expected)) throw new Error(`Acquisition receipt differs: ${key}`)
   const names = Object.keys(pin.files).sort()
   if (JSON.stringify(inventory(root).filter(name => name !== 'PROVENANCE.json')) !== JSON.stringify(names)) throw new Error(`Package inventory differs: ${key}`)
   for (const name of names) check(readFileSync(join(root, name)), pin.files[name], name)
   const metadata = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
   if ((metadata.name !== (pin.staged_package ?? pin.package)) || metadata.version !== pin.version || metadata.license.replace(/[()]/g, '') !== 'CECILL-2.1 OR AGPL-3.0-or-later') throw new Error(`Package identity/license differs: ${key}`)
-  console.log(`${pin.package}@${pin.version} published inventory and acquisition verified`)
+  console.log(`${pin.package}@${pin.version} ${pin.local ? 'local-unpublished (no registry identity)' : 'published'} inventory and acquisition verified`)
   return { pin, root }
+}
+/**
+ * A pin may declare `local`: `{ kind: 'local-unpublished', note, files: { <staged name>: { source, size, sha256 } } }`.
+ * Its bytes are copied from absolute local paths after their size and SHA-256 match both that
+ * declaration and `pin.files`. This records the truth (an unpublished local artifact with no
+ * registry identity) and never fetches, rebuilds or relaxes a check.
+ */
+function stageLocalPackage(key, pin) {
+  if (pin.local.kind !== 'local-unpublished' || !pin.local.files || Object.keys(pin.local.files).sort().join() !== Object.keys(pin.files).sort().join()) {
+    throw new Error(`Local acquisition must be local-unpublished and cover exactly the pinned files: ${key}`)
+  }
+  const temporary = mkdtempSync(join(tmpdir(), 'web-local-package-'))
+  try {
+    const staged = join(temporary, 'staged')
+    for (const [name, fact] of Object.entries(pin.local.files)) {
+      if (fact.size !== pin.files[name].size || fact.sha256 !== pin.files[name].sha256) throw new Error(`Local declaration differs from the pinned file: ${key}/${name}`)
+      const body = readFileSync(fact.source)
+      check(body, pin.files[name], name)
+      mkdirSync(dirname(join(staged, name)), { recursive: true })
+      writeFileSync(join(staged, name), body)
+    }
+    installStaged(key, pin, staged)
+  } finally { rmSync(temporary, { recursive: true, force: true }) }
+}
+function installStaged(key, pin, staged) {
+  const destination = resolve(app, pin.destination)
+  if (JSON.stringify(inventory(staged)) !== JSON.stringify(Object.keys(pin.files).sort())) throw new Error(`Incomplete staged inventory: ${key}`)
+  mkdirSync(destination, { recursive: true })
+  // Keep npm's installed dependencies when refreshing a linked Core package.
+  for (const name of inventory(destination)) rmSync(join(destination, name))
+  for (const name of Object.keys(pin.files)) {
+    mkdirSync(dirname(join(destination, name)), { recursive: true })
+    copyFileSync(join(staged, name), join(destination, name))
+  }
+  writeFileSync(join(destination, 'PROVENANCE.json'), JSON.stringify({ schema: 'nirs4all-web.public-npm-acquisition.v1', package: pin.package, version: pin.version,
+    source: pin.source, acquisition: pin.local ?? pin.registry, reproducibility: { performed_by_web: Boolean(pin.build), independent_rebuild_claimed: false }, files: pin.files, ...(pin.browser_deployment ? { browser_deployment: pin.browser_deployment } : {}), ...(pin.build ? { build: pin.build } : {}) }, null, 2) + '\n')
+  verifyPackage(key)
 }
 export async function stagePackage(key) {
   const pin = pins[key]
+  if (pin.local) return stageLocalPackage(key, pin)
   const metadata = await (await fetch(pin.registry.metadata_url)).json()
   const bytes = Buffer.from(await (await fetch(pin.registry.tarball_url)).arrayBuffer())
   check(bytes, pin.registry, key)
@@ -99,17 +138,6 @@ export async function stagePackage(key) {
       check(body, fact, name)
       writeFileSync(join(staged, name), body)
     }
-    const destination = resolve(app, pin.destination)
-    if (JSON.stringify(inventory(staged)) !== JSON.stringify(Object.keys(pin.files).sort())) throw new Error(`Incomplete staged inventory: ${key}`)
-    mkdirSync(destination, { recursive: true })
-    // Keep npm's installed dependencies when refreshing a linked Core package.
-    for (const name of inventory(destination)) rmSync(join(destination, name))
-    for (const name of Object.keys(pin.files)) {
-      mkdirSync(dirname(join(destination, name)), { recursive: true })
-      copyFileSync(join(staged, name), join(destination, name))
-    }
-    writeFileSync(join(destination, 'PROVENANCE.json'), JSON.stringify({ schema: 'nirs4all-web.public-npm-acquisition.v1', package: pin.package, version: pin.version,
-      source: pin.source, acquisition: pin.registry, reproducibility: { performed_by_web: Boolean(pin.build), independent_rebuild_claimed: false }, files: pin.files, ...(pin.browser_deployment ? { browser_deployment: pin.browser_deployment } : {}), ...(pin.build ? { build: pin.build } : {}) }, null, 2) + '\n')
-    verifyPackage(key)
+    installStaged(key, pin, staged)
   } finally { rmSync(temporary, { recursive: true, force: true }) }
 }

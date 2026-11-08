@@ -3,9 +3,9 @@
 // confirming exports a bundle flagged `containsTrainingRows` (bundle-level and
 // on the model state) whose re-import in a fresh session predicts identically.
 import { tmpdir } from 'node:os'
-import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { chromium } from 'playwright-core'
+import { readWebHostContainer, webHostDeclarationProblem } from './n4a-container-reader.mjs'
 import { capturePredictionPanel, comparePredictionPanels } from './smoke-evidence-helpers.mjs'
 
 const APP_URL = process.env.SMOKE_URL || 'http://localhost:4345/'
@@ -37,6 +37,7 @@ try {
   console.log('✓ trained a Kernel PLS model')
 
   await page.locator('[data-step="predict"]').click()
+  await page.getByLabel('Spectra header row', { exact: true }).selectOption('yes')
   await page.locator('input[type=file][accept*="csv"]').last().setInputFiles(XTEST)
   const before = await capturePredictionPanel(page)
 
@@ -61,7 +62,10 @@ try {
   ])
   const n4aPath = join(tmpdir(), 'training-rows.n4a')
   await download.saveAs(n4aPath)
-  const bundle = JSON.parse(await readFile(n4aPath, 'utf8'))
+  const container = await readWebHostContainer(n4aPath)
+  const declaration = webHostDeclarationProblem(container)
+  if (declaration) fail(`the consented .n4a is not the declared Web host container: ${declaration}`)
+  const bundle = container.bundle
   if (bundle.containsTrainingRows !== true || bundle.model?.state?.model?.containsTrainingRows !== true) {
     fail('the consented .n4a does not record containsTrainingRows')
   } else {
@@ -78,6 +82,7 @@ try {
   await page.goto(APP_URL, { waitUntil: 'load', timeout: 30000 })
   await page.locator('input[type=file][accept*=".n4a"]').first().setInputFiles(n4aPath)
   await page.waitForSelector('text=/Predict on new spectra/', { timeout: 15000 })
+  await page.getByLabel('Spectra header row', { exact: true }).selectOption('yes')
   await page.locator('input[type=file][accept*="csv"]').last().setInputFiles(XTEST)
   const after = await capturePredictionPanel(page)
   const cmp = comparePredictionPanels(before, after, 0)

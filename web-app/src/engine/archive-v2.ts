@@ -7,7 +7,6 @@ import type { NativePredictorDescriptorV1 } from './nirs4all-core'
 import type { FittedPipeline, PredictResult } from './types'
 
 export const ARCHIVE_V2_MODEL_KIND = 'nirs4all-core/archive-v2-methods-model' as const
-export const MAX_ARCHIVE_V2_BYTES = 537_938_966
 
 interface ValidatedArchive {
   readonly archive_id: string
@@ -54,8 +53,8 @@ function archiveBytes(value: ArrayBuffer | ArrayBufferView): Uint8Array {
   const bytes = value instanceof ArrayBuffer
     ? new Uint8Array(value)
     : new Uint8Array(value.buffer, value.byteOffset, value.byteLength)
-  if (bytes.byteLength === 0 || bytes.byteLength > MAX_ARCHIVE_V2_BYTES) {
-    throw new RangeError('Archive V2 is empty or exceeds the canonical Core byte budget.')
+  if (bytes.byteLength === 0) {
+    throw new RangeError('The native package container is empty.')
   }
   return new Uint8Array(bytes)
 }
@@ -145,7 +144,11 @@ function nativePredictorDescriptor(value: unknown): NativePredictorDescriptorV1 
   const writer = descriptor.writer_abi
   const dimensions = descriptor.dimensions
   const formatVersion = descriptor.format_version
-  const expectedKeys = formatVersion === 2 ? [...DESCRIPTOR_KEYS, 'pipeline'] : DESCRIPTOR_KEYS
+  // Owner rule (DAG-ML NativePredictorDescriptorV1): format 2 always carries its pipeline, format 3
+  // carries it exactly when the pipeline capability is set, format 1 never does.
+  const expectedKeys = formatVersion === 2 || (formatVersion === 3 && 'pipeline' in descriptor)
+    ? [...DESCRIPTOR_KEYS, 'pipeline']
+    : DESCRIPTOR_KEYS
   if (!exactKeys(descriptor, expectedKeys)
     || !writer || typeof writer !== 'object' || Array.isArray(writer)
     || !exactKeys(writer as Record<string, unknown>, ['major', 'minor', 'patch'])
@@ -154,7 +157,7 @@ function nativePredictorDescriptor(value: unknown): NativePredictorDescriptorV1 
     || descriptor.descriptor_type !== 'dagml.native_predictor_descriptor.v1'
     || descriptor.schema_version !== 1
     || descriptor.format !== 'N4MM'
-    || (formatVersion !== 1 && formatVersion !== 2)
+    || (formatVersion !== 1 && formatVersion !== 2 && formatVersion !== 3)
     || !['controller:methods.pls', 'controller:methods.ridge'].includes(String(descriptor.owner_controller))
     || !Number.isSafeInteger(descriptor.storage_algorithm)
     || !nonNegativeInteger(descriptor.capabilities) || descriptor.capabilities > 15
@@ -170,15 +173,18 @@ function nativePredictorDescriptor(value: unknown): NativePredictorDescriptorV1 
     || !nonNegativeInteger((dimensions as Record<string, unknown>).n_components)) {
     throw new TypeError('Core returned an invalid native predictor descriptor contract.')
   }
-  if (formatVersion === 2) {
+  if (formatVersion === 2 || formatVersion === 3) {
+    // Format 3 needs an attested Methods writer ABI of at least 2.20; format 2 at least 2.5.
+    const hasPipeline = 'pipeline' in descriptor
     if (descriptor.owner_controller !== 'controller:methods.pls'
       || descriptor.storage_algorithm !== 0
-      || Number(descriptor.capabilities) < 8
-      || (Number(descriptor.capabilities) & 8) !== 8
-      || Number((writer as Record<string, unknown>).minor) < 5) {
+      || ((Number(descriptor.capabilities) & 8) === 8) !== hasPipeline
+      || Number((writer as Record<string, unknown>).minor) < (formatVersion === 3 ? 20 : 5)) {
       throw new TypeError('Core returned an unsupported native pipeline predictor contract.')
     }
-    nativePipeline(descriptor.pipeline, Number((dimensions as Record<string, unknown>).n_features))
+    if (hasPipeline) {
+      nativePipeline(descriptor.pipeline, Number((dimensions as Record<string, unknown>).n_features))
+    }
   }
   return value as NativePredictorDescriptorV1
 }

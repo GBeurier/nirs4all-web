@@ -1,7 +1,7 @@
 import type { FittedPipeline, PipelineDSL, RunResult } from '@/engine/types'
-import { buildN4aBundle, serializeTyped } from './n4a'
+import { exportN4aContainer } from './n4a'
 
-function save(filename: string, content: string, mime: string): void {
+function save(filename: string, content: BlobPart, mime: string): void {
   const blob = new Blob([content], { type: mime })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
@@ -41,10 +41,11 @@ export function downloadRunJson(run: RunResult): void {
   downloadJson(`${slug(run.pipelineName)}.results.json`, { ...rest, modelSummary: { engine: model.dsl ? run.engine : run.engine, nFeatures: model.nFeatures } })
 }
 
-/** Export a re-importable .n4a model bundle (pipeline + fitted model + metadata)
- *  carrying `model`, the shareable copy `Engine.exportModel` made of the run's model. */
-export function downloadN4a(run: RunResult, model: FittedPipeline): void {
-  save(`${slug(run.pipelineName)}.n4a`, serializeTyped(buildN4aBundle({ ...run, model })), 'application/json')
+/** Export a re-importable Core V1 `.n4a` container carrying the Web host bundle
+ *  (pipeline + fitted model + metadata) of `model`, the shareable copy
+ *  `Engine.exportModel` made of the run's model. */
+export async function downloadN4a(run: RunResult, model: FittedPipeline): Promise<void> {
+  save(`${slug(run.pipelineName)}.n4a`, (await exportN4aContainer(run, model)) as BlobPart, 'application/octet-stream')
 }
 
 function slug(s: string): string {

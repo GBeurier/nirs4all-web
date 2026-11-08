@@ -1,0 +1,121 @@
+{
+  "schema_version": "nirs4all.vendored-npm/v1",
+  "package": {
+    "name": "nirs4all-ui",
+    "version": "0.2.2-local.20261107.1"
+  },
+  "source": {
+    "kind": "local-clean-export",
+    "base_commit_sha": "8bfc5f51600b59fc5cc899cd93f58da98fb2f851",
+    "base_tree_sha": "661969ee14dd00330aa50e58bab254fe68a048a3",
+    "overlay_manifest_sha256": "d290a6e1d984a6abd227dcfef58896c45dd50fb05144ac248e31437ccd5e2cc8",
+    "overlay_files": [
+      {
+        "path": "LICENSES/THIRD-PARTY/README.md",
+        "sha256": "0962af54004e2fa30c25cac39f8eddb51e0fa1cd4cbde3030ee3560f555551ef"
+      },
+      {
+        "path": "LICENSES/THIRD-PARTY/react-dom.LICENSE.txt",
+        "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+      },
+      {
+        "path": "LICENSES/THIRD-PARTY/react.LICENSE.txt",
+        "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+      },
+      {
+        "path": "LICENSES/THIRD-PARTY/scheduler.LICENSE.txt",
+        "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+      },
+      {
+        "path": "README.md",
+        "sha256": "b0cb98d6713219165c4ead347ff2199d70262117f460c3548b691479d9549d82"
+      },
+      {
+        "path": "THIRD_PARTY_NOTICES.md",
+        "sha256": "e1ad28ce44cd64979b14e0d33e1317d9ab58271335cfe9f1bfd9ec5c475d68f5"
+      },
+      {
+        "path": "package.json",
+        "sha256": "91afaced003d547dcd9d8416e3b30ea5d328043f14ac901625d45318bf9daabb"
+      },
+      {
+        "path": "src/browser/browser.css",
+        "sha256": "90f63395861ce8fba5c815e3a07f4466faa9ad2142a99515c8036b078434e832"
+      },
+      {
+        "path": "src/browser/index.tsx",
+        "sha256": "f710ef8efbe871ec709bd5b49089e22c39de74b9372ae35a2ef9cc7566e0fdaf"
+      },
+      {
+        "path": "src/datasetBuilder/OwnerProposalList.tsx",
+        "sha256": "50fe3050e3f9c33927f9fcbcb45527f35bc1547633520d255a42cb5f11a37dbf"
+      },
+      {
+        "path": "src/datasetBuilder/index.ts",
+        "sha256": "79cb56ea7e360d5e38c45ab2301754d627e8020f9355174282c5bcb66cc16125"
+      },
+      {
+        "path": "src/inspector/Inspector.tsx",
+        "sha256": "d6af1182b1c3e7a06a80fc420565ad9913ffd59fa5d86269122812622e47eca4"
+      },
+      {
+        "path": "src/inspector/locale.ts",
+        "sha256": "0143a9476f2d4b142a12fb07be4792fa3a30b72247c0775f763160a1b6c3c040"
+      },
+      {
+        "path": "src/inspector/rankingViews.tsx",
+        "sha256": "97930578dec5d6dd694b6bdaa5a207523a6ec0440e7689458467cd2b65fb3eaa"
+      },
+      {
+        "path": "src/inspector/views.tsx",
+        "sha256": "c72907d9b889bec1467a31ab7c543cfad6b6e899a1453333ad51e056d7b295b2"
+      },
+      {
+        "path": "src/playground/Playground.tsx",
+        "sha256": "2b30843471f193ec991a9a02e50cd6ebce3dd0577115216ab60cc5c3f0737021"
+      },
+      {
+        "path": "src/playground/locale.ts",
+        "sha256": "ab895f964022e84ffd6aa026ae049edb531e3f31fa1d37ecd7d29ace2e14e90d"
+      },
+      {
+        "path": "src/playground/model.ts",
+        "sha256": "09a59e70b176b771c28fa160b69b64881822cabded21b9af32c9fec28f4e72ce"
+      },
+      {
+        "path": "src/playground/views.tsx",
+        "sha256": "67600f67a03dc8a5c598c9257094e38e42e3d9817f0e2976cee09d78ec91ffae"
+      },
+      {
+        "path": "src/qualification/SpectraExplorer.tsx",
+        "sha256": "0b14c38b0ce10deef2198cbee6fb4285b1d2b44c335011c4dae32630bbde008b"
+      },
+      {
+        "path": "src/workbench/SpectraView.tsx",
+        "sha256": "43f529dc79c63f2b6cd168311b24cc3d3a65f9cc4b836c59ef8a07ce6f367e0e"
+      },
+      {
+        "path": "vite.browser.config.ts",
+        "sha256": "8f3c4114f89b3ab4cf5ee9c29427d51e84e0677b85dcd4b86e7e08c1b7025e46"
+      }
+    ],
+    "note": "Clean HEAD plus explicit capsule, axis-label, browser-entry and finite-marker handoffs. Independent dirty qualification table changes excluded. Local version override only in build export. Tests excluded from production compiler inputs."
+  },
+  "artifact": {
+    "filename": "nirs4all-ui-0.2.2-local.20261107.1.tgz",
+    "size": 3728377,
+    "sha256": "2f9c7847886beefde05a661481b784b544dd36d1c003cea896c1a76659501b70",
+    "npm_integrity": "sha512-GqN2PBeZ3shnsv0+Lo1qUg51SRRmMsVOW7GztW3P3T4/tPsoR7aUVDy6LWAmNqiDCtIgTM+tViXNhXkp8O1LCA=="
+  },
+  "license_files": [
+    "LICENSE",
+    "LICENSING.md",
+    "THIRD_PARTY_NOTICES.md",
+    "LICENSES/THIRD-PARTY/react.LICENSE.txt",
+    "LICENSES/THIRD-PARTY/react-dom.LICENSE.txt",
+    "LICENSES/THIRD-PARTY/scheduler.LICENSE.txt"
+  ],
+  "publication": {
+    "status": "unpublished-local-development"
+  }
+}

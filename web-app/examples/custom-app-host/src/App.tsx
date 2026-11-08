@@ -27,12 +27,10 @@ import {
   parseTuningSummaryArtifact,
 } from 'nirs4all-ui/tuning'
 import {
-  artifactContracts,
   capabilityManifest,
   predictPortablePipeline,
-  requiredKeywordRegistryEntries,
   runPortablePipeline,
-  runtimeContracts,
+  type CapabilityManifest,
   type PortableExecutionResult,
   type PortableMatrixDataset,
   type PortablePredictionResult,
@@ -40,20 +38,19 @@ import {
 } from 'nirs4all'
 
 export interface CustomHostState {
-  artifactContractCount: number
-  artifactContractIds: string
   conformalCoverageLabel: string
   conformalIntervalCount: number
   conformalStatus: string
   conformalTuningCalibrationLabel: string
-  controllerCount: number
   datasetTitle: string
   engineLabel: string
+  executionProfileCount: number
+  executionProfileIds: string
+  javascriptWasmPredict: string
   keywordEngineOptions: string
-  keywordRequiredRegistryEntryCount: number
-  keywordRequiredRegistryEntries: string
   keywordRegistrySectionCount: number
-  predictSurface: string
+  profileContentTypeCount: number
+  profileContentTypeSchemas: string
   robustnessGuaranteeCoverageLabel: string
   robustnessGuaranteeStatus: string
   robustnessReplaySource: string
@@ -303,9 +300,26 @@ export async function runDemoPipeline(): Promise<{
   return { predictions, result }
 }
 
+// Describes, per execution profile, whether Core declares a JavaScript/WASM predict entrypoint.
+// This reports declared availability and explicit refusals only; it does not claim that a model
+// fitted in one profile or runtime surface can be predicted in another.
+function describeJavascriptWasmPredict(manifest: CapabilityManifest): string {
+  return manifest.executionProfiles.profiles
+    .map((profile) => {
+      const entry = profile.operations.predict.javascript_wasm
+      return entry.status === 'supported'
+        ? `${profile.id}: ${entry.entrypoints.map((entrypoint) => entrypoint.symbol).join(', ')}`
+        : `${profile.id}: unsupported (${entry.reason})`
+    })
+    .join('; ')
+}
+
 export function buildCustomHostState(): CustomHostState {
   const manifest = capabilityManifest()
-  const predictSurface = runtimeContracts.find((item) => item.serializedModelPredict)?.surface ?? 'none'
+  const profiles = manifest.executionProfiles.profiles
+  const contentTypeSchemas = [
+    ...new Set(profiles.flatMap((profile) => profile.content_types.map((contentType) => contentType.schema))),
+  ]
   const datasetPreview = buildDatasetPreview({
     id: 'custom-host-demo',
     name: 'Custom host demo dataset',
@@ -395,22 +409,21 @@ export function buildCustomHostState(): CustomHostState {
   const tuningRows = createTuningSummaryTrialRows(tuningArtifact)
   const tuningSpacePreview = createTuningSearchSpacePreview(createDemoTuningSearchSpaceArtifact())
   return {
-    artifactContractCount: artifactContracts.length,
-    artifactContractIds: artifactContracts.map((item) => item.id).join(', '),
     conformalCoverageLabel: conformalGuarantee?.coverageLabel ?? 'unavailable',
     conformalIntervalCount: conformalRows.length,
     conformalStatus: conformalGuarantee?.status ?? 'unknown',
     conformalTuningCalibrationLabel: conformalGuarantee?.tuningCalibrationLabel ?? 'unknown tuning calibration source',
-    controllerCount: manifest.controllers.length,
     datasetTitle: datasetPreview?.title ?? 'Dataset',
     engineLabel: engineStatus?.badgeLabel ?? 'nirs4all-core-wasm',
+    executionProfileCount: profiles.length,
+    executionProfileIds: profiles.map((profile) => profile.id).join(', '),
+    javascriptWasmPredict: describeJavascriptWasmPredict(manifest),
     keywordEngineOptions: engineKeyword === undefined
       ? 'unavailable'
       : getKeywordRegistryValueOptions(engineKeyword).map((option) => String(option.value)).join(', '),
-    keywordRequiredRegistryEntryCount: requiredKeywordRegistryEntries.length,
-    keywordRequiredRegistryEntries: requiredKeywordRegistryEntries.join(', '),
     keywordRegistrySectionCount: createKeywordRegistryFormSections(keywordRegistry).length,
-    predictSurface,
+    profileContentTypeCount: contentTypeSchemas.length,
+    profileContentTypeSchemas: contentTypeSchemas.join(', '),
     robustnessGuaranteeCoverageLabel: robustnessGuarantee.coverageLabel,
     robustnessGuaranteeStatus: robustnessGuarantee.status,
     robustnessReplaySource: robustnessSpectralReplay === null
@@ -461,8 +474,8 @@ export function CustomAppHostDemo({ state = buildCustomHostState() }: { state?: 
         <MetricValueBadge metric="rmse" value={0.03125} className="custom-host-score" />
       </section>
       <dl>
-        <dt>Runtime predict surface</dt>
-        <dd>{state.predictSurface}</dd>
+        <dt>JavaScript/WASM predict entrypoints by execution profile</dt>
+        <dd>{state.javascriptWasmPredict}</dd>
         <dt>Robustness summary status</dt>
         <dd>{state.robustnessStatus}</dd>
         <dt>Robustness guarantee status</dt>
@@ -479,19 +492,17 @@ export function CustomAppHostDemo({ state = buildCustomHostState() }: { state?: 
         <dd>{state.conformalCoverageLabel}</dd>
         <dt>Conformal interval rows</dt>
         <dd>{state.conformalIntervalCount}</dd>
-        <dt>Controller contracts</dt>
-        <dd>{state.controllerCount}</dd>
-        <dt>Native artifact contracts</dt>
-        <dd>{state.artifactContractCount}</dd>
-        <dt>Native artifact contract ids</dt>
-        <dd>{state.artifactContractIds}</dd>
-        <dt>Keyword registry sections</dt>
+        <dt>Core execution profiles</dt>
+        <dd>{state.executionProfileCount}</dd>
+        <dt>Core execution profile ids</dt>
+        <dd>{state.executionProfileIds}</dd>
+        <dt>Profile content types</dt>
+        <dd>{state.profileContentTypeCount}</dd>
+        <dt>Profile content type schemas</dt>
+        <dd>{state.profileContentTypeSchemas}</dd>
+        <dt>Sample keyword registry sections</dt>
         <dd>{state.keywordRegistrySectionCount}</dd>
-        <dt>Required registry entries</dt>
-        <dd>{state.keywordRequiredRegistryEntryCount}</dd>
-        <dt>Required registry entry ids</dt>
-        <dd>{state.keywordRequiredRegistryEntries}</dd>
-        <dt>Execution backend options</dt>
+        <dt>Sample execution backend options</dt>
         <dd>{state.keywordEngineOptions}</dd>
         <dt>Tuning best value</dt>
         <dd>{state.tuningBestValue}</dd>

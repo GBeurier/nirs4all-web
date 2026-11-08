@@ -20,7 +20,7 @@ export async function robustness(model, value, truth, options = {}) {
   const matrix = { data: Float64Array.from(X.flat()), rows: X.length, cols: X[0].length };
   const archive = await readPortableArchiveV2(bytes);
   const decoder = new TextDecoder('utf-8', { fatal: true });
-  const packageJsonStored = decoder.decode(archive.members[archive.manifest.replay.portable_predictor_package.member_path]);
+  const packageJsonStored = decoder.decode(archive.package);
   const pkg = JSON.parse(packageJsonStored);
   const cProfile = Object.values(pkg.effective_plan.node_plans)
     .some(node => node.controller_id === 'controller:methods.pls');
@@ -30,8 +30,6 @@ export async function robustness(model, value, truth, options = {}) {
     const sourceId = Object.values(pkg.template.campaign.data_bindings).flat()[0].source_ids[0];
     const expected = pkg.template.campaign.metadata.raw_source_schema;
     if (!expected || JSON.stringify(ordered(deps.io.publicSourceSchema(record, sourceId))) !== JSON.stringify(ordered(expected))) throw new TypeError('Prediction source schema differs from frozen predictor');
-    deps.dag.validate_archive_v2_portable_payloads_json(JSON.stringify(archive.manifest), packageJsonStored,
-      JSON.stringify(Object.fromEntries(Object.entries(archive.members).map(([name, bytes]) => [name, [...bytes]]))));
   }
   const replays = [];
   let packageJson;

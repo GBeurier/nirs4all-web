@@ -407,7 +407,9 @@ X = raw_x[1:].astype(np.float64)
 y = np.loadtxt(fixture_dir / "repository_y_train.csv", delimiter=",", skiprows=1, dtype=np.float64)
 with (fixture_dir / "repository_metadata.csv").open(newline="", encoding="utf-8") as handle:
     metadata_sample_ids = [row["sample_id"] for row in csv.DictReader(handle)]
-synthetic_sample_ids = [f"train-{index}" for index in range(X.shape[0])]
+# wasm-io.ts mapAssembledToMaterialized: an undeclared key is partition#row,
+# in the owner's partition-local matrix order. These fixtures contain one train block.
+positional_sample_ids = [f"train#{index}" for index in range(X.shape[0])]
 
 if X.shape[0] != y.shape[0] or len(metadata_sample_ids) != y.shape[0]:
     raise AssertionError(f"fixture row mismatch: X={X.shape[0]} y={y.shape[0]} metadata_ids={len(metadata_sample_ids)}")
@@ -424,12 +426,12 @@ fold_sample_ids = {sample_id for fold in folds for sample_id in fold["sample_ids
 if fold_sample_ids <= set(metadata_sample_ids):
     sample_ids = metadata_sample_ids
     sample_id_source = "metadata.sample_id"
-elif fold_sample_ids <= set(synthetic_sample_ids):
-    sample_ids = synthetic_sample_ids
-    sample_id_source = "web-app-csv-builder-synthetic-train-index"
+elif fold_sample_ids <= set(positional_sample_ids):
+    sample_ids = positional_sample_ids
+    sample_id_source = "web-io-projection-positional-train-row"
 else:
-    missing = sorted(fold_sample_ids - set(metadata_sample_ids) - set(synthetic_sample_ids))
-    raise AssertionError(f"fold sample ids do not match metadata or synthetic ids: {missing[:10]}")
+    missing = sorted(fold_sample_ids - set(metadata_sample_ids) - set(positional_sample_ids))
+    raise AssertionError(f"fold sample ids do not match metadata or owner positional ids: {missing[:10]}")
 index_by_sample_id = {sample_id: index for index, sample_id in enumerate(sample_ids)}
 fold_indices = []
 seen_validation = set()

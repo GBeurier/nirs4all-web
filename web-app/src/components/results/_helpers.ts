@@ -150,20 +150,20 @@ export function variantChains(
   const chains = new Map<string, InspectorChain>()
   const labelsBySlot = new Map<string, Set<string>>()
   for (const v of variants) {
-    if (!v.pipeline) continue
-    const steps = variantSteps(v.pipeline)
+    const steps = v.pipeline ? variantSteps(v.pipeline) : []
     for (const s of steps) labelsBySlot.set(s.token, (labelsBySlot.get(s.token) ?? new Set()).add(s.label))
     chains.set(v.variantId, {
       id: v.variantId,
+      label: v.label,
       task: task === 'regression' ? 'regression' : 'classification',
-      model: v.pipeline.model ? (nodeByType(v.pipeline.model.type)?.name ?? v.pipeline.model.type) : '',
+      model: v.pipeline?.model ? (nodeByType(v.pipeline.model.type)?.name ?? v.pipeline.model.type) : '',
       steps,
       scores: {},
     })
   }
   const differing = new Set<string>()
   for (const [slot, labels] of labelsBySlot) {
-    if (labels.size > 1 || [...chains.values()].some((c) => !c.steps.some((s) => s.token === slot))) differing.add(slot)
+    if (labels.size > 1 || [...chains.values()].some((c) => c.steps.length > 0 && !c.steps.some((s) => s.token === slot))) differing.add(slot)
   }
   return { chains, differing }
 }

@@ -56,7 +56,6 @@ import {
 } from 'nirs4all-ui/robustness'
 import { getNirs4allBrandDefinition } from 'nirs4all-ui/brand'
 import { getNirs4allStyleAsset } from 'nirs4all-ui/styles'
-import { artifactContracts } from 'nirs4all'
 import { metricChips, primaryMetric } from '@/lib/format'
 
 describe('shared nirs4all-ui contract', () => {
@@ -207,8 +206,6 @@ describe('shared nirs4all-ui contract', () => {
       score_data_used: false,
       source: 'tuning.winner',
     })
-    expect(artifactContracts.find((item) => item.id === 'conformal.calibrated_result')?.optionalPayloadFields)
-      .toEqual(['conformal_guarantee_status', 'calibration_replay_source', 'tuning_calibration_source'])
     expect(createConformalIntervalSummaryRows(artifact)).toEqual([
       expect.objectContaining({ coverage: 0.8, coverageLabel: '80%', meanWidth: 1, nSamples: 2, qhat: 0.5 }),
     ])

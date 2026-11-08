@@ -33,52 +33,85 @@ export interface PipelineDefinition {
 }
 
 export type RuntimeSurface = 'python' | 'javascript_wasm' | 'rust' | 'matlab_octave';
-export type CapabilityLevel = 'metadata' | 'plan' | 'execute-local' | 'execute-remote' | 'parity-validated';
 
-export interface RuntimeContract {
-  surface: RuntimeSurface;
-  pipelineExecution: CapabilityLevel;
-  pipelineEntrypoint: string;
-  serializedModelPredict: boolean;
-  predictEntrypoint: string | null;
+export type ProfileOperation =
+  | 'compile' | 'fit' | 'predict' | 'import' | 'export'
+  | 'produce' | 'inspect' | 'calibrate' | 'retrain'
+  | 'read' | 'write' | 'update';
+
+export interface ProfileEntrypoint {
+  symbol: string;
+  source: string;
 }
 
-export interface ArtifactContract {
-  id: 'conformal.calibrated_result' | 'robustness.summary' | 'tuning.summary' | 'tuning.ordered_search_space' | 'keyword.registry';
+export type ProfileOperationEntry =
+  | { status: 'supported'; entrypoints: readonly ProfileEntrypoint[] }
+  | { status: 'unsupported'; reason: string };
+
+export interface ProfileContentType {
   schema: string;
-  producer: 'full-python-nirs4all';
-  consumerLevel: Readonly<Record<RuntimeSurface, 'metadata'>>;
-  pythonSurface: string;
-  portableClaim: 'not-exposed-in-nirs4all-core' | 'summary-json-contract-only' | 'search-space-json-contract-only' | 'registry-json-contract-only';
-  optionalPayloadFields: readonly string[];
-  publishedConstants?: Readonly<Record<string, readonly string[]>>;
-  requiredRegistryEntries: readonly string[];
+  owner: string;
+  carried_in: string;
 }
 
-export interface ControllerCapability {
-  id: string;
-  kind: 'splitter' | 'transform' | 'model' | 'pipeline';
-  domain: Upstream['key'];
-  label: string;
-  operatorClasses: readonly string[];
-  ports: {
-    inputs: readonly string[];
-    outputs: readonly string[];
-  };
-  parameters: readonly string[];
-  runtime: Readonly<Record<RuntimeSurface, CapabilityLevel>>;
-  executionPath: 'portable_pipeline' | 'run_portable_pipeline';
-  composes?: readonly string[];
+export interface ProfileContentRoute {
+  operation: ProfileOperation;
+  surface: RuntimeSurface;
+  route: 'public_return' | 'cli_response' | 'archive_transfer';
+  entrypoint: string;
+  carries: 'host_object' | 'wrapper_json' | 'native_archive_v2';
+  /** Present only when the route really emits this schema id. */
+  schema?: string;
+  fields?: readonly string[];
+  cli_command?: string;
+  mechanism?: string;
+  archive_schema_version?: 2;
+  calibration_in_archive?: string;
+}
+
+export interface ExecutionProfile {
+  id: 'native-workflow' | 'native-conformal' | 'native-n4a-canonical' | 'n4a-container';
+  version: 1;
+  title: string;
+  surfaces: readonly RuntimeSurface[];
+  dependencies: readonly string[];
+  runtime_requirements: Readonly<Record<RuntimeSurface, readonly string[]>>;
+  content_types: readonly ProfileContentType[];
+  content_routes: readonly ProfileContentRoute[];
+  operations: Readonly<Record<ProfileOperation, Readonly<Record<RuntimeSurface, ProfileOperationEntry>>>>;
+  limits: readonly string[];
+}
+
+export interface ExternalFederation {
+  surface: string;
+  repository: string;
+  package: string;
+  core_runtime_surface: false;
+  status: 'externally-federated';
+  profiles: readonly string[];
+  contracts: readonly string[];
+  evidence: readonly string[];
+  entrypoints: readonly { profile: string; operation: ProfileOperation; symbol: string }[];
+  note: string;
+}
+
+export interface ExecutionProfiles {
+  schema: 'nirs4all-core.execution-profiles.v1';
+  version: number;
+  generated_from: string;
+  runtime_surfaces: readonly RuntimeSurface[];
+  operations: readonly ProfileOperation[];
+  statuses: readonly ('supported' | 'unsupported')[];
+  limits: readonly string[];
+  profiles: readonly ExecutionProfile[];
+  external_federation: readonly ExternalFederation[];
 }
 
 export interface CapabilityManifest {
   schema: 'nirs4all-core.capabilities.v1';
   aggregate: 'nirs4all-core';
   runtimeSurfaces: readonly RuntimeSurface[];
-  runtimeContracts: readonly RuntimeContract[];
-  artifactContracts: readonly ArtifactContract[];
-  portableOperatorClasses: readonly string[];
-  controllers: readonly ControllerCapability[];
+  executionProfiles: ExecutionProfiles;
 }
 
 export interface PortableMatrixDataset {
@@ -321,13 +354,9 @@ export interface ArchiveV2ReplayResult {
 }
 
 export const upstreams: readonly Upstream[];
-export const portableOperatorClasses: readonly string[];
 export const runtimeSurfaces: readonly RuntimeSurface[];
-export const runtimeContracts: readonly RuntimeContract[];
-export const requiredKeywordRegistryEntries: readonly string[];
-export const artifactContracts: readonly ArtifactContract[];
-export const controllerCapabilities: readonly ControllerCapability[];
 export function capabilityManifest(): CapabilityManifest;
+export function executionProfiles(): ExecutionProfiles;
 
 export function upstream(name: string): Upstream | null;
 export function importUpstream(name: string): Promise<unknown>;
@@ -384,27 +413,73 @@ export function predictPortablePipeline(
   options?: { methods?: unknown },
 ): Promise<PortablePredictionResult>;
 export function loadArchiveV2Native(): Promise<unknown>;
-/** Native-validated storage only; DAG-ML owns package semantics and trust. */
+/** Host-authorized call options; the optional memory budget is the only bound on a call. */
+export interface NativePackageReadOptions {
+  entrypoint?: string;
+  memoryBudgetBytes?: number | bigint;
+}
+/** Core's native view of the selected Package V2/V3 closure. */
+export interface NativePackageView {
+  archive_id: string;
+  archive_sha256: string;
+  schema_version: 1;
+  profile: 'native-methods-package';
+  package_schema_version: 2 | 3;
+  entrypoint: string;
+  operation: string;
+  root_artifact: string;
+  package_member: string;
+  receipt: Record<string, unknown>;
+  manifest: Record<string, unknown>;
+}
+/**
+ * A native Package V2/V3 container validated by Core. `package` is the exact root
+ * package bytes and `members` only the selected verified physical closure;
+ * `manifest` is the neutral Core V1 manifest (no physical replay map).
+ * `trainingOutcome` is null for a standalone Package V3.
+ */
 export interface PortableArchiveV2Payloads {
   archiveId: string;
   archiveSha256: string;
   manifest: Record<string, unknown>;
   members: Readonly<Record<string, Uint8Array>>;
+  package: Uint8Array;
+  trainingOutcome: Uint8Array | null;
+  view: Readonly<NativePackageView>;
 }
 export function readPortableArchiveV2(
   archiveBytes: ArrayBuffer | ArrayBufferView,
+  options?: NativePackageReadOptions,
 ): Promise<PortableArchiveV2Payloads>;
-export function writePortableArchiveV2(
-  manifest: Record<string, unknown>,
-  members: Readonly<Record<string, ArrayBuffer | ArrayBufferView>>,
+/** Calibration by immutable-base carry through Core (`calibrate-external`); never a fresh writer. */
+export function calibrateNativePackage(
+  baseBytes: ArrayBuffer | ArrayBufferView,
+  outcomeBytes: ArrayBuffer | ArrayBufferView,
+  packageBytes: ArrayBuffer | ArrayBufferView,
+  containerId: string,
+  options?: { entrypoint?: string; memoryBudgetBytes?: number | bigint },
+): Promise<Uint8Array>;
+/** New native Package V2 container bytes from exact TrainingOutcome and Package V2 JSON bytes. */
+export function writeNativePredictorPackage(
+  containerId: string,
+  outcomeBytes: ArrayBuffer | ArrayBufferView,
+  packageBytes: ArrayBuffer | ArrayBufferView,
+  options?: { memoryBudgetBytes?: number | bigint },
+): Promise<Uint8Array>;
+/** New native Package V3 container bytes (storage and inspection only in WASM). */
+export function writeNativeRefitPackage(
+  containerId: string,
+  packageBytes: ArrayBuffer | ArrayBufferView,
+  options?: { memoryBudgetBytes?: number | bigint },
 ): Promise<Uint8Array>;
 export function inspectMethodsArchiveV2Predictors(
   archiveBytes: ArrayBuffer | ArrayBufferView,
+  options?: NativePackageReadOptions,
 ): Promise<readonly NativePredictorDescriptorV1[]>;
 export function replayMethodsArchiveV2(
   archiveBytes: ArrayBuffer | ArrayBufferView,
   dataset: ArchiveV2ReplayDataset,
-  options?: { methods?: unknown },
+  options?: { methods?: unknown } & NativePackageReadOptions,
 ): Promise<ArchiveV2ReplayResult>;
 
 /** Prefix of the language-neutral n4m role step token `n4m:<catalog method id>`. */
@@ -496,6 +571,9 @@ export { CalibratedWorkflow, calibrate, predictCalibrated, conformalMetrics, exp
 export type { PublicDatasetRecord, PublicDataset, MultimodalOptions, MultimodalPrediction } from './multimodal.js';
 
 export { robustness } from './robustness.js';
+
+export { N4aContainer, inspectN4aBytes, openN4aContainer, predictN4aNative, produceN4aNative, retrainN4aNative, writeN4aContainer, writeN4aStream } from './n4a.js';
+export type { N4aBytes, N4aChunkStream, N4aContainerView, N4aMemberBytes, N4aMemoryOptions, N4aOpenOptions, N4aPrediction, N4aProduction, N4aRuntimeOptions, N4aRandomAccessSource, N4aSink, N4aSource, N4aTrainOptions, N4aView, N4aWriteOptions, N4aWriteReceipt, N4aWriteResult, PredictN4aOptions, ProduceN4aOptions } from './n4a.js';
 
 export { predictMultimodalArchive } from './multimodal-archive.js';
 

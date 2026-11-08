@@ -1,7 +1,5 @@
-// Runtime smoke for the upgraded Explore step: preprocessing preview (raw →
-// processed → both → difference) + the client-side PCA scatter, asserting the
-// charts render and no console errors are thrown. Pure client-side (no model
-// run), so it works on the served build and the file:// single-file build.
+// Existing UI Playground adoption: Methods worker preprocessing/PCA, keyboard
+// operator selection and a visible sample table. No browser-local PCA fallback.
 import { chromium } from 'playwright-core'
 
 const APP_URL = process.env.SMOKE_URL || 'http://localhost:4317/'
@@ -29,39 +27,30 @@ try {
   await page.waitForSelector('text=/samples ×/', { timeout: 20000 })
   console.log('✓ sample loaded + Explore rendered')
 
-  // Spectra tab is default — apply a preprocessing preview and step view modes
-  await page.locator('select[aria-label="Preprocessing preview"]').selectOption('snv')
-  await page.waitForTimeout(250)
-  for (const mode of ['Both', 'Difference', 'Processed']) {
-    await page.getByRole('button', { name: mode, exact: true }).click()
-    await page.waitForTimeout(150)
-  }
-  const spectraSvg = await page.locator('svg.recharts-surface').count()
-  if (spectraSvg < 1) fail('expected a spectra chart after preprocessing preview')
-  else console.log(`✓ preprocessing preview rendered (${spectraSvg} chart) across view modes`)
+  const playground = page.locator('[data-owner-playground]')
+  await playground.getByText('PCA computed by Methods', { exact: false }).waitFor({ timeout: 30000 })
+  await playground.getByRole('button', { name: 'Add step', exact: true }).first().click()
+  const search = page.getByRole('dialog', { name: 'Add step' }).getByRole('textbox', { name: /Search operators/ })
+  await search.fill('n4m:preprocessing.scatter.snv')
+  await search.press('Enter')
+  await page.getByRole('dialog', { name: 'Add step' }).waitFor({ state: 'hidden' })
+  await playground.locator('.n4pg-card-meta .n4wb-mono').first().waitFor({ timeout: 30000 })
+  await playground.getByText('PCA computed by Methods', { exact: false }).waitFor({ timeout: 30000 })
+  if (await playground.locator('canvas').count() < 1) fail('expected owner-backed spectra/PCA canvas')
+  const samples = playground.locator('section[aria-label="Samples"]')
+  await samples.getByRole('grid').waitFor()
+  if (await samples.getByRole('row').count() < 2) fail('expected the on-page sample data alternative')
+  console.log('✓ Methods preprocessing/PCA and sample table rendered')
 
-  // PCA tab — client PCA scatter + explained-variance caption
-  await page.getByRole('tab', { name: /PCA/ }).click()
-  await page.waitForSelector('text=/of variance/', { timeout: 15000 })
-  const dots = await page.locator('.recharts-scatter-symbol, .recharts-symbols').count()
-  if (dots < 1) fail('expected PCA scatter points')
-  else console.log(`✓ PCA scatter rendered (${dots} points)`)
-
-  // toggle colour mode (Partition) and an axis component, no errors expected
-  await page.getByRole('button', { name: 'Partition', exact: true }).click()
-  await page.waitForTimeout(150)
-
-  // switch to the 3D WebGL view — a <canvas> should mount (gated on >=3 PCs)
-  const toggle3d = page.getByRole('button', { name: '3D', exact: true })
-  if (await toggle3d.count()) {
-    await toggle3d.first().click()
-    await page.waitForTimeout(600)
-    const canvases = await page.locator('canvas').count()
-    if (canvases >= 1) console.log(`✓ 3D WebGL view mounted a canvas (${canvases})`)
-    else fail('expected a <canvas> after switching to the 3D view')
-  } else {
-    console.log('• 3D toggle not offered (fewer than 3 PCs) — skipping 3D check')
-  }
+  // The views picker is keyboard reachable, and local-statistic views stay out.
+  const views = playground.getByRole('button', { name: /^Views/ })
+  await views.focus()
+  await page.keyboard.press('Enter')
+  const menu = page.getByRole('dialog', { name: 'Views', exact: true })
+  await menu.waitFor()
+  if (await menu.getByText('Correlation', { exact: true }).count()) fail('local correlation must not be offered')
+  await page.keyboard.press('Escape')
+  console.log('✓ keyboard views control opened and closed')
 
   await page.screenshot({ path: '/tmp/n4a_explore_smoke.png', fullPage: true })
 

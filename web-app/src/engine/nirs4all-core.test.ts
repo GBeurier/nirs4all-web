@@ -2,45 +2,30 @@ import { describe, expect, it } from 'vitest'
 import { spawnSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { readPortableArchiveV2 } from 'nirs4all'
 import {
-  artifactContracts,
-  capabilityManifest,
-  controllerCapabilities,
   inspectMethodsArchiveV2Predictors,
   loadArchiveV2Native,
   loadDatasetsWasm,
   loadMethodsWasm,
+  openN4aContainer,
   parseExecutionPlan,
   predictPortablePipeline,
   replayMethodsArchiveV2,
-  requiredKeywordRegistryEntries,
   runPortablePipeline,
-  runtimeContracts,
-  runtimeSurfaces,
   upstreams,
+  writeN4aContainer,
+  coreExecutionProfileDefinitions,
+  coreExecutionProfileDefinitionsSha256,
 } from './nirs4all-core'
+import * as nirs4allCore from './nirs4all-core'
+import { CORE_EXECUTION_PROFILES_JSON } from './core-execution-profiles.generated'
+import { createHash } from 'node:crypto'
 import { isPortableCoreModel, predictPortableCore, tryRunPortableCore } from './portable-core'
 import type { FittedPipeline, MaterializedDataset, PipelineDSL } from './types'
 
 const oracleUrl = new URL('./fixtures/core-parity/portable_python_oracle.json', import.meta.url)
 const fixtureDir = new URL('./fixtures/core-parity/', import.meta.url)
-
-const EXPECTED_REQUIRED_KEYWORD_REGISTRY_ENTRIES = [
-  'run.tuning',
-  'run.tuning.engine',
-  'run.tuning.space',
-  'run.tuning.force_params',
-  'run.tuning.score_data',
-  'run.tuning.score_data.conformal_calibration',
-  'predict.coverage',
-  'predict.all_predictions',
-  'robustness.scenarios.kind',
-  'robustness.scenarios.severity',
-  'robustness.scenarios.distribution',
-  'robustness.X',
-  'robustness.predictor',
-  'robustness.predictor_bundle',
-]
 
 function maxAbsDiff(actual: number[], expected: number[]): number {
   expect(actual.length).toBe(expected.length)
@@ -54,7 +39,7 @@ describe('nirs4all-core aggregate loaders', () => {
       name: string
       version: string
     }
-    const provenance = readFileSync(new URL('../../vendor/nirs4all/PROVENANCE.json', import.meta.url), 'utf8')
+    const provenance = JSON.parse(readFileSync(new URL('../../vendor/nirs4all/PROVENANCE.json', import.meta.url), 'utf8'))
     const syncScript = readFileSync(new URL('../../scripts/sync-core-shim.mjs', import.meta.url), 'utf8')
 
     expect(pkg.scripts['vendor:core']).toBe('node scripts/sync-core-shim.mjs')
@@ -64,18 +49,30 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(existsSync(new URL('../../scripts/sync-core-shim.mjs', import.meta.url))).toBe(true)
     expect(existsSync(new URL('../../scripts/sync-lite-shim.mjs', import.meta.url))).toBe(false)
     expect(syncScript).not.toMatch(/NIRS4ALL_LITE|nirs4all-lite|sync-lite/)
-    expect(vendorPkg).toMatchObject({ name: 'nirs4all', version: '0.4.7' })
-    expect(provenance).toContain('1dffd9f4472551cc09ad9d99ed9d40814bd003cc')
-    expect(provenance).toContain('6e6df6bf0ad685402cc4596709b4840cc66a7819587e9e730f5c72c62b07f55f')
-    expect(provenance).toContain('860ce804e13e914912e9180a82651b2bfff7939f6ead8c451b6a2cd2bbad13a4')
-    expect(provenance).toContain('7265d648a9c3aa62781ad5a1f2dc879c9f1a8bc748be9627dccac1fbbeb24a31')
+    expect(vendorPkg).toMatchObject({ name: 'nirs4all', version: '0.5.0' })
+    expect(provenance).toMatchObject({
+      package: 'nirs4all',
+      version: '0.5.0',
+      source: {
+        kind: 'local-working-tree-export',
+        base_commit_sha: '1dffd9f4472551cc09ad9d99ed9d40814bd003cc',
+        base_tree_sha: '3990c98a44a49c2c3827f61daad78915e33e948a',
+        working_tree_dirty: true,
+      },
+      acquisition: { kind: 'local-unpublished' },
+      reproducibility: { performed_by_web: false, independent_rebuild_claimed: false },
+      files: {
+        'native/nirs4all_core_wasm_native.js': { sha256: '39f8505794cc05e81c121654403cbac1d83d57b8a3a5d100e1191af1b9598f40' },
+        'native/nirs4all_core_wasm_native_bg.wasm': { sha256: '3377eb6c0e2bcff7a042fce6c5c4af0dd7d5db3940ec15a645114c69cef1eab3' },
+      },
+    })
   })
 
-  it('verifies the pinned registry package without requiring a mutable sibling', () => {
+  it('verifies the pinned local unpublished package without requiring a mutable sibling', () => {
     const script = fileURLToPath(new URL('../../scripts/sync-core-shim.mjs', import.meta.url))
     const verified = spawnSync(process.execPath, [script, '--check'], { encoding: 'utf8' })
     expect(verified.status).toBe(0)
-    expect(verified.stdout).toContain('nirs4all@0.4.7 published inventory and acquisition verified')
+    expect(verified.stdout).toContain('nirs4all@0.5.0 local-unpublished (no registry identity) inventory and acquisition verified')
   })
 
   it('keeps the datasets upstream candidate aligned with the vendored WASM package', () => {
@@ -104,104 +101,117 @@ describe('nirs4all-core aggregate loaders', () => {
   })
 
   it('re-exports the portable execution and initialized WASM loaders from the portable aggregate', () => {
-    expect(typeof capabilityManifest).toBe('function')
-    expect(Array.isArray(controllerCapabilities)).toBe(true)
-    expect(Array.isArray(runtimeSurfaces)).toBe(true)
-    expect(Array.isArray(runtimeContracts)).toBe(true)
-    expect(Array.isArray(artifactContracts)).toBe(true)
     expect(typeof parseExecutionPlan).toBe('function')
     expect(typeof runPortablePipeline).toBe('function')
     expect(typeof predictPortablePipeline).toBe('function')
     expect(typeof loadArchiveV2Native).toBe('function')
     expect(typeof inspectMethodsArchiveV2Predictors).toBe('function')
     expect(typeof replayMethodsArchiveV2).toBe('function')
-    expect(Array.isArray(requiredKeywordRegistryEntries)).toBe(true)
     expect(typeof loadMethodsWasm).toBe('function')
     expect(typeof loadDatasetsWasm).toBe('function')
   })
 
-  it('vendors the nirs4all-core capability manifest for custom app hosts', () => {
-    const manifest = capabilityManifest()
+  it('publishes only the native execution-profile definitions and no coarse capability metadata', () => {
+    for (const retired of ['artifactContracts', 'capabilityManifest', 'controllerCapabilities',
+      'requiredKeywordRegistryEntries', 'runtimeContracts', 'runtimeSurfaces']) {
+      expect(retired in nirs4allCore).toBe(false)
+    }
+    const definitions = coreExecutionProfileDefinitions()
+    expect(definitions.schema).toBe('nirs4all-core.execution-profiles.v1')
+    expect(definitions.version).toBe(1)
+    expect(definitions.runtime_surfaces).toEqual(['python', 'javascript_wasm', 'rust', 'matlab_octave'])
+    expect(definitions.operations).toEqual([
+      'compile', 'fit', 'predict', 'import', 'export', 'produce', 'inspect', 'calibrate', 'retrain', 'read', 'write', 'update',
+    ])
+    expect(definitions.profiles.map((item) => [item.id, item.version])).toEqual([
+      ['native-workflow', 1],
+      ['native-conformal', 1],
+      ['native-methods-package', 1],
+      ['native-n4a-canonical', 1],
+      ['n4a-container', 1],
+    ])
+    const [workflow, conformal] = definitions.profiles
+    expect(workflow.content_types).toEqual([
+      { schema: 'nirs4all.native-pipeline.v1', owner: 'nirs4all-core', carried_in: 'native pipeline JSON envelope' },
+    ])
+    expect(conformal.content_types.map((item) => [item.schema, item.owner])).toEqual([['nirs4all.calibrated.v1', 'nirs4all-core']])
+    expect(conformal.dependencies).toContain('dag_ml')
+    expect(workflow.content_routes).toEqual([])
+    const wasmRoutes = conformal.content_routes.filter((route) => route.surface === 'javascript_wasm')
+    expect(wasmRoutes.map((route) => route.schema)).toEqual([undefined, undefined, undefined, undefined, undefined])
+    expect(wasmRoutes.filter((route) => route.route === 'archive_transfer').every((route) => route.archive_schema_version === 2)).toBe(true)
+    expect(conformal.content_routes.filter((route) => route.schema).map((route) => route.schema)).not.toContain(undefined)
+    expect(JSON.stringify(definitions)).not.toMatch(/legacy|portable_pipeline|runtime_contract|parity-validated|conformal_store/)
+  })
 
-    expect(manifest.schema).toBe('nirs4all-core.capabilities.v1')
-    expect(manifest.runtimeSurfaces).toEqual(['python', 'javascript_wasm', 'rust', 'matlab_octave'])
-    expect(manifest.runtimeContracts).toEqual(runtimeContracts)
-    expect(manifest.artifactContracts).toEqual(artifactContracts)
-    expect(manifest.artifactContracts.map((item) => item.id)).toEqual([
-      'conformal.calibrated_result',
-      'robustness.summary',
-      'tuning.summary',
-      'tuning.ordered_search_space',
-      'keyword.registry',
+  it('declares and exports the package replay and container storage cells used by Web', () => {
+    // Metadata and exported functions are not numerical qualification.
+    const profiles = new Map(coreExecutionProfileDefinitions().profiles.map((profile) => [String(profile.id), profile]))
+    for (const [profileId, operation, symbol, entrypoint] of [
+      ['native-methods-package', 'import', 'readPortableArchiveV2', readPortableArchiveV2],
+      ['native-methods-package', 'predict', 'replayMethodsArchiveV2', replayMethodsArchiveV2],
+      ['n4a-container', 'read', 'openN4aContainer', openN4aContainer],
+      ['n4a-container', 'write', 'writeN4aContainer', writeN4aContainer],
+    ] as const) {
+      const profile = profiles.get(profileId)
+      expect(profile, profileId).toBeDefined()
+      const cell = new Map(Object.entries(profile!.operations)).get(operation)?.javascript_wasm
+      expect(cell?.status, `${profileId}.${operation}`).toBe('supported')
+      expect(cell?.status === 'supported' ? cell.entrypoints.map((item) => item.symbol) : [], `${profileId}.${operation}`).toEqual([symbol])
+      expect(typeof entrypoint, symbol).toBe('function')
+    }
+
+    const methodsPackage = profiles.get('native-methods-package')!
+    expect(methodsPackage.operations.fit.javascript_wasm.status).toBe('unsupported')
+    expect(methodsPackage.limits).toContain(
+      'Package V3 execution is not claimed on JavaScript/WASM: V3 is readable and storable there while its execution stays an explicit refusal. A V3 child is stored standalone; no archive-path retrain operation is introduced.',
+    )
+    const canonical = profiles.get('native-n4a-canonical')!
+    expect(canonical.operations.fit.javascript_wasm.status).toBe('unsupported')
+    expect(canonical.operations.export.javascript_wasm.status).toBe('unsupported')
+  })
+
+  it('declares the browser entrypoints and requirements of the JavaScript/WASM surface exactly', () => {
+    const [workflow, conformal] = coreExecutionProfileDefinitions().profiles
+    const symbols = (profile: typeof workflow, operation: 'fit' | 'predict' | 'import' | 'export' | 'compile') => {
+      const entry = profile.operations[operation].javascript_wasm
+      return entry.status === 'supported' ? entry.entrypoints.map((item) => item.symbol) : entry.reason
+    }
+    expect(symbols(workflow, 'fit')).toEqual(['runBrowserPipeline'])
+    expect(symbols(workflow, 'predict')).toEqual(['BrowserNativePipeline.predict', 'predictBrowserPipeline'])
+    expect(symbols(workflow, 'import')).toEqual(['loadBrowserPipeline'])
+    expect(symbols(workflow, 'export')).toEqual(['BrowserNativePipeline.export'])
+    expect(workflow.operations.compile.javascript_wasm.status).toBe('unsupported')
+    expect(symbols(conformal, 'fit')).toEqual(['calibrate'])
+    expect(conformal.operations.compile.javascript_wasm.status).toBe('unsupported')
+    for (const profile of [workflow, conformal]) {
+      expect(profile.runtime_requirements.javascript_wasm.join(' ')).toMatch(/WASM builds.*no native library path and no CLI/)
+      expect(profile.runtime_requirements.python.join(' ')).toContain('nirs4all-core-archive CLI')
+    }
+  })
+
+  it('keeps the snapshot a definition only: hash-verified, R federated and outside the Core surfaces', () => {
+    const embedded = CORE_EXECUTION_PROFILES_JSON
+    expect(createHash('sha256').update(embedded).digest('hex')).toBe(coreExecutionProfileDefinitionsSha256)
+    expect(coreExecutionProfileDefinitions()).toEqual(JSON.parse(embedded))
+    const mutated = coreExecutionProfileDefinitions()
+    mutated.profiles.length = 0
+    expect(coreExecutionProfileDefinitions().profiles).toHaveLength(5)
+    const definitions = coreExecutionProfileDefinitions()
+    expect(definitions.runtime_surfaces).not.toContain('r')
+    const [federation] = definitions.external_federation
+    expect(federation).toMatchObject({ surface: 'r', core_runtime_surface: false, status: 'externally-federated' })
+    expect(federation.profiles).toEqual([
+      'native-workflow', 'native-conformal', 'native-methods-package', 'native-n4a-canonical', 'n4a-container',
     ])
-    expect(manifest.artifactContracts.find((item) => item.id === 'robustness.summary')?.optionalPayloadFields).toEqual([
-      'conformal_guarantee_status',
-      'spectral_replay',
-    ])
-    expect(manifest.artifactContracts.find((item) => item.id === 'tuning.summary')?.optionalPayloadFields).toEqual([
-      'sampler',
-      'pruner',
-      'seed',
-      'persistence',
-      'trials[*].diagnostics',
-    ])
-    expect(manifest.artifactContracts.find((item) => item.id === 'tuning.ordered_search_space')).toMatchObject({
-      schema: 'https://nirs4all.org/schemas/tuning-ordered-search-space/v1',
-      portableClaim: 'search-space-json-contract-only',
-      requiredRegistryEntries: ['run.tuning.space', 'run.tuning.force_params'],
-    })
-    expect(
-      manifest.artifactContracts.find((item) => item.id === 'tuning.ordered_search_space')?.pythonSurface,
-    ).toContain('inspect_tuning_space')
-    expect(requiredKeywordRegistryEntries).toEqual(EXPECTED_REQUIRED_KEYWORD_REGISTRY_ENTRIES)
-    expect(manifest.artifactContracts.find((item) => item.id === 'keyword.registry')?.requiredRegistryEntries).toEqual(
-      requiredKeywordRegistryEntries,
-    )
-    expect(manifest.artifactContracts.find((item) => item.id === 'keyword.registry')?.pythonSurface).toContain(
-      'TUNING_OPTIMIZER_PERSISTENCE_KEYS',
-    )
-    expect(manifest.artifactContracts.find((item) => item.id === 'keyword.registry')?.pythonSurface).toContain(
-      'ROBUSTNESS_SCENARIO_KINDS',
-    )
-    expect(manifest.artifactContracts.find((item) => item.id === 'keyword.registry')?.pythonSurface).toContain(
-      'ROBUSTNESS_SCENARIO_DISTRIBUTIONS',
-    )
-    expect(manifest.artifactContracts.find((item) => item.id === 'keyword.registry')?.pythonSurface).toContain(
-      'ROBUSTNESS_MODES',
-    )
-    expect(manifest.artifactContracts.find((item) => item.id === 'keyword.registry')?.pythonSurface).toContain(
-      'ROBUSTNESS_EXECUTABLE_MODES',
-    )
-    expect(manifest.artifactContracts.find((item) => item.id === 'keyword.registry')?.publishedConstants).toEqual({
-      ROBUSTNESS_SCENARIO_DISTRIBUTIONS: ['normal', 'uniform'],
-    })
-    expect(manifest.artifactContracts.every((item) => item.consumerLevel.javascript_wasm === 'metadata')).toBe(true)
-    expect(manifest.runtimeContracts.map((item) => item.surface)).toEqual(manifest.runtimeSurfaces)
-    expect(manifest.runtimeContracts.filter((item) => item.serializedModelPredict).map((item) => item.surface)).toEqual([
-      'javascript_wasm', 'rust',
-    ])
-    expect(manifest.runtimeContracts.find((item) => item.surface === 'javascript_wasm')?.predictEntrypoint).toBe(
-      'predictPortablePipeline',
-    )
-    expect(manifest.controllers.map((item) => item.id)).toEqual([
-      'split.kennard_stone',
-      'preprocess.snv',
-      'preprocess.savgol',
-      'preprocess.msc',
-      'select.spa',
-      'select.n4m',
-      'model.pls_regression',
-      'model.affine_methods',
-      'pipeline.portable_methods',
-    ])
-    expect(manifest.controllers).toEqual(controllerCapabilities)
-    expect(manifest.controllers.every((item) => item.domain === 'methods')).toBe(true)
-    expect(manifest.controllers.flatMap((item) => item.operatorClasses).sort()).toEqual(
-      [...manifest.portableOperatorClasses].sort(),
-    )
-    expect(manifest.controllers[0].runtime.javascript_wasm).toBe('parity-validated')
-    expect(manifest.controllers[1].parameters).toEqual([])
-    expect(manifest.controllers.find((item) => item.id === 'model.pls_regression')?.parameters).toEqual(['n_components', '_range_'])
+    // The generated file must not read as installed-runtime certification.
+    const generated = readFileSync(new URL('./core-execution-profiles.generated.ts', import.meta.url), 'utf8')
+    expect(generated).toContain('not\n// installed-runtime certification')
+  })
+
+  const coreFixture = new URL('../../../../nirs4all-core/tests/parity/expected/capability_profiles.json', import.meta.url)
+  it.skipIf(!existsSync(coreFixture))('equals the Core owner fixture when the Core checkout is present', () => {
+    expect(coreExecutionProfileDefinitions()).toEqual(JSON.parse(readFileSync(coreFixture, 'utf8')))
   })
 
   it('loads the vendored datasets WASM artifact', async () => {
@@ -225,22 +235,27 @@ describe('nirs4all-core aggregate loaders', () => {
     )
   })
 
-  it('loads the qualified dag-ml WASM coordinator', async () => {
+  it('loads the pinned local dag-ml WASM coordinator', async () => {
     const dagml = await import('./wasm/dagml/dag_ml_wasm.js')
     const wasm = readFileSync(new URL('./wasm/dagml/dag_ml_wasm_bg.wasm', import.meta.url))
     const provenance = JSON.parse(
       readFileSync(new URL('./wasm/dagml/PROVENANCE.json', import.meta.url), 'utf8'),
-    ) as { version: string; source: { commit: string }; reproducibility: { performed_by_web: boolean; independent_rebuild_claimed: boolean } }
+    ) as { version: string; source: { kind: string; base_commit_sha: string }; reproducibility: { performed_by_web: boolean; independent_rebuild_claimed: boolean } }
     dagml.initSync({ module: wasm })
 
     const manifest = JSON.parse(dagml.contract_manifest_json()) as { crate: string; capabilities: string[] }
-    expect(dagml.dag_ml_version()).toBe('0.3.44')
+    expect(dagml.dag_ml_version()).toBe('0.4.0')
     expect(manifest.crate).toBe('dag-ml')
     expect(manifest.capabilities).toContain('execute_execution_plan_phase')
     expect(manifest.capabilities).toContain('loss_execution_attestation')
     expect(provenance).toMatchObject({
-      version: '0.3.44',
-      source: { commit: '01226120552529aad45e5ba60d3f6327894adc67' },
+      version: '0.4.0',
+      source: {
+        kind: 'local-working-tree-export',
+        base_commit_sha: '963abc4531789d6483e9d60d8d2e30549fc5ca9e',
+        working_tree_dirty: true,
+      },
+      acquisition: { kind: 'local-unpublished' },
       reproducibility: { performed_by_web: false, independent_rebuild_claimed: false },
     })
   })

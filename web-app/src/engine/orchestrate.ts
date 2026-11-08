@@ -1,17 +1,13 @@
 import { identifyNativeFitRefusal, isFitRefusal } from './fit-refusal'
-// Pipeline orchestration shared by every engine, parameterized by a ModelBackend
-// (the actual PLS fit/predict). The JS backend uses NIPALS; the libn4m backend
-// uses the real nirs4all-methods C++ engine compiled to WASM. Orchestration
-// (preprocessing fit-on-train, K-fold, OOF-by-sampleId, refit, metrics) is
-// identical and leakage-honest regardless of backend.
+// Fit/predict/export helpers shared by the dag-ml engine and the imported-model paths,
+// parameterized by a ModelBackend (the actual model fit/predict). The libn4m backend
+// uses the real nirs4all-methods C++ engine compiled to WASM; ml.js models use their
+// own backend. CV, refit and scoring run in dag-ml (dagml-engine.ts), not here.
 import { nodeByType } from '@/catalog/nodes'
 import { type Mat, mat, selectRows } from './algo/linalg'
 import { type FittedTransformer, isRowOperator, type Preprocessor, type StepState } from './methods/preproc'
-import { buildFolds, type Fold } from './kfold'
-import { missingTargetCount, missingTargetMessage, testRowsOf, trainRowsOf } from './partition'
-import { applySplit, isSplitType } from './split'
 import { classificationMetrics, regressionMetrics } from './metrics'
-import { checkInputColumns, datasetFeatureIdentity } from './feature-identity'
+import { checkInputColumns } from './feature-identity'
 import type {
   FittedPipeline,
   MaterializedDataset,
@@ -21,9 +17,9 @@ import type {
   PipelineStep,
   PredRow,
   PredictResult,
-  RunOptions,
   RunProgress,
   RunResult,
+  ScoreContext,
   ScoreKind,
   ScoreNode,
   TaskType,
@@ -36,12 +32,11 @@ export interface ModelSpec {
 }
 
 /** A pluggable numeric backend: the model fit/predict + the preprocessing
- *  operators. Both come from libn4m (C++ → WASM) in production; a JS backend is
- *  the offline fallback. Model blobs + preprocessing state are serializable data
- *  (N4ME bytes for every n4m method).
+ *  operators. Both come from libn4m (C++ → WASM) in production. Model blobs +
+ *  preprocessing state are serializable data (N4ME bytes for every n4m method).
  *
  *  `fit` dispatches on `spec.type` — the libn4m backend fits every n4m model node
- *  through the generic role API; the JS fallback only does NIPALS PLS. */
+ *  through the generic role API. */
 export interface ModelBackend {
   id: string
   fit(spec: ModelSpec, X: Mat, Y: Mat, nComp: number): unknown
@@ -131,10 +126,12 @@ export function decodeRows(ds: MaterializedDataset, classNames: string[], classI
   const rows: PredRow[] = []
   for (let i = 0; i < idx.length; i++) {
     const sid = ds.sampleIds[idx[i]]
+    const observation = ds.observationIds?.[idx[i]]
+    const observationId = observation == null ? {} : { observationId: observation }
     if (ds.taskType === 'regression') {
       const a = ds.y[idx[i]]
       const pv = pred.data[i * pred.cols]
-      rows.push({ sampleId: sid, actual: a, predicted: pv, residual: pv - a })
+      rows.push({ sampleId: sid, ...observationId, actual: a, predicted: pv, residual: pv - a })
     } else {
       const K = classNames.length
       let best = 0
@@ -144,7 +141,7 @@ export function decodeRows(ds: MaterializedDataset, classNames: string[], classI
         if (v > bv) (bv = v), (best = k)
       }
       const a = classIdx[idx[i]]
-      rows.push({ sampleId: sid, actual: a, predicted: best, residual: best - a, actualLabel: classNames[a], predictedLabel: classNames[best] })
+      rows.push({ sampleId: sid, ...observationId, actual: a, predicted: best, residual: best - a, actualLabel: classNames[a], predictedLabel: classNames[best] })
     }
   }
   return rows
@@ -290,22 +287,21 @@ function applyChain(chain: FittedStep[], X: Mat, preproc: Preprocessor): Mat {
   }
 }
 
-export function scoreNode(id: string, name: string, kind: ScoreKind, rows: PredRow[], task: TaskType, classNames: string[]): ScoreNode {
+export function scoreNode(id: string, name: string, kind: ScoreKind, rows: PredRow[], task: TaskType, classNames: string[], scoreContext?: ScoreContext): ScoreNode {
+  const context = scoreContext ? { scoreContext } : {}
   if (task === 'regression') {
-    return { id, name, kind, metrics: regressionMetrics(rows), predictions: rows, status: 'completed' }
+    return { id, name, kind, metrics: regressionMetrics(rows), predictions: rows, status: 'completed', ...context }
   }
   const { metrics, confusion } = classificationMetrics(rows, classNames)
-  return { id, name, kind, metrics, predictions: rows, confusion, status: 'completed' }
+  return { id, name, kind, metrics, predictions: rows, confusion, status: 'completed', ...context }
 }
-
-const yieldToLoop = (): Promise<void> => new Promise((r) => setTimeout(r, 0))
 
 /**
  * Run a generator-OR pipeline by expanding it into candidate DSLs (one per
  * alternative), running each through the engine's existing single-DSL CV/refit
  * path (`runOne`), then selecting the best by the canonical metric. Selection is
- * delegated (`select`) — the served engine routes it through dag-ml's
- * `select_candidates_json`, the offline engine uses host argmin/argmax — so this
+ * delegated (`select`) — the engine routes it through dag-ml's
+ * `select_candidates_json` — so this
  * reuses the EXISTING per-variant FIT_CV + selection machinery rather than
  * reinventing it. The winner's RunResult is returned, annotated with the full
  * variant list (the selected one flagged). `dsl` must already contain exactly one
@@ -362,108 +358,6 @@ export async function runGeneratorOr(
     pipelineName: dsl.name,
     variantCount: candidates.length,
     variants: results.map((r, i) => ({ variantId: r.variantId, label: r.label, metrics: r.run.cv?.metrics ?? r.run.refit.metrics, selected: i === winnerIdx, pipeline: r.pipeline })),
-  }
-}
-
-export async function runPipeline(
-  ds: MaterializedDataset,
-  dsl: PipelineDSL,
-  opts: RunOptions,
-  backend: ModelBackend,
-  /** when provided (served path), use these dag-ml-built folds instead of
-   *  building them in TS — keeps fold construction in dag-ml even on the
-   *  multi-node-pipeline path that dag-ml's scheduler can't yet execute. */
-  prebuiltFolds?: Fold[],
-): Promise<RunResult> {
-  const { onProgress: onP, signal } = opts
-  const task = ds.taskType
-  if (!dsl.model) throw new Error('This pipeline has no model — add a model to run / score.')
-  // SPLIT (optional, the FIRST split): override partitions before CV. Best-effort
-  // offline — if libn4m can't compute the split (file://), keep the existing
-  // partition rather than failing the whole run.
-  if (dsl.split && isSplitType(dsl.split.type)) {
-    try {
-      onP?.({ phase: 'preprocess', pct: 1, message: `splitting via ${dsl.split.type}` })
-      ds = await applySplit(ds, dsl.split)
-    } catch (e) {
-      console.warn('[split] could not compute split, keeping dataset partition:', e)
-    }
-  }
-  const { classNames, classIdx } = classInfo(ds)
-
-  // refuse to train on missing targets rather than producing a meaningless model;
-  // rows whose target is missing are left out of FIT and scoring (trainRowsOf)
-  const trainRowsIdx = trainRowsOf(ds)
-  const missingTargets = missingTargetCount(ds)
-  if (missingTargets) onP?.({ phase: 'preprocess', pct: 2, message: missingTargetMessage(missingTargets) })
-  if (task === 'regression' && !trainRowsIdx.some((i) => Number.isFinite(ds.y[i]))) {
-    throw new Error('No numeric targets in the training data — add a y / reference file before running.')
-  }
-  if (task !== 'regression' && classNames.length < 2) {
-    throw new Error('Classification needs at least two classes in the training data.')
-  }
-
-  const decode = (pred: Mat, idx: number[]): PredRow[] => decodeRows(ds, classNames, classIdx, pred, idx)
-  const checkCancel = () => {
-    if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError')
-  }
-
-  // CV is OPTIONAL: with `dsl.cv` present, run the leakage-honest fold loop and
-  // assemble OOF; with it absent, skip CV entirely (refit-only run).
-  let cvNode: ScoreNode | undefined
-  const foldNodes: ScoreNode[] = []
-  if (dsl.cv) {
-    onP?.({ phase: 'fit_cv', pct: 4 })
-    const folds = prebuiltFolds ?? buildFolds(ds, dsl.cv.folds, dsl.cv.seed)
-    const oof: PredRow[] = []
-    for (let fi = 0; fi < folds.length; fi++) {
-      checkCancel()
-      const f = folds[fi]
-      // trainAndPredict fits the main chain + optional branch union on the fold's
-      // train rows and predicts its validation rows — branch- and leakage-safe.
-      const { pred } = trainAndPredict(ds, dsl, backend, f.trainIdx, f.valIdx)
-      const rows = decode(pred, f.valIdx)
-      oof.push(...rows)
-      foldNodes.push(scoreNode(`fold-${f.foldId}`, `Fold ${f.foldId}`, 'fold', rows, task, classNames))
-      onP?.({ phase: 'fit_cv', pct: 4 + Math.round((72 * (fi + 1)) / folds.length) })
-      await yieldToLoop()
-    }
-    cvNode = scoreNode('cv', 'CV Scores', 'cv', oof, task, classNames)
-  }
-
-  checkCancel()
-  onP?.({ phase: 'refit', pct: 82 })
-  const trainIdx = trainRowsIdx
-  const testIdx = testRowsOf(ds)
-  const scoreIdx = testIdx.length > 0 ? testIdx : trainIdx
-  const { pred: refitPred, descriptors, branch, model } = trainAndPredict(ds, dsl, backend, trainIdx, scoreIdx)
-  const refitRows = decode(refitPred, scoreIdx)
-  const refitNode = scoreNode('refit', testIdx.length > 0 ? 'Refit · test' : 'Refit · train', 'refit', refitRows, task, classNames)
-
-  onP?.({ phase: 'done', pct: 100 })
-  const fitted: FittedPipeline = {
-    dsl,
-    taskType: task,
-    nFeatures: ds.nFeatures,
-    features: datasetFeatureIdentity(ds),
-    classes: classNames.length ? classNames : undefined,
-    state: { chain: descriptors, branch, model, classNames: classNames.length ? classNames : undefined, backendId: backend.id } as FittedState,
-  }
-  const scoreMetric: keyof Metrics = task === 'regression' ? 'rmse' : 'accuracy'
-  return {
-    id: `run-${Date.now().toString(36)}`,
-    pipelineName: dsl.name,
-    taskType: task,
-    targetName: ds.targetName,
-    refit: refitNode,
-    cv: cvNode,
-    folds: foldNodes,
-    seed: dsl.cv?.seed ?? 0,
-    engine: backend.id,
-    scoreMetric,
-    model: fitted,
-    createdAt: new Date().toISOString(),
-    ...(missingTargets ? { missingTargets } : {}),
   }
 }
 

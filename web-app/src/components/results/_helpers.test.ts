@@ -21,7 +21,9 @@ describe('variantChains', () => {
       { variantId: 'v2', label: 'imported', metrics: {}, selected: false },
     ]
     const { chains, differing } = variantChains(variants, 'regression')
-    expect(chains.has('v2')).toBe(false)
+    expect(chains.has('v2')).toBe(true)
+    expect(chains.get('v2')!.label).toBe('imported')
+    expect(chains.get('v2')!.steps).toEqual([])
     const steps = chains.get('v1')!.steps
     expect(steps.map((s) => s.role)).toEqual(['preprocess', 'preprocess', 'model'])
     expect(steps[1].label).toMatch(/window_length=15, polyorder=2/)

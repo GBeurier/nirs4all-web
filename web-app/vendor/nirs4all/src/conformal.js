@@ -1,6 +1,6 @@
 // Core transports; DAG-ML owns calibration, interval calculations and lineage.
 import { Workflow, workflowDependencies, workflowReplay, workflowHashes, workflowEnvelope } from './workflow.js';
-import { loadArchiveV2Native, readPortableArchiveV2, replayMethodsArchiveV2, writePortableArchiveV2 } from './archive-v2.js';
+import { loadArchiveV2Native, readPortableArchiveV2, replayMethodsArchiveV2, calibrateNativePackage } from './archive-v2.js';
 import { independentPhysicalDataset } from './uncertainty-cohort.js';
 
 const json = JSON.stringify;
@@ -27,21 +27,20 @@ export async function calibrate(model, value, options = {}) {
   const deps = await workflowDependencies(options);
   const record = independentPhysicalDataset(deps.io, value);
   const inventory = await readPortableArchiveV2(source);
-  const packageJson = text(inventory.members[inventory.manifest.replay.portable_predictor_package.member_path]);
+  const packageJson = text(inventory.package);
   const pkg = JSON.parse(packageJson);
   const details = Object.values(pkg.effective_plan.node_plans).some(node => node.controller_id === 'controller:methods.pls')
     ? await nativeMethodsCalibrationReplay(source, record, pkg, packageJson, inventory, deps)
     : await workflowReplay(source, record, options, true);
   const original = details.archive;
   const native = await loadArchiveV2Native();
-  const outcome = text(original.members[original.manifest.replay.training_artifacts.training_outcome.member_path]);
+  const outcome = text(original.trainingOutcome);
   const capture = JSON.parse(native.calibrate_workflow_replay_json(outcome, details.replayJson,
     json(details.relations), json(details.truth), json(options.coverages ?? [0.9]), json(options.smallSamplePolicy ?? 'error')));
-  const { dag } = await workflowDependencies(options);
-  const payloads = JSON.parse(dag.build_archive_v2_native_portable_payloads_json(
-    'archive:public:calibrated', capture.training_outcome_json, capture.portable_predictor_package_json));
-  const archive = await writePortableArchiveV2(payloads.manifest,
-    Object.fromEntries(Object.entries(payloads.members).map(([key, bytes]) => [key, Uint8Array.from(bytes)])));
+  const encoder = new TextEncoder();
+  // Immutable-base carry through Core (never a fresh writer): `source` is the original workflow archive.
+  const archive = await calibrateNativePackage(source, encoder.encode(capture.training_outcome_json),
+    encoder.encode(capture.portable_predictor_package_json), 'archive:public:calibrated');
   return new CalibratedWorkflow(archive, capture.calibration);
 }
 
@@ -50,7 +49,7 @@ export async function predictCalibrated(model, value, options = {}) {
   const record = independentPhysicalDataset(deps.io, value);
   const bytes = model instanceof CalibratedWorkflow ? model.archive : model;
   const archive = await readPortableArchiveV2(bytes);
-  const storedPackage = text(archive.members[archive.manifest.replay.portable_predictor_package.member_path]);
+  const storedPackage = text(archive.package);
   const pkg = JSON.parse(storedPackage);
   if (Object.values(pkg.effective_plan.node_plans).some(node => node.controller_id === 'controller:methods.pls')) {
     const { io } = deps;
@@ -82,15 +81,13 @@ export async function conformalMetrics(model, prediction, truth) {
   if (!(model instanceof CalibratedWorkflow)) throw new TypeError('A calibrated workflow is required');
   const native = await loadArchiveV2Native();
   const archive = await readPortableArchiveV2(model.archive);
-  const packageJson = text(archive.members[archive.manifest.replay.portable_predictor_package.member_path]);
+  const packageJson = text(archive.package);
   return JSON.parse(native.conformal_metrics_json(packageJson, json(prediction.interval_block), json(truth)));
 }
 
 export async function loadCalibrated(bytes, options = {}) {
-  const archive = await readPortableArchiveV2(bytes), { dag } = await workflowDependencies(options);
-  const packageJson = text(archive.members[archive.manifest.replay.portable_predictor_package.member_path]);
-  dag.validate_archive_v2_portable_payloads_json(json(archive.manifest), packageJson,
-    json(Object.fromEntries(Object.entries(archive.members).map(([key, value]) => [key, [...value]]))));
+  const archive = await readPortableArchiveV2(bytes);
+  const packageJson = text(archive.package);
   const calibration = JSON.parse(packageJson).conformal_calibration;
   if (!calibration) throw new TypeError('Native archive has no calibration');
   return new CalibratedWorkflow(bytes, calibration);
@@ -117,17 +114,14 @@ async function nativeMethodsCalibrationReplay(bytes, record, pkg, packageJson, a
   const current = workflowEnvelope(dag, workflowHashes(deps.digest), sourceId, dense, raw);
   const requirement = pkg.execution_bundle.data_requirements[0];
   const key = `${requirement.node_id}.${requirement.input_name}`;
+  // Match native conformal replay: V1 describes the actual calibration input.
+  // DAG derives the calibration role and checks the saved training influence
+  // when attaching calibration. This is not an external-test scoring cohort.
   const envelope = { schema_version: 1, schema_fingerprint: requirement.schema_fingerprint,
-    plan_fingerprint: requirement.plan_fingerprint, relation_fingerprint: requirement.relation_fingerprint,
-    data_content_fingerprint: pkg.data_identities[0].data_content_fingerprint,
-    target_content_fingerprint: pkg.data_identities[0].target_content_fingerprint,
-    coordinator_relations: { records: pkg.effective_plan.fold_set.sample_ids.map(id => ({
-      observation_id: id, sample_id: id, target_id: null, source_id: sourceId,
-      group_id: null, origin_sample_id: null, is_augmented: false })) }, predict_cohort: null };
-  const predictEnvelope = JSON.parse(dag.attach_predict_cohort_to_envelope_json(json(envelope), json({
-    role: 'external_test', target_names: raw.target_names,
-    data_content_fingerprint: current.data_content_fingerprint, target_content_fingerprint: current.target_content_fingerprint,
-    relations: current.coordinator_relations })));
+    plan_fingerprint: requirement.plan_fingerprint, relation_fingerprint: current.relation_fingerprint,
+    data_content_fingerprint: current.data_content_fingerprint,
+    target_content_fingerprint: current.target_content_fingerprint,
+    coordinator_relations: current.coordinator_relations, predict_cohort: null };
   const request = dag.sign_training_replay_request_json(json({ schema_version: 1, request_id: 'replay:browser:cpu:calibrate',
     source_outcome_fingerprint: pkg.training_outcome.outcome_fingerprint, phase: 'PREDICT',
     data_envelope_keys: [key], output_binding_ids: [binding.binding_id], request_fingerprint: '0'.repeat(64) }));
@@ -161,7 +155,13 @@ async function nativeMethodsCalibrationReplay(bytes, record, pkg, packageJson, a
     const inputs = Object.entries(task.artifact_inputs);
     if (inputs.length !== 1 || !handles.has(task.input_handles[inputs[0][0]]?.handle)
         || inputs[0][1].artifact.content_fingerprint !== artifact.artifact.content_fingerprint) throw new TypeError('Frozen calibration handle/artifact differs');
-    const features = adapter._features(task, 'predict');
+    // V1 PREDICT may leave row selection to the provider. Materialize that
+    // selector from this invocation's executed cohort before the JS helper,
+    // whose contract requires explicit IDs. Preserve every explicit selection.
+    const featureTask = { ...task, data_views: Object.fromEntries(Object.entries(task.data_views).map(([key, view]) =>
+      [key, view.partition === 'predict' && view.sample_ids === null
+        ? { ...view, sample_ids: [...native.sampleIds] } : view])) };
+    const features = adapter._features(featureTask, 'predict');
     const model = { predict(matrix) {
       const indices = features.sampleIds.map(sample => positions.get(sample));
       const expectedX = indices.flatMap(index => source.array.values[index]);
@@ -171,7 +171,7 @@ async function nativeMethodsCalibrationReplay(bytes, record, pkg, packageJson, a
     return adapter._result(task, features, model, [], {});
   };
   try {
-    const replayJson = dag.replay_training_package_json(packageJson, request, json({ [key]: predictEnvelope }),
+    const replayJson = dag.replay_training_package_json(packageJson, request, json({ [key]: envelope }),
       json([manifest]), 'outcome:browser:cpu:calibration', 'run:browser:cpu:calibration', callback);
     return { archive, replayJson, relations: current.coordinator_relations,
       truth: { sample_ids: [...raw.sample_ids], values: raw.y.values.map(y => [y]),

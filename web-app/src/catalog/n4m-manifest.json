@@ -1,5 +1,5 @@
 {
-  "abi": "2.20.0",
+  "abi": "2.22.0",
   "methods": [
     {
       "method_id": "aom_pop.aom_chain_fixed_fit",

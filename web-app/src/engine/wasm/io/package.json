@@ -1,24 +1,31 @@
 {
-  "name": "nirs4all-io-wasm",
+  "name": "@nirs4all/io-wasm",
+  "version": "0.3.0",
+  "private": true,
   "type": "module",
-  "collaborators": [
-    "Gregory Beurier <gregory.beurier@cirad.fr>"
-  ],
-  "description": "wasm-bindgen binding for nirs4all-io: the fs-free JSON surface (to_spec / validate over a spec dict). Excluded from the cargo workspace; built with wasm-pack.",
-  "version": "0.2.14",
   "license": "CECILL-2.1 OR AGPL-3.0-or-later",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/GBeurier/nirs4all-io"
-  },
-  "files": [
-    "nirs4all_io_wasm_bg.wasm",
-    "nirs4all_io_wasm.js",
-    "nirs4all_io_wasm.d.ts"
-  ],
-  "main": "nirs4all_io_wasm.js",
-  "types": "nirs4all_io_wasm.d.ts",
-  "sideEffects": [
-    "./snippets/*"
-  ]
+  "description": "Private current IO 0.3 browser qualification package; explicit parsing options before first inference. Not published.",
+  "main": "./nirs4all_io_wasm.js",
+  "types": "./nirs4all_io_wasm.d.ts",
+  "exports": {
+    ".": {
+      "types": "./nirs4all_io_wasm.d.ts",
+      "default": "./nirs4all_io_wasm.js"
+    },
+    "./idiomatic": {
+      "types": "./idiomatic.d.ts",
+      "import": "./idiomatic.mjs"
+    },
+    "./public-dataset": {
+      "types": "./public-dataset.d.ts",
+      "import": "./public-dataset.mjs"
+    },
+    "./numeric-wire": {
+      "types": "./numeric-wire.d.ts",
+      "import": "./numeric-wire.mjs"
+    },
+    "./types": {
+      "types": "./types/nirs4all-io.d.ts"
+    }
+  }
 }

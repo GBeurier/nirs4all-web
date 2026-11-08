@@ -5,11 +5,12 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 import { n4mToken } from '@/catalog/native'
 import { loadSampleDataset } from '@/data/samples'
-import { buildN4aBundle, parseN4a, serializeTyped } from '@/lib/n4a'
+import { buildN4aBundle, exportN4aContainer, parseN4a, parseN4aFile, serializeTyped } from '@/lib/n4a'
 import type { Mat } from './algo/linalg'
 import { loadLibn4mBackend } from './backends'
 import { loadMlJsBackend } from './mljs-backend'
-import { exportPipeline, type FittedState, type ModelBackend, predictPipeline, runPipeline, trainingRowSteps } from './orchestrate'
+import { exportPipeline, type FittedState, type ModelBackend, predictPipeline, trainingRowSteps } from './orchestrate'
+import { runPipelineOracle } from './testing/run-pipeline-oracle'
 import type { MaterializedDataset, PipelineDSL, RunResult } from './types'
 import { WorkerEngine } from './worker-engine'
 
@@ -40,7 +41,7 @@ describe('training-row export policy', () => {
   let kernel: RunResult
 
   beforeAll(async () => {
-    kernel = await runPipeline(ds, pipeline('models.pls.kernel', { n_components: 4 }), {}, backend)
+    kernel = await runPipelineOracle(ds, pipeline('models.pls.kernel', { n_components: 4 }), {}, backend)
   })
 
   it('records per state whether libn4m embedded training rows', () => {
@@ -73,8 +74,19 @@ describe('training-row export policy', () => {
     )
   })
 
+  it('carries the consented bundle in a Core V1 host container and re-opens it to identical predictions', async () => {
+    const shared = exportPipeline(kernel.model, true, backend)
+    const container = await exportN4aContainer(kernel, shared)
+    const loaded = await parseN4aFile(new File([container as BlobPart], 'kernel.n4a'))
+    const { X, n } = testRows()
+    expect(Array.from(predictPipeline(loaded.model, X, n, ds.nFeatures, backend).values)).toEqual(
+      Array.from(predictPipeline(kernel.model, X, n, ds.nFeatures, backend).values),
+    )
+    expect((loaded.model.state as FittedState).chain.length).toBe((kernel.model.state as FittedState).chain.length)
+  })
+
   it('exports a model without training rows with no opt-in', async () => {
-    const pls = await runPipeline(ds, pipeline('models.pls.pls_regression', { n_components: 6 }), {}, backend)
+    const pls = await runPipelineOracle(ds, pipeline('models.pls.pls_regression', { n_components: 6 }), {}, backend)
     expect(trainingRowSteps(pls.model)).toEqual([])
     const bundle = buildN4aBundle({ ...pls, model: exportPipeline(pls.model, false, backend) })
     expect(bundle.containsTrainingRows).toBe(false)

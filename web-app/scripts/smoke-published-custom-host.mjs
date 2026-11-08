@@ -45,20 +45,11 @@ function run(cmd, args, cwd, { capture = false } = {}) {
 }
 
 const smokeSource = `
-import { capabilityManifest, predictPortablePipeline, runPortablePipeline, runtimeContracts } from 'nirs4all'
+import { predictPortablePipeline, runPortablePipeline } from 'nirs4all'
 import { DatasetPreviewCard, MetricValueBadge, RuntimeEngineBadge } from 'nirs4all-ui/components'
 import { buildDatasetPreview } from 'nirs4all-ui/dataset'
 import { buildRuntimeEngineStatus, runtimeEngineLabel } from 'nirs4all-ui/runtime'
 
-const manifest = capabilityManifest()
-if (!Array.isArray(manifest.controllers) || manifest.controllers.length < 4) {
-  throw new Error('published nirs4all does not expose the expected controller manifest')
-}
-
-const predictSurface = runtimeContracts.find((item) => item.serializedModelPredict)?.surface
-if (predictSurface !== 'javascript_wasm') {
-  throw new Error(\`unexpected serialized-model predict surface: \${predictSurface ?? 'none'}\`)
-}
 if (typeof runPortablePipeline !== 'function' || typeof predictPortablePipeline !== 'function') {
   throw new Error('published nirs4all does not expose portable run/predict entrypoints')
 }
@@ -140,8 +131,6 @@ for (const [name, value] of Object.entries({ DatasetPreviewCard, MetricValueBadg
 }
 
 console.log(JSON.stringify({
-  controllers: manifest.controllers.length,
-  predictSurface,
   dataset: dataset.title,
   engine: engineStatus.badgeLabel,
   runEntrypoint: typeof runPortablePipeline,
@@ -159,10 +148,8 @@ const appSource = `
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import {
-  capabilityManifest,
   predictPortablePipeline,
   runPortablePipeline,
-  runtimeContracts,
 } from 'nirs4all'
 import { DatasetPreviewCard, MetricValueBadge, RuntimeEngineBadge } from 'nirs4all-ui/components'
 import { buildDatasetPreview } from 'nirs4all-ui/dataset'
@@ -200,8 +187,6 @@ const demoPipeline = {
 }
 
 function App() {
-  const manifest = capabilityManifest()
-  const predictSurface = runtimeContracts.find((item) => item.serializedModelPredict)?.surface ?? 'none'
   const dataset = buildDatasetPreview({
     id: 'published-custom-host',
     name: 'Published custom host dataset',
@@ -233,12 +218,6 @@ function App() {
       <DatasetPreviewCard view={dataset} className="published-custom-host-dataset" />
       <RuntimeEngineBadge status={engineStatus} className="published-custom-host-engine" />
       <MetricValueBadge metric="rmse" value={0.03125} className="published-custom-host-metric" />
-      <dl>
-        <dt>Runtime predict surface</dt>
-        <dd>{predictSurface}</dd>
-        <dt>Controller contracts</dt>
-        <dd>{manifest.controllers.length}</dd>
-      </dl>
       <button type="button" onClick={runDemo}>Run portable pipeline</button>
     </main>
   )
@@ -342,8 +321,6 @@ try {
       upstream_methods_installed: true,
       react_version: versions.react,
       vite_version: versions.vite,
-      controller_count: smokeResult.controllers,
-      predict_surface: smokeResult.predictSurface,
       dataset_title: smokeResult.dataset,
       engine_label: smokeResult.engine,
       run_entrypoint: smokeResult.runEntrypoint,

@@ -1,6 +1,6 @@
 // User choices are compiled and signed by DAG-ML; Methods owns each fit.
 import { loadDagMl, loadMethodsWasm } from './index.js';
-import { loadArchiveV2Native, readPortableArchiveV2, writePortableArchiveV2, replayMethodsArchiveV2 } from './archive-v2.js';
+import { loadArchiveV2Native, readPortableArchiveV2, writeNativePredictorPackage, replayMethodsArchiveV2 } from './archive-v2.js';
 import { trainingResultView } from './result-view.js';
 
 const json = JSON.stringify;
@@ -161,8 +161,8 @@ export async function run(value, options = {}) {
     const runId = options.runId ?? `run:workflow:${globalThis.crypto.randomUUID()}`;
     const capture = JSON.parse(dag.execute_training_json(dag.sign_training_request_json(json(request)), json({ 'model:pls.x': env }),
       json(env.coordinator_relations), `package:${runId}`, `outcome:${runId}`, runId, `bundle:${runId}`, nativeController.callback));
-    const payloads = JSON.parse(dag.build_archive_v2_native_portable_payloads_json(`archive:${runId}`, capture.training_outcome_json, capture.portable_predictor_package_json));
-    const archive = await writePortableArchiveV2(payloads.manifest, Object.fromEntries(Object.entries(payloads.members).map(([name, bytes]) => [name, Uint8Array.from(bytes)])));
+    const encoder = new TextEncoder();
+    const archive = await writeNativePredictorPackage(`archive:${runId}`, encoder.encode(capture.training_outcome_json), encoder.encode(capture.portable_predictor_package_json));
     return new Workflow(archive, JSON.parse(capture.training_outcome_json), { sourceId, components: [...components], preprocessing, seed, folds, inputSampleIds: [...dense.sample_ids] });
   } finally { nativeController.close(); }
 }
@@ -187,10 +187,7 @@ export async function workflowReplay(model, value, options = {}, calibration = f
   if (options.preprocessing !== undefined && !['raw', 'snv_savgol'].includes(options.preprocessing)) throw new TypeError('preprocessing must be raw or snv_savgol');
   const deps = await workflowDependencies(options), { dag, io } = deps, hash = hashes(deps.digest);
   const archive = await readPortableArchiveV2(model instanceof Workflow ? model.archive : model);
-  const packagePath = archive.manifest.replay.portable_predictor_package.member_path;
-  const packageJson = new TextDecoder('utf-8', { fatal: true }).decode(archive.members[packagePath]);
-  dag.validate_archive_v2_portable_payloads_json(json(archive.manifest), packageJson,
-    json(Object.fromEntries(Object.entries(archive.members).map(([name, bytes]) => [name, [...bytes]]))));
+  const packageJson = new TextDecoder('utf-8', { fatal: true }).decode(archive.package);
   const pkg = JSON.parse(packageJson);
   const profile = boundedProfile(pkg);
   if (calibration && Object.values(pkg.effective_plan.node_plans).some(node => node.controller_id === 'controller:methods.pls')) {
@@ -261,14 +258,12 @@ export async function load(value, options = {}) {
   if (!rawArchive && (record?.schema !== 'nirs4all.workflow.v1' || !Array.isArray(record.archive) || !record.archive.length
     || record.archive.some(byte => !Number.isInteger(byte) || byte < 0 || byte > 255))) throw new TypeError('Invalid workflow export');
   const archive = rawArchive ? Uint8Array.from(new Uint8Array(value)) : Uint8Array.from(record.archive);
-  const loaded = await readPortableArchiveV2(archive), dag = await runtime(options);
+  const loaded = await readPortableArchiveV2(archive);
   const decoder = new TextDecoder('utf-8', { fatal: true });
-  const packageJson = decoder.decode(loaded.members[loaded.manifest.replay.portable_predictor_package.member_path]);
-  dag.validate_archive_v2_portable_payloads_json(json(loaded.manifest), packageJson,
-    json(Object.fromEntries(Object.entries(loaded.members).map(([name, bytes]) => [name, [...bytes]]))));
+  const packageJson = decoder.decode(loaded.package);
   const pkg = JSON.parse(packageJson);
   const profile = boundedProfile(pkg);
-  const actualOutcome = JSON.parse(decoder.decode(loaded.members[loaded.manifest.replay.training_artifacts.training_outcome.member_path]));
+  const actualOutcome = JSON.parse(decoder.decode(loaded.trainingOutcome));
   const binding = Object.values(pkg.template.campaign.data_bindings).flat()[0];
   const actualConfig = { sourceId: binding.source_ids[0], components: pkg.template.campaign.generation.dimensions[0].choices.map(choice => choice.value),
     preprocessing: pkg.template.graph.nodes[0].operator === 'pls'

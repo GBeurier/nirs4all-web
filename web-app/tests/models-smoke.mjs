@@ -111,6 +111,7 @@ try {
         }
         await page.getByText('CV Scores', { exact: true }).first().waitFor()
         await page.locator('[data-step="predict"]').click()
+        await page.getByLabel('Spectra header row', { exact: true }).selectOption('yes')
         await page.locator('input[type=file]').last().setInputFiles(new URL(`../src/data/demo/${sample}/Xtest.csv`, import.meta.url).pathname)
         await page.locator('svg.recharts-surface').first().waitFor({ timeout: 30000 })
         assert.deepEqual(errors, [])

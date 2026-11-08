@@ -4,14 +4,10 @@
   "collaborators": [
     "G. Beurier <beurier@cirad.fr>"
   ],
-  "description": "WASM bindings for DAG-ML JSON contracts.",
-  "version": "0.3.44",
+  "description": "Private current DAG score-family qualification artifact; not published.",
+  "version": "0.4.0",
   "license": "CECILL-2.1 OR AGPL-3.0-or-later",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/GBeurier/dag-ml.git",
-    "directory": "crates/dag-ml-wasm"
-  },
+  "repository": "https://github.com/GBeurier/dag-ml",
   "files": [
     "dag_ml_wasm_bg.wasm",
     "dag_ml_wasm.js",
@@ -62,8 +58,5 @@
       "optional": true
     }
   },
-  "publishConfig": {
-    "access": "public",
-    "provenance": true
-  }
+  "private": true
 }

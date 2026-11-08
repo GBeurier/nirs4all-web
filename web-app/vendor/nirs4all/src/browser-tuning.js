@@ -101,7 +101,7 @@ export async function tuneBrowser(data, options = {}) {
         return result;
       } });
     const search = JSON.parse(dag.host_hpo_search_json(plan, json([manifest]), json(env), json(request),
-      optimizer.committed === null ? undefined : json(optimizer.committed), nativeController.callback, optimizer.callback));
+      optimizer.committedJson ?? undefined, nativeController.callback, optimizer.callback));
     if (!search.selected_params || search.status !== 'completed') throw new Error(`Native tuning did not complete: ${search.status}`);
     const selectedPlan = compile(deps, dense, raw, sourceId, seed, manifest, env, search.selected_params, false);
     const runId = options.runId ?? `run:browser:tuning:${Date.now()}`;
@@ -168,6 +168,7 @@ export async function loadBrowserTuning(record, options = {}) {
   dag.validate_initial_full_refit_package_json(record.packageJson);
   const { N4mWasmHostOptimizer } = await import('dag-ml-wasm/n4m-optimizer');
   const c = record.config, contracts = record.contracts;
+  const committed = typeof record.snapshot?.committed_json === 'string' ? JSON.parse(record.snapshot.committed_json) : null;
   const pkg = JSON.parse(record.packageJson), graph = pkg.effective_plan.graph_plan.graph;
   const equal = (left, right) => workflowHashes(deps.digest)(left) === workflowHashes(deps.digest)(right);
   if (graph.nodes.length !== 1 || graph.nodes[0].id !== 'model:pls' || !equal(graph.nodes[0].operator, workflowRecipe)
@@ -175,7 +176,7 @@ export async function loadBrowserTuning(record, options = {}) {
     || contracts.request.metric !== c.metric || contracts.request.direction !== direction(c.metric)
     || contracts.request.optimizer_descriptor.seed !== c.seed || contracts.request.optimizer_descriptor.sampler !== c.sampler
     || contracts.objective.source_schema.source_id !== c.sourceId
-    || record.snapshot.committed.trials.length !== c.trials) throw new Error('Browser tuning options differ from native study contracts');
+    || committed?.trials?.length !== c.trials) throw new Error('Browser tuning options differ from native study contracts');
   const controller = await publicController(deps, graph.metadata.target_names, c.sourceId,
     { X: [], sample_ids: [], y: null });
   try {
@@ -186,7 +187,7 @@ export async function loadBrowserTuning(record, options = {}) {
     objective: contracts.objective, state: record.snapshot, persist: () => {} });
   try {
     const verified = JSON.parse(dag.host_hpo_search_json(contracts.plan, json([contracts.manifest]), json(contracts.envelope),
-      json({ ...contracts.request, trial_budget: record.snapshot.committed.trials.length }), json(optimizer.committed),
+      json({ ...contracts.request, trial_budget: committed.trials.length }), optimizer.committedJson,
       () => { throw new Error('Cold tuning validation cannot fit'); }, optimizer.callback));
     const params = pkg.effective_plan.graph_plan.graph.nodes[0].params;
     if (json(verified.selected_params) !== json(record.search.selected_params)

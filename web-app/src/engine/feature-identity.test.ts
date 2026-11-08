@@ -9,7 +9,8 @@ import { loadSampleDataset } from '@/data/samples'
 import { buildN4aBundle, parseN4a, serializeTyped } from '@/lib/n4a'
 import { loadLibn4mBackend } from './backends'
 import { checkInputColumns, columnMismatch, columnName, datasetFeatureIdentity, parseFeatureIdentity } from './feature-identity'
-import { type FittedState, type ModelBackend, predictPipeline, runPipeline } from './orchestrate'
+import { type FittedState, type ModelBackend, predictPipeline } from './orchestrate'
+import { runPipelineOracle } from './testing/run-pipeline-oracle'
 import type { MaterializedDataset, PipelineDSL, RunResult } from './types'
 
 let backend: ModelBackend
@@ -66,7 +67,7 @@ describe('libn4m predict with a known spectral axis', () => {
   let run: RunResult
   beforeAll(async () => {
     ds = await loadSampleDataset('corn')
-    run = await runPipeline(ds, ridge, {}, backend)
+    run = await runPipelineOracle(ds, ridge, {}, backend)
   })
 
   it('records the axis in the fitted pipeline', () => {
@@ -102,7 +103,7 @@ describe('libn4m predict with a known spectral axis', () => {
     ['meat', { ...snvPls, model: { id: 'm', type: n4mToken('models.classification.pls_lda'), params: { n_components: 6 } } }],
   ] as const)('%s: the native named pipeline predicts exactly like the per-step replay', async (sample, dsl) => {
     const data = await loadSampleDataset(sample)
-    const fitted = await runPipeline(data, dsl, {}, backend)
+    const fitted = await runPipelineOracle(data, dsl, {}, backend)
     expect(fitted.model.features).toBeDefined()
     const named = predictPipeline(fitted.model, data.X, data.nSamples, data.nFeatures, backend, fitted.model.features!.names)
     const positional = predictPipeline({ ...fitted.model, features: undefined }, data.X, data.nSamples, data.nFeatures, backend)
@@ -116,7 +117,7 @@ describe('.n4a bundle column identity', () => {
   let run: RunResult
   beforeAll(async () => {
     ds = await loadSampleDataset('corn')
-    run = await runPipeline(ds, snvPls, {}, backend)
+    run = await runPipelineOracle(ds, snvPls, {}, backend)
   })
 
   it('round-trips the identity and still refuses permuted columns', () => {

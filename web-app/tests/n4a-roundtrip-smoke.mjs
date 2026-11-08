@@ -4,11 +4,11 @@
 // that the bundle carries the n4m fitted states as portable N4ME bytes which the
 // browser engine reloads (NativeEstimator.fromN4me) into identical predictions.
 import { tmpdir } from 'node:os'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { chromium } from 'playwright-core'
+import { methodsOnlyRefusal, readWebHostContainer, webHostDeclarationProblem } from './n4a-container-reader.mjs'
 import {
-  assertResultsPanels,
   capturePredictionPanel,
   collectRuntimeEvidence,
   comparePredictionPanels,
@@ -27,6 +27,7 @@ const evidence = {
   exported_model_bundle: null,
   exported_model_bundle_bytes: null,
   exported_model_bundle_sha256: null,
+  exported_model_bundle_member_sha256: null,
   training_results_panels: null,
   training_runtime: null,
   pre_export_prediction_panel: null,
@@ -55,6 +56,51 @@ page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resourc
 page.on('pageerror', (e) => errors.push('PAGEERR: ' + e.message))
 const fail = (m) => { console.error('✗ ' + m); process.exitCode = 1 }
 
+// The legacy shared evidence helper still targets ResultsVisualization. Keep
+// its other numerical/round-trip helpers intact; assert the adopted UI here.
+async function assertInspectorPanels(page) {
+  const inspector = page.locator('[data-owner-inspector]')
+  await inspector.waitFor({ timeout: 10000 })
+  await inspector.locator('[data-testid="n4a-results-list"]').waitFor({ timeout: 10000 })
+  await inspector.locator('svg[role="img"][aria-label="Predicted versus observed"]').waitFor({ timeout: 10000 })
+  await page.waitForFunction(() => {
+    const svg = document.querySelector('[data-owner-inspector] svg[role="img"][aria-label="Predicted versus observed"]')
+    const points = Number(svg?.querySelector('desc')?.textContent?.match(/^(\d+) points\b/)?.[1] ?? 0)
+    const canvas = svg?.closest('.n4wb-plot')?.querySelector('canvas')
+    if (!points || !canvas?.width || !canvas?.height) return false
+    const pixels = canvas.getContext('2d')?.getImageData(0, 0, canvas.width, canvas.height).data
+    return pixels?.some((value, index) => index % 4 === 3 && value > 0) === true
+  }, null, { timeout: 10000 })
+  const owner = await page.evaluate(() => {
+    const run = window.__n4aLastRun
+    return run ? { metric: run.scoreMetric, cv: run.cv, refit: run.refit } : null
+  })
+  if (!owner?.cv?.predictions.length || owner.cv.status !== 'completed') throw new Error('missing real completed CV predictions')
+  await inspector.locator('[data-testid="n4a-results-list"]').getByText('CV Scores', { exact: true }).first().waitFor()
+  await inspector.locator('[data-testid="n4a-results-list"]').getByText(owner.refit.name, { exact: true }).first().waitFor()
+  const scoreRef = await inspector.locator('label').filter({ hasText: 'Evaluation score' }).locator('select').inputValue()
+  if (scoreRef !== `${owner.metric}:cv`) throw new Error(`unexpected Inspector score context ${scoreRef}`)
+  const selectedScore = inspector.locator('summary').filter({ hasText: 'Selected owner score:' })
+  if (!(await selectedScore.innerText()).includes(owner.cv.name)) throw new Error('selected owner score context is missing')
+  await selectedScore.click()
+  const rows = await inspector.locator('[aria-label="Selected owner predictions"] tbody tr').evaluateAll((nodes) =>
+    nodes.map((row) => Array.from(row.querySelectorAll('th, td'), (cell) => cell.textContent.trim())),
+  )
+  const expected = owner.cv.predictions.map((row) => [String(row.sampleId), String(row.actualLabel ?? row.actual), String(row.predictedLabel ?? row.predicted), String(row.residual)])
+  if (JSON.stringify(rows) !== JSON.stringify(expected)) throw new Error('rendered owner CV prediction rows changed')
+  return {
+    results_list: true,
+    results_visualization: true,
+    results_inspector: true,
+    has_cv_scores: true,
+    has_refit_scores: true,
+    has_prediction_view: true,
+    chart_count: await inspector.locator('svg[role="img"][aria-label="Predicted versus observed"]').count(),
+    prediction_rows: rows.length,
+    score_context: scoreRef,
+  }
+}
+
 try {
   // 1. train a model
   await page.goto(APP_URL, { waitUntil: 'load', timeout: 30000 })
@@ -63,13 +109,23 @@ try {
   await page.locator('[data-step="pipeline"]').click()
   await page.getByRole('button', { name: /Run pipeline/i }).click()
   await page.waitForSelector('text=/CV Scores/', { timeout: 45000 })
-  evidence.training_results_panels = await assertResultsPanels(page)
+  if (ARTIFACTS_DIR) {
+    const rtResultJson = await page.evaluate(() => {
+      const rtResult = window.__n4aLastRun?.rtResult
+      if (!rtResult) throw new Error('Missing worker rtResult on the existing round-trip training run; cannot write converted-prediction evidence.')
+      return JSON.stringify(rtResult)
+    })
+    await mkdir(ARTIFACTS_DIR, { recursive: true })
+    await writeFile(join(ARTIFACTS_DIR, 'predictions.rt_result.json'), rtResultJson + '\n')
+  }
+  evidence.training_results_panels = await assertInspectorPanels(page)
   evidence.training_runtime = await collectRuntimeEvidence(page)
   console.log('✓ trained a model')
 
   // 2. predict before export so the re-imported bundle has a stable numeric baseline.
   await page.locator('[data-step="predict"]').click()
   await page.waitForSelector('text=/Predict on new spectra/', { timeout: 10000 })
+  await page.getByLabel('Spectra header row', { exact: true }).selectOption('yes')
   await page.locator('input[type=file][accept*="csv"]').last().setInputFiles(FRUIT_XTEST)
   evidence.pre_export_prediction_panel = await capturePredictionPanel(page)
   console.log(`✓ pre-export model predicted ${evidence.pre_export_prediction_panel.predicted_samples} spectra`)
@@ -90,14 +146,25 @@ try {
   evidence.exported_model_bundle_sha256 = exportedHash.sha256
   console.log(`✓ exported .n4a → ${dl.suggestedFilename()}`)
   if (!/\.n4a$/.test(dl.suggestedFilename())) fail('exported file is not a .n4a')
+  // the file is a real Core V1 container: Core's reader verifies it, the declared owner,
+  // feature, entrypoint and raw SHA-256 identity must match the bundle member
+  const container = await readWebHostContainer(n4aPath)
+  evidence.exported_model_bundle_member_sha256 = container.memberSha256
+  const declaration = webHostDeclarationProblem(container)
+  if (declaration) fail(`exported .n4a is not the declared Web host container: ${declaration}`)
+  else console.log(`✓ .n4a is a Core V1 container (${container.manifest.container_id}); member SHA-256 equals the declared fingerprint`)
+  // readable by Core, executable only by the Web host: the Methods-only route refuses it with Core's own message
+  const refusal = await methodsOnlyRefusal(n4aPath)
+  if (refusal === null) fail('the Methods-only route accepted a Web host container')
+  else console.log(`✓ Methods-only route refuses the Web host container (Core: ${refusal.slice(0, 100)})`)
   // the n4m model and every fitted n4m step are N4ME payloads (base64 "N4ME" magic)
-  const bundle = JSON.parse(await readFile(n4aPath, 'utf8'))
+  const bundle = container.bundle
   const isN4me = (value) => typeof value?.$u8 === 'string' && Buffer.from(value.$u8, 'base64').subarray(0, 4).toString('latin1') === 'N4ME'
   const state = bundle.model?.state
-  if (bundle.version !== 2 || !isN4me(state?.model?.n4me) || !state.chain.every((step) => step.state === null || isN4me(step.state))) {
+  if (bundle.version !== 3 || !isN4me(state?.model?.n4me) || !state.chain.every((step) => step.state === null || isN4me(step.state))) {
     fail('exported .n4a does not carry the n4m fitted states as N4ME')
   } else {
-    console.log(`✓ .n4a v2 carries N4ME states (${bundle.model.dsl.model.type} + ${state.chain.length} step${state.chain.length === 1 ? '' : 's'})`)
+    console.log(`✓ .n4a host payload v3 carries N4ME states (${bundle.model.dsl.model.type} + ${state.chain.length} step${state.chain.length === 1 ? '' : 's'})`)
   }
 
   // 4. reload the app FRESH (no dataset, no run) — clear the persisted session
@@ -119,6 +186,7 @@ try {
   console.log('✓ imported .n4a into a fresh session → Predict unlocked (no retrain)')
 
   // 6. predict on new spectra and compare with the pre-export prediction panel.
+  await page.getByLabel('Spectra header row', { exact: true }).selectOption('yes')
   await page.locator('input[type=file][accept*="csv"]').last().setInputFiles(FRUIT_XTEST)
   evidence.imported_prediction_panel = await capturePredictionPanel(page)
   evidence.prediction_comparison = comparePredictionPanels(evidence.pre_export_prediction_panel, evidence.imported_prediction_panel, 0)

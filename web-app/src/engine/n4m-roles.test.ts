@@ -13,7 +13,8 @@ import type { Mat } from './algo/linalg'
 import { loadLibn4mBackend } from './backends'
 import { augmentRows, loadEstimator, splitRows } from './methods/n4m'
 import { libn4mPreprocessor } from './methods/preproc'
-import { type FittedState, type ModelBackend, predictPipeline, runPipeline } from './orchestrate'
+import { type FittedState, type ModelBackend, predictPipeline } from './orchestrate'
+import { runPipelineOracle } from './testing/run-pipeline-oracle'
 import type { MaterializedDataset, PipelineDSL } from './types'
 import type { Classifier, NativeEstimator, SampleFilter } from './wasm/methods/index.js'
 
@@ -149,7 +150,7 @@ describe('web-trained n4m pipelines round-trip as N4ME', () => {
       ],
       model: { id: 'model', type: model, params },
     }
-    const run = await runPipeline(ds, dsl, {}, backend)
+    const run = await runPipelineOracle(ds, dsl, {}, backend)
     const state = run.model.state as FittedState
     // every fitted n4m state is portable N4ME; the train-only augmenter stores none
     expect(state.chain.map((s) => s.state instanceof Uint8Array)).toEqual([true, true, false])

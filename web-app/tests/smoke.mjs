@@ -43,26 +43,50 @@ try {
   if (!/RMSE/i.test(body)) fail('expected RMSE metric in results')
   else console.log('✓ RMSE metric present')
 
-  // 3b. dag-ml executed/compiled the pipeline (served build only; skipped under file://)
-  if (!String(APP_URL).startsWith('file:')) {
-    if (/by dag-ml/i.test(body)) console.log('✓ pipeline run via dag-ml-wasm (badge present)')
-    else fail('expected a "by dag-ml" badge on the served build')
-    // dag-ml-data served the X/y blocks (the data-contract layer is wired in)
-    if (/data by dag-ml-data/i.test(body)) console.log('✓ data materialized via dag-ml-data (badge present)')
-    else fail('expected a "data by dag-ml-data" badge on the served build')
-  }
+  // 3b. dag-ml executed/compiled the pipeline (served and file:// single-file builds alike)
+  if (/by dag-ml/i.test(body)) console.log('✓ pipeline run via dag-ml-wasm (badge present)')
+  else fail('expected a "by dag-ml" badge')
+  // dag-ml-data served the X/y blocks (the data-contract layer is wired in)
+  if (/data by dag-ml-data/i.test(body)) console.log('✓ data materialized via dag-ml-data (badge present)')
+  else fail('expected a "data by dag-ml-data" badge')
 
-  // 4. visualization tab content present (parity / residual chart svg)
-  const svgCount = await page.locator('svg.recharts-surface').count()
-  if (svgCount < 1) fail('expected at least one recharts chart')
-  else console.log(`✓ ${svgCount} charts rendered`)
+  // 4. Shared Inspector: real parity points, a painted canvas and exact owner
+  // prediction rows in their selected CV context (an empty shell cannot pass).
+  const inspector = page.locator('[data-owner-inspector]')
+  await inspector.locator('svg[role="img"][aria-label="Predicted versus observed"]').waitFor({ timeout: 10000 })
+  await page.waitForFunction(() => {
+    const svg = document.querySelector('[data-owner-inspector] svg[role="img"][aria-label="Predicted versus observed"]')
+    const points = Number(svg?.querySelector('desc')?.textContent?.match(/^(\d+) points\b/)?.[1] ?? 0)
+    const canvas = svg?.closest('.n4wb-plot')?.querySelector('canvas')
+    if (!points || !canvas?.width || !canvas?.height) return false
+    const pixels = canvas.getContext('2d')?.getImageData(0, 0, canvas.width, canvas.height).data
+    return pixels?.some((value, index) => index % 4 === 3 && value > 0) === true
+  }, null, { timeout: 10000 })
+  const owner = await page.evaluate(() => {
+    const run = window.__n4aLastRun
+    return run ? { metric: run.scoreMetric, score: run.cv } : null
+  })
+  if (!owner?.score || owner.score.status !== 'completed' || !owner.score.predictions.length) throw new Error('missing completed owner CV predictions')
+  const scoreRef = await inspector.locator('label').filter({ hasText: 'Evaluation score' }).locator('select').inputValue()
+  if (scoreRef !== `${owner.metric}:cv`) throw new Error(`unexpected Inspector score context ${scoreRef}`)
+  const selectedScore = inspector.locator('summary').filter({ hasText: 'Selected owner score:' })
+  if (!(await selectedScore.innerText()).includes(owner.score.name)) throw new Error('selected score label differs from owner CV context')
+  await selectedScore.click()
+  const rows = await inspector.locator('[aria-label="Selected owner predictions"] tbody tr').evaluateAll((nodes) =>
+    nodes.map((row) => Array.from(row.querySelectorAll('th, td'), (cell) => cell.textContent.trim())),
+  )
+  const expectedRows = owner.score.predictions.map((row) => [String(row.sampleId), String(row.actualLabel ?? row.actual), String(row.predictedLabel ?? row.predicted), String(row.residual)])
+  if (JSON.stringify(rows) !== JSON.stringify(expectedRows)) throw new Error('Inspector prediction rows differ from the real owner CV result')
+  console.log(`✓ shared Inspector parity plot and ${rows.length} owner prediction rows rendered (${scoreRef})`)
 
   // 5. predict on new spectra → histogram (open the Predict step, use the sample's test spectra)
   const FRUIT_XTEST = process.env.FRUIT_XTEST || new URL('../src/data/demo/corn/Xtest.csv', import.meta.url).pathname
   await page.locator('[data-step="predict"]').click()
   await page.waitForTimeout(300)
+  await page.getByLabel('Spectra header row', { exact: true }).selectOption('yes')
   await page.locator('input[type=file]').last().setInputFiles(FRUIT_XTEST)
-  await page.waitForTimeout(1500)
+  // wait for the prediction to complete (same completion text as the n4a round-trip smoke), not a fixed delay
+  await page.waitForSelector('text=/samples? predicted\\./', { timeout: 30000 })
   const svgAfter = await page.locator('svg.recharts-surface').count()
   if (svgAfter >= 1) console.log(`✓ prediction produced a histogram (${svgAfter} chart(s) on Predict)`)
   else fail('prediction did not render a histogram')

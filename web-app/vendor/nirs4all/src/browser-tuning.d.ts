@@ -1,4 +1,11 @@
 import type { WorkflowOptions } from './workflow.js';
+export interface BrowserTuningSnapshot {
+  schema: 'dagml.n4m.wasm-hpo.v2';
+  contract: unknown;
+  committed_json: string | null;
+  prepared_json: string | null;
+  n4mopt: number[];
+}
 export interface BrowserTuneOptions extends Omit<WorkflowOptions, 'components' | 'preprocessing'> {
   trials?: number; sampler?: 'random' | 'tpe' | 'sobol' | 'lhs'; metric?: 'rmse' | 'mae' | 'r2';
   checkpoint?: BrowserTuningResult | Record<string, unknown>;
@@ -9,7 +16,7 @@ export interface BrowserTuneOptions extends Omit<WorkflowOptions, 'components' |
 export class BrowserTuningResult {
   readonly packageJson: string;
   readonly search: Record<string, unknown>;
-  readonly snapshot: Record<string, unknown>;
+  readonly snapshot: BrowserTuningSnapshot;
   readonly config: Record<string, unknown>;
   trials(): Record<string, unknown>[];
   compare(query?: { trialIndex?: number; partition?: string; foldId?: string; level?: string }): Record<string, unknown>[];

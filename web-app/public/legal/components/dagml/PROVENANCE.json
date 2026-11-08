@@ -1,19 +1,147 @@
 {
   "schema": "nirs4all-web.public-npm-acquisition.v1",
   "package": "dag-ml-wasm",
-  "version": "0.3.44",
+  "version": "0.4.0",
   "source": {
+    "kind": "local-working-tree-export",
     "repository": "https://github.com/GBeurier/dag-ml",
-    "commit": "01226120552529aad45e5ba60d3f6327894adc67",
-    "tree": "14f02a3278e74e953a94f482dc4a4f8800c85f54"
+    "base_commit_sha": "963abc4531789d6483e9d60d8d2e30549fc5ca9e",
+    "base_tree_sha": "14f02a3278e74e953a94f482dc4a4f8800c85f54",
+    "working_tree_dirty": true,
+    "artifact_origin": "Local locked release build (size-optimized, LTO) with the observation identity/scoring WASM facade, the DAG score-family/outcome reader, the inline-error formatter and the GroupKFold explicit-candidate API (target-missing candidates outside CV); wasm/js/d.ts changed vs the inline-error package, other companions byte-identical; not a published package or immutable clean-tree rebuild",
+    "wasm_facade_sha256": {
+      "crates/dag-ml-wasm/src/lib.rs": "2351c6c8bed26206f6908088cd6fdb8322db87e9ad201bcf6172b7582e15c143",
+      "crates/dag-ml-wasm/src/observation_scoring.rs": "8c7b56710a7bdaa2b008c28081d2925ad1d22e0c698c8f33630db1fe1d6922ca",
+      "crates/dag-ml-wasm/src/js_text.rs": "7c7557dd8636bdc836961aa141b914b390ed6a24fd0a7bc1d97210f945fb8a23",
+      "crates/dag-ml-core/src/fold.rs": "5786f3b06855ca47d2c9d8b4726dd838ba5edc6f27b4599f818bd6d40294e1a5",
+      "crates/dag-ml-core/src/nested_selection.rs": "fa03e30abf978caeda875960b0e8261d6a2347171d6944cbef01a521323b257d"
+    }
   },
   "acquisition": {
-    "metadata_url": "https://registry.npmjs.org/dag-ml-wasm/0.3.44",
-    "tarball_url": "https://registry.npmjs.org/dag-ml-wasm/-/dag-ml-wasm-0.3.44.tgz",
-    "size": 3653607,
-    "sha256": "eb37342b5183a41783dacf0557a48bc65daa74a395a8e55fb8047e470664d666",
-    "sha1": "b1c4b9844f45c17c772ab1c8332c585f9a81012a",
-    "integrity": "sha512-2Bl6ZLmpJv2918vEt2d1kUtmpl2OiIEoVLWu3+U0C/Q+I35zBPi83pyZeBC8jGdPz70sUF7WMRcgmsBvoF0uCg=="
+    "kind": "local-unpublished",
+    "note": "Locked local release WASM (GroupKFold target-missing successor, raw 608d1345…), wasm-bindgen 0.2.129; private, no registry identity. Owner Node gates recorded under group-kfold-target-missing/root-gates. Browser/runtime qualification is recorded separately.",
+    "files": {
+      "LICENSE": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-package-web/LICENSE",
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+      },
+      "LICENSES/AGPL-3.0-or-later.txt": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-package-web/LICENSES/AGPL-3.0-or-later.txt",
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+      },
+      "LICENSES/Apache-2.0.txt": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-package-web/LICENSES/Apache-2.0.txt",
+        "size": 10280,
+        "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+      },
+      "LICENSES/BSD-3-Clause.txt": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-package-web/LICENSES/BSD-3-Clause.txt",
+        "size": 1460,
+        "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
+      },
+      "LICENSES/CeCILL-2.1.txt": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-package-web/LICENSES/CeCILL-2.1.txt",
+        "size": 21778,
+        "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+      },
+      "LICENSES/MIT.txt": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-package-web/LICENSES/MIT.txt",
+        "size": 1078,
+        "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+      },
+      "LICENSING.md": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-package-web/LICENSING.md",
+        "size": 1406,
+        "sha256": "f9f26e32462eb28e350d0bd4db913ee5ccbd3a1eb88d97e78d187e1b35b86ae9"
+      },
+      "LICENSING_FR.md": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-package-web/LICENSING_FR.md",
+        "size": 1521,
+        "sha256": "6f907830be970cbd87723ebaa1e58ffd3dd3f69692a5b211edfc6ee964d93aff"
+      },
+      "README.md": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-package-web/README.md",
+        "size": 7115,
+        "sha256": "03bbc86037a16568663889111da16d36bc6f42b7ec141fbad861049301a99c3a"
+      },
+      "THIRD_PARTY_NOTICES.md": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-package-web/THIRD_PARTY_NOTICES.md",
+        "size": 1573,
+        "sha256": "01a4064f18fa28336f49c40a4e2db4b40ebee4766160320174e5aaadc41304fd"
+      },
+      "dag_ml_wasm.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-group-kfold-package-web/dag_ml_wasm.d.ts",
+        "size": 25521,
+        "sha256": "69208779651d17baa99201bb0e58027144c0054cefac267ed1f1201d19fa7ddb"
+      },
+      "dag_ml_wasm.js": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-group-kfold-package-web/dag_ml_wasm.js",
+        "size": 70810,
+        "sha256": "f141524335a1a9de91dd55bf36f70a42db2cc13564e8ea3b30c3228904236e3e"
+      },
+      "dag_ml_wasm_bg.wasm": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-group-kfold-package-web/dag_ml_wasm_bg.wasm",
+        "size": 9117630,
+        "sha256": "9dd4ed45e48755aabf7ee9f3c08183005eec777ec7a41ca997fa8b8765ca8347"
+      },
+      "dag_ml_wasm_bg.wasm.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-group-kfold-package-web/dag_ml_wasm_bg.wasm.d.ts",
+        "size": 8263,
+        "sha256": "762f9413dbe5810229d0da599d036f905ca9fec7ab2f76f172d4a9473cba36b4"
+      },
+      "multimodal_archive.mjs": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-package-web/multimodal_archive.mjs",
+        "size": 1997,
+        "sha256": "caaf58882459a24b6add0f04f40b128cd4d89f952af0900c79043dc990bef011"
+      },
+      "multimodal_dataset_replay.mjs": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-package-web/multimodal_dataset_replay.mjs",
+        "size": 5816,
+        "sha256": "892fbca7465a316fb83b69ac50617a04fa8d929d8627d2eb783451c5933f7bf3"
+      },
+      "n4m_controller.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-package-web/n4m_controller.d.ts",
+        "size": 2135,
+        "sha256": "cb662945ea21493f5e727b66477d9ef971cfd9d37771b17ebb6aebc236872cf9"
+      },
+      "n4m_controller.mjs": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-package-web/n4m_controller.mjs",
+        "size": 20386,
+        "sha256": "a9d0bc6a0b05b502721517da55999ddf093133d605f56286b3e5944bbf1bb635"
+      },
+      "n4m_estimator_controller.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-package-web/n4m_estimator_controller.d.ts",
+        "size": 1019,
+        "sha256": "5bef931949ee5875f3089dc993660539597b6cc4979ef77b7e1c96a1fc8bb084"
+      },
+      "n4m_estimator_controller.mjs": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-package-web/n4m_estimator_controller.mjs",
+        "size": 18968,
+        "sha256": "2c40a06f2a62324f292139b454a677282c6661da4c551de7bab6dcfef335e8d8"
+      },
+      "n4m_hpo_optimizer.d.ts": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-package-web/n4m_hpo_optimizer.d.ts",
+        "size": 1339,
+        "sha256": "b02ef2d5df584f5f972c1544e0dfc324c931123cfb4ccb4ed9ebc4420570119b"
+      },
+      "n4m_hpo_optimizer.mjs": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-package-web/n4m_hpo_optimizer.mjs",
+        "size": 12276,
+        "sha256": "5664f662bc1af50026a3f5446be289d16dc6725d2fbeaf24098a32f6246b8ff5"
+      },
+      "n4m_multimodal_controller.mjs": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-package-web/n4m_multimodal_controller.mjs",
+        "size": 25073,
+        "sha256": "9c5354d3dc0e6ff4f63be6f88640445c4ea3736c9759ef505672fa21d4ee2a63"
+      },
+      "package.json": {
+        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-group-kfold-package-web/package.json",
+        "size": 1623,
+        "sha256": "a12ab6814016ad48f850ab33f26d9915f3ceba733fdd285a917e92ea31945eb7"
+      }
+    }
   },
   "reproducibility": {
     "performed_by_web": false,
@@ -48,33 +176,41 @@
       "size": 1406,
       "sha256": "f9f26e32462eb28e350d0bd4db913ee5ccbd3a1eb88d97e78d187e1b35b86ae9"
     },
+    "LICENSING_FR.md": {
+      "size": 1521,
+      "sha256": "6f907830be970cbd87723ebaa1e58ffd3dd3f69692a5b211edfc6ee964d93aff"
+    },
     "README.md": {
-      "size": 6397,
-      "sha256": "235fc98b4aa19a29b365e88d9a76c23c8703ea2c413f7346cd7a8b7b47d2e25d"
+      "size": 7115,
+      "sha256": "03bbc86037a16568663889111da16d36bc6f42b7ec141fbad861049301a99c3a"
     },
     "THIRD_PARTY_NOTICES.md": {
       "size": 1573,
       "sha256": "01a4064f18fa28336f49c40a4e2db4b40ebee4766160320174e5aaadc41304fd"
     },
     "dag_ml_wasm.d.ts": {
-      "size": 26749,
-      "sha256": "8c156ba0ac178e4457e68a0058280e1ead759d82013efa2af1bcf19623158e78"
+      "size": 25521,
+      "sha256": "69208779651d17baa99201bb0e58027144c0054cefac267ed1f1201d19fa7ddb"
     },
     "dag_ml_wasm.js": {
-      "size": 87206,
-      "sha256": "f4dce7451b4bb60a61aeb5f291cd434848d10cc72415a0bc0c71650339ee5699"
+      "size": 70810,
+      "sha256": "f141524335a1a9de91dd55bf36f70a42db2cc13564e8ea3b30c3228904236e3e"
     },
     "dag_ml_wasm_bg.wasm": {
-      "size": 10863620,
-      "sha256": "9329ecd5f1d1a4f77829c3023690d5b1d48421eec33322bae831b9d47a781e73"
+      "size": 9117630,
+      "sha256": "9dd4ed45e48755aabf7ee9f3c08183005eec777ec7a41ca997fa8b8765ca8347"
+    },
+    "dag_ml_wasm_bg.wasm.d.ts": {
+      "size": 8263,
+      "sha256": "762f9413dbe5810229d0da599d036f905ca9fec7ab2f76f172d4a9473cba36b4"
     },
     "multimodal_archive.mjs": {
-      "size": 2089,
-      "sha256": "164bb4cc8730f723bfe6807ec7ce7e92e579a43627c9c61d01d51063446f9a1f"
+      "size": 1997,
+      "sha256": "caaf58882459a24b6add0f04f40b128cd4d89f952af0900c79043dc990bef011"
     },
     "multimodal_dataset_replay.mjs": {
-      "size": 6033,
-      "sha256": "0305b6ae8ae75a33fc74d8ebc6f4e84b58911d973da3592da2f063d155923cdc"
+      "size": 5816,
+      "sha256": "892fbca7465a316fb83b69ac50617a04fa8d929d8627d2eb783451c5933f7bf3"
     },
     "n4m_controller.d.ts": {
       "size": 2135,
@@ -93,24 +229,20 @@
       "sha256": "2c40a06f2a62324f292139b454a677282c6661da4c551de7bab6dcfef335e8d8"
     },
     "n4m_hpo_optimizer.d.ts": {
-      "size": 1201,
-      "sha256": "0e914686077faccf611ce9b97fa8fb90a902dbba9c71cb1cfd7a75538654b5f0"
+      "size": 1339,
+      "sha256": "b02ef2d5df584f5f972c1544e0dfc324c931123cfb4ccb4ed9ebc4420570119b"
     },
     "n4m_hpo_optimizer.mjs": {
-      "size": 8917,
-      "sha256": "d68581fe58740df21652bdb9f47c448be49238b189dd4e7a7849958a6ea19d1a"
+      "size": 12276,
+      "sha256": "5664f662bc1af50026a3f5446be289d16dc6725d2fbeaf24098a32f6246b8ff5"
     },
     "n4m_multimodal_controller.mjs": {
       "size": 25073,
       "sha256": "9c5354d3dc0e6ff4f63be6f88640445c4ea3736c9759ef505672fa21d4ee2a63"
     },
     "package.json": {
-      "size": 1730,
-      "sha256": "dba65617c1697c3d07fc0a7537220e0590f62c4c153c8dd070c1116c57686aab"
-    },
-    "LICENSING_FR.md": {
-      "size": 1521,
-      "sha256": "6f907830be970cbd87723ebaa1e58ffd3dd3f69692a5b211edfc6ee964d93aff"
+      "size": 1623,
+      "sha256": "a12ab6814016ad48f850ab33f26d9915f3ceba733fdd285a917e92ea31945eb7"
     }
   }
 }

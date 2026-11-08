@@ -11,6 +11,155 @@ This package is the runtime surface that `nirs4all-web` should consume. The web
 application lives in `nirs4all-web`; this directory is for the reusable
 JavaScript/WASM binding and package metadata.
 
+## Canonical V1 `.n4a` exchange
+
+The new library actions are `produceN4aNative`, `inspectN4aBytes`,
+`predictN4aNative` and `retrainN4aNative`. Their source is being integrated with
+the shared Core portable owner API; compiled exchange qualification is pending.
+Use a matching local Core/DAG-ML/IO/Methods cohort until the coordinated V1
+package release. This section does not claim support from older published packages.
+
+The actions accept exact IO record and archive bytes. Core/IO derive identities
+and prepare requests, DAG-ML schedules training, scoring, selection and replay,
+and Methods owns fitted state and numerical operations. JavaScript marshals
+arrays and selects callback rows by sample ID. It does not compile recipes or
+replace missing state by fitting.
+
+```javascript
+import { produceN4aNative, predictN4aNative, retrainN4aNative } from 'nirs4all';
+
+const trained = await produceN4aNative(trainingRecordBytes, {
+  sourceId: 'spectra',
+  recipe: {
+    steps: [
+      { method_id: 'preprocessing.scaling.standard_scale', role: 'transformer', params: {} },
+      { method_id: 'models.regularized.ridge', role: 'regressor', params: { scale_x: false } },
+    ],
+    candidates: [{ alpha: 0.1 }, { alpha: 1.0 }],
+  },
+});
+const prediction = await predictN4aNative(trained.archiveBytes, {
+  entrypoint: 'predict-external',
+  sourceId: 'spectra',
+  record: predictionRecordBytes,
+});
+const retrained = await retrainN4aNative(trained.archiveBytes, newTrainingRecordBytes);
+```
+
+Production fits once and returns sealed `archiveBytes`. Retraining reads the
+recipe from the validated archive; the caller supplies no replacement recipe.
+Prediction exposes physical record-order `sampleIds` while preserving the signed
+DAG replay unchanged. Align replay values by sample ID and target name. Inspection
+returns the closed native-model view; readability alone does not grant execution.
+Parsed JavaScript diagnostic views use JSON numbers; retain archive bytes and
+exact owner JSON for identities or integers beyond JavaScript's exact range.
+
+The first exchange gate targets single-source standard_scale/Ridge regression
+with two complete targets, native Linux and Node WASM, including both prediction
+directions and stored-recipe retraining. Other methods, browsers, classifiers,
+partial targets and WASM calibration are not qualified by that gate. The dedicated
+`n4a_wasm_exchange` Rust target drives `tests/n4a-exchange-driver.mjs`; missing
+qualification inputs fail explicitly. Binding unit tests alone establish no
+numerical portability.
+
+### Generic `.n4a` storage (host payloads)
+
+`openN4aContainer`, `writeN4aContainer` and `writeN4aStream` read and write any V1
+`.n4a` container, including host-owned payloads Core cannot interpret. They are
+storage only: only the Core WASM bridge is loaded, never Methods or DAG-ML, and no
+owner payload is deserialized, trusted or executed. Readability is not executability;
+`predictN4aNative` still refuses anything outside the supported native profile.
+
+```javascript
+import { openN4aContainer, writeN4aContainer, writeN4aStream } from 'nirs4all';
+
+// Exact bytes held in WASM memory.
+const { archiveBytes, receipt } = await writeN4aContainer(manifestJson, [
+  { path: 'payloads/model.bin', bytes: hostModelBytes },
+]);
+const container = await openN4aContainer(archiveBytes);
+try {
+  container.view();                            // verified storage, `executability: 'not_evaluated'`
+  container.manifestBytes();                   // exact stored manifest.json
+  container.member('payloads/model.bin');      // exact bytes, or undefined
+  container.artifactMembers('artifact:model'); // [{ path, bytes }, ...]
+} finally {
+  container.close();                           // frees the WASM allocation
+}
+
+// An archive that stays outside WASM memory: a File/Blob or { size, read(offset, length) }.
+const external = await openN4aContainer(file, { memoryBudgetBytes: 64n * 1024n * 1024n });
+try {
+  for await (const chunk of external.memberStream('payloads/model.bin')) consume(chunk);
+  // The last chunk arrives only after Core matched every byte read against the receipt.
+  const whole = await external.readMember('payloads/small.json'); // allocates the whole member
+} finally {
+  external.close();
+}
+
+// Write without assembling the archive; sources are read twice (hash, then payload).
+await writeN4aStream(manifestJson, [{ path: 'payloads/model.bin', source: file }], sink, { base: external });
+```
+
+**Sources.** Exact bytes are copied into WASM memory once and keep Core's full owner
+semantic view. A `Blob`/`File`, or an object `{ size, read(offset, length) }` whose
+arguments are BigInt and whose `read` resolves to exactly that range, stays outside
+WASM: Core's scanner requests ranges, the host reads and feeds them, and only
+validated metadata is retained. `view()` of such a container reports `semantics` and
+`training_view` as `not_evaluated`, because no member bytes were read. The same
+scanner serves every host; JavaScript parses no ZIP, computes no CRC and no hash.
+
+**Verified streams.** `memberStream(path)` and `archiveStream()` re-read the source,
+Core hashes the bytes actually returned and compares them with the validated receipt,
+and the final chunk is delivered only after that comparison succeeds. Earlier chunks
+are therefore unverified until the iteration finishes without throwing; a changed
+source refuses with an integrity error. A bytes-held container streams from its
+immutable WASM copy. `readMember` and `readArchive` materialize and verify the whole
+range; `member`, `artifactMembers` and `archiveBytes` are synchronous and need a
+bytes-held container.
+
+**Budget.** `memoryBudgetBytes` (a safe integer, a BigInt or exact decimal text, never
+rounded) is an optional declaration of authorized working memory for one operation.
+Core admits an allocation against it before any wasm-bindgen copy and refuses with a
+memory error. Without it Core declares no ceiling and imposes no limit on content size,
+member count, manifest size or path length: only the allocator and the real host limits
+below remain. The budget charges working allocations, never payload bytes that stay in
+the source; the streaming chunk is derived by Core from the budget (a buffer size, not
+a limit), so a budget below one chunk refuses. It does not detect or promise machine
+memory. Every native action (`produceN4aNative`, `retrainN4aNative`,
+`predictN4aNative`, `inspectN4aBytes`) accepts the same option.
+
+**Writing.** Core derives each member's size, SHA-256 and CRC-32 and re-serializes the
+manifest canonically, so whitespace and key order of the input are not kept; use the
+original archive for an exact copy. `members` is an array so duplicate paths are
+refused instead of collapsed. With `{ base }`, each member the manifest declares and
+`members` omits comes from the base (digests from its validated inventory, bytes copied
+verified); omitting a member from the manifest removes it. The base is never modified.
+Owner identities stored inside replaced payloads are not recomputed.
+`writeN4aContainer` assembles the archive in memory (it needs a bytes-held base).
+`writeN4aStream` appends chunks to `sink = { write(chunk), close?(), abort?(error) }`
+and resolves to `{ receipt }`. A source whose bytes changed between the two passes is
+refused. On any failure after writing started, `abort(error)` is called and the sink
+must be discarded: it may already hold bytes that were not verified. `close()` runs only
+after Core confirmed the container SHA-256 of the bytes written.
+
+**Real host limits** (reported as `n4a host limit` or as the engine's own error, never
+as format limits): JavaScript safe integers (2^53 - 1) for `Blob` offsets and array
+sizes, the engine's typed-array length when a whole member or archive is materialized,
+and wasm32 linear memory, where an allocation that fails inside WASM traps instead of
+returning a refusal. Archive paths are names inside the container, never
+operating-system paths.
+
+**Not qualified.** This source has not been compiled or run against a built bridge.
+Not claimed: execution or scientific equivalence of host payloads, browser behaviour,
+or behaviour at multi-gigabyte sizes. Native actions (`produce`, `retrain`, `predict`)
+remain byte-based and bounded by WASM linear memory.
+
+## Existing routes awaiting consumer migration
+
+The following routes remain while active consumers migrate in their authorized
+batches. They do not establish canonical V1 exchange.
+
 The portable execution API delegates Kennard-Stone, SNV, MSC, Savitzky-Golay, and
 PLS component sweeps to `@nirs4all/methods`:
 
@@ -124,21 +273,25 @@ npm run qualify:archive-v2 -- /path/to/archive.n4a /path/to/scenario.json
 
 ### Complete portable predictor transport
 
-`writePortableArchiveV2(manifest, members)` writes DAG-ML-assembled opaque
-payloads through the canonical Core stored-ZIP writer. `members` is a mapping
-of relative paths to typed byte arrays. `readPortableArchiveV2(archiveBytes)`
-returns `{ archiveId, archiveSha256, manifest, members }` after native inventory,
-hash and byte-budget validation. Both reuse the same Core Rust source as the
-file/Python surfaces; JavaScript implements no ZIP format or numerical code.
-
-The additive optional `payloads.methods.role_pipelines` family transports
-complete RAW `methods_role_pipeline` wrappers at SHA-addressed
-`artifacts/<sha256>.json` paths. It retains the original signed DAG-ML package
-and controller trust contract; it does not relabel N4ME states as N4MM.
-These functions validate storage only. Before hydration, use DAG-ML's native
-portable-payload validator and replay driver with explicitly trusted controller
-manifests and signed current-cohort envelopes. The existing single-model
-`replayMethodsArchiveV2` remains a separate closed N4MM execution surface.
+`writeNativePredictorPackage(containerId, outcomeBytes, packageBytes)` and
+`writeNativeRefitPackage(containerId, packageBytes)` build a new owner-neutral
+Core V1 container holding the native Package V2 / Package V3 scientific closure
+from the exact DAG-ML JSON bytes; Core builds the closure through DAG-ML.
+`readPortableArchiveV2(archiveBytes, { entrypoint, memoryBudgetBytes })` returns
+`{ archiveId, archiveSha256, manifest, members, package, trainingOutcome, view }`
+after Core validated the container and the selected closure: `package` is the
+exact root package `Uint8Array`, `members` only the selected verified physical
+members, `manifest` the neutral Core V1 manifest (there is no physical replay
+map) and `trainingOutcome` is `null` for a standalone Package V3. There is no
+intrinsic byte cap; only the optional host-authorized `memoryBudgetBytes`
+bounds a call. Package V3 is readable and storable; WASM execution of Package V3
+remains explicitly unsupported. All entrypoints reuse the same Core Rust source
+as the file/Python surfaces; JavaScript implements no ZIP format or numerical
+code. The old physical payload writer is removed; existing Package2/3 semantic
+reader/replay names remain. Core retains RAW Methods state bytes, signed package
+bindings and explicit runtime controller trust; it does not reinterpret one
+state family as another. `replayMethodsArchiveV2` remains the separate closed
+N4MM execution surface.
 
 This transport supports a complete captured ensemble, including its learned
 meta-model. It does not claim the canonical U07 N-D encoders or the same-DAG
@@ -194,14 +347,15 @@ embeds training rows (kernel PLS, LW-PLS, ...) is exported only with
 `toJSON({ allowTrainingRows: true })`. This path requires `@nirs4all/methods`
 1.2 (ABI 2.14 role pipelines).
 
-Custom app hosts can inspect `capabilityManifest()`, `controllerCapabilities`,
-`runtimeSurfaces`, and `runtimeContracts` before rendering graph nodes or
-selecting a runtime. The manifest schema is `nirs4all-core.capabilities.v1`; it
-exposes the stable V1 controller IDs for Kennard-Stone, SNV, Savitzky-Golay,
-PLS regression, and the portable methods pipeline, with parameter lists
-matching the executable parser. `runtimeContracts` also makes explicit that
-standalone serialized-model prediction is available on the WASM and Rust
-surfaces.
+Custom app hosts can inspect `executionProfiles()` (also embedded in
+`capabilityManifest()` with `runtimeSurfaces`) before selecting a runtime. The
+registry (`nirs4all-core.execution-profiles.v1`) declares exactly two supported
+profiles, `native-workflow@1` and `native-conformal@1`, with per-operation
+`supported`/`unsupported` entries (compile, fit, predict, import, export) and
+the content types they carry (`nirs4all.native-pipeline.v1`;
+`nirs4all.calibrated.v1`, a Core wrapper schema that JS/WASM itself never emits:
+its calibrated import/export move the native archive V2 bytes). It is a metadata contract, not numerical certification. See
+`docs/EXECUTION_PROFILES.md`.
 
 ## JavaScript model controllers
 

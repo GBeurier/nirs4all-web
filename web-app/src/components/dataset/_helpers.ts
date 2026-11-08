@@ -1,12 +1,6 @@
 // Small presentational helpers local to the dataset component group:
-// reading uploaded files and binning the target for the histogram view.
+// binning the target for the histogram view.
 import type { MaterializedDataset, Partition } from '@/engine/types'
-import type { RawFile } from '@/data/dataset'
-
-/** Read a list of browser File objects into RawFile[] ({ name, text }). */
-export async function readRawFiles(files: File[]): Promise<RawFile[]> {
-  return Promise.all(files.map(async (f) => ({ name: f.name, text: await f.text() })))
-}
 
 /** Chart palette mapped to the brand chart CSS variables. */
 export const CHART = {

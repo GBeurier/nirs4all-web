@@ -94,8 +94,24 @@ describe('session persistence', () => {
     expect(loadSession().sampleId).toBe('corn')
     clearSession()
     expect(loadSession()).toEqual({})
-    ;(globalThis as unknown as { localStorage: MemStorage }).localStorage.setItem('nirs4all-web:session:v1', '{not json')
+    ;(globalThis as unknown as { localStorage: MemStorage }).localStorage.setItem('nirs4all-web:session:v2', '{not json')
     expect(loadSession()).toEqual({})
+  })
+
+  it('stores typed arrays as exact bytes and never reads or rewrites the v1 namespace', () => {
+    const storage = (globalThis as unknown as { localStorage: MemStorage }).localStorage
+    const legacy = JSON.stringify({ sampleId: 'beer', model: { model: { dsl: {}, state: { w: { $f64: [1, null] } }, nFeatures: 1 } } })
+    storage.setItem('nirs4all-web:session:v1', legacy)
+    expect(loadSession()).toEqual({}) // the v1 payload is not loaded
+    const special = Float64Array.from([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, -0, 5e-324])
+    const model = {
+      name: 'M', taskType: 'regression', targetName: 'y',
+      model: { dsl: { name: 'p', steps: [], model: { id: 'm', type: 'n4m:models.pls.pls_regression', params: {} }, cv: { folds: 5, seed: 42 } }, nFeatures: 3, taskType: 'regression', state: { chain: [], model: { coefficients: special }, backendId: 'libn4m-wasm' } },
+    } as never
+    saveSession({ model, sampleId: 'corn' })
+    const back = (loadSession() as { model: { model: { state: { model: { coefficients: Float64Array } } } } }).model.model.state.model.coefficients
+    expect(Array.from(new Uint8Array(back.buffer))).toEqual(Array.from(new Uint8Array(special.buffer)))
+    expect(storage.getItem('nirs4all-web:session:v1')).toBe(legacy) // untouched
   })
 
   it('ignores the retired nirs4all-lite session key', () => {

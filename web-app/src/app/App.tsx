@@ -14,10 +14,13 @@ import {
   Upload,
 } from 'lucide-react'
 import { BrandMark } from '@/app/components/BrandMark'
-import { DatasetConfigDialog, DatasetUpload, DatasetView } from '@/components/dataset'
+import { DatasetConfigDialog } from '@/components/dataset/DatasetConfigDialog'
+import { DatasetUpload } from '@/components/dataset/DatasetUpload'
+import { PlaygroundPanel } from '@/components/dataset/PlaygroundPanel'
 import { ExecutionLog, PipelineBuilder } from '@/components/pipeline'
 import { migrateLegacyBranch } from '@/components/pipeline/_helpers'
-import { PredictionPanel, ResultsList, ResultsVisualization } from '@/components/results'
+import { PredictionPanel } from '@/components/results/PredictionPanel'
+import { ResultsWorkbench } from '@/components/results/ResultsWorkbench'
 import { defaultPipeline } from '@/catalog/build'
 import { engine } from '@/engine/client'
 import { rtResultEnvelopeToDisplayRunResult, type RtResultWire } from '@/engine/rt-result'
@@ -824,7 +827,7 @@ function StepPanel(props: StepPanelProps) {
           onGoDataset={props.onGoDataset}
           onCancel={props.onCancel}
         />
-        <DatasetView ds={dataset} summary={summary} onOpenConfig={props.onOpenConfig} />
+        <PlaygroundPanel ds={dataset} summary={summary} onOpenConfig={props.onOpenConfig} />
         <DatasetConfigDialog open={props.configOpen} ds={dataset} analysis={props.analysis} onOpenChange={props.onConfigOpenChange} onApply={props.onApplyConfig} />
       </Panel>
     )
@@ -895,10 +898,7 @@ function StepPanel(props: StepPanelProps) {
           />
         ) : null}
         <ExecutionLog runLog={props.runLog} />
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
-          <ResultsList runs={props.runs} engine={engine} selectedRunId={selectedRun?.id ?? null} selectedScoreId={props.selectedScoreId} onSelect={props.onSelectScore} />
-          {selectedRun && selectedScore && <ResultsVisualization run={selectedRun} score={selectedScore} />}
-        </div>
+        <ResultsWorkbench runs={props.runs} dataset={dataset} datasetName={datasetInfo?.name ?? summary?.name ?? 'Imported results'} engine={engine} selectedRunId={selectedRun?.id ?? null} selectedScoreId={props.selectedScoreId} onSelect={props.onSelectScore} />
       </Panel>
     )
   }

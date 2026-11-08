@@ -7,7 +7,7 @@ const EXE = process.env.CHROME || '/usr/bin/google-chrome'
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || ''
 const RESULT_FILE = process.env.RT_RESULT || (ARTIFACTS_DIR ? join(ARTIFACTS_DIR, 'predictions.rt_result.json') : '')
 
-const PANEL_IDS = ['n4a-results-list', 'n4a-results-visualization']
+const PANEL_IDS = ['n4a-results-list', 'data-owner-inspector']
 const evidence = {
   schema_version: 'n4a.web.converted_predictions_render/v1',
   status: 'failed',
@@ -165,15 +165,62 @@ try {
   evidence.hydrated_run = await page.evaluate((payload) => window.__n4aE2E.importRtResult(payload), rtResult)
 
   await page.waitForSelector('[data-testid="n4a-results-list"]', { timeout: 10000 })
-  await page.waitForSelector('[data-testid="n4a-results-visualization"]', { timeout: 10000 })
+  const inspector = page.locator('[data-owner-inspector]')
+  await inspector.waitFor({ timeout: 10000 })
   await page.getByText(summary.predictions[0]?.model_name || summary.run_id || 'Imported RtResult').first().waitFor({ timeout: 10000 })
-  await page.getByText(/Predicted vs Actual|Confusion Matrix/).first().waitFor({ timeout: 10000 })
+  // Use only the supplied owner artifact. Import selects its first CV block,
+  // otherwise its refit block; no synthetic run or replacement rows are created.
+  const selected = rtResult.predictions.find((block) => block.fold_id === 'avg')
+    ?? rtResult.predictions.find((block) => !block.fold_id || block.fold_id === 'final')
+    ?? rtResult.predictions.at(-1)
+  if (!selected?.sample_indices.length) throw new Error('provided rt_result has no selected prediction rows')
+  const scoreName = selected.fold_id === 'avg' ? 'CV Scores'
+    : selected.fold_id && selected.fold_id !== 'final' ? String(selected.fold_id).replace(/^fold[-_]?/i, 'Fold ')
+      : selected.partition === 'test' ? 'Refit test' : 'Refit'
+  if (summary.run_id !== null && evidence.hydrated_run.runId !== summary.run_id) throw new Error('rendered run identity differs from the supplied rt_result')
+  const resultsList = inspector.locator('[data-testid="n4a-results-list"]')
+  await resultsList.getByText(scoreName, { exact: true }).first().waitFor({ timeout: 10000 })
+  const selectedScore = inspector.locator('summary').filter({ hasText: 'Selected owner score:' })
+  if (!(await selectedScore.innerText()).includes(scoreName)) throw new Error('rendered selected score context differs from the supplied rt_result')
+  await selectedScore.click()
+  const renderedRows = await inspector.locator('[aria-label="Selected owner predictions"] tbody tr').evaluateAll((nodes) =>
+    nodes.map((row) => Array.from(row.querySelectorAll('th, td'), (cell) => cell.textContent.trim())),
+  )
+  const scalar = (value) => Array.isArray(value) ? value[0] : value
+  const expectedRows = selected.sample_indices.map((sampleIndex, index) => {
+    const actual = scalar(selected.y_true[index])
+    const predicted = scalar(selected.y_pred[index])
+    return [`sample:${sampleIndex}`, String(actual), String(predicted), String(actual - predicted)]
+  })
+  if (JSON.stringify(renderedRows) !== JSON.stringify(expectedRows)) throw new Error('rendered prediction values/identities differ from the supplied rt_result')
+  evidence.rendered_prediction_rows = renderedRows.length
+  evidence.selected_score_name = scoreName
+  const scoreSelect = inspector.locator('label').filter({ hasText: 'Evaluation score' }).locator('select')
+  const scoreContext = await scoreSelect.inputValue()
+  if (selected.fold_id === 'avg' && !scoreContext.endsWith(':cv')) throw new Error('owner CV result is not the selected Inspector score context')
+  if (selected.fold_id !== 'avg' && selected.partition === 'test' && !scoreContext.endsWith(':refit')) throw new Error('held-out result is not the selected Inspector score context')
+  evidence.selected_score_context = scoreContext
+
+  const classification = selected.task_type !== 'regression'
+  const plotSelector = classification
+    ? '[data-owner-inspector] svg[role="img"][aria-label="Confusion matrix"]'
+    : '[data-owner-inspector] svg[role="img"][aria-label="Predicted versus observed"]'
+  await page.locator(plotSelector).waitFor({ timeout: 10000 })
+  await page.waitForFunction(({ selector, classification }) => {
+    const svg = document.querySelector(selector)
+    if (classification) return Array.from(svg?.querySelectorAll('.n4viz-cell-value') ?? []).some((cell) => Number(cell.textContent) > 0)
+    const points = Number(svg?.querySelector('desc')?.textContent?.match(/^(\d+) points\b/)?.[1] ?? 0)
+    const canvas = svg?.closest('.n4wb-plot')?.querySelector('canvas')
+    if (!points || !canvas?.width || !canvas?.height) return false
+    const pixels = canvas.getContext('2d')?.getImageData(0, 0, canvas.width, canvas.height).data
+    return pixels?.some((value, index) => index % 4 === 3 && value > 0) === true
+  }, { selector: plotSelector, classification }, { timeout: 10000 })
 
   const injectedPanels = await page.locator('[data-testid="converted-predictions-panels"]').count()
   if (injectedPanels !== 0) throw new Error('converted prediction smoke rendered injected panels instead of product components')
 
-  const renderedPanels = await page.locator('[data-testid^="n4a-results-"]').evaluateAll((nodes) =>
-    nodes.map((node) => node.getAttribute('data-testid')).filter(Boolean),
+  const renderedPanels = await page.locator('[data-testid="n4a-results-list"], [data-owner-inspector]').evaluateAll((nodes) =>
+    nodes.map((node) => node.hasAttribute('data-owner-inspector') ? 'data-owner-inspector' : node.getAttribute('data-testid')).filter(Boolean),
   )
   evidence.panels = renderedPanels
   for (const panel of PANEL_IDS) {

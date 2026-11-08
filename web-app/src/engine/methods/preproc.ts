@@ -6,12 +6,7 @@
 // export with the user's training-row choice). Sample filters and augmenters are
 // train-only row operators (`resample`): they reshape the training rows and are
 // never replayed at predict time.
-//
-// `jsPreprocessor` is the OFFLINE-ONLY degraded fallback (the single-file file://
-// build can't load the emscripten module): it wraps the small JS transforms in
-// algo/preprocessing.ts and has no row operators.
-import { colMeans, type Mat, selectRows } from '../algo/linalg'
-import { type Transformer, makeTransformer, mscFromRef, MSC_TOKEN } from '../algo/preprocessing'
+import { type Mat, selectRows } from '../algo/linalg'
 import { nodeByType } from '@/catalog/nodes'
 import { augmentRows, checkpoint, exportN4me, type FitContext, filterRows, fitEstimator, loadEstimator, transform } from './n4m'
 import type { NativeEstimator } from '../wasm/methods/index.js'
@@ -46,8 +41,6 @@ export function isRowOperator(type: string): boolean {
   const category = nodeByType(type)?.category
   return category === 'filter' || category === 'augmentation'
 }
-
-const EMPTY: Mat = { data: new Float64Array(0), rows: 0, cols: 0 }
 
 function stack(a: Mat, b: Mat): Mat {
   const out: Mat = { data: new Float64Array(a.data.length + b.data.length), rows: a.rows + b.rows, cols: a.cols }
@@ -91,30 +84,4 @@ export const libn4mPreprocessor: Preprocessor = {
   share(state, allowTrainingRows) {
     return exportN4me(state as Uint8Array, allowTrainingRows)
   },
-}
-
-/** Pure-JS preprocessing — OFFLINE fallback only (file:// can't load the wasm). */
-export const jsPreprocessor: Preprocessor = {
-  id: 'js',
-  fit(type, params, train) {
-    if (type === MSC_TOKEN) {
-      const ref = colMeans(train)
-      const t = mscFromRef(ref)
-      return jsWrap(t, Array.from(ref))
-    }
-    return jsWrap(makeTransformer(type, params, train), [])
-  },
-  restore(type, params, state) {
-    const t = type === MSC_TOKEN && state.length ? mscFromRef(Float64Array.from(state as number[])) : makeTransformer(type, params, EMPTY)
-    return { apply: (X) => t.apply(X), free: () => {} }
-  },
-  resample(type) {
-    throw new Error(`Offline mode has no "${nodeByType(type)?.name ?? type}" row operator; it needs the served build (libn4m).`)
-  },
-  // the JS transforms keep no training rows (MSC stores the mean spectrum)
-  share: (state) => state,
-}
-
-function jsWrap(t: Transformer, state: number[]): FittedTransformer {
-  return { state, containsTrainingRows: false, apply: (X) => t.apply(X), free: () => {} }
 }

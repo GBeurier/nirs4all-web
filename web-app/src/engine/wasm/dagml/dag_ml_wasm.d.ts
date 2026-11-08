@@ -28,6 +28,12 @@ export class TrainingLossBinding {
 }
 
 /**
+ * Aggregate observation-level predictions to physical samples with an
+ * existing `AggregationPolicy` and the attested sample relations.
+ */
+export function aggregate_observation_predictions_json(block_json: string, relations_json: string, policy_json: string, requested_sample_order_json: string): string;
+
+/**
  * Validate named source/sample coverage and return identity-only row indices.
  */
 export function align_named_source_rows_json(request_json: string): string;
@@ -36,11 +42,6 @@ export function align_named_source_rows_json(request_json: string): string;
  * Attach independently derived, target-free or external-test V2 cohort evidence.
  */
 export function attach_predict_cohort_to_envelope_json(envelope_json: string, cohort_request_json: string): string;
-
-/**
- * Assemble the canonical opaque payload set consumed by Core's bounded ZIP writer.
- */
-export function build_archive_v2_native_portable_payloads_json(archive_id: string, outcome_json: string, package_json: string): string;
 
 export function build_execution_plan_json(plan_id: string, graph_json: string, campaign_json: string, controller_manifests_json: string): string;
 
@@ -106,6 +107,16 @@ export function execute_execution_plan_phase_json(execution_plan_json: string, t
 export function execute_execution_plan_phase_u64_json(execution_plan_json: string, trusted_controller_manifests_json: string, run_id: string, root_seed: string, phase: string, js_invoke: Function): string;
 
 /**
+ * Execute FIT_CV of a built plan against an attested data envelope.
+ *
+ * The envelope's coordinator relations make native observation-to-sample
+ * aggregation, cross-fold OOF scoring and the returned `ScoreSet` available to
+ * hosts whose controllers emit observation-level predictions. `variant_id`
+ * must name one plan variant; the run context is scoped to it.
+ */
+export function execute_execution_plan_phase_with_envelope_json(execution_plan_json: string, trusted_controller_manifests_json: string, envelope_json: string, variant_id: string, run_id: string, root_seed: string, phase: string, js_invoke: Function): string;
+
+/**
  * Execute a no-splitter REFIT once and return the closed package and node evidence.
  * The synchronous JS callback owns host-sidecar operator state by artifact ID.
  */
@@ -133,11 +144,13 @@ export function execute_training_json(request_json: string, data_envelopes_json:
 export function fold_set_fingerprint_json(json: string): string;
 
 /**
- * Build a native group-disjoint FoldSet from explicit sample -> group identities.
+ * Build a native group-disjoint FoldSet from explicit candidate ids and sample -> group identities.
  * No group inference, clipping, randomization or feature values occur in the binding.
- * `target_missing_json` behaves as in [`kfold_split_json`].
+ * `sample_ids_json` is a JSON array of candidate ids. Groups are required only for target-observed
+ * candidates; groups outside the candidates are refused. `target_missing_json` behaves as in
+ * [`kfold_split_json`]; any groups supplied for those missing candidates are ignored.
  */
-export function group_kfold_split_json(spec_json: string, sample_groups_json: string, id: string, target_missing_json?: string | null): string;
+export function group_kfold_split_json(spec_json: string, sample_ids_json: string, sample_groups_json: string, id: string, target_missing_json?: string | null): string;
 
 /**
  * Evaluate one FIT_CV fold only, then return to the browser coordinator for
@@ -224,6 +237,12 @@ export function replay_training_package_json(package_json: string, request_json:
 export function sample_relation_set_fingerprint_json(json: string): string;
 
 /**
+ * Score a sample-level prediction block against sample-level targets with the
+ * named DAG metrics (mirrors `dagml_score_regression_prediction_block_json`).
+ */
+export function score_regression_prediction_block_json(predictions_json: string, targets_json: string, metrics_json: string): string;
+
+/**
  * Rank candidate variants and return the winner — the SELECT phase for in-browser
  * generators/finetune. Selection stays in dag-ml (deterministic argmin/argmax +
  * id tie-break), not the host. `policy_json` = SelectionPolicy, `candidates_json`
@@ -273,11 +292,6 @@ export function stratified_kfold_split_json(spec_json: string, sample_ids_json: 
  */
 export function training_data_identity_json(binding_json: string, envelope_json: string): string;
 
-/**
- * Validate opaque archive members before replay can invoke a controller.
- */
-export function validate_archive_v2_portable_payloads_json(manifest_json: string, package_json: string, members_json: string): string;
-
 export function validate_campaign_json(json: string): void;
 
 export function validate_controller_manifest_json(json: string): void;
@@ -305,77 +319,78 @@ export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly __wbg_localimplementationregistry_free: (a: number, b: number) => void;
     readonly __wbg_traininglossbinding_free: (a: number, b: number) => void;
-    readonly align_named_source_rows_json: (a: number, b: number) => [number, number, number, number];
-    readonly attach_predict_cohort_to_envelope_json: (a: number, b: number, c: number, d: number) => [number, number, number, number];
-    readonly build_archive_v2_native_portable_payloads_json: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number, number, number];
-    readonly build_execution_plan_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number, number, number];
-    readonly build_execution_plan_with_training_losses_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => [number, number, number, number];
-    readonly compile_pipeline_dsl_artifact_json: (a: number, b: number) => [number, number, number, number];
-    readonly compile_pipeline_dsl_artifact_with_controllers_json: (a: number, b: number, c: number, d: number) => [number, number, number, number];
-    readonly compile_pipeline_dsl_graph_json: (a: number, b: number) => [number, number, number, number];
+    readonly aggregate_observation_predictions_json: (a: any, b: any, c: any, d: any) => [number, number, number, number];
+    readonly align_named_source_rows_json: (a: any) => [number, number, number, number];
+    readonly attach_predict_cohort_to_envelope_json: (a: any, b: any) => [number, number, number, number];
+    readonly build_execution_plan_json: (a: any, b: any, c: any, d: any) => [number, number, number, number];
+    readonly build_execution_plan_with_training_losses_json: (a: any, b: any, c: any, d: any, e: any) => [number, number, number, number];
+    readonly compile_pipeline_dsl_artifact_json: (a: any) => [number, number, number, number];
+    readonly compile_pipeline_dsl_artifact_with_controllers_json: (a: any, b: any) => [number, number, number, number];
+    readonly compile_pipeline_dsl_graph_json: (a: any) => [number, number, number, number];
     readonly contract_manifest_json: () => [number, number, number, number];
     readonly dag_ml_version: () => [number, number];
-    readonly derive_controller_manifest_json: (a: number, b: number) => [number, number, number, number];
-    readonly derive_controller_manifest_list_json: (a: number, b: number) => [number, number, number, number];
-    readonly exclude_target_missing_json: (a: number, b: number, c: number, d: number) => [number, number, number, number];
-    readonly execute_campaign_phase_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: any) => [number, number, number, number];
-    readonly execute_campaign_phase_u64_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: any) => [number, number, number, number];
-    readonly execute_execution_plan_phase_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: any) => [number, number, number, number];
-    readonly execute_execution_plan_phase_u64_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: any) => [number, number, number, number];
-    readonly execute_initial_full_refit_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: any) => [number, number, number, number];
-    readonly execute_nested_selection_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: any, h: number) => [number, number, number, number];
-    readonly execute_training_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: any) => [number, number, number, number];
-    readonly fold_set_fingerprint_json: (a: number, b: number) => [number, number, number, number];
-    readonly group_kfold_split_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number, number, number];
-    readonly host_hpo_evaluate_worker_fold_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: any) => [number, number, number, number];
-    readonly host_hpo_evaluate_worker_task_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: any) => [number, number, number, number];
-    readonly host_hpo_search_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: any, l: any) => [number, number, number, number];
-    readonly host_hpo_search_parallel_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: any, m: any) => any;
-    readonly initial_full_refit_predict_envelope_json: (a: number, b: number, c: number, d: number) => [number, number, number, number];
-    readonly kfold_split_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number, number, number];
-    readonly localimplementationregistry_bind_training_loss: (a: number, b: number, c: number, d: any) => [number, number, number];
+    readonly derive_controller_manifest_json: (a: any) => [number, number, number, number];
+    readonly derive_controller_manifest_list_json: (a: any) => [number, number, number, number];
+    readonly exclude_target_missing_json: (a: any, b: any) => [number, number, number, number];
+    readonly execute_campaign_phase_json: (a: any, b: any, c: any, d: any, e: any, f: number, g: any, h: any) => [number, number, number, number];
+    readonly execute_campaign_phase_u64_json: (a: any, b: any, c: any, d: any, e: any, f: any, g: any, h: any) => [number, number, number, number];
+    readonly execute_execution_plan_phase_json: (a: any, b: any, c: any, d: number, e: any, f: any) => [number, number, number, number];
+    readonly execute_execution_plan_phase_u64_json: (a: any, b: any, c: any, d: any, e: any, f: any) => [number, number, number, number];
+    readonly execute_execution_plan_phase_with_envelope_json: (a: any, b: any, c: any, d: any, e: any, f: any, g: any, h: any) => [number, number, number, number];
+    readonly execute_initial_full_refit_json: (a: any, b: any, c: any, d: any, e: any, f: any, g: any, h: any) => [number, number, number, number];
+    readonly execute_nested_selection_json: (a: any, b: any, c: any, d: any, e: number) => [number, number, number, number];
+    readonly execute_training_json: (a: any, b: any, c: any, d: any, e: any, f: any, g: any, h: any) => [number, number, number, number];
+    readonly fold_set_fingerprint_json: (a: any) => [number, number, number, number];
+    readonly group_kfold_split_json: (a: any, b: any, c: any, d: any, e: number) => [number, number, number, number];
+    readonly host_hpo_evaluate_worker_fold_json: (a: any, b: number, c: any, d: any, e: any, f: any) => [number, number, number, number];
+    readonly host_hpo_evaluate_worker_task_json: (a: any, b: any, c: any, d: any, e: any) => [number, number, number, number];
+    readonly host_hpo_search_json: (a: any, b: any, c: any, d: any, e: number, f: any, g: any) => [number, number, number, number];
+    readonly host_hpo_search_parallel_json: (a: any, b: any, c: any, d: any, e: number, f: number, g: any, h: any) => any;
+    readonly initial_full_refit_predict_envelope_json: (a: any, b: any) => [number, number, number, number];
+    readonly kfold_split_json: (a: any, b: any, c: any, d: number) => [number, number, number, number];
+    readonly localimplementationregistry_bind_training_loss: (a: number, b: any, c: any) => [number, number, number];
     readonly localimplementationregistry_clear: (a: number) => void;
     readonly localimplementationregistry_descriptors_json: (a: number) => [number, number, number, number];
     readonly localimplementationregistry_new: () => number;
-    readonly localimplementationregistry_register_loss: (a: number, b: number, c: number, d: any) => [number, number];
-    readonly localimplementationregistry_register_metric: (a: number, b: number, c: number, d: any) => [number, number];
-    readonly localimplementationregistry_resolve_loss: (a: number, b: number, c: number) => [number, number, number];
-    readonly localimplementationregistry_resolve_metric: (a: number, b: number, c: number) => [number, number, number];
-    readonly localimplementationregistry_resolve_training_loss: (a: number, b: number, c: number, d: number, e: number) => [number, number, number];
+    readonly localimplementationregistry_register_loss: (a: number, b: any, c: any) => [number, number];
+    readonly localimplementationregistry_register_metric: (a: number, b: any, c: any) => [number, number];
+    readonly localimplementationregistry_resolve_loss: (a: number, b: any) => [number, number, number];
+    readonly localimplementationregistry_resolve_metric: (a: number, b: any) => [number, number, number];
+    readonly localimplementationregistry_resolve_training_loss: (a: number, b: any, c: any) => [number, number, number];
     readonly localimplementationregistry_size: (a: number) => number;
     readonly localimplementationregistry_toJSON: (a: number) => [number, number, number];
-    readonly localimplementationregistry_unregister_loss: (a: number, b: number, c: number) => [number, number, number];
-    readonly localimplementationregistry_unregister_metric: (a: number, b: number, c: number) => [number, number, number];
-    readonly loss_execution_attestation_json: (a: number, b: number, c: number, d: number) => [number, number, number, number];
-    readonly n4m_host_controller_specs_json: (a: number, b: number) => [number, number, number, number];
-    readonly native_estimator_descriptor_json: (a: number, b: number) => [number, number, number, number];
-    readonly recover_host_hpo_checkpoint_json: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number, number, number];
-    readonly replay_initial_full_refit_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: any) => [number, number, number, number];
-    readonly replay_training_package_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: any) => [number, number, number, number];
-    readonly sample_relation_set_fingerprint_json: (a: number, b: number) => [number, number, number, number];
-    readonly select_candidates_json: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number, number, number];
-    readonly select_portable_output_json: (a: number, b: number, c: number, d: number) => [number, number, number, number];
-    readonly select_stacking_fold_json: (a: number, b: number) => [number, number, number, number];
-    readonly select_stacking_producers_json: (a: number, b: number) => [number, number, number, number];
-    readonly sign_training_replay_request_json: (a: number, b: number) => [number, number, number, number];
-    readonly sign_training_request_json: (a: number, b: number) => [number, number, number, number];
-    readonly stacking_fold_weights_json: (a: number, b: number) => [number, number, number, number];
-    readonly stratified_kfold_split_json: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => [number, number, number, number];
-    readonly training_data_identity_json: (a: number, b: number, c: number, d: number) => [number, number, number, number];
+    readonly localimplementationregistry_unregister_loss: (a: number, b: any) => [number, number, number];
+    readonly localimplementationregistry_unregister_metric: (a: number, b: any) => [number, number, number];
+    readonly loss_execution_attestation_json: (a: any, b: any) => [number, number, number, number];
+    readonly n4m_host_controller_specs_json: (a: any) => [number, number, number, number];
+    readonly native_estimator_descriptor_json: (a: any) => [number, number, number, number];
+    readonly recover_host_hpo_checkpoint_json: (a: any, b: any, c: any) => [number, number, number, number];
+    readonly replay_initial_full_refit_json: (a: any, b: any, c: any, d: any, e: any, f: any) => [number, number, number, number];
+    readonly replay_training_package_json: (a: any, b: any, c: any, d: any, e: any, f: any, g: any) => [number, number, number, number];
+    readonly sample_relation_set_fingerprint_json: (a: any) => [number, number, number, number];
+    readonly score_regression_prediction_block_json: (a: any, b: any, c: any) => [number, number, number, number];
+    readonly select_candidates_json: (a: any, b: any, c: number) => [number, number, number, number];
+    readonly select_portable_output_json: (a: any, b: any) => [number, number, number, number];
+    readonly select_stacking_fold_json: (a: any) => [number, number, number, number];
+    readonly select_stacking_producers_json: (a: any) => [number, number, number, number];
+    readonly sign_training_replay_request_json: (a: any) => [number, number, number, number];
+    readonly sign_training_request_json: (a: any) => [number, number, number, number];
+    readonly stacking_fold_weights_json: (a: any) => [number, number, number, number];
+    readonly stratified_kfold_split_json: (a: any, b: any, c: any, d: any, e: number) => [number, number, number, number];
+    readonly training_data_identity_json: (a: any, b: any) => [number, number, number, number];
     readonly traininglossbinding_invoke: (a: number) => any;
     readonly traininglossbinding_required_attestation_json: (a: number) => [number, number];
-    readonly validate_archive_v2_portable_payloads_json: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number, number, number];
-    readonly validate_campaign_json: (a: number, b: number) => [number, number];
-    readonly validate_controller_manifest_json: (a: number, b: number) => [number, number];
-    readonly validate_controller_manifest_list_json: (a: number, b: number) => [number, number];
-    readonly validate_execution_bundle_json: (a: number, b: number) => [number, number];
-    readonly validate_execution_plan_json: (a: number, b: number) => [number, number];
-    readonly validate_fold_set_json: (a: number, b: number) => [number, number];
-    readonly validate_graph_json: (a: number, b: number) => [number, number];
-    readonly validate_initial_full_refit_package_json: (a: number, b: number) => [number, number];
-    readonly validate_pipeline_dsl_json: (a: number, b: number) => [number, number];
-    readonly wasm_bindgen_6d8b02b35ac3a954___convert__closures_____invoke___js_sys_baa5e4b942bda068___Function_fn_wasm_bindgen_6d8b02b35ac3a954___JsValue_____wasm_bindgen_6d8b02b35ac3a954___sys__Undefined___js_sys_baa5e4b942bda068___Function_fn_wasm_bindgen_6d8b02b35ac3a954___JsValue_____wasm_bindgen_6d8b02b35ac3a954___sys__Undefined_______true_: (a: number, b: number, c: any, d: any) => void;
-    readonly wasm_bindgen_6d8b02b35ac3a954___convert__closures_____invoke___wasm_bindgen_6d8b02b35ac3a954___JsValue__core_37ee0ce0c4cd57d5___result__Result_____wasm_bindgen_6d8b02b35ac3a954___JsError___true_: (a: number, b: number, c: any) => [number, number];
+    readonly validate_campaign_json: (a: any) => [number, number];
+    readonly validate_controller_manifest_json: (a: any) => [number, number];
+    readonly validate_controller_manifest_list_json: (a: any) => [number, number];
+    readonly validate_execution_bundle_json: (a: any) => [number, number];
+    readonly validate_execution_plan_json: (a: any) => [number, number];
+    readonly validate_fold_set_json: (a: any) => [number, number];
+    readonly validate_graph_json: (a: any) => [number, number];
+    readonly validate_initial_full_refit_package_json: (a: any) => [number, number];
+    readonly validate_pipeline_dsl_json: (a: any) => [number, number];
+    readonly wasm_bindgen__convert__closures_____invoke__h099d61a787badafb: (a: number, b: number, c: any) => [number, number];
+    readonly wasm_bindgen__convert__closures_____invoke__h51a83d35f1b2856a: (a: number, b: number, c: any, d: any) => void;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_exn_store: (a: number) => void;

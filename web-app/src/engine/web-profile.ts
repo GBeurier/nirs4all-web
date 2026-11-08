@@ -3,7 +3,8 @@
  *
  * `strict-wasm` is the deployed Web profile: computation must remain on the
  * staged native/WASM route and every compatibility degrade fails closed.
- * `transitional` keeps the explicit single-file/development compatibility path.
+ * `transitional` keeps the explicit development compatibility path. The offline
+ * single-file build is also `strict-wasm` (same owner DAG-ML route in an inline worker).
  */
 export const WEB_RUNTIME_PROFILES = ['strict-wasm', 'transitional'] as const
 export type WebRuntimeProfile = (typeof WEB_RUNTIME_PROFILES)[number]
@@ -37,6 +38,12 @@ const TRANSITIONAL_POLICY: WebRuntimePolicy = Object.freeze({
 
 export function webRuntimePolicy(profile: WebRuntimeProfile): WebRuntimePolicy {
   return profile === 'strict-wasm' ? STRICT_POLICY : TRANSITIONAL_POLICY
+}
+
+/** The profile a Vite build mode freezes into its bundles: production, strict and the offline
+ *  single-file build are the strict product; development and test stay transitional. */
+export function runtimeProfileForBuildMode(mode: string): WebRuntimeProfile {
+  return mode === 'production' || mode === 'strict' || mode === 'singlefile' ? 'strict-wasm' : 'transitional'
 }
 
 /** Build-selected profile, injected by Vite and frozen into workers as well. */

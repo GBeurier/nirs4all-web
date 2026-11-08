@@ -1,6 +1,5 @@
 import { identifyNativeFitRefusal, isFitRefusal, markFitRefusal } from './fit-refusal'
 import type { Mat } from './algo/linalg'
-import { type PlsModel, plsFit, plsPredict } from './algo/pls'
 import {
   exportN4me,
   isNativeModelState,
@@ -8,35 +7,11 @@ import {
   predictModel as predictNativeModel,
   predictNamedPipeline,
 } from './methods/n4m'
-import { jsPreprocessor, libn4mPreprocessor } from './methods/preproc'
+import { libn4mPreprocessor } from './methods/preproc'
 import { loadMethodsWasm } from './nirs4all-core'
 import type { ModelBackend } from './orchestrate'
-import { n4mToken } from '@/catalog/native'
 import { nodeByType } from '@/catalog/nodes'
 import { makeRtError, RtErrorException } from './rt'
-
-/** The one model the offline JS fallback implements (NIPALS PLS regression). */
-const PLS_REGRESSION_TOKEN = n4mToken('models.pls.pls_regression')
-
-/** Pure-JS NIPALS PLS + JS preprocessing — OFFLINE fallback only (file:// can't
- *  load the emscripten module). The served/public build uses libn4m for both.
- *  Only PLS regression is supported here (classification uses it through one-hot
- *  targets); the offline build is a degraded demonstrator. */
-export const jsBackend: ModelBackend = {
-  id: 'js-pls',
-  // Offline NIPALS only models PLS. Fail loudly on anything else rather than
-  // silently fitting PLS for it (the served build uses libn4m for all models).
-  fit: (spec, X, Y, nComp) => {
-    if (spec.type !== PLS_REGRESSION_TOKEN) {
-      throw new Error(`Offline mode runs PLS regression only; "${nodeByType(spec.type)?.name ?? spec.type}" needs the served build (libn4m).`)
-    }
-    return plsFit(X, Y, nComp)
-  },
-  predict: (model, X) => plsPredict(model as PlsModel, X),
-  // NIPALS keeps weights and loadings, no training rows
-  share: (model) => model,
-  preproc: jsPreprocessor,
-}
 
 /**
  * The real nirs4all-methods engine (libn4m, C++ → WASM). Lazily imported so the

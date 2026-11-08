@@ -22,3 +22,5 @@ export { Status, Dtype, Algorithm, Solver, Deflation, ModelArray, N4mError, type
 export declare function version(): string;
 /** ABI MAJOR.MINOR.PATCH triple. */
 export declare function abiVersion(): readonly [number, number, number];
+export { rank, type RankingMethod, type RankingOptions, type RankingCandidate, type RankingResult } from "./ranking.js";
+export { mixedEffects, fanova, normalizeLoss, type MixedEffectsOptions, type MixedEffectsResult, type FanovaOptions, type FanovaResult } from "./componentAnalysis.js";

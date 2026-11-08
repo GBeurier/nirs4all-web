@@ -5,7 +5,9 @@ import { initSync as initDagMl } from './wasm/dagml/dag_ml_wasm.js'
 import { initSync as initData } from './wasm/dagml-data/dag_ml_data_wasm.js'
 import { initSync as initDatasets } from './wasm/datasets/nirs4all_datasets_wasm.js'
 import { loadSampleDataset, type SampleId } from '@/data/samples'
+import { ioRetainedOf } from '@/data/wasm-io'
 import { loadLibn4mBackend } from './backends'
+import * as nativeModels from './methods/n4m'
 import { DagMlEngine } from './dagml-engine'
 import { MainEngine } from './main-engine'
 import { loadDagMl } from './dagml'
@@ -32,8 +34,9 @@ describe('native browser full REFIT and PREDICT', () => {
     expect(fit).toHaveBeenCalledTimes(1)
     const state = (fitted.state as FittedState & { nativeRefit: NativeRefitState }).nativeRefit
     const pkg = JSON.parse(state.packageJson)
-    expect(pkg.training_sample_ids).toEqual(train.map((i) => `s${i}`))
-    expect(pkg.training_relations.records.every((r: { sample_id: string }) => !heldout.some((i) => r.sample_id === `s${i}`))).toBe(true)
+    // One scan per physical sample here: p{i} is the physical-sample handle of row i.
+    expect(pkg.training_sample_ids).toEqual(train.map((i) => `p${i}`))
+    expect(pkg.training_relations.records.every((r: { sample_id: string }) => !heldout.some((i) => r.sample_id === `p${i}`))).toBe(true)
     expect(pkg.artifacts).toHaveLength(1)
     expect(pkg.artifacts[0].load_mode).toBe('host_sidecar')
     const canonical = exportPipeline(fitted, true, backend)
@@ -68,6 +71,10 @@ describe('native browser full REFIT and PREDICT', () => {
   it('native GroupKFold keeps whole unequal groups disjoint and validates every Train ID once', async () => {
     const ds = await loadSampleDataset('corn')
     const train = trainRowsOf(ds)
+    const heldout = testRowsOf(ds)
+    expect(ioRetainedOf(ds)!.record.partition_order).toEqual(['test', 'train'])
+    expect(ds.partitions[0]).toBe('test')
+    expect(Math.min(...train)).toBe(heldout.length)
     ds.groupIds = ds.partitions.map((partition, i) => `${partition}-group-${Math.floor(i / 3)}`)
     const dagml = await loadDagMl()
     const folds = buildNativeFolds(dagml, ds, { folds: 3, seed: 42 }, train)
@@ -76,10 +83,32 @@ describe('native browser full REFIT and PREDICT', () => {
     overlapping.folds[0].train_sample_ids.push(overlapping.folds[0].validation_sample_ids[0])
     expect(() => dagml.validate_fold_set_json(JSON.stringify(overlapping))).toThrow()
     const validation = folds.folds.flatMap((f) => f.validation_sample_ids)
-    expect([...validation].sort()).toEqual(train.map((i) => `s${i}`).sort())
+    expect([...validation].sort()).toEqual(train.map((i) => `p${i}`).sort())
     for (const fold of folds.folds) {
       const trainGroups = new Set(fold.train_sample_ids.map((id) => folds.sample_groups[id]))
       expect(fold.validation_sample_ids.every((id) => !trainGroups.has(folds.sample_groups[id]))).toBe(true)
+    }
+    // Backend loaders return fresh wrappers; observe their shared real native
+    // adapter, preserving its implementation and all actual WASM fits.
+    const fit = vi.spyOn(nativeModels, 'fitModel')
+    try {
+      const result = await new MainEngine({ profile: 'strict-wasm' }).run(ds, { ...pipeline, cv: { strategy: 'group', folds: 3, seed: 42 } })
+      expect(result.lineage).toMatchObject({ executed: true, refitExecuted: true })
+      expect(result.diagnostics ?? []).toEqual([])
+      expect(result.cv!.predictions.map((r) => r.sampleId).sort()).toEqual(train.map((i) => ds.sampleIds[i]).sort())
+      expect(result.folds.flatMap((f) => f.predictions.map((r) => r.sampleId)).sort()).toEqual(train.map((i) => ds.sampleIds[i]).sort())
+      expect(result.refit.predictions.map((r) => r.sampleId).sort()).toEqual(heldout.map((i) => ds.sampleIds[i]).sort())
+      const pkg = JSON.parse((result.model.state as FittedState & { nativeRefit: NativeRefitState }).nativeRefit.packageJson)
+      expect(pkg.training_sample_ids).toEqual(train.map((i) => `p${i}`))
+      // Observe genuine backend input: each fold fits exactly its native Train
+      // scope, and the final fit uses all Train rows, never the leading Test rows.
+      const key = (i: number) => JSON.stringify(Array.from(ds.X.subarray(i * ds.nFeatures, (i + 1) * ds.nFeatures)))
+      const expectedScopes = [...folds.folds.map((f) => f.train_sample_ids.map((id) => key(Number(id.slice(1)))).sort()), train.map(key).sort()]
+      expect(fit).toHaveBeenCalledTimes(expectedScopes.length)
+      const actualScopes = fit.mock.calls.map(([, , X]) => Array.from({ length: X.rows }, (_, i) => JSON.stringify(Array.from(X.data.subarray(i * X.cols, (i + 1) * X.cols)))).sort())
+      expect(actualScopes.map((scope) => JSON.stringify(scope)).sort()).toEqual(expectedScopes.map((scope) => JSON.stringify(scope)).sort())
+    } finally {
+      fit.mockRestore()
     }
   })
   it('refuses a valid foreign learned state even after the local carrier is resealed', async () => {
@@ -128,8 +157,8 @@ describe('native browser full REFIT and PREDICT', () => {
     }
     const dagml = await loadDagMl()
     const relations = datasetRelations(ds)
-    const groups = Object.fromEntries(train.map((i) => [`s${i}`, relations[i].group_id]))
-    const native = JSON.parse(dagml.group_kfold_split_json('{"n_splits":3}', JSON.stringify(groups), 'outer'))
+    const groups = Object.fromEntries(train.map((i) => [`p${i}`, relations[i].group_id]))
+    const native = JSON.parse(dagml.group_kfold_split_json('{"n_splits":3}', JSON.stringify(Object.keys(groups)), JSON.stringify(groups), 'outer'))
     const folds = buildNativeFolds(dagml, ds, { folds: 3, seed: 42 }, train)
     expect(folds.partition_mode).toBe('resampled')
     expect(() => dagml.validate_fold_set_json(JSON.stringify(folds))).not.toThrow()
@@ -138,11 +167,11 @@ describe('native browser full REFIT and PREDICT', () => {
     expect(() => dagml.validate_fold_set_json(JSON.stringify(wronglyPartitioned))).toThrow()
     for (let i = 0; i < folds.folds.length; i++) {
       expect(folds.folds[i].train_sample_ids).toEqual(native.folds[i].train_sample_ids)
-      expect(folds.folds[i].validation_sample_ids).toEqual(native.folds[i].validation_sample_ids.filter((id: string) => id !== `s${child}`))
+      expect(folds.folds[i].validation_sample_ids).toEqual(native.folds[i].validation_sample_ids.filter((id: string) => id !== `p${child}`))
     }
-    expect(folds.folds.some((fold) => fold.train_sample_ids.includes(`s${child}`))).toBe(true)
+    expect(folds.folds.some((fold) => fold.train_sample_ids.includes(`p${child}`))).toBe(true)
     const validation = folds.folds.flatMap((fold) => fold.validation_sample_ids)
-    expect([...validation].sort()).toEqual(train.filter((i) => i !== child).map((i) => `s${i}`).sort())
+    expect([...validation].sort()).toEqual(train.filter((i) => i !== child).map((i) => `p${i}`).sort())
     const result = await new MainEngine({ profile: 'strict-wasm' }).run(ds, { ...pipeline, cv: { folds: 3, seed: 42 } })
     expect(result.lineage).toMatchObject({ executed: true, refitExecuted: true })
     expect(result.diagnostics ?? []).toEqual([])
@@ -150,7 +179,7 @@ describe('native browser full REFIT and PREDICT', () => {
     expect(result.folds.flatMap((fold) => fold.predictions.map((row) => row.sampleId)).sort()).toEqual(result.cv!.predictions.map((row) => row.sampleId).sort())
     expect(result.refit.predictions.map((row) => row.sampleId).sort()).toEqual(heldout.filter((i) => i !== testChild).map((i) => ds.sampleIds[i]).sort())
     const pkg = JSON.parse((result.model.state as FittedState & { nativeRefit: NativeRefitState }).nativeRefit.packageJson)
-    expect(pkg.training_sample_ids).toEqual(train.map((i) => `s${i}`))
+    expect(pkg.training_sample_ids).toEqual(train.map((i) => `p${i}`))
     const noCv = await new MainEngine({ profile: 'strict-wasm' }).run(ds, pipeline)
     expect(noCv.cv).toBeUndefined()
     expect(noCv.folds).toEqual([])

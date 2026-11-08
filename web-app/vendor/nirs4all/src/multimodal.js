@@ -33,7 +33,7 @@ export class MultimodalPredictor {
   static async load(input,options={}) {
     const {io,methods}=await dependencies(options),record=typeof input==='string'?JSON.parse(input):input;
     const keys=['schema','schema_version','recipe','source_schemas','state','target_names'];
-    if(record===null||typeof record!=='object'||Object.keys(record).length!==keys.length||keys.some(k=>!Object.hasOwn(record,k))||record.schema!=='nirs4all.multimodal-predictor.v1'||record.schema_version!==1||!Array.isArray(record.target_names)||record.target_names.length!==1||typeof record.target_names[0]!=='string'||!record.target_names[0].trim()||!Array.isArray(record.state)||!record.state.length||record.state.length>67108864||record.state.some(b=>!Number.isInteger(b)||b<0||b>255))throw new TypeError('Invalid multimodal predictor envelope or native byte state');
+    if(record===null||typeof record!=='object'||Object.keys(record).length!==keys.length||keys.some(k=>!Object.hasOwn(record,k))||record.schema!=='nirs4all.multimodal-predictor.v1'||record.schema_version!==1||!Array.isArray(record.target_names)||record.target_names.length!==1||typeof record.target_names[0]!=='string'||!record.target_names[0].trim()||!Array.isArray(record.state)||!record.state.length||record.state.some(b=>!Number.isInteger(b)||b<0||b>255))throw new TypeError('Invalid multimodal predictor envelope or native byte state');
     const native=methods.MultimodalPipeline.fromState(new Uint8Array(record.state),record.recipe,record.source_schemas);
     return new MultimodalPredictor(native,record.recipe,record.source_schemas,io,record.target_names);
   }

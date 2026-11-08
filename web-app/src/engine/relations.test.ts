@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { buildDataset } from '@/data/dataset'
-import { datasetRelations } from './relations'
+import { datasetRelations, hasCvGroups } from './relations'
 import { buildNativeFolds, nonAugmentedScoreRows, validatePartitionGroups } from './grouped-cv'
 import { refitWithDagMl, requireRefitRuntime } from './dagml-refit'
 import type { DagMlMod } from './dagml'
@@ -19,7 +19,7 @@ describe('declared browser relation identities', () => {
     expect(ds.sampleIds).toEqual(['α', 'β', 'γ', 'δ'])
     expect(ds.groupIds).toEqual(['001', '001', '002', '002'])
     const records = datasetRelations(ds)
-    expect(records[3]).toMatchObject({ origin_id: 's2', augmented: true, metadata: { original_origin_id: 'γ', original_group_id: '002' } })
+    expect(records[3]).toMatchObject({ observation_id: 's3', sample_id: 'p3', origin_id: 's2', augmented: true, metadata: { original_sample_id: 'δ', original_origin_id: 'γ', original_group_id: '002', identity_basis: 'declared' } })
     expect(records[0].group_id).toBe(records[1].group_id)
     expect(records[0].repetition_id).not.toBe(records[1].repetition_id)
   })
@@ -31,6 +31,42 @@ describe('declared browser relation identities', () => {
   it('leaves undeclared repetitions absent', () => {
     const ds = cohort(); delete ds.repetitionIds
     expect(datasetRelations(ds).every((r) => r.repetition_id === null)).toBe(true)
+  })
+  describe('repeated sample ids', () => {
+    const replicates = () => {
+      const ds = cohort()
+      delete ds.groupIds; delete ds.originIds; delete ds.augmented; delete ds.repetitionIds
+      ds.sampleIds = ['S1', 'S1', 'S2', 'S2']
+      return ds
+    }
+    // These scans of one physical sample carry different targets (1.2 vs 2.4): dag-ml-data
+    // holds one target per physical sample, so the original data is refused (R2), never
+    // relabelled or split into independent rows.
+    it('refuse one physical sample whose scans carry different targets', () => {
+      const ds = replicates()
+      expect(ds.repetition).toBeUndefined()
+      expect(hasCvGroups(ds)).toBe(false)
+      expect(() => datasetRelations(ds)).toThrow(/different targets on its scans/)
+    })
+    it('refuse before any native split is requested', () => {
+      const native = vi.fn(() => JSON.stringify({ id: 'outer', sample_ids: [], folds: [], sample_groups: {} }))
+      const kfold = vi.fn(() => JSON.stringify({ id: 'outer', sample_ids: [], folds: [], sample_groups: {} }))
+      expect(() => buildNativeFolds({ group_kfold_split_json: native, kfold_split_json: kfold } as unknown as DagMlMod, replicates(), { folds: 2, seed: 42 }, [0, 1, 2, 3])).toThrow(/different targets on its scans/)
+      expect(native).not.toHaveBeenCalled()
+      expect(kfold).not.toHaveBeenCalled()
+    })
+    it('refuse a physical sample shared by Train and the held-out Test partition (no partition-prefix detachment)', () => {
+      const ds = replicates()
+      ds.partitions = ['train', 'test', 'train', 'test']
+      expect(() => datasetRelations(ds)).toThrow(/held-out Test partition/)
+      expect(() => validatePartitionGroups(ds)).toThrow(/held-out Test partition/)
+    })
+    it('never group positional identities, which are row handles and not physical samples', () => {
+      const ds = replicates()
+      ds.sampleIds = ['x', 'x', 'x', 'x']
+      ds.identity = { basis: 'positional' }
+      expect(hasCvGroups(ds)).toBe(false)
+    })
   })
   it.each(['missing-origin', 'unmarked', 'cross-group', 'misaligned', 'ambiguous-origin'])('refuses malformed relation %s before native/model calls', (kind) => {
     const ds = cohort()
@@ -106,7 +142,21 @@ describe('declared browser relation identities', () => {
     const native = vi.fn(() => JSON.stringify({ id: 'outer', sample_ids: [], folds: [], sample_groups: {} }))
     const ds = cohort()
     buildNativeFolds({ group_kfold_split_json: native } as unknown as DagMlMod, ds, { folds: 3, seed: 42 }, [0, 1, 2, 3])
-    expect(native).toHaveBeenCalledWith('{"n_splits":3}', JSON.stringify({ s0: 'g0', s1: 'g0', s2: 'g1', s3: 'g1' }), 'outer', undefined)
+    expect(native).toHaveBeenCalledWith('{"n_splits":3}', JSON.stringify(['p0', 'p1', 'p2', 'p3']), JSON.stringify({ p0: 'g0', p1: 'g0', p2: 'g1', p3: 'g1' }), 'outer', undefined)
+  })
+  it('passes a target-missing scan with a blank declared key as a candidate without inventing a group', () => {
+    // Numeric-looking subject codes let the CSV header detection apply to the metadata file.
+    // r5 has no reference and no Sample_ID-like key: it stays its own row unit (p3), is never fitted or scored,
+    // and is declared target-missing; the observed samples keep their real groups.
+    const ds = buildDataset([
+      { name: 'X_train.csv', text: 'a;b\n1;2\n3;4\n5;6\n7;8\n9;10' },
+      { name: 'y_train.csv', text: 'y\n1.2\n1.2\n2.4\n3.6\nNA' },
+      { name: 'metadata_train.csv', text: 'sample_id;subject\nr1;1\nr2;1\nr3;2\nr4;3\nr5;' },
+    ])
+    ds.repetition = 'subject'
+    const native = vi.fn(() => JSON.stringify({ id: 'outer', sample_ids: [], folds: [], sample_groups: {} }))
+    buildNativeFolds({ group_kfold_split_json: native } as unknown as DagMlMod, ds, { folds: 3, seed: 42 }, [0, 1, 2, 3])
+    expect(native).toHaveBeenCalledWith('{"n_splits":3}', JSON.stringify(['p0', 'p1', 'p2', 'p3']), JSON.stringify({ p0: 'g0', p1: 'g1', p2: 'g2' }), 'outer', JSON.stringify(['p3']))
   })
   it('does not fallback to row KFold when groups or the native export are missing', () => {
     const rowSplit = vi.fn()

@@ -1,150 +1,133 @@
-# dag-ml WASM bindings
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/brand/logo-dark.svg">
+    <img alt="dag-ml" src="assets/brand/logo.svg" width="440">
+  </picture>
+</p>
 
-Browser-friendly bindings for DAG-ML JSON contracts.
+# dag-ml
 
-The WASM package exposes validation, DSL compilation, execution-plan
-construction and synchronous host-controller execution over UTF-8 JSON strings.
-Artifacts and data-buffer ownership remain outside the binding.
+Rust-first execution core for leakage-safe, in-process ML pipelines.
 
-For parallel browser HPO, call `host_hpo_search_parallel_json` with a
-dispatcher that returns a Promise for each serialized candidate task. Each Web
-Worker loads its own WASM instance and calls `host_hpo_evaluate_worker_task_json`
-with candidate-local controller state. The core dispatches a whole trial window
-before awaiting results, validates scores and checkpoints, then tells the
-optimizer in trial order. `host_hpo_search_json` remains the synchronous
-single-worker route. For progressive pruning, tagged fold tasks call
-`host_hpo_evaluate_worker_fold_json` and return to the coordinator after each
-fold; pruned candidates never execute later folds. Complete candidates run one
-full native FIT_CV pass for the exact global OOF result.
+`dag-ml` owns the graph, phases, folds, OOF joins, controller ABI, lineage,
+cache and deterministic control RNG. It does not own source storage or feature
+buffers; those contracts live in the companion `dag-ml-data` repository.
 
-`contract_manifest_json()` returns a stable JSON manifest with the package
-version, supported contract ids, exported Python/WASM function names and shared
-fixture digests. Browser integrations should check it before accepting cached
-pipelines or persisted `nirs4all-core` workspaces.
+> Status: 0.3.34 V1 RC release train. The core contracts, C ABI validation helpers, CLI
+> workflows, OOF/leakage checks, deterministic selection, replay bundles,
+> process-adapter protocol and cross-repo `dag-ml-data` fixtures are executable
+> and gated. Production support is intentionally scoped; see
+> [`docs/SUPPORTED.md`](docs/SUPPORTED.md) before treating an adapter or binding
+> as release-supported.
 
-## Build
+## Repository Layout
+
+```text
+crates/
+  dag-ml-core/      # graph, phase, OOF, selection, bundle and control contracts
+  dag-ml/           # Rust facade re-exporting stable core APIs
+  dag-ml-capi/      # C ABI surface and header for host/controller integration
+  dag-ml-py/        # PyO3/maturin JSON-contract bindings for Python hosts
+  dag-ml-wasm/      # wasm-bindgen JSON-contract bindings for browser hosts
+  dag-ml-cli/       # small validation CLI for specs and fixtures
+docs/
+  DEVELOPMENT.md    # contributor navigation and document lifecycle
+  ARCHITECTURE.md   # module boundaries and runtime flow
+  ABI.md            # C ABI ownership model and vtable roadmap
+  RATIONALE.md      # why Rust/C ABI, why the data split, non-goals
+  SUPPORTED.md      # release support matrix and public-signature policy
+  design/source/_archive/ # historical design provenance
+examples/
+  minimal_graph.json
+```
+
+## Rust compiler support
+
+The control runtime (including C ABI, Arrow IPC, WASM and validation CLI) retains
+Rust 1.85 support. `dag-ml-results` and the Python binding that embeds it require
+Rust 1.88: Parquet/Arrow 60 preserves ZSTD support with patched zstd 0.14.3 and
+zstd-safe 8.2.0. This is a compiler-floor change, not a prediction/score schema
+change. The entire workspace is checked on Rust 1.88; do not claim all crates
+support 1.85. The historical Core 0.4.3 archive oracle runs in a separate bounded
+test-only process and retains a separate visible legacy security audit.
+
+## Quick Start
 
 ```bash
+cargo fmt --all --check
+cargo +1.85.0 check --workspace --exclude dag-ml-results --locked
+cargo +1.88.0 check --workspace --all-targets --locked
+cargo test --workspace
 cargo test -p dag-ml-wasm
+# dag-ml-py is excluded from the workspace (abi3-py311); test it standalone:
+PYO3_PYTHON=python3.11 cargo test --manifest-path crates/dag-ml-py/Cargo.toml
+python3 scripts/validate_release_metadata.py
+python3 scripts/check_error_taxonomy.py
+python3 scripts/check_deprecations.py
+python3 scripts/check_public_docs.py
+python3 scripts/release/check_publish_plan.py --dry-run
+python3 scripts/validate_abi_snapshot.py
+cargo audit --deny warnings
+python3 -m pip install -r docs/requirements.txt
+sphinx-build -W --keep-going -b html docs docs/_build/html
+cargo run -p dag-ml-cli -- validate-graph examples/minimal_graph.json
+cargo run -p dag-ml-cli -- validate-bundle --bundle examples/generated/execution_bundle_minimal.json --graph examples/minimal_graph.json --campaign examples/campaign_oof_generation.json --controllers examples/controller_manifests.json --envelope model:base.x=examples/fixtures/data/coordinator_data_plan_envelope_sample12.json --replay-request examples/fixtures/bundle/replay_request_predict.json --plan-id plan:cli.bundle
+(cd crates/dag-ml-py && maturin build --release --features extension-module --out ../../target/wheels)
+python3 scripts/smoke_python_wheel_metadata.py target/wheels/dag_ml-*.whl
+python3 scripts/smoke_python_bindings.py      # after installing the built wheel
+python3 scripts/smoke_python_integration.py ../dag-ml-data  # after installing dag-ml + dag-ml-data wheels
 node_out_dir="$PWD/target/wasm/dag-ml-wasm"
 wasm-pack build crates/dag-ml-wasm --target nodejs --out-dir "$node_out_dir" --release
 node scripts/smoke_wasm_bindings.cjs "$node_out_dir"
-web_out_dir="$PWD/target/wasm-web/dag-ml-wasm"
+web_out_dir="$PWD/crates/dag-ml-wasm/pkg-web"
+rm -rf "$web_out_dir"
 wasm-pack build crates/dag-ml-wasm --target web --out-dir "$web_out_dir" --release
 node scripts/smoke_wasm_web_bindings.mjs "$web_out_dir"
+(cd crates/dag-ml-wasm && wasm-pack pack --pkg-dir pkg-web .)
+node scripts/smoke_wasm_tarball_metadata.mjs "$web_out_dir"
+data_web_out_dir="$PWD/target/wasm-web/dag-ml-data-wasm"
+wasm-pack build ../dag-ml-data/crates/dag-ml-data-wasm --target web --out-dir "$data_web_out_dir" --release
+node scripts/smoke_wasm_tarball_metadata.mjs "$data_web_out_dir"
+node scripts/smoke_wasm_integration.mjs "$web_out_dir" "$data_web_out_dir" ../dag-ml-data
 ```
 
-## JavaScript Surface
+The supply-chain gate retains one reviewed informational exception in
+`.cargo/audit.toml`: [RUSTSEC-2024-0436](https://rustsec.org/advisories/RUSTSEC-2024-0436.html)
+reports the unmaintained `paste` proc macro, pulled only through Parquet.
+This is accepted temporarily, not fixed; no patched version is available.
+All other warnings and vulnerabilities remain blocking. Remove the exception
+when the upstream Parquet dependency replaces `paste` and requalify result files.
 
-```js
-import init, {
-  LocalImplementationRegistry,
-  contract_manifest_json,
-  loss_execution_attestation_json,
-  validate_pipeline_dsl_json,
-  compile_pipeline_dsl_artifact_json,
-} from "./pkg/dag_ml_wasm.js";
+## 0.3.x RC Release Scope
 
-await init();
-const manifest = JSON.parse(contract_manifest_json());
-validate_pipeline_dsl_json(JSON.stringify(dsl));
-const artifact = JSON.parse(compile_pipeline_dsl_artifact_json(JSON.stringify(dsl)));
-```
+The supported 0.3.x RC scope is a Rust-first control core that can:
 
-Local JavaScript losses and metrics are retained by a WASM registry and never
-serialized into DAG-ML contracts:
+1. parse a canonical `GraphSpec`;
+2. validate edge contracts and acyclicity;
+3. consume identity-only fold assignments;
+4. join validation predictions by `sample_id`;
+5. reject train predictions as meta-model training features by default;
+6. select branch/merge variants from persisted OOF metrics;
+7. build a refit/replay bundle that locks plan, controller, data and artifact
+   fingerprints;
+8. resume a native Methods HPO campaign from its opaque `N4MOPT` checkpoint,
+   merging the validated completed-trial prefix before continuing;
+9. replay Archive V2 N4MM format 1 raw PLS or format 2
+   `SNV(ddof=0) -> Savitzky-Golay(mode=interp) -> PLS` artifacts without a
+   Python fallback; and
+10. project validated archive-bound, multi-target conformal evidence for
+    presentation without host-side recalibration or positional joins.
 
-```js
-const implementations = new LocalImplementationRegistry();
-implementations.register_loss(JSON.stringify(lossReference), weightedLoss);
+That scope is intentionally smaller than arbitrary host-pipeline execution.
+Adapter support is bounded in [`docs/SUPPORTED.md`](docs/SUPPORTED.md) and
+the remaining adapter backlog is tracked in
+[`docs/HOST_ADAPTER_BACKLOG.md`](docs/HOST_ADAPTER_BACKLOG.md).
 
-const loss = implementations.resolve_training_loss(
-  JSON.stringify(trainingLossRole),
-  "FIT_CV",
-);
-const value = loss(target, prediction);
-const attestation = JSON.parse(
-  loss_execution_attestation_json(JSON.stringify(trainingLossRole), "FIT_CV"),
-);
-```
+## License
 
-Controllers should bind from the native `NodeTask` rather than resolving a
-role and constructing lineage independently:
+`dag-ml` is dual-licensed open-source — **`CeCILL-2.1 OR AGPL-3.0-or-later`** (your choice). See
+[`LICENSING.md`](LICENSING.md), the full texts under [`LICENSES/`](LICENSES/), third-party
+attributions in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md), and the licensing decision in
+[`docs/adr/ADR-18-licensing.md`](docs/adr/ADR-18-licensing.md).
 
-```js
-const binding = implementations.bind_training_loss(
-  JSON.stringify(nodeTask),
-  0,
-);
-const loss = binding.invoke;
-const value = loss(target, prediction);
-const requiredAttestation = JSON.parse(binding.required_attestation_json);
-binding.free();
-```
-
-The role index is zero-based. Binding validates that the task's ordered loss
-requirements exactly match its active roles. A controller may copy the returned
-attestation into `NodeResult.lineage.loss_attestations` only after `loss(...)`
-returns successfully.
-
-For scheduler execution, lower the roles into the native plan and execute that
-plan rather than rebuilding a loss-free campaign plan:
-
-```js
-const planJson = build_execution_plan_with_training_losses_json(
-  planId,
-  JSON.stringify(graph),
-  JSON.stringify(campaign),
-  JSON.stringify(controllerManifests),
-  JSON.stringify(trainingLossRoles),
-);
-
-const resultsJson = execute_execution_plan_phase_json(
-  planJson,
-  JSON.stringify(controllerManifests),
-  runId,
-  rootSeed,
-  "FIT_CV",
-  (controllerId, taskJson, exactSeed) =>
-    controller.invoke(controllerId, taskJson, exactSeed),
-);
-```
-
-The native lowerer replaces all plan loss roles, groups them by node and sorts
-them canonically before validating controller capabilities. At execution, every
-manifest embedded in the plan must exactly match the independently supplied
-trusted controller registry before any callback runs. The scheduler then checks
-that each callback result contains exactly the task's required loss attestations
-in the same order.
-
-The callback's `exactSeed` argument is a decimal string (or `null`), avoiding
-precision loss for native `u64` seeds beyond JavaScript's safe-integer range.
-The callback may set `NodeResult.lineage.seed` to `null`; the WASM bridge then
-injects the authoritative native seed before scheduler validation. The returned
-`resultsJson` still contains native numeric `u64` values; use a lossless JSON
-integer parser, or preserve the raw JSON, when inspecting lineage seeds exactly.
-
-For host hyperparameter search, `host_hpo_search_json(planJson, manifestsJson,
-envelopeJson, requestJson, checkpointJson, controller, optimizer)` runs the same
-sequential native search as Rust and PyO3. The `controller` has the signature
-shown above. The synchronous `optimizer(operation, payloadJson)` must return a
-JSON string: `ask` returns `{"params": {...}}` or `{"params": null}`;
-`report_intermediate` returns `{"prune": true|false}`; `tell`, `pruned`,
-`fail`, and `prepare_terminal` return `{"ok": true}`; `checkpoint` returns
-`{"continue": true|false}`. `prepare_terminal` receives a sealed prospective
-checkpoint before an optimizer transition, so a browser host should persist it
-durably before replying. To resume, pass the last published native checkpoint
-as `checkpointJson` and reconcile any prepared optimizer transition first with
-`recover_host_hpo_checkpoint_json(checkpointJson, preparedJson, interruptedJson)`;
-use `"null"` and `"[]"` when there is no prepared terminal or interrupted trial.
-This export runs one candidate at a time; browser worker parallelism remains
-an adapter gap.
-
-JavaScript-local descriptors use `binding:javascript` and a `host_local` or
-`portable_registered` lifecycle. A Web Worker must populate its own registry;
-functions are not cloned, posted, or embedded in replay artifacts. Resolution
-is rejected when the exact descriptor or phase does not match.
-
-Rust-side validation failures are returned as JSON strings with the ADR-11
-descriptor fields `category`, `code`, `severity`, `message`,
-`remediation_hint` and `context`.
+For fold-fitted categorical targets, see the [fold-local domain contract](docs/FOLD_LOCAL_TARGET_DOMAINS.md): native macrofold selection and captured-domain inference, with cross-domain prediction ensembles refused.

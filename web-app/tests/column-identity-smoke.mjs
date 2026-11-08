@@ -31,7 +31,8 @@ function fail(msg) {
   process.exitCode = 1
 }
 
-async function predict(file) {
+async function predict(file, hasHeader) {
+  await page.getByLabel('Spectra header row', { exact: true }).selectOption(hasHeader ? 'yes' : 'no')
   await page.locator('input[type=file][accept*="csv"]').first().setInputFiles(file)
   await page.waitForFunction(() => !/Predicting…/.test(document.body.textContent || ''), null, { timeout: 30000 })
   await page.waitForTimeout(300)
@@ -47,17 +48,18 @@ try {
   await page.locator('[data-step="predict"]').click()
   await page.waitForSelector('text=/Predict on new spectra/', { timeout: 10000 })
 
-  await predict(XTEST)
+  if (await page.getByLabel('Spectra header row', { exact: true }).inputValue() !== '') fail('expected the IO proposal by default')
+  await predict(XTEST, true)
   if (await page.locator('[data-column-check="names"]').count()) console.log('✓ matching header: columns checked by name and order')
   else fail('expected the "columns checked" notice for the matching header')
 
-  await predict(permuted)
+  await predict(permuted, true)
   const body = (await page.textContent('body')) || ''
   if (/do not match the model's.*different order/.test(body) && (await page.locator('[data-column-check]').count()) === 0) {
     console.log('✓ permuted columns refused, no prediction shown')
   } else fail('expected permuted columns to be refused')
 
-  await predict(anonymous)
+  await predict(anonymous, false)
   const notice = page.locator('[data-column-check="positional"]')
   if ((await notice.count()) && /no header row.*taken by position/.test((await notice.textContent()) || '')) {
     console.log('✓ file without header: positional contract stated')

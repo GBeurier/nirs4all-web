@@ -12,7 +12,10 @@ import { parseFeatureIdentity } from '@/engine/feature-identity'
 import type { PipelineDSL } from '@/engine/types'
 import { deserializeTyped, type LoadedModel, serializeTyped } from './n4a'
 
-const KEY = 'nirs4all-web:session:v1'
+// v2: typed arrays are stored as exact little-endian bytes (host payload v3). The v1
+// namespace held lossy number-array payloads; its bytes are never read, rewritten or
+// deleted here, so an offline tool can still convert them.
+const KEY = 'nirs4all-web:session:v2'
 const SAMPLE_IDS: SampleId[] = SAMPLES.map((s) => s.id)
 
 export interface Session {

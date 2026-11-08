@@ -93,12 +93,11 @@ export async function openExperiment(indexBytes, members) {
     if (index.model_archive?.path !== 'model.n4a') throw new Error('Model archive reference is invalid');
     archive = bytes(inventory['model.n4a'], 'model.n4a').slice();
     if (await sha256(archive) !== index.model_archive.sha256) throw new Error('Model archive hash mismatch');
+    // Core validates the selected native closure on read and returns the exact root and evidence bytes.
     const opened = await readPortableArchiveV2(archive);
-    // Use the native package/artifact semantic gate before accepting a model.
     const nativeArchive = await loadArchiveV2Native();
-    nativeArchive.validate_portable_archive_v2(archive);
-    const packagePayload = parse(opened.members['dagml/portable_predictor_package.json'], 'native predictor package');
-    const outcome = parse(opened.members['dagml/training_outcome.json'], 'native training outcome');
+    const packagePayload = parse(opened.package, 'native predictor package');
+    const outcome = parse(opened.trainingOutcome, 'native training outcome');
     if (outcome.run_id !== index.run_id || outcome.selected_variant_id !== index.winner_variant_id
         || packagePayload.execution_bundle?.selected_variant_id !== index.winner_variant_id
         || packagePayload.training_outcome?.outcome_fingerprint !== outcome.outcome_fingerprint
@@ -107,7 +106,7 @@ export async function openExperiment(indexBytes, members) {
       throw new Error('Model archive does not close over experiment winner');
     }
     nativeArchive.validate_training_predictions_json(
-      decoder.decode(opened.members['dagml/training_outcome.json']), JSON.stringify(predictions),
+      decoder.decode(opened.trainingOutcome), JSON.stringify(predictions),
     );
   }
   return Object.freeze({

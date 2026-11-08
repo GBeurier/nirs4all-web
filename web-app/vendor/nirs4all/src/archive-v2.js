@@ -1,11 +1,5 @@
 import { loadMethodsWasm } from './index.js';
 
-const MAX_ROWS = 4096;
-const MAX_FEATURES = 2048;
-const MAX_TARGETS = 256;
-const MAX_CELLS = 2_097_152;
-const MAX_ARCHIVE_BYTES = 537_938_966;
-
 let archiveNativePromise = null;
 
 /** Load the Core-owned Archive V2 validator compiled from Rust to WASM. */
@@ -30,85 +24,134 @@ export async function loadArchiveV2Native() {
 }
 
 /**
- * Read the opaque payload inventory through Core's bounded native validator.
- * This validates storage only. DAG-ML must validate package semantics and
- * controller trust before using these bytes for a replay.
+ * Read a native Package V2/V3 container through Core's native validator.
+ *
+ * Core validates the owner-neutral V1 container and the selected native
+ * scientific closure (owner, content type, profile, operation, links and fitted
+ * states). `package` is the exact root package bytes (a Uint8Array) and
+ * `members` holds only the selected verified physical closure. There is no
+ * physical-manifest replay map: do not pass this result to an old DAG
+ * physical-manifest validator. `trainingOutcome` is the exact outcome evidence
+ * of a Package V2 and `null` for a standalone Package V3 child. Only an optional
+ * host-authorized working-memory budget bounds the call.
+ *
+ * @param {ArrayBuffer|ArrayBufferView} archiveBytes
+ * @param {{entrypoint?: string, memoryBudgetBytes?: number|bigint}} [options]
  */
-export async function readPortableArchiveV2(archiveBytes) {
-  const bytes = bytesView(archiveBytes, 'Archive V2');
-  if (bytes.byteLength > MAX_ARCHIVE_BYTES) {
-    throw new RangeError('Archive V2 exceeds the canonical Core byte budget.');
-  }
+export async function readPortableArchiveV2(archiveBytes, options = {}) {
+  const bytes = bytesView(archiveBytes, 'native package container');
   const native = await loadArchiveV2Native();
-  if (typeof native?.ValidatedPortableArchiveV2 !== 'function') {
-    throw new TypeError('Core lacks the portable Archive V2 inventory bridge.');
+  if (typeof native?.ValidatedPortableArchiveV2?.with_entrypoint !== 'function') {
+    throw new TypeError('Core lacks the native package inventory bridge.');
   }
-  const archive = new native.ValidatedPortableArchiveV2(bytes);
+  const archive = native.ValidatedPortableArchiveV2.with_entrypoint(
+    bytes, entrypointOption(options), budgetOption(options),
+  );
   try {
     const members = Object.create(null);
     for (const path of JSON.parse(archive.member_paths_json())) {
       members[path] = archive.member_bytes(path);
     }
+    const view = deepFreeze(JSON.parse(archive.view_json()));
     return Object.freeze({
       archiveId: archive.archive_id,
       archiveSha256: archive.archive_sha256,
-      manifest: JSON.parse(archive.manifest_json()),
+      manifest: deepFreeze(JSON.parse(archive.manifest_json())),
       members: Object.freeze(members),
+      package: archive.package_bytes(),
+      trainingOutcome: view.package_schema_version === 2 ? archive.training_outcome_bytes() : null,
+      view,
     });
   } finally {
     archive.free();
   }
 }
 
-/** Write Core's exact stored-ZIP profile from DAG-ML-assembled payloads. */
-export async function writePortableArchiveV2(manifest, members) {
-  if (manifest === null || typeof manifest !== 'object' || Array.isArray(manifest)
-    || members === null || typeof members !== 'object' || Array.isArray(members)) {
-    throw new TypeError('Archive V2 manifest and members must be mappings.');
-  }
+/**
+ * Build a NEW native Package V2 container (owner-neutral Core V1 bytes) from the
+ * exact TrainingOutcome and PortablePredictorPackage V2 JSON bytes. Core builds
+ * the native scientific closure through DAG-ML.
+ */
+export async function writeNativePredictorPackage(containerId, outcomeBytes, packageBytes, options = {}) {
   const native = await loadArchiveV2Native();
-  if (typeof native?.ArchiveV2Builder !== 'function') {
-    throw new TypeError('Core lacks the portable Archive V2 writer bridge.');
+  if (typeof native?.write_native_predictor_package_bytes !== 'function') {
+    throw new TypeError('Core lacks the native Package V2 writer bridge.');
   }
-  const builder = new native.ArchiveV2Builder(JSON.stringify(manifest));
-  try {
-    for (const path of Object.keys(members).sort()) {
-      builder.add_member(path, bytesView(members[path], `Archive V2 member ${path}`));
-    }
-    return builder.finish();
-  } finally {
-    builder.free();
-  }
+  return native.write_native_predictor_package_bytes(
+    containerIdText(containerId),
+    bytesView(outcomeBytes, 'TrainingOutcome JSON'),
+    bytesView(packageBytes, 'Package V2 JSON'),
+    budgetOption(options),
+  );
 }
 
 /**
- * Replay the bounded Methods-only Archive V2 contract through libn4m WASM.
+ * Calibrate by immutable-base carry: Core admits `calibrate-external` on the verified original
+ * container `baseBytes` (the optional `entrypoint` names a calibration entrypoint, never a predict
+ * one; omitted, Core selects the unique calibration operation), keeps every unrelated byte,
+ * identity, link and entrypoint, and refuses rebinding of a retained reference or any fitted-state
+ * change. `outcomeBytes`/`packageBytes` are the exact UTF-8 JSON of the calibrated outcome and package.
+ * Never a fresh writer.
+ */
+export async function calibrateNativePackage(baseBytes, outcomeBytes, packageBytes, containerId, options = {}) {
+  const native = await loadArchiveV2Native();
+  if (typeof native?.calibrate_native_package_bytes !== 'function') {
+    throw new TypeError('Core lacks the native package calibration carry bridge.');
+  }
+  return native.calibrate_native_package_bytes(
+    bytesView(baseBytes, 'base native package container'),
+    entrypointOption(options),
+    bytesView(outcomeBytes, 'calibrated TrainingOutcome JSON'),
+    bytesView(packageBytes, 'calibrated Package V2 JSON'),
+    containerIdText(containerId),
+    budgetOption(options),
+  );
+}
+
+/**
+ * Build a NEW native Package V3 container (storage and inspection only; WASM
+ * execution of Package V3 is refused) from the exact PortableRefitPackage V3 JSON
+ * bytes. No parent outcome, refit-of link or score is invented.
+ */
+export async function writeNativeRefitPackage(containerId, packageBytes, options = {}) {
+  const native = await loadArchiveV2Native();
+  if (typeof native?.write_native_refit_package_bytes !== 'function') {
+    throw new TypeError('Core lacks the native Package V3 writer bridge.');
+  }
+  return native.write_native_refit_package_bytes(
+    containerIdText(containerId),
+    bytesView(packageBytes, 'Package V3 JSON'),
+    budgetOption(options),
+  );
+}
+
+/**
+ * Replay the Methods-only Package V2 contract through libn4m WASM.
  *
- * Core Rust/WASM validates the complete stored-ZIP inventory and DAG-ML package
- * before releasing opaque N4MM bytes. This JavaScript layer only validates host
+ * Core Rust/WASM validates the owner-neutral container and the selected native
+ * closure, including the DAG-ML package, before releasing opaque N4MM bytes. This JavaScript layer only validates host
  * arrays, marshals them into the public Methods C ABI and shapes the returned
  * multi-target result. It contains no estimator or prediction implementation.
  */
 export async function replayMethodsArchiveV2(archiveBytes, dataset, options = {}) {
-  const bytes = bytesView(archiveBytes, 'Archive V2');
-  if (bytes.byteLength > MAX_ARCHIVE_BYTES) {
-    throw new RangeError('Archive V2 exceeds the canonical Core byte budget.');
-  }
+  const bytes = bytesView(archiveBytes, 'native package container');
   const input = features(dataset);
   const archiveNative = await loadArchiveV2Native();
-  if (typeof archiveNative?.ValidatedMethodsArchiveV2 !== 'function') {
+  if (typeof archiveNative?.ValidatedMethodsArchiveV2?.with_entrypoint !== 'function') {
     throw new TypeError('Archive V2 native validator is unavailable or incompatible.');
   }
 
-  // The native constructor validates before any package/model byte is exposed.
-  const archive = new archiveNative.ValidatedMethodsArchiveV2(bytes);
+  // The native constructor validates the selected closure before any package/model byte is exposed.
+  const archive = archiveNative.ValidatedMethodsArchiveV2.with_entrypoint(
+    bytes, entrypointOption(options), budgetOption(options),
+  );
   try {
     const targetNames = JSON.parse(archive.target_names_json());
     if (!Array.isArray(targetNames) || targetNames.length === 0
-      || targetNames.length > MAX_TARGETS || new Set(targetNames).size !== targetNames.length
+      || new Set(targetNames).size !== targetNames.length
       || targetNames.some((name) => typeof name !== 'string' || name.length === 0
-        || name.length > 128 || /[\u0000-\u001f\u007f]/.test(name))) {
-      throw new Error('Archive V2 target names exceed the bounded output contract.');
+        || /[\u0000-\u001f\u007f]/.test(name))) {
+      throw new Error('Archive V2 target names must be distinct non-empty strings without control characters.');
     }
     const methods = options.methods ?? await loadMethodsWasm();
     if (typeof methods.loadModule === 'function') {
@@ -157,16 +200,15 @@ export async function replayMethodsArchiveV2(archiveBytes, dataset, options = {}
  * the result is derived from their inventoried N4MM bytes. New packages are
  * refused unless their embedded DAG-ML descriptor matches the same inspection.
  */
-export async function inspectMethodsArchiveV2Predictors(archiveBytes) {
-  const bytes = bytesView(archiveBytes, 'Archive V2');
-  if (bytes.byteLength > MAX_ARCHIVE_BYTES) {
-    throw new RangeError('Archive V2 exceeds the canonical Core byte budget.');
-  }
+export async function inspectMethodsArchiveV2Predictors(archiveBytes, options = {}) {
+  const bytes = bytesView(archiveBytes, 'native package container');
   const archiveNative = await loadArchiveV2Native();
-  if (typeof archiveNative?.ValidatedMethodsArchiveV2 !== 'function') {
+  if (typeof archiveNative?.ValidatedMethodsArchiveV2?.with_entrypoint !== 'function') {
     throw new TypeError('Archive V2 native validator is unavailable or incompatible.');
   }
-  const archive = new archiveNative.ValidatedMethodsArchiveV2(bytes);
+  const archive = archiveNative.ValidatedMethodsArchiveV2.with_entrypoint(
+    bytes, entrypointOption(options), budgetOption(options),
+  );
   try {
     const methods = await loadMethodsWasm();
     if (typeof methods.loadModule === 'function') {
@@ -285,8 +327,8 @@ function predictN4mm(
       );
     }
     const outputCells = input.rows * nTargets;
-    if (!Number.isSafeInteger(outputCells) || nTargets > MAX_TARGETS || outputCells > MAX_CELLS) {
-      throw new RangeError('Archive V2 prediction exceeds the bounded WASM output contract.');
+    if (!Number.isSafeInteger(outputCells)) {
+      throw new RangeError('Archive V2 prediction shape exceeds the safe integer range.');
     }
 
     matrix = methods.makeMatrixView(input.X, input.rows, input.cols);
@@ -382,10 +424,10 @@ function features(dataset) {
   }
   const rows = Number(dataset.rows ?? dataset.n_samples);
   const cols = Number(dataset.cols ?? dataset.n_features);
-  if (!Number.isInteger(rows) || rows <= 0 || rows > MAX_ROWS
-    || !Number.isInteger(cols) || cols <= 0 || cols > MAX_FEATURES
-    || rows * cols > MAX_CELLS) {
-    throw new RangeError('Archive V2 replay shape exceeds the bounded WASM matrix contract.');
+  if (!Number.isSafeInteger(rows) || rows <= 0
+    || !Number.isSafeInteger(cols) || cols <= 0
+    || !Number.isSafeInteger(rows * cols)) {
+    throw new RangeError('Archive V2 replay shape requires positive safe integer dimensions and cell count.');
   }
   const X = numericMatrix(dataset.X, rows, cols);
   const supplied = dataset.sampleIds ?? dataset.sample_ids;
@@ -435,6 +477,41 @@ function hasNonFinite(values) {
     if (!Number.isFinite(values[index])) return true;
   }
   return false;
+}
+
+function entrypointOption(options) {
+  const entrypoint = options?.entrypoint;
+  if (entrypoint === undefined || entrypoint === null) return undefined;
+  if (typeof entrypoint !== 'string' || entrypoint.length === 0) {
+    throw new TypeError('entrypoint must be a non-empty string when supplied.');
+  }
+  return entrypoint;
+}
+
+/** The only bound on a call is the host-authorized working-memory budget (BigInt for Core's u64). */
+function budgetOption(options) {
+  const budget = options?.memoryBudgetBytes;
+  if (budget === undefined || budget === null) return undefined;
+  if ((typeof budget !== 'number' || !Number.isSafeInteger(budget) || budget < 0)
+    && (typeof budget !== 'bigint' || budget < 0n)) {
+    throw new TypeError('memoryBudgetBytes must be a non-negative integer when supplied.');
+  }
+  return BigInt(budget);
+}
+
+function containerIdText(value) {
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new TypeError('A native package container id must be a non-empty string.');
+  }
+  return value;
+}
+
+function deepFreeze(value) {
+  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const child of Object.values(value)) deepFreeze(child);
+  }
+  return value;
 }
 
 function bytesView(value, label) {

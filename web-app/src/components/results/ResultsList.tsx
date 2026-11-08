@@ -194,7 +194,7 @@ function useModelExport(run: RunResult, engine: Engine) {
   const exportModel = async (allowTrainingRows: boolean) => {
     setError(null)
     try {
-      downloadN4a(run, await engine.exportModel(run.model, { allowTrainingRows }))
+      await downloadN4a(run, await engine.exportModel(run.model, { allowTrainingRows }))
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     }

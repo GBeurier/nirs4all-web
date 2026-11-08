@@ -21,7 +21,7 @@ npm run build
 ```
 
 The package uses file dependencies against `../../vendor/nirs4all` and the exact content-addressed
-`../../vendor/npm/nirs4all-ui-0.1.17.tgz` artifact, so it is tested against the same pinned UI snapshot as the Web app.
+`../../vendor/npm/nirs4all-ui-0.2.2-local.20261107.2.tgz` artifact, so it is tested against the same pinned UI snapshot as the Web app.
 
 ## Host Boundary
 
@@ -34,14 +34,19 @@ The host owns:
 
 The reusable packages own:
 
-- capability and runtime contracts from `nirs4all`
+- the capability manifest from `nirs4all` (`capabilityManifest()`: `schema`, `aggregate`,
+  `runtimeSurfaces` and `executionProfiles`)
 - portable pipeline execution entrypoints
 - dataset/runtime/score view-models from `nirs4all-ui`
 - presentational React components from `nirs4all-ui/components`
 - conformal artifact, robustness summary, tuning summary, and keyword-registry projection helpers
 
-The example demonstrates how a complex host can render the native
-metadata contracts declared by the core capability manifest:
+The host lists the Core execution profiles, the content-type schemas each profile carries, and the
+per-profile JavaScript/WASM `predict` entrypoints or explicit unsupported reasons. This reports declared
+availability, not qualification, and does not mean a model fitted on one runtime surface is portable to another.
+
+The example also demonstrates how a complex host can render these native
+metadata artifacts from sample fixtures through `nirs4all-ui`:
 
 - `conformal.calibrated_result`
 - `robustness.summary`
@@ -80,17 +85,11 @@ run HPO, infer candidate values, or mutate the search space. The template uses
 the same compact fixture values as the full Python `ordered_search_space_v1`
 contract test so custom-host behavior stays aligned with the source generator.
 
-For `keyword.registry`, the host reads the manifest's `publishedConstants`
-and `required_registry_entries` compatibility floor. `publishedConstants`
-currently pins `ROBUSTNESS_SCENARIO_DISTRIBUTIONS = ["normal", "uniform"]`
-so the host can build robustness distribution options without parsing prose.
-The required entries include `run.tuning.space` as the object/mapping tuning-space keyword,
-`run.tuning.force_params`, `predict.coverage`, `predict.all_predictions`, and
-robustness scenario fields, plus `robustness.X`, `robustness.predictor`, and
-`robustness.predictor_bundle` for the full Python explicit-X frozen-predictor
-spectral replay path. They are preserved for forms and
-custom hosts; they do not mean this browser aggregate executes HPO, conformal
-calibration, or robustness campaigns itself.
+For `keyword.registry`, the host parses a small sample registry document with
+`parseKeywordRegistryDocument(...)` and projects form sections and value options
+(`run.engine`) through `nirs4all-ui/keywordRegistry`. The sample entry is a UI
+fixture, not a Core capability or a required-entry contract, and it does not mean
+this browser aggregate executes HPO, conformal calibration, or robustness campaigns itself.
 
 The host does not compute conformal quantiles, infer guarantee status from raw
 predictions, replay HPO trials, drive optimizers, recompute robustness metrics,

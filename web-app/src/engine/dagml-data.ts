@@ -10,7 +10,7 @@
 // in-memory matrices and records the degraded status in lineage (never silent).
 import { loadDagMlDataWasm } from './nirs4all-core'
 import type { MaterializedDataset } from './types'
-import { datasetRelations } from './relations'
+import { datasetRelations, physicalIdentity, type PhysicalIdentity } from './relations'
 
 type DagMlDataMod = typeof import('@/engine/wasm/dagml-data/dag_ml_data_wasm.js')
 
@@ -33,6 +33,8 @@ export interface DataProviderResult {
   version: string
   /** Validated native data-plan authority, not a host reconstruction. */
   envelopeJson: string
+  /** The physical-sample (`p{k}`) / observation (`s{i}`) handles the envelope was built with. */
+  identity: PhysicalIdentity
 }
 
 /** Is the dag-ml-data provider WASM loadable in this environment? */
@@ -49,20 +51,18 @@ const FEATURE_SET = 'X'
 const TARGET_ID = 'y'
 const SOURCE_ID = 'nir'
 
-// dag-ml-data (like dag-ml) restricts SampleId to [A-Za-z0-9_-.:]; studio sample
-// ids may contain '#' or other characters. Address the provider with stable
-// row-index ids and map blocks back by index — original ds.sampleIds stay for UI.
-const canonicalIds = (n: number): string[] => Array.from({ length: n }, (_, i) => `s${i}`)
-const rowOfCanonical = (id: string): number => Number(id.slice(1))
-
-function buildSchema(ds: MaterializedDataset) {
+// dag-ml-data (like dag-ml) restricts ids to [A-Za-z0-9_-.:]; original sample ids may
+// contain '#' or other characters. The provider is addressed with execution handles:
+// observation `s{i}` (row i) and physical sample `p{k}`; blocks map back through the exact
+// handle tables, and the original ids stay in ds.sampleIds and the relation metadata.
+function buildSchema(ds: MaterializedDataset, identity: PhysicalIdentity) {
   const axisOk = ds.axis && ds.axis.length === ds.nFeatures
   const axisValues = axisOk ? Array.from(ds.axis) : Array.from({ length: ds.nFeatures }, (_, j) => j)
   const featureNames = Array.from({ length: ds.nFeatures }, (_, j) => `w${j}`)
   return {
     schema: {
       dataset_id: ds.targetName ? `web-${ds.targetName}` : 'web-dataset',
-      sample_ids: canonicalIds(ds.nSamples),
+      sample_ids: [...identity.handles],
       sources: [
         {
           id: SOURCE_ID,
@@ -154,8 +154,10 @@ const ADAPTER_REGISTRY = {
  */
 export async function materializeViaProvider(ds: MaterializedDataset): Promise<DataProviderResult> {
   const m = await mod()
-  const cids = canonicalIds(ds.nSamples) // dag-ml-data-safe ids (row-index based)
-  const { schema, featureNames } = buildSchema(ds)
+  const identity = physicalIdentity(ds)
+  const observationIds = identity.observationHandle
+  const rowOfObservation = new Map(observationIds.map((id, i) => [id, i]))
+  const { schema, featureNames } = buildSchema(ds, identity)
   const schemaJson = JSON.stringify(schema)
   m.validate_dataset_schema_json(schemaJson)
 
@@ -173,23 +175,24 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
   m.validate_coordinator_data_plan_envelope_json(envelopeJson)
   const envelope = JSON.parse(envelopeJson)
 
-  // target table (keyed by sample_id) — small (one value per sample), stays JSON.
+  // target table (keyed by the physical sample p{k}) — one value per sample, the
+  // dag-ml-data target grain (physicalIdentity refuses a sample whose scans disagree).
   // Only finite targets enter it: a missing target never crosses the boundary
-  // (JSON would turn NaN into null). Its row is `excluded` in the relations, so
-  // the training view below drops it while the feature view keeps it.
-  const labeled = cids.filter((_, i) => Number.isFinite(ds.y[i]))
-  const targetTables = labeled.length ? [{ target_id: TARGET_ID, values: labeled.map((sid) => ({ sample_id: sid, value: ds.y[rowOfCanonical(sid)] })) }] : null
+  // (JSON would turn NaN into null). Its rows are `excluded` in the relations, so
+  // the training view below drops them while the feature view keeps them.
+  const labeled = identity.handles.filter((handle) => Number.isFinite(ds.y[identity.rowsOf.get(handle)![0]]))
+  const targetTables = labeled.length ? [{ target_id: TARGET_ID, values: labeled.map((handle) => ({ sample_id: handle, value: ds.y[identity.rowsOf.get(handle)![0]] })) }] : null
   // Feature matrix: only the METADATA goes as JSON; the flat row-major values
   // cross as a typed Float64Array (one memcpy in WASM), never through
   // `JSON.stringify` + a boxed array. ds.X is already row-major in dataset
-  // (= observation) order, so it maps 1:1 to `observation_ids` (cids). This is
+  // (= observation) order, so it maps 1:1 to `observation_ids` (s{i}). This is
   // the load-bearing fix for large datasets (e.g. Cassava 3021×1050): the old
   // JSON value-transport peaked at hundreds of MB and crashed the worker.
   const featureMeta = {
     feature_set_id: FEATURE_SET,
     representation_id: 'tabular_numeric',
     feature_names: featureNames,
-    observation_ids: cids,
+    observation_ids: observationIds,
   }
 
   const provider = m.WasmInMemoryProvider.withF64Features(envelopeJson, targetTables && JSON.stringify(targetTables), JSON.stringify(featureMeta), ds.X)
@@ -213,7 +216,7 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
       require_relations: true,
     }
     dataHandle = provider.materialize(JSON.stringify(matRequest))
-    viewHandle = provider.make_view(dataHandle, JSON.stringify({ sample_ids: cids, include_augmented: true, include_excluded: true }))
+    viewHandle = provider.make_view(dataHandle, JSON.stringify({ sample_ids: identity.handles, include_augmented: true, include_excluded: true }))
 
     // Feature matrix via the TYPED path: a small layout JSON (ids + shape) plus
     // the flat row-major values as a Float64Array — no O(rows×cols) JSON string,
@@ -223,57 +226,58 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
     const fblock = provider.featureBlockF64(viewHandle, FEATURE_SET)
     const fLayoutStr = fblock.layout
     const fValues = fblock.into_values() // consumes the block; flat row-major, length n_rows*n_cols
-    const fLayout = JSON.parse(fLayoutStr) as { sample_ids: string[]; n_rows: number; n_cols: number }
+    const fLayout = JSON.parse(fLayoutStr) as { observation_ids: string[]; sample_ids: string[]; n_rows: number; n_cols: number }
 
-    // reconstruct in dataset order, asserting exact 1:1 coverage — never train on
-    // zero-filled rows. Any gap/dup/width mismatch throws → visible degraded path.
+    // reconstruct in dataset order by OBSERVATION identity, asserting exact 1:1 coverage —
+    // never train on zero-filled rows. A view over p{k} serves rows grouped by physical
+    // sample, so the served order is not the dataset order once a sample repeats.
     const at = (id: string): number => {
-      const i = rowOfCanonical(id)
-      if (!Number.isInteger(i) || i < 0 || i >= ds.nSamples) throw new Error(`provider returned unknown sample id ${id}`)
+      const i = rowOfObservation.get(id)
+      if (i === undefined) throw new Error(`provider returned unknown observation id ${id}`)
       return i
     }
-    if (fLayout.sample_ids.length !== ds.nSamples) throw new Error(`provider feature block covered ${fLayout.sample_ids.length}/${ds.nSamples} samples`)
+    if (fLayout.observation_ids.length !== ds.nSamples) throw new Error(`provider feature block covered ${fLayout.observation_ids.length}/${ds.nSamples} observations`)
     if (fLayout.n_cols !== ds.nFeatures) throw new Error(`provider feature block has ${fLayout.n_cols}/${ds.nFeatures} features`)
     if (fValues.length !== ds.nSamples * ds.nFeatures) throw new Error(`provider feature block has ${fValues.length} values, expected ${ds.nSamples * ds.nFeatures}`)
 
-    // The provider serves rows in relation order, which we registered as
-    // s0..s{n-1} — when it echoes that identity ordering (the steady state),
-    // adopt the served buffer DIRECTLY: zero copy. Anything else falls back to
-    // an explicit reorder by sampleId (row-block memcpy), with duplicate
-    // detection; full length + no dups ⇒ exact coverage either way.
+    // When the provider echoes dataset order (the steady state without repeats), adopt
+    // the served buffer DIRECTLY: zero copy. Otherwise reorder by observation id
+    // (row-block memcpy) with duplicate detection; full length + no dups ⇒ exact coverage.
     let X = fValues
-    let identity = true
-    for (let r = 0; r < fLayout.sample_ids.length; r++) {
-      if (fLayout.sample_ids[r] !== `s${r}`) {
-        identity = false
+    let inOrder = true
+    for (let r = 0; r < fLayout.observation_ids.length; r++) {
+      if (fLayout.observation_ids[r] !== observationIds[r]) {
+        inOrder = false
         break
       }
     }
-    if (!identity) {
+    if (!inOrder) {
       X = new Float64Array(ds.nSamples * ds.nFeatures)
       const seenX = new Uint8Array(ds.nSamples)
-      for (let r = 0; r < fLayout.sample_ids.length; r++) {
-        const i = at(fLayout.sample_ids[r])
-        if (seenX[i]) throw new Error(`provider returned duplicate sample id ${fLayout.sample_ids[r]}`)
+      for (let r = 0; r < fLayout.observation_ids.length; r++) {
+        const i = at(fLayout.observation_ids[r])
+        if (seenX[i]) throw new Error(`provider returned duplicate observation id ${fLayout.observation_ids[r]}`)
         seenX[i] = 1
         X.set(fValues.subarray(r * ds.nFeatures, (r + 1) * ds.nFeatures), i * ds.nFeatures)
       }
     }
-    // Targets come from the training view (excluded rows dropped natively) and
-    // must cover exactly the labeled rows with finite numbers — never coerced.
+    // Targets come from the training view (excluded rows dropped natively): one value per
+    // labeled physical sample, served to every scan of that sample — never coerced.
     const y = new Float64Array(ds.nSamples).fill(NaN)
     if (labeled.length) {
-      trainingViewHandle = provider.make_view(dataHandle, JSON.stringify({ sample_ids: cids, include_augmented: true, include_excluded: false }))
+      trainingViewHandle = provider.make_view(dataHandle, JSON.stringify({ sample_ids: identity.handles, include_augmented: true, include_excluded: false }))
       const tblock = JSON.parse(provider.target_block(trainingViewHandle, TARGET_ID)) as { sample_ids: string[]; values: unknown[] }
       if (tblock.sample_ids.length !== labeled.length) throw new Error(`provider target block covered ${tblock.sample_ids.length}/${labeled.length} labeled samples`)
-      const seenY = new Uint8Array(ds.nSamples)
+      const seenY = new Set<string>()
       for (let r = 0; r < tblock.sample_ids.length; r++) {
-        const i = at(tblock.sample_ids[r])
+        const handle = tblock.sample_ids[r]
+        const rows = identity.rowsOf.get(handle)
         const value = tblock.values[r]
-        if (seenY[i]) throw new Error(`provider returned duplicate target sample id ${tblock.sample_ids[r]}`)
-        if (typeof value !== 'number' || !Number.isFinite(value) || !Number.isFinite(ds.y[i])) throw new Error(`provider served an invalid target for sample ${tblock.sample_ids[r]}`)
-        seenY[i] = 1
-        y[i] = value
+        if (!rows) throw new Error(`provider returned unknown sample id ${handle}`)
+        if (seenY.has(handle)) throw new Error(`provider returned duplicate target sample id ${handle}`)
+        if (typeof value !== 'number' || !Number.isFinite(value) || rows.some((i) => !Number.isFinite(ds.y[i]))) throw new Error(`provider served an invalid target for sample ${handle}`)
+        seenY.add(handle)
+        for (const i of rows) y[i] = value
       }
     }
 
@@ -284,6 +288,7 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
       outputRepresentation,
       version: m.dag_ml_data_version(),
       envelopeJson,
+      identity,
     }
   } finally {
     try {

@@ -4,6 +4,7 @@
 //      ONLY a Refit score is produced (no "CV Scores", no folds) — a refit-only run;
 //   2. re-add CV → run → "CV Scores" returns.
 import { chromium } from 'playwright-core'
+import { join } from 'node:path'
 
 const URL = process.env.SMOKE_URL || 'http://localhost:4345/'
 const EXE = process.env.CHROME || '/usr/bin/google-chrome'
@@ -46,7 +47,8 @@ try {
   await page.getByRole('button', { name: /Run pipeline/i }).click()
   // The editor already says 'refit-only'; wait for the completed engine result.
   await page.waitForFunction(() => window.__n4aLastRun?.refit && !window.__n4aLastRun.cv, null, { timeout: 60000 })
-  await page.waitForSelector('text=/Refit ·/', { timeout: 10000 })
+  const refitName = await page.evaluate(() => window.__n4aLastRun.refit.name)
+  await page.locator('[data-testid="n4a-results-list"]').getByText(refitName, { exact: true }).first().waitFor({ timeout: 10000 })
   const body1 = (await page.textContent('body')) || ''
   if (/CV Scores/.test(body1)) fail('refit-only run must NOT produce "CV Scores"')
   else console.log('✓ refit-only run produced no CV Scores')
@@ -76,7 +78,7 @@ try {
   if (!r2 || !r2.hasCv || r2.folds < 2) fail(`expected a CV run after re-adding (hasCv=${r2 && r2.hasCv}, folds=${r2 && r2.folds})`)
   else console.log(`✓ CV run restored: cv=present, folds=${r2.folds}`)
 
-  await page.screenshot({ path: '/tmp/cv_optional_smoke.png', fullPage: true })
+  await page.screenshot({ path: join(process.env.ARTIFACTS_DIR || '/tmp', 'cv_optional_smoke.png'), fullPage: true })
 
   if (errors.length) {
     console.error(`✗ ${errors.length} console error(s):`)

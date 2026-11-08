@@ -5,7 +5,7 @@ import publicPackages from './scripts/public-packages.v1.json'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { viteSingleFile } from 'vite-plugin-singlefile'
-import { type WebRuntimeProfile, webRuntimePolicy } from './src/engine/web-profile'
+import { runtimeProfileForBuildMode, type WebRuntimeProfile, webRuntimePolicy } from './src/engine/web-profile'
 
 // Two build modes:
 //  - default      → static site (lazy-loaded WASM), the primary web.nirs4all.org deliverable
@@ -13,10 +13,9 @@ import { type WebRuntimeProfile, webRuntimePolicy } from './src/engine/web-profi
 //                   `base: './'` keeps asset URLs relative so the file opens under file://
 export default defineConfig(({ mode }) => {
   const singlefile = mode === 'singlefile'
-  // Standard production builds are the strict browser product. Development,
-  // test and the explicit single-file compatibility build remain transitional.
-  const strict = mode === 'production' || mode === 'strict'
-  const runtimeProfile: WebRuntimeProfile = strict ? 'strict-wasm' : 'transitional'
+  // Standard production and the offline single-file builds are the strict browser product
+  // (owner DAG-ML route, no compatibility fallback). Development and test stay transitional.
+  const runtimeProfile: WebRuntimeProfile = runtimeProfileForBuildMode(mode)
   const runtimePolicy = webRuntimePolicy(runtimeProfile)
   return {
     base: './',
@@ -27,7 +26,7 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
       ...(singlefile ? [viteSingleFile()] : []),
-      ...(!singlefile ? [{
+      ...[{
         name: 'nirs4all-web-runtime-profile',
         generateBundle() {
           this.emitFile({
@@ -48,7 +47,7 @@ export default defineConfig(({ mode }) => {
             }, null, 2)}\n`,
           })
         },
-      }] : []),
+      }],
     ],
     resolve: {
       alias: {
@@ -56,6 +55,9 @@ export default defineConfig(({ mode }) => {
         // worker. Listed before '@' so the exact match wins. The served/dev build
         // keeps client.ts, which uses a module worker.
         ...(singlefile ? { '@/engine/client': path.resolve(__dirname, './src/engine/client.singlefile.ts') } : {}),
+        // Same swap for the owner-preview worker: served keeps a real-URL module
+        // worker (chunks resolve against its asset URL); singlefile stays inline.
+        ...(singlefile ? { '@/engine/preview-worker': path.resolve(__dirname, './src/engine/preview-worker.singlefile.ts') } : {}),
         '@nirs4all/methods': path.resolve(__dirname, './src/engine/wasm/methods/index.js'),
         '@nirs4all/formats-wasm': path.resolve(__dirname, './src/engine/wasm/formats/nirs4all_formats_wasm.js'),
         '@nirs4all/io-wasm/public-dataset': path.resolve(__dirname, './src/engine/wasm/io/public-dataset.mjs'),

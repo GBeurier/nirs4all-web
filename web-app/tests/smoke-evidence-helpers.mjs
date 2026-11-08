@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { basename } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const RUNTIME_RESOURCE_RE = /(dag_ml|dag-ml|dagml|n4m|methods|worker).*\.(?:js|wasm)(?:$|\?)|(?:\.wasm)(?:$|\?)/i
 
@@ -22,6 +23,69 @@ async function sha256Url(url) {
     bytes: buf.byteLength,
     sha256: createHash('sha256').update(buf).digest('hex'),
   }
+}
+
+const WASM_PROVENANCE = [
+  ...['dagml', 'dagml-data', 'datasets', 'formats', 'io', 'methods'].map((dir) => [dir, new URL(`../src/engine/wasm/${dir}/PROVENANCE.json`, import.meta.url)]),
+  ['nirs4all', new URL('../vendor/nirs4all/PROVENANCE.json', import.meta.url)],
+]
+
+/** sha256 → staged component file name, from the staged owner PROVENANCE manifests. */
+export async function knownWasmManifest() {
+  const known = new Map()
+  const walk = (component, value) => {
+    if (!value || typeof value !== 'object') return
+    for (const [key, entry] of Object.entries(value)) {
+      if (key.endsWith('.wasm') && typeof entry?.sha256 === 'string') {
+        const name = `${component}/${basename(key)}`
+        if (known.has(entry.sha256) && known.get(entry.sha256) !== name) throw new Error(`WASM manifest names ${entry.sha256} twice: ${known.get(entry.sha256)}, ${name}`)
+        known.set(entry.sha256, name)
+      }
+      walk(component, entry)
+    }
+  }
+  for (const [component, url] of WASM_PROVENANCE) walk(component, JSON.parse(await readFile(url, 'utf8')))
+  return known
+}
+
+const INLINE_WORKER_RE = /new Blob\(\[([A-Za-z_$][\w$]*)\],\{type:"text\/javascript;charset=utf-8"\}\)/g
+const WASM_DATA_URL = 'data:application/wasm;base64,'
+const BASE64_RUN = /[A-Za-z0-9+/=]*/y
+const REQUIRED_WORKER_WASM = ['dagml/dag_ml_wasm_bg.wasm', 'methods/n4m.wasm']
+
+/** The inline single-file document's embedded WASM payloads: decoded, hashed and
+ *  labelled by container (inline engine worker or document), each matched to the
+ *  staged manifest. Refuses an unknown payload or a worker without the owner DAG/Methods WASM. */
+export async function embeddedRuntimeResources(htmlPath) {
+  const html = (await readFile(htmlPath)).toString('latin1')
+  const workers = []
+  for (const match of html.matchAll(INLINE_WORKER_RE)) {
+    const start = html.lastIndexOf(`${match[1]}='`, match.index)
+    if (start < 0) throw new Error(`inline worker source ${match[1]} is not a string literal in ${htmlPath}`)
+    workers.push([start, match.index])
+  }
+  if (workers.length !== 1) throw new Error(`expected one inline engine worker in ${htmlPath}, found ${workers.length}`)
+  const known = await knownWasmManifest()
+  const byKey = new Map()
+  for (let at = html.indexOf(WASM_DATA_URL); at >= 0; at = html.indexOf(WASM_DATA_URL, at + 1)) {
+    BASE64_RUN.lastIndex = at + WASM_DATA_URL.length
+    const bytes = Buffer.from(BASE64_RUN.exec(html)[0], 'base64')
+    const sha256 = createHash('sha256').update(bytes).digest('hex')
+    const manifest = known.get(sha256)
+    if (!manifest) throw new Error(`embedded WASM at offset ${at} (${bytes.byteLength} bytes, sha256 ${sha256}) is not in the staged owner manifests`)
+    const container = workers.some(([from, to]) => at > from && at < to) ? 'inline-engine-worker' : 'document'
+    const key = `${container}|${sha256}`
+    const item = byKey.get(key) ?? { origin: 'embedded', container, name: `embedded:${container}/${manifest}`, manifest, bytes: bytes.byteLength, sha256, occurrences: 0 }
+    item.occurrences += 1
+    byKey.set(key, item)
+  }
+  const resources = [...byKey.values()].sort((a, b) => a.name.localeCompare(b.name))
+  for (const manifest of REQUIRED_WORKER_WASM) {
+    if (!resources.some((item) => item.container === 'inline-engine-worker' && item.manifest === manifest)) {
+      throw new Error(`the inline engine worker embeds no ${manifest} matching the staged manifest`)
+    }
+  }
+  return resources
 }
 
 export async function collectRuntimeEvidence(page) {
@@ -81,11 +145,15 @@ export async function collectRuntimeEvidence(page) {
   for (const url of urls.slice(0, 24)) {
     if (!RUNTIME_RESOURCE_RE.test(url)) continue
     try {
-      resources.push(await sha256Url(url))
+      resources.push({ origin: 'loaded', ...(await sha256Url(url)) })
     } catch (error) {
-      resources.push({ url, error: error instanceof Error ? error.message : String(error) })
+      resources.push({ origin: 'loaded', url, error: error instanceof Error ? error.message : String(error) })
     }
   }
+  // The single-file build loads no runtime resource: its WASM is embedded in the
+  // document and in the inline engine worker. Hash those actual embedded bytes.
+  const pageUrl = new URL(page.url())
+  if (pageUrl.protocol === 'file:') resources.push(...await embeddedRuntimeResources(fileURLToPath(pageUrl)))
   if (!resources.some((item) => item.sha256)) throw new Error('no hashable WASM/runtime resources were loaded')
 
   const runtimeHash = createHash('sha256')
@@ -116,24 +184,57 @@ export function assertNativeRefitExecution(runtime, label) {
 }
 
 export async function assertResultsPanels(page) {
-  await page.waitForSelector('[data-testid="n4a-results-list"]', { timeout: 10000 })
-  await page.waitForSelector('[data-testid="n4a-results-visualization"]', { timeout: 10000 })
+  const inspector = page.locator('[data-owner-inspector]')
+  await inspector.waitFor({ timeout: 10000 })
+  await inspector.locator('[data-testid="n4a-results-list"]').waitFor({ timeout: 10000 })
+  const owner = await page.evaluate(() => {
+    const run = window.__n4aLastRun
+    return run ? { metric: run.scoreMetric, task: run.taskType, score: run.cv ?? run.refit, kind: run.cv ? 'cv' : 'refit' } : null
+  })
+  if (!owner?.score || owner.score.status !== 'completed' || !owner.score.predictions.length) throw new Error('missing completed owner predictions')
+  const scoreRef = await inspector.locator('label').filter({ hasText: 'Evaluation score' }).locator('select').inputValue()
+  if (scoreRef !== `${owner.metric}:${owner.kind}`) throw new Error(`unexpected Inspector score context ${scoreRef}`)
+  const classification = owner.task !== 'regression'
+  const plotSelector = classification
+    ? 'svg[role="img"][aria-label="Confusion matrix"]'
+    : 'svg[role="img"][aria-label="Predicted versus observed"]'
+  await inspector.locator(plotSelector).waitFor({ timeout: 10000 })
+  await page.waitForFunction(({ plotSelector, classification }) => {
+    const svg = document.querySelector(`[data-owner-inspector] ${plotSelector}`)
+    if (classification) return Array.from(svg?.querySelectorAll('.n4viz-cell-value') ?? []).some((cell) => Number(cell.textContent) > 0)
+    const points = Number(svg?.querySelector('desc')?.textContent?.match(/^(\d+) points\b/)?.[1] ?? 0)
+    const canvas = svg?.closest('.n4wb-plot')?.querySelector('canvas')
+    if (!points || !canvas?.width || !canvas?.height) return false
+    const pixels = canvas.getContext('2d')?.getImageData(0, 0, canvas.width, canvas.height).data
+    return pixels?.some((value, index) => index % 4 === 3 && value > 0) === true
+  }, { plotSelector, classification }, { timeout: 10000 })
+  const selectedScore = inspector.locator('summary').filter({ hasText: 'Selected owner score:' })
+  if (!(await selectedScore.innerText()).includes(owner.score.name)) throw new Error('selected score label differs from owner result')
+  const details = selectedScore.locator('..')
+  const wasOpen = await details.evaluate((node) => node.open)
+  if (!wasOpen) await selectedScore.click()
+  const rows = await inspector.locator('[aria-label="Selected owner predictions"] tbody tr').evaluateAll((nodes) =>
+    nodes.map((row) => Array.from(row.querySelectorAll('th, td'), (cell) => cell.textContent.trim())),
+  )
+  const expectedRows = owner.score.predictions.map((row) => [String(row.sampleId), String(row.actualLabel ?? row.actual), String(row.predictedLabel ?? row.predicted), String(row.residual)])
+  if (JSON.stringify(rows) !== JSON.stringify(expectedRows)) throw new Error('Inspector prediction rows differ from the real owner result')
+  if (!wasOpen) await selectedScore.click()
   const panels = await page.evaluate(() => {
     const body = document.body.innerText || ''
     return {
       results_list: Boolean(document.querySelector('[data-testid="n4a-results-list"]')),
-      results_visualization: Boolean(document.querySelector('[data-testid="n4a-results-visualization"]')),
+      results_visualization: Boolean(document.querySelector('[data-owner-inspector]')),
       has_cv_scores: /CV Scores/.test(body),
       has_refit_scores: /Refit/.test(body),
-      has_prediction_view: /Predicted vs Actual|Confusion Matrix/.test(body),
-      chart_count: document.querySelectorAll('svg.recharts-surface').length,
+      has_prediction_view: Boolean(document.querySelector('[data-owner-inspector] svg[role="img"][aria-label="Predicted versus observed"], [data-owner-inspector] svg[role="img"][aria-label="Confusion matrix"]')),
+      chart_count: document.querySelectorAll('[data-owner-inspector] svg[role="img"]').length,
     }
   })
   if (!panels.results_list || !panels.results_visualization) throw new Error('missing Results list or visualization panel')
   if (!panels.has_cv_scores) throw new Error('Results panel did not render CV Scores')
   if (!panels.has_refit_scores) throw new Error('Results panel did not render Refit scores')
   if (!panels.has_prediction_view) throw new Error('Results panel did not render a prediction visualization tab')
-  return panels
+  return { ...panels, selected_score_ref: scoreRef, owner_prediction_rows: rows.length }
 }
 
 function finiteMetrics(metrics) {

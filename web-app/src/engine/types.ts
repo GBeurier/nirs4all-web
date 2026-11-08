@@ -13,7 +13,24 @@ export type Partition = 'train' | 'test' | 'predict';
 // ---------------------------------------------------------------------------
 // Dataset (a browser-materialized view of a nirs4all-io DatasetSpec)
 // ---------------------------------------------------------------------------
+export interface DatasetIdentity {
+  basis: 'declared' | 'positional';
+  sampleIdColumn?: string;
+  observationIdColumn?: string;
+  groupColumn?: string;
+  /** why the identity is positional */
+  reason?: string;
+}
+
+/** Host-boundary key under which the complete original nirs4all-io record (masks and
+ *  identity included), its spec, analysis and input bytes are retained BY REFERENCE on a
+ *  dataset ingested through io. A symbol key, so `{ ...ds }` keeps the reference while the
+ *  structured clone sent to the engine worker carries none of it (no copy, no leak). */
+export const IO_RECORD: unique symbol = Symbol.for('nirs4all.web.io-record');
+
 export interface MaterializedDataset {
+  /** the retained original io record (see IO_RECORD); opaque here, typed in data/wasm-io.ts */
+  [IO_RECORD]?: unknown;
   /** row-major, length nSamples * nFeatures */
   X: Float64Array;
   nSamples: number;
@@ -50,11 +67,20 @@ export interface MaterializedDataset {
   augmented?: boolean[];
   /** per-sample partition assignment, length nSamples */
   partitions: Partition[];
+  /** nirs4all-io's original partition name of each row (length nSamples), kept for display and exports */
+  partitionNames?: string[];
+  /** io name of the single held-out partition mapped to `test` (e.g. `val`); evaluation only, never used for selection */
+  heldOutName?: string;
+  /** io's declared observation identity per row (absent: io declared none; `s{i}` is only an execution row handle) */
+  observationIds?: (string | null)[];
+  /** How `sampleIds` were obtained. `positional`: io declared no usable sample key, so every row is its
+   *  own sample identified by partition and row position (not a scientific identifier). */
+  identity?: DatasetIdentity;
   /** optional per-sample metadata columns (from an uploaded metadata file).
    *  Never enters X/y. Reserved relation columns also populate the explicit
    *  group/origin/repetition roles used by dag-ml-data and native CV;
    *  used for colouring/inspection. Each column's `values` has length nSamples,
-   *  in the same train-then-test row order as X. */
+   *  in the same owner-declared partition and within-partition row order as X. */
   metadata?: { name: string; kind: 'numeric' | 'categorical'; values: (number | string | null)[] }[];
   /** optional externally-defined folds (else the engine builds KFold from cv.folds) */
   folds?: { foldId: number; valSampleIds: string[] }[];
@@ -225,12 +251,54 @@ export interface Metrics {
   n?: number;
 }
 export interface PredRow {
+  /** original physical sample id (never an execution handle) */
   sampleId: string;
+  /** original declared observation id of an observation-level row, when io declared one */
+  observationId?: string;
   actual: number;
   predicted: number;
   residual: number;
   actualLabel?: string;
   predictedLabel?: string;
+}
+/** What a score node's metrics are computed over, and by whom. */
+export interface ScoreContext {
+  /** `sample`: one unit per physical sample; `observation`: one unit per scan */
+  unit: 'sample' | 'observation';
+  identityBasis: 'declared' | 'positional';
+  /** what keys a physical sample: a declared repetition column, the declared sample id, or the
+   *  row itself (explicit positional independent-row profile: no physical identity is known) */
+  physicalKey: 'repetition' | 'sample_id' | 'row';
+  /** observations (scans) of the scored cohort of this node */
+  nObservations: number;
+  /** physical samples (scored units) of this node; null when no physical identity is known
+   *  (`physicalKey: 'row'`) */
+  nPhysicalSamples: number | null;
+  /** `host-rows`: existing host metric over rows (one observation per sample);
+   *  `dag:sample:<method>`: DAG-ML aggregated scans to physical samples and scored them */
+  aggregation: 'host-rows' | `dag:sample:${string}`;
+  /** observation-level (raw scan) metrics: `not-computed` when scans are aggregated by
+   *  DAG-ML, whose runtime implements no raw parallel metric reports */
+  rawObservationMetrics?: 'not-computed';
+}
+/** One raw (per-scan) prediction block, kept as produced: the DAG-ML FIT_CV observation
+ *  block of a fold, or the REFIT replay of the scoring rows. `observation_ids` are execution
+ *  handles `s{i}`; `RawObservationEvidence.identity` maps them to the original ids. */
+export interface RawObservationBlock {
+  partition: string;
+  fold_id: string | null;
+  observation_ids: string[];
+  values: number[][];
+  target_names: string[];
+}
+/** Raw scan-level predictions of the selected pipeline (no metrics are computed on them). */
+export interface RawObservationEvidence {
+  /** selected variant's FIT_CV validation blocks, one per fold (fold provenance in `fold_id`) */
+  cv: RawObservationBlock[];
+  /** REFIT replay of the scoring rows (held-out test, or train without a test partition) */
+  heldout: RawObservationBlock;
+  /** observation handle -> original physical sample id and declared observation id */
+  identity: Record<string, { sampleId: string; observationId: string | null }>;
 }
 export interface Confusion {
   labels: string[];
@@ -245,6 +313,7 @@ export interface ScoreNode {
   predictions: PredRow[];
   confusion?: Confusion;
   status: 'completed' | 'running' | 'failed';
+  scoreContext?: ScoreContext;
 }
 
 /** The input columns a model was fitted on, in order. `names` are what predict
@@ -298,6 +367,10 @@ export interface RunResult {
   /** Train/Test rows left out of FIT, CV and scoring because their target is
    *  missing (omitted when every row has a target). They remain predictable. */
   missingTargets?: number;
+  /** repeated scans of one physical sample: the selected pipeline's raw per-scan predictions
+   *  (FIT_CV folds + REFIT scoring replay) with their original-id mapping; scores are
+   *  sample-level DAG-ML scores, and no metric is computed on these rows */
+  rawObservationPredictions?: RawObservationEvidence;
   /** typed runtime diagnostics (B-018) — e.g. "ran the libn4m fold chain because the
    *  dag-ml scheduler failed". Present only when the engine degraded; a clean dag-ml
    *  run omits it. Lets runtime consumers tell a fallback from a native execution. */

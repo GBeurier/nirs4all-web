@@ -9,10 +9,14 @@ import { nativePlanForVariant } from './native-plan'
 import { loadLibn4mBackend } from './backends'
 import { isMlJsModelType, loadMlJsBackend } from './mljs-backend'
 import { createDagMlModelManifest, createDagMlNodeResult } from './nirs4all-core'
-import { activeOrGenerator, compileWithDagMl, dagMlAvailable, dagMlRtSmokeForcedFailure, expandGeneratorVariants, hasUnsupportedGenerator, loadDagMl, toCompatDsl } from './dagml'
+import { activeOrGenerator, compileWithDagMl, dagMlAvailable, dagMlRtSmokeForcedFailure, expandGeneratorVariants, hasUnsupportedGenerator, loadDagMl, toCompatDsl, type DagMlMod } from './dagml'
 import { materializeViaProvider } from './dagml-data'
-import { predictionResult, refitWithDagMl, replayWithDagMl, validateCarrierBinding, type NativeRefitState } from './dagml-refit'
-import { buildNativeFolds, nonAugmentedScoreRows, validatePartitionGroups } from './grouped-cv'
+import {
+  compositeModelPlan, OWNER, PHYSICAL_CLASSIFICATION_REFUSAL, PHYSICAL_SAMPLE_POLICY, physicalShapePlan, predictionResult, refitWithDagMl, replayWithDagMl,
+  requireObservationScoringRuntime, sameJson, validateCarrierBinding, type NativeRefitState, type PhysicalSampleScore, type RegressionReport, type SampleBlock,
+} from './dagml-refit'
+import { buildNativeFolds, expandFoldRows, handlesOf, nonAugmentedScoreRows, validatePartitionGroups } from './grouped-cv'
+import { physicalIdentity, type PhysicalIdentity } from './relations'
 import { applySplit, isSplitType } from './split'
 import type { Fold } from './kfold'
 import { missingTargetCount, missingTargetMessage, testRowsOf, trainRowsOf } from './partition'
@@ -29,7 +33,7 @@ import {
   trainAndPredict,
 } from './orchestrate'
 import { makeRtError, type RtError, RtErrorException, rtErrorFromUnknown } from './rt'
-import type { Engine, ExportOptions, FittedPipeline, MaterializedDataset, ParamSweep, PipelineDSL, PredRow, PredictResult, RunOptions, RunResult } from './types'
+import type { Engine, ExportOptions, FittedPipeline, MaterializedDataset, ParamSweep, PipelineDSL, PredRow, PredictResult, RawObservationBlock, RawObservationEvidence, RunOptions, RunResult, ScoreContext, ScoreNode } from './types'
 import { buildWebRuntimeProfile, type WebRuntimePolicy, type WebRuntimeProfile, webRuntimePolicy } from './web-profile'
 
 const MODEL_CONTROLLER = 'controller:model'
@@ -249,10 +253,15 @@ export class DagMlEngine implements Engine {
       layer: 'dag-ml-data',
       status: 'unavailable',
     }
+    // Physical-sample identity refusals (one sample never trained on and held out; one
+    // target per physical sample) are data errors, reported before any provider work.
+    physicalIdentity(ds)
+    let servedEnvelope: string | undefined
     try {
       onP?.({ phase: 'preprocess', pct: 1, message: 'materializing via dag-ml-data' })
       const served = await materializeViaProvider(ds)
       ds = { ...ds, X: served.X, y: served.y }
+      servedEnvelope = served.envelopeJson
       dataProvider = { layer: 'dag-ml-data', status: 'materialized', fingerprints: served.fingerprints, representation: served.outputRepresentation, version: served.version }
       onP?.({ phase: 'preprocess', pct: 5, message: `dag-ml-data ok — ${ds.nSamples}×${ds.nFeatures}` })
     } catch (e) {
@@ -275,6 +284,7 @@ export class DagMlEngine implements Engine {
     // same regardless of split. ---
     if (dsl.split && isSplitType(dsl.split.type)) {
       if (ds.groupIds || ds.originIds?.some((id) => id !== null)) throw new Error('A row-wise split cannot override declared groups/origins. Supply an explicit group-safe Train/Test partition.')
+      if (physicalIdentity(ds).repeated) throw new Error('A row-wise split cannot separate the repeated scans of one physical sample. Supply an explicit sample-safe Train/Test partition.')
       onP?.({ phase: 'preprocess', pct: 7, message: `splitting via ${dsl.split.type}` })
       ds = await applySplit(ds, dsl.split)
       const nTrain = trainRowsOf(ds).length
@@ -294,6 +304,16 @@ export class DagMlEngine implements Engine {
     if (task !== 'regression' && classNames.length < 2) throw new Error('Classification needs ≥2 classes.')
 
     const dagml = await loadDagMl()
+    const identity = physicalIdentity(ds)
+    // Repeated scans of one physical sample: the whole run is native over physical samples.
+    if (identity.repeated) return this.runPhysicalSampleViaDagMl(ds, dsl, opts, backend, dagml, identity, servedEnvelope, dataProvider, missingTargets)
+    // One observation per physical sample (or the positional independent-row profile):
+    // p{k} handles map 1:1 to rows; scores remain the existing host row metrics.
+    // Each scored row is one observation; it is one known physical sample only when a sample id
+    // or a repetition column keys it. The positional row profile states no physical count.
+    const p1Context = (rows: number): ScoreContext => identity.physicalKey === 'row'
+      ? { unit: 'observation', identityBasis: identity.basis, physicalKey: 'row', nObservations: rows, nPhysicalSamples: null, aggregation: 'host-rows' }
+      : { unit: 'sample', identityBasis: identity.basis, physicalKey: identity.physicalKey, nObservations: rows, nPhysicalSamples: rows, aggregation: 'host-rows' }
 
     // --- CV is OPTIONAL: with no `pipeline.cv` the run is REFIT-ONLY. We still
     // compile the DSL through dag-ml (lineage / "compiled by dag-ml" badge) but
@@ -309,7 +329,7 @@ export class DagMlEngine implements Engine {
       const scoreIdx = nonAugmentedScoreRows(ds, testIdx.length > 0 ? testIdx : trainIdx)
       const { pred: refitPred, fitted, packageFingerprint } = await refitWithDagMl(ds, dsl, backend, trainIdx, scoreIdx, signal)
       const refitRows = decodeRows(ds, classNames, classIdx, refitPred, scoreIdx)
-      const refitNode = scoreNode('refit', testIdx.length > 0 ? 'Refit · test' : 'Refit · train', 'refit', refitRows, task, classNames)
+      const refitNode = scoreNode('refit', testIdx.length > 0 ? 'Refit · test' : 'Refit · train', 'refit', refitRows, task, classNames, p1Context(refitRows.length))
       onP?.({ phase: 'done', pct: 100 })
       const scoreMetric: RunResult['scoreMetric'] = task === 'regression' ? 'rmse' : 'accuracy'
 
@@ -337,11 +357,12 @@ export class DagMlEngine implements Engine {
     const cv = dsl.cv
     const trainUniverse = trainRowsOf(ds)
     if (trainUniverse.length < 2) throw new Error('Cross-validation needs at least 2 training samples.')
-    // dag-ml SampleId only allows [A-Za-z0-9_-.:]; studio sample ids can contain
-    // '#' or other characters, so address dag-ml with stable row-index ids
-    // (`s{row}`) and map back by index. Original ds.sampleIds stay for the UI.
-    const dagId = (row: number) => `s${row}`
-    const rowOfDagId = (id: string) => Number(id.slice(1))
+    // dag-ml SampleId only allows [A-Za-z0-9_-.:]; original sample ids can contain
+    // '#' or other characters, so dag-ml addresses the physical-sample handle p{k}
+    // (one row each in this profile) and maps back through the exact handle table.
+    // Original ds.sampleIds stay for the UI and exports.
+    const dagId = (row: number) => identity.sampleHandle[row]
+    const rowOfDagId = (id: string) => identity.rowsOf.get(id)?.[0] ?? -1
     const nSplits = Math.max(2, Math.min(cv.folds, trainUniverse.length))
     const foldSet = buildNativeFolds(dagml, ds, cv, trainUniverse)
     const folds = foldSet.folds
@@ -616,7 +637,7 @@ export class DagMlEngine implements Engine {
       const foldRows = foldRowsByVariant.get(variant.variant_id)!
       const oof = foldRows.flat()
       if (oof.length === 0) throw new Error('dag-ml produced no OOF predictions')
-      const cvNode = scoreNode('cv', 'CV Scores', 'cv', oof, task, classNames)
+      const cvNode = scoreNode('cv', 'CV Scores', 'cv', oof, task, classNames, p1Context(oof.length))
       const metric = Number(cvNode.metrics[scoreMetric] ?? (task === 'regression' ? Infinity : -Infinity))
       evaluated.push({ variant, vDsl: baseDslByVariant.get(variant.variant_id) ?? dsl, oof, foldRows, cvNode, metric })
     }
@@ -641,7 +662,7 @@ export class DagMlEngine implements Engine {
     }
     const winner = evaluated[winnerIdx]
     const cvNode = winner.cvNode
-    const foldScoreNodes = winner.foldRows.map((rows, i) => scoreNode(`fold-${i + 1}`, `Fold ${i + 1}`, 'fold', rows, task, classNames))
+    const foldScoreNodes = winner.foldRows.map((rows, i) => scoreNode(`fold-${i + 1}`, `Fold ${i + 1}`, 'fold', rows, task, classNames, p1Context(rows.length)))
 
     // --- REFIT the SELECTED variant on full-train, score on test (or train), via
     // libn4m. dag-ml's variant scheduler has no per-variant REFIT pin, so the host
@@ -653,7 +674,7 @@ export class DagMlEngine implements Engine {
     const scoreIdx = nonAugmentedScoreRows(ds, testIdx.length > 0 ? testIdx : trainIdx)
     const { pred: refitPred, fitted, packageFingerprint } = await refitWithDagMl(ds, winner.vDsl, backend, trainIdx, scoreIdx, signal)
     const refitRows = decodeRows(ds, classNames, classIdx, refitPred, scoreIdx)
-    const refitNode = scoreNode('refit', testIdx.length > 0 ? 'Refit · test' : 'Refit · train', 'refit', refitRows, task, classNames)
+    const refitNode = scoreNode('refit', testIdx.length > 0 ? 'Refit · test' : 'Refit · train', 'refit', refitRows, task, classNames, p1Context(refitRows.length))
 
     onP?.({ phase: 'done', pct: 100 })
 
@@ -678,6 +699,236 @@ export class DagMlEngine implements Engine {
       variants: variantSummaries,
       ...(missingTargets ? { missingTargets } : {}),
       ...(diagnostics.length ? { diagnostics } : {}),
+    }
+  }
+
+  /**
+   * Repeated scans of one physical sample. FIT_CV runs natively over physical-sample folds
+   * through the relation-attested DAG-ML phase entry: the composite browser controller fits
+   * every fold-train scan and returns observation predictions plus the physical-sample
+   * targets; DAG-ML aggregates them per its declared policy, scores them and returns the
+   * ScoreSet whose sample-level validation average drives the native selection. REFIT and its
+   * scoring stay native too (`refitWithDagMl` physical-sample score). No host fold loop,
+   * aggregation or metric.
+   */
+  private async runPhysicalSampleViaDagMl(
+    ds: MaterializedDataset, dsl: PipelineDSL, opts: RunOptions, backend: ModelBackend, dagml: DagMlMod,
+    identity: PhysicalIdentity, envelopeJson: string | undefined, dataProvider: Record<string, unknown> & { representation?: string }, missingTargets: number,
+  ): Promise<RunResult> {
+    const { onProgress: onP, signal } = opts
+    if (ds.taskType !== 'regression') throw new Error(PHYSICAL_CLASSIFICATION_REFUSAL)
+    if (!envelopeJson || !dataProvider.representation) throw new Error('Repeated scans of one physical sample require the dag-ml-data envelope; the provider did not materialize this dataset.')
+    const scoring = requireObservationScoringRuntime(dagml)
+    const scoreMetric: RunResult['scoreMetric'] = 'rmse'
+    const context = (units: number, observations: number): ScoreContext => ({ unit: 'sample', identityBasis: identity.basis, physicalKey: identity.physicalKey, nObservations: observations, nPhysicalSamples: units, aggregation: `dag:sample:${PHYSICAL_SAMPLE_POLICY.method}`, rawObservationMetrics: 'not-computed' })
+    const scans = (blocks: RawObservationBlock[]) => blocks.reduce((n, block) => n + block.observation_ids.length, 0)
+    // Raw per-scan evidence: execution handle s{i} -> original sample id + declared observation id.
+    const rowOfObservation = new Map(identity.observationHandle.map((handle, i) => [handle, i]))
+    const rawEvidence = (cvBlocks: RawObservationBlock[], heldout: RawObservationBlock): RawObservationEvidence => {
+      const mapping: RawObservationEvidence['identity'] = {}
+      for (const block of [...cvBlocks, heldout]) {
+        for (const handle of block.observation_ids) {
+          const row = rowOfObservation.get(handle)
+          if (row === undefined) throw new Error(`Raw prediction block names an unknown observation ${handle}`)
+          mapping[handle] = { sampleId: identity.physicalLabel[row] ?? ds.sampleIds[row], observationId: ds.observationIds?.[row] ?? null }
+        }
+      }
+      return { cv: cvBlocks, heldout, identity: mapping }
+    }
+    const metricsOf = (report: RegressionReport) => ({ rmse: report.metrics.rmse, mae: report.metrics.mae, r2: report.metrics.r2, n: report.row_count })
+    // Display rows of DAG-ML's physical-sample predictions, under the original sample ids.
+    const physicalRows = (blocks: SampleBlock[]): PredRow[] => blocks.flatMap((block) => block.sample_ids.map((handle, j) => {
+      const row = identity.rowsOf.get(handle)?.[0]
+      if (row === undefined) throw new Error(`DAG-ML returned unknown physical sample ${handle}`)
+      const actual = ds.y[row]
+      const predicted = block.values[j][0]
+      return { sampleId: identity.physicalLabel[row] ?? ds.sampleIds[row], actual, predicted, residual: predicted - actual }
+    }))
+    const nodeOf = (id: string, name: string, kind: ScoreNode['kind'], report: RegressionReport, rows: PredRow[], observations: number): ScoreNode =>
+      ({ id, name, kind, metrics: metricsOf(report), predictions: rows, status: 'completed', scoreContext: context(report.row_count, observations) })
+    const trainIdx = trainRowsOf(ds)
+    const testIdx = testRowsOf(ds)
+    const scoreIdx = nonAugmentedScoreRows(ds, testIdx.length > 0 ? testIdx : trainIdx)
+    const refitNodeOf = (score: PhysicalSampleScore | undefined): ScoreNode => {
+      if (!score) throw new Error('DAG-ML returned no physical-sample REFIT score')
+      return nodeOf('refit', testIdx.length > 0 ? 'Refit · test' : 'Refit · train', 'refit', score.report, physicalRows([score.aggregated]), score.observations.observation_ids.length)
+    }
+    const identityLineage = {
+      identityProfile: 'physical-sample', identityBasis: identity.basis, physicalKey: identity.physicalKey, physicalSamples: identity.handles.length, observations: ds.nSamples,
+      aggregationPolicy: PHYSICAL_SAMPLE_POLICY, ...(identity.predictReuse.length ? { predictReuse: identity.predictReuse } : {}),
+      // Raw observation predictions are retained by Web on RunResult.rawObservationPredictions
+      // (selected pipeline only); raw observation-level metrics are not computed (no DAG-ML
+      // runtime scorer for them; Web computes none).
+      rawObservationPredictions: 'retained on RunResult.rawObservationPredictions: selected FIT_CV fold blocks + REFIT scoring replay, with original-id mapping',
+      rawObservationMetrics: 'not computed: DAG-ML has no runtime observation-level parallel scorer (emit_parallel_metrics is declarative); not requested',
+    }
+
+    if (!dsl.cv) {
+      onP?.({ phase: 'refit', pct: 10, message: `fitting on ${trainIdx.length} scans of ${handlesOf(identity, trainIdx).length} physical samples — no CV` })
+      const lineage = await compileWithDagMl(dsl)
+      const { fitted, packageFingerprint, refitScores, physicalScore } = await refitWithDagMl(ds, dsl, backend, trainIdx, scoreIdx, signal)
+      const refit = refitNodeOf(physicalScore)
+      onP?.({ phase: 'done', pct: 100 })
+      return {
+        id: `run-${Date.now().toString(36)}`, pipelineName: dsl.name, taskType: ds.taskType, targetName: ds.targetName,
+        refit, folds: [], seed: 0, engine: 'dag-ml-wasm + libn4m', scoreMetric,
+        lineage: { engine: 'dag-ml-wasm', compiled: lineage.compiled, executed: true, phase: 'REFIT+PREDICT', controllerProfile: 'browser-composite-host-sidecar-v1', packageFingerprint, version: lineage.version, dataProvider, refitScores, ...identityLineage },
+        model: fitted, createdAt: new Date().toISOString(), ...(missingTargets ? { missingTargets } : {}),
+        rawObservationPredictions: rawEvidence([], physicalScore!.observations),
+      }
+    }
+
+    const cv = dsl.cv
+    if (handlesOf(identity, trainIdx).length < 2) throw new Error('Cross-validation needs at least 2 training physical samples.')
+    const foldSet = buildNativeFolds(dagml, ds, cv, trainIdx)
+    const foldById = new Map(foldSet.folds.map((fold) => [fold.fold_id, fold]))
+    // Variant enumeration as on the observation-per-sample lane (native plan for a
+    // model-only graph; the existing sweep grid for a multi-node pipeline).
+    const baseVariant: VariantPlan = { variant_id: 'variant:base', choices: {}, fingerprint: 'base' }
+    const multiNodeGraph = dsl.steps.length > 0 || (dsl.containers?.some((c) => c.container !== 'generator' && c.branches.length >= 2) ?? false) || !!dsl.branch
+    let variants: VariantPlan[]
+    if (multiNodeGraph) variants = expandSweepVariants(dsl)
+    else {
+      const compat = JSON.parse(dagml.compile_pipeline_dsl_artifact_json(JSON.stringify(toCompatDsl(dsl))))
+      compat.campaign_template.split_invocation.fold_set = foldSet
+      compat.campaign_template.root_seed = cv.seed
+      try {
+        const plan = JSON.parse(dagml.build_execution_plan_json('plan:n4a', JSON.stringify(compat.graph), JSON.stringify(compat.campaign_template), JSON.stringify(modelManifest(dagml)))) as { variants: VariantPlan[] }
+        variants = plan.variants.length ? plan.variants : [baseVariant]
+      } catch (error) {
+        if (/max_variants|exceed/i.test(error instanceof Error ? error.message : String(error))) throw new Error('Too many variants for the configured cap — lower a sweep range or raise the variant cap.')
+        throw error
+      }
+    }
+
+    // The FIT_CV envelope attests exactly the CV cohort's relations (Train physical samples,
+    // including declared target-missing ones); held-out samples never enter it.
+    const cohort = new Set([...foldSet.sample_ids, ...(foldSet.target_missing_sample_ids ?? [])])
+    const envelope = JSON.parse(envelopeJson)
+    envelope.coordinator_relations.records = (envelope.coordinator_relations.records as { sample_id: string }[]).filter((record) => cohort.has(record.sample_id))
+    envelope.relation_fingerprint = dagml.sample_relation_set_fingerprint_json(JSON.stringify(envelope.coordinator_relations))
+    const envelopeText = JSON.stringify(envelope)
+
+    type Evaluated = { variant: VariantPlan; vDsl: PipelineDSL; cv: RegressionReport; folds: RegressionReport[]; blocks: SampleBlock[]; raw: RawObservationBlock[]; scores: unknown }
+    const evaluated: Evaluated[] = []
+    let firstFitError: unknown
+    onP?.({ phase: 'fit_cv', pct: 10, message: `building ${foldSet.folds.length}-fold CV over ${foldSet.sample_ids.length} physical samples` })
+    for (const [vIdx, variant] of variants.entries()) {
+      if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError')
+      const vDsl = effectiveDsl(dsl, variant)
+      const { manifests, artifact, node, dataPort, concreteDsl } = compositeModelPlan(dagml, ds, vDsl, 'graph:web-physical-cv')
+      const campaign = artifact.campaign_template
+      campaign.root_seed = cv.seed
+      campaign.split_invocation = { id: 'split:web-physical-cv', controller_id: null, leakage_policy: campaign.leakage_policy, params: { kind: 'precomputed' }, fold_set: foldSet }
+      campaign.data_bindings = { [node.id]: [{
+        node_id: node.id, input_name: dataPort.name, request_id: 'nir-to-tabular',
+        schema_fingerprint: envelope.schema_fingerprint, plan_fingerprint: envelope.plan_fingerprint,
+        relation_fingerprint: envelope.relation_fingerprint, output_representation: dataProvider.representation,
+        feature_set_id: 'X', source_ids: ['nir'], require_relations: true,
+      }] }
+      campaign.shape_plans = { [node.id]: physicalShapePlan(node.id, 'fold_train', 'fold_validation') }
+      const planJson = dagml.build_execution_plan_json(`plan:web-physical-cv:${vIdx}`, JSON.stringify(artifact.graph), JSON.stringify(campaign), manifests)
+      const planVariants = (JSON.parse(planJson) as { variants: { variant_id: string }[] }).variants
+      if (planVariants.length !== 1) throw new Error('The composite physical-sample FIT_CV plan must be one concrete variant')
+      onP?.({ phase: 'fit_cv', pct: Math.min(76, 12 + Math.round((64 * vIdx) / variants.length)), message: variants.length > 1 ? `variant ${vIdx + 1}/${variants.length}` : 'cross-validation', ...(variants.length > 1 ? { variant: { index: vIdx + 1, total: variants.length } } : {}) })
+      let controllerError: unknown
+      const invoke = (owner: string, taskJson: string): string => {
+        if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError')
+        const task = JSON.parse(taskJson) as Record<string, unknown> & { phase: string; fold_id?: string | null; node_plan: { node_id: string; params: { web_pipeline?: unknown } } }
+        if (owner !== OWNER || task.phase !== 'FIT_CV') throw new Error('Unexpected native browser FIT_CV task')
+        if (!sameJson(task.node_plan.params.web_pipeline, concreteDsl)) throw new Error('Native FIT_CV pipeline differs from the declared browser pipeline')
+        const fold = task.fold_id ? foldById.get(task.fold_id) : undefined
+        if (!fold) throw new Error(`Native FIT_CV task names an unknown fold ${task.fold_id}`)
+        const trainRows = expandFoldRows(identity, fold.train_sample_ids, 'train', ds)
+        const valRows = expandFoldRows(identity, fold.validation_sample_ids, 'validation', ds)
+        let pred: Mat
+        try {
+          pred = trainAndPredict(ds, concreteDsl, backend, trainRows, valRows).pred
+        } catch (error) {
+          controllerError = error
+          throw error
+        }
+        const valHandles = handlesOf(identity, valRows)
+        return JSON.stringify({
+          ...createDagMlNodeResult(task, null),
+          predictions: [],
+          observation_predictions: [{
+            prediction_id: `pred:${task.node_plan.node_id}:${variant.variant_id}:${task.fold_id}:obs`, producer_node: task.node_plan.node_id, producer_port: 'oof',
+            partition: 'validation', fold_id: task.fold_id, observation_ids: valRows.map((i) => identity.observationHandle[i]),
+            values: matToRows(pred), target_names: [ds.targetName],
+          }],
+          // Complete physical-sample truth for the validated samples, from the provider-served y.
+          regression_targets: [{
+            level: 'sample', unit_ids: valHandles.map((id) => ({ level: 'sample', id })),
+            values: valHandles.map((id) => [ds.y[identity.rowsOf.get(id)![0]]]), target_names: [ds.targetName],
+          }],
+        })
+      }
+      let out: { node_results: { predictions?: SampleBlock[]; observation_predictions?: RawObservationBlock[] }[]; scores: { reports?: RegressionReport[] } | null }
+      try {
+        out = JSON.parse(scoring.execute_execution_plan_phase_with_envelope_json(planJson, manifests, envelopeText, planVariants[0].variant_id, 'run:web-physical-cv', String(cv.seed), 'FIT_CV', invoke))
+      } catch (error) {
+        if (signal?.aborted) throw new DOMException('Run cancelled', 'AbortError')
+        // A variant that cannot be fitted is dropped from the search, as on the other lane.
+        if (variants.length > 1 && isFitRefusal(controllerError)) {
+          firstFitError ??= controllerError
+          continue
+        }
+        throw controllerError ?? error
+      }
+      const reports = out.scores?.reports ?? []
+      const sampleValidation = (foldId: string) => reports.find((r) => r.partition === 'validation' && r.level === 'sample' && r.producer_node === node.id && r.fold_id === foldId)
+      const cvReport = sampleValidation('avg')
+      if (!cvReport) throw new Error('DAG-ML returned no sample-level cross-fold validation score for the physical-sample run')
+      const folds = foldSet.folds.map((fold) => {
+        const report = sampleValidation(fold.fold_id)
+        if (!report) throw new Error(`DAG-ML returned no sample-level validation score for ${fold.fold_id}`)
+        return report
+      })
+      const blocks = out.node_results.flatMap((result) => result.predictions ?? []).filter((block) => block.partition === 'validation')
+      // The raw per-scan validation blocks DAG-ML returned with its node results (kept as is).
+      const raw = out.node_results.flatMap((result) => result.observation_predictions ?? []).filter((block) => block.partition === 'validation')
+      if (foldSet.folds.some((fold) => raw.filter((block) => block.fold_id === fold.fold_id).length !== 1)) throw new Error('DAG-ML did not return exactly one raw observation block per fold')
+      evaluated.push({ variant, vDsl, cv: cvReport, folds, blocks, raw, scores: out.scores })
+    }
+    if (!evaluated.length) throw firstFitError
+    onP?.({ phase: 'fit_cv', pct: 80, message: 'physical-sample validation scored by dag-ml' })
+
+    // SELECT on the DAG-ML sample-level validation average (never on observation rows).
+    let winnerIdx = 0
+    if (variants.length > 1) {
+      onP?.({ phase: 'select', pct: 82, message: `selecting from ${variants.length} variants` })
+      const candidates = evaluated
+        .filter((e) => Number.isFinite(e.cv.metrics[scoreMetric]))
+        .map((e) => ({ candidate_id: e.variant.variant_id, metrics: { [scoreMetric]: e.cv.metrics[scoreMetric] } }))
+      if (candidates.length > 0) {
+        const decision = JSON.parse(dagml.select_candidates_json(JSON.stringify({ id: 'sel:n4a-physical', metric: { name: scoreMetric, objective: 'minimize' } }), JSON.stringify(candidates), undefined)) as { selected_candidate_id: string }
+        const idx = evaluated.findIndex((e) => e.variant.variant_id === decision.selected_candidate_id)
+        if (idx >= 0) winnerIdx = idx
+      }
+    }
+    const winner = evaluated[winnerIdx]
+    const cvNode = nodeOf('cv', 'CV Scores', 'cv', winner.cv, physicalRows(winner.blocks), scans(winner.raw))
+    const foldScoreNodes = foldSet.folds.map((fold, i) => nodeOf(`fold-${i + 1}`, `Fold ${i + 1}`, 'fold', winner.folds[i], physicalRows(winner.blocks.filter((block) => block.fold_id === fold.fold_id)), scans(winner.raw.filter((block) => block.fold_id === fold.fold_id))))
+
+    onP?.({ phase: 'refit', pct: 86, message: `final fit on ${trainIdx.length} scans${testIdx.length ? ` · test ${testIdx.length}` : ''}` })
+    const { fitted, packageFingerprint, refitScores, physicalScore } = await refitWithDagMl(ds, winner.vDsl, backend, trainIdx, scoreIdx, signal)
+    const refitNode = refitNodeOf(physicalScore)
+    onP?.({ phase: 'done', pct: 100 })
+    const multiVariant = variants.length > 1
+    return {
+      id: `run-${Date.now().toString(36)}`, pipelineName: dsl.name, taskType: ds.taskType, targetName: ds.targetName,
+      refit: refitNode, cv: cvNode, folds: foldScoreNodes, seed: cv.seed, engine: 'dag-ml-wasm + libn4m', scoreMetric,
+      lineage: {
+        engine: 'dag-ml-wasm', compiled: true, executed: true, refitExecuted: true, refitProfile: 'browser-composite-host-sidecar-v1', packageFingerprint,
+        phase: multiVariant ? 'FIT_CV+SELECT+REFIT+PREDICT' : 'FIT_CV+REFIT+PREDICT', variantCount: variants.length, selectedVariant: winner.variant.variant_id,
+        folds: foldSet.folds.length, version: dagml.dag_ml_version(), dataProvider, scoreSet: winner.scores, refitScores, ...identityLineage,
+      },
+      model: fitted, createdAt: new Date().toISOString(), variantCount: variants.length,
+      variants: multiVariant ? evaluated.map((e, i) => ({ variantId: e.variant.variant_id, label: variantLabel(e.variant), metrics: metricsOf(e.cv), selected: i === winnerIdx, pipeline: e.vDsl })) : undefined,
+      ...(missingTargets ? { missingTargets } : {}),
+      // Only the selected variant's raw blocks are returned; losing variants' blocks are dropped.
+      rawObservationPredictions: rawEvidence(winner.raw, physicalScore!.observations),
     }
   }
 

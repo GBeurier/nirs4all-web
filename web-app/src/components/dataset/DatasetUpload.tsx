@@ -1,16 +1,16 @@
 import { useRef, useState } from 'react'
 import { Upload, FileText, FileUp, Loader2, ShieldCheck, Sparkles, AlertTriangle } from 'lucide-react'
-import { buildDataset, datasetInputName, type RawFile } from '@/data/dataset'
+import { datasetInputName } from '@/data/dataset'
 import { SAMPLES } from '@/data/samples'
+import { datasetSpecInputName, ingestFiles, IoIngestionRefusal, resumeIngestion } from '@/data/wasm-io'
 import type { DatasetUploadProps } from '@/components/contracts'
 import { Button } from '@/app/components/ui/button'
 import { cn } from '@/app/components/ui/utils'
-import { readRawFiles } from './_helpers'
 
 /**
- * Drag-and-drop + file-picker ingestion zone. Reads CSV/TXT files entirely in
- * the browser, materializes them via buildDataset(), and hands the dataset up
- * through onDataset(). No bytes ever leave the page.
+ * Drag-and-drop + file-picker ingestion zone. Reads CSV/TXT and vendor files
+ * entirely in the browser, assembles them through nirs4all-io (ingestFiles) and
+ * hands the dataset up through onDataset(). No bytes ever leave the page.
  */
 export function DatasetUpload({ onDataset, onLoadSample, onImportModel, busy: busyProp, error }: DatasetUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -20,52 +20,45 @@ export function DatasetUpload({ onDataset, onLoadSample, onImportModel, busy: bu
   const [busyLocal, setBusyLocal] = useState(false)
   const busy = busyProp || busyLocal
 
+  // The refusal keeps the input bytes, the io analysis and (when io assembled) the original record,
+  // so a user decision resumes from the owner evidence instead of re-reading or guessing.
+  const [refusal, setRefusal] = useState<IoIngestionRefusal | null>(null)
+
   const shownError = error ?? localError
 
   const ingest = async (fileList: FileList | File[]) => {
     setLocalError(null)
+    setRefusal(null)
     const files = Array.from(fileList)
     if (files.length === 0) return
     const name = datasetInputName(files)
-    const allText = files.every((f) => /\.(csv|tsv|txt)$/i.test(f.name))
     setBusyLocal(true)
-    let fastPathError: unknown = null
     try {
-      // Conventional delimited-text uploads are common and should not pay the
-      // nirs4all-formats/io WASM startup cost. If the local parser cannot identify
-      // an X/y-style layout, fall through to the robust WASM inference path below.
-      if (allText) {
-        try {
-          const raw: RawFile[] = await readRawFiles(files)
-          onDataset(buildDataset(raw, name), name)
-          return
-        } catch (e) {
-          fastPathError = e
-        }
-      }
-
-      // Vendor formats and non-conventional CSV folders go through the real
-      // nirs4all-formats decode + nirs4all-io inference. nirs4all-io resolves the
-      // dataset structure (roles, joins, partitions, axis, task type) more robustly
-      // than the lightweight CSV fast-path.
-      const { analyzeFiles, assembleDataset, datasetSpecInputName } = await import('@/data/wasm-io')
+      // Every upload — delimited text and vendor formats alike — goes through the
+      // nirs4all-formats decode + nirs4all-io inference and assembly (roles, joins,
+      // partitions, identity, axis, task type). When io cannot assemble it, the
+      // refusal is shown as is; there is no local assembler to fall back on.
       const withBytes = await Promise.all(files.map(async (f) => ({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) })))
-      const analysis = await analyzeFiles(withBytes)
-      const failed = analysis.decoded.filter((d) => !d.ok)
-      if (analysis.decoded.every((d) => !d.ok)) {
-        throw new Error(`No spectra could be decoded (${failed.map((d) => d.error).join('; ') || 'unsupported format'}).`)
-      }
-      onDataset(await assembleDataset(analysis.decoded, analysis.plan, withBytes), datasetSpecInputName(analysis.plan) ?? name, analysis)
+      const { dataset, name: datasetName, analysis } = await ingestFiles(withBytes, name)
+      onDataset(dataset, datasetName, analysis)
     } catch (e) {
-      if (fastPathError) {
-        const fast = fastPathError instanceof Error ? fastPathError.message : String(fastPathError)
-        const wasm = e instanceof Error ? e.message : String(e)
-        setLocalError(`Could not parse the text dataset locally (${fast}); nirs4all-io fallback also failed (${wasm}).`)
-        return
-      }
+      if (e instanceof IoIngestionRefusal) setRefusal(e)
       setLocalError(e instanceof Error ? e.message : 'Could not read the selected files.')
     } finally {
       setBusyLocal(false)
+    }
+  }
+
+  // Resume a refused ingestion with the user's target choice, from the retained owner record.
+  const chooseTarget = (target: string) => {
+    if (!refusal) return
+    try {
+      const resumed = resumeIngestion(refusal, { target })
+      setRefusal(null)
+      setLocalError(null)
+      onDataset(resumed.dataset, datasetSpecInputName(resumed.analysis.plan) ?? datasetInputName(refusal.inputs), resumed.analysis)
+    } catch (e) {
+      setLocalError(e instanceof Error ? e.message : 'Could not use the chosen target.')
     }
   }
 
@@ -163,6 +156,17 @@ export function DatasetUpload({ onDataset, onLoadSample, onImportModel, busy: bu
         </div>
       )}
 
+      {refusal?.decision && (
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground" data-target-choice>
+          <span>Model which target? (the other columns stay in the retained io record)</span>
+          {refusal.decision.target.map((target) => (
+            <Button key={target} type="button" variant="outline" size="sm" className="h-7" onClick={() => chooseTarget(target)}>
+              {target}
+            </Button>
+          ))}
+        </div>
+      )}
+
       <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
         <ShieldCheck className="h-4 w-4 text-brand-green" />
         <span>Runs entirely in your browser — no files are uploaded.</span>
@@ -174,7 +178,7 @@ export function DatasetUpload({ onDataset, onLoadSample, onImportModel, busy: bu
           <input
             ref={modelRef}
             type="file"
-            accept=".n4a,application/json"
+            accept=".n4a"
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0]
@@ -198,8 +202,8 @@ export function DatasetUpload({ onDataset, onLoadSample, onImportModel, busy: bu
           <code className="font-mono text-foreground">y_test.csv</code> and a{' '}
           <code className="font-mono text-foreground">metadata.csv</code>), or a single{' '}
           <code className="font-mono text-foreground">X</code> +{' '}
-          <code className="font-mono text-foreground">y</code> pair. The X header row is read as the
-          spectral axis.
+          <code className="font-mono text-foreground">y</code> pair. nirs4all-io decides the header
+          row, the spectral axis and the column roles.
         </p>
       </div>
     </div>

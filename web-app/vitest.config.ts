@@ -12,9 +12,13 @@ const require = createRequire(pathToFileURL(path.resolve(__dirname, 'package.jso
 const dagAsset = require.resolve('dag-ml-wasm/dag_ml_wasm_bg.wasm')
 const stagedDagAsset = path.resolve(__dirname, './src/engine/wasm/dagml/dag_ml_wasm_bg.wasm')
 const digest = (file: string) => createHash('sha256').update(readFileSync(file)).digest('hex')
-const expectedDagSha = '9329ecd5f1d1a4f77829c3023690d5b1d48421eec33322bae831b9d47a781e73'
+// The exact digest is the pinned one (scripts/public-packages.v1.json, filled by the staging
+// metadata for the DAG bytes actually staged, registry or local-unpublished): the npm peer used
+// by Core's Node initializer and the staged browser asset must both equal it, byte for byte.
+const pinnedDag = JSON.parse(readFileSync(path.resolve(__dirname, './scripts/public-packages.v1.json'), 'utf8')).dagml
+const expectedDagSha: string = pinnedDag.files['dag_ml_wasm_bg.wasm'].sha256
 if (digest(dagAsset) !== expectedDagSha || digest(stagedDagAsset) !== expectedDagSha) {
-  throw new Error('Vitest DAG npm asset and staged browser asset must match authenticated DAG 0.3.44 bytes.')
+  throw new Error(`Vitest DAG npm asset and staged browser asset must both match the pinned DAG ${pinnedDag.version} bytes (${expectedDagSha}).`)
 }
 const coreIndex = path.resolve(__dirname, './vendor/nirs4all/src/index.js')
 const nodeAssetCall = "import.meta.resolve('dag-ml-wasm/dag_ml_wasm_bg.wasm')"
@@ -27,7 +31,7 @@ export default defineConfig({
     transform(code, id) {
       if (id.split('?')[0] !== coreIndex) return null
       if (code.split(nodeAssetCall).length !== 2) {
-        throw new Error('Expected the published Core 0.4.7 Node DAG asset resolver exactly once.')
+        throw new Error('Expected the staged Core Node DAG asset resolver exactly once.')
       }
       return { code: code.replace(nodeAssetCall, JSON.stringify(pathToFileURL(dagAsset).href)), map: null }
     },
@@ -51,5 +55,5 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  test: { environment: 'node', include: ['src/**/*.test.ts'] },
+  test: { environment: 'node', include: ['src/**/*.test.ts'], setupFiles: ['./tests/setup-owner-wasm.ts'] },
 })

@@ -18,7 +18,7 @@
 //   wasm-pack build bindings/wasm --target nodejs --out-dir pkg
 // Pass a different module to `wrap()` to use another build/target.
 
-import * as defaultModule from "./nirs4all_io_wasm.js";
+import * as defaultModule from "./pkg/nirs4all_io_wasm.js";
 
 /**
  * Build the idiomatic surface around a wasm-pack module instance.
