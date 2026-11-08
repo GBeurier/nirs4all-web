@@ -1,0 +1,79 @@
+{
+  "scope": "test-only historical source oracle; never current Web execution or bank qualification",
+  "source_record": "phase3-methods-n-train-build-20261108/host-k4-stage/core-count-refusal/oracles/quali-core-0.5-pre-count-refusal/package",
+  "package": "nirs4all",
+  "source_package_version": "0.5.0",
+  "license": "(CECILL-2.1 OR AGPL-3.0-or-later)",
+  "files": [
+    {
+      "file": "execution.js",
+      "source": "package/src/execution.js",
+      "sha256": "dcc35fbe1a741764864c75786172362949e79815c862a014a08eafe535bee962",
+      "byte_length": 34768,
+      "verbatim": true
+    },
+    {
+      "file": "native-augmentation.js",
+      "source": "package/src/native-augmentation.js",
+      "sha256": "eefca27e7d15c711e87f78a5661357f0db5afda6de8d7446cfefffa997d3ac2a",
+      "byte_length": 2784,
+      "verbatim": true
+    },
+    {
+      "file": "n4m-roles.js",
+      "source": "package/src/n4m-roles.js",
+      "sha256": "8e7564714f4bca0795ef6024b512ed85bc6cb2e719b6360e4ccf734e4b7d3abb",
+      "byte_length": 13593,
+      "verbatim": true
+    },
+    {
+      "file": "pipeline-loader.js",
+      "source": "original owner index.js blocks assembled with explicitly new test-only module wiring",
+      "sha256": "0e1519116eaaca8f4a58d350cdae5fd57458d25544a946c04fcbedafb5f4127e",
+      "byte_length": 6159,
+      "verbatim": false,
+      "owner_source_file": "package/src/index.js",
+      "owner_source_sha256": "4664ef5ca25bc1ef2593de4fa0d29c6cfe4844c0f1de613da32e8a3356a4332c",
+      "verbatim_owner_ranges": [
+        {
+          "start_line": 2,
+          "end_line": 4,
+          "sha256": "8970f73860c7fa2e445fdd8a26c63d2114dab92357c638c64b29121db7eefc6d",
+          "byte_length": 206
+        },
+        {
+          "start_line": 47,
+          "end_line": 87,
+          "sha256": "b35af6b96bd555d5298f5db01001ea24f385e155588091f1e3a81830f4cefdf2",
+          "byte_length": 1365
+        },
+        {
+          "start_line": 110,
+          "end_line": 110,
+          "sha256": "4d7a9878c4eafeccef7c90f62ea1f3bcf48d2cfdfb6b62f51fbac846ce174092",
+          "byte_length": 62
+        },
+        {
+          "start_line": 177,
+          "end_line": 192,
+          "sha256": "002db3d13102f76398515037347a58598c38d277c95748ab3b4515691b330f56",
+          "byte_length": 372
+        },
+        {
+          "start_line": 251,
+          "end_line": 298,
+          "sha256": "8b11a9645193cc8bd0a67801859011a4f7c4ae175e906e17788f9426aeda4c72",
+          "byte_length": 2157
+        },
+        {
+          "start_line": 323,
+          "end_line": 387,
+          "sha256": "d872507a74efcd5b23993718f847cafb16ae307dd429dcddebb2a45dd962b50b",
+          "byte_length": 1754
+        }
+      ],
+      "new_wiring": "comments, separators and one import: current loadMethodsWasm as loadMethods; no newly authored parser or alias implementation"
+    }
+  ],
+  "adapter": "index.js is new test-only export wiring. pipeline-loader.js contains verbatim original owner parser/alias/cache source blocks plus a current loadMethodsWasm bridge. No current loadPipelineDefinition dependency or retired production runner export remains. No fitted models, kernels, fixtures or generated numerical values were copied."
+}

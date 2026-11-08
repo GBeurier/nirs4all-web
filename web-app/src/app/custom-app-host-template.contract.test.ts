@@ -20,6 +20,8 @@ describe('standalone custom app host template', () => {
     expect(source).toContain("from 'nirs4all-ui/tuning'")
     expect(source).not.toContain("from '@/")
     expect(source).not.toContain("from '../../src/")
+    expect(source).not.toMatch(/\b(?:runPortablePipeline|predictPortablePipeline)\s*[,\(]/)
+    expect(source).not.toMatch(/\bPortable(?:ExecutionResult|MatrixDataset|PredictionResult)\b/)
     expect(readme).toContain('conformal.calibrated_result')
     expect(readme).toContain('robustness.summary')
     expect(readme).toContain('tuning.summary')
@@ -34,6 +36,15 @@ describe('standalone custom app host template', () => {
     expect(readme).toContain('../../vendor/npm/nirs4all-ui-0.2.2-local.20261107.2.tgz')
     expect(readme).not.toContain('nirs4all-ui-0.1.17.tgz')
     expect(readme).not.toContain('required_registry_entries')
+  })
+
+  it('keeps the published runner sources restricted to their historical Core cohort', () => {
+    const published = readFileSync(join(process.cwd(), 'scripts', 'smoke-published-custom-host.mjs'), 'utf8')
+    const guard = "if (versions.nirs4all !== '0.4.7')"
+
+    expect(published).toContain("nirs4all: process.env.N4A_PUBLISHED_NIRS4ALL_VERSION || '0.4.7'")
+    expect(published).toContain(guard)
+    expect(published.indexOf(guard)).toBeLessThan(published.indexOf('const workdir = await mkdtemp'))
   })
 
   it('reports the Core execution profiles, their content types and JavaScript/WASM predict declarations', () => {

@@ -36,7 +36,7 @@ The reusable packages own:
 
 - the capability manifest from `nirs4all` (`capabilityManifest()`: `schema`, `aggregate`,
   `runtimeSurfaces` and `executionProfiles`)
-- portable pipeline execution entrypoints
+- public native execution, generic role and storage APIs, each with its own accepted data and recipe contract
 - dataset/runtime/score view-models from `nirs4all-ui`
 - presentational React components from `nirs4all-ui/components`
 - conformal artifact, robustness summary, tuning summary, and keyword-registry projection helpers
@@ -44,6 +44,26 @@ The reusable packages own:
 The host lists the Core execution profiles, the content-type schemas each profile carries, and the
 per-profile JavaScript/WASM `predict` entrypoints or explicit unsupported reasons. This reports declared
 availability, not qualification, and does not mean a model fitted on one runtime surface is portable to another.
+
+`createDemoDataset()` retains the original synthetic 12x4 numeric fixture, and
+`createDemoPipeline()` retains KennardStone (`test_size: 0.25`) -> SNV -> PLS
+(`n_components: 2`). The exported `runDemoPipeline()` helper explicitly rejects:
+this standalone metadata template has no owner-backed adapter for that holdout
+request. It is not wired to a visible button. Core retired the former
+`runPortablePipeline` / `predictPortablePipeline` runner and its result types.
+The public `runBrowserPipeline` API accepts native steps/candidates and a
+CV/OOF protocol; it is not a drop-in executor for this KS declaration.
+`N4mRolePipeline.fit` runs a native recipe on supplied training rows and does
+not schedule the requested holdout. The example does not replace the request
+with training on all rows or import Web app internals. This operation-specific
+refusal does not change the Core capability declarations displayed above.
+
+`../../scripts/smoke-published-custom-host.mjs` remains a separate historical
+published-Core **0.4.7** smoke, with its original numeric fixture, recipe,
+run/predict calls and generated app source. Its Core version guard rejects
+other versions before installing packages or creating the generated app.
+It is not a current-template generator or evidence for the local Core 0.5.0
+surface; its historical UI/Methods defaults and prior provenance are retained.
 
 The example also demonstrates how a complex host can render these native
 metadata artifacts from sample fixtures through `nirs4all-ui`:

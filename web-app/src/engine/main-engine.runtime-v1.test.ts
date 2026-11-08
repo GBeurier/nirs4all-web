@@ -21,9 +21,9 @@ vi.mock('./dagml-engine', async (importOriginal) => {
   return { ...actual, DagMlEngine: class { run = ctrl.dagRun } }
 })
 
-vi.mock('./portable-core', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('./portable-core')>()
-  return { ...actual, tryRunPortableCore: async () => null }
+vi.mock('./single-holdout', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./single-holdout')>()
+  return { ...actual, tryRunSingleHoldout: async () => null }
 })
 
 vi.mock('./backends', async (importOriginal) => {

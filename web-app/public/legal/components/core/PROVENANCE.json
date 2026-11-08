@@ -8,11 +8,11 @@
     "base_commit_sha": "1dffd9f4472551cc09ad9d99ed9d40814bd003cc",
     "base_tree_sha": "3990c98a44a49c2c3827f61daad78915e33e948a",
     "working_tree_dirty": true,
-    "artifact_origin": "Local release WASM (wasm32 release, wasm-bindgen 0.2.129) embedding the current DAG score-family outcome reader and IO N1; JS/d.ts companions byte-identical to the prior cohort; not an immutable source rebuild claim"
+    "artifact_origin": "Local release WASM (wasm32 release, wasm-bindgen 0.2.129) embedding the current DAG score-family outcome reader and IO N1; native payload unchanged. JS/types/package.json overlay from Core candidate commit 15ee6477d0e2361f71e4bb44bf189f8eca92622c; production execution.js retired after actual Web/Quali owner parity. This is a mixed source/artifact cohort, not an immutable native rebuild claim."
   },
   "acquisition": {
     "kind": "local-unpublished",
-    "note": "Exact frozen local owner artifacts; release native WASM (score-family reader + IO N1), no registry identity, no numerical rebuild by Web. Source and platform qualification remain separately scoped.",
+    "note": "Exact frozen local owner artifacts; retained release native WASM (score-family reader + IO N1) plus JS/types/package.json from Core candidate 15ee6477d0e2361f71e4bb44bf189f8eca92622c. No registry identity or numerical rebuild by Web; source/platform qualification remains separately scoped.",
     "files": {
       "LICENSE": {
         "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/LICENSE",
@@ -95,9 +95,9 @@
         "sha256": "66448c41a5672a6e29c181aca9634975df1d7450f475d11960463764cb10ff4a"
       },
       "package.json": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/package.json",
-        "size": 2749,
-        "sha256": "42b7abfb8b39ffa047049b422cf6a775f2700a5fdf97dfa17361836b24b60b40"
+        "source": "/home/delete/nirs4all/_worktrees/2026-11-08-core-js-runner-retirement/bindings/wasm/package.json",
+        "size": 2725,
+        "sha256": "6a5dfde605cfb6c7e34447c357e68f84ad7a9850345fc4e85d9075781a8595cb"
       },
       "src/archive-v2.js": {
         "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/archive-v2.js",
@@ -144,20 +144,15 @@
         "size": 13310,
         "sha256": "1f587895ff94b4757476f9efb51c8864886c13c87e7e90a6d57d8a8f4692ad75"
       },
-      "src/execution.js": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/execution.js",
-        "size": 34768,
-        "sha256": "dcc35fbe1a741764864c75786172362949e79815c862a014a08eafe535bee962"
-      },
       "src/index.d.ts": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/index.d.ts",
-        "size": 22826,
-        "sha256": "2114d8c90fd991149c4973b7914201209f80ab8a3c7e617940cff67656b76f77"
+        "source": "/home/delete/nirs4all/_worktrees/2026-11-08-core-js-runner-retirement/bindings/wasm/src/index.d.ts",
+        "size": 19973,
+        "sha256": "0e8badc20cd23d86e8fa38f61f5731c8f2dbfc13b9e44c0d68fc01227b42c4cb"
       },
       "src/index.js": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/index.js",
-        "size": 13818,
-        "sha256": "4664ef5ca25bc1ef2593de4fa0d29c6cfe4844c0f1de613da32e8a3356a4332c"
+        "source": "/home/delete/nirs4all/_worktrees/2026-11-08-core-js-runner-retirement/bindings/wasm/src/index.js",
+        "size": 12372,
+        "sha256": "dcb15058d4175cda4ed777610b7cac5c21b2e39a9662be68a1580c2a6627499c"
       },
       "src/js-estimator-controller.js": {
         "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/js-estimator-controller.js",
@@ -200,9 +195,9 @@
         "sha256": "809d0d0e6ab3ad3948300307408a98d2aa0f638343580390808a96bc864e9eb4"
       },
       "src/n4m-roles.js": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/n4m-roles.js",
-        "size": 13593,
-        "sha256": "8e7564714f4bca0795ef6024b512ed85bc6cb2e719b6360e4ccf734e4b7d3abb"
+        "source": "/home/delete/nirs4all/_worktrees/2026-11-08-core-js-runner-retirement/bindings/wasm/src/n4m-roles.js",
+        "size": 15356,
+        "sha256": "d7cb38db892bfc20f1f4225da1fe3cb3bb486f4d15fd574aaa8ad5ef107b0c32"
       },
       "src/native-augmentation.js": {
         "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/native-augmentation.js",
@@ -356,8 +351,8 @@
       "sha256": "66448c41a5672a6e29c181aca9634975df1d7450f475d11960463764cb10ff4a"
     },
     "package.json": {
-      "size": 2749,
-      "sha256": "42b7abfb8b39ffa047049b422cf6a775f2700a5fdf97dfa17361836b24b60b40"
+      "size": 2725,
+      "sha256": "6a5dfde605cfb6c7e34447c357e68f84ad7a9850345fc4e85d9075781a8595cb"
     },
     "src/archive-v2.js": {
       "size": 20637,
@@ -395,17 +390,13 @@
       "size": 13310,
       "sha256": "1f587895ff94b4757476f9efb51c8864886c13c87e7e90a6d57d8a8f4692ad75"
     },
-    "src/execution.js": {
-      "size": 34768,
-      "sha256": "dcc35fbe1a741764864c75786172362949e79815c862a014a08eafe535bee962"
-    },
     "src/index.d.ts": {
-      "size": 22826,
-      "sha256": "2114d8c90fd991149c4973b7914201209f80ab8a3c7e617940cff67656b76f77"
+      "size": 19973,
+      "sha256": "0e8badc20cd23d86e8fa38f61f5731c8f2dbfc13b9e44c0d68fc01227b42c4cb"
     },
     "src/index.js": {
-      "size": 13818,
-      "sha256": "4664ef5ca25bc1ef2593de4fa0d29c6cfe4844c0f1de613da32e8a3356a4332c"
+      "size": 12372,
+      "sha256": "dcb15058d4175cda4ed777610b7cac5c21b2e39a9662be68a1580c2a6627499c"
     },
     "src/js-estimator-controller.js": {
       "size": 24069,
@@ -440,8 +431,8 @@
       "sha256": "809d0d0e6ab3ad3948300307408a98d2aa0f638343580390808a96bc864e9eb4"
     },
     "src/n4m-roles.js": {
-      "size": 13593,
-      "sha256": "8e7564714f4bca0795ef6024b512ed85bc6cb2e719b6360e4ccf734e4b7d3abb"
+      "size": 15356,
+      "sha256": "d7cb38db892bfc20f1f4225da1fe3cb3bb486f4d15fd574aaa8ad5ef107b0c32"
     },
     "src/native-augmentation.js": {
       "size": 2784,

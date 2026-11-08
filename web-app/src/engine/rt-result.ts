@@ -59,6 +59,7 @@ export interface RtResultOptions {
 }
 
 type LineageLike = {
+  producerNode?: unknown
   selectedVariant?: unknown
   schedulerFallback?: unknown
   dataProvider?: unknown
@@ -102,16 +103,19 @@ const selectedVariantOf = (run: RunResult): string | null => {
 }
 
 const producerNodeOf = (run: RunResult): string => {
+  const owner = lineageOf(run).producerNode
+  if (run.refit.scoreContext?.evaluation === 'selection_validation' && typeof owner === 'string') return owner
   const stepCount = run.model.dsl.steps.length
   return `model:compat.${stepCount}`
 }
 
 const partitionOf = (score: ScoreNode): RtPredictionPartition => {
-  if (score.kind === 'cv' || score.kind === 'fold') return 'validation'
+  if (score.scoreContext?.evaluation === 'selection_validation' || score.kind === 'cv' || score.kind === 'fold') return 'validation'
   return /test/i.test(score.name) ? 'test' : 'train'
 }
 
 const foldIdOf = (score: ScoreNode): string | null => {
+  if (score.scoreContext?.evaluation === 'selection_validation') return score.id
   if (score.kind === 'cv') return 'avg'
   if (score.kind === 'fold') return score.id
   return 'final'
@@ -225,7 +229,11 @@ export function runResultToRtResultEnvelope(run: RunResult, opts: RtResultOption
         diagnostics: run.diagnostics?.length ?? 0,
       },
       portable_level: opts.portableLevel ?? null,
-      files: {},
+      files: run.refit.scoreContext?.evaluation === 'selection_validation' ? {
+        owner_bank_json: run.bundleJson,
+        owner_score_context: run.refit.scoreContext,
+        owner_sample_identity: isRecord(run.model.state) ? run.model.state.identity : null,
+      } : {},
     },
     ...(run.diagnostics?.length ? { diagnostics: run.diagnostics.map(rtErrorToWire) } : {}),
   }

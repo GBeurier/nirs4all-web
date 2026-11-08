@@ -20,7 +20,6 @@
 // may keep labels a sample filter removed). The recipe is snapshotted at fit
 // and import, so the exported recipe is the one the states attest.
 
-import { coerceFeatures } from './execution.js';
 import { loadMethodsWasm } from './index.js';
 
 export const N4M_ROLE_PREFIX = 'n4m:';
@@ -322,3 +321,50 @@ function base64ToBytes(text) {
 function clone(value) {
   return value == null ? value : JSON.parse(JSON.stringify(value));
 }
+
+function coerceFeatures(dataset) {
+  if (!dataset || typeof dataset !== 'object') {
+    throw new TypeError('Portable prediction requires a feature dataset object.');
+  }
+  const rows = Number(dataset.rows ?? dataset.n_samples ?? 0);
+  const cols = Number(dataset.cols ?? dataset.n_features ?? 0);
+  const X = flattenMatrix(dataset.X, rows, cols, 'X');
+  return { data: X, rows, cols };
+}
+
+function flattenMatrix(value, rows, cols, label) {
+  if (!Number.isInteger(rows) || rows <= 0 || !Number.isInteger(cols) || cols <= 0) {
+    throw new TypeError(`Dataset ${label} shape must provide positive integer rows/cols.`);
+  }
+  if (value instanceof Float64Array) {
+    if (value.length !== rows * cols) {
+      throw new RangeError(`Dataset ${label} length ${value.length} does not match ${rows}x${cols}.`);
+    }
+    return value;
+  }
+  if (Array.isArray(value) && Array.isArray(value[0])) {
+    if (value.length !== rows) {
+      throw new RangeError(`Dataset ${label} has ${value.length} rows but declares ${rows}.`);
+    }
+    value.forEach((row, r) => {
+      if (!Array.isArray(row) || row.length !== cols) {
+        throw new RangeError(`Dataset ${label} row ${r} has ${row?.length} values but declares ${cols} columns.`);
+      }
+    });
+    const out = new Float64Array(rows * cols);
+    for (let r = 0; r < rows; r += 1) {
+      for (let c = 0; c < cols; c += 1) {
+        out[r * cols + c] = Number(value[r][c]);
+      }
+    }
+    return out;
+  }
+  if (Array.isArray(value) || ArrayBuffer.isView(value)) {
+    if (value.length !== rows * cols) {
+      throw new RangeError(`Dataset ${label} length ${value.length} does not match ${rows}x${cols}.`);
+    }
+    return Float64Array.from(value);
+  }
+  throw new TypeError(`Dataset ${label} must be a Float64Array, a flat array, or a nested row array.`);
+}
+

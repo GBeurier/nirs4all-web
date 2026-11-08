@@ -3,7 +3,8 @@
 // This is a host-sidecar package, not a claim of portable native estimator state.
 import { createDagMlModelManifest, createDagMlNodeResult, loadDatasetsWasm } from './nirs4all-core'
 import { loadDagMl, type DagMlMod } from './dagml'
-import { materializeViaProvider } from './dagml-data'
+import { materializeViaProvider, providerCohort } from './dagml-data'
+import { datasetRelations } from './relations'
 import { checkInputColumns, datasetFeatureIdentity } from './feature-identity'
 import { expandFoldRows, handlesOf, validatePartitionGroups } from './grouped-cv'
 import { classInfo, exportPipeline, predictPipelineMatrix, trainAndPredict, type FittedState, type ModelBackend } from './orchestrate'
@@ -49,11 +50,10 @@ export interface RefitRuntime {
   replay_initial_full_refit_json(packageJson: string, envelope: string, outputs: string, handles: string, runId: string, invoke: Invoke): string
   initial_full_refit_predict_envelope_json(packageJson: string, cohort: string): string
   validate_initial_full_refit_package_json(packageJson: string): void
-  sample_relation_set_fingerprint_json(relations: string): string
 }
 export function requireRefitRuntime(value: DagMlMod): DagMlMod & RefitRuntime {
   const candidate = value as DagMlMod & Partial<RefitRuntime>
-  for (const key of ['execute_initial_full_refit_json', 'replay_initial_full_refit_json', 'initial_full_refit_predict_envelope_json', 'validate_initial_full_refit_package_json', 'sample_relation_set_fingerprint_json'] as const) {
+  for (const key of ['execute_initial_full_refit_json', 'replay_initial_full_refit_json', 'initial_full_refit_predict_envelope_json', 'validate_initial_full_refit_package_json'] as const) {
     if (typeof candidate[key] !== 'function') throw new Error(`The staged DAG-ML WASM lacks ${key}; rebuild and stage the current native WASM before REFIT/PREDICT. No direct-fit fallback is allowed.`)
   }
   return candidate as DagMlMod & RefitRuntime
@@ -158,30 +158,35 @@ export async function refitWithDagMl(ds: MaterializedDataset, dsl: PipelineDSL, 
   const dagml = requireRefitRuntime(await loadDagMl())
   const hashes = await loadDatasetsWasm()
   if (!Number.isSafeInteger(dsl.cv?.seed ?? 0) || (dsl.cv?.seed ?? 0) < 0) throw new Error('Native REFIT requires a nonnegative safe integer root seed')
-  // Materialize once more after partition overrides. Only true training content
-  // enters the REFIT identity; held-out labels never enter the fitted package.
+  // Keep the existing full numerical/class-domain and scoring context separate
+  // from the source authority admitted for training below.
   const served = await materializeViaProvider(ds)
   const identity = served.identity
   const repeated = identity.repeated
   if (repeated && ds.taskType !== 'regression') throw new Error(PHYSICAL_CLASSIFICATION_REFUSAL)
   const scoring = repeated ? requireObservationScoringRuntime(dagml) : undefined
-  const envelope = JSON.parse(served.envelopeJson)
-  const allRecords = envelope.coordinator_relations.records as { observation_id: string; sample_id: string }[]
-  // Distinct physical training samples p{k}: every scan of a training sample is fitted.
+  const allRecords = JSON.parse(served.envelopeJson).coordinator_relations.records as { observation_id: string; sample_id: string }[]
+  // Training order comes from the supplied owner rows, never canonical hash order.
   const ids = handlesOf(identity, trainRows)
-  const idSet = new Set(ids)
-  envelope.coordinator_relations.records = allRecords.filter((r) => idSet.has(r.sample_id))
-  envelope.relation_fingerprint = dagml.sample_relation_set_fingerprint_json(JSON.stringify(envelope.coordinator_relations))
-  const trainX = takeRows(served.X, trainRows, ds.nFeatures)
-  const trainY = Float64Array.from(trainRows.map((i) => served.y[i]))
-  envelope.data_content_fingerprint = await bufferFingerprint(trainX)
-  envelope.target_content_fingerprint = await bufferFingerprint(trainY)
+  const cohort = providerCohort(ds, identity, trainRows)
+  const sourceRows = datasetRelations(ds, identity)
+  const training = await materializeViaProvider(cohort.ds, {
+    identity: cohort.identity,
+    featureNames: ds.featureNames ?? datasetFeatureIdentity(ds)?.names ?? Array.from({ length: ds.nFeatures }, (_, i) => `w${i}`),
+    targetNames: [ds.targetName],
+    relationRows: trainRows.map(i => sourceRows[i]),
+  })
+  // This is DMD's new scoped source S. Never replace it with canonical DAG C or
+  // attach a full-source fingerprint to a filtered record set.
+  const envelope = JSON.parse(training.envelopeJson)
+  envelope.data_content_fingerprint = await bufferFingerprint(training.X)
+  envelope.target_content_fingerprint = await bufferFingerprint(training.y)
   const { manifests, artifact, node, dataPort, concreteDsl, classNames, targetNames } = compositeModelPlan(dagml, ds, dsl, 'graph:web-refit')
   artifact.campaign_template.split_invocation = null
   artifact.campaign_template.data_bindings = { [node.id]: [{
     node_id: node.id, input_name: dataPort.name, request_id: 'nir-to-tabular',
     schema_fingerprint: envelope.schema_fingerprint, plan_fingerprint: envelope.plan_fingerprint,
-    relation_fingerprint: envelope.relation_fingerprint, output_representation: served.outputRepresentation,
+    relation_fingerprint: envelope.relation_fingerprint, output_representation: training.outputRepresentation,
     feature_set_id: 'X', source_ids: ['nir'], require_relations: true,
   }] }
   // Repeated scans: DAG-ML aggregates the observation predictions to physical samples.

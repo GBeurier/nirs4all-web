@@ -44,48 +44,6 @@ export const upstreams = Object.freeze([
   },
 ]);
 
-// Private runner constant: the temporary portable runner/compiler still validates
-// against it until its callers migrate to owner APIs. It is not a capability claim.
-const portableOperatorClasses = Object.freeze([
-  'nirs4all.operators.splitters.KennardStoneSplitter',
-  'nirs4all.operators.splitters.splitters.KennardStoneSplitter',
-  'nirs4all.operators.transforms.SNV',
-  'nirs4all.operators.transforms.StandardNormalVariate',
-  'nirs4all.operators.transforms.scalers.StandardNormalVariate',
-  'nirs4all.operators.transforms.SavitzkyGolay',
-  'nirs4all.operators.transforms.nirs.SavitzkyGolay',
-  'n4m.MSC',
-  'nirs4all.operators.transforms.MSC',
-  'nirs4all.operators.transforms.MultiplicativeScatterCorrection',
-  'nirs4all.operators.transforms.nirs.MultiplicativeScatterCorrection',
-  'n4m.SPA',
-  'n4m.SPASelector',
-  'pls4all.sklearn.SPASelector',
-  'n4m.Selector',
-  'sklearn.cross_decomposition.PLSRegression',
-  'sklearn.cross_decomposition._pls.PLSRegression',
-  'n4m.KennardStone',
-  'n4m.SNV',
-  'n4m.SavitzkyGolay',
-  'n4m.PLS',
-  'n4m.PLSRegression',
-  'n4m.Ridge',
-  'n4m.RidgePLS',
-  'n4m.RobustPLS',
-  'n4m.CPPLS',
-  'n4m.SparseSIMPLS',
-  'n4m.ECR',
-  'n4m.ContinuumRegression',
-  'n4m.MIRPLS',
-  'n4m.FusedSparsePLS',
-  'n4m.BaggingPLS',
-  'n4m.BoostingPLS',
-  'n4m.RandomSubspacePLS',
-  'n4m.NPLS',
-  'n4m.MBPLS',
-  'n4m.GroupSparsePLS',
-]);
-
 export const runtimeSurfaces = Object.freeze([
   'python',
   'javascript_wasm',
@@ -106,8 +64,6 @@ export function capabilityManifest() {
     executionProfiles: executionProfilesData,
   });
 }
-
-const portableOperatorSet = new Set(portableOperatorClasses);
 
 const upstreamByKey = new Map(upstreams.map((item) => [item.key, item]));
 
@@ -269,13 +225,12 @@ export function loadPipelineDefinition(source, options = {}) {
     && !Array.isArray(step) && Object.prototype.hasOwnProperty.call(step, 'train_augmentation'));
   for (const step of augmentationSteps) parseTrainAugmentation(step);
 
-  // Legacy class names use the portable subset; "n4m:<method id>" tokens
-  // resolve through the loaded Methods manifest.
+  // "n4m:<method id>" tokens resolve through the loaded Methods manifest.
+  // Legacy runner class aliases are refused; no recipe conversion is performed.
   const methods = options.methods ?? methodsModule;
   const classes = portableClassNames(definition);
   const augmentationClassCount = classes.filter((name) => name === NATIVE_X_AUGMENTATION_CLASS).length;
-  const unsupported = classes.filter((name) => !portableOperatorSet.has(name)
-    && !resolvesN4mRole(name, methods)
+  const unsupported = classes.filter((name) => !resolvesN4mRole(name, methods)
     && !(name === NATIVE_X_AUGMENTATION_CLASS && augmentationSteps.length === 1
       && augmentationClassCount === 1));
   if (unsupported.length > 0) {
@@ -290,6 +245,7 @@ export function loadPipelineDefinition(source, options = {}) {
   return definition;
 }
 
+/** Class names occurring in the supplied definition, not a supported-operator list. */
 export function portableClassNames(definition) {
   const root = definition && Array.isArray(definition.pipeline) ? definition.pipeline : definition;
   const classes = [];
@@ -386,7 +342,6 @@ function collectClasses(value, output) {
   }
 }
 
-export { parseExecutionPlan, predictPortablePipeline, runPortablePipeline } from './execution.js';
 export {
   N4M_ROLE_PREFIX,
   N4M_TRAINED_PIPELINE_SCHEMA,

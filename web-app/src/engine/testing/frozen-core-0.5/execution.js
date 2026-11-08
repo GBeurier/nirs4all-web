@@ -371,12 +371,6 @@ export function parseExecutionPlan(source) {
         if (splitter) {
           throw new Error('The optional splitter must appear once, before the model.');
         }
-        const nTrain = step.params?.n_train;
-        if (nTrain !== undefined && nTrain !== null && nTrain !== '') {
-          throw new TypeError(
-            "Unsupported portable KennardStone parameter 'n_train': training-count splits are not supported by this execution profile.",
-          );
-        }
         const params = { ...step.params, test_size: numberParam(step.params?.test_size, 0.25, 'test_size') };
         splitter = { type: 'KennardStone', params };
       } else if (SNV.has(step.class)) {

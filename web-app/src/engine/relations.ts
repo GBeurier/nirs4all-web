@@ -197,7 +197,7 @@ function effectiveGroups(ds: MaterializedDataset, identity: PhysicalIdentity): (
 export const hasCvGroups = (ds: MaterializedDataset): boolean =>
   ds.groupIds !== undefined || (ds.repetition !== undefined && ds.repetition !== ds.sampleIdColumn)
 
-export function datasetRelations(ds: MaterializedDataset) {
+export function datasetRelations(ds: MaterializedDataset, identity = physicalIdentity(ds)) {
   if (ds.sampleIds.some((id) => typeof id !== 'string' || id.length === 0 || id.includes('\0'))) throw new Error('Sample identities must be nonempty strings without NUL')
   if (ds.augmented?.some((value) => typeof value !== 'boolean')) throw new Error('Augmentation flags must be explicit booleans')
   for (const values of [ds.groupIds, ds.originIds, ds.repetitionIds]) {
@@ -209,7 +209,6 @@ export function datasetRelations(ds: MaterializedDataset) {
   for (const values of [ds.groupIds, ds.originIds, ds.repetitionIds, ds.augmented, ds.observationIds]) {
     if (values && values.length !== ds.nSamples) throw new Error('Relation column is not aligned with dataset rows')
   }
-  const identity = physicalIdentity(ds)
   const physicalReps = repetitionValues(ds)
   const groupOf = effectiveGroups(ds, identity)
   const groups = [...new Set(groupOf?.filter((v): v is string => v !== null) ?? [])].sort()

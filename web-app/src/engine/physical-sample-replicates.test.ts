@@ -17,7 +17,7 @@ import { MainEngine } from './main-engine'
 import { buildNativeFolds } from './grouped-cv'
 import { classificationMetrics, regressionMetrics } from './metrics'
 import { trainRowsOf } from './partition'
-import { tryRunPortableCore } from './portable-core'
+import { tryRunSingleHoldout } from './single-holdout'
 import { datasetRelations, hasCvGroups, physicalIdentity } from './relations'
 import type { FittedState } from './orchestrate'
 import type { NativeRefitState } from './dagml-refit'
@@ -27,9 +27,9 @@ vi.mock('./metrics', async (original) => {
   const actual = await original<typeof import('./metrics')>()
   return { ...actual, regressionMetrics: vi.fn(actual.regressionMetrics), classificationMetrics: vi.fn(actual.classificationMetrics) }
 })
-vi.mock('./portable-core', async (original) => {
-  const actual = await original<typeof import('./portable-core')>()
-  return { ...actual, tryRunPortableCore: vi.fn(actual.tryRunPortableCore) }
+vi.mock('./single-holdout', async (original) => {
+  const actual = await original<typeof import('./single-holdout')>()
+  return { ...actual, tryRunSingleHoldout: vi.fn(actual.tryRunSingleHoldout) }
 })
 
 beforeAll(() => {
@@ -155,10 +155,10 @@ describe('repeated scans are one physical sample in DAG-ML relations, folds and 
   it('runs FIT_CV, SELECT, REFIT and held-out scoring natively at the physical-sample level', async () => {
     vi.mocked(regressionMetrics).mockClear()
     vi.mocked(classificationMetrics).mockClear()
-    vi.mocked(tryRunPortableCore).mockClear()
+    vi.mocked(tryRunSingleHoldout).mockClear()
     const ds = physical()
     const run = await new MainEngine({ profile: 'strict-wasm', mainThread: false }).run(ds, ridge)
-    expect(tryRunPortableCore).not.toHaveBeenCalled()
+    expect(tryRunSingleHoldout).not.toHaveBeenCalled()
     expect(regressionMetrics).not.toHaveBeenCalled()
     expect(classificationMetrics).not.toHaveBeenCalled()
     // Counts are scoped to the scored cohort: 8 cal samples x 3 scans in CV, 4 val samples x 2 scans held out.

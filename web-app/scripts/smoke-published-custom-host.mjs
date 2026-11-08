@@ -13,6 +13,11 @@ const versions = {
   vite: process.env.N4A_PUBLISHED_VITE_VERSION || '6.4.3',
   pluginReact: process.env.N4A_PUBLISHED_PLUGIN_REACT_VERSION || '4.7.0',
 }
+// Historical published cohort only: both embedded sources below use Core 0.4.7's retired runner.
+// The active standalone template has a separate, explicit unavailable holdout operation.
+if (versions.nirs4all !== '0.4.7') {
+  throw new Error('This historical custom-host smoke requires published Core 0.4.7; its portable runner sources do not target current Core.')
+}
 const keepTemp = process.env.N4A_KEEP_PUBLISHED_SMOKE === '1'
 const artifactsDir = process.env.ARTIFACTS_DIR
 

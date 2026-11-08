@@ -134,6 +134,12 @@ export function execute_initial_full_refit_json(plan_json: string, trusted_contr
 export function execute_nested_selection_json(request_json: string, trusted_controller_manifests_json: string, data_envelope_json: string, js_invoke: Function, js_metrics?: Function | null): string;
 
 /**
+ * Execute a whole ordered Cartesian bank with native FIT_CV + holdout SELECT.
+ * No host candidate loop, REFIT, or synthetic cross-fold average participates.
+ */
+export function execute_single_holdout_bank_json(execution_plan_json: string, trusted_controller_manifests_json: string, envelope_json: string, request_json: string, run_id: string, root_seed: string, js_invoke: Function): string;
+
+/**
  * Execute native CV/SELECT/REFIT and capture a self-contained predictor package.
  * This synchronous lane derives influence in the core and requires every
  * fitted artifact to be native-portable. Caller-owned controllers are closed
@@ -243,6 +249,12 @@ export function sample_relation_set_fingerprint_json(json: string): string;
 export function score_regression_prediction_block_json(predictions_json: string, targets_json: string, metrics_json: string): string;
 
 /**
+ * Score known-reference predictions with an explicit versioned owner profile.
+ * `profile_json` is a JSON string, e.g. `"regression_report.population_rmse_ratios.v1"`.
+ */
+export function score_regression_prediction_block_with_profile_json(predictions_json: string, targets_json: string, profile_json: string): string;
+
+/**
  * Rank candidate variants and return the winner — the SELECT phase for in-browser
  * generators/finetune. Selection stays in dag-ml (deterministic argmin/argmax +
  * id tie-break), not the host. `policy_json` = SelectionPolicy, `candidates_json`
@@ -339,6 +351,7 @@ export interface InitOutput {
     readonly execute_execution_plan_phase_with_envelope_json: (a: any, b: any, c: any, d: any, e: any, f: any, g: any, h: any) => [number, number, number, number];
     readonly execute_initial_full_refit_json: (a: any, b: any, c: any, d: any, e: any, f: any, g: any, h: any) => [number, number, number, number];
     readonly execute_nested_selection_json: (a: any, b: any, c: any, d: any, e: number) => [number, number, number, number];
+    readonly execute_single_holdout_bank_json: (a: any, b: any, c: any, d: any, e: any, f: any, g: any) => [number, number, number, number];
     readonly execute_training_json: (a: any, b: any, c: any, d: any, e: any, f: any, g: any, h: any) => [number, number, number, number];
     readonly fold_set_fingerprint_json: (a: any) => [number, number, number, number];
     readonly group_kfold_split_json: (a: any, b: any, c: any, d: any, e: number) => [number, number, number, number];
@@ -369,6 +382,7 @@ export interface InitOutput {
     readonly replay_training_package_json: (a: any, b: any, c: any, d: any, e: any, f: any, g: any) => [number, number, number, number];
     readonly sample_relation_set_fingerprint_json: (a: any) => [number, number, number, number];
     readonly score_regression_prediction_block_json: (a: any, b: any, c: any) => [number, number, number, number];
+    readonly score_regression_prediction_block_with_profile_json: (a: any, b: any, c: any) => [number, number, number, number];
     readonly select_candidates_json: (a: any, b: any, c: number) => [number, number, number, number];
     readonly select_portable_output_json: (a: any, b: any) => [number, number, number, number];
     readonly select_stacking_fold_json: (a: any) => [number, number, number, number];

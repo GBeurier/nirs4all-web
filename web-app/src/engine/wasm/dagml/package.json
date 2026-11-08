@@ -4,7 +4,7 @@
   "collaborators": [
     "G. Beurier <beurier@cirad.fr>"
   ],
-  "description": "Private current DAG score-family qualification artifact; not published.",
+  "description": "Private current single-holdout bank and scoring qualification artifact; not published.",
   "version": "0.4.0",
   "license": "CECILL-2.1 OR AGPL-3.0-or-later",
   "repository": "https://github.com/GBeurier/dag-ml",

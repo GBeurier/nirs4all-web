@@ -743,6 +743,37 @@ export function execute_nested_selection_json(request_json, trusted_controller_m
 }
 
 /**
+ * Execute a whole ordered Cartesian bank with native FIT_CV + holdout SELECT.
+ * No host candidate loop, REFIT, or synthetic cross-fold average participates.
+ * @param {string} execution_plan_json
+ * @param {string} trusted_controller_manifests_json
+ * @param {string} envelope_json
+ * @param {string} request_json
+ * @param {string} run_id
+ * @param {string} root_seed
+ * @param {Function} js_invoke
+ * @returns {string}
+ */
+export function execute_single_holdout_bank_json(execution_plan_json, trusted_controller_manifests_json, envelope_json, request_json, run_id, root_seed, js_invoke) {
+    let deferred2_0;
+    let deferred2_1;
+    try {
+        const ret = wasm.execute_single_holdout_bank_json(execution_plan_json, trusted_controller_manifests_json, envelope_json, request_json, run_id, root_seed, js_invoke);
+        var ptr1 = ret[0];
+        var len1 = ret[1];
+        if (ret[3]) {
+            ptr1 = 0; len1 = 0;
+            throw takeFromExternrefTable0(ret[2]);
+        }
+        deferred2_0 = ptr1;
+        deferred2_1 = len1;
+        return getStringFromWasm0(ptr1, len1);
+    } finally {
+        wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+    }
+}
+
+/**
  * Execute native CV/SELECT/REFIT and capture a self-contained predictor package.
  * This synchronous lane derives influence in the core and requires every
  * fitted artifact to be native-portable. Caller-owned controllers are closed
@@ -1205,6 +1236,33 @@ export function score_regression_prediction_block_json(predictions_json, targets
     let deferred2_1;
     try {
         const ret = wasm.score_regression_prediction_block_json(predictions_json, targets_json, metrics_json);
+        var ptr1 = ret[0];
+        var len1 = ret[1];
+        if (ret[3]) {
+            ptr1 = 0; len1 = 0;
+            throw takeFromExternrefTable0(ret[2]);
+        }
+        deferred2_0 = ptr1;
+        deferred2_1 = len1;
+        return getStringFromWasm0(ptr1, len1);
+    } finally {
+        wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+    }
+}
+
+/**
+ * Score known-reference predictions with an explicit versioned owner profile.
+ * `profile_json` is a JSON string, e.g. `"regression_report.population_rmse_ratios.v1"`.
+ * @param {string} predictions_json
+ * @param {string} targets_json
+ * @param {string} profile_json
+ * @returns {string}
+ */
+export function score_regression_prediction_block_with_profile_json(predictions_json, targets_json, profile_json) {
+    let deferred2_0;
+    let deferred2_1;
+    try {
+        const ret = wasm.score_regression_prediction_block_with_profile_json(predictions_json, targets_json, profile_json);
         var ptr1 = ret[0];
         var len1 = ret[1];
         if (ret[3]) {
@@ -1720,7 +1778,7 @@ function __wbg_get_imports() {
             return ret;
         },
         __wbindgen_generic_0000000000000001: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 178, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 179, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
             const ret = makeMutClosure(arg0, arg1, wasm_bindgen__convert__closures_____invoke__h099d61a787badafb);
             return ret;
         },

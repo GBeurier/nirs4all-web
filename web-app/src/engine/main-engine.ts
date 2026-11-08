@@ -1,6 +1,6 @@
 // The engine the app uses. Served and offline (file:// single-file, in an inline Web Worker)
 // builds run the same full WASM coordinator path — dag-ml's SequentialScheduler (WASM)
-// drives the CV, libn4m (WASM) does the numerics. There is no direct compatibility runner:
+// drives CV and the restricted single-holdout bank; Methods owns numerics:
 // when dag-ml is unavailable the run is refused. Imported non-nativeRefit libn4m / ml.js
 // models keep their predict and export paths; JavaScript-backend models are refused.
 import { loadLibn4mBackend } from './backends'
@@ -12,7 +12,8 @@ import { assertAomBudget } from './guard'
 import { missingTargetCount } from './partition'
 import { physicalIdentity } from './relations'
 import { backendIdOf, exportPipeline, predictPipeline } from './orchestrate'
-import { isPortableCoreModel, predictPortableCore, tryRunPortableCore } from './portable-core'
+import { isPortableCoreModel, portableCoreRefusal } from './portable-core'
+import { exportSingleHoldoutModel, isSingleHoldoutModel, predictSingleHoldout, tryRunSingleHoldout } from './single-holdout'
 import { withWasmRobustnessEvidencePublicationTrace } from './robustness-evidence'
 import { createRobustnessEvidencePublisherFromSidecar } from './robustness-evidence-sidecar'
 import { makeRtError, RtErrorException } from './rt'
@@ -32,7 +33,7 @@ function javascriptBackendRefusal(verb: 'predict' | 'export'): RtErrorException 
     verb,
     cause: 'unsupported_capability',
     message: `The browser engine refuses to ${verb} a JavaScript-backend model: that backend was retired.`,
-    mitigation: 'Refit the pipeline, or import a model produced by the portable Core, dag-ml or libn4m WASM backend.',
+    mitigation: 'Refit the pipeline, or import a current model produced by dag-ml or libn4m WASM.',
     unsupported_capability: 'javascript_model_backend',
   }))
 }
@@ -64,9 +65,9 @@ export class MainEngine implements Engine {
     // Warn (or refuse) an oversized operator-adaptive screen before any compute,
     // so a heavy AOM/POP run is never silent (it runs in a worker, cancellable).
     assertAomBudget(ds, dsl, opts.onProgress, { mainThread: this.mainThread })
-    // The portable Core subset carries no relations: repeated scans of one physical sample
-    // (and any declared relation) always take the relation-aware DAG-ML path.
-    const portable = ds.groupIds || ds.originIds || ds.repetitionIds || ds.augmented || missingTargetCount(ds) || physicalIdentity(ds).repeated ? null : await tryRunPortableCore(ds, dsl, opts)
+    // Preserve the old restricted eligibility boundary; relations/repeated scans
+    // stay on their existing DAG path. Matched holdout failures never reroute.
+    const portable = ds.groupIds || ds.originIds || ds.repetitionIds || ds.augmented || missingTargetCount(ds) || physicalIdentity(ds).repeated ? null : await tryRunSingleHoldout(ds, dsl, opts)
     if (portable) {
       return withWasmRobustnessEvidencePublicationTrace(
         portable,
@@ -100,8 +101,9 @@ export class MainEngine implements Engine {
       return predictArchiveV2(model, Xnew, nSamples, nFeatures)
     }
     if (isPortableCoreModel(model)) {
-      return predictPortableCore(model, Xnew, nSamples, nFeatures, featureNames)
+      throw portableCoreRefusal('predict')
     }
+    if (isSingleHoldoutModel(model)) return predictSingleHoldout(model, Xnew, nSamples, nFeatures, featureNames)
     if ((model.state as { nativeRefit?: unknown } | null)?.nativeRefit) {
       return this.dagml.predict(model, Xnew, nSamples, nFeatures, featureNames)
     }
@@ -118,10 +120,10 @@ export class MainEngine implements Engine {
   }
 
   async exportModel(model: FittedPipeline, { allowTrainingRows }: ExportOptions): Promise<FittedPipeline> {
-    // An imported archive is replayed, never re-exported; the portable Core
-    // subset stores PLS coefficients only.
+    // Imported native archives keep their existing no-re-export policy.
     if (isArchiveV2Model(model)) throw new Error('An imported Archive V2 model is not re-exported by the web client.')
-    if (isPortableCoreModel(model)) return model
+    if (isPortableCoreModel(model)) throw portableCoreRefusal('export')
+    if (isSingleHoldoutModel(model)) return exportSingleHoldoutModel(model)
     if ((model.state as { nativeRefit?: unknown } | null)?.nativeRefit) {
       return this.dagml.exportModel(model, { allowTrainingRows })
     }

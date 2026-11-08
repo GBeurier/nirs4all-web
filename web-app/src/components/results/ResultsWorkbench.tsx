@@ -25,12 +25,18 @@ export function ResultsWorkbench(props: ResultsListProps & { dataset: Materializ
   return (
     <section aria-label="Owner results Inspector" data-owner-inspector>
       <p className="mb-3 text-sm text-muted-foreground">
-        CV validation scores come from the owner and are used for selection. Held-out test scores are final evaluation.
+        CV and single-holdout validation scores come from the owner and are used for selection; they are not independent-test scores. Held-out test scores are final evaluation.
         {' '}Training resubstitution scores are hidden until explicitly requested. Missing metrics are not computed here.
       </p>
       {data.warnings.map((warning) => <p key={warning} role="status" className="mb-2 text-sm">{warning}</p>)}
       {runs.map((run) => <div key={run.id}>
         <RuntimeDiagnosticList source={{ diagnostics: run.diagnostics }} className="mb-2 text-sm" />
+        {run.refit.scoreContext?.evaluation === 'selection_validation' && <details className="mb-2 text-sm">
+          <summary>Selection validation — owner reports and chain issues</summary>
+          <p>Selection validation is not independent-test evaluation. Undefined metrics retain the owner's reasons.</p>
+          <pre className="overflow-auto whitespace-pre-wrap">{JSON.stringify(run.refit.scoreContext, null, 2)}</pre>
+          <pre className="overflow-auto whitespace-pre-wrap">{typeof run.bundleJson === 'string' ? run.bundleJson : JSON.stringify(run.bundleJson, null, 2)}</pre>
+        </details>}
         {run.missingTargets ? <p role="status" className="text-sm">{run.pipelineName}: {run.missingTargets} without target excluded</p> : null}
       </div>)}
       {data.scoreRefs.some((ref) => ref.protocol === 'refit-resubstitution') && <label className="mb-3 flex items-center gap-2 text-sm">

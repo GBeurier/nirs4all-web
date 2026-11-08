@@ -55,10 +55,52 @@ const SOURCE_ID = 'nir'
 // contain '#' or other characters. The provider is addressed with execution handles:
 // observation `s{i}` (row i) and physical sample `p{k}`; blocks map back through the exact
 // handle tables, and the original ids stay in ds.sampleIds and the relation metadata.
-function buildSchema(ds: MaterializedDataset, identity: PhysicalIdentity) {
+/** Internal binding for a restricted cohort; names and handles come from its original cohort. */
+export interface ProviderBinding {
+  identity: PhysicalIdentity
+  featureNames: string[]
+  targetNames: [string]
+  /** Unchanged original source-table rows, selected before DMD builds S/records.
+   *  Keeps global group/repetition/origin handles when restricting a cohort. */
+  relationRows?: ReturnType<typeof datasetRelations>
+}
+
+/** Project already-validated row selections without changing execution handles.
+ *  Callers retain the complete original source; no missing value is filled here. */
+export function providerCohort(ds: MaterializedDataset, identity: PhysicalIdentity, indices: number[]): { ds: MaterializedDataset; identity: PhysicalIdentity } {
+  const select = <T>(values: T[] | undefined) => values && indices.map(i => values[i])
+  const X = new Float64Array(indices.length * ds.nFeatures)
+  indices.forEach((row, i) => X.set(ds.X.subarray(row * ds.nFeatures, (row + 1) * ds.nFeatures), i * ds.nFeatures))
+  const sampleHandle = indices.map(i => identity.sampleHandle[i])
+  const rowsOf = new Map<string, number[]>()
+  sampleHandle.forEach((id, i) => {
+    const rows = rowsOf.get(id)
+    if (rows) rows.push(i)
+    else rowsOf.set(id, [i])
+  })
+  const cohort: MaterializedDataset = { ...ds, X, y: Float64Array.from(indices, i => ds.y[i]), nSamples: indices.length,
+    sampleIds: indices.map(i => ds.sampleIds[i]), partitions: indices.map(i => ds.partitions[i]),
+    observationIds: select(ds.observationIds), partitionNames: select(ds.partitionNames),
+    yRaw: ds.yRaw && Float64Array.from(indices, i => ds.yRaw![i]), labelsRaw: select(ds.labelsRaw), classes: select(ds.classes),
+    groupIds: select(ds.groupIds), originIds: select(ds.originIds), repetitionIds: select(ds.repetitionIds), augmented: select(ds.augmented),
+    metadata: ds.metadata?.map(column => ({ ...column, values: indices.map(i => column.values[i]) })), folds: undefined,
+  }
+  const labels = (predict: boolean) => new Set(indices.flatMap(i => {
+    const label = identity.physicalLabel[i]
+    return label !== null && !ds.augmented?.[i] && (ds.partitions[i] === 'predict') === predict ? [label] : []
+  }))
+  const scored = labels(false), predicted = labels(true)
+  return { ds: cohort, identity: { ...identity, sampleHandle, handles: [...rowsOf.keys()], rowsOf,
+    observationHandle: indices.map(i => identity.observationHandle[i]), physicalLabel: indices.map(i => identity.physicalLabel[i]),
+    repeated: [...rowsOf.values()].some(rows => rows.filter(i => !cohort.augmented?.[i]).length > 1),
+    predictReuse: identity.predictReuse.filter(label => scored.has(label) && predicted.has(label)),
+  } }
+}
+
+function buildSchema(ds: MaterializedDataset, identity: PhysicalIdentity, binding?: ProviderBinding) {
   const axisOk = ds.axis && ds.axis.length === ds.nFeatures
   const axisValues = axisOk ? Array.from(ds.axis) : Array.from({ length: ds.nFeatures }, (_, j) => j)
-  const featureNames = Array.from({ length: ds.nFeatures }, (_, j) => `w${j}`)
+  const featureNames = binding?.featureNames ?? Array.from({ length: ds.nFeatures }, (_, j) => `w${j}`)
   return {
     schema: {
       dataset_id: ds.targetName ? `web-${ds.targetName}` : 'web-dataset',
@@ -108,7 +150,7 @@ function buildSchema(ds: MaterializedDataset, identity: PhysicalIdentity) {
               unit: null,
               size: 1,
               variable: false,
-              coordinate: { dtype: 'categorical', ordered: false, values: { kind: 'explicit', values: [TARGET_ID] } },
+              coordinate: { dtype: 'categorical', ordered: false, values: { kind: 'explicit', values: binding?.targetNames ?? [TARGET_ID] } },
             },
           ],
           container: 'dataframe',
@@ -152,12 +194,12 @@ const ADAPTER_REGISTRY = {
  * blocks it serves (reconstructed in dataset order). Throws if the provider is
  * unavailable or rejects the contract — the caller decides how to degrade.
  */
-export async function materializeViaProvider(ds: MaterializedDataset): Promise<DataProviderResult> {
+export async function materializeViaProvider(ds: MaterializedDataset, binding?: ProviderBinding): Promise<DataProviderResult> {
   const m = await mod()
-  const identity = physicalIdentity(ds)
+  const identity = binding?.identity ?? physicalIdentity(ds)
   const observationIds = identity.observationHandle
   const rowOfObservation = new Map(observationIds.map((id, i) => [id, i]))
-  const { schema, featureNames } = buildSchema(ds, identity)
+  const { schema, featureNames } = buildSchema(ds, identity, binding)
   const schemaJson = JSON.stringify(schema)
   m.validate_dataset_schema_json(schemaJson)
 
@@ -166,7 +208,7 @@ export async function materializeViaProvider(ds: MaterializedDataset): Promise<D
   const outputRepresentation = JSON.parse(dataPlanJson).output_representation as string
 
   const sampleRelations = {
-    rows: datasetRelations(ds),
+    rows: binding?.relationRows ?? datasetRelations(ds, identity),
   }
   const sampleRelationsJson = JSON.stringify(sampleRelations)
   m.validate_sample_relation_table_json(sampleRelationsJson)

@@ -9,19 +9,18 @@ import {
   loadDatasetsWasm,
   loadMethodsWasm,
   openN4aContainer,
-  parseExecutionPlan,
-  predictPortablePipeline,
   replayMethodsArchiveV2,
-  runPortablePipeline,
   upstreams,
   writeN4aContainer,
   coreExecutionProfileDefinitions,
   coreExecutionProfileDefinitionsSha256,
 } from './nirs4all-core'
 import * as nirs4allCore from './nirs4all-core'
+import { predictPortablePipeline, runPortablePipeline } from './testing/frozen-core-0.5/execution.js'
 import { CORE_EXECUTION_PROFILES_JSON } from './core-execution-profiles.generated'
 import { createHash } from 'node:crypto'
-import { isPortableCoreModel, predictPortableCore, tryRunPortableCore } from './portable-core'
+import { isPortableCoreModel } from './portable-core'
+import { tryRunSingleHoldout } from './single-holdout'
 import type { FittedPipeline, MaterializedDataset, PipelineDSL } from './types'
 
 const oracleUrl = new URL('./fixtures/core-parity/portable_python_oracle.json', import.meta.url)
@@ -33,6 +32,18 @@ function maxAbsDiff(actual: number[], expected: number[]): number {
 }
 
 describe('nirs4all-core aggregate loaders', () => {
+
+  it('binds the test-only historical source to the named dcc35fbe oracle', () => {
+    const root = new URL('./testing/frozen-core-0.5/', import.meta.url)
+    const provenance = JSON.parse(readFileSync(new URL('PROVENANCE.json', root), 'utf8')) as { files: { file: string; sha256: string; byte_length: number }[] }
+    expect(provenance.files.find(file => file.file === 'execution.js')?.sha256).toBe('dcc35fbe1a741764864c75786172362949e79815c862a014a08eafe535bee962')
+    for (const file of provenance.files) {
+      const bytes = readFileSync(new URL(file.file, root))
+      expect(bytes.length).toBe(file.byte_length)
+      expect(createHash('sha256').update(bytes).digest('hex')).toBe(file.sha256)
+    }
+  })
+
   it('uses core names for the vendored aggregate sync path', () => {
     const pkg = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8')) as { scripts: Record<string, string> }
     const vendorPkg = JSON.parse(readFileSync(new URL('../../vendor/nirs4all/package.json', import.meta.url), 'utf8')) as {
@@ -100,10 +111,10 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(viteConfig + vitestConfig + JSON.stringify(methods) + JSON.stringify(vendorPkg)).not.toContain('@nirs4all/methods' + '-wasm')
   })
 
-  it('re-exports the portable execution and initialized WASM loaders from the portable aggregate', () => {
-    expect(typeof parseExecutionPlan).toBe('function')
-    expect(typeof runPortablePipeline).toBe('function')
-    expect(typeof predictPortablePipeline).toBe('function')
+  it('keeps current storage/loaders without retired runner exports', () => {
+    for (const retired of ['parseExecutionPlan', 'runPortablePipeline', 'predictPortablePipeline']) expect(retired in nirs4allCore).toBe(false)
+    expect(typeof openN4aContainer).toBe('function')
+    expect(typeof writeN4aContainer).toBe('function')
     expect(typeof loadArchiveV2Native).toBe('function')
     expect(typeof inspectMethodsArchiveV2Predictors).toBe('function')
     expect(typeof replayMethodsArchiveV2).toBe('function')
@@ -260,7 +271,7 @@ describe('nirs4all-core aggregate loaders', () => {
     })
   })
 
-  it('executes the shared portable oracle through the vendored aggregate', async () => {
+  it('compares the shared numerical oracle with the explicit frozen Core0.5 source reference', async () => {
     expect(existsSync(oracleUrl)).toBe(true)
     const oracle = JSON.parse(readFileSync(oracleUrl, 'utf8')) as {
       metadata: { tolerances: { targets_abs: number; rmse_abs: number; predictions_abs: number } }
@@ -295,7 +306,7 @@ describe('nirs4all-core aggregate loaders', () => {
     }
   })
 
-  it('runs the web portable subset through the vendored aggregate and predicts from the fitted model', async () => {
+  it('preserves the historical Core reference separately from current Web execution', async () => {
     expect(existsSync(oracleUrl)).toBe(true)
     const oracle = JSON.parse(readFileSync(oracleUrl, 'utf8')) as {
       metadata: { tolerances: { predictions_abs: number } }
@@ -336,30 +347,34 @@ describe('nirs4all-core aggregate loaders', () => {
       },
     }
 
-    const run = await tryRunPortableCore(ds, dsl)
+    // The imported dcc35fbe source copy is test-only, never the current Core facade or MainEngine.
+    const source = { name: dsl.name, pipeline: [
+      { class: 'nirs4all.operators.splitters.KennardStoneSplitter', params: dsl.split!.params },
+      { class: 'nirs4all.operators.transforms.StandardNormalVariate', params: {} },
+      { class: 'nirs4all.operators.transforms.SavitzkyGolay', params: dsl.steps[1].params },
+      { model: { class: 'sklearn.cross_decomposition.PLSRegression', params: dsl.model!.params }, param: 'n_components', _range_: [2, 11, 2] },
+    ] }
+    const run = await runPortablePipeline(source, { X: ds.X, y: ds.y, rows: ds.nSamples, cols: ds.nFeatures })
     expect(run).toBeTruthy()
-    expect(run?.engine).toBe('nirs4all-core-wasm')
-    expect(isPortableCoreModel(run!.model)).toBe(true)
-    expect(run?.variantCount).toBe(5)
-    expect((run?.model.dsl.model?.params.n_components)).toBe(expected!.selected.n_components)
-    expect(maxAbsDiff(run!.refit.predictions.map((row) => row.predicted), expected!.selected.predictions)).toBeLessThanOrEqual(
+    expect(run.variants).toHaveLength(5)
+    expect(run.selected.n_components).toBe(expected!.selected.n_components)
+    expect(maxAbsDiff(run.selected.predictions, expected!.selected.predictions)).toBeLessThanOrEqual(
       oracle.metadata.tolerances.predictions_abs,
     )
 
-    const predicted = await predictPortableCore(run!.model, ds.X, ds.nSamples, ds.nFeatures)
-    const heldOut = expected!.split.testIndices.map((index) => predicted.values[index])
+    const predicted = await predictPortablePipeline(run, { X: ds.X, rows: ds.nSamples, cols: ds.nFeatures })
+    const heldOut = expected!.split.testIndices.map((index) => predicted.data[index])
     expect(maxAbsDiff(Array.from(heldOut), expected!.selected.predictions)).toBeLessThanOrEqual(
       oracle.metadata.tolerances.predictions_abs,
     )
 
-    const retiredModel = {
-      ...run!.model,
-      state: { ...(run!.model.state as Record<string, unknown>), backendId: 'nirs4all-lite-wasm' },
-    } as FittedPipeline
+    const historicalModel = { dsl, nFeatures: ds.nFeatures, taskType: 'regression', state: { backendId: 'nirs4all-core-wasm' } } as FittedPipeline
+    expect(isPortableCoreModel(historicalModel)).toBe(true)
+    const retiredModel = { ...historicalModel, state: { backendId: 'nirs4all-lite-wasm' } } as FittedPipeline
     expect(isPortableCoreModel(retiredModel)).toBe(false)
   })
 
-  it('rejects lossy n_components coercions before running the portable core path', async () => {
+  it('rejects lossy n_components declarations before the owner holdout bank', async () => {
     const ds: MaterializedDataset = {
       X: Float64Array.from([1, 2, 3, 4, 5, 6, 7, 8]),
       y: Float64Array.from([1, 2, 3, 4]),
@@ -373,14 +388,16 @@ describe('nirs4all-core aggregate loaders', () => {
       partitions: ['train', 'train', 'train', 'train'],
     }
 
-    await expect(tryRunPortableCore(ds, {
+    await expect(tryRunSingleHoldout(ds, {
       name: 'fractional_component',
+      split: { id: 's', type: 'n4m:splitters.kennard_stone', params: {} },
       steps: [],
       model: { id: 'pls', type: 'n4m:models.pls.pls_regression', params: { n_components: 1.5 } },
-    })).rejects.toThrow(/n_components must be an integer/)
+    })).rejects.toThrow(/n_components must be a positive safe integer/)
 
-    await expect(tryRunPortableCore(ds, {
+    await expect(tryRunSingleHoldout(ds, {
       name: 'fractional_component_range',
+      split: { id: 's', type: 'n4m:splitters.kennard_stone', params: {} },
       steps: [],
       model: {
         id: 'pls',
@@ -388,6 +405,6 @@ describe('nirs4all-core aggregate loaders', () => {
         params: { n_components: 2 },
         sweeps: { n_components: { type: 'range', from: 1.5, to: 3, step: 1 } },
       },
-    })).rejects.toThrow(/n_components range start must be an integer/)
+    })).rejects.toThrow(/range start must be a positive safe integer/)
   })
 })

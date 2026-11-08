@@ -114,75 +114,6 @@ export interface CapabilityManifest {
   executionProfiles: ExecutionProfiles;
 }
 
-export interface PortableMatrixDataset {
-  X: Float64Array | number[] | readonly number[] | readonly (readonly number[])[];
-  y: Float64Array | number[] | readonly number[] | readonly (readonly number[])[];
-  rows?: number;
-  cols?: number;
-  n_samples?: number;
-  n_features?: number;
-}
-
-export interface PortableSplitResult {
-  kind: 'all' | 'KennardStone';
-  trainIndices: number[];
-  testIndices: number[];
-}
-
-export interface PortableVariantResult {
-  n_components: number;
-  rmse: number;
-  predictions: number[];
-}
-
-export interface PortablePlsModel {
-  type: 'PLSRegression' | 'Ridge' | 'RidgePLS' | 'RobustPLS' | 'CPPLS' | 'SparseSIMPLS' | 'ECR' | 'ContinuumRegression' | 'MIRPLS' | 'FusedSparsePLS' | 'BaggingPLS' | 'BoostingPLS' | 'RandomSubspacePLS' | 'NPLS' | 'MBPLS' | 'GroupSparsePLS';
-  n_components: number;
-  params?: number[];
-  coefficients: number[];
-  xMean: number[];
-  yMean: number[];
-  intercept: number[] | null;
-  n_features: number;
-  n_targets: number;
-}
-
-export interface PortableExecutionResult {
-  name: string;
-  rows: number;
-  cols: number;
-  split: PortableSplitResult;
-  preprocessing: PortablePreprocessingStep[];
-  /** Training-only one-shot native X augmentation; never replayed at predict time. */
-  train_augmentation?: { kind: string; values: number[]; seed: number };
-  variants: PortableVariantResult[];
-  selected: PortableVariantResult;
-  model: PortablePlsModel;
-  targets: number[];
-  /** Present on current runs; older persisted results may omit this metadata. */
-  evaluation?: {
-    scope: 'training' | 'selection_validation';
-    independent_test: false;
-  };
-}
-
-export interface PortablePreprocessingStep {
-  type: string;
-  params: number[] | {
-    method: string;
-    n_components: number;
-    method_params: Record<string, number | boolean | number[]>;
-  };
-  /** Fitted Methods state. Older stateless results may omit it. */
-  state?: number[];
-}
-
-export interface PortablePredictionResult {
-  data: number[];
-  rows: number;
-  cols: number;
-}
-
 export interface ArchiveV2ReplayDataset {
   X: Float64Array | readonly number[] | readonly (readonly number[])[];
   rows?: number;
@@ -388,30 +319,8 @@ export function loadPipelineDefinition(
   source: string | unknown[] | Record<string, unknown>,
   options?: { methods?: unknown },
 ): PipelineDefinition;
+/** Class names occurring in the supplied definition, not a supported-operator list. */
 export function portableClassNames(definition: PipelineDefinition | unknown[] | Record<string, unknown>): string[];
-export function parseExecutionPlan(source: string | PipelineDefinition | unknown[] | Record<string, unknown>): {
-  splitter: { type: 'KennardStone'; params: Record<string, unknown> } | null;
-  trainAugmentation: {
-    kind: string;
-    methodsKind: string;
-    values: number[];
-    seed: number;
-  } | null;
-  preprocessing: PortablePreprocessingStep[];
-  nComponents: number[];
-  modelType: PortablePlsModel['type'];
-  modelParams: number[];
-};
-export function runPortablePipeline(
-  source: string | PipelineDefinition | unknown[] | Record<string, unknown>,
-  dataset: PortableMatrixDataset,
-  options?: { methods?: unknown },
-): Promise<PortableExecutionResult>;
-export function predictPortablePipeline(
-  fitted: PortableExecutionResult | { preprocessing?: PortablePreprocessingStep[]; model?: PortablePlsModel },
-  dataset: Omit<PortableMatrixDataset, 'y'>,
-  options?: { methods?: unknown },
-): Promise<PortablePredictionResult>;
 export function loadArchiveV2Native(): Promise<unknown>;
 /** Host-authorized call options; the optional memory budget is the only bound on a call. */
 export interface NativePackageReadOptions {

@@ -23,6 +23,7 @@ export const execute_execution_plan_phase_u64_json: (a: any, b: any, c: any, d: 
 export const execute_execution_plan_phase_with_envelope_json: (a: any, b: any, c: any, d: any, e: any, f: any, g: any, h: any) => [number, number, number, number];
 export const execute_initial_full_refit_json: (a: any, b: any, c: any, d: any, e: any, f: any, g: any, h: any) => [number, number, number, number];
 export const execute_nested_selection_json: (a: any, b: any, c: any, d: any, e: number) => [number, number, number, number];
+export const execute_single_holdout_bank_json: (a: any, b: any, c: any, d: any, e: any, f: any, g: any) => [number, number, number, number];
 export const execute_training_json: (a: any, b: any, c: any, d: any, e: any, f: any, g: any, h: any) => [number, number, number, number];
 export const fold_set_fingerprint_json: (a: any) => [number, number, number, number];
 export const group_kfold_split_json: (a: any, b: any, c: any, d: any, e: number) => [number, number, number, number];
@@ -53,6 +54,7 @@ export const replay_initial_full_refit_json: (a: any, b: any, c: any, d: any, e:
 export const replay_training_package_json: (a: any, b: any, c: any, d: any, e: any, f: any, g: any) => [number, number, number, number];
 export const sample_relation_set_fingerprint_json: (a: any) => [number, number, number, number];
 export const score_regression_prediction_block_json: (a: any, b: any, c: any) => [number, number, number, number];
+export const score_regression_prediction_block_with_profile_json: (a: any, b: any, c: any) => [number, number, number, number];
 export const select_candidates_json: (a: any, b: any, c: number) => [number, number, number, number];
 export const select_portable_output_json: (a: any, b: any) => [number, number, number, number];
 export const select_stacking_fold_json: (a: any) => [number, number, number, number];

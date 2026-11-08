@@ -98,3 +98,23 @@ describe('Web Inspector projection', () => {
     expect(inspectorResults([run], null, 'Classes').chains[0].status).toBe('failed')
   })
 })
+
+
+describe('single-holdout selection-validation projection', () => {
+  it('keeps owner scores and predictions visible without resubstitution or independent-test labels', () => {
+    const run = fixture()
+    run.cv = undefined
+    run.folds = []
+    run.refit.name = 'Selection validation'
+    run.refit.scoreContext = { unit: 'sample', identityBasis: 'declared', physicalKey: 'sample_id', nObservations: 1, nPhysicalSamples: 1, aggregation: 'dag:single-holdout', evaluation: 'selection_validation', independent_test: false, metric_profile: 'regression_report.population_rmse_ratios.v1', undefined_metrics: { r2: 'constant_target' } }
+    delete run.refit.metrics.r2
+    run.variants![0].metrics = { rmse: 1 }
+    const projected = inspectorResults([run], null, 'Dataset')
+    expect(projected.defaultScoreRef).toBe('rmse:selection-validation')
+    expect(projected.scoreRefs).toEqual(expect.arrayContaining([expect.objectContaining({ partition: 'validation', protocol: 'selection_validation', label: 'RMSE · Selection validation' })]))
+    expect(projected.scoreRefs.some(ref => ref.protocol === 'final' || ref.protocol === 'refit-resubstitution')).toBe(false)
+    expect(projected.predictions[projected.chains[0].id].partition).toEqual(['validation'])
+    expect(projected.chains[0].scores['r2:selection-validation']).toBeUndefined()
+    expect(run.refit.scoreContext.undefined_metrics).toEqual({ r2: 'constant_target' })
+  })
+})

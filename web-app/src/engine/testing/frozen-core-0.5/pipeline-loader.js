@@ -1,0 +1,183 @@
+// Test-only module wiring; all owner blocks below are verbatim source excerpts.
+// Only the numerical module bridge is current; historical parsing is self-contained.
+import { loadMethodsWasm as loadMethods } from '../../nirs4all-core';
+
+import { parse as parseYaml } from 'yaml';
+import { NATIVE_X_AUGMENTATION_CLASS, parseTrainAugmentation } from './native-augmentation.js';
+import { n4mRoleMethodId, resolvesN4mRole } from './n4m-roles.js';
+
+// Private runner constant: the temporary portable runner/compiler still validates
+// against it until its callers migrate to owner APIs. It is not a capability claim.
+const portableOperatorClasses = Object.freeze([
+  'nirs4all.operators.splitters.KennardStoneSplitter',
+  'nirs4all.operators.splitters.splitters.KennardStoneSplitter',
+  'nirs4all.operators.transforms.SNV',
+  'nirs4all.operators.transforms.StandardNormalVariate',
+  'nirs4all.operators.transforms.scalers.StandardNormalVariate',
+  'nirs4all.operators.transforms.SavitzkyGolay',
+  'nirs4all.operators.transforms.nirs.SavitzkyGolay',
+  'n4m.MSC',
+  'nirs4all.operators.transforms.MSC',
+  'nirs4all.operators.transforms.MultiplicativeScatterCorrection',
+  'nirs4all.operators.transforms.nirs.MultiplicativeScatterCorrection',
+  'n4m.SPA',
+  'n4m.SPASelector',
+  'pls4all.sklearn.SPASelector',
+  'n4m.Selector',
+  'sklearn.cross_decomposition.PLSRegression',
+  'sklearn.cross_decomposition._pls.PLSRegression',
+  'n4m.KennardStone',
+  'n4m.SNV',
+  'n4m.SavitzkyGolay',
+  'n4m.PLS',
+  'n4m.PLSRegression',
+  'n4m.Ridge',
+  'n4m.RidgePLS',
+  'n4m.RobustPLS',
+  'n4m.CPPLS',
+  'n4m.SparseSIMPLS',
+  'n4m.ECR',
+  'n4m.ContinuumRegression',
+  'n4m.MIRPLS',
+  'n4m.FusedSparsePLS',
+  'n4m.BaggingPLS',
+  'n4m.BoostingPLS',
+  'n4m.RandomSubspacePLS',
+  'n4m.NPLS',
+  'n4m.MBPLS',
+  'n4m.GroupSparsePLS',
+]);
+
+const portableOperatorSet = new Set(portableOperatorClasses);
+
+let methodsPromise = null;
+let methodsModule = null;
+
+export async function loadMethodsWasm() {
+  if (!methodsPromise) {
+    methodsPromise = (async () => {
+      const mod = await loadMethods();
+      if (typeof mod.loadModule === 'function') {
+        await mod.loadModule();
+      }
+      methodsModule = mod;
+      return mod;
+    })();
+  }
+  return methodsPromise;
+}
+
+export function loadPipelineDefinition(source, options = {}) {
+  const data = typeof source === 'string' ? parsePipelineText(source) : clone(source);
+  const normalized = normalizePipelineRoot(data);
+  const pipeline = normalized.pipeline;
+  if (!Array.isArray(pipeline)) {
+    throw new Error("Pipeline definition key 'pipeline' or 'steps' must contain an array of steps.");
+  }
+
+  const definition = {
+    name: String(normalized.name || 'pipeline'),
+    description: String(normalized.description || ''),
+    pipeline: stripComments(pipeline),
+  };
+  if (Number.isInteger(normalized.random_state)) {
+    definition.random_state = normalized.random_state;
+  }
+
+  const augmentationSteps = definition.pipeline.filter((step) => step && typeof step === 'object'
+    && !Array.isArray(step) && Object.prototype.hasOwnProperty.call(step, 'train_augmentation'));
+  for (const step of augmentationSteps) parseTrainAugmentation(step);
+
+  // Legacy class names use the portable subset; "n4m:<method id>" tokens
+  // resolve through the loaded Methods manifest.
+  const methods = options.methods ?? methodsModule;
+  const classes = portableClassNames(definition);
+  const augmentationClassCount = classes.filter((name) => name === NATIVE_X_AUGMENTATION_CLASS).length;
+  const unsupported = classes.filter((name) => !portableOperatorSet.has(name)
+    && !resolvesN4mRole(name, methods)
+    && !(name === NATIVE_X_AUGMENTATION_CLASS && augmentationSteps.length === 1
+      && augmentationClassCount === 1));
+  if (unsupported.length > 0) {
+    const hint = !methods && unsupported.some((name) => n4mRoleMethodId(name) !== null)
+      ? ' (n4m:<method id> steps resolve through the Methods manifest: await loadMethodsWasm() or pass {methods})'
+      : '';
+    throw new Error(
+      `Pipeline uses operators outside the current nirs4all-core portable subset: ${[...new Set(unsupported)].join(', ')}${hint}`,
+    );
+  }
+
+  return definition;
+}
+
+export function portableClassNames(definition) {
+  const root = definition && Array.isArray(definition.pipeline) ? definition.pipeline : definition;
+  const classes = [];
+  collectClasses(root, classes);
+  return classes;
+}
+
+function parsePipelineText(text) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return parseYaml(text);
+  }
+}
+
+function clone(value) {
+  return value == null ? value : JSON.parse(JSON.stringify(value));
+}
+
+function normalizePipelineRoot(data) {
+  if (Array.isArray(data)) {
+    return { pipeline: data };
+  }
+  if (!data || typeof data !== 'object') {
+    throw new TypeError("Pipeline definition must be an array or an object with a 'pipeline'/'steps' key.");
+  }
+  if (data.pipeline !== undefined) {
+    return data;
+  }
+  if (data.steps !== undefined) {
+    return { ...data, pipeline: data.steps };
+  }
+  throw new Error("Invalid pipeline definition format. Expected an array or an object with a 'pipeline' or 'steps' key.");
+}
+
+function stripComments(value) {
+  if (Array.isArray(value)) {
+    return value.filter((item) => !isCommentStep(item)).map(stripComments);
+  }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([key]) => key !== '_comment')
+        .map(([key, item]) => [key, stripComments(item)]),
+    );
+  }
+  return value;
+}
+
+function isCommentStep(value) {
+  return value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 1 && value._comment !== undefined;
+}
+
+function collectClasses(value, output) {
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      if (n4mRoleMethodId(item) !== null) {
+        output.push(item);
+      }
+      collectClasses(item, output);
+    }
+    return;
+  }
+  if (value && typeof value === 'object') {
+    if (typeof value.class === 'string') {
+      output.push(value.class);
+    }
+    for (const item of Object.values(value)) {
+      collectClasses(item, output);
+    }
+  }
+}

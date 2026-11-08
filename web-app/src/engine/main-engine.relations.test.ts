@@ -4,9 +4,9 @@ import { MainEngine } from './main-engine'
 import type { MaterializedDataset, PipelineDSL } from './types'
 
 const calls = vi.hoisted(() => ({ portable: vi.fn(), fit: vi.fn(), provider: vi.fn() }))
-vi.mock('./portable-core', async (original) => ({
-  ...await original<typeof import('./portable-core')>(),
-  tryRunPortableCore: calls.portable,
+vi.mock('./single-holdout', async (original) => ({
+  ...await original<typeof import('./single-holdout')>(),
+  tryRunSingleHoldout: calls.portable,
 }))
 vi.mock('./backends', async (original) => ({
   ...await original<typeof import('./backends')>(),

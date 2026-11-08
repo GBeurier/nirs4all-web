@@ -11,11 +11,8 @@ import {
   loadPipelineDefinition,
   methodsWasm as methodsWasmRaw,
   openN4aContainer as openN4aContainerRaw,
-  parseExecutionPlan,
   portableClassNames,
-  predictPortablePipeline,
   replayMethodsArchiveV2 as replayMethodsArchiveV2Raw,
-  runPortablePipeline,
   upstreams,
   writeN4aContainer as writeN4aContainerRaw,
 } from 'nirs4all'
@@ -29,10 +26,7 @@ export {
   createDagMlModelManifest,
   createDagMlNodeResult,
   loadPipelineDefinition,
-  parseExecutionPlan,
   portableClassNames,
-  predictPortablePipeline,
-  runPortablePipeline,
   upstreams,
 }
 
@@ -45,9 +39,6 @@ export type IoMod = typeof import('./wasm/io/nirs4all_io_wasm.js')
 export type {
   ArchiveV2ReplayDataset,
   ArchiveV2ReplayResult,
-  PortableExecutionResult,
-  PortablePlsModel,
-  PortablePredictionResult,
   NativePredictorDescriptorV1,
 } from 'nirs4all'
 

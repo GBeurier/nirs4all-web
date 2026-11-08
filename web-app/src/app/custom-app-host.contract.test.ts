@@ -6,7 +6,7 @@ import { DatasetPreviewCard, MetricValueBadge, RuntimeEngineBadge } from 'nirs4a
 import { buildDatasetPreview } from 'nirs4all-ui/dataset'
 import { buildRuntimeEngineStatus, runtimeEngineLabel } from 'nirs4all-ui/runtime'
 import * as nirs4allCore from '@/engine/nirs4all-core'
-import { isPortableCoreModel, predictPortableCore, tryRunPortableCore } from '@/engine/portable-core'
+import { predictPortablePipeline, runPortablePipeline } from '@/engine/testing/frozen-core-0.5/execution.js'
 import type { MaterializedDataset, PipelineDSL } from '@/engine/types'
 
 const oracleUrl = new URL('../engine/fixtures/core-parity/portable_python_oracle.json', import.meta.url)
@@ -17,7 +17,7 @@ function maxAbsDiff(actual: number[], expected: number[]): number {
 }
 
 describe('custom app host contract', () => {
-  it('combines nirs4all-core runtime output with reusable nirs4all-ui view components', async () => {
+  it('keeps the named historical Core reference and reusable UI contract separate from current Web execution', async () => {
     expect(existsSync(oracleUrl)).toBe(true)
     const oracle = JSON.parse(readFileSync(oracleUrl, 'utf8')) as {
       metadata: { tolerances: { predictions_abs: number } }
@@ -74,14 +74,18 @@ describe('custom app host contract', () => {
       },
     }
 
-    const run = await tryRunPortableCore(dataset, dsl)
-    expect(run?.engine).toBe('nirs4all-core-wasm')
-    expect(run?.scoreMetric).toBe('rmse')
-    expect(isPortableCoreModel(run!.model)).toBe(true)
-    expect(run?.model.dsl.model?.params.n_components).toBe(expected!.selected.n_components)
-
-    const predicted = await predictPortableCore(run!.model, dataset.X, dataset.nSamples, dataset.nFeatures)
-    const heldOut = expected!.split.testIndices.map((index) => predicted.values[index])
+    // This uses the verbatim dcc35fbe source reference, not current Core runner exports or MainEngine.
+    const source = { name: dsl.name, pipeline: [
+      { class: 'nirs4all.operators.splitters.KennardStoneSplitter', params: dsl.split!.params },
+      { class: 'nirs4all.operators.transforms.StandardNormalVariate', params: {} },
+      { class: 'nirs4all.operators.transforms.SavitzkyGolay', params: dsl.steps[1].params },
+      { model: { class: 'sklearn.cross_decomposition.PLSRegression', params: dsl.model!.params }, param: 'n_components', _range_: [2, 11, 2] },
+    ] }
+    const run = await runPortablePipeline(source, { X: dataset.X, y: dataset.y, rows: dataset.nSamples, cols: dataset.nFeatures })
+    const referenceEngine = 'nirs4all-core-wasm'
+    expect(run.selected.n_components).toBe(expected!.selected.n_components)
+    const predicted = await predictPortablePipeline(run, { X: dataset.X, rows: dataset.nSamples, cols: dataset.nFeatures })
+    const heldOut = expected!.split.testIndices.map((index) => predicted.data[index])
     expect(maxAbsDiff(Array.from(heldOut), expected!.selected.predictions)).toBeLessThanOrEqual(
       oracle.metadata.tolerances.predictions_abs,
     )
@@ -98,15 +102,15 @@ describe('custom app host contract', () => {
     expect(preview?.title).toBe('Custom host oracle fixture')
     expect(preview?.badges.map((badge) => badge.label)).toEqual(expect.arrayContaining(['Regression']))
 
-    const engineStatus = buildRuntimeEngineStatus({ engine: run!.engine, requestedEngine: 'nirs4all-core-wasm' })
+    const engineStatus = buildRuntimeEngineStatus({ engine: referenceEngine, requestedEngine: 'nirs4all-core-wasm' })
     expect(engineStatus?.badgeLabel.toLowerCase()).toContain('nirs4all core wasm')
     expect(runtimeEngineLabel({ compiled: true, executed: true })).toBe('executed by dag-ml')
 
     const datasetCard = DatasetPreviewCard({ view: preview, className: 'custom-host-dataset' }) as ReactElement<{ className: string }>
     const engineBadge = RuntimeEngineBadge({ status: engineStatus, className: 'custom-host-engine' }) as ReactElement<{ className: string }>
     const metricBadge = MetricValueBadge({
-      metric: run!.scoreMetric,
-      value: run!.refit.metrics.rmse,
+      metric: 'rmse',
+      value: run.selected.rmse,
       className: 'custom-host-metric',
     }) as ReactElement<{ className: string }>
 
@@ -124,10 +128,11 @@ describe('custom app host contract', () => {
         join(artifactsDir, 'custom-host-run.json'),
         JSON.stringify({
           status: 'passed',
-          engine: run!.engine,
-          selected_components: run!.model.dsl.model?.params.n_components,
-          score_metric: run!.scoreMetric,
-          variant_count: run!.variantCount,
+          scope: 'historical Core reference; not current Web execution',
+          engine: referenceEngine,
+          selected_components: run.selected.n_components,
+          score_metric: 'rmse',
+          variant_count: run.variants.length,
         }, null, 2),
       )
       writeFileSync(

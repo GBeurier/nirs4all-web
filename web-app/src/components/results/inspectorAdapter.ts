@@ -11,7 +11,8 @@ const valueOf = (metrics: Metrics | undefined, metric: Metric): number | null =>
 }
 
 /** Same owner score-node context used by engine/rt-result.ts; no row inference. */
-export const refitIsTest = (run: RunResult): boolean => /test/i.test(run.refit.name)
+const selectionValidation = (run: RunResult): boolean => run.refit.scoreContext?.evaluation === 'selection_validation'
+export const refitIsTest = (run: RunResult): boolean => !selectionValidation(run) && /test/i.test(run.refit.name)
 
 /** Project owner results only; no scoring, selection, averaging or row joins by position. */
 export function inspectorResults(runs: readonly RunResult[], dataset: MaterializedDataset | null, datasetName: string) {
@@ -28,10 +29,12 @@ export function inspectorResults(runs: readonly RunResult[], dataset: Materializ
       label: `${metric.toUpperCase()} · ${label}`, lowerIsBetter: DIRECTIONS[metric] })
   }
   if (runs.some((run) => run.cv)) addRefs('cv', 'validation', 'cv', 'CV validation')
+  if (runs.some(selectionValidation)) addRefs('selection-validation', 'validation', 'selection_validation', 'Selection validation')
   if (runs.some(refitIsTest)) addRefs('refit', 'test', 'final', 'Refit · test')
-  if (runs.some((run) => !refitIsTest(run))) addRefs(runs.some(refitIsTest) ? 'refit-resubstitution' : 'refit', 'train', 'refit-resubstitution', 'Refit · train (resubstitution)')
+  if (runs.some((run) => !refitIsTest(run) && !selectionValidation(run))) addRefs(runs.some(refitIsTest) ? 'refit-resubstitution' : 'refit', 'train', 'refit-resubstitution', 'Refit · train (resubstitution)')
   // A refit-only training score requires an explicit host opt-in to display.
   const defaultScoreRef = scoreRefs.find((ref) => ref.protocol === 'cv')?.key
+    ?? scoreRefs.find((ref) => ref.protocol === 'selection_validation')?.key
     ?? scoreRefs.find((ref) => ref.protocol === 'final')?.key ?? null
   const chains: InspectorChain[] = []
   const predictions: Record<string, ChainPredictions> = {}
@@ -43,7 +46,7 @@ export function inspectorResults(runs: readonly RunResult[], dataset: Materializ
   for (const run of runs) {
     const hasVariants = Boolean(run.variants?.length)
     const variants = hasVariants ? run.variants! : [{
-      variantId: 'single', label: run.pipelineName, selected: true, pipeline: run.model.dsl, metrics: run.cv?.metrics ?? {},
+      variantId: 'single', label: run.pipelineName, selected: true, pipeline: run.model.dsl, metrics: run.cv?.metrics ?? (selectionValidation(run) ? run.refit.metrics : {}),
     }]
     const projected = variantChains(variants, run.taskType).chains
     for (const variant of variants) {
@@ -53,9 +56,11 @@ export function inspectorResults(runs: readonly RunResult[], dataset: Materializ
       const foldScores: Record<string, readonly number[]> = {}
       for (const ref of scoreRefs) {
         const metric = ref.metric as Metric
-        const contextMatches = ref.protocol === 'final' ? refitIsTest(run)
-          : ref.protocol === 'refit-resubstitution' ? !refitIsTest(run) : Boolean(run.cv)
-        scores[ref.key] = !contextMatches ? null : ref.protocol === 'cv'
+        const contextMatches = ref.protocol === 'selection_validation' ? selectionValidation(run)
+          : ref.protocol === 'final' ? refitIsTest(run)
+          : ref.protocol === 'refit-resubstitution' ? !refitIsTest(run) && !selectionValidation(run) : Boolean(run.cv)
+        scores[ref.key] = !contextMatches ? null : ref.protocol === 'selection_validation'
+          ? valueOf(variant.metrics, metric) : ref.protocol === 'cv'
           ? valueOf(hasVariants ? variant.metrics : run.cv?.metrics, metric)
           : variant.selected ? valueOf(run.refit.metrics, metric) : null
         if (variant.selected && ref.protocol === 'cv' && run.folds.length > 0) {
@@ -88,6 +93,7 @@ export function inspectorResults(runs: readonly RunResult[], dataset: Materializ
         foldBySample.set(row.sampleId, foldBySample.has(row.sampleId) ? null : fold.id)
       }
       for (const row of run.cv?.predictions ?? []) rows.push({ row, partition: 'validation', fold: foldBySample.get(row.sampleId) ?? null })
+      if (selectionValidation(run)) for (const row of run.refit.predictions) rows.push({ row, partition: 'validation', fold: null })
       if (refitIsTest(run)) for (const row of run.refit.predictions) rows.push({ row, partition: 'test', fold: null })
       const unique = new Set(rows.map(({ row }) => row.sampleId)).size === rows.length
       const linkable = sampleLinking && unique

@@ -244,6 +244,9 @@ export interface Metrics {
   rmse?: number;
   r2?: number;
   mae?: number;
+  bias?: number;
+  rpd?: number;
+  rpiq?: number;
   // classification
   accuracy?: number;
   f1?: number;
@@ -276,10 +279,15 @@ export interface ScoreContext {
   nPhysicalSamples: number | null;
   /** `host-rows`: existing host metric over rows (one observation per sample);
    *  `dag:sample:<method>`: DAG-ML aggregated scans to physical samples and scored them */
-  aggregation: 'host-rows' | `dag:sample:${string}`;
+  aggregation: 'host-rows' | 'dag:single-holdout' | `dag:sample:${string}`;
   /** observation-level (raw scan) metrics: `not-computed` when scans are aggregated by
    *  DAG-ML, whose runtime implements no raw parallel metric reports */
   rawObservationMetrics?: 'not-computed';
+  /** Owner evaluation scope, distinct from independent-test evaluation. */
+  evaluation?: 'selection_validation';
+  independent_test?: false;
+  metric_profile?: string;
+  undefined_metrics?: Record<string, string>;
 }
 /** One raw (per-scan) prediction block, kept as produced: the DAG-ML FIT_CV observation
  *  block of a fold, or the REFIT replay of the scoring rows. `observation_ids` are execution
@@ -334,7 +342,7 @@ export interface FittedPipeline {
   /** the fitted input columns; absent: positional input */
   features?: FeatureIdentity;
   classes?: string[];
-  /** engine-specific serialized state (preprocessing states + model coeffs) */
+  /** Detached engine-owned state; owner packages retain their exact JSON strings. */
   state: unknown;
 }
 
@@ -343,7 +351,8 @@ export interface RunResult {
   pipelineName: string;
   taskType: TaskType;
   targetName: string;
-  /** model refit on all training data, scored on the held-out test partition (or train if none) */
+  /** Primary score. Owner single-holdout runs label this Selection validation and
+   *  retain its selection_validation context; it is not an all-training refit score. */
   refit: ScoreNode;
   /** cross-validation aggregate over folds — OPTIONAL: omitted for a refit-only
    *  run (pipeline.cv absent). When omitted, `folds` is empty too. */

@@ -28,12 +28,7 @@ import {
 } from 'nirs4all-ui/tuning'
 import {
   capabilityManifest,
-  predictPortablePipeline,
-  runPortablePipeline,
   type CapabilityManifest,
-  type PortableExecutionResult,
-  type PortableMatrixDataset,
-  type PortablePredictionResult,
   type PipelineDefinition,
 } from 'nirs4all'
 
@@ -70,7 +65,7 @@ export interface CustomHostState {
   tuningTrialCount: number
 }
 
-export function createDemoDataset(): PortableMatrixDataset {
+export function createDemoDataset(): { X: number[]; y: number[]; rows: number; cols: number } {
   const rows = 12
   const cols = 4
   const X = Array.from({ length: rows * cols }, (_, index) => {
@@ -286,18 +281,13 @@ export function createDemoPipeline(): PipelineDefinition {
   }
 }
 
-export async function runDemoPipeline(): Promise<{
-  predictions: PortablePredictionResult
-  result: PortableExecutionResult
-}> {
-  const dataset = createDemoDataset()
-  const result = await runPortablePipeline(createDemoPipeline(), dataset)
-  const predictions = await predictPortablePipeline(result, {
-    X: dataset.X,
-    rows: dataset.rows,
-    cols: dataset.cols,
-  })
-  return { predictions, result }
+// This standalone metadata template has no execution adapter for the declared holdout.
+export async function runDemoPipeline(): Promise<never> {
+  throw new Error(
+    'Demo execution is unavailable in this standalone template: '
+      + 'no owner-backed adapter is configured for KennardStone(test_size=0.25) -> SNV -> PLS(n_components=2). '
+      + 'The request is not executed or replaced with another training protocol.',
+  )
 }
 
 // Describes, per execution profile, whether Core declares a JavaScript/WASM predict entrypoint.
@@ -466,6 +456,10 @@ export function CustomAppHostDemo({ state = buildCustomHostState() }: { state?: 
     <main aria-label="nirs4all custom app host">
       <header>
         <h1>nirs4all custom host</h1>
+        <p>
+          Pipeline execution is unavailable in this standalone template pending a DAG holdout adapter.
+          The content below demonstrates metadata presentation.
+        </p>
         <p>{state.runtimeLabel}</p>
       </header>
       <section aria-label="Reusable UI contracts">
