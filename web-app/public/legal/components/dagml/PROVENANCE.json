@@ -3,138 +3,17 @@
   "package": "dag-ml-wasm",
   "version": "0.4.0",
   "source": {
-    "kind": "local-committed-source",
     "repository": "https://github.com/GBeurier/dag-ml",
-    "commit": "aa9435a1d7b0a64bdca41f51940270f7cc088848",
-    "tree": "b35b9ff5decd14ce87fcbacbfb7b09f0d479452e",
-    "artifact_origin": "One locked optimized DAG WASM build from aa9435a1, including distinct source/coordinator relation identities. 51f0dbd7 changes a negative test only. Local unpublished artifact; no registry or independent rebuild claim.",
-    "test_only_followup_commit": "51f0dbd7fb998a6021de5362602350ca6a7879c1"
+    "commit": "beaba0b62f9a65bca86c2f521fc482bd80092ba3",
+    "tree": "338c88a76393c2203c8a0a9406b74aac5adad236"
   },
   "acquisition": {
-    "kind": "local-unpublished",
-    "note": "Current web-target owner package, wasm-bindgen 0.2.129, WASM cf950aad. Consumer qualification remains pending; Core3377, Methodsf3d, DMD7e135 and IO are unchanged.",
-    "files": {
-      "LICENSE": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-relation-domains-package-web/LICENSE",
-        "size": 34020,
-        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
-      },
-      "LICENSES/AGPL-3.0-or-later.txt": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-relation-domains-package-web/LICENSES/AGPL-3.0-or-later.txt",
-        "size": 34020,
-        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
-      },
-      "LICENSES/Apache-2.0.txt": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-relation-domains-package-web/LICENSES/Apache-2.0.txt",
-        "size": 10280,
-        "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
-      },
-      "LICENSES/BSD-3-Clause.txt": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-relation-domains-package-web/LICENSES/BSD-3-Clause.txt",
-        "size": 1460,
-        "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
-      },
-      "LICENSES/CeCILL-2.1.txt": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-relation-domains-package-web/LICENSES/CeCILL-2.1.txt",
-        "size": 21778,
-        "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
-      },
-      "LICENSES/MIT.txt": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-relation-domains-package-web/LICENSES/MIT.txt",
-        "size": 1078,
-        "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
-      },
-      "LICENSING.md": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-relation-domains-package-web/LICENSING.md",
-        "size": 1406,
-        "sha256": "f9f26e32462eb28e350d0bd4db913ee5ccbd3a1eb88d97e78d187e1b35b86ae9"
-      },
-      "LICENSING_FR.md": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-relation-domains-package-web/LICENSING_FR.md",
-        "size": 1521,
-        "sha256": "6f907830be970cbd87723ebaa1e58ffd3dd3f69692a5b211edfc6ee964d93aff"
-      },
-      "README.md": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-relation-domains-package-web/README.md",
-        "size": 7115,
-        "sha256": "03bbc86037a16568663889111da16d36bc6f42b7ec141fbad861049301a99c3a"
-      },
-      "THIRD_PARTY_NOTICES.md": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-relation-domains-package-web/THIRD_PARTY_NOTICES.md",
-        "size": 1573,
-        "sha256": "01a4064f18fa28336f49c40a4e2db4b40ebee4766160320174e5aaadc41304fd"
-      },
-      "dag_ml_wasm.d.ts": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-relation-domains-package-web/dag_ml_wasm.d.ts",
-        "size": 26514,
-        "sha256": "2150e73b8746e81ed51dc80da2cbe303b6343c6fb67f63fd134d91e09caa5e1d"
-      },
-      "dag_ml_wasm.js": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-relation-domains-package-web/dag_ml_wasm.js",
-        "size": 72935,
-        "sha256": "1d5883cf83fc75096e4a09878a9a797e12faf4bb1b272db5ab8fba42bfcb483c"
-      },
-      "dag_ml_wasm_bg.wasm": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-relation-domains-package-web/dag_ml_wasm_bg.wasm",
-        "size": 9186371,
-        "sha256": "cf950aad12e10bd84544869a0b2e71458475943ff2b1a79234a2253b2b65fde2"
-      },
-      "dag_ml_wasm_bg.wasm.d.ts": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-relation-domains-package-web/dag_ml_wasm_bg.wasm.d.ts",
-        "size": 8532,
-        "sha256": "f3849c996dcd978b8eea3d98bc6178ccf895b0953f3576f38e010d3b45f721dd"
-      },
-      "multimodal_archive.mjs": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-relation-domains-package-web/multimodal_archive.mjs",
-        "size": 1997,
-        "sha256": "caaf58882459a24b6add0f04f40b128cd4d89f952af0900c79043dc990bef011"
-      },
-      "multimodal_dataset_replay.mjs": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-relation-domains-package-web/multimodal_dataset_replay.mjs",
-        "size": 5816,
-        "sha256": "892fbca7465a316fb83b69ac50617a04fa8d929d8627d2eb783451c5933f7bf3"
-      },
-      "n4m_controller.d.ts": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-relation-domains-package-web/n4m_controller.d.ts",
-        "size": 2796,
-        "sha256": "30555a04e56a8cf1f8c9a5d5efd19f3bc8b4974b2fa6d237c654a9e63943517a"
-      },
-      "n4m_controller.mjs": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-relation-domains-package-web/n4m_controller.mjs",
-        "size": 22810,
-        "sha256": "9fa386748f3d9c3d5ecd16df01769ed20eee2ab73e2ff835a74c35dd1f195374"
-      },
-      "n4m_estimator_controller.d.ts": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-relation-domains-package-web/n4m_estimator_controller.d.ts",
-        "size": 1019,
-        "sha256": "5bef931949ee5875f3089dc993660539597b6cc4979ef77b7e1c96a1fc8bb084"
-      },
-      "n4m_estimator_controller.mjs": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-relation-domains-package-web/n4m_estimator_controller.mjs",
-        "size": 18968,
-        "sha256": "2c40a06f2a62324f292139b454a677282c6661da4c551de7bab6dcfef335e8d8"
-      },
-      "n4m_hpo_optimizer.d.ts": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-relation-domains-package-web/n4m_hpo_optimizer.d.ts",
-        "size": 1339,
-        "sha256": "b02ef2d5df584f5f972c1544e0dfc324c931123cfb4ccb4ed9ebc4420570119b"
-      },
-      "n4m_hpo_optimizer.mjs": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-relation-domains-package-web/n4m_hpo_optimizer.mjs",
-        "size": 12276,
-        "sha256": "5664f662bc1af50026a3f5446be289d16dc6725d2fbeaf24098a32f6246b8ff5"
-      },
-      "n4m_multimodal_controller.mjs": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-relation-domains-package-web/n4m_multimodal_controller.mjs",
-        "size": 25073,
-        "sha256": "9c5354d3dc0e6ff4f63be6f88640445c4ea3736c9759ef505672fa21d4ee2a63"
-      },
-      "package.json": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/dag-relation-domains-package-web/package.json",
-        "size": 1638,
-        "sha256": "5478de1662f209f14d3df175d7d29a8de74534bc6bf353756e1bd820f5879bc3"
-      }
-    }
+    "metadata_url": "https://registry.npmjs.org/dag-ml-wasm/0.4.0",
+    "tarball_url": "https://registry.npmjs.org/dag-ml-wasm/-/dag-ml-wasm-0.4.0.tgz",
+    "size": 3516038,
+    "sha256": "b5be2713f79c12281413a3c8829d4355162782a9f6206c7319e4aadae48b035b",
+    "sha1": "d000c8877ff9d210b882d6d95735e01cf788c1c9",
+    "integrity": "sha512-mt6sQpFI7xFvencITI5hvi4TvljsS8eKCSKObE5TtgFr6TI8ET78mSvZGnwY96v7203IimkHxJUc7hRjYNHOgA=="
   },
   "reproducibility": {
     "performed_by_web": false,
@@ -144,6 +23,62 @@
     "LICENSE": {
       "size": 34020,
       "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+    },
+    "dag_ml_wasm.js": {
+      "size": 74426,
+      "sha256": "e863682e25863542963df65b84c25d03cd96e041aaba1da400224177cfad90c6"
+    },
+    "package.json": {
+      "size": 1729,
+      "sha256": "6c1826b61d29fa45103044c7dcae36b3669a7d3fbc0a42bb5e96079c0771e090"
+    },
+    "README.md": {
+      "size": 9222,
+      "sha256": "586029450a20985b10e5f0608d1c66a1bb57d861a79cf0c8549575697f9bbbb0"
+    },
+    "multimodal_archive.mjs": {
+      "size": 1997,
+      "sha256": "caaf58882459a24b6add0f04f40b128cd4d89f952af0900c79043dc990bef011"
+    },
+    "multimodal_dataset_replay.mjs": {
+      "size": 5816,
+      "sha256": "892fbca7465a316fb83b69ac50617a04fa8d929d8627d2eb783451c5933f7bf3"
+    },
+    "n4m_controller.mjs": {
+      "size": 22810,
+      "sha256": "9fa386748f3d9c3d5ecd16df01769ed20eee2ab73e2ff835a74c35dd1f195374"
+    },
+    "n4m_estimator_controller.mjs": {
+      "size": 18968,
+      "sha256": "2c40a06f2a62324f292139b454a677282c6661da4c551de7bab6dcfef335e8d8"
+    },
+    "n4m_hpo_optimizer.mjs": {
+      "size": 12276,
+      "sha256": "5664f662bc1af50026a3f5446be289d16dc6725d2fbeaf24098a32f6246b8ff5"
+    },
+    "n4m_multimodal_controller.mjs": {
+      "size": 25073,
+      "sha256": "9c5354d3dc0e6ff4f63be6f88640445c4ea3736c9759ef505672fa21d4ee2a63"
+    },
+    "dag_ml_wasm.d.ts": {
+      "size": 26920,
+      "sha256": "e5406745dd87d672fb99c4a264812d0d596f36128e1b782d604909c1d2b5f997"
+    },
+    "n4m_controller.d.ts": {
+      "size": 2796,
+      "sha256": "30555a04e56a8cf1f8c9a5d5efd19f3bc8b4974b2fa6d237c654a9e63943517a"
+    },
+    "n4m_estimator_controller.d.ts": {
+      "size": 1019,
+      "sha256": "5bef931949ee5875f3089dc993660539597b6cc4979ef77b7e1c96a1fc8bb084"
+    },
+    "n4m_hpo_optimizer.d.ts": {
+      "size": 1339,
+      "sha256": "b02ef2d5df584f5f972c1544e0dfc324c931123cfb4ccb4ed9ebc4420570119b"
+    },
+    "dag_ml_wasm_bg.wasm": {
+      "size": 10537236,
+      "sha256": "edff9682b63a16a79462c288b3577e912db8143865bf02a0a1c6db07a3690599"
     },
     "LICENSES/AGPL-3.0-or-later.txt": {
       "size": 34020,
@@ -173,69 +108,9 @@
       "size": 1521,
       "sha256": "6f907830be970cbd87723ebaa1e58ffd3dd3f69692a5b211edfc6ee964d93aff"
     },
-    "README.md": {
-      "size": 7115,
-      "sha256": "03bbc86037a16568663889111da16d36bc6f42b7ec141fbad861049301a99c3a"
-    },
     "THIRD_PARTY_NOTICES.md": {
       "size": 1573,
       "sha256": "01a4064f18fa28336f49c40a4e2db4b40ebee4766160320174e5aaadc41304fd"
-    },
-    "dag_ml_wasm.d.ts": {
-      "size": 26514,
-      "sha256": "2150e73b8746e81ed51dc80da2cbe303b6343c6fb67f63fd134d91e09caa5e1d"
-    },
-    "dag_ml_wasm.js": {
-      "size": 72935,
-      "sha256": "1d5883cf83fc75096e4a09878a9a797e12faf4bb1b272db5ab8fba42bfcb483c"
-    },
-    "dag_ml_wasm_bg.wasm": {
-      "size": 9186371,
-      "sha256": "cf950aad12e10bd84544869a0b2e71458475943ff2b1a79234a2253b2b65fde2"
-    },
-    "dag_ml_wasm_bg.wasm.d.ts": {
-      "size": 8532,
-      "sha256": "f3849c996dcd978b8eea3d98bc6178ccf895b0953f3576f38e010d3b45f721dd"
-    },
-    "multimodal_archive.mjs": {
-      "size": 1997,
-      "sha256": "caaf58882459a24b6add0f04f40b128cd4d89f952af0900c79043dc990bef011"
-    },
-    "multimodal_dataset_replay.mjs": {
-      "size": 5816,
-      "sha256": "892fbca7465a316fb83b69ac50617a04fa8d929d8627d2eb783451c5933f7bf3"
-    },
-    "n4m_controller.d.ts": {
-      "size": 2796,
-      "sha256": "30555a04e56a8cf1f8c9a5d5efd19f3bc8b4974b2fa6d237c654a9e63943517a"
-    },
-    "n4m_controller.mjs": {
-      "size": 22810,
-      "sha256": "9fa386748f3d9c3d5ecd16df01769ed20eee2ab73e2ff835a74c35dd1f195374"
-    },
-    "n4m_estimator_controller.d.ts": {
-      "size": 1019,
-      "sha256": "5bef931949ee5875f3089dc993660539597b6cc4979ef77b7e1c96a1fc8bb084"
-    },
-    "n4m_estimator_controller.mjs": {
-      "size": 18968,
-      "sha256": "2c40a06f2a62324f292139b454a677282c6661da4c551de7bab6dcfef335e8d8"
-    },
-    "n4m_hpo_optimizer.d.ts": {
-      "size": 1339,
-      "sha256": "b02ef2d5df584f5f972c1544e0dfc324c931123cfb4ccb4ed9ebc4420570119b"
-    },
-    "n4m_hpo_optimizer.mjs": {
-      "size": 12276,
-      "sha256": "5664f662bc1af50026a3f5446be289d16dc6725d2fbeaf24098a32f6246b8ff5"
-    },
-    "n4m_multimodal_controller.mjs": {
-      "size": 25073,
-      "sha256": "9c5354d3dc0e6ff4f63be6f88640445c4ea3736c9759ef505672fa21d4ee2a63"
-    },
-    "package.json": {
-      "size": 1638,
-      "sha256": "5478de1662f209f14d3df175d7d29a8de74534bc6bf353756e1bd820f5879bc3"
     }
   }
 }

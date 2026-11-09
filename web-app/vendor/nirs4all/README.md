@@ -155,79 +155,29 @@ Not claimed: execution or scientific equivalence of host payloads, browser behav
 or behaviour at multi-gigabyte sizes. Native actions (`produce`, `retrain`, `predict`)
 remain byte-based and bounded by WASM linear memory.
 
-## Existing routes awaiting consumer migration
+## Native execution and historical references
 
-The following routes remain while active consumers migrate in their authorized
-batches. They do not establish canonical V1 exchange.
+The JS portable runner and its coefficient DTOs have been retired. The package
+does not export `runPortablePipeline`, `predictPortablePipeline` or
+`parseExecutionPlan`, and does not convert legacy fitted JSON into owner packages.
+Use the documented browser/native workflow and package routes for their declared
+profiles, or `N4mRolePipeline` for Methods role recipes and trained v8 envelopes.
 
-The portable execution API delegates Kennard-Stone, SNV, MSC, Savitzky-Golay, and
-PLS component sweeps to `@nirs4all/methods`:
+`loadPipelineDefinition` keeps JSON/YAML text, array and `pipeline` / `steps`
+envelopes, comments, native augmentation parsing and Methods-manifest resolution
+of `n4m:<method id>` tokens. Pass `{methods}` or await `loadMethodsWasm()` first.
+Legacy class aliases are refused. `portableClassNames(definition)` extracts names
+from supplied data; it is not a capability list or execution admission.
+Parsing an augmentation declaration does not execute it or qualify a workflow.
 
-It also accepts `n4m.Ridge`, `n4m.RidgePLS`, `n4m.RobustPLS`, `n4m.CPPLS`,
-`n4m.SparseSIMPLS`, `n4m.ECR`, `n4m.ContinuumRegression`, and `n4m.MIRPLS`
-as final model steps. These use Methods `fitModel` and `predictModel`; the
-serialized selected model can be replayed after JSON roundtrip. Recipe
-parameters map to Methods in positional order: `lambda`, `ridge_lambda`,
-`[huber_k, max_irls_iter]`, `gamma`, `sparsity_lambda`, `alpha`, `tau`, or no
-extra parameters, respectively. `n_components` is passed separately and may
-be swept with `_range_`. Unknown model parameters are rejected.
+Original JS source/tests are frozen as `.txt` under
+[`tests/parity/reference/core-js-runner`](../../tests/parity/reference/core-js-runner/README.md).
+The shared Python oracle and native/R augmentation fixture retain their bytes,
+tolerances and provenance. Active `parity.test.js` checks MBPLS and GroupSparsePLS
+directly through Methods; `native-augmentation.test.js` checks the 22 native/R
+augmentation references. These primitive checks do not establish workflow parity.
+The retained Core portable runner is MATLAB/Octave-only; its route is unchanged.
 
-The same `fitModel`/`predictModel` path also supports `n4m.FusedSparsePLS`,
-`n4m.BaggingPLS`, `n4m.BoostingPLS`, and `n4m.RandomSubspacePLS`. Their
-positional parameters are `[l1_lambda, fusion_lambda]` (defaults 0.05/0.05),
-`[n_estimators, seed]` (50/0), `[n_estimators, learning_rate]` (50/0.1), and
-`[n_estimators, features_per_subspace, seed]` (50/10/0). Subspace width is
-checked against the fitted feature count. These recipes have native C and mock
-contract checks, not numerical WASM parity without a fresh WASM artifact.
-
-`n4m.NPLS` accepts flattened tensor features with required positive integer
-`mode_j` and `mode_k`; their product must equal the fitted feature count.
-`n_components` defaults to 2. Methods fits the native N-PLS kernel and the
-serialized coefficient/mean state replays on later matrices. The Core recipe
-currently accepts a single target; a native C oracle additionally checks
-two-target held-out prediction. Real WASM parity requires a fresh artifact.
-
-`n4m.GroupSparsePLS` requires an explicit `group_assignment` array with one
-non-negative 32-bit group ID per fitted feature. `group_lambda` defaults to
-0.05 and must be finite and non-negative. The recipe preserves the group IDs
-in JSON/YAML and fitted model metadata; fit and replay use the corrected native
-Methods post-SIMPLS group-wise coefficient shrinkage (not a refit of sparse
-latent directions). The WASM parity gate checks held-out predictions
-at both zero and positive penalty against Python n4m. This is a bounded recipe
-and coefficient replay, not a claim that an R/Python trained archive can already
-be imported into the browser.
-
-- `runPortablePipeline(source, dataset)` parses the shared nirs4all JSON/YAML
-  syntax, executes the portable subset, and returns parity-checkable split,
-  target, variant, and selected-result fields plus a serialized selected PLS
-  model.
-- `predictPortablePipeline(result, dataset)` replays the recorded preprocessing
-  chain and predicts with that serialized model through the same methods WASM
-  backend. Fitted preprocessing state is serialized as numeric arrays in each
-  step and restored before prediction. Older results with stateless steps remain
-  readable; a persisted MSC step without fitted state is rejected because its
-  training reference cannot be recovered from prediction data.
-
-MSC recipes accept `n4m.MSC` and the nirs4all Python `MSC` /
-`MultiplicativeScatterCorrection` class aliases. They call the Methods `MSC`
-operator with no numeric parameters. The Python `scale` and `copy` flags are
-accepted as booleans; they do not alter the Methods numerical operation.
-
-SPA recipes accept `n4m.SPA` (also `n4m.SPASelector` and
-`pls4all.sklearn.SPASelector`) before the final model. `top_k` is required;
-`n_components` defaults to 2. Methods fits the selector on training rows only.
-The result stores validated zero-based selected indices in the native ranked
-order. Fit and prediction project a sorted copy onto ascending columns without
-re-fitting SPA. A missing, duplicate, or out-of-range index is rejected.
-
-The generic `n4m.Selector` step accepts all 25 Methods selector names with
-`{method, n_components, method_params}`. It calls the native selector once on
-training rows, stores zero-based indices in their native ranked order, and
-projects a sorted copy onto validation and replay matrices. Methods requiring
-internal validation receive deterministic folds over training rows only. Seeds,
-threshold vectors, and other method parameters are passed through the native
-C ABI; this surface has mock-contract coverage but not numerical WASM parity
-until a current Methods WASM artifact is built and tested.
 - `replayMethodsArchiveV2(archiveBytes, dataset)` validates the bounded Archive
   V2 stored-ZIP, manifest, inventory digests, DAG-ML package, execution bundle,
   and N4MM binding in Rust, then imports and predicts the single multi-target
@@ -238,24 +188,6 @@ until a current Methods WASM artifact is built and tested.
   numerical fallback and never fits a replacement model. Before import it also
   compares the manifest's capability-derived `abi_min_minor` with the actual
   Methods WASM `abiVersion()` and refuses an older runtime.
-
-`runPortablePipeline` also accepts one training-only native X augmentation
-before preprocessing and the model. It runs after splitting and applies only
-to the training matrix; `predictPortablePipeline` never replays it. The kind is
-one of the 22 snake_case names in the closed Methods ABI 2.11 X→X subset, and
-`values` follows that kind's native positional parameter order. For example:
-
-```json
-{"pipeline":[
-  {"train_augmentation":{"class":"n4m.NativeXAugmentation","params":{"kind":"gaussian_noise","values":[0.03],"seed":42}}},
-  {"model":{"class":"sklearn.cross_decomposition.PLSRegression","params":{"n_components":2}}}
-]}
-```
-
-This Level 1 WASM runner requires a Methods package exposing `augmentNative`.
-It records the declaration with the fitted result for provenance. The
-augmentation has no fitted state or prediction transform and is outside Core's
-Archive V2 and DAG training contracts.
 
 The Archive V2 WASM replay intentionally covers the Phase 2 portable Methods
 PLS final-refit contract only. N4MM v2 preprocessing stays embedded in Methods
@@ -345,7 +277,7 @@ numbers labelling every fitted class id (index = id). `recipe` is a copy of
 the recipe the states attest, which is also the one exported. A state that
 embeds training rows (kernel PLS, LW-PLS, ...) is exported only with
 `toJSON({ allowTrainingRows: true })`. This path requires `@nirs4all/methods`
-1.2 (ABI 2.14 role pipelines).
+1.3.15 or later; the role-pipeline native format remains ABI 2.14.
 
 Custom app hosts can inspect `executionProfiles()` (also embedded in
 `capabilityManifest()` with `runtimeSurfaces`) before selecting a runtime. The
@@ -458,12 +390,12 @@ and Python-oracle parity claim.
 
 Both libraries are optional peer dependencies. They provide familiar classical
 ML APIs in JavaScript, but no numerical equality with sklearn is claimed for
-their independently implemented algorithms. The Methods-backed portable subset
-retains its separate Python oracle gate.
+their independently implemented algorithms. Methods primitives and current role
+envelopes have separate named reference checks; the old full-Python JS runner
+comparison is historical.
 
 For a browser-only custom host, pair this package with `nirs4all-ui`: keep
-runtime loading and portable execution in `nirs4all`, and consume shared React
+runtime loading and owner-backed execution in `nirs4all`, and consume shared React
 components / view-model helpers / brand assets from `nirs4all-ui`. The
-reference composition lives in the `nirs4all-web` browser app, whose contract
-tests exercise `runPortablePipeline()` / `predictPortablePipeline()` together
-with the shared UI package in a no-backend environment.
+`nirs4all-web` browser app owns its worker, IO and storage integration. Consumer
+production parity requires its own frozen-cohort evidence.

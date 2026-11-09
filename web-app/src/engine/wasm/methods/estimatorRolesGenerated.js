@@ -1724,6 +1724,28 @@ export class KernelPLS extends NativeEstimator {
     }
 }
 NativeMethod.register("models.pls.kernel", KernelPLS);
+/** Native `models.pls.opls` (transformer, regressor). */
+export class OPLS extends NativeEstimator {
+    methodId = "models.pls.opls";
+    paramTypes = {
+        n_components: "int",
+        center_x: "bool",
+        scale_x: "bool",
+        center_y: "bool",
+        scale_y: "bool",
+    };
+    constructor(params = {}) {
+        super();
+        this.params = { ...params };
+    }
+    predict(X) {
+        return this.predictMatrix(X);
+    }
+    transform(X) {
+        return this.transformMatrix(X);
+    }
+}
+NativeMethod.register("models.pls.opls", OPLS);
 /** Native `models.pls.pcr` (transformer, regressor). */
 export class PCR extends NativeEstimator {
     methodId = "models.pls.pcr";
@@ -2636,6 +2658,7 @@ export class StandardScale extends NativeEstimator {
     paramTypes = {
         with_mean: "bool",
         with_std: "bool",
+        ddof: "int",
     };
     constructor(params = {}) {
         super();
@@ -3827,6 +3850,21 @@ export class SystematicCircular extends NativeProcedure {
     }
 }
 NativeMethod.register("splitters.systematic_circular", SystematicCircular);
+/** Native `utilities.finite_column_quantiles` (generic). */
+export class FiniteColumnQuantiles extends NativeProcedure {
+    methodId = "utilities.finite_column_quantiles";
+    paramTypes = {
+        probabilities: "double_array",
+    };
+    constructor(params = {}) {
+        super();
+        this.params = { ...params };
+    }
+    run(X, y, inputs = {}) {
+        return this.runOutputs(X, y, inputs);
+    }
+}
+NativeMethod.register("utilities.finite_column_quantiles", FiniteColumnQuantiles);
 /** Native `utilities.hotelling_t2` (generic). */
 export class HotellingT2 extends NativeProcedure {
     methodId = "utilities.hotelling_t2";

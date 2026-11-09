@@ -1,156 +1,159 @@
 {
   "schema": "nirs4all-web.public-npm-acquisition.v1",
-  "package": "@nirs4all/io-wasm",
-  "version": "0.3.0",
+  "package": "nirs4all-io-wasm",
+  "version": "0.3.2",
   "source": {
-    "kind": "local-working-tree-export",
+    "kind": "owner-provided-browser-build",
     "repository": "https://github.com/GBeurier/nirs4all-io",
-    "base_commit_sha": "e67f0588b054c4d35e786306e139dfc92c9cf74b",
-    "base_tree_sha": "653a543e6916ce5a322c8e9e819b3279fdbd7c3a",
-    "working_tree_dirty": true,
-    "artifact_origin": "Local locked release build with describeTables, statistical NA refusal, identity keys and explicit exact-name parsing options (params/file_params) with header_ambiguous diagnostics applied before first inference, plus the numeric-only header warning successor; not a published or clean-tree package",
-    "changed_owner_sha256": {
-      "bindings/wasm/src/lib.rs": "b84945ab097d97658cf809007c003eee7866336db7012750d77f8283ef9da973",
-      "crates/nirs4all-io-core/src/infer/memory.rs": "365de3ccb3138d4d9a1b2a29fa9b608dfdcce7a48cb2c200a5571c98e3288853",
-      "crates/nirs4all-io-core/src/spec/enums.rs": "a7af665c40bacf3c398cc6a0d735ea994a58a430bb519b75715e733ec628ca29",
-      "crates/nirs4all-io-core/src/spec/dataset_spec.rs": "01f9ba6847ccea381d9532056e58fc243a1a464db61979b9ff78673def49c029",
-      "crates/nirs4all-io-core/src/materialize/loaders.rs": "31f1d5b5ed24420c8272dc0491e1d203fda23f350e68f1fbe597558c85d15274",
-      "crates/nirs4all-io-core/src/infer/propose.rs": "9e03874eafbb28e7ce0e39e8fc25065a237bef0e19ca08be33c837a173493934"
-    }
+    "commit": "6c1a2567730464de5147509e39aaeba6bbc00b66",
+    "tree": "e90972a82a5d231285104071d3bbfc886eb9d1db",
+    "browser_artifact_directory": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package",
+    "build_reported_by_root": {
+      "tool": "wasm-pack",
+      "version": "0.15.0",
+      "target": "web",
+      "release": true,
+      "locked": true
+    },
+    "owner_node24_initSync_version_smoke": "Passed for the shared artifact; not rerun by this staging task.",
+    "package_preparation": "Existing owner scripts/stage_wasm_package.mjs; NPM_PKG_NAME=nirs4all-io-wasm.",
+    "publication_claimed": false,
+    "artifact_origin": "Local-unpublished owner browser build; not public npm bytes.",
+    "performed_by_web": false
   },
   "acquisition": {
     "kind": "local-unpublished",
-    "note": "Locked local release WASM (N1 numeric-header warning successor): inspection, explicit statistical NA refusal, payload-aware source identity keys, explicit parsing options before first inference; wasm-bindgen 0.2.129; no registry identity. Qualification recorded separately.",
+    "note": "Local-unpublished IO 0.3.2 owner web-target build from commit 6c1a256; no registry identity or rebuild by Web.",
     "files": {
       "COPY_PROVENANCE.md": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-r3-package-web/COPY_PROVENANCE.md",
-        "size": 36034,
-        "sha256": "16493b8d06437f2e5a34ac2e4d9af7d72735104781ddc544a087c2590bb8a3d0"
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/COPY_PROVENANCE.md",
+        "size": 36889,
+        "sha256": "bcc5be99f7294d5c08992d1538069b94b5c9a3863e46c3fa8be95be486ef60f3"
       },
       "LICENSE": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-r3-package-web/LICENSE",
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/LICENSE",
         "size": 34020,
         "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
       },
       "LICENSES/AGPL-3.0-or-later.txt": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-r3-package-web/LICENSES/AGPL-3.0-or-later.txt",
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/LICENSES/AGPL-3.0-or-later.txt",
         "size": 34020,
         "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
       },
       "LICENSES/Apache-2.0.txt": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-r3-package-web/LICENSES/Apache-2.0.txt",
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/LICENSES/Apache-2.0.txt",
         "size": 9723,
         "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
       },
       "LICENSES/BSD-3-Clause.txt": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-r3-package-web/LICENSES/BSD-3-Clause.txt",
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/LICENSES/BSD-3-Clause.txt",
         "size": 1459,
         "sha256": "3cf06aba3588c41c514f6946bb2d757b413ff6491647d474800f55edca75dcb4"
       },
       "LICENSES/COMMERCIAL-LICENSE.md": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-r3-package-web/LICENSES/COMMERCIAL-LICENSE.md",
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/LICENSES/COMMERCIAL-LICENSE.md",
         "size": 670,
         "sha256": "e62a66dc45d618d419706048b17a840f87d0c0c5c940eadd1cf6ea13c7eae08f"
       },
       "LICENSES/COMMERCIAL-LICENSE_FR.md": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-r3-package-web/LICENSES/COMMERCIAL-LICENSE_FR.md",
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/LICENSES/COMMERCIAL-LICENSE_FR.md",
         "size": 759,
         "sha256": "7d1fd841891d4cb53836a6aca2fbbf7f36ef3bca540a394a9d94633af34ea3d6"
       },
       "LICENSES/CeCILL-2.1.txt": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-r3-package-web/LICENSES/CeCILL-2.1.txt",
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/LICENSES/CeCILL-2.1.txt",
         "size": 21778,
         "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
       },
       "LICENSES/MIT.txt": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-r3-package-web/LICENSES/MIT.txt",
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/LICENSES/MIT.txt",
         "size": 1078,
         "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
       },
       "LICENSES/Unicode-3.0.txt": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-r3-package-web/LICENSES/Unicode-3.0.txt",
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/LICENSES/Unicode-3.0.txt",
         "size": 1995,
         "sha256": "f7db81051789b729fea528a63ec4c938fdcb93d9d61d97dc8cc2e9df6d47f2a1"
       },
       "LICENSING.md": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-r3-package-web/LICENSING.md",
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/LICENSING.md",
         "size": 2113,
         "sha256": "b41ad1d4b8e62c89e42704fc4c9b5bb8a2099a0ad0680d72e95efb57c5d3326c"
       },
       "README.md": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-r3-package-web/README.md",
-        "size": 7389,
-        "sha256": "2d3c64e66e6b6d9ba2161fdf58f12627dc829ef871c718776a4ef467e604166f"
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/README.md",
+        "size": 7489,
+        "sha256": "f47d7be4f40ee5f6616a2a8ce881096de94d2c326d7b43ddc7b80bb0b33bdbb3"
       },
       "THIRD_PARTY_NOTICES.md": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-r3-package-web/THIRD_PARTY_NOTICES.md",
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/THIRD_PARTY_NOTICES.md",
         "size": 5732,
         "sha256": "c2f5c9061e7bc5a259a2d630330930ce9438f157e9646724824730ce516a5179"
       },
       "idiomatic.d.ts": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-r3-package-web/idiomatic.d.ts",
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/idiomatic.d.ts",
         "size": 2255,
         "sha256": "76cac94b2829a64977359ea807dd1c84bef41cb60af291c14eb3eecb372ceef0"
       },
       "idiomatic.mjs": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-r3-package-web/idiomatic.mjs",
-        "size": 2688,
-        "sha256": "e2870220f4580cf3bc2db2440ff9b53ec530de26effdf3c01b354201ac8ef494"
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/idiomatic.mjs",
+        "size": 2684,
+        "sha256": "a041c2304307eccbe805cfb97868eb2640fafe2fc51da8237e0a535135d1bfa3"
       },
       "nirs4all-io-wasm.cdx.json": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-n1-package-web/nirs4all-io-wasm.cdx.json",
-        "size": 35568,
-        "sha256": "d1273320302fa9cb0d014843e68ab926a38c958ed970dd62b46f43bd083927d8"
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/nirs4all-io-wasm.cdx.json",
+        "size": 34796,
+        "sha256": "c27233f4b1e4e9b38d4f7cf61253c0d39df50c0acc64f43839ec7d2b0d2b66c4"
       },
       "nirs4all_io_wasm.d.ts": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-n1-package-web/nirs4all_io_wasm.d.ts",
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/nirs4all_io_wasm.d.ts",
         "size": 6006,
         "sha256": "330eb68f22da3e42fcbd3495cce4efcaafceb543cecfef649069f6cd2dc5decf"
       },
       "nirs4all_io_wasm.js": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-n1-package-web/nirs4all_io_wasm.js",
-        "size": 26055,
-        "sha256": "ee7ab93044dcb159c1a7d53fdfbd797ef6d6c8ee0b6b7a0cb5b82c6c5a3f032f"
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/nirs4all_io_wasm.js",
+        "size": 25905,
+        "sha256": "7dd87d55807f43b163cd017a48751cd56273b044bc731be137f1c9256dbee5f7"
       },
       "nirs4all_io_wasm_bg.wasm": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-n1-package-web/nirs4all_io_wasm_bg.wasm",
-        "size": 2708538,
-        "sha256": "b955facd114c3a6c7b7f991ade1fe5007bbfcd7d21adb5e71fa9376a32a432b6"
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/nirs4all_io_wasm_bg.wasm",
+        "size": 2674955,
+        "sha256": "9bd041658f0cdb87042926e0ae608af6fc318568bc01d9c594ae33fd0d5f1012"
       },
       "nirs4all_io_wasm_bg.wasm.d.ts": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-r3-package-web/nirs4all_io_wasm_bg.wasm.d.ts",
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/nirs4all_io_wasm_bg.wasm.d.ts",
         "size": 1348,
         "sha256": "a3d3595633d4e94fd368535fcbf68a3027a0266abbad91fd9c8cce3510829241"
       },
-      "numeric-wire.d.ts": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-r3-package-web/numeric-wire.d.ts",
-        "size": 744,
-        "sha256": "48a26a8d6754a59e3d074c3c52351970e3f5725f3991899913bf61810229c0b0"
-      },
-      "numeric-wire.mjs": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-r3-package-web/numeric-wire.mjs",
-        "size": 1949,
-        "sha256": "82e35e14f51aa49f6ad2da382e26d080e7b4ec84b257b6cf77da52b5410d618b"
-      },
       "package.json": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-n1-package-web/package.json",
-        "size": 855,
-        "sha256": "9f105323de368988fdc8324e4a5fe5b699a001fdc30a4cd076cea4902fd7e5ec"
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/package.json",
+        "size": 1774,
+        "sha256": "6fb190d3d44abcbb5cecfa0833b1044421204c65378160f687a6e8547240c45d"
       },
       "public-dataset.d.ts": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-r3-package-web/public-dataset.d.ts",
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/public-dataset.d.ts",
         "size": 4765,
         "sha256": "c5f53b89e2ceb21bc9aafe0d6ed8bd2f037eda58f1a36997ca895ec638c181a8"
       },
       "public-dataset.mjs": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-r3-package-web/public-dataset.mjs",
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/public-dataset.mjs",
         "size": 31123,
         "sha256": "ab29fc57e4e78e3c6b49bd3aae026d3f310750c974803b7fa00a44906f621981"
       },
       "types/nirs4all-io.d.ts": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/io-n1-package-web/types/nirs4all-io.d.ts",
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/types/nirs4all-io.d.ts",
         "size": 12078,
         "sha256": "6d6f5a8c0f445e740c15f81e0c00298bfaa9915eba05a1a53b4a1b2bc35c91f5"
+      },
+      "numeric-wire.mjs": {
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/numeric-wire.mjs",
+        "size": 1949,
+        "sha256": "82e35e14f51aa49f6ad2da382e26d080e7b4ec84b257b6cf77da52b5410d618b"
+      },
+      "numeric-wire.d.ts": {
+        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/numeric-wire.d.ts",
+        "size": 744,
+        "sha256": "48a26a8d6754a59e3d074c3c52351970e3f5725f3991899913bf61810229c0b0"
       }
     }
   },
@@ -160,8 +163,8 @@
   },
   "files": {
     "COPY_PROVENANCE.md": {
-      "size": 36034,
-      "sha256": "16493b8d06437f2e5a34ac2e4d9af7d72735104781ddc544a087c2590bb8a3d0"
+      "size": 36889,
+      "sha256": "bcc5be99f7294d5c08992d1538069b94b5c9a3863e46c3fa8be95be486ef60f3"
     },
     "LICENSE": {
       "size": 34020,
@@ -204,8 +207,8 @@
       "sha256": "b41ad1d4b8e62c89e42704fc4c9b5bb8a2099a0ad0680d72e95efb57c5d3326c"
     },
     "README.md": {
-      "size": 7389,
-      "sha256": "2d3c64e66e6b6d9ba2161fdf58f12627dc829ef871c718776a4ef467e604166f"
+      "size": 7489,
+      "sha256": "f47d7be4f40ee5f6616a2a8ce881096de94d2c326d7b43ddc7b80bb0b33bdbb3"
     },
     "THIRD_PARTY_NOTICES.md": {
       "size": 5732,
@@ -216,40 +219,32 @@
       "sha256": "76cac94b2829a64977359ea807dd1c84bef41cb60af291c14eb3eecb372ceef0"
     },
     "idiomatic.mjs": {
-      "size": 2688,
-      "sha256": "e2870220f4580cf3bc2db2440ff9b53ec530de26effdf3c01b354201ac8ef494"
+      "size": 2684,
+      "sha256": "a041c2304307eccbe805cfb97868eb2640fafe2fc51da8237e0a535135d1bfa3"
     },
     "nirs4all-io-wasm.cdx.json": {
-      "size": 35568,
-      "sha256": "d1273320302fa9cb0d014843e68ab926a38c958ed970dd62b46f43bd083927d8"
+      "size": 34796,
+      "sha256": "c27233f4b1e4e9b38d4f7cf61253c0d39df50c0acc64f43839ec7d2b0d2b66c4"
     },
     "nirs4all_io_wasm.d.ts": {
       "size": 6006,
       "sha256": "330eb68f22da3e42fcbd3495cce4efcaafceb543cecfef649069f6cd2dc5decf"
     },
     "nirs4all_io_wasm.js": {
-      "size": 26055,
-      "sha256": "ee7ab93044dcb159c1a7d53fdfbd797ef6d6c8ee0b6b7a0cb5b82c6c5a3f032f"
+      "size": 25905,
+      "sha256": "7dd87d55807f43b163cd017a48751cd56273b044bc731be137f1c9256dbee5f7"
     },
     "nirs4all_io_wasm_bg.wasm": {
-      "size": 2708538,
-      "sha256": "b955facd114c3a6c7b7f991ade1fe5007bbfcd7d21adb5e71fa9376a32a432b6"
+      "size": 2674955,
+      "sha256": "9bd041658f0cdb87042926e0ae608af6fc318568bc01d9c594ae33fd0d5f1012"
     },
     "nirs4all_io_wasm_bg.wasm.d.ts": {
       "size": 1348,
       "sha256": "a3d3595633d4e94fd368535fcbf68a3027a0266abbad91fd9c8cce3510829241"
     },
-    "numeric-wire.d.ts": {
-      "size": 744,
-      "sha256": "48a26a8d6754a59e3d074c3c52351970e3f5725f3991899913bf61810229c0b0"
-    },
-    "numeric-wire.mjs": {
-      "size": 1949,
-      "sha256": "82e35e14f51aa49f6ad2da382e26d080e7b4ec84b257b6cf77da52b5410d618b"
-    },
     "package.json": {
-      "size": 855,
-      "sha256": "9f105323de368988fdc8324e4a5fe5b699a001fdc30a4cd076cea4902fd7e5ec"
+      "size": 1774,
+      "sha256": "6fb190d3d44abcbb5cecfa0833b1044421204c65378160f687a6e8547240c45d"
     },
     "public-dataset.d.ts": {
       "size": 4765,
@@ -262,6 +257,14 @@
     "types/nirs4all-io.d.ts": {
       "size": 12078,
       "sha256": "6d6f5a8c0f445e740c15f81e0c00298bfaa9915eba05a1a53b4a1b2bc35c91f5"
+    },
+    "numeric-wire.mjs": {
+      "size": 1949,
+      "sha256": "82e35e14f51aa49f6ad2da382e26d080e7b4ec84b257b6cf77da52b5410d618b"
+    },
+    "numeric-wire.d.ts": {
+      "size": 744,
+      "sha256": "48a26a8d6754a59e3d074c3c52351970e3f5725f3991899913bf61810229c0b0"
     }
   }
 }

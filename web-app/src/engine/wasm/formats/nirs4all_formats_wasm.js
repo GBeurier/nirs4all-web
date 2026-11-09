@@ -258,17 +258,6 @@ function __wbg_get_imports() {
             const ret = Object.entries(arg0);
             return ret;
         },
-        __wbg_error_757e9472f8410341: function(arg0, arg1) {
-            let deferred0_0;
-            let deferred0_1;
-            try {
-                deferred0_0 = arg0;
-                deferred0_1 = arg1;
-                console.error(getStringFromWasm0(arg0, arg1));
-            } finally {
-                wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
-            }
-        },
         __wbg_get_2080c49015e35254: function() { return handleError(function (arg0, arg1) {
             const ret = Reflect.get(arg0, arg1);
             return ret;
@@ -351,10 +340,6 @@ function __wbg_get_imports() {
             const ret = new Map();
             return ret;
         },
-        __wbg_new_bb74001155cb8ca8: function() {
-            const ret = new Error();
-            return ret;
-        },
         __wbg_new_cd4348290afae586: function() {
             const ret = new Object();
             return ret;
@@ -379,13 +364,6 @@ function __wbg_get_imports() {
         },
         __wbg_set_e4b9a833d288759a: function(arg0, arg1, arg2) {
             arg0[arg1] = arg2;
-        },
-        __wbg_stack_575c4e0918581b9c: function(arg0, arg1) {
-            const ret = arg1.stack;
-            const ptr1 = passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-            const len1 = WASM_VECTOR_LEN;
-            getDataViewMemory0().setInt32((arg0 >>> 0) + 4 * 1, len1, true);
-            getDataViewMemory0().setInt32((arg0 >>> 0) + 4 * 0, ptr1, true);
         },
         __wbg_static_accessor_GLOBAL_THIS_003ee833af9699fc: function() {
             const ret = typeof globalThis === 'undefined' ? undefined : globalThis;

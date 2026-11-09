@@ -3,283 +3,17 @@
   "package": "nirs4all",
   "version": "0.5.0",
   "source": {
-    "kind": "local-working-tree-export",
     "repository": "https://github.com/GBeurier/nirs4all-core",
-    "base_commit_sha": "1dffd9f4472551cc09ad9d99ed9d40814bd003cc",
-    "base_tree_sha": "3990c98a44a49c2c3827f61daad78915e33e948a",
-    "working_tree_dirty": true,
-    "artifact_origin": "Local release WASM (wasm32 release, wasm-bindgen 0.2.129) embedding the current DAG score-family outcome reader and IO N1; native payload unchanged. JS/types/package.json overlay from Core candidate commit 15ee6477d0e2361f71e4bb44bf189f8eca92622c; production execution.js retired after actual Web/Quali owner parity. This is a mixed source/artifact cohort, not an immutable native rebuild claim."
+    "commit": "53f53b727e983057f137f42ca0f87d7368db5990",
+    "tree": "77dfd729cad80579b61a63d80a80cec442289dc6"
   },
   "acquisition": {
-    "kind": "local-unpublished",
-    "note": "Exact frozen local owner artifacts; retained release native WASM (score-family reader + IO N1) plus JS/types/package.json from Core candidate 15ee6477d0e2361f71e4bb44bf189f8eca92622c. No registry identity or numerical rebuild by Web; source/platform qualification remains separately scoped.",
-    "files": {
-      "LICENSE": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/LICENSE",
-        "size": 34020,
-        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
-      },
-      "LICENSES/AGPL-3.0-or-later.txt": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/LICENSES/AGPL-3.0-or-later.txt",
-        "size": 34020,
-        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
-      },
-      "LICENSES/Apache-2.0.txt": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/LICENSES/Apache-2.0.txt",
-        "size": 10280,
-        "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
-      },
-      "LICENSES/BSD-3-Clause.txt": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/LICENSES/BSD-3-Clause.txt",
-        "size": 1460,
-        "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
-      },
-      "LICENSES/COMMERCIAL-LICENSE.md": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/LICENSES/COMMERCIAL-LICENSE.md",
-        "size": 674,
-        "sha256": "4340124a3a1d3c82577ea3aebc834cb9d37ee196d83fbf320af218a751449702"
-      },
-      "LICENSES/COMMERCIAL-LICENSE_FR.md": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/LICENSES/COMMERCIAL-LICENSE_FR.md",
-        "size": 763,
-        "sha256": "e05393d17534ba7129cd04f51c2ebe00448a4b427a50204f52ea37e906bf115a"
-      },
-      "LICENSES/CeCILL-2.1.txt": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/LICENSES/CeCILL-2.1.txt",
-        "size": 21778,
-        "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
-      },
-      "LICENSES/MIT.txt": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/LICENSES/MIT.txt",
-        "size": 1078,
-        "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
-      },
-      "LICENSING.md": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/LICENSING.md",
-        "size": 2058,
-        "sha256": "46c57e67ed1e40c98a714f32a968b343650b02df3627744c28e9ceba011b7447"
-      },
-      "LICENSING_FR.md": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/LICENSING_FR.md",
-        "size": 2205,
-        "sha256": "ef7b9eb2c9ff741218f6f4538578abb843b635376010a72443b06c1b3c0820ff"
-      },
-      "README.md": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/README.md",
-        "size": 27386,
-        "sha256": "51a6253998228be849996a0b9c5c4e7156b4746990aa95dca535239e47f8c74c"
-      },
-      "THIRD_PARTY_NOTICES.md": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/THIRD_PARTY_NOTICES.md",
-        "size": 1582,
-        "sha256": "36239a5e2cfb203f0f9b1a4d78578e938b35fc696e7bedc613e4030954ba14ac"
-      },
-      "native/nirs4all_core_wasm_native.d.ts": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/native/nirs4all_core_wasm_native.d.ts",
-        "size": 35143,
-        "sha256": "65a5b66cfdf1e32afc6cef7ad2c25d7e8e690722d0f02c1b89ea6cc832a472f6"
-      },
-      "native/nirs4all_core_wasm_native.js": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/native/nirs4all_core_wasm_native.js",
-        "size": 97851,
-        "sha256": "39f8505794cc05e81c121654403cbac1d83d57b8a3a5d100e1191af1b9598f40"
-      },
-      "native/nirs4all_core_wasm_native_bg.wasm": {
-        "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/ui-owner-wave-output/core-score-family-native/nirs4all_core_wasm_native_bg.wasm",
-        "size": 14988170,
-        "sha256": "3377eb6c0e2bcff7a042fce6c5c4af0dd7d5db3940ec15a645114c69cef1eab3"
-      },
-      "native/nirs4all_core_wasm_native_bg.wasm.d.ts": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/native/nirs4all_core_wasm_native_bg.wasm.d.ts",
-        "size": 14614,
-        "sha256": "66448c41a5672a6e29c181aca9634975df1d7450f475d11960463764cb10ff4a"
-      },
-      "package.json": {
-        "source": "/home/delete/nirs4all/_worktrees/2026-11-08-core-js-runner-retirement/bindings/wasm/package.json",
-        "size": 2725,
-        "sha256": "6a5dfde605cfb6c7e34447c357e68f84ad7a9850345fc4e85d9075781a8595cb"
-      },
-      "src/archive-v2.js": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/archive-v2.js",
-        "size": 20637,
-        "sha256": "476aa917ac84be062877bf5086f20bcd34dd375536f843ccf24866c1331d8025"
-      },
-      "src/browser-native-pipeline.d.ts": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/browser-native-pipeline.d.ts",
-        "size": 2185,
-        "sha256": "cea682b9d91d29ed1ecf4dc4c7ccc88eac68973c4999b6583140791a6b871f59"
-      },
-      "src/browser-native-pipeline.js": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/browser-native-pipeline.js",
-        "size": 17016,
-        "sha256": "9ad929007ac34f8c4fb698818d22c6672beb3b2b8a416894e94c280a33bcf3cb"
-      },
-      "src/browser-tuning.d.ts": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/browser-tuning.d.ts",
-        "size": 1626,
-        "sha256": "21d5ae6f8a26847a5639065a3c443637db662494bb4fd2a19b312b5f7cca1712"
-      },
-      "src/browser-tuning.js": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/browser-tuning.js",
-        "size": 15727,
-        "sha256": "514cbdee20097d190885988a9339af04a790b85e11f2460ccecbf9301f993224"
-      },
-      "src/capability-profiles.js": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/capability-profiles.js",
-        "size": 88758,
-        "sha256": "c76ba67b25263bf578f9a72357325c7f86c728e9071dde23634e92686aa13d62"
-      },
-      "src/classic-ml.d.ts": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/classic-ml.d.ts",
-        "size": 3492,
-        "sha256": "84b0bb294a01dba395b31dec48813d866014df0e635f0e71c4ec8b084f00cd04"
-      },
-      "src/conformal.d.ts": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/conformal.d.ts",
-        "size": 1012,
-        "sha256": "5d58fd90afa24990b7b06ff081f0c8db718f85854bc4bd8d4a017a75bb9cc9e7"
-      },
-      "src/conformal.js": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/conformal.js",
-        "size": 13310,
-        "sha256": "1f587895ff94b4757476f9efb51c8864886c13c87e7e90a6d57d8a8f4692ad75"
-      },
-      "src/index.d.ts": {
-        "source": "/home/delete/nirs4all/_worktrees/2026-11-08-core-js-runner-retirement/bindings/wasm/src/index.d.ts",
-        "size": 19973,
-        "sha256": "0e8badc20cd23d86e8fa38f61f5731c8f2dbfc13b9e44c0d68fc01227b42c4cb"
-      },
-      "src/index.js": {
-        "source": "/home/delete/nirs4all/_worktrees/2026-11-08-core-js-runner-retirement/bindings/wasm/src/index.js",
-        "size": 12372,
-        "sha256": "dcb15058d4175cda4ed777610b7cac5c21b2e39a9662be68a1580c2a6627499c"
-      },
-      "src/js-estimator-controller.js": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/js-estimator-controller.js",
-        "size": 24069,
-        "sha256": "24166d1a8694c8afc9bfd104e574422ac3e08cd9e02dd069bc06bcac64236061"
-      },
-      "src/ml-estimator-adapters.js": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/ml-estimator-adapters.js",
-        "size": 11340,
-        "sha256": "530e3081a3caba6e4f726f21fff7aaa48b0b95b10680e60c4d70531e0f399701"
-      },
-      "src/multimodal-archive.d.ts": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/multimodal-archive.d.ts",
-        "size": 560,
-        "sha256": "5673c776ec1c95445f5373456f5e4774c5b550f223108e4c7710a5d8236dbae5"
-      },
-      "src/multimodal-archive.js": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/multimodal-archive.js",
-        "size": 1178,
-        "sha256": "a9f98fc3f9e056d4c8d1420966a721b0db5024d99a7dbf86b765f94484c8952f"
-      },
-      "src/multimodal.d.ts": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/multimodal.d.ts",
-        "size": 1028,
-        "sha256": "ba31be8aa9d3c1e3bfb5424802d79e33a8314a0a13f84f604840baeb3eaa4ff5"
-      },
-      "src/multimodal.js": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/multimodal.js",
-        "size": 3702,
-        "sha256": "27aa40f2deae14bd982572dca41e7db5e6f5381f463b5a6e92986ef5cf611204"
-      },
-      "src/n4a.d.ts": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/n4a.d.ts",
-        "size": 11528,
-        "sha256": "50d43225ab4902366eebc6f30bde9e3d6875a29f42e0160d7af41dccf94d282f"
-      },
-      "src/n4a.js": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/n4a.js",
-        "size": 34516,
-        "sha256": "809d0d0e6ab3ad3948300307408a98d2aa0f638343580390808a96bc864e9eb4"
-      },
-      "src/n4m-roles.js": {
-        "source": "/home/delete/nirs4all/_worktrees/2026-11-08-core-js-runner-retirement/bindings/wasm/src/n4m-roles.js",
-        "size": 15356,
-        "sha256": "d7cb38db892bfc20f1f4225da1fe3cb3bb486f4d15fd574aaa8ad5ef107b0c32"
-      },
-      "src/native-augmentation.js": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/native-augmentation.js",
-        "size": 2784,
-        "sha256": "eefca27e7d15c711e87f78a5661357f0db5afda6de8d7446cfefffa997d3ac2a"
-      },
-      "src/native-multimodal.d.ts": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/native-multimodal.d.ts",
-        "size": 962,
-        "sha256": "ebca23e4145e1d74d6dbc2dfa129170cb82ab93a50204bea72fadd056a907a1f"
-      },
-      "src/native-multimodal.js": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/native-multimodal.js",
-        "size": 4137,
-        "sha256": "61c80287661219c83ccb0597b9a4841e78351521fa39dc0d79d30cbc426ece1f"
-      },
-      "src/native-pipeline.d.ts": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/native-pipeline.d.ts",
-        "size": 1078,
-        "sha256": "77fabecf16226777dba55ae40d86a848f523f996158ffa87ff72aa62e47f7232"
-      },
-      "src/native-pipeline.js": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/native-pipeline.js",
-        "size": 4060,
-        "sha256": "9ee7dfe9713c6713fc6a4b1fe2104b9813263ae4b8812edc3af2a7bab7f07159"
-      },
-      "src/result-view.d.ts": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/result-view.d.ts",
-        "size": 2364,
-        "sha256": "fde34ced1775a9ffa798bf1bf9f4aa5ea52459bcf5cb4d8fc3e553066c8d1e17"
-      },
-      "src/result-view.js": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/result-view.js",
-        "size": 12933,
-        "sha256": "78327f0ee84096a049dcbba586d2293a3e148d37d94772c1ad7410e75c3ad0e2"
-      },
-      "src/robustness.d.ts": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/robustness.d.ts",
-        "size": 496,
-        "sha256": "d7c3a95e21508d90a058ceb010f448e28e48d7f65b1acb159c0142bd13dd27f0"
-      },
-      "src/robustness.js": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/robustness.js",
-        "size": 4157,
-        "sha256": "babebdf05c35c91ace4cb568df762cfc13aeb5987474331462b7345919e61035"
-      },
-      "src/tuning.d.ts": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/tuning.d.ts",
-        "size": 1877,
-        "sha256": "3f2b3e31175e912c8d68730f29bf1e50a7cec1fa9f72723b6efdd418966b50c0"
-      },
-      "src/tuning.js": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/tuning.js",
-        "size": 7946,
-        "sha256": "c1c35e4d43b31799dff295a617f4791fc4a3b915a15a1fd9806caee2359dcaf9"
-      },
-      "src/uncertainty-cohort.js": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/uncertainty-cohort.js",
-        "size": 588,
-        "sha256": "3d6326a86bbaa19bccae17e1f6a236bce3a214437960cdbbc4f3ca3070d897ce"
-      },
-      "src/workflow.d.ts": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/workflow.d.ts",
-        "size": 1790,
-        "sha256": "cae8a9d196e0eeca446cc38cd4a8dea3748e9dfe59e1aa2dda4c3122e44ccd14"
-      },
-      "src/workflow.js": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/workflow.js",
-        "size": 23015,
-        "sha256": "cedcb61fe97d0332b2aa55969a28ce83a28ee9c7d87039db7097fd915b007bb6"
-      },
-      "src/workspace.d.ts": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/workspace.d.ts",
-        "size": 988,
-        "sha256": "e40aff470aaef6d599952d9a35bda8eb25e8052bc215bd38ba77588348452107"
-      },
-      "src/workspace.js": {
-        "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-artifacts/core/src/workspace.js",
-        "size": 4481,
-        "sha256": "5a862b1bf551ecfa161856b21dc085c5292d45223c68b94ff193b587a9a2fc17"
-      }
-    }
+    "metadata_url": "https://registry.npmjs.org/nirs4all/0.5.0",
+    "tarball_url": "https://registry.npmjs.org/nirs4all/-/nirs4all-0.5.0.tgz",
+    "size": 4526405,
+    "sha256": "ed99284503dd0096f514e631329b70377e13093ed858428f4631a2b2a317b847",
+    "sha1": "d66674bdbd4885d503e7eb35969980b36393f22c",
+    "integrity": "sha512-eg/jFzuacaxb1XIKvgF6jPAgoOwU0Dsmkhf734FriPYw36lBjzoHKSDEZPlIzcZ5pc2QhoSBe0JPzfnGH4LOog=="
   },
   "reproducibility": {
     "performed_by_web": false,
@@ -322,13 +56,9 @@
       "size": 2058,
       "sha256": "46c57e67ed1e40c98a714f32a968b343650b02df3627744c28e9ceba011b7447"
     },
-    "LICENSING_FR.md": {
-      "size": 2205,
-      "sha256": "ef7b9eb2c9ff741218f6f4538578abb843b635376010a72443b06c1b3c0820ff"
-    },
     "README.md": {
-      "size": 27386,
-      "sha256": "51a6253998228be849996a0b9c5c4e7156b4746990aa95dca535239e47f8c74c"
+      "size": 23430,
+      "sha256": "90d8dd681db1a06c00337a91a1d096b7997868e114bd2f51b85bb710420d1642"
     },
     "THIRD_PARTY_NOTICES.md": {
       "size": 1582,
@@ -343,16 +73,20 @@
       "sha256": "39f8505794cc05e81c121654403cbac1d83d57b8a3a5d100e1191af1b9598f40"
     },
     "native/nirs4all_core_wasm_native_bg.wasm": {
-      "size": 14988170,
-      "sha256": "3377eb6c0e2bcff7a042fce6c5c4af0dd7d5db3940ec15a645114c69cef1eab3"
+      "size": 15085273,
+      "sha256": "e2282ab4a978a38b0978baa259db11cb25887e5b75724a354cf6447c13ca67c6"
     },
     "native/nirs4all_core_wasm_native_bg.wasm.d.ts": {
       "size": 14614,
       "sha256": "66448c41a5672a6e29c181aca9634975df1d7450f475d11960463764cb10ff4a"
     },
+    "native/package.json": {
+      "size": 570,
+      "sha256": "d961991c8a17308feb0e9d3053e880d6c5d5646bc97726e5af5cc0cf3f92e801"
+    },
     "package.json": {
-      "size": 2725,
-      "sha256": "6a5dfde605cfb6c7e34447c357e68f84ad7a9850345fc4e85d9075781a8595cb"
+      "size": 2798,
+      "sha256": "1e5320531d6e4d5f69d31917f60e3606b1cf57eb0813e8c272d66b41f9d3387c"
     },
     "src/archive-v2.js": {
       "size": 20637,

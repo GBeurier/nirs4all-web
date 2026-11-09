@@ -7,7 +7,8 @@ import { describe, expect, it } from 'vitest'
 // through staged WASM. This test freezes that as a contract — app sources may
 // not talk to a server backend or assume a Node runtime. Only the staged WASM
 // glue (vendor output under src/engine/wasm/) fetches its own same-origin
-// static assets, so it is excluded from the scan.
+// static assets, so it is excluded from the scan. The hash-bound historical
+// Core test oracle is excluded too; browser sources must never import it.
 const SRC_ROOT = fileURLToPath(new URL('..', import.meta.url))
 const APP_ROOT = fileURLToPath(new URL('../..', import.meta.url))
 
@@ -30,6 +31,7 @@ function walkSources(dir: string, out: { app: string[]; scripts: string[] }): vo
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const path = join(dir, entry.name)
     if (entry.isDirectory()) {
+      if (relative(SRC_ROOT, path).split(sep).join('/') === 'engine/testing/frozen-core-0.5') continue
       if (EXCLUDED_DIRS.has(entry.name) && relative(SRC_ROOT, path).split(sep).includes('wasm')) continue
       walkSources(path, out)
       continue
@@ -57,6 +59,7 @@ const FORBIDDEN: { pattern: RegExp; why: string }[] = [
   { pattern: /['"`]\/api\//, why: 'no backend API routes' },
   { pattern: /https?:\/\/(localhost|127\.0\.0\.1|\[::1\])/, why: 'no hardcoded local server origin' },
   { pattern: /from\s+['"][^'"]*(?:nirs4all-lite|portable-lite)[^'"]*['"]/, why: 'runtime package shims use nirs4all-core names' },
+  { pattern: /(?:from\s+|import\s*\()\s*['"][^'"]*frozen-core-0\.5\//, why: 'the frozen Core oracle is test-only' },
 ]
 
 function getAttribute(tag: string, name: string): string | null {

@@ -2300,6 +2300,33 @@ export declare class KernelPLS extends NativeEstimator implements Regressor {
     constructor(params?: KernelPLSParams);
     predict(X: Matrix): Matrix;
 }
+/** Parameters of OPLS; unset values take the native defaults. */
+export interface OPLSParams {
+    /** Default 2. */
+    n_components?: number;
+    /** Default true. */
+    center_x?: boolean;
+    /** Default true. */
+    scale_x?: boolean;
+    /** Default true. */
+    center_y?: boolean;
+    /** Default true. */
+    scale_y?: boolean;
+}
+/** Native `models.pls.opls` (transformer, regressor). */
+export declare class OPLS extends NativeEstimator implements Regressor, Transformer {
+    readonly methodId = "models.pls.opls";
+    readonly paramTypes: {
+        readonly n_components: "int";
+        readonly center_x: "bool";
+        readonly scale_x: "bool";
+        readonly center_y: "bool";
+        readonly scale_y: "bool";
+    };
+    constructor(params?: OPLSParams);
+    predict(X: Matrix): Matrix;
+    transform(X: Matrix): Matrix;
+}
 /** Parameters of PCR; unset values take the native defaults. */
 export interface PCRParams {
     /** Default 2. */
@@ -3337,6 +3364,8 @@ export interface StandardScaleParams {
     with_mean?: boolean;
     /** Default true. */
     with_std?: boolean;
+    /** Default 0. */
+    ddof?: number;
 }
 /** Native `preprocessing.scaling.standard_scale` (transformer). */
 export declare class StandardScale extends NativeEstimator implements Transformer {
@@ -3344,6 +3373,7 @@ export declare class StandardScale extends NativeEstimator implements Transforme
     readonly paramTypes: {
         readonly with_mean: "bool";
         readonly with_std: "bool";
+        readonly ddof: "int";
     };
     constructor(params?: StandardScaleParams);
     transform(X: Matrix): Matrix;
@@ -4718,6 +4748,20 @@ export declare class SystematicCircular extends NativeProcedure implements Split
     };
     constructor(params?: SystematicCircularParams);
     split(X: Matrix, y?: Float64Array | ArrayLike<number>, groups?: number[]): Fold[];
+}
+/** Parameters of FiniteColumnQuantiles; unset values take the native defaults. */
+export interface FiniteColumnQuantilesParams {
+    /** Required. */
+    probabilities?: number[];
+}
+/** Native `utilities.finite_column_quantiles` (generic). */
+export declare class FiniteColumnQuantiles extends NativeProcedure implements Procedure {
+    readonly methodId = "utilities.finite_column_quantiles";
+    readonly paramTypes: {
+        readonly probabilities: "double_array";
+    };
+    constructor(params?: FiniteColumnQuantilesParams);
+    run(X: Matrix, y?: Matrix | Float64Array | ArrayLike<number>, inputs?: FitInputs): Record<string, ProcedureOutput>;
 }
 /** Parameters of HotellingT2; unset values take the native defaults. */
 export interface HotellingT2Params {

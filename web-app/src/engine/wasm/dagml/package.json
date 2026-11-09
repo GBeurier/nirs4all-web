@@ -4,10 +4,14 @@
   "collaborators": [
     "G. Beurier <beurier@cirad.fr>"
   ],
-  "description": "Private current single-holdout bank and scoring qualification artifact; not published.",
+  "description": "WASM bindings for DAG-ML JSON contracts.",
   "version": "0.4.0",
   "license": "CECILL-2.1 OR AGPL-3.0-or-later",
-  "repository": "https://github.com/GBeurier/dag-ml",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GBeurier/dag-ml.git",
+    "directory": "crates/dag-ml-wasm"
+  },
   "files": [
     "dag_ml_wasm_bg.wasm",
     "dag_ml_wasm.js",
@@ -58,5 +62,8 @@
       "optional": true
     }
   },
-  "private": true
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
 }

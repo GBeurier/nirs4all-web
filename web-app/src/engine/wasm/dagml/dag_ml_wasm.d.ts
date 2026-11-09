@@ -403,8 +403,8 @@ export interface InitOutput {
     readonly validate_graph_json: (a: any) => [number, number];
     readonly validate_initial_full_refit_package_json: (a: any) => [number, number];
     readonly validate_pipeline_dsl_json: (a: any) => [number, number];
-    readonly wasm_bindgen__convert__closures_____invoke__h099d61a787badafb: (a: number, b: number, c: any) => [number, number];
-    readonly wasm_bindgen__convert__closures_____invoke__h51a83d35f1b2856a: (a: number, b: number, c: any, d: any) => void;
+    readonly wasm_bindgen_6d8b02b35ac3a954___convert__closures_____invoke___js_sys_baa5e4b942bda068___Function_fn_wasm_bindgen_6d8b02b35ac3a954___JsValue_____wasm_bindgen_6d8b02b35ac3a954___sys__Undefined___js_sys_baa5e4b942bda068___Function_fn_wasm_bindgen_6d8b02b35ac3a954___JsValue_____wasm_bindgen_6d8b02b35ac3a954___sys__Undefined_______true_: (a: number, b: number, c: any, d: any) => void;
+    readonly wasm_bindgen_6d8b02b35ac3a954___convert__closures_____invoke___wasm_bindgen_6d8b02b35ac3a954___JsValue__core_37ee0ce0c4cd57d5___result__Result_____wasm_bindgen_6d8b02b35ac3a954___JsError___true_: (a: number, b: number, c: any) => [number, number];
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_exn_store: (a: number) => void;

@@ -65,25 +65,27 @@ describe('nirs4all-core aggregate loaders', () => {
       package: 'nirs4all',
       version: '0.5.0',
       source: {
-        kind: 'local-working-tree-export',
-        base_commit_sha: '1dffd9f4472551cc09ad9d99ed9d40814bd003cc',
-        base_tree_sha: '3990c98a44a49c2c3827f61daad78915e33e948a',
-        working_tree_dirty: true,
+        repository: 'https://github.com/GBeurier/nirs4all-core',
+        commit: '53f53b727e983057f137f42ca0f87d7368db5990',
+        tree: '77dfd729cad80579b61a63d80a80cec442289dc6',
       },
-      acquisition: { kind: 'local-unpublished' },
+      acquisition: {
+        tarball_url: 'https://registry.npmjs.org/nirs4all/-/nirs4all-0.5.0.tgz',
+        sha256: 'ed99284503dd0096f514e631329b70377e13093ed858428f4631a2b2a317b847',
+      },
       reproducibility: { performed_by_web: false, independent_rebuild_claimed: false },
       files: {
         'native/nirs4all_core_wasm_native.js': { sha256: '39f8505794cc05e81c121654403cbac1d83d57b8a3a5d100e1191af1b9598f40' },
-        'native/nirs4all_core_wasm_native_bg.wasm': { sha256: '3377eb6c0e2bcff7a042fce6c5c4af0dd7d5db3940ec15a645114c69cef1eab3' },
+        'native/nirs4all_core_wasm_native_bg.wasm': { sha256: 'e2282ab4a978a38b0978baa259db11cb25887e5b75724a354cf6447c13ca67c6' },
       },
     })
   })
 
-  it('verifies the pinned local unpublished package without requiring a mutable sibling', () => {
+  it('verifies the pinned public package without requiring a mutable sibling', () => {
     const script = fileURLToPath(new URL('../../scripts/sync-core-shim.mjs', import.meta.url))
     const verified = spawnSync(process.execPath, [script, '--check'], { encoding: 'utf8' })
     expect(verified.status).toBe(0)
-    expect(verified.stdout).toContain('nirs4all@0.5.0 local-unpublished (no registry identity) inventory and acquisition verified')
+    expect(verified.stdout).toContain('nirs4all@0.5.0 published inventory and acquisition verified')
   })
 
   it('keeps the datasets upstream candidate aligned with the vendored WASM package', () => {
@@ -106,7 +108,7 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(methods?.candidates).toEqual(['@nirs4all/methods'])
     expect(viteConfig).toContain("'@nirs4all/methods':")
     expect(vitestConfig).toContain("'@nirs4all/methods':")
-    expect(vendorPkg.peerDependencies['@nirs4all/methods']).toBe('>=1.3.13 <2')
+    expect(vendorPkg.peerDependencies['@nirs4all/methods']).toBe('>=1.3.15 <2')
     expect(vendorPkg.peerDependenciesMeta['@nirs4all/methods']).toBeTruthy()
     expect(viteConfig + vitestConfig + JSON.stringify(methods) + JSON.stringify(vendorPkg)).not.toContain('@nirs4all/methods' + '-wasm')
   })
@@ -246,12 +248,12 @@ describe('nirs4all-core aggregate loaders', () => {
     )
   })
 
-  it('loads the pinned local dag-ml WASM coordinator', async () => {
+  it('loads the pinned public dag-ml WASM coordinator', async () => {
     const dagml = await import('./wasm/dagml/dag_ml_wasm.js')
     const wasm = readFileSync(new URL('./wasm/dagml/dag_ml_wasm_bg.wasm', import.meta.url))
     const provenance = JSON.parse(
       readFileSync(new URL('./wasm/dagml/PROVENANCE.json', import.meta.url), 'utf8'),
-    ) as { version: string; source: { kind: string; base_commit_sha: string }; reproducibility: { performed_by_web: boolean; independent_rebuild_claimed: boolean } }
+    ) as { version: string; source: { commit: string }; reproducibility: { performed_by_web: boolean; independent_rebuild_claimed: boolean } }
     dagml.initSync({ module: wasm })
 
     const manifest = JSON.parse(dagml.contract_manifest_json()) as { crate: string; capabilities: string[] }
@@ -262,11 +264,12 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(provenance).toMatchObject({
       version: '0.4.0',
       source: {
-        kind: 'local-working-tree-export',
-        base_commit_sha: '963abc4531789d6483e9d60d8d2e30549fc5ca9e',
-        working_tree_dirty: true,
+        commit: 'beaba0b62f9a65bca86c2f521fc482bd80092ba3',
       },
-      acquisition: { kind: 'local-unpublished' },
+      acquisition: {
+        tarball_url: 'https://registry.npmjs.org/dag-ml-wasm/-/dag-ml-wasm-0.4.0.tgz',
+        sha256: 'b5be2713f79c12281413a3c8829d4355162782a9f6206c7319e4aadae48b035b',
+      },
       reproducibility: { performed_by_web: false, independent_rebuild_claimed: false },
     })
   })

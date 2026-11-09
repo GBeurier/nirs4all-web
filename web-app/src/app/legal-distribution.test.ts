@@ -94,7 +94,7 @@ describe('distributed legal notices', () => {
         const sourceContents = readFileSync(join(source, path))
         const mirrorContents = readFileSync(join(componentRoot, name, path))
         const declared = declaration.files.find((file: { path: string }) => file.path === path)
-        expect(mirrorContents).toEqual(sourceContents)
+        expect(mirrorContents.equals(sourceContents), `${name}/${path}`).toBe(true)
         expect(declared).toEqual({
           path,
           size: sourceContents.length,
@@ -116,7 +116,7 @@ describe('distributed legal notices', () => {
     expect(index).toContain('href="THIRD_PARTY_NOTICES.md"')
     expect(index).toContain('href="LICENSES/CeCILL-2.1.txt"')
     expect(index).toContain('href="components/io/nirs4all-io-wasm.cdx.json"')
-    expect(index).toContain('href="components/methods/THIRD_PARTY_NOTICES.md"')
+    expect(index).toContain('href="components/methods/THIRD_PARTY_LICENSES.md"')
     expect(index).toContain('href="components/manifest.json"')
     expect(index).toContain('provided without warranty')
   })
