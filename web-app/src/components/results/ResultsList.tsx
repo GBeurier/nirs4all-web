@@ -32,6 +32,7 @@ import { cn } from '@/app/components/ui/utils'
 import { downloadN4a, downloadPipeline, downloadRunCsv, downloadRunJson } from '@/lib/download'
 
 import { formatDate, variantChains } from './_helpers'
+import { defaultEvaluationScore, refitIsTest, scoreEvaluationLabel, selectionValidation } from './inspectorAdapter'
 
 function StatusIcon({ status }: { status: ScoreNode['status'] }) {
   if (status === 'running') return <Loader2 className="size-4 animate-spin text-brand-teal" />
@@ -71,6 +72,9 @@ function ScoreRow({ run, node, selected, onSelect, accent, icon, indent, childre
   return (
     <div
       role="button"
+      aria-pressed={selected}
+      data-score-id={node.id}
+      data-run-id={run.id}
       tabIndex={0}
       onClick={() => onSelect(run, node)}
       onKeyDown={(e) => {
@@ -93,6 +97,7 @@ function ScoreRow({ run, node, selected, onSelect, accent, icon, indent, childre
             {icon}
           </span>
           <span className="truncate text-sm font-medium text-foreground">{node.name}</span>
+          <span className="text-xs text-muted-foreground">· {scoreEvaluationLabel(run, node)}</span>
           <StatusIcon status={node.status} />
         </div>
         {children}
@@ -238,19 +243,24 @@ function RunCard({
   selectedRunId,
   selectedScoreId,
   onSelect,
+  onClearSelection,
 }: {
   run: RunResult
   engine: Engine
   selectedRunId: string | null
   selectedScoreId: string | null
   onSelect: ResultsListProps['onSelect']
+  onClearSelection?: ResultsListProps['onClearSelection']
 }) {
   const [cvOpen, setCvOpen] = useState(false)
   const modelExport = useModelExport(run, engine)
   const pm = primaryMetric(run.taskType)
-  // CV is optional (refit-only run): headline + the CV score row fall back to refit.
-  const headlineNode = run.cv ?? run.refit
-  const headline = headlineNode.metrics[pm.key]
+  const [showTraining, setShowTraining] = useState(false)
+  const trainingRefit = !selectionValidation(run) && !refitIsTest(run)
+  const selectedTraining = trainingRefit && selectedRunId === run.id && selectedScoreId === run.refit.id
+  const trainingVisible = showTraining || selectedTraining
+  const headlineNode = defaultEvaluationScore(run) ?? (trainingVisible ? run.refit : null)
+  const headline = headlineNode?.metrics[pm.key]
   const isSel = (node: ScoreNode) => run.id === selectedRunId && node.id === selectedScoreId
 
   return (
@@ -321,24 +331,32 @@ function RunCard({
 
       {/* Headline primary metric — CV when cross-validated, else the refit. */}
       <div className="mb-4 flex items-baseline gap-2 rounded-xl bg-muted/50 px-4 py-3">
-        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{run.cv ? 'CV' : 'Refit'} {pm.label}</span>
+        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{headlineNode ? scoreEvaluationLabel(run, headlineNode) : 'Training score hidden'} {pm.label}</span>
         <span className="font-mono text-2xl font-bold text-brand-teal">{fmt(headline)}</span>
         <span className="ml-auto text-xs text-muted-foreground">
           {pm.higherIsBetter ? 'higher is better' : 'lower is better'}
         </span>
       </div>
 
+      {trainingRefit && <label className="mb-3 flex items-center gap-2 text-sm">
+        <input type="checkbox" checked={trainingVisible} onChange={(event) => {
+          setShowTraining(event.target.checked)
+          if (!event.target.checked && selectedTraining) onClearSelection?.()
+        }} />
+        Show training resubstitution scores (training evaluation only)
+      </label>}
+
       {/* Score tree */}
       <div className="space-y-2">
         <VariantRows run={run} />
-        <ScoreRow
+        {(!trainingRefit || trainingVisible) && <ScoreRow
           run={run}
           node={run.refit}
           selected={isSel(run.refit)}
           onSelect={onSelect}
           accent="bg-brand-teal/10 text-brand-teal"
           icon={<Target className="size-3.5" />}
-        />
+        />}
 
         {run.cv ? (
           <Collapsible open={cvOpen} onOpenChange={setCvOpen}>
@@ -384,7 +402,7 @@ function RunCard({
 }
 
 export function ResultsList(props: ResultsListProps) {
-  const { runs, engine, selectedRunId, selectedScoreId, onSelect } = props
+  const { runs, engine, selectedRunId, selectedScoreId, onSelect, onClearSelection } = props
 
   if (runs.length === 0) {
     return (
@@ -408,6 +426,7 @@ export function ResultsList(props: ResultsListProps) {
           selectedRunId={selectedRunId}
           selectedScoreId={selectedScoreId}
           onSelect={onSelect}
+          onClearSelection={onClearSelection}
         />
       ))}
     </div>

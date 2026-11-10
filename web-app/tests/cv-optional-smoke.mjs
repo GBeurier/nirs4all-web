@@ -48,8 +48,9 @@ try {
   // The editor already says 'refit-only'; wait for the completed engine result.
   await page.waitForFunction(() => window.__n4aLastRun?.refit && !window.__n4aLastRun.cv, null, { timeout: 60000 })
   const refitName = await page.evaluate(() => window.__n4aLastRun.refit.name)
-  await page.locator('[data-testid="n4a-results-list"]').getByText(refitName, { exact: true }).first().waitFor({ timeout: 10000 })
-  const body1 = (await page.textContent('body')) || ''
+  await page.locator('[data-testid="n4a-results-list"]').getByText(refitName, { exact: false }).first().waitFor({ timeout: 10000 })
+  if (await page.getByTestId('n4a-results-list').count() !== 1) fail('expected one Results list, including after Inspector mounting')
+  const body1 = (await page.locator('body').innerText()) || ''
   if (/CV Scores/.test(body1)) fail('refit-only run must NOT produce "CV Scores"')
   else console.log('✓ refit-only run produced no CV Scores')
 

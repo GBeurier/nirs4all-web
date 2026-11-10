@@ -1,19 +1,67 @@
 {
   "schema": "nirs4all-web.public-npm-acquisition.v1",
   "package": "@nirs4all/methods",
-  "version": "1.3.15",
+  "version": "1.3.16",
   "source": {
+    "kind": "published-npm-registry-package",
     "repository": "https://github.com/GBeurier/nirs4all-methods",
-    "commit": "50c2cbacc58a69af43e6fc3867be16a16293c793",
-    "tree": "38abf546d70e7240bc2d7dbd7424fe3a95dfea64"
+    "commit": "0399906f1d4df256a294d1b4937b4826c828f649",
+    "tree": "6484f475179e6f39dee6e7cb9240356dcf2ec351",
+    "tag": "v1.3.16",
+    "artifact_origin": "Exact cached public npm tarball; replaces the distinct local-unpublished qualification candidate",
+    "public_receipt": {
+      "path": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/public-main-site-integration/methods-row-l2-nov10/public-release-nov10/npm-public/PUBLIC_NPM_RECEIPT.json",
+      "size": 4466,
+      "sha256": "8c32d720be5255374df18a8b5a8d96d3c955e767d468ae7f62ec15600dc84a68"
+    },
+    "registry_metadata": {
+      "path": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/public-main-site-integration/methods-row-l2-nov10/public-release-nov10/npm-public/registry-metadata.json",
+      "size": 4822,
+      "sha256": "5acbab9a13634e856f160d19688bcd28684b64055172c683c727ab076bf296d0"
+    },
+    "provenance": {
+      "registry_attestations": {
+        "url": "https://registry.npmjs.org/-/npm/v1/attestations/@nirs4all%2fmethods@1.3.16",
+        "provenance": {
+          "predicateType": "https://slsa.dev/provenance/v1"
+        }
+      },
+      "retained_bundle": {
+        "path": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/public-main-site-integration/methods-row-l2-nov10/public-release-nov10/npm-public/registry-attestations.json",
+        "size": 17049,
+        "sha256": "63093b0d0057d02d79b2caedb943a8cb6e8fc563b40b89d8f51dec70b6f5268a"
+      },
+      "retained_statements": {
+        "path": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/public-main-site-integration/methods-row-l2-nov10/public-release-nov10/npm-public/provenance-statements.json",
+        "size": 2085,
+        "sha256": "12c7f2fe0546b281c93474266fc7b0324bb69e6385dd630adbbe55fa45a519ad"
+      },
+      "statement_count": 2,
+      "subject_sha512_verified": true,
+      "source_commit_in_statement_verified": true,
+      "cryptographic_signature_verification": "not repeated locally; registry bundle retained"
+    },
+    "owner_reported_build_profile": "emscripten-analysis; Emscripten3.1.74; Rust1.96.0; releaseNode20; actualpublicsmokeNode22.21.1",
+    "owner_workflow_run": 42805885412,
+    "public_smoke_reported_by_owner": {
+      "started": "2026-11-10T11:21:32.645684+00:00",
+      "exit_code": 0,
+      "stdout": "{\"version\":\"1.3.16+abi.2.22.0\",\"abi\":[2,22,0],\"method\":\"preprocessing.scaling.row_l2_normalize\",\"analytic_zero_extremes_refusal_replay_pipeline\":\"PASS\"}",
+      "reused_witness": "existing run_row_l2_normalize.mjs; only import target changed to extracted public package"
+    },
+    "public_smoke_rerun_by_web": false,
+    "publication_claimed": true,
+    "publication_basis": "Retained public npm metadata, archive integrity and owner receipt",
+    "performed_by_web": false,
+    "independent_rebuild_claimed": false
   },
   "acquisition": {
-    "metadata_url": "https://registry.npmjs.org/@nirs4all/methods/1.3.15",
-    "tarball_url": "https://registry.npmjs.org/@nirs4all/methods/-/methods-1.3.15.tgz",
-    "size": 1939074,
-    "sha256": "85f26a1ff1b8803bc15afd6813dc7bfd9f5d197e5d51a574fbda9ea6beb4f8d1",
-    "sha1": "2016dd5bf43523d1f9c05c2df4c8c19c5fcdabb3",
-    "integrity": "sha512-gf6WOjxCgwAzZN6RbgbtZd2LE12/WrtgLM3obBuA4BW08AAP84ixZS78qAVrq2dFVbp/m8tCusgotkpWRjz4BA=="
+    "metadata_url": "https://registry.npmjs.org/@nirs4all%2fmethods/1.3.16",
+    "tarball_url": "https://registry.npmjs.org/@nirs4all/methods/-/methods-1.3.16.tgz",
+    "size": 1940083,
+    "sha256": "2e5c4c45eb5f4010038c14c5737bf7c861ded8a4e206b91bcec27726427cc897",
+    "sha1": "42e44748bdbc718db20f4cdb64416e939294b37d",
+    "integrity": "sha512-Fzk5NofwI2uWxMSqu+hqK0Wc2w8WaGOrTK7NwDZe3s/bZQdxXq2Peaay/QzUY07M0dD4I7CbaZemlYu5A4aOeA=="
   },
   "reproducibility": {
     "performed_by_web": false,
@@ -45,8 +93,8 @@
       "sha256": "fdf36a65d49049b2390deea222b37528ce85a9aef402270478561c2b0ba25d7a"
     },
     "estimatorRolesGenerated.js": {
-      "size": 117471,
-      "sha256": "ec634a5e8ffca3cc2529121afa874a2c54ae5b119b889d544f71f633f88b5306"
+      "size": 117912,
+      "sha256": "7cfc4a8e1adcd604ceb8eb31162049cf4acbf4c40ea4c2b6af040b4981e625c8"
     },
     "ffi.js": {
       "size": 5296,
@@ -97,8 +145,8 @@
       "sha256": "b96242fc5cba7a8b53178ccdad321425522a920ad329bff3dffabb64e359fce7"
     },
     "preprocessing.js": {
-      "size": 4988,
-      "sha256": "8bcca5b102afc2add3d56f83fc615f3da7e729754040aeb16e4195a820559bd9"
+      "size": 5004,
+      "sha256": "3e5d9f2c817622cf4d7380d95eed3ff2c28e464cf94c4cce997f348f2011391b"
     },
     "ranking.js": {
       "size": 6683,
@@ -126,7 +174,7 @@
     },
     "package.json": {
       "size": 3225,
-      "sha256": "6cf53bbdd956fb537c80d947ad3e18850dee3247c9ec39181a095a3fd9a56cc9"
+      "sha256": "30b57ded4de1b270077bb7177b1451af156f1708850fe68bc42e5eb471e9d648"
     },
     "LICENSES/COMMERCIAL-LICENSE_FR.md": {
       "size": 769,
@@ -161,8 +209,8 @@
       "sha256": "2389591087f0dbea32e6b252ac4f16b51e8bc513f8f1e9f440f50b94f531d38a"
     },
     "estimatorRolesGenerated.d.ts": {
-      "size": 173581,
-      "sha256": "19d46cf7c11dcfb862368d13007c1d0e8a41a9fe3dab6d70ae0d94e67da31cf0"
+      "size": 174033,
+      "sha256": "c0ee7e5109ed8ffb219d41fcfe26b42ea4da588ceb1539859a3bd620abee7ce3"
     },
     "ffi.d.ts": {
       "size": 2285,
@@ -281,8 +329,8 @@
       "sha256": "5b87c6cf33f65fa1a3093c03b106954cd38ec40f7d9a8d96c5ddc0df36617db0"
     },
     "n4m.wasm": {
-      "size": 4985673,
-      "sha256": "c96a9d6cf0d56bba2a37efc7d332f5bfde76d8dc1a7ae3185ea274e16b49e52c"
+      "size": 4996427,
+      "sha256": "287b843eccb95c52ff4210390ef12ad55696267699881f7eb8f2f9bd52a53f62"
     }
   }
 }

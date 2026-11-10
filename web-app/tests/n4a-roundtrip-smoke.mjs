@@ -9,6 +9,7 @@ import { join } from 'node:path'
 import { chromium } from 'playwright-core'
 import { methodsOnlyRefusal, readWebHostContainer, webHostDeclarationProblem } from './n4a-container-reader.mjs'
 import {
+  assertResultsPanels,
   capturePredictionPanel,
   collectRuntimeEvidence,
   comparePredictionPanels,
@@ -56,51 +57,6 @@ page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resourc
 page.on('pageerror', (e) => errors.push('PAGEERR: ' + e.message))
 const fail = (m) => { console.error('✗ ' + m); process.exitCode = 1 }
 
-// The legacy shared evidence helper still targets ResultsVisualization. Keep
-// its other numerical/round-trip helpers intact; assert the adopted UI here.
-async function assertInspectorPanels(page) {
-  const inspector = page.locator('[data-owner-inspector]')
-  await inspector.waitFor({ timeout: 10000 })
-  await inspector.locator('[data-testid="n4a-results-list"]').waitFor({ timeout: 10000 })
-  await inspector.locator('svg[role="img"][aria-label="Predicted versus observed"]').waitFor({ timeout: 10000 })
-  await page.waitForFunction(() => {
-    const svg = document.querySelector('[data-owner-inspector] svg[role="img"][aria-label="Predicted versus observed"]')
-    const points = Number(svg?.querySelector('desc')?.textContent?.match(/^(\d+) points\b/)?.[1] ?? 0)
-    const canvas = svg?.closest('.n4wb-plot')?.querySelector('canvas')
-    if (!points || !canvas?.width || !canvas?.height) return false
-    const pixels = canvas.getContext('2d')?.getImageData(0, 0, canvas.width, canvas.height).data
-    return pixels?.some((value, index) => index % 4 === 3 && value > 0) === true
-  }, null, { timeout: 10000 })
-  const owner = await page.evaluate(() => {
-    const run = window.__n4aLastRun
-    return run ? { metric: run.scoreMetric, cv: run.cv, refit: run.refit } : null
-  })
-  if (!owner?.cv?.predictions.length || owner.cv.status !== 'completed') throw new Error('missing real completed CV predictions')
-  await inspector.locator('[data-testid="n4a-results-list"]').getByText('CV Scores', { exact: true }).first().waitFor()
-  await inspector.locator('[data-testid="n4a-results-list"]').getByText(owner.refit.name, { exact: true }).first().waitFor()
-  const scoreRef = await inspector.locator('label').filter({ hasText: 'Evaluation score' }).locator('select').inputValue()
-  if (scoreRef !== `${owner.metric}:cv`) throw new Error(`unexpected Inspector score context ${scoreRef}`)
-  const selectedScore = inspector.locator('summary').filter({ hasText: 'Selected owner score:' })
-  if (!(await selectedScore.innerText()).includes(owner.cv.name)) throw new Error('selected owner score context is missing')
-  await selectedScore.click()
-  const rows = await inspector.locator('[aria-label="Selected owner predictions"] tbody tr').evaluateAll((nodes) =>
-    nodes.map((row) => Array.from(row.querySelectorAll('th, td'), (cell) => cell.textContent.trim())),
-  )
-  const expected = owner.cv.predictions.map((row) => [String(row.sampleId), String(row.actualLabel ?? row.actual), String(row.predictedLabel ?? row.predicted), String(row.residual)])
-  if (JSON.stringify(rows) !== JSON.stringify(expected)) throw new Error('rendered owner CV prediction rows changed')
-  return {
-    results_list: true,
-    results_visualization: true,
-    results_inspector: true,
-    has_cv_scores: true,
-    has_refit_scores: true,
-    has_prediction_view: true,
-    chart_count: await inspector.locator('svg[role="img"][aria-label="Predicted versus observed"]').count(),
-    prediction_rows: rows.length,
-    score_context: scoreRef,
-  }
-}
-
 try {
   // 1. train a model
   await page.goto(APP_URL, { waitUntil: 'load', timeout: 30000 })
@@ -118,7 +74,7 @@ try {
     await mkdir(ARTIFACTS_DIR, { recursive: true })
     await writeFile(join(ARTIFACTS_DIR, 'predictions.rt_result.json'), rtResultJson + '\n')
   }
-  evidence.training_results_panels = await assertInspectorPanels(page)
+  evidence.training_results_panels = await assertResultsPanels(page)
   evidence.training_runtime = await collectRuntimeEvidence(page)
   console.log('✓ trained a model')
 

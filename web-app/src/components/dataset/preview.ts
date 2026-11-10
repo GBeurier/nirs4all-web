@@ -1,21 +1,15 @@
-// Explore-only spectral preview: apply the shipped JS preprocessors to the
-// uploaded spectra and shape them for recharts (subsampled lines + a min–max
-// range band + the mean), with Original / Processed / Both / Difference modes.
-// Stateful ops (MSC) are fit on the TRAIN rows only, so the preview is honest
-// about leakage. This is viewing only — the real run still goes through libn4m.
-import { type Mat, selectRows } from '@/engine/algo/linalg'
-import { makeTransformer } from '@/engine/algo/preprocessing'
+// Display models only. Preprocessing, PCA and fold construction execute in owner WASM.
 import type { MaterializedDataset, Partition } from '@/engine/types'
 
 export interface PreviewOp {
   id: string
   label: string
-  /** catalog `type` token for makeTransformer; '' = raw (no transform) */
+  /** Native owner operator token; empty means raw (no transform). */
   type: string
   params: Record<string, unknown>
 }
 
-/** The core preprocessors the offline JS engine implements (makeTransformer). */
+/** Preserved Explore controls, executed by the owner preview worker. */
 export const PREVIEW_OPS: PreviewOp[] = [
   { id: 'none', label: 'Raw', type: '', params: {} },
   { id: 'snv', label: 'SNV', type: 'n4m:preprocessing.scatter.snv', params: {} },
@@ -23,29 +17,11 @@ export const PREVIEW_OPS: PreviewOp[] = [
   { id: 'sg', label: 'SG smooth', type: 'n4m:preprocessing.derivatives.savitzky_golay', params: { window_length: 11, polyorder: 2, deriv: 0 } },
   { id: 'sg1', label: 'SG 1st deriv', type: 'n4m:preprocessing.derivatives.savitzky_golay', params: { window_length: 11, polyorder: 2, deriv: 1 } },
   { id: 'sg2', label: 'SG 2nd deriv', type: 'n4m:preprocessing.derivatives.savitzky_golay', params: { window_length: 15, polyorder: 2, deriv: 2 } },
-  { id: 'd1', label: '1st derivative', type: 'n4m:preprocessing.derivatives.first_derivative', params: { order: 1 } },
+  { id: 'd1', label: '1st derivative', type: 'n4m:preprocessing.derivatives.first_derivative', params: { delta: 1, edge_order: 1 } },
   { id: 'detrend', label: 'Detrend', type: 'n4m:preprocessing.baselines.detrend', params: { polyorder: 1 } },
   { id: 'gauss', label: 'Gaussian', type: 'n4m:preprocessing.smoothing.gaussian', params: { sigma: 2 } },
-  { id: 'norm', label: 'Normalize (L2)', type: 'Normalize', params: { norm: 'l2' } },
+  { id: 'norm', label: 'Normalize (L2)', type: 'n4m:preprocessing.scaling.row_l2_normalize', params: {} },
 ]
-
-/** Apply a preview op to the full X, fitting stateful ops on the train rows only
- *  (no leakage). Returns a processed row-major buffer, or null for raw / errors. */
-export function applyPreview(ds: MaterializedDataset, op: PreviewOp): Float64Array | null {
-  if (!op.type) return null
-  try {
-    const full: Mat = { data: ds.X, rows: ds.nSamples, cols: ds.nFeatures }
-    // Fit stateful ops (MSC) on the TRAIN rows only — exclude both test AND
-    // predict rows so the preview is leakage-honest; fall back to all rows if
-    // the dataset has no explicit train partition.
-    const trainIdx: number[] = []
-    for (let i = 0; i < ds.nSamples; i++) if (ds.partitions[i] === 'train') trainIdx.push(i)
-    const train = trainIdx.length > 0 ? selectRows(full, trainIdx) : full
-    return makeTransformer(op.type, op.params, train).apply(full).data
-  } catch {
-    return null
-  }
-}
 
 export type PartitionFilter = 'all' | 'train' | 'test'
 export type ViewMode = 'original' | 'processed' | 'both' | 'difference'

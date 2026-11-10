@@ -156,6 +156,38 @@ try {
   if (/by dag-ml/i.test(body)) console.log('✓ run via dag-ml-wasm (badge present)')
   else fail('expected a "by dag-ml" badge on the served build')
 
+  // A nonwinning variant must never borrow the selected model's predictions.
+  await page.evaluate(() => { window.__n4aGeneratorRun = window.__n4aLastRun })
+  const openInspector = page.getByRole('button', { name: 'Open Results Inspector', exact: true })
+  await openInspector.click()
+  const inspector = page.locator('[data-owner-inspector]')
+  await inspector.waitFor({ state: 'visible' })
+  await inspector.getByRole('listbox').getByRole('option', { selected: false }).first().click()
+  await page.waitForFunction(() => {
+    const host = document.querySelector('[data-owner-inspector]')
+    const chain = host?.getAttribute('data-selected-chain-id')
+    if (!chain || host.closest('[hidden]')) return false
+    const [runId, variantId] = JSON.parse(chain)
+    return runId === window.__n4aLastRun.id && window.__n4aLastRun.variants.some((variant) => variant.variantId === variantId && !variant.selected)
+      && !host.hasAttribute('data-selected-score-id')
+  })
+  const selectedVariant = await inspector.getAttribute('data-selected-chain-id')
+  await inspector.getByText('Predictions unavailable in Web for a non-selected variant', { exact: false }).first().waitFor({ state: 'visible' })
+  if (await inspector.locator('[aria-label="Selected owner predictions"]').count()) throw new Error('nonwinning variant displayed winner prediction rows')
+  await page.getByRole('button', { name: 'Back to Results', exact: true }).click()
+  await page.getByTestId('n4a-score-placeholder').waitFor({ state: 'visible' })
+  if (await page.getByTestId('n4a-results-visualization').count()) throw new Error('nonwinning variant retained the winner visualization')
+  if (await page.getByTestId('n4a-results-list').count() !== 1) throw new Error('Inspector created a duplicate ResultsList')
+  await openInspector.click()
+  await inspector.waitFor({ state: 'visible' })
+  if (await inspector.getAttribute('data-selected-chain-id') !== selectedVariant) throw new Error('Back/open lost the nonwinning variant selection')
+  if (!(await page.evaluate(() => window.__n4aGeneratorRun === window.__n4aLastRun))) throw new Error('variant navigation replaced the existing owner run')
+  await page.getByRole('button', { name: 'Back to Results', exact: true }).click()
+  const winner = await page.evaluate(() => ({ run: window.__n4aLastRun.id, score: window.__n4aLastRun.cv.id }))
+  await page.locator(`[data-run-id="${winner.run}"][data-score-id="${winner.score}"]`).click()
+  await page.getByTestId('n4a-results-visualization').waitFor({ state: 'visible' })
+  console.log('✓ nonwinning variant keeps its run/selection without borrowing winner predictions')
+
   await page.screenshot({ path: '/tmp/n4a_generators_smoke.png', fullPage: true })
 
   if (errors.length) {

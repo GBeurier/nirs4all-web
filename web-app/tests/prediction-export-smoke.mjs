@@ -46,7 +46,7 @@ try {
     await page.locator('button').filter({ hasText: fixture.sample }).first().click()
     await page.locator('[data-step="pipeline"]').click()
     await page.getByRole('button', { name: /Run pipeline/i }).click()
-    await page.getByText('CV Scores', { exact: true }).first().waitFor({ timeout: 60000 })
+    await page.getByText('CV Scores', { exact: false }).first().waitFor({ timeout: 60000 })
     await page.locator('[data-step="predict"]').click()
     const exportButton = page.getByRole('button', { name: 'Export predictions', exact: true })
     assert.equal(await exportButton.isDisabled(), true)

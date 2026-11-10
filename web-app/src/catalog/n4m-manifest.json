@@ -7411,6 +7411,89 @@
       ]
     },
     {
+      "method_id": "models.pls.opls",
+      "fq_name": "n4m.estimators.regression.latent.opls",
+      "kind": "estimator",
+      "roles": [
+        "transformer",
+        "regressor"
+      ],
+      "node_kinds": [
+        "model",
+        "transform"
+      ],
+      "capabilities": [
+        "transform",
+        "predict",
+        "serializable",
+        "affine"
+      ],
+      "state_format": "n4mm",
+      "inputs": {
+        "y": "required",
+        "labels": "none",
+        "sample_weight": "none",
+        "groups": "none",
+        "feature_groups": "none",
+        "blocks": "none",
+        "axis": "none",
+        "target_domain": "none",
+        "fold_ids": "none"
+      },
+      "params": [
+        {
+          "name": "n_components",
+          "type": "int",
+          "required": false,
+          "default": 2,
+          "min": 1,
+          "max": null,
+          "choices": [],
+          "recorded": true
+        },
+        {
+          "name": "center_x",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "min": null,
+          "max": null,
+          "choices": [],
+          "recorded": true
+        },
+        {
+          "name": "scale_x",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "min": null,
+          "max": null,
+          "choices": [],
+          "recorded": true
+        },
+        {
+          "name": "center_y",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "min": null,
+          "max": null,
+          "choices": [],
+          "recorded": true
+        },
+        {
+          "name": "scale_y",
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "min": null,
+          "max": null,
+          "choices": [],
+          "recorded": true
+        }
+      ]
+    },
+    {
       "method_id": "models.pls.pcr",
       "fq_name": "n4m.estimators.regression.latent.pcr",
       "kind": "estimator",
@@ -10448,6 +10531,34 @@
       ]
     },
     {
+      "method_id": "preprocessing.scaling.row_l2_normalize",
+      "fq_name": "n4m.transform.scaling.row_l2_normalize",
+      "kind": "estimator",
+      "roles": [
+        "transformer"
+      ],
+      "node_kinds": [
+        "transform"
+      ],
+      "capabilities": [
+        "transform",
+        "serializable"
+      ],
+      "state_format": "width",
+      "inputs": {
+        "y": "optional",
+        "labels": "none",
+        "sample_weight": "none",
+        "groups": "none",
+        "feature_groups": "none",
+        "blocks": "none",
+        "axis": "none",
+        "target_domain": "none",
+        "fold_ids": "none"
+      },
+      "params": []
+    },
+    {
       "method_id": "preprocessing.scaling.simple_scale",
       "fq_name": "n4m.transform.scaling.simple_scale",
       "kind": "estimator",
@@ -10518,6 +10629,16 @@
           "required": false,
           "default": true,
           "min": null,
+          "max": null,
+          "choices": [],
+          "recorded": false
+        },
+        {
+          "name": "ddof",
+          "type": "int",
+          "required": false,
+          "default": 0,
+          "min": 0,
           "max": null,
           "choices": [],
           "recorded": false
@@ -14616,6 +14737,40 @@
           "default": null,
           "min": 0,
           "max": null,
+          "choices": [],
+          "recorded": false
+        }
+      ]
+    },
+    {
+      "method_id": "utilities.finite_column_quantiles",
+      "fq_name": "n4m.utilities.finite_column_quantiles",
+      "kind": "procedure",
+      "roles": [
+        "generic"
+      ],
+      "node_kinds": [],
+      "capabilities": [],
+      "state_format": "",
+      "inputs": {
+        "y": "none",
+        "labels": "none",
+        "sample_weight": "none",
+        "groups": "none",
+        "feature_groups": "none",
+        "blocks": "none",
+        "axis": "none",
+        "target_domain": "none",
+        "fold_ids": "none"
+      },
+      "params": [
+        {
+          "name": "probabilities",
+          "type": "double_array",
+          "required": true,
+          "default": null,
+          "min": 0,
+          "max": 1,
           "choices": [],
           "recorded": false
         }

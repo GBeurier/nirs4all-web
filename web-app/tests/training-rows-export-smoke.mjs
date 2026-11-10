@@ -20,7 +20,10 @@ page.on('pageerror', (e) => errors.push('PAGEERR: ' + e.message))
 const fail = (m) => { console.error('✗ ' + m); process.exitCode = 1 }
 
 async function openModelExport() {
-  await page.getByRole('button', { name: /^Export/i }).first().click()
+  const list = page.getByTestId('n4a-results-list')
+  await list.waitFor({ state: 'visible' })
+  if (await list.count() !== 1) throw new Error('expected one Results list and one export consent flow')
+  await list.getByRole('button', { name: /^Export/i }).first().click()
   await page.getByRole('menuitem', { name: /Model bundle/i }).click()
 }
 

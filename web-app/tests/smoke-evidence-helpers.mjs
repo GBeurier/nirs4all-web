@@ -183,58 +183,62 @@ export function assertNativeRefitExecution(runtime, label) {
   if (runtime.scheduler_fallback) throw new Error(`${label} used a scheduler fallback`)
 }
 
+/** Check the restored result panels, then the dedicated owner Inspector, and return. */
 export async function assertResultsPanels(page) {
-  const inspector = page.locator('[data-owner-inspector]')
-  await inspector.waitFor({ timeout: 10000 })
-  await inspector.locator('[data-testid="n4a-results-list"]').waitFor({ timeout: 10000 })
+  const list = page.getByTestId('n4a-results-list')
+  const visualization = page.getByTestId('n4a-results-visualization')
+  await list.waitFor({ state: 'visible', timeout: 10000 })
+  await visualization.waitFor({ state: 'visible', timeout: 10000 })
+  if (await list.count() !== 1) throw new Error('Results must mount exactly one export/score list')
   const owner = await page.evaluate(() => {
     const run = window.__n4aLastRun
-    return run ? { metric: run.scoreMetric, task: run.taskType, score: run.cv ?? run.refit, kind: run.cv ? 'cv' : 'refit' } : null
+    return run ? { metric: run.scoreMetric, task: run.taskType, score: run.cv ?? run.refit, kind: run.cv ? 'cv' : run.refit.scoreContext?.evaluation === 'selection_validation' ? 'selection-validation' : 'refit' } : null
   })
   if (!owner?.score || owner.score.status !== 'completed' || !owner.score.predictions.length) throw new Error('missing completed owner predictions')
+  await list.locator('[data-score-id]').filter({ hasText: owner.score.name }).first().waitFor({ state: 'visible' })
+  const selectedScore = visualization.locator('summary').filter({ hasText: 'Selected owner score:' })
+  if (!(await selectedScore.innerText()).includes(owner.score.name)) throw new Error('selected score label differs from owner result')
+  const details = selectedScore.locator('..')
+  const wasOpen = await details.evaluate((node) => node.open)
+  if (!wasOpen) await selectedScore.click()
+  const rows = await visualization.locator('[aria-label="Selected owner predictions"] tbody tr').evaluateAll((nodes) =>
+    nodes.map((row) => Array.from(row.querySelectorAll('th, td'), (cell) => cell.textContent.trim())),
+  )
+  const expectedRows = owner.score.predictions.map((row) => [String(row.sampleId), String(row.actualLabel ?? row.actual), String(row.predictedLabel ?? row.predicted), String(row.residual)])
+  if (JSON.stringify(rows) !== JSON.stringify(expectedRows)) throw new Error('Results prediction rows differ from the real owner result')
+  if (!wasOpen) await selectedScore.click()
+  const panels = {
+    results_list: await list.isVisible(),
+    results_visualization: await visualization.isVisible(),
+    has_cv_scores: await list.getByText('CV Scores', { exact: false }).count() > 0,
+    has_refit_scores: await list.getByText(/Refit/).count() > 0,
+  }
+  if (!panels.has_cv_scores || !panels.has_refit_scores) throw new Error('Results list is missing CV or refit scores')
+
+  await page.getByRole('button', { name: 'Open Results Inspector', exact: true }).click()
+  const inspector = page.locator('[data-owner-inspector]')
+  await inspector.waitFor({ state: 'visible', timeout: 10000 })
   const scoreRef = await inspector.locator('label').filter({ hasText: 'Evaluation score' }).locator('select').inputValue()
   if (scoreRef !== `${owner.metric}:${owner.kind}`) throw new Error(`unexpected Inspector score context ${scoreRef}`)
   const classification = owner.task !== 'regression'
   const plotSelector = classification
     ? 'svg[role="img"][aria-label="Confusion matrix"]'
     : 'svg[role="img"][aria-label="Predicted versus observed"]'
-  await inspector.locator(plotSelector).waitFor({ timeout: 10000 })
+  await inspector.locator(plotSelector).waitFor({ state: 'visible', timeout: 10000 })
   await page.waitForFunction(({ plotSelector, classification }) => {
     const svg = document.querySelector(`[data-owner-inspector] ${plotSelector}`)
-    if (classification) return Array.from(svg?.querySelectorAll('.n4viz-cell-value') ?? []).some((cell) => Number(cell.textContent) > 0)
-    const points = Number(svg?.querySelector('desc')?.textContent?.match(/^(\d+) points\b/)?.[1] ?? 0)
-    const canvas = svg?.closest('.n4wb-plot')?.querySelector('canvas')
+    if (!svg?.getBoundingClientRect().width || svg.closest('[hidden]')) return false
+    if (classification) return Array.from(svg.querySelectorAll('.n4viz-cell-value')).some((cell) => Number(cell.textContent) > 0)
+    const points = Number(svg.querySelector('desc')?.textContent?.match(/^(\d+) points\b/)?.[1] ?? 0)
+    const canvas = svg.closest('.n4wb-plot')?.querySelector('canvas')
     if (!points || !canvas?.width || !canvas?.height) return false
     const pixels = canvas.getContext('2d')?.getImageData(0, 0, canvas.width, canvas.height).data
     return pixels?.some((value, index) => index % 4 === 3 && value > 0) === true
   }, { plotSelector, classification }, { timeout: 10000 })
-  const selectedScore = inspector.locator('summary').filter({ hasText: 'Selected owner score:' })
-  if (!(await selectedScore.innerText()).includes(owner.score.name)) throw new Error('selected score label differs from owner result')
-  const details = selectedScore.locator('..')
-  const wasOpen = await details.evaluate((node) => node.open)
-  if (!wasOpen) await selectedScore.click()
-  const rows = await inspector.locator('[aria-label="Selected owner predictions"] tbody tr').evaluateAll((nodes) =>
-    nodes.map((row) => Array.from(row.querySelectorAll('th, td'), (cell) => cell.textContent.trim())),
-  )
-  const expectedRows = owner.score.predictions.map((row) => [String(row.sampleId), String(row.actualLabel ?? row.actual), String(row.predictedLabel ?? row.predicted), String(row.residual)])
-  if (JSON.stringify(rows) !== JSON.stringify(expectedRows)) throw new Error('Inspector prediction rows differ from the real owner result')
-  if (!wasOpen) await selectedScore.click()
-  const panels = await page.evaluate(() => {
-    const body = document.body.innerText || ''
-    return {
-      results_list: Boolean(document.querySelector('[data-testid="n4a-results-list"]')),
-      results_visualization: Boolean(document.querySelector('[data-owner-inspector]')),
-      has_cv_scores: /CV Scores/.test(body),
-      has_refit_scores: /Refit/.test(body),
-      has_prediction_view: Boolean(document.querySelector('[data-owner-inspector] svg[role="img"][aria-label="Predicted versus observed"], [data-owner-inspector] svg[role="img"][aria-label="Confusion matrix"]')),
-      chart_count: document.querySelectorAll('[data-owner-inspector] svg[role="img"]').length,
-    }
-  })
-  if (!panels.results_list || !panels.results_visualization) throw new Error('missing Results list or visualization panel')
-  if (!panels.has_cv_scores) throw new Error('Results panel did not render CV Scores')
-  if (!panels.has_refit_scores) throw new Error('Results panel did not render Refit scores')
-  if (!panels.has_prediction_view) throw new Error('Results panel did not render a prediction visualization tab')
-  return { ...panels, selected_score_ref: scoreRef, owner_prediction_rows: rows.length }
+  const chartCount = await inspector.locator('svg[role="img"]:visible').count()
+  await page.getByRole('button', { name: 'Back to Results', exact: true }).click()
+  await visualization.waitFor({ state: 'visible' })
+  return { ...panels, results_inspector: true, has_prediction_view: true, chart_count: chartCount, selected_score_ref: scoreRef, owner_prediction_rows: rows.length, prediction_rows: rows.length, score_context: scoreRef }
 }
 
 function finiteMetrics(metrics) {
@@ -303,11 +307,11 @@ export function compareRunPredictionSummaries(reference, actual, tolerance = 1e-
 
 export async function capturePredictionPanel(page) {
   await page.waitForSelector('text=/samples predicted\\./', { timeout: 15000 })
-  await page.locator('svg.recharts-surface').first().waitFor({ timeout: 10000 })
+  await page.locator('svg.recharts-surface:visible').first().waitFor({ timeout: 10000 })
   return await page.evaluate(() => {
     const body = document.body.innerText || ''
     const sampleMatch = body.match(/(\d+)\s+samples?\s+predicted\./)
-    const table = Array.from(document.querySelectorAll('table')).find((node) => /Predicted value|Predicted class/.test(node.innerText || ''))
+    const table = Array.from(document.querySelectorAll('table')).find((node) => !node.closest('[hidden]') && /Predicted value|Predicted class/.test(node.innerText || ''))
     const displayValues = table
       ? Array.from(table.querySelectorAll('tbody tr')).map((row) => {
           const cells = Array.from(row.querySelectorAll('td')).map((cell) => (cell.textContent || '').trim())
@@ -318,7 +322,7 @@ export async function capturePredictionPanel(page) {
     return {
       panel_title: /Predict on new spectra/.test(body),
       predicted_samples: sampleMatch ? Number(sampleMatch[1]) : null,
-      chart_count: document.querySelectorAll('svg.recharts-surface').length,
+      chart_count: Array.from(document.querySelectorAll('svg.recharts-surface')).filter((node) => !node.closest('[hidden]') && node.getBoundingClientRect().width > 0).length,
       table_rows: displayValues.length,
       display_values: displayValues,
       numeric_values: numericValues,

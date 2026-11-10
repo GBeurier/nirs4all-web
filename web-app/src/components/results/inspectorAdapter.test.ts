@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { MaterializedDataset, PredRow, RunResult, ScoreNode } from '@/engine/types'
-import { inspectorResults } from './inspectorAdapter'
+import { defaultEvaluationScore, inspectorPredictionsForScore, inspectorResults, inspectorScoreRef, scoreEvaluationLabel, scoreForInspectorRef } from './inspectorAdapter'
 
 const prediction = (sampleId: string): PredRow => ({ sampleId, actual: 1, predicted: 2, residual: -1 })
 const node = (kind: ScoreNode['kind'], rows: PredRow[], name: string = kind): ScoreNode => ({
@@ -116,5 +116,82 @@ describe('single-holdout selection-validation projection', () => {
     expect(projected.predictions[projected.chains[0].id].partition).toEqual(['validation'])
     expect(projected.chains[0].scores['r2:selection-validation']).toBeUndefined()
     expect(run.refit.scoreContext.undefined_metrics).toEqual({ r2: 'constant_target' })
+  })
+})
+
+
+describe('restored Results and Inspector score synchronization', () => {
+  it('defaults to validation or held-out evidence and requires opt-in for training resubstitution', () => {
+    const run = fixture()
+    expect(defaultEvaluationScore(run)).toBe(run.cv)
+    run.cv = undefined
+    expect(defaultEvaluationScore(run)).toBe(run.refit)
+    expect(scoreEvaluationLabel(run, run.refit)).toBe('Held-out test')
+    run.refit.name = 'Refit · train'
+    expect(defaultEvaluationScore(run)).toBeNull()
+    expect(scoreEvaluationLabel(run, run.refit)).toBe('Training resubstitution')
+    run.refit.scoreContext = { unit: 'sample', identityBasis: 'declared', physicalKey: 'sample_id', nObservations: 1, nPhysicalSamples: 1, aggregation: 'dag:single-holdout', evaluation: 'selection_validation', independent_test: false }
+    expect(defaultEvaluationScore(run)).toBe(run.refit)
+    expect(scoreEvaluationLabel(run, run.refit)).toBe('Selection validation')
+  })
+
+  it('maps evaluation contexts in both directions while retaining a selected fold', () => {
+    const run = fixture()
+    const data = inspectorResults([run], null, 'Dataset')
+    expect(inspectorScoreRef(run, run.folds[1], data.scoreRefs)).toBe('rmse:cv')
+    expect(inspectorScoreRef(run, run.refit, data.scoreRefs, 'r2')).toBe('r2:refit')
+    const cvRef = data.scoreRefs.find((ref) => ref.key === 'rmse:cv')!
+    const testRef = data.scoreRefs.find((ref) => ref.key === 'rmse:refit')!
+    expect(scoreForInspectorRef(run, cvRef, run.folds[1])).toBe(run.folds[1])
+    expect(scoreForInspectorRef(run, testRef, run.folds[1])).toBe(run.refit)
+    const otherRun = { ...run, id: 'other', folds: [{ ...run.folds[0], id: 'other-fold' }] }
+    expect(scoreForInspectorRef(otherRun, cvRef, run.folds[1])).toBe(otherRun.cv)
+    run.refit.scoreContext = { unit: 'observation', identityBasis: 'positional', physicalKey: 'row', nObservations: 1, nPhysicalSamples: null, aggregation: 'dag:single-holdout', evaluation: 'selection_validation', independent_test: false }
+    const validation = inspectorResults([run], null, 'Dataset')
+    expect(inspectorScoreRef(run, run.refit, validation.scoreRefs)).toBe('rmse:selection-validation')
+    expect(scoreForInspectorRef(run, validation.scoreRefs.find((ref) => ref.protocol === 'selection_validation')!)).toBe(run.refit)
+    expect(scoreForInspectorRef(run, testRef)).toBeNull()
+  })
+
+  it('plots only the selected owner cohort and never borrows winning predictions for another variant', () => {
+    const run = fixture()
+    const data = inspectorResults([run], null, 'Dataset')
+    const winner = data.defaultCompare[0]
+    const other = data.chains.find((chain) => chain.attributes?.selection !== 'dag-ml selected')!.id
+    const cv = inspectorPredictionsForScore(data, 'rmse:cv', run, run.cv)
+    expect(cv.predictions[winner].sampleKeys).toEqual(['a', 'b'])
+    expect(cv.predictions[winner].partition).toEqual(['validation', 'validation'])
+    expect(cv.predictions[winner].fold).toEqual(['fold-a', 'fold-b'])
+    const fold = inspectorPredictionsForScore(data, 'rmse:cv', run, run.folds[1])
+    expect(fold.predictions[winner].sampleKeys).toEqual(['b'])
+    expect(fold.predictions[winner].fold).toEqual(['fold-b'])
+    const test = inspectorPredictionsForScore(data, 'rmse:refit', run, run.refit)
+    expect(test.predictions[winner].sampleKeys).toEqual(['c'])
+    expect(test.predictions[winner].partition).toEqual(['test'])
+    for (const projection of [cv, fold, test]) {
+      expect(projection.predictions[other]).toBeUndefined()
+      expect(projection.unavailable[other]).toMatch(/non-selected/)
+    }
+  })
+
+  it('shows training prediction rows only after explicit opt-in and retains repeated observations', () => {
+    const run = fixture()
+    run.refit.name = 'Refit · train'
+    run.refit.predictions = [prediction('repeat'), { ...prediction('repeat'), predicted: 7 }]
+    run.cv = undefined
+    run.folds = []
+    const data = inspectorResults([run], null, 'Dataset')
+    const winner = data.defaultCompare[0]
+    expect(data.defaultScoreRef).toBeNull()
+    expect(inspectorScoreRef(run, run.refit, data.scoreRefs)).toBe('rmse:refit')
+    expect(scoreForInspectorRef(run, data.scoreRefs.find((ref) => ref.protocol === 'refit-resubstitution')!)).toBe(run.refit)
+    const hidden = inspectorPredictionsForScore(data, 'rmse:refit', run, run.refit)
+    expect(hidden.predictions[winner]).toBeUndefined()
+    const shown = inspectorPredictionsForScore(data, 'rmse:refit', run, run.refit, true)
+    expect(shown.predictions[winner].yPred).toEqual([2, 7])
+    expect(shown.predictions[winner].partition).toEqual(['train', 'train'])
+    expect(new Set(shown.predictions[winner].sampleKeys).size).toBe(2)
+    expect(shown.sampleLinking).toBe(false)
+    expect(shown.warnings[0]).toMatch(/no canonical row identity/)
   })
 })

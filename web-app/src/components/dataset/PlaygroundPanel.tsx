@@ -15,13 +15,14 @@ export function PlaygroundPanel({ ds, summary, onOpenConfig }: DatasetViewProps)
   const host = usePlaygroundHost(ds, dataset.id)
   const [pipeline, setPipeline] = useState<readonly PipelineStep[]>([])
   return (
-    <section aria-label="Dataset exploration" data-owner-playground>
-      <p className="mb-3 text-sm text-muted-foreground">
+    <section aria-label="Dataset exploration" data-owner-playground className="flex h-full min-h-0 flex-col">
+      <p className="mb-3 shrink-0 text-sm text-muted-foreground">
         {ds.nSamples} samples × {ds.nFeatures} wavelengths. {dataset.description}
         {' '}Preprocessing and PCA are fitted on all displayed rows, exploration only; they are separate from pipeline training.
-        {' '}UMAP, outlier monitoring, preview folds and repetition distances are unavailable in Web.
+        {' '}UMAP, outlier monitoring and repetition distances are unavailable in this Playground. Native preview folds are available on Explore’s PCA tab.
       </p>
       <Playground
+        className="flex-1"
         key={dataset.id}
         dataset={dataset}
         operators={PLAYGROUND_OPERATORS}
@@ -37,7 +38,7 @@ export function PlaygroundPanel({ ds, summary, onOpenConfig }: DatasetViewProps)
           needsProjection: 'Requested projection unavailable in Web. UMAP is unsupported; PCA requires Methods and at least two rows.',
           needsOutliers: 'Outlier monitoring unavailable in Web: no reference/monitored protocol configured.',
           needsLoadings: 'PCA loadings unavailable in Web for this request; check the owner preview status.',
-          needsFolds: 'Preview folds unavailable in Web; configure CV in the pipeline editor.',
+          needsFolds: 'Use Fold colouring on Explore’s PCA tab for a native preview; configure training CV in the pipeline editor.',
           needsRepetitions: 'Repetition distances unavailable in Web.',
           needsGroupColumn: 'Repetition distances unavailable in Web.',
         }}

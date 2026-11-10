@@ -19,6 +19,8 @@ export interface DatasetUploadProps {
 export interface DatasetViewProps {
   ds: MaterializedDataset
   summary: DatasetSummary
+  /** Current run CV configuration supplies preview defaults and grouping policy. */
+  cv?: PipelineDSL['cv']
   onOpenConfig: () => void
 }
 export interface DatasetConfigDialogProps {
@@ -56,6 +58,9 @@ export interface ResultsListProps {
   selectedRunId: string | null
   selectedScoreId: string | null
   onSelect: (run: RunResult, score: ScoreNode) => void
+  onClearSelection?: () => void
+  /** Inspecting a non-selected variant changes the run without borrowing winner predictions. */
+  onSelectRun?: (run: RunResult) => void
 }
 export interface ResultsVisualizationProps {
   run: RunResult

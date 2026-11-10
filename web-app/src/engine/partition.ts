@@ -6,7 +6,8 @@ import type { MaterializedDataset } from './types'
 
 /** A row without a finite target (missing y, or a missing class label) never
  *  enters FIT, CV or scoring; it stays in the dataset for prediction. */
-export const hasTarget = (ds: MaterializedDataset, row: number): boolean => Number.isFinite(ds.y[row])
+export const hasTarget = (ds: MaterializedDataset, row: number): boolean =>
+  Number.isFinite(ds.y[row]) && (ds.taskType === 'regression' || ds.classes?.[row] !== '')
 
 /** Labeled row indices of the train partition (falls back to all non-predict rows). */
 export function trainRowsOf(ds: MaterializedDataset): number[] {

@@ -109,11 +109,11 @@ try {
           assert.equal(result.classes.length, sample === 'meat' ? 3 : 2)
           assert(result.cv.predictions.every((row) => row.predicted >= 0 && row.predicted < result.classes.length))
         }
-        await page.getByText('CV Scores', { exact: true }).first().waitFor()
+        await page.getByText('CV Scores', { exact: false }).first().waitFor()
         await page.locator('[data-step="predict"]').click()
         await page.getByLabel('Spectra header row', { exact: true }).selectOption('yes')
         await page.locator('input[type=file]').last().setInputFiles(new URL(`../src/data/demo/${sample}/Xtest.csv`, import.meta.url).pathname)
-        await page.locator('svg.recharts-surface').first().waitFor({ timeout: 30000 })
+        await page.locator('svg.recharts-surface:visible').first().waitFor({ timeout: 30000 })
         assert.deepEqual(errors, [])
         report.push({ sample, name, type: result.type, status: 'passed', cv: result.cv.metrics, milliseconds: Date.now() - start })
         console.log(`✓ ${sample}: ${name} — CV, refit and prediction`)

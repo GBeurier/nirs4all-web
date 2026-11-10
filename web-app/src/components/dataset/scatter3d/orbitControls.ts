@@ -56,6 +56,7 @@ export class OrbitControls {
   private readonly onMouseMove: (e: MouseEvent) => void
   private readonly onMouseUp: () => void
   private readonly onWheel: (e: WheelEvent) => void
+  private readonly onKeyDown: (e: KeyboardEvent) => void
   private readonly onTouchStart: (e: TouchEvent) => void
   private readonly onTouchMove: (e: TouchEvent) => void
   private readonly onTouchEnd: (e: TouchEvent) => void
@@ -86,6 +87,20 @@ export class OrbitControls {
     this.onWheel = (e) => {
       e.preventDefault()
       this.zoom(e.deltaY * this.options.zoomSpeed)
+    }
+    this.onKeyDown = (e) => {
+      if (e.altKey || e.ctrlKey || e.metaKey) return
+      switch (e.key) {
+        case 'ArrowLeft': this.rotate(-20, 0); break
+        case 'ArrowRight': this.rotate(20, 0); break
+        case 'ArrowUp': this.rotate(0, -20); break
+        case 'ArrowDown': this.rotate(0, 20); break
+        case '+': case '=': this.zoom(-0.1); break
+        case '-': this.zoom(0.1); break
+        case 'Home': this.reset(); break
+        default: return
+      }
+      e.preventDefault()
     }
     this.onTouchStart = (e) => {
       if (e.touches.length === 1) {
@@ -121,6 +136,7 @@ export class OrbitControls {
       }
     }
 
+    canvas.addEventListener('keydown', this.onKeyDown)
     canvas.addEventListener('mousedown', this.onMouseDown)
     canvas.addEventListener('wheel', this.onWheel, { passive: false })
     canvas.addEventListener('touchstart', this.onTouchStart, { passive: false })
@@ -179,6 +195,7 @@ export class OrbitControls {
 
   /** Remove all event listeners. */
   dispose(): void {
+    this.canvas.removeEventListener('keydown', this.onKeyDown)
     this.canvas.removeEventListener('mousedown', this.onMouseDown)
     this.canvas.removeEventListener('wheel', this.onWheel)
     this.canvas.removeEventListener('touchstart', this.onTouchStart)

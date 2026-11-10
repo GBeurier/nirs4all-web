@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url'
 import { createHash } from 'node:crypto'
 import { verifyPackage } from './public-package.mjs'
 const { pin, root } = verifyPackage('methods')
-const EXPECTED = { ...pin, runtimeVersion: '1.3.15+abi.2.22.0', abi: '2.22.0' }
+const EXPECTED = { ...pin, runtimeVersion: `${pin.version}+abi.${pin.abi}`, abi: pin.abi }
 async function assertRuntimeWitness() {
   const module = await import(`${pathToFileURL(join(root, 'index.js')).href}?verify=${Date.now()}`)
   await module.loadModule()

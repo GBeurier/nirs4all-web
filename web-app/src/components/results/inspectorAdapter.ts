@@ -1,5 +1,5 @@
 import type { ChainPredictions, InspectorChain, ScoreRef } from 'nirs4all-ui/inspector'
-import type { MaterializedDataset, Metrics, PredRow, RunResult } from '@/engine/types'
+import type { MaterializedDataset, Metrics, PredRow, RunResult, ScoreNode } from '@/engine/types'
 import { variantChains } from './_helpers'
 
 const DIRECTIONS = { rmse: true, mae: true, r2: false, accuracy: false, f1: false } as const
@@ -11,8 +11,34 @@ const valueOf = (metrics: Metrics | undefined, metric: Metric): number | null =>
 }
 
 /** Same owner score-node context used by engine/rt-result.ts; no row inference. */
-const selectionValidation = (run: RunResult): boolean => run.refit.scoreContext?.evaluation === 'selection_validation'
+export const selectionValidation = (run: RunResult): boolean => run.refit.scoreContext?.evaluation === 'selection_validation'
 export const refitIsTest = (run: RunResult): boolean => !selectionValidation(run) && /test/i.test(run.refit.name)
+
+/** Training resubstitution is available only through an explicit UI opt-in. */
+export const defaultEvaluationScore = (run: RunResult): ScoreNode | null =>
+  run.cv ?? (selectionValidation(run) || refitIsTest(run) ? run.refit : null)
+
+export function scoreEvaluationLabel(run: RunResult, score: ScoreNode): string {
+  if (score.scoreContext?.evaluation === 'selection_validation') return 'Selection validation'
+  if (score.kind === 'cv') return 'CV validation'
+  if (score.kind === 'fold') return 'CV fold validation'
+  return refitIsTest(run) ? 'Held-out test' : 'Training resubstitution'
+}
+
+export function inspectorScoreRef(run: RunResult, score: ScoreNode, refs: readonly ScoreRef[], metric: string = run.scoreMetric): string | null {
+  const protocol = score.kind === 'cv' || score.kind === 'fold' ? 'cv'
+    : selectionValidation(run) ? 'selection_validation' : refitIsTest(run) ? 'final' : 'refit-resubstitution'
+  return (refs.find((ref) => ref.protocol === protocol && ref.metric === metric)
+    ?? refs.find((ref) => ref.protocol === protocol))?.key ?? null
+}
+
+export function scoreForInspectorRef(run: RunResult, ref: ScoreRef, previous?: ScoreNode): ScoreNode | null {
+  if (ref.protocol === 'cv') return previous && (previous.kind === 'fold' || previous.kind === 'cv')
+    && [run.cv, ...run.folds].some((score) => score?.id === previous.id) ? previous : run.cv ?? null
+  if (ref.protocol === 'selection_validation') return selectionValidation(run) ? run.refit : null
+  if (ref.protocol === 'final') return refitIsTest(run) ? run.refit : null
+  return ref.protocol === 'refit-resubstitution' && !selectionValidation(run) && !refitIsTest(run) ? run.refit : null
+}
 
 /** Project owner results only; no scoring, selection, averaging or row joins by position. */
 export function inspectorResults(runs: readonly RunResult[], dataset: MaterializedDataset | null, datasetName: string) {
@@ -117,4 +143,45 @@ export function inspectorResults(runs: readonly RunResult[], dataset: Materializ
   }
   if (!sampleLinking) warnings.push('Cross-chain agreement and sample linking are unavailable in Web: repeated sample IDs have no canonical row identity in owner predictions. Every prediction is retained separately.')
   return { chains, scoreRefs, defaultScoreRef, predictions, unavailablePredictions, defaultCompare, chainRuns, sampleLinking, warnings }
+}
+
+/** Restrict chart data to the active owner's cohort; never mix CV with test rows. */
+export function inspectorPredictionsForScore(
+  data: ReturnType<typeof inspectorResults>, refKey: string,
+  selectedRun?: RunResult, selectedScore?: ScoreNode, allowTraining = false,
+) {
+  const ref = data.scoreRefs.find((candidate) => candidate.key === refKey)
+  const predictions: Record<string, ChainPredictions> = {}
+  const unavailable = { ...data.unavailablePredictions }
+  let sampleLinking = data.sampleLinking
+  for (const id of data.defaultCompare) {
+    const run = data.chainRuns.get(id)!
+    const node = ref && scoreForInspectorRef(run, ref, selectedRun?.id === run.id ? selectedScore : undefined)
+    if (!node || (ref?.protocol === 'refit-resubstitution' && !allowTraining)) {
+      unavailable[id] = 'Predictions unavailable for this run in the selected evaluation context.'
+      continue
+    }
+    if (node.predictions.length === 0) {
+      unavailable[id] = 'The owner supplied no predictions for this evaluation score.'
+      continue
+    }
+    const unique = new Set(node.predictions.map((row) => row.sampleId)).size === node.predictions.length
+    const linkable = data.sampleLinking && unique
+    if (!unique) sampleLinking = false
+    predictions[id] = {
+      chainId: id,
+      sampleKeys: node.predictions.map((row, index) => linkable ? row.sampleId : JSON.stringify([run.id, node.id, index])),
+      yTrue: node.predictions.map((row) => run.taskType === 'regression' ? row.actual : row.actualLabel ?? run.model.classes?.[row.actual] ?? row.actual),
+      yPred: node.predictions.map((row) => run.taskType === 'regression' ? row.predicted : row.predictedLabel ?? run.model.classes?.[row.predicted] ?? row.predicted),
+      partition: node.predictions.map(() => ref!.partition),
+      fold: node.kind === 'fold' ? node.predictions.map(() => node.id) : ref!.protocol === 'cv'
+        ? data.predictions[id]?.partition?.flatMap((partition, index) => partition === 'validation' ? [data.predictions[id].fold?.[index] ?? null] : [])
+        : node.predictions.map(() => null),
+      classes: run.model.classes,
+    }
+    delete unavailable[id]
+  }
+  const warnings = [...data.warnings]
+  if (!sampleLinking && warnings.length === 0) warnings.push('Cross-chain agreement and sample linking are unavailable in Web: repeated sample IDs have no canonical row identity in owner predictions. Every prediction is retained separately.')
+  return { predictions, unavailable, sampleLinking, warnings }
 }

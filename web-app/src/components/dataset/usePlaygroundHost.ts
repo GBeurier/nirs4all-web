@@ -2,24 +2,26 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PlaygroundResult, PlaygroundRunRequest, PlaygroundStatus } from 'nirs4all-ui/playground'
 import { createPreviewWorker } from '@/engine/preview-worker'
 import type { MaterializedDataset } from '@/engine/types'
+import type { OwnerPreviewOptions } from '@/engine/preview-options'
 
 /** Response identity is scoped to both a dataset revision and a request. */
 export function createPreviewGate() {
-  let latest: { datasetKey: string; requestId: string } | null = null
+  let latest: { datasetKey: string; requestId: string; revision: string } | null = null
   return {
     invalidate() { latest = null },
-    start(datasetKey: string, requestId: string) { latest = { datasetKey, requestId } },
-    accepts(datasetKey: string, requestId: string) {
-      return latest?.datasetKey === datasetKey && latest.requestId === requestId
+    start(datasetKey: string, requestId: string, revision = '') { latest = { datasetKey, requestId, revision } },
+    accepts(datasetKey: string, requestId: string, revision = '') {
+      return latest?.datasetKey === datasetKey && latest.requestId === requestId && latest.revision === revision
     },
   }
 }
 
-export function usePlaygroundHost(ds: MaterializedDataset, datasetKey: string) {
+export function usePlaygroundHost(ds: MaterializedDataset, datasetKey: string, revision = '') {
   const worker = useRef<Worker | null>(null)
   const active = useRef(false)
   const gate = useRef(createPreviewGate())
   const currentKey = useRef(datasetKey)
+  const currentRevision = useRef(revision)
   const [result, setResult] = useState<PlaygroundResult | null>(null)
   const [status, setStatus] = useState<PlaygroundStatus>('idle')
   const [error, setError] = useState<string | null>(null)
@@ -36,8 +38,9 @@ export function usePlaygroundHost(ds: MaterializedDataset, datasetKey: string) {
     setStatus('idle')
     setError(null)
   }, [])
-  if (currentKey.current !== datasetKey) {
+  if (currentKey.current !== datasetKey || currentRevision.current !== revision) {
     currentKey.current = datasetKey
+    currentRevision.current = revision
     invalidate()
   }
   useEffect(() => () => {
@@ -47,10 +50,10 @@ export function usePlaygroundHost(ds: MaterializedDataset, datasetKey: string) {
     active.current = false
   }, [])
 
-  const onRunRequest = useCallback((request: PlaygroundRunRequest) => {
+  const onRunRequest = useCallback((request: PlaygroundRunRequest, options?: OwnerPreviewOptions) => {
+    if (request.datasetId !== currentKey.current || revision !== currentRevision.current) return
     invalidate()
-    if (request.datasetId !== currentKey.current) return
-    gate.current.start(datasetKey, request.id)
+    gate.current.start(datasetKey, request.id, revision)
     active.current = true
     setStatus('running')
     try {
@@ -63,7 +66,7 @@ export function usePlaygroundHost(ds: MaterializedDataset, datasetKey: string) {
       worker.current = job
       job.onmessage = (event: MessageEvent) => {
         const response = event.data
-        if (!gate.current.accepts(response.datasetKey, response.id) || response.id !== request.id) return
+        if (!gate.current.accepts(response.datasetKey, response.id, revision) || response.id !== request.id) return
         if (response.type === 'preview-result' && response.result.requestId === request.id) {
           setResult(response.result)
           setStatus('idle')
@@ -78,7 +81,7 @@ export function usePlaygroundHost(ds: MaterializedDataset, datasetKey: string) {
         }
       }
       job.onerror = (event) => {
-        if (!gate.current.accepts(datasetKey, request.id)) return
+        if (!gate.current.accepts(datasetKey, request.id, revision)) return
         setError(event.message || 'Owner preview unavailable in Web.')
         setStatus('error')
         active.current = false
@@ -86,7 +89,7 @@ export function usePlaygroundHost(ds: MaterializedDataset, datasetKey: string) {
         if (worker.current === job) worker.current = null
       }
       // Clone across the worker boundary; never transfer/detach the live X.
-      job.postMessage({ type: 'preview', id: request.id, datasetKey, ds, request })
+      job.postMessage({ type: 'preview', id: request.id, datasetKey, ds, request, options })
     } catch (cause) {
       worker.current?.terminate()
       worker.current = null
@@ -94,7 +97,7 @@ export function usePlaygroundHost(ds: MaterializedDataset, datasetKey: string) {
       setError(cause instanceof Error ? cause.message : String(cause))
       setStatus('error')
     }
-  }, [ds, datasetKey, invalidate])
+  }, [ds, datasetKey, revision, invalidate])
 
   return { result, status, error, onRunRequest, invalidate }
 }

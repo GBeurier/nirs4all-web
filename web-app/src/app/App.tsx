@@ -16,10 +16,16 @@ import {
 import { BrandMark } from '@/app/components/BrandMark'
 import { DatasetConfigDialog } from '@/components/dataset/DatasetConfigDialog'
 import { DatasetUpload } from '@/components/dataset/DatasetUpload'
+import { DatasetView } from '@/components/dataset/DatasetView'
+import { playgroundDatasetKey } from '@/components/dataset/playgroundAdapter'
 import { PlaygroundPanel } from '@/components/dataset/PlaygroundPanel'
 import { ExecutionLog, PipelineBuilder } from '@/components/pipeline'
 import { migrateLegacyBranch } from '@/components/pipeline/_helpers'
 import { PredictionPanel } from '@/components/results/PredictionPanel'
+import { ResultsList } from '@/components/results/ResultsList'
+import { ResultsVisualization } from '@/components/results/ResultsVisualization'
+import { ResultsNotices } from '@/components/results/ResultsNotices'
+import { defaultEvaluationScore } from '@/components/results/inspectorAdapter'
 import { ResultsWorkbench } from '@/components/results/ResultsWorkbench'
 import { defaultPipeline } from '@/catalog/build'
 import { engine } from '@/engine/client'
@@ -44,8 +50,9 @@ type E2EDatasetPayload = Omit<MaterializedDataset, 'X' | 'y'> & { X: number[]; y
 declare global {
   interface Window {
     __n4aE2E?: {
-      importRtResult: (wire: RtResultWire) => { runId: string; selectedScoreId: string; scoreCount: number }
-      runDatasetPipeline: (payload: { dataset: E2EDatasetPayload; pipeline: PipelineDSL }) => Promise<{ runId: string; selectedScoreId: string; scoreCount: number; engine: string; refitRows: number; cvRows: number }>
+      getSessionIdentity: () => { datasetKey: string | null; runCalls: number; datasetLoads: number; lastRunId: string | null }
+      importRtResult: (wire: RtResultWire) => { runId: string; selectedScoreId: string | null; scoreCount: number }
+      runDatasetPipeline: (payload: { dataset: E2EDatasetPayload; pipeline: PipelineDSL }) => Promise<{ runId: string; selectedScoreId: string | null; scoreCount: number; engine: string; refitRows: number; cvRows: number }>
     }
     __n4aLastRun?: RunResult
   }
@@ -88,9 +95,17 @@ export default function App() {
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
   const [loadedModel, setLoadedModel] = useState<LoadedModel | null>(() => loadSession().model ?? null)
   const [step, setStep] = useState<StepId>('dataset')
+  const [workbench, setWorkbench] = useState<'playground' | 'inspector' | null>(null)
+  const [openedWorkbenches, setOpenedWorkbenches] = useState({ playground: false, inspector: false })
+  const workbenchHeading = useRef<HTMLHeadingElement | null>(null)
+  const workbenchOpener = useRef<HTMLElement | null>(null)
   const [theme, setTheme] = useState<Theme>(() => loadTheme())
   const abortRef = useRef<AbortController | null>(null)
   const runTokenRef = useRef(0)
+  // Read-only E2E counters distinguish navigation from execution or dataset adoption.
+  const sessionActivity = useRef({ runCalls: 0, datasetLoads: 0 })
+  const liveDataset = useRef(dataset)
+  liveDataset.current = dataset
 
   // apply the persisted light/dark choice to <html> (and on every toggle)
   useEffect(() => {
@@ -101,6 +116,10 @@ export default function App() {
     abortRef.current?.abort()
     abortRef.current = null
     runTokenRef.current++
+    setWorkbench(null)
+    setOpenedWorkbenches({ playground: false, inspector: false })
+    setConfigOpen(false)
+    sessionActivity.current.datasetLoads++
     setDataset(ds)
     setSummary(summarize(ds))
     setDatasetInfo({
@@ -172,6 +191,7 @@ export default function App() {
   }, [pipeline, loadedModel, sampleId])
 
   const onImportModel = useCallback(async (file: File) => {
+    setWorkbench(null)
     setError(null)
     try {
       const loaded = await parseN4aFile(file)
@@ -185,6 +205,7 @@ export default function App() {
 
   const applyConfigPatch = useCallback(
     (patch: DatasetConfigPatch) => {
+      setWorkbench(null)
       // a target/task/partition change invalidates any prior run — abort, drop
       // stale results & their fitted models, and send the user back to the pipeline
       if (patch.taskType !== undefined || patch.testFraction != null || patch.repetition !== undefined) {
@@ -249,6 +270,7 @@ export default function App() {
       })
     }
     try {
+      sessionActivity.current.runCalls++
       const result = await engine.run(dataset, pipeline, { signal: ctrl.signal, onProgress: handleProgress })
       if (token !== runTokenRef.current) return
       // Test-only introspection hook (read by tests/generators-smoke.mjs to prove
@@ -256,7 +278,7 @@ export default function App() {
       ;(window as unknown as { __n4aLastRun?: RunResult }).__n4aLastRun = result
       setRuns((r) => [result, ...r])
       setSelectedRunId(result.id)
-      setSelectedScore(result.cv ?? result.refit) // refit-only run has no CV node
+      setSelectedScore(defaultEvaluationScore(result))
       setStep('results')
     } catch (e) {
       if (token === runTokenRef.current && !(e instanceof DOMException && e.name === 'AbortError')) setError(formatRuntimeErrorForUi(e))
@@ -277,18 +299,30 @@ export default function App() {
     setSelectedScore(score)
   }, [])
 
+  const onSelectRun = useCallback((run: RunResult) => {
+    setSelectedRunId(run.id)
+    setSelectedScore(null)
+  }, [])
+  const onClearSelection = useCallback(() => setSelectedScore(null), [])
+
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('n4a_e2e') !== '1') return
     window.__n4aE2E = {
+      getSessionIdentity: () => ({
+        datasetKey: liveDataset.current ? playgroundDatasetKey(liveDataset.current) : null,
+        ...sessionActivity.current,
+        lastRunId: window.__n4aLastRun?.id ?? null,
+      }),
       importRtResult: (wire: RtResultWire) => {
         const run = rtResultEnvelopeToDisplayRunResult(wire)
-        const score = run.cv ?? run.refit
+        const score = defaultEvaluationScore(run)
+        setWorkbench(null)
         setRuns([run])
         setSelectedRunId(run.id)
         setSelectedScore(score)
         setStep('results')
         setError(null)
-        return { runId: run.id, selectedScoreId: score.id, scoreCount: 1 + (run.cv ? 1 : 0) + run.folds.length }
+        return { runId: run.id, selectedScoreId: score?.id ?? null, scoreCount: 1 + (run.cv ? 1 : 0) + run.folds.length }
       },
       runDatasetPipeline: async ({ dataset: payload, pipeline: rawPipeline }) => {
         const ds: MaterializedDataset = {
@@ -312,6 +346,7 @@ export default function App() {
         abortRef.current = ctrl
         const token = ++runTokenRef.current
         try {
+          sessionActivity.current.runCalls++
           const result = await engine.run(ds, dsl, {
             signal: ctrl.signal,
             onProgress: (p) => {
@@ -321,14 +356,14 @@ export default function App() {
           })
           if (token !== runTokenRef.current) throw new DOMException('Run superseded', 'AbortError')
           window.__n4aLastRun = result
-          const score = result.cv ?? result.refit
+          const score = defaultEvaluationScore(result)
           setRuns([result])
           setSelectedRunId(result.id)
           setSelectedScore(score)
           setStep('results')
           return {
             runId: result.id,
-            selectedScoreId: score.id,
+            selectedScoreId: score?.id ?? null,
             scoreCount: 1 + (result.cv ? 1 : 0) + result.folds.length,
             engine: result.engine,
             refitRows: result.refit.predictions.length,
@@ -366,6 +401,19 @@ export default function App() {
     if (enabled[id]) setStep(id)
   }
 
+  const openWorkbench = (view: 'playground' | 'inspector') => {
+    workbenchOpener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    setOpenedWorkbenches((opened) => ({ ...opened, [view]: true }))
+    setWorkbench(view)
+  }
+  const closeWorkbench = () => {
+    setWorkbench(null)
+    requestAnimationFrame(() => workbenchOpener.current?.focus())
+  }
+  useEffect(() => {
+    if (workbench) workbenchHeading.current?.focus()
+  }, [workbench])
+
   const lineage = selectedRun?.lineage as DagMlLineage | undefined
   const dataServed = lineage?.dataProvider?.status === 'materialized' ? lineage.dataProvider : null
   const dataFallback = lineage?.dataProvider && lineage.dataProvider.status !== 'materialized' ? lineage.dataProvider : null
@@ -374,7 +422,7 @@ export default function App() {
   const schedulerFallback = lineage?.schedulerFallback ? selectedRun?.diagnostics?.[0] ?? true : null
 
   return (
-    <div className="flex min-h-screen flex-col n4a-app-bg">
+    <div data-workbench={workbench ?? undefined} className={cn('flex flex-col n4a-app-bg', workbench ? 'h-screen overflow-hidden' : 'min-h-screen')}>
       <div className="h-1.5 shrink-0 n4a-spectrum-strip" />
 
       {/* ── top runtime bar ───────────────────────────────────────────── */}
@@ -463,9 +511,9 @@ export default function App() {
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* ── workflow rail ───────────────────────────────────────────── */}
-        <nav className="hidden w-60 shrink-0 flex-col border-r border-border/70 bg-sidebar/60 p-3 md:flex">
+        {!workbench && <nav aria-label="Workflow" className="hidden w-60 shrink-0 flex-col border-r border-border/70 bg-sidebar/60 p-3 md:flex">
           <div className="space-y-1">
             {STEPS.map((s, i) => {
               const Icon = s.icon
@@ -519,11 +567,11 @@ export default function App() {
               <p className="mt-1.5 text-[10px] text-muted-foreground">Nothing leaves your browser.</p>
             </div>
           </div>
-        </nav>
+        </nav>}
 
         {/* ── mobile step tabs ────────────────────────────────────────── */}
-        <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-border/60 bg-card/40 px-3 py-2 md:hidden">
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          {!workbench && <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-border/60 bg-card/40 px-3 py-2 md:hidden">
             {STEPS.map((s, i) => (
               <button
                 key={s.id}
@@ -539,9 +587,10 @@ export default function App() {
                 {i + 1}. {s.label}
               </button>
             ))}
-          </div>
+          </div>}
 
-          <div className="flex-1 overflow-y-auto">
+          {/* Keep the origin step mounted while its dedicated workbench is open. */}
+          <div hidden={workbench !== null} className="min-h-0 flex-1 overflow-y-auto">
             <div className="mx-auto h-full max-w-6xl p-4 sm:p-6">
               <StepPanel
                 step={step}
@@ -558,26 +607,57 @@ export default function App() {
                 runLog={runLog}
                 busy={busy}
                 error={error}
-                analysis={analysis}
-                configOpen={configOpen}
                 onDataset={onDataset}
                 onLoadSample={onLoadSample}
                 onImportModel={onImportModel}
                 onOpenConfig={() => setConfigOpen(true)}
-                onConfigOpenChange={setConfigOpen}
-                onApplyConfig={applyConfigPatch}
                 onChangePipeline={setPipeline}
                 onRun={onRun}
                 onCancel={onCancel}
                 onSelectScore={onSelect}
+                onSelectRun={onSelectRun}
+                onClearSelection={onClearSelection}
+                onOpenPlayground={() => openWorkbench('playground')}
+                onOpenInspector={() => openWorkbench('inspector')}
                 selectedScoreId={selectedScore?.id ?? null}
                 onGoDataset={() => go('dataset')}
                 onGoPipeline={() => go('pipeline')}
               />
             </div>
           </div>
+          {/* Visited workbenches retain their pipeline, layout and selection while hidden. */}
+          <div hidden={workbench === null} className="min-h-0 flex-1 overflow-auto">
+            <section data-testid="n4a-workbench-page" data-workbench-view={workbench ?? undefined} aria-label={workbench === 'playground' ? 'Playground page' : 'Results Inspector page'} className="flex h-full min-h-0 flex-col p-4">
+              <div className="mb-3 flex shrink-0 flex-wrap items-center gap-4">
+                <button type="button" onClick={closeWorkbench} className="rounded-full border border-border px-4 py-2 text-sm font-semibold">
+                  {workbench === 'playground' ? 'Back to Explore' : 'Back to Results'}
+                </button>
+                <h1 ref={workbenchHeading} tabIndex={-1} className="font-display text-xl font-semibold focus-visible:outline-2 focus-visible:outline-brand-teal">
+                  {workbench === 'playground' ? 'Playground' : 'Results Inspector'}
+                </h1>
+              </div>
+              <div hidden={workbench !== 'playground'} className="min-h-0 flex-1 overflow-auto">
+                {openedWorkbenches.playground && dataset && summary && <PlaygroundPanel key={playgroundDatasetKey(dataset)} ds={dataset} summary={summary} onOpenConfig={() => setConfigOpen(true)} />}
+              </div>
+              <div hidden={workbench !== 'inspector'} className="min-h-0 flex-1 overflow-auto">
+                {openedWorkbenches.inspector && runs.length > 0 && <ResultsWorkbench
+                  runs={runs}
+                  dataset={dataset}
+                  datasetName={datasetInfo?.name ?? summary?.name ?? 'Imported results'}
+                  engine={engine}
+                  selectedRunId={selectedRunId}
+                  selectedScoreId={selectedScore?.id ?? null}
+                  onSelect={onSelect}
+                  onSelectRun={onSelectRun}
+                  onClearSelection={onClearSelection}
+                />}
+              </div>
+            </section>
+          </div>
         </main>
       </div>
+
+      {dataset && <DatasetConfigDialog open={configOpen} ds={dataset} analysis={analysis} onOpenChange={setConfigOpen} onApply={applyConfigPatch} />}
 
       {/* ── footer — nirs4all family bar ────────────────────────────────── */}
       <footer className="shrink-0 border-t border-border-warm bg-paper/80">
@@ -761,19 +841,19 @@ interface StepPanelProps {
   runLog: RunLogEntry[]
   busy: boolean
   error: string | null
-  analysis: Analysis | null
-  configOpen: boolean
   selectedScoreId: string | null
   onDataset: (ds: MaterializedDataset, name: string, a?: Analysis) => void
   onLoadSample: (sample?: SampleId) => void
   onImportModel: (file: File) => void
   onOpenConfig: () => void
-  onConfigOpenChange: (open: boolean) => void
-  onApplyConfig: (patch: DatasetConfigPatch) => void
   onChangePipeline: (p: PipelineDSL) => void
   onRun: () => void
   onCancel: () => void
   onSelectScore: (run: RunResult, score: ScoreNode) => void
+  onSelectRun: (run: RunResult) => void
+  onClearSelection: () => void
+  onOpenPlayground: () => void
+  onOpenInspector: () => void
   onGoDataset: () => void
   onGoPipeline: () => void
 }
@@ -827,8 +907,8 @@ function StepPanel(props: StepPanelProps) {
           onGoDataset={props.onGoDataset}
           onCancel={props.onCancel}
         />
-        <PlaygroundPanel ds={dataset} summary={summary} onOpenConfig={props.onOpenConfig} />
-        <DatasetConfigDialog open={props.configOpen} ds={dataset} analysis={props.analysis} onOpenChange={props.onConfigOpenChange} onApply={props.onApplyConfig} />
+        <button type="button" onClick={props.onOpenPlayground} className="mb-4 self-start rounded-full border border-border px-4 py-2 text-sm font-semibold">Open Playground</button>
+        <DatasetView key={playgroundDatasetKey(dataset)} ds={dataset} summary={summary} cv={props.pipeline.cv} onOpenConfig={props.onOpenConfig} />
       </Panel>
     )
   }
@@ -898,7 +978,13 @@ function StepPanel(props: StepPanelProps) {
           />
         ) : null}
         <ExecutionLog runLog={props.runLog} />
-        <ResultsWorkbench runs={props.runs} dataset={dataset} datasetName={datasetInfo?.name ?? summary?.name ?? 'Imported results'} engine={engine} selectedRunId={selectedRun?.id ?? null} selectedScoreId={props.selectedScoreId} onSelect={props.onSelectScore} />
+        <button type="button" onClick={props.onOpenInspector} className="mb-4 self-start rounded-full border border-border px-4 py-2 text-sm font-semibold">Open Results Inspector</button>
+        <ResultsNotices runs={props.runs} dataset={dataset} datasetName={datasetInfo?.name ?? summary?.name ?? 'Imported results'} />
+        <ResultsList runs={props.runs} engine={engine} selectedRunId={selectedRun?.id ?? null} selectedScoreId={props.selectedScoreId} onSelect={props.onSelectScore} onSelectRun={props.onSelectRun} onClearSelection={props.onClearSelection} />
+        {selectedRun && (selectedScore ? <div className="mt-4"><ResultsVisualization run={selectedRun} score={selectedScore} /></div>
+          : <p role="status" data-testid="n4a-score-placeholder" className="mt-4 rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
+            {defaultEvaluationScore(selectedRun) ? 'Select an owner score to inspect predictions. Evaluated variants do not carry the selected variant’s predictions.' : 'Training resubstitution scores are hidden. Enable “Show training resubstitution scores” to inspect training evaluation.'}
+          </p>)}
       </Panel>
     )
   }

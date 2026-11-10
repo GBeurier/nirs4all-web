@@ -2639,6 +2639,19 @@ export class Normalize extends NativeEstimator {
     }
 }
 NativeMethod.register("preprocessing.scaling.normalize", Normalize);
+/** Native `preprocessing.scaling.row_l2_normalize` (transformer). */
+export class RowL2Normalize extends NativeEstimator {
+    methodId = "preprocessing.scaling.row_l2_normalize";
+    paramTypes = {};
+    constructor(params = {}) {
+        super();
+        this.params = { ...params };
+    }
+    transform(X) {
+        return this.transformMatrix(X);
+    }
+}
+NativeMethod.register("preprocessing.scaling.row_l2_normalize", RowL2Normalize);
 /** Native `preprocessing.scaling.simple_scale` (transformer). */
 export class SimpleScale extends NativeEstimator {
     methodId = "preprocessing.scaling.simple_scale";

@@ -3348,6 +3348,16 @@ export declare class Normalize extends NativeEstimator implements Transformer {
     constructor(params?: NormalizeParams);
     transform(X: Matrix): Matrix;
 }
+/** Parameters of RowL2Normalize; unset values take the native defaults. */
+export interface RowL2NormalizeParams {
+}
+/** Native `preprocessing.scaling.row_l2_normalize` (transformer). */
+export declare class RowL2Normalize extends NativeEstimator implements Transformer {
+    readonly methodId = "preprocessing.scaling.row_l2_normalize";
+    readonly paramTypes: {};
+    constructor(params?: RowL2NormalizeParams);
+    transform(X: Matrix): Matrix;
+}
 /** Parameters of SimpleScale; unset values take the native defaults. */
 export interface SimpleScaleParams {
 }

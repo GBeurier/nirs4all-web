@@ -282,6 +282,10 @@ export default function ScatterWebGL3D({
     >
       <canvas
         ref={canvasRef}
+        role="img"
+        aria-label="3D PCA scatter. Arrow keys rotate, plus and minus zoom, Home resets. Exact coordinates are available in the PCA data table."
+        tabIndex={0}
+        className="rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-teal"
         style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }}
       />
       <div

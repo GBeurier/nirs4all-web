@@ -27,7 +27,9 @@ try {
   await page.waitForSelector('text=/samples ×/', { timeout: 20000 })
   console.log('✓ sample loaded + Explore rendered')
 
+  await page.getByRole('button', { name: 'Open Playground', exact: true }).click()
   const playground = page.locator('[data-owner-playground]')
+  await playground.waitFor({ state: 'visible' })
   await playground.getByText('PCA computed by Methods', { exact: false }).waitFor({ timeout: 30000 })
   await playground.getByRole('button', { name: 'Add step', exact: true }).first().click()
   const search = page.getByRole('dialog', { name: 'Add step' }).getByRole('textbox', { name: /Search operators/ })
@@ -36,7 +38,7 @@ try {
   await page.getByRole('dialog', { name: 'Add step' }).waitFor({ state: 'hidden' })
   await playground.locator('.n4pg-card-meta .n4wb-mono').first().waitFor({ timeout: 30000 })
   await playground.getByText('PCA computed by Methods', { exact: false }).waitFor({ timeout: 30000 })
-  if (await playground.locator('canvas').count() < 1) fail('expected owner-backed spectra/PCA canvas')
+  if (await playground.locator('canvas:visible').count() < 1) fail('expected owner-backed spectra/PCA canvas')
   const samples = playground.locator('section[aria-label="Samples"]')
   await samples.getByRole('grid').waitFor()
   if (await samples.getByRole('row').count() < 2) fail('expected the on-page sample data alternative')
