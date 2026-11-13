@@ -1,0 +1,14 @@
+{
+  "package": "@nirs4all/server-client",
+  "version": "0.1.0-local.20261113.2",
+  "sourceRepository": "nirs4all-server",
+  "sourceDirectory": "browser-client",
+  "sourceCommit": "ef09a897e99a7a84dfad669a2140cc1b24e3cdb8",
+  "sourcePackageJsonSha256": "4e263ce5301faea79bcfad812553a75cea9da4145f4aa438faefe184c50c8744",
+  "artifact": "nirs4all-server-client-0.1.0-local.20261113.2.tgz",
+  "artifactSha256": "b72842936375b8f11d9f7e1ba59dab0ef780643ce07fb8a6a95fd1404e7c44a6",
+  "artifactSha512Integrity": "sha512-x4IyTmNuTiwqzTBrlDlNAMUaeDVJnsTaKjSBmapKwJSFwOKPwj1McOFLZRJeBm8SnpmMJTc8l0Zv3L4bk/gYMw==",
+  "license": "CeCILL-2.1 OR AGPL-3.0-or-later",
+  "licenseFiles": ["LICENSE", "LICENSES/CeCILL-2.1.txt", "LICENSES/AGPL-3.0-or-later.txt"],
+  "note": "Exact reviewed tarball copied from the original Web checkout; no rebuild or package release."
+}

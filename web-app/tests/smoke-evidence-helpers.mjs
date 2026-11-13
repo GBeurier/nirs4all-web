@@ -192,9 +192,10 @@ export async function assertResultsPanels(page) {
   if (await list.count() !== 1) throw new Error('Results must mount exactly one export/score list')
   const owner = await page.evaluate(() => {
     const run = window.__n4aLastRun
-    return run ? { metric: run.scoreMetric, task: run.taskType, score: run.cv ?? run.refit, kind: run.cv ? 'cv' : run.refit.scoreContext?.evaluation === 'selection_validation' ? 'selection-validation' : 'refit' } : null
+    return run ? { metric: run.scoreMetric, task: run.taskType, score: run.cv ?? run.refit, refit: run.refit, kind: run.cv ? 'cv' : run.refit.scoreContext?.evaluation === 'selection_validation' ? 'selection-validation' : 'refit' } : null
   })
   if (!owner?.score || owner.score.status !== 'completed' || !owner.score.predictions.length) throw new Error('missing completed owner predictions')
+  if (!owner.refit || owner.refit.status !== 'completed' || !owner.refit.predictions.length) throw new Error('missing completed owner refit predictions')
   await list.locator('[data-score-id]').filter({ hasText: owner.score.name }).first().waitFor({ state: 'visible' })
   const selectedScore = visualization.locator('summary').filter({ hasText: 'Selected owner score:' })
   if (!(await selectedScore.innerText()).includes(owner.score.name)) throw new Error('selected score label differs from owner result')
@@ -207,11 +208,22 @@ export async function assertResultsPanels(page) {
   const expectedRows = owner.score.predictions.map((row) => [String(row.sampleId), String(row.actualLabel ?? row.actual), String(row.predictedLabel ?? row.predicted), String(row.residual)])
   if (JSON.stringify(rows) !== JSON.stringify(expectedRows)) throw new Error('Results prediction rows differ from the real owner result')
   if (!wasOpen) await selectedScore.click()
+  const refitScope = owner.refit.scoreContext?.evaluation === 'selection_validation' ? 'selection_validation'
+    : owner.refit.name === 'Refit · train' ? 'train_resubstitution'
+      : owner.refit.name === 'Refit · test' ? 'held_out_test' : null
+  if (!refitScope) throw new Error(`unrecognized owner refit score context: ${owner.refit.name}`)
+  if (refitScope === 'train_resubstitution') {
+    const refitRow = list.locator('[data-score-id]').filter({ hasText: owner.refit.name })
+    if (await refitRow.count()) throw new Error('Training resubstitution score was visible without explicit opt-in')
+    await list.getByRole('checkbox', { name: 'Show training resubstitution scores (training evaluation only)' }).check()
+    await refitRow.first().waitFor({ state: 'visible' })
+  }
   const panels = {
     results_list: await list.isVisible(),
     results_visualization: await visualization.isVisible(),
     has_cv_scores: await list.getByText('CV Scores', { exact: false }).count() > 0,
-    has_refit_scores: await list.getByText(/Refit/).count() > 0,
+    has_refit_scores: await list.locator('[data-score-id]').filter({ hasText: owner.refit.name }).count() > 0,
+    refit_scope: refitScope,
   }
   if (!panels.has_cv_scores || !panels.has_refit_scores) throw new Error('Results list is missing CV or refit scores')
 

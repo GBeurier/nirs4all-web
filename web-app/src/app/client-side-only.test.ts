@@ -3,12 +3,11 @@ import { join, relative, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
-// web.nirs4all.org is a client-side-only app: everything runs in the browser
-// through staged WASM. This test freezes that as a contract — app sources may
-// not talk to a server backend or assume a Node runtime. Only the staged WASM
-// glue (vendor output under src/engine/wasm/) fetches its own same-origin
-// static assets, so it is excluded from the scan. The hash-bound historical
-// Core test oracle is excluded too; browser sources must never import it.
+// Computation runs in the browser through staged WASM. Optional workspace
+// transport uses the explicit server-client SDK; app sources must not create
+// their own backend calls or assume a Node runtime. Staged WASM glue fetches
+// its same-origin static assets and is excluded from this scan. The hash-bound
+// historical Core test oracle is excluded too; production sources cannot import it.
 const SRC_ROOT = fileURLToPath(new URL('..', import.meta.url))
 const APP_ROOT = fileURLToPath(new URL('../..', import.meta.url))
 
@@ -49,7 +48,7 @@ function walkSources(dir: string, out: { app: string[]; scripts: string[] }): vo
 }
 
 const FORBIDDEN: { pattern: RegExp; why: string }[] = [
-  { pattern: /\bfetch\s*\(/, why: 'app sources must not fetch — data stays local (uploads, samples, staged WASM)' },
+  { pattern: /\bfetch\s*\(/, why: 'app sources must use the explicit server-client SDK for optional workspace transport' },
   { pattern: /XMLHttpRequest/, why: 'no HTTP client in the app shell' },
   { pattern: /new WebSocket\s*\(/, why: 'no realtime server channel' },
   { pattern: /\bEventSource\s*\(/, why: 'no server-sent events' },

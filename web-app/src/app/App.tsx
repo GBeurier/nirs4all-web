@@ -33,18 +33,20 @@ import { rtResultEnvelopeToDisplayRunResult, type RtResultWire } from '@/engine/
 import { type DatasetSummary, reencodeTarget, summarize } from '@/data/dataset'
 import { loadSampleDataset, SAMPLES, type SampleId } from '@/data/samples'
 import { type LoadedModel, parseN4aFile } from '@/lib/n4a'
-import { applyTheme, loadSession, loadTheme, saveSession, type Theme } from '@/lib/persist'
+import { applyTheme, clearServerSessionModel, loadSession, loadTheme, saveSession, type Theme } from '@/lib/persist'
+import { ServerWorkspacePanel } from '@/components/server/ServerWorkspacePanel'
+import type { RestoredWebWorkspace } from '@/lib/serverWorkspace'
 import { Progress } from '@/app/components/ui/progress'
 import { cn } from '@/app/components/ui/utils'
 import { formatRuntimeErrorForUi } from '@/app/runtimeErrors'
 import { RuntimeEngineBadge } from 'nirs4all-ui/components'
-import type { Analysis } from '@/data/wasm-io'
+import { ioRetainedOf, type Analysis } from '@/data/wasm-io'
 import type { DatasetConfigPatch } from '@/components/contracts'
 import type { DagMlLineage } from '@/engine/dagml'
 import type { MaterializedDataset, PipelineDSL, Partition, RunLogEntry, RunProgress, RunResult, ScoreNode, TaskType } from '@/engine/types'
 
 type StepId = 'dataset' | 'explore' | 'pipeline' | 'results' | 'predict'
-type DatasetSourceKind = 'upload' | 'sample'
+type DatasetSourceKind = 'upload' | 'sample' | 'server'
 type E2EDatasetPayload = Omit<MaterializedDataset, 'X' | 'y'> & { X: number[]; y: number[] }
 
 declare global {
@@ -93,7 +95,9 @@ export default function App() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
-  const [loadedModel, setLoadedModel] = useState<LoadedModel | null>(() => loadSession().model ?? null)
+  const [importedModel, setImportedModel] = useState<{ model: LoadedModel | null; origin: 'local' | 'server'; archive: Blob | null }>(() => ({ model: loadSession().model ?? null, origin: 'local', archive: null }))
+  const loadedModel = importedModel.model
+  const loadedModelArchive = loadedModel && importedModel.archive ? { model: loadedModel, archive: importedModel.archive } : null
   const [step, setStep] = useState<StepId>('dataset')
   const [workbench, setWorkbench] = useState<'playground' | 'inspector' | null>(null)
   const [openedWorkbenches, setOpenedWorkbenches] = useState({ playground: false, inspector: false })
@@ -175,8 +179,10 @@ export default function App() {
     const sid = loadSession().sampleId
     if (!sid) return
     setBusy(true)
+    const restoreToken = runTokenRef.current
     loadSampleDataset(sid)
       .then((ds) => {
+        if (restoreToken !== runTokenRef.current) return
         adoptDataset(ds, { keepPipeline: true, sourceName: SAMPLES.find((s) => s.id === sid)?.name ?? sid, sourceKind: 'sample' })
         setSampleId(sid)
         setStep('pipeline') // land on the editor where the restored pipeline lives
@@ -187,21 +193,52 @@ export default function App() {
 
   // Persist the session (pipeline + imported model + active bundled sample).
   useEffect(() => {
-    saveSession({ pipeline, model: loadedModel, sampleId })
-  }, [pipeline, loadedModel, sampleId])
+    saveSession({ pipeline, model: loadedModel, modelOrigin: importedModel.origin, sampleId })
+  }, [pipeline, loadedModel, importedModel.origin, sampleId])
 
   const onImportModel = useCallback(async (file: File) => {
     setWorkbench(null)
     setError(null)
     try {
       const loaded = await parseN4aFile(file)
-      setLoadedModel(loaded)
+      setImportedModel({ model: loaded, origin: 'local', archive: file })
       setStep('predict') // a saved model goes straight to scoring new spectra
     } catch (e) {
       setError(formatRuntimeErrorForUi(e))
       setStep('dataset')
     }
   }, [])
+
+  const onRestoreWorkspace = useCallback((restored: RestoredWebWorkspace) => {
+    abortRef.current?.abort()
+    abortRef.current = null
+    runTokenRef.current++
+    setWorkbench(null)
+    setOpenedWorkbenches({ playground: false, inspector: false })
+    setRuns([])
+    setSelectedRunId(null)
+    setSelectedScore(null)
+    setRunning(false)
+    setProgress(null)
+    setRunLog([])
+    setError(null)
+    setAnalysis(restored.dataset ? ioRetainedOf(restored.dataset)?.analysis ?? null : null)
+    setSampleId(null)
+    setConfigOpen(false)
+    if (restored.dataset) {
+      adoptDataset(restored.dataset, { keepPipeline: true, sourceName: restored.datasetName, sourceKind: 'server' })
+    } else {
+      setDataset(null)
+      setSummary(null)
+      setDatasetInfo(null)
+    }
+    setPipeline(restored.pipeline)
+    setImportedModel({ model: restored.loadedModel, origin: 'server', archive: restored.modelArchive })
+    setTheme(restored.editor.theme)
+    const desired = restored.editor.step
+    setStep(!restored.dataset ? (restored.loadedModel ? 'predict' : 'dataset')
+      : desired === 'results' || desired === 'predict' && !restored.loadedModel ? 'pipeline' : desired)
+  }, [adoptDataset])
 
   const applyConfigPatch = useCallback(
     (patch: DatasetConfigPatch) => {
@@ -450,6 +487,11 @@ export default function App() {
         )}
 
         <div className="ml-auto flex items-center gap-2">
+          <ServerWorkspacePanel
+            input={{ pipeline, editor: { step, theme }, dataset, datasetName: datasetInfo?.name, selectedRun: runs.find((run) => run.id === selectedRunId) ?? null, loadedModel, loadedModelArchive }}
+            onRestore={onRestoreWorkspace}
+            onDisconnect={clearServerSessionModel}
+          />
           {running && (
             <span className="flex items-center gap-1.5 rounded-full border border-brand-teal/30 bg-brand-teal/5 px-2.5 py-1 text-xs font-medium text-brand-teal">
               <Loader2 className="size-3.5 animate-spin" /> running…
@@ -564,7 +606,7 @@ export default function App() {
               <p className="mt-1 font-mono text-[10px] leading-relaxed text-muted-foreground">
                 formats → io → dag-ml-data → dag-ml + methods
               </p>
-              <p className="mt-1.5 text-[10px] text-muted-foreground">Nothing leaves your browser.</p>
+              <p className="mt-1.5 text-[10px] text-muted-foreground">Data stays local unless you explicitly save it to a server workspace.</p>
             </div>
           </div>
         </nav>}
@@ -766,7 +808,9 @@ function DatasetSessionBanner({
   const persistence =
     info?.kind === 'sample'
       ? 'Bundled sample: restored on reload with the saved pipeline.'
-      : 'Uploaded dataset: kept in memory for this browser session; reload requires re-upload.'
+      : info?.kind === 'server'
+        ? 'Server workspace dataset: kept in memory; reconnect and open the workspace after reload.'
+        : 'Uploaded dataset: kept in memory for this browser session; reload requires re-upload.'
   const resultContext =
     runCount > 0
       ? `${runCount} result${runCount === 1 ? '' : 's'} ${runCount === 1 ? 'belongs' : 'belong'} to this loaded dataset.`
@@ -873,7 +917,7 @@ function StepPanel(props: StepPanelProps) {
             <span className="font-semibold text-brand-teal-d">DAG-ML</span> (Directed Acyclic Graph ML), the
             future cross-language engine written in <span className="font-semibold">Rust</span> for the nirs4all
             ecosystem, compiled to WebAssembly here alongside the <span className="font-mono text-[0.85em]">libn4m</span>{' '}
-            numerical core. Nothing you load ever leaves your browser.
+            numerical core. Data stays local unless you explicitly save it to a server workspace.
           </p>
         </div>
         <DatasetUpload onDataset={props.onDataset} onLoadSample={props.onLoadSample} onImportModel={props.onImportModel} busy={props.busy} error={props.error} />

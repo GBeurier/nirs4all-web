@@ -22,6 +22,8 @@ export interface Session {
   pipeline?: PipelineDSL
   model?: LoadedModel | null
   sampleId?: SampleId | null
+  /** Private project models never enter browser persistence. */
+  modelOrigin?: 'local' | 'server'
 }
 
 // Restored data is untrusted (manual edits, a catalog that dropped an operator
@@ -103,7 +105,11 @@ export function loadSession(): Session {
     if (!raw) return {}
     const s = deserializeTyped<Session>(raw)
     if (!s || typeof s !== 'object') return {}
-    return { pipeline: validPipeline(s.pipeline), model: validModel(s.model), sampleId: validSampleId(s.sampleId) }
+    if (s.modelOrigin === 'server') {
+      clearServerSessionModel()
+      return { pipeline: validPipeline(s.pipeline), model: null, sampleId: validSampleId(s.sampleId), modelOrigin: 'server' }
+    }
+    return { pipeline: validPipeline(s.pipeline), model: s.model === null ? null : validModel(s.model), sampleId: validSampleId(s.sampleId) }
   } catch {
     return {} // private mode / quota / corrupt JSON — start fresh, never throw
   }
@@ -112,10 +118,23 @@ export function loadSession(): Session {
 /** Persist the session. Best-effort: storage errors (quota, disabled) are ignored. */
 export function saveSession(s: Session): void {
   try {
-    const model = s.model && isArchiveV2Model(s.model.model) ? null : s.model
+    const model = s.modelOrigin === 'server' || s.model && isArchiveV2Model(s.model.model) ? null : s.model
     localStorage.setItem(KEY, serializeTyped({ ...s, model }))
   } catch {
     /* non-fatal */
+  }
+}
+
+/** Remove only a server-origin persisted model; retain the user's pipeline/sample. */
+export function clearServerSessionModel(): void {
+  try {
+    const raw = localStorage.getItem(KEY)
+    if (!raw) return
+    const s = deserializeTyped<Session>(raw)
+    if (s?.modelOrigin !== 'server') return
+    localStorage.setItem(KEY, serializeTyped({ ...s, model: null, modelOrigin: 'local' }))
+  } catch {
+    /* best-effort storage, as for session save/load */
   }
 }
 

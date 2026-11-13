@@ -46,3 +46,7 @@ source. The root legal bundle is also published by the Web app under `web-app/pu
 License-family texts are bundled under [`LICENSES/`](LICENSES/): CeCILL-2.1,
 AGPL-3.0-or-later, MIT, Apache-2.0, and BSD-3-Clause. The commercial-license documents in that
 directory apply only to nirs4all-web itself; they do not replace or alter third-party licenses.
+
+The optional server workspace transport is also distributed with this application.
+Its source archive identity and original license texts are available in
+[server-client/NOTICE.md](server-client/NOTICE.md).
