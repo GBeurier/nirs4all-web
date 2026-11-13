@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { clearSession, loadSession, saveSession } from './persist'
+import { clearServerSessionModel, clearSession, loadSession, saveSession } from './persist'
+import { serializeTyped, type LoadedModel } from './n4a'
 
 // vitest runs in the node env (no DOM) — provide a minimal localStorage.
 class MemStorage {
@@ -121,5 +122,42 @@ describe('session persistence', () => {
     }
     ;(globalThis as unknown as { localStorage: MemStorage }).localStorage.setItem('nirs4all-lite:session:v1', JSON.stringify(retired))
     expect(loadSession()).toEqual({})
+  })
+
+  const privateModel: LoadedModel = {
+    name: 'private-training-row-sentinel', taskType: 'regression', targetName: 'y',
+    model: { dsl: { name: 'Private fitted recipe', steps: [] }, nFeatures: 2, taskType: 'regression', state: { chain: [], model: { containsTrainingRows: true, trainingRows: new Float64Array([1, 2, 3, 4]) } } },
+  }
+
+  it('keeps server-origin fitted state out of localStorage while retaining local editor work', () => {
+    const pipeline = { name: 'Local editor work', steps: [] }
+    saveSession({ pipeline, model: privateModel, modelOrigin: 'server', sampleId: 'corn' })
+    const storage = (globalThis as unknown as { localStorage: MemStorage }).localStorage
+    const raw = storage.getItem('nirs4all-web:session:v2')!
+    expect(raw).not.toContain(privateModel.name)
+    expect(raw).not.toContain('trainingRows')
+    expect(loadSession().model).toBeNull()
+    clearServerSessionModel()
+    expect(loadSession().model).toBeNull()
+    expect(loadSession().pipeline).toEqual(pipeline)
+    expect(loadSession().sampleId).toBe('corn')
+  })
+
+  it('removes a marked server model left by an older session without losing the editor', () => {
+    const storage = (globalThis as unknown as { localStorage: MemStorage }).localStorage
+    storage.setItem('nirs4all-web:session:v2', serializeTyped({ model: privateModel, modelOrigin: 'server', sampleId: 'beer', pipeline: { name: 'Keep editor', steps: [] } }))
+    expect(loadSession().model).toBeNull()
+    expect(storage.getItem('nirs4all-web:session:v2')).not.toContain(privateModel.name)
+    expect(loadSession().sampleId).toBe('beer')
+    expect(loadSession().pipeline?.name).toBe('Keep editor')
+  })
+
+  it('disconnect cleanup preserves unrelated local models', () => {
+    saveSession({ model: privateModel, modelOrigin: 'local', sampleId: 'corn' })
+    const storage = (globalThis as unknown as { localStorage: MemStorage }).localStorage
+    const before = storage.getItem('nirs4all-web:session:v2')
+    clearServerSessionModel()
+    expect(storage.getItem('nirs4all-web:session:v2')).toBe(before)
+    expect(loadSession().model?.name).toBe(privateModel.name)
   })
 })

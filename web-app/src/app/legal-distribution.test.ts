@@ -59,13 +59,27 @@ describe('distributed legal notices', () => {
       ...filesRecursively(join(repoRoot, 'LICENSES')).map((path) => join('LICENSES', path)),
     ].sort()
     const publicFiles = filesRecursively(publicLegalRoot).filter(
-      (path) => path !== 'index.html' && !path.startsWith('components/'),
+      (path) => path !== 'index.html' && !path.startsWith('components/') && !path.startsWith('server-client/'),
     )
 
     expect(publicFiles).toEqual(rootFiles)
     for (const path of rootFiles) {
       expect(readFileSync(join(publicLegalRoot, path))).toEqual(readFileSync(join(repoRoot, path)))
     }
+  })
+
+  it('distributes the optional server client licenses unchanged', () => {
+    const source = join(appRoot, 'node_modules', '@nirs4all', 'server-client')
+    const mirror = join(publicLegalRoot, 'server-client')
+    const licenses = ['LICENSE', 'LICENSES/AGPL-3.0-or-later.txt', 'LICENSES/CeCILL-2.1.txt']
+    expect(filesRecursively(mirror)).toEqual([...licenses, 'NOTICE.md'].sort())
+    for (const path of licenses) {
+      expect(readFileSync(join(mirror, path))).toEqual(readFileSync(join(source, path)))
+    }
+    const notice = readFileSync(join(mirror, 'NOTICE.md'), 'utf8')
+    const pkg = JSON.parse(readFileSync(join(source, 'package.json'), 'utf8'))
+    expect(notice).toContain(pkg.version)
+    expect(notice).toContain('CeCILL-2.1 OR AGPL-3.0-or-later')
   })
 
   it('mirrors each staged component legal payload with a deterministic manifest', () => {

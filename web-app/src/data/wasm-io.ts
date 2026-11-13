@@ -199,6 +199,12 @@ export interface IoRetained {
 
 /** The retained io evidence of a dataset ingested through io (undefined for any other dataset). */
 export const ioRetainedOf = (dataset: MaterializedDataset): IoRetained | undefined => dataset[IO_RECORD] as IoRetained | undefined
+/** Reattach already decoded host IO evidence after a lossless workspace restore.
+ * This does not assemble, infer or change the owner's record or the dataset view. */
+export function rehydrateIoRetained(dataset: MaterializedDataset, retained?: IoRetained): MaterializedDataset {
+  if (retained) dataset[IO_RECORD] = retained
+  return dataset
+}
 function retain(dataset: MaterializedDataset, retained: IoRetained): MaterializedDataset {
   dataset[IO_RECORD] = retained
   return dataset

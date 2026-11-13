@@ -224,8 +224,21 @@ function assertDagMlRun(value, dataset, pipeline) {
   const nativeRefit = assertRecord(run.nativeRefit, 'fitted native REFIT state')
   const pkg = assertRecord(JSON.parse(nativeRefit.packageJson), 'native REFIT package')
   if (nativeRefit.schemaVersion !== 1 || pkg.schema_version !== 1 || !/^[a-f0-9]{64}$/.test(pkg.package_fingerprint) || pkg.package_fingerprint !== lineage.packageFingerprint) throw new Error('native package fingerprint differs from REFIT lineage')
-  const expectedFitIds = trainRows.map((i) => `s${i}`).sort()
-  if (stableJson([...pkg.training_sample_ids].sort()) !== stableJson(expectedFitIds)) throw new Error('native package REFIT scope must contain exactly Train and no Test observation')
+  const trainingRelations = assertRecord(pkg.training_relations, 'native REFIT training relations')
+  if (!Array.isArray(pkg.training_sample_ids) || !Array.isArray(trainingRelations.records)) throw new Error('native REFIT package has no training sample identities or relations')
+  const packageIds = pkg.training_sample_ids
+  const relations = trainingRelations.records
+  const relationIds = relations.map((record) => record.sample_id)
+  const originalIds = relations.map((record) => record.metadata?.original_sample_id)
+  if (packageIds.length !== trainIds.length || relations.length !== trainIds.length
+      || new Set(packageIds).size !== packageIds.length || new Set(relationIds).size !== relations.length
+      || relationIds.some((id) => typeof id !== 'string') || originalIds.some((id) => typeof id !== 'string')
+      || relations.some((record) => record.metadata?.io_partition !== 'train')
+      || stableJson([...packageIds].sort()) !== stableJson([...relationIds].sort())
+      || stableJson([...originalIds].sort()) !== stableJson([...trainIds].sort())
+      || originalIds.some((id) => testIds.includes(id))) {
+    throw new Error('native package REFIT scope must contain exactly Train and no Test observation')
+  }
   if (pkg.execution_root_seed !== pipeline.cv.seed || stableJson(nativeRefit.targetNames) !== stableJson([dataset.targetName])) throw new Error('native package seed or target identity differs from the request')
   const plans = Object.values(pkg.effective_plan.node_plans)
   const concretePipeline = { ...pipeline }
