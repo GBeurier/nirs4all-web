@@ -19,6 +19,7 @@ import { createLabClient, defaultLabConfig, type LabClient } from './client'
 import { IMPORT_PROFILES, TEACHING_PRESETS, importLabFiles, loadTeachingDataset } from './data'
 import { toExecutionConfig, toWorkbenchProgress, toWorkbenchResult } from './presentation'
 import type { LabCase, LabConfig, LabDataset, LabRunResult } from './types'
+import { DatasetBuilderHost } from './DatasetBuilderHost'
 
 /**
  * Host assembly for the multimodal laboratory. Owns React state only and
@@ -281,6 +282,9 @@ export default function MultimodalApp() {
       dataset={workspace.dataset}
       onLoadPreset={presetId => loadPreset(caseId, presetId)}
       onImportFiles={(profileId, files) => importFiles(caseId, profileId, files)}
+      datasetBuilder={<DatasetBuilderHost key={caseId} caseId={caseId} disabled={workspace.run.kind === 'running'}
+        onCreate={(dataset, fileNames) => acceptDataset(caseId, ++loadToken.current[caseId], dataset,
+          { kind: 'import', profileId: `manifest-${caseId}`, fileNames })} />}
       selectedSampleId={workspace.selectedSampleId}
       onSelectSample={sampleId => patch(caseId, current => ({ ...current, selectedSampleId: sampleId }))}
       config={workspace.config}

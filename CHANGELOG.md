@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.5.2 — 2026-11-16
+
+### Fixed
+
+- Apply the canonical nirs4all.org visual theme from nirs4all-ui: warm paper,
+  spectral grid, teal controls and shared surface/typography tokens.
+- Replace manifest-only multimodal import with the reusable shared Dataset
+  Builder: Source, Role, Columns and Validation. Inspect files with IO/Formats,
+  edit source roles, sample IDs, features and axes, validate alignment, then explicitly
+  create the dataset. A JSON manifest is optional.
+- Invalidate import validation after any draft edit; preserve the active dataset
+  and its results when inspection or materialization refuses the new collection.
+
+### Changed
+
+- Consume the exact published nirs4all-ui 0.2.4 archive in both Web hosts and
+  qualify the complete Dataset Builder interaction path before Pages deployment.
+
 ## 0.5.1 — 2026-11-16
 
 ### Added

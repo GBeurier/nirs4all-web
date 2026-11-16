@@ -10,13 +10,13 @@ import { fileURLToPath } from 'node:url'
 const here = dirname(fileURLToPath(import.meta.url))
 const root = resolve(here, '..')
 const packageName = 'nirs4all-ui'
-const version = '0.2.3'
+const version = '0.2.4'
 const filename = `${packageName}-${version}.tgz`
 const tarballPath = resolve(root, 'vendor', 'npm', filename)
 const receiptPath = resolve(root, 'vendor', 'npm', `${packageName}-${version}.provenance.json`)
 const legacyShimPath = resolve(root, 'vendor', packageName)
-const expectedSha256 = 'e37d242db4a54daf932bf560081ac21e40778208a22900afc006ac02f8f0646f'
-const expectedIntegrity = 'sha512-omQ4EiBLz1kGY80bMfduU4ppG8dg2A4IpcDWAU0KE5llajZWSzxQqe5E4i5abwrlYlRs5LYIAEHQwp9F8fnYSQ=='
+const expectedSha256 = 'aa15435ce2e0a25c101d9a564e2dfe9bc59be63ba922053f9fa7e51f1857a423'
+const expectedIntegrity = 'sha512-jHjvm/f/xDqlem9H3UC32mk48hVxl4XKvNgsAJc8Ptj2CXCfOUbF7R/3WC7Ioe0ZnuTJtG0Bk+wDHaJvpOKMuw=='
 
 function fail(message) {
   throw new Error(`[check-ui-package] ${message}`)
@@ -65,7 +65,7 @@ if (integrity !== expectedIntegrity) fail(`npm integrity mismatch: ${integrity}`
 const receipt = JSON.parse(readFileSync(receiptPath, 'utf8'))
 if (receipt.package?.name !== packageName || receipt.package?.version !== version) fail('receipt package identity mismatch')
 if (receipt.schema_version !== 'nirs4all.ui-release-artifact/v1' || receipt.source?.dirty !== false) fail('receipt is not a clean owner release artifact')
-if (receipt.source?.commit_sha !== 'e3f515a00394cddef88ca3afa2a625ea71ebc44d') fail('receipt source commit mismatch')
+if (receipt.source?.commit_sha !== 'da06544626edb5e8a20e3a8e26fa05e1a928c427') fail('receipt source commit mismatch')
 if (receipt.artifact?.filename !== filename || receipt.artifact?.size !== bytes.length) fail('receipt artifact identity mismatch')
 if (receipt.artifact?.sha256 !== sha256 || receipt.artifact?.npm_integrity !== integrity) fail('receipt digest mismatch')
 

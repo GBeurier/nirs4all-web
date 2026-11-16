@@ -71,11 +71,31 @@ scopes, predictions, scores, versions and provenance; they are not executable
 
 ## Importing real data
 
-Download and unzip the matching example from **Import your files**. Replace its
-data while retaining an explicit `manifest.json`, then choose the manifest and
-every referenced CSV, VCF and PNG file together. Collection names are flat and
-unambiguous. IO joins exact string identifiers, including leading zeros; it never
-repairs a join by row position or guesses sample IDs from image filenames.
+Open **Import your files** to use the reusable `nirs4all-ui/datasetBuilder`
+**Dataset Builder**, following four distinct steps:
+
+1. **Source:** add the CSV/VCF/PNG files. CSV tables require UTF-8, comma separators
+   and a header row. PNG assets are listed separately from their mapping table.
+   A matching example ZIP can be downloaded and unzipped for rehearsal. An
+   optional `manifest.json` pre-fills the editable choices; it is not required.
+2. **Role:** mark each table as Measurements, Metadata & target, Combined, or
+   Ignore. Choose the measurement profile/modality and edit its label. Combined
+   tables hold both feature columns and the target.
+3. **Columns:** select exact sample IDs, target and unit, optional biological
+   groups and deterministic partition; select ordered feature columns and axes.
+   VCF uses all variants and exact header sample identities. PNG mappings use
+   the fixed `sample_id,file` columns and explicit HWC geometry.
+4. **Validation:** review the mapping, click **Validate alignment**, inspect the
+   owner-provided source counts, then click **Create dataset**. Any edit clears
+   the prior validation. A refused import preserves the active dataset/results;
+   complete-data training refuses missing cells while displaying their counts.
+
+Collection names are flat and unambiguous. IO joins exact string identifiers,
+including leading zeros; it never repairs a join by row position or guesses
+sample IDs from image filenames. A file declared in an optional manifest but
+not selected remains a blocking missing-file entry until added or explicitly
+ignored. This wizard maps one measurement block per file; manifests with
+multiple measurement declarations for the same file are explicitly refused.
 
 The declared profile is `nirs4all.multimodal-import.v1`. Metadata specifies the
 sample ID, numeric target, target unit, optional biological group and optional
