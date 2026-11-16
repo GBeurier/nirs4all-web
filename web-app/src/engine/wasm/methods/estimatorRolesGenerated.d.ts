@@ -2257,6 +2257,54 @@ export declare class SOPLS extends NativeEstimator implements Regressor {
     constructor(params?: SOPLSParams);
     predict(X: Matrix): Matrix;
 }
+/** Parameters of MultibranchRegressor; unset values take the native defaults. */
+export interface MultibranchRegressorParams {
+    /** Default []. */
+    branch_kinds?: number[];
+    /** Default []. */
+    branch_shapes?: number[];
+    /** Default 4. */
+    filters?: number;
+    /** Default 5. */
+    kernel_size?: number;
+    /** Default 2. */
+    pool_size?: number;
+    /** Default 8. */
+    embedding_dim?: number;
+    /** Default 8. */
+    head_hidden?: number;
+    /** Default 100. */
+    epochs?: number;
+    /** Default 16. */
+    batch_size?: number;
+    /** Default 0.01. */
+    learning_rate?: number;
+    /** Default 0.0001. */
+    weight_decay?: number;
+    /** Optional: unset by default. */
+    seed?: number;
+}
+/** Native `models.neural.multibranch_regressor` (transformer, regressor). */
+export declare class MultibranchRegressor extends NativeEstimator implements Regressor, Transformer {
+    readonly methodId = "models.neural.multibranch_regressor";
+    readonly paramTypes: {
+        readonly branch_kinds: "int_array";
+        readonly branch_shapes: "int_array";
+        readonly filters: "int";
+        readonly kernel_size: "int";
+        readonly pool_size: "int";
+        readonly embedding_dim: "int";
+        readonly head_hidden: "int";
+        readonly epochs: "int";
+        readonly batch_size: "int";
+        readonly learning_rate: "double";
+        readonly weight_decay: "double";
+        readonly seed: "int";
+    };
+    constructor(params?: MultibranchRegressorParams);
+    predict(X: Matrix): Matrix;
+    transform(X: Matrix): Matrix;
+}
 /** Parameters of CPPLS; unset values take the native defaults. */
 export interface CPPLSParams {
     /** Default 2. */
@@ -3306,6 +3354,16 @@ export declare class BaselineCenter extends NativeEstimator implements Transform
     readonly methodId = "preprocessing.scaling.baseline";
     readonly paramTypes: {};
     constructor(params?: BaselineCenterParams);
+    transform(X: Matrix): Matrix;
+}
+/** Parameters of BlockRms; unset values take the native defaults. */
+export interface BlockRmsParams {
+}
+/** Native `preprocessing.scaling.block_rms` (transformer). */
+export declare class BlockRms extends NativeEstimator implements Transformer {
+    readonly methodId = "preprocessing.scaling.block_rms";
+    readonly paramTypes: {};
+    constructor(params?: BlockRmsParams);
     transform(X: Matrix): Matrix;
 }
 /** Parameters of LogTransform; unset values take the native defaults. */

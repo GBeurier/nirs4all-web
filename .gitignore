@@ -8,6 +8,7 @@ single-page-WASM/pkg/
 
 # design artifacts / OS cruft
 *.zip
+!web-app/public/multimodal-data/*.zip
 *:Zone.Identifier
 .DS_Store
 

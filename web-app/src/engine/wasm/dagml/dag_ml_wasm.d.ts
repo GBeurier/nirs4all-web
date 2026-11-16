@@ -403,16 +403,16 @@ export interface InitOutput {
     readonly validate_graph_json: (a: any) => [number, number];
     readonly validate_initial_full_refit_package_json: (a: any) => [number, number];
     readonly validate_pipeline_dsl_json: (a: any) => [number, number];
-    readonly wasm_bindgen_6d8b02b35ac3a954___convert__closures_____invoke___js_sys_baa5e4b942bda068___Function_fn_wasm_bindgen_6d8b02b35ac3a954___JsValue_____wasm_bindgen_6d8b02b35ac3a954___sys__Undefined___js_sys_baa5e4b942bda068___Function_fn_wasm_bindgen_6d8b02b35ac3a954___JsValue_____wasm_bindgen_6d8b02b35ac3a954___sys__Undefined_______true_: (a: number, b: number, c: any, d: any) => void;
-    readonly wasm_bindgen_6d8b02b35ac3a954___convert__closures_____invoke___wasm_bindgen_6d8b02b35ac3a954___JsValue__core_37ee0ce0c4cd57d5___result__Result_____wasm_bindgen_6d8b02b35ac3a954___JsError___true_: (a: number, b: number, c: any) => [number, number];
+    readonly wasm_bindgen_bf2fafd4a36c287c___convert__closures_____invoke___js_sys_cb0ad0bee22ff531___Function_fn_wasm_bindgen_bf2fafd4a36c287c___JsValue_____wasm_bindgen_bf2fafd4a36c287c___sys__Undefined___js_sys_cb0ad0bee22ff531___Function_fn_wasm_bindgen_bf2fafd4a36c287c___JsValue_____wasm_bindgen_bf2fafd4a36c287c___sys__Undefined_______true_: (a: number, b: number, c: any, d: any) => void;
+    readonly wasm_bindgen_bf2fafd4a36c287c___convert__closures_____invoke___wasm_bindgen_bf2fafd4a36c287c___JsValue__core_d941ad8722425d2e___result__Result_____wasm_bindgen_bf2fafd4a36c287c___JsError___true_: (a: number, b: number, c: any) => [number, number];
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
+    readonly __wbindgen_free: (a: number, b: number, c: number) => void;
     readonly __wbindgen_exn_store: (a: number) => void;
     readonly __externref_table_alloc: () => number;
     readonly __wbindgen_externrefs: WebAssembly.Table;
     readonly __wbindgen_destroy_closure: (a: number, b: number) => void;
     readonly __externref_table_dealloc: (a: number) => void;
-    readonly __wbindgen_free: (a: number, b: number, c: number) => void;
     readonly __wbindgen_start: () => void;
 }
 

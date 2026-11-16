@@ -5,6 +5,33 @@ export function _start() {
 }
 
 /**
+ * Decode an explicitly declared non-spectral PNG/VCF profile through the Rust owner.
+ * @param {string} profile
+ * @param {Uint8Array | number[]} bytes
+ * @param {number} max_decoded_bytes
+ * @returns {any}
+ */
+export function decodeMultimodalBytes(profile, bytes, max_decoded_bytes) {
+    const val3 = +max_decoded_bytes;
+    let ptr0, len0, ptr1, len1;
+    try {
+        ptr0 = passStringToWasm0(profile, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        len0 = WASM_VECTOR_LEN;
+        ptr1 = passArray8ToWasm0(bytes, wasm.__wbindgen_malloc);
+        len1 = WASM_VECTOR_LEN;
+    } catch (e) {
+        if (ptr1) { wasm.__wbindgen_free(ptr1, len1 * 1, 1); }
+        if (ptr0) { wasm.__wbindgen_free(ptr0, len0 * 1, 1); }
+        throw e;
+    }
+    const ret = wasm.decodeMultimodalBytes(ptr0, len0, ptr1, len1, val3);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
  * Feature flags the WASM build was compiled with. Useful for runtime checks
  * from JS ("does this WASM bundle have HDF5 support?").
  *
@@ -14,6 +41,17 @@ export function _start() {
  */
 export function features() {
     const ret = wasm.features();
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * @returns {any}
+ */
+export function multimodalReaderCatalog() {
+    const ret = wasm.multimodalReaderCatalog();
     if (ret[2]) {
         throw takeFromExternrefTable0(ret[1]);
     }

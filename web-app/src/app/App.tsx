@@ -532,6 +532,13 @@ export default function App() {
               <Cpu className="size-3.5" /> CV: libn4m fallback
             </span>
           )}
+          <a
+            href="./nirs4all_multimodale/"
+            aria-label="Open the multimodal laboratory"
+            className="flex items-center gap-1.5 rounded-full border border-brand-teal/30 bg-brand-teal/5 px-3 py-1 text-xs font-medium text-brand-teal-d transition-colors hover:bg-brand-teal/10"
+          >
+            <GitBranch className="size-3.5" /> <span className="hidden sm:inline">Multimodal lab</span>
+          </a>
           <button
             type="button"
             data-theme-toggle

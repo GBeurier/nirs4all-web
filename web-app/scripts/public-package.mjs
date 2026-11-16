@@ -136,6 +136,7 @@ export async function stagePackage(key) {
     for (const [name, fact] of Object.entries(pin.browser_files ?? {})) {
       const body = Buffer.from(await (await fetch(fact.url)).arrayBuffer())
       check(body, fact, name)
+      mkdirSync(dirname(join(staged, name)), { recursive: true })
       writeFileSync(join(staged, name), body)
     }
     installStaged(key, pin, staged)

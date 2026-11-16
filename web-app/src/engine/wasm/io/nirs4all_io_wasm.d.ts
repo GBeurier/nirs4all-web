@@ -22,6 +22,12 @@
 export function assembleDataset(files: any, record_sets: any, spec: string): any;
 
 /**
+ * Explicit multimodal file profile. IO parses declarations/CSV and aligns IDs;
+ * the supplied synchronous Formats owner callback decodes non-spectral bytes.
+ */
+export function assembleMultimodalFiles(manifest_json: string, files: any, decode: Function, max_decoded_bytes: number): any;
+
+/**
  * Inspect each original table independently, retaining NA and assembler column names.
  * Per-file read refusals are returned in the descriptions; invalid arguments throw.
  */
@@ -94,6 +100,7 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly assembleDataset: (a: any, b: any, c: number, d: number) => [number, number, number];
+    readonly assembleMultimodalFiles: (a: number, b: number, c: any, d: any, e: number) => [number, number, number];
     readonly describeTables: (a: any, b: any) => [number, number, number];
     readonly inferDataset: (a: any, b: any, c: any) => [number, number, number];
     readonly inferFiles: (a: any, b: any) => [number, number, number];

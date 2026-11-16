@@ -1,0 +1,10 @@
+{
+  "schema": "nirs4all.teaching-files.v1",
+  "files": [
+    "manifest.json",
+    "markers.csv",
+    "markers.vcf",
+    "metadata.csv",
+    "nirs.csv"
+  ]
+}

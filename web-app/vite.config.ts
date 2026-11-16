@@ -8,7 +8,7 @@ import { viteSingleFile } from 'vite-plugin-singlefile'
 import { runtimeProfileForBuildMode, type WebRuntimeProfile, webRuntimePolicy } from './src/engine/web-profile'
 
 // Two build modes:
-//  - default      → static site (lazy-loaded WASM), the primary web.nirs4all.org deliverable
+//  - default      → main workbench and multimodal laboratory (lazy-loaded WASM)
 //  - `singlefile` → inline JS+CSS+WASM into one HTML through vite-plugin-singlefile;
 //                   `base: './'` keeps asset URLs relative so the file opens under file://
 export default defineConfig(({ mode }) => {
@@ -35,7 +35,7 @@ export default defineConfig(({ mode }) => {
             source: `${JSON.stringify({
               version: packageJson.version,
               upstreams: Object.fromEntries(Object.entries(publicPackages).map(([key, pin]) => [key, pin.version])),
-              ui: '0.2.1',
+              ui: '0.2.3',
             }, null, 2)}\n`,
           })
           this.emitFile({
@@ -66,6 +66,7 @@ export default defineConfig(({ mode }) => {
         // Public DAG subpaths must precede the bare package alias.
         'dag-ml-wasm/n4m-estimator-controller': path.resolve(__dirname, './src/engine/wasm/dagml/n4m_estimator_controller.mjs'),
         'dag-ml-wasm/n4m-controller': path.resolve(__dirname, './src/engine/wasm/dagml/n4m_controller.mjs'),
+        'dag-ml-wasm/n4m-source-controller': path.resolve(__dirname, './src/engine/wasm/dagml/n4m_source_controller.mjs'),
         'dag-ml-wasm/n4m-optimizer': path.resolve(__dirname, './src/engine/wasm/dagml/n4m_hpo_optimizer.mjs'),
         'dag-ml-wasm/multimodal_dataset_replay': path.resolve(__dirname, './src/engine/wasm/dagml/multimodal_dataset_replay.mjs'),
         'dag-ml-wasm/multimodal_dataset_replay.mjs': path.resolve(__dirname, './src/engine/wasm/dagml/multimodal_dataset_replay.mjs'),
@@ -91,6 +92,14 @@ export default defineConfig(({ mode }) => {
     build: {
       target: 'es2022',
       outDir: singlefile ? 'dist-single' : mode === 'strict' ? 'dist-strict' : mode === 'transitional' ? 'dist-transitional' : 'dist',
+      ...(!singlefile ? {
+        rollupOptions: {
+          input: {
+            workbench: path.resolve(__dirname, 'index.html'),
+            multimodal: path.resolve(__dirname, 'nirs4all_multimodale/index.html'),
+          },
+        },
+      } : {}),
       chunkSizeWarningLimit: 4096,
     },
   }

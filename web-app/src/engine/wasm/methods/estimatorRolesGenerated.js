@@ -1689,6 +1689,35 @@ export class SOPLS extends NativeEstimator {
     }
 }
 NativeMethod.register("models.multiblock.so_pls", SOPLS);
+/** Native `models.neural.multibranch_regressor` (transformer, regressor). */
+export class MultibranchRegressor extends NativeEstimator {
+    methodId = "models.neural.multibranch_regressor";
+    paramTypes = {
+        branch_kinds: "int_array",
+        branch_shapes: "int_array",
+        filters: "int",
+        kernel_size: "int",
+        pool_size: "int",
+        embedding_dim: "int",
+        head_hidden: "int",
+        epochs: "int",
+        batch_size: "int",
+        learning_rate: "double",
+        weight_decay: "double",
+        seed: "int",
+    };
+    constructor(params = {}) {
+        super();
+        this.params = { ...params };
+    }
+    predict(X) {
+        return this.predictMatrix(X);
+    }
+    transform(X) {
+        return this.transformMatrix(X);
+    }
+}
+NativeMethod.register("models.neural.multibranch_regressor", MultibranchRegressor);
 /** Native `models.pls.cppls` (regressor). */
 export class CPPLS extends NativeEstimator {
     methodId = "models.pls.cppls";
@@ -2605,6 +2634,19 @@ export class BaselineCenter extends NativeEstimator {
     }
 }
 NativeMethod.register("preprocessing.scaling.baseline", BaselineCenter);
+/** Native `preprocessing.scaling.block_rms` (transformer). */
+export class BlockRms extends NativeEstimator {
+    methodId = "preprocessing.scaling.block_rms";
+    paramTypes = {};
+    constructor(params = {}) {
+        super();
+        this.params = { ...params };
+    }
+    transform(X) {
+        return this.transformMatrix(X);
+    }
+}
+NativeMethod.register("preprocessing.scaling.block_rms", BlockRms);
 /** Native `preprocessing.scaling.log_transform` (transformer). */
 export class LogTransform extends NativeEstimator {
     methodId = "preprocessing.scaling.log_transform";

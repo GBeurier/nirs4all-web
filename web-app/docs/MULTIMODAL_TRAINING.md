@@ -1,0 +1,131 @@
+# Multisource and multimodal teaching laboratory
+
+The laboratory is a separate static entry at
+`https://web.nirs4all.org/nirs4all_multimodale/`, linked from the main Web
+workbench. It loads files locally and computes in a background worker with the
+Formats, IO, DAG-ML and Methods WebAssembly owners. There is no training server.
+
+## Teaching experiments
+
+All bundled data are deterministic CC0 simulations generated offline. Each
+collection has 120 observations, with 96 calibration observations and 24 declared
+test observations. They illustrate mechanisms, not expected rankings on real data.
+
+| Case | Sources | Main teaching question |
+| --- | --- | --- |
+| Three spectroscopies | Raman: 48 shifts; NIRS: 64 wavelengths; MIR: 56 wavenumbers | Does another spectral window add complementary information? |
+| Spectra and genetic markers | 64 NIRS wavelengths; 16 biallelic dosage markers; 60 biological groups with two observations each | How do modality-specific preprocessing and grouped validation change the experiment? |
+| Spectra and images | 64 NIRS wavelengths; 12 × 12 grayscale images | What changes when a model learns local spatial features instead of treating pixels as ordinary columns? |
+
+Each source retains its own axis, unit and representation. Selecting a sample
+links its spectrum, marker values, image and target by identity. Source files in
+the teaching collections intentionally use different row orders.
+
+| Recipe | What enters the final predictor | What is learned |
+| --- | --- | --- |
+| Single source | One transformed source | One PLS model; run every source baseline |
+| Early fusion | Concatenated transformed variables | One PLS model |
+| Multiblock PLS | Transformed variables with explicit block widths | Centered-block, equal-super-weight multiblock NIPALS |
+| Late mean | Source PLS predictions | Source PLS models; the mean has fixed equal weights |
+| Stacking | Nested OOF source PLS/Ridge predictions | Base models and a Ridge meta-learner |
+| Hybrid | Transformed source variables plus nested OOF predictions | Source preprocessing, base models and Ridge |
+| Intermediate fusion | Learned branch embeddings | Jointly trained convolution/dense branches and a common regression head |
+| Network stacking | Source PLS/Ridge and intermediate-network OOF predictions | Base models, network and Ridge meta-learner |
+
+The network uses 1-D convolutions for spectra, a dense branch for markers and
+2-D convolutions for images. It trains from scratch for a fixed number of epochs;
+it is a compact CPU/WASM model, not a pretrained image backbone. Flattening an
+image preserves its ordered pixel values but gives PLS no convolutional locality
+or shared-filter inductive bias.
+
+## A valid comparison
+
+Use the same selected sources, source preprocessing, samples, outer folds and
+held-out identities for every candidate. Defaults are three outer folds and three
+inner folds with fixed hyperparameters. The seed is an exact decimal u64 string.
+Declared groups remain whole in outer, inner and refit-OOF folds. Repeated
+measurement identities are distinct; their biological group identifies dependency.
+
+Every fitted preprocessing step learns only from its current training scope.
+Stacking trains each meta-learner on predictions from base models that did not
+train on those observations. Hybrid raw features use exactly the same identities
+as those OOF features. Final refit repeats the inner OOF process on calibration
+data; held-out predictions come from replaying the fitted native package.
+
+Compare recipes using OOF scores. The held-out test is a final check after a
+recipe is chosen. Looking repeatedly at scores while changing recipes is
+exploration, not unbiased model selection. The page presents run order rather
+than declaring a universal winner.
+
+Each source can have its own SNV, Savitzky–Golay or train-fitted standard scaling
+where its representation allows it. Spectral operations do not apply to marker
+or image tables. Optional block RMS scaling divides each block by one
+training-fitted scalar; the PLS head does not silently undo it with variable-wise
+scaling. The network's internal train-fitted normalization absorbs a uniform
+block scalar, as disclosed in its result diagnostics.
+
+Changing data, preprocessing, recipes or validation clears old results. Cancel
+terminates the owned compute worker. The JSON downloads document settings,
+scopes, predictions, scores, versions and provenance; they are not executable
+`.n4a` models and omit portable states that could contain training rows.
+
+## Importing real data
+
+Download and unzip the matching example from **Import your files**. Replace its
+data while retaining an explicit `manifest.json`, then choose the manifest and
+every referenced CSV, VCF and PNG file together. Collection names are flat and
+unambiguous. IO joins exact string identifiers, including leading zeros; it never
+repairs a join by row position or guesses sample IDs from image filenames.
+
+The declared profile is `nirs4all.multimodal-import.v1`. Metadata specifies the
+sample ID, numeric target, target unit, optional biological group and optional
+deterministic train/test partition. Each numeric source declares ordered feature
+headers. Spectroscopic sources also declare their numerical axis and unit.
+
+A marker CSV source can replace the example VCF declaration:
+
+```json
+{
+  "id": "genetics",
+  "label": "Genetic markers",
+  "modality": "genetics",
+  "profile": "numeric_csv",
+  "file": "markers.csv",
+  "sampleId": "sample_id",
+  "features": ["marker_1", "marker_2", "marker_3"]
+}
+```
+
+VCF imports use the narrower `vcf_gt_dosage` profile: biallelic diploid GT calls
+become alternate-allele dosages 0/1/2. Phase is discarded with provenance; missing
+calls remain missing. BCF, multiallelic, symbolic and unsupported ploidy inputs
+are refused. PNG imports use `png_manifest`, a `sample_id,file` mapping CSV and
+an explicit fixed `[height,width,channels]` shape. Initial image support is 8-bit,
+non-interlaced grayscale/RGB PNG without alpha, palettes or animation. There is no
+automatic resize or per-image contrast stretch.
+
+Missing cells retain validity information for inspection. This first training
+profile requires complete aligned data and refuses missing cells rather than
+globally imputing them. The browser currently authorizes a 64 MiB aggregate
+decoded import budget. Large-image pipelines require an appropriate host profile.
+
+The detailed owner contract is
+[IO multimodal import](https://github.com/GBeurier/nirs4all-io/blob/main/docs/MULTIMODAL_IMPORT.md).
+Numerical operations belong to Methods, source-controller orchestration and
+native folds/OOF/scoring/replay to DAG-ML, and reusable presentation to UI.
+
+## Forty-minute session
+
+Allow about 23 minutes for concepts and 17 minutes for live work and discussion:
+explain sample identity and complementarity; contrast early, intermediate and
+late fusion; unpack honest stacking; then demonstrate the three cases. Start with
+single-source baselines, change one preprocessing choice, run a common comparison
+and read one OOF prediction/residual view. For genetics, inspect the group policy;
+for images, contrast flattened pixels with the learned spatial branch.
+
+Useful primary conceptual references are Wolpert (1992),
+[Stacked generalization](https://doi.org/10.1016/S0893-6080%2805%2980023-1),
+Westerhuis et al. (1998),
+[Analysis of multiblock and hierarchical PCA and PLS models](https://doi.org/10.1002/%28SICI%291099-128X%28199809/10%2912%3A5%3C301%3A%3AAID-CEM515%3E3.0.CO%3B2-S),
+and Borràs et al. (2015),
+[Data fusion methodologies for food and beverage authentication and quality assessment](https://doi.org/10.1016/j.aca.2015.04.042).

@@ -248,30 +248,41 @@ describe('nirs4all-core aggregate loaders', () => {
     )
   })
 
-  it('loads the pinned public dag-ml WASM coordinator', async () => {
+  it('loads the exact pinned dag-ml WASM coordinator with truthful acquisition provenance', async () => {
     const dagml = await import('./wasm/dagml/dag_ml_wasm.js')
     const wasm = readFileSync(new URL('./wasm/dagml/dag_ml_wasm_bg.wasm', import.meta.url))
     const provenance = JSON.parse(
       readFileSync(new URL('./wasm/dagml/PROVENANCE.json', import.meta.url), 'utf8'),
-    ) as { version: string; source: { commit: string }; reproducibility: { performed_by_web: boolean; independent_rebuild_claimed: boolean } }
+    )
+    const pin = JSON.parse(readFileSync(new URL('../../scripts/public-packages.v1.json', import.meta.url), 'utf8')).dagml
     dagml.initSync({ module: wasm })
 
     const manifest = JSON.parse(dagml.contract_manifest_json()) as { crate: string; capabilities: string[] }
-    expect(dagml.dag_ml_version()).toBe('0.4.0')
+    expect(dagml.dag_ml_version()).toBe(pin.version)
     expect(manifest.crate).toBe('dag-ml')
     expect(manifest.capabilities).toContain('execute_execution_plan_phase')
     expect(manifest.capabilities).toContain('loss_execution_attestation')
-    expect(provenance).toMatchObject({
-      version: '0.4.0',
-      source: {
-        commit: 'beaba0b62f9a65bca86c2f521fc482bd80092ba3',
-      },
-      acquisition: {
-        tarball_url: 'https://registry.npmjs.org/dag-ml-wasm/-/dag-ml-wasm-0.4.0.tgz',
-        sha256: 'b5be2713f79c12281413a3c8829d4355162782a9f6206c7319e4aadae48b035b',
-      },
-      reproducibility: { performed_by_web: false, independent_rebuild_claimed: false },
+    expect(provenance).toEqual({
+      schema: 'nirs4all-web.public-npm-acquisition.v1', package: pin.package, version: pin.version,
+      source: pin.source, acquisition: pin.local ?? pin.registry, files: pin.files,
+      reproducibility: { performed_by_web: Boolean(pin.build), independent_rebuild_claimed: false },
+      ...(pin.browser_deployment ? { browser_deployment: pin.browser_deployment } : {}),
+      ...(pin.build ? { build: pin.build } : {}),
     })
+    expect(provenance.source.repository).toBe('https://github.com/GBeurier/dag-ml')
+    expect(pin).not.toHaveProperty('local')
+    expect(pin.version).toBe('0.4.2')
+    expect(provenance.source.commit).toBe('cacd24f4d5025664ca404b47ecff45ca0491d3b3')
+    expect(provenance.acquisition.tarball_url).toBe('https://registry.npmjs.org/dag-ml-wasm/-/dag-ml-wasm-0.4.2.tgz')
+    for (const [name, fact] of Object.entries(pin.files) as Array<[string, { size: number; sha256: string }]>) {
+      const bytes = readFileSync(new URL(`./wasm/dagml/${name}`, import.meta.url))
+      expect(bytes.length, name).toBe(fact.size)
+      expect(createHash('sha256').update(bytes).digest('hex'), name).toBe(fact.sha256)
+    }
+    expect(Object.keys(pin.files)).toContain('n4m_source_controller.mjs')
+    expect(Object.keys(pin.files)).toContain('n4m_source_controller.d.ts')
+    const pkg = JSON.parse(readFileSync(new URL('./wasm/dagml/package.json', import.meta.url), 'utf8'))
+    expect(pkg.exports['./n4m-source-controller']).toEqual({ types: './n4m_source_controller.d.ts', import: './n4m_source_controller.mjs' })
   })
 
   it('compares the shared numerical oracle with the explicit frozen Core0.5 source reference', async () => {

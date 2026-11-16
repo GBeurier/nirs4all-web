@@ -289,20 +289,13 @@
   },
   "dagml": {
     "package": "dag-ml-wasm",
-    "version": "0.4.0",
+    "version": "0.4.2",
     "destination": "src/engine/wasm/dagml",
     "source": {
       "repository": "https://github.com/GBeurier/dag-ml",
-      "commit": "beaba0b62f9a65bca86c2f521fc482bd80092ba3",
-      "tree": "338c88a76393c2203c8a0a9406b74aac5adad236"
-    },
-    "registry": {
-      "metadata_url": "https://registry.npmjs.org/dag-ml-wasm/0.4.0",
-      "tarball_url": "https://registry.npmjs.org/dag-ml-wasm/-/dag-ml-wasm-0.4.0.tgz",
-      "size": 3516038,
-      "sha256": "b5be2713f79c12281413a3c8829d4355162782a9f6206c7319e4aadae48b035b",
-      "sha1": "d000c8877ff9d210b882d6d95735e01cf788c1c9",
-      "integrity": "sha512-mt6sQpFI7xFvencITI5hvi4TvljsS8eKCSKObE5TtgFr6TI8ET78mSvZGnwY96v7203IimkHxJUc7hRjYNHOgA=="
+      "commit": "cacd24f4d5025664ca404b47ecff45ca0491d3b3",
+      "tree": "f96880b09e4f3f08ccb43061b0a938415ee2cb41",
+      "tag": "v0.4.2"
     },
     "projection": {
       "LICENSE": "LICENSE",
@@ -315,52 +308,54 @@
       "n4m_estimator_controller.mjs": "n4m_estimator_controller.mjs",
       "n4m_hpo_optimizer.mjs": "n4m_hpo_optimizer.mjs",
       "n4m_multimodal_controller.mjs": "n4m_multimodal_controller.mjs",
+      "n4m_source_controller.mjs": "n4m_source_controller.mjs",
       "dag_ml_wasm.d.ts": "dag_ml_wasm.d.ts",
       "n4m_controller.d.ts": "n4m_controller.d.ts",
       "n4m_estimator_controller.d.ts": "n4m_estimator_controller.d.ts",
       "n4m_hpo_optimizer.d.ts": "n4m_hpo_optimizer.d.ts",
+      "n4m_source_controller.d.ts": "n4m_source_controller.d.ts",
       "dag_ml_wasm_bg.wasm": "dag_ml_wasm_bg.wasm"
     },
     "source_files": {
       "LICENSES/AGPL-3.0-or-later.txt": {
+        "source_path": "LICENSES/AGPL-3.0-or-later.txt",
         "size": 34020,
-        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
-        "source_path": "LICENSES/AGPL-3.0-or-later.txt"
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
       },
       "LICENSES/Apache-2.0.txt": {
+        "source_path": "LICENSES/Apache-2.0.txt",
         "size": 10280,
-        "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff",
-        "source_path": "LICENSES/Apache-2.0.txt"
+        "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
       },
       "LICENSES/BSD-3-Clause.txt": {
+        "source_path": "LICENSES/BSD-3-Clause.txt",
         "size": 1460,
-        "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d",
-        "source_path": "LICENSES/BSD-3-Clause.txt"
+        "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
       },
       "LICENSES/CeCILL-2.1.txt": {
+        "source_path": "LICENSES/CeCILL-2.1.txt",
         "size": 21778,
-        "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5",
-        "source_path": "LICENSES/CeCILL-2.1.txt"
+        "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
       },
       "LICENSES/MIT.txt": {
+        "source_path": "LICENSES/MIT.txt",
         "size": 1078,
-        "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5",
-        "source_path": "LICENSES/MIT.txt"
+        "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
       },
       "LICENSING.md": {
+        "source_path": "LICENSING.md",
         "size": 1406,
-        "sha256": "f9f26e32462eb28e350d0bd4db913ee5ccbd3a1eb88d97e78d187e1b35b86ae9",
-        "source_path": "LICENSING.md"
+        "sha256": "f9f26e32462eb28e350d0bd4db913ee5ccbd3a1eb88d97e78d187e1b35b86ae9"
       },
       "LICENSING_FR.md": {
+        "source_path": "LICENSING_FR.md",
         "size": 1521,
-        "sha256": "6f907830be970cbd87723ebaa1e58ffd3dd3f69692a5b211edfc6ee964d93aff",
-        "source_path": "LICENSING_FR.md"
+        "sha256": "6f907830be970cbd87723ebaa1e58ffd3dd3f69692a5b211edfc6ee964d93aff"
       },
       "THIRD_PARTY_NOTICES.md": {
+        "source_path": "THIRD_PARTY_NOTICES.md",
         "size": 1573,
-        "sha256": "01a4064f18fa28336f49c40a4e2db4b40ebee4766160320174e5aaadc41304fd",
-        "source_path": "THIRD_PARTY_NOTICES.md"
+        "sha256": "01a4064f18fa28336f49c40a4e2db4b40ebee4766160320174e5aaadc41304fd"
       }
     },
     "files": {
@@ -369,16 +364,16 @@
         "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
       },
       "dag_ml_wasm.js": {
-        "size": 74426,
-        "sha256": "e863682e25863542963df65b84c25d03cd96e041aaba1da400224177cfad90c6"
+        "size": 75035,
+        "sha256": "07547bf005d6eeb82f3b94782f951025aaed0d852d6e0b27808b9ba17f3fe92c"
       },
       "package.json": {
-        "size": 1729,
-        "sha256": "6c1826b61d29fa45103044c7dcae36b3669a7d3fbc0a42bb5e96079c0771e090"
+        "size": 1929,
+        "sha256": "3f0549f1978ebac507961a2ab4678d78888b5b25309860f8e04c7a10d4878a94"
       },
       "README.md": {
-        "size": 9222,
-        "sha256": "586029450a20985b10e5f0608d1c66a1bb57d861a79cf0c8549575697f9bbbb0"
+        "size": 9899,
+        "sha256": "dae30eb39ac141d1f4eea1fb49608ab4189994d71446e3b71d2f763e817e1516"
       },
       "multimodal_archive.mjs": {
         "size": 1997,
@@ -404,9 +399,13 @@
         "size": 25073,
         "sha256": "9c5354d3dc0e6ff4f63be6f88640445c4ea3736c9759ef505672fa21d4ee2a63"
       },
+      "n4m_source_controller.mjs": {
+        "size": 24979,
+        "sha256": "71106fdc916c29ceef230d6e3a9d1556028f802879e71f13badba67772c99c9e"
+      },
       "dag_ml_wasm.d.ts": {
         "size": 26920,
-        "sha256": "e5406745dd87d672fb99c4a264812d0d596f36128e1b782d604909c1d2b5f997"
+        "sha256": "0cabed8661af4414ec1d990f3e1954c2f7c55a3fee0e700ad20af21d922efe43"
       },
       "n4m_controller.d.ts": {
         "size": 2796,
@@ -420,9 +419,13 @@
         "size": 1339,
         "sha256": "b02ef2d5df584f5f972c1544e0dfc324c931123cfb4ccb4ed9ebc4420570119b"
       },
+      "n4m_source_controller.d.ts": {
+        "size": 2073,
+        "sha256": "9e538766d243cc5bf2766caf0308575c9d2fa410f6b1a7f06cc2393dad181c36"
+      },
       "dag_ml_wasm_bg.wasm": {
-        "size": 10537236,
-        "sha256": "edff9682b63a16a79462c288b3577e912db8143865bf02a0a1c6db07a3690599"
+        "size": 10748976,
+        "sha256": "bb0b18a7fc0918a83e457226c6b9e9903483519ea44a21dbf1a9b307321077f1"
       },
       "LICENSES/AGPL-3.0-or-later.txt": {
         "size": 34020,
@@ -456,6 +459,19 @@
         "size": 1573,
         "sha256": "01a4064f18fa28336f49c40a4e2db4b40ebee4766160320174e5aaadc41304fd"
       }
+    },
+    "registry": {
+      "metadata_url": "https://registry.npmjs.org/dag%2Dml%2Dwasm/0.4.2",
+      "tarball_url": "https://registry.npmjs.org/dag-ml-wasm/-/dag-ml-wasm-0.4.2.tgz",
+      "size": 3652578,
+      "sha256": "829a9fc4557bd258f2371406272215df0838e6f6d0980c485ffe321d827fb8e5",
+      "sha1": "62593fd755333d5f8693df7455521f4a78476131",
+      "integrity": "sha512-6+JcmiNjtC/np15blE12NWk9+zAh/TGEC7m/bLr4ApXtl5tsGYyzEN2MTIl69MJrkFp6X4k4AuEJyw0bskjpYQ=="
+    },
+    "browser_deployment": {
+      "payload": "Published npm web-target WASM and exact owner host adapters; no Web rebuild.",
+      "profile": "release",
+      "target": "web"
     }
   },
   "dagml-data": {
@@ -600,204 +616,35 @@
     }
   },
   "io": {
-    "package": "nirs4all-io-wasm",
-    "version": "0.3.2",
+    "package": "@nirs4all/io-wasm",
+    "version": "0.3.3",
     "destination": "src/engine/wasm/io",
     "source": {
-      "kind": "owner-provided-browser-build",
       "repository": "https://github.com/GBeurier/nirs4all-io",
-      "commit": "6c1a2567730464de5147509e39aaeba6bbc00b66",
-      "tree": "e90972a82a5d231285104071d3bbfc886eb9d1db",
-      "browser_artifact_directory": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package",
-      "build_reported_by_root": {
-        "tool": "wasm-pack",
-        "version": "0.15.0",
-        "target": "web",
-        "release": true,
-        "locked": true
-      },
-      "owner_node24_initSync_version_smoke": "Passed for the shared artifact; not rerun by this staging task.",
-      "package_preparation": "Existing owner scripts/stage_wasm_package.mjs; NPM_PKG_NAME=nirs4all-io-wasm.",
-      "publication_claimed": false,
-      "artifact_origin": "Local-unpublished owner browser build; not public npm bytes.",
-      "performed_by_web": false
-    },
-    "local": {
-      "kind": "local-unpublished",
-      "note": "Local-unpublished IO 0.3.2 owner web-target build from commit 6c1a256; no registry identity or rebuild by Web.",
-      "files": {
-        "COPY_PROVENANCE.md": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/COPY_PROVENANCE.md",
-          "size": 36889,
-          "sha256": "bcc5be99f7294d5c08992d1538069b94b5c9a3863e46c3fa8be95be486ef60f3"
-        },
-        "LICENSE": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/LICENSE",
-          "size": 34020,
-          "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
-        },
-        "LICENSES/AGPL-3.0-or-later.txt": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/LICENSES/AGPL-3.0-or-later.txt",
-          "size": 34020,
-          "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
-        },
-        "LICENSES/Apache-2.0.txt": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/LICENSES/Apache-2.0.txt",
-          "size": 9723,
-          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
-        },
-        "LICENSES/BSD-3-Clause.txt": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/LICENSES/BSD-3-Clause.txt",
-          "size": 1459,
-          "sha256": "3cf06aba3588c41c514f6946bb2d757b413ff6491647d474800f55edca75dcb4"
-        },
-        "LICENSES/COMMERCIAL-LICENSE.md": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/LICENSES/COMMERCIAL-LICENSE.md",
-          "size": 670,
-          "sha256": "e62a66dc45d618d419706048b17a840f87d0c0c5c940eadd1cf6ea13c7eae08f"
-        },
-        "LICENSES/COMMERCIAL-LICENSE_FR.md": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/LICENSES/COMMERCIAL-LICENSE_FR.md",
-          "size": 759,
-          "sha256": "7d1fd841891d4cb53836a6aca2fbbf7f36ef3bca540a394a9d94633af34ea3d6"
-        },
-        "LICENSES/CeCILL-2.1.txt": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/LICENSES/CeCILL-2.1.txt",
-          "size": 21778,
-          "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
-        },
-        "LICENSES/MIT.txt": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/LICENSES/MIT.txt",
-          "size": 1078,
-          "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
-        },
-        "LICENSES/Unicode-3.0.txt": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/LICENSES/Unicode-3.0.txt",
-          "size": 1995,
-          "sha256": "f7db81051789b729fea528a63ec4c938fdcb93d9d61d97dc8cc2e9df6d47f2a1"
-        },
-        "LICENSING.md": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/LICENSING.md",
-          "size": 2113,
-          "sha256": "b41ad1d4b8e62c89e42704fc4c9b5bb8a2099a0ad0680d72e95efb57c5d3326c"
-        },
-        "README.md": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/README.md",
-          "size": 7489,
-          "sha256": "f47d7be4f40ee5f6616a2a8ce881096de94d2c326d7b43ddc7b80bb0b33bdbb3"
-        },
-        "THIRD_PARTY_NOTICES.md": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/THIRD_PARTY_NOTICES.md",
-          "size": 5732,
-          "sha256": "c2f5c9061e7bc5a259a2d630330930ce9438f157e9646724824730ce516a5179"
-        },
-        "idiomatic.d.ts": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/idiomatic.d.ts",
-          "size": 2255,
-          "sha256": "76cac94b2829a64977359ea807dd1c84bef41cb60af291c14eb3eecb372ceef0"
-        },
-        "idiomatic.mjs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/idiomatic.mjs",
-          "size": 2684,
-          "sha256": "a041c2304307eccbe805cfb97868eb2640fafe2fc51da8237e0a535135d1bfa3"
-        },
-        "nirs4all-io-wasm.cdx.json": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/nirs4all-io-wasm.cdx.json",
-          "size": 34796,
-          "sha256": "c27233f4b1e4e9b38d4f7cf61253c0d39df50c0acc64f43839ec7d2b0d2b66c4"
-        },
-        "nirs4all_io_wasm.d.ts": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/nirs4all_io_wasm.d.ts",
-          "size": 6006,
-          "sha256": "330eb68f22da3e42fcbd3495cce4efcaafceb543cecfef649069f6cd2dc5decf"
-        },
-        "nirs4all_io_wasm.js": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/nirs4all_io_wasm.js",
-          "size": 25905,
-          "sha256": "7dd87d55807f43b163cd017a48751cd56273b044bc731be137f1c9256dbee5f7"
-        },
-        "nirs4all_io_wasm_bg.wasm": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/nirs4all_io_wasm_bg.wasm",
-          "size": 2674955,
-          "sha256": "9bd041658f0cdb87042926e0ae608af6fc318568bc01d9c594ae33fd0d5f1012"
-        },
-        "nirs4all_io_wasm_bg.wasm.d.ts": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/nirs4all_io_wasm_bg.wasm.d.ts",
-          "size": 1348,
-          "sha256": "a3d3595633d4e94fd368535fcbf68a3027a0266abbad91fd9c8cce3510829241"
-        },
-        "package.json": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/package.json",
-          "size": 1774,
-          "sha256": "6fb190d3d44abcbb5cecfa0833b1044421204c65378160f687a6e8547240c45d"
-        },
-        "public-dataset.d.ts": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/public-dataset.d.ts",
-          "size": 4765,
-          "sha256": "c5f53b89e2ceb21bc9aafe0d6ed8bd2f037eda58f1a36997ca895ec638c181a8"
-        },
-        "public-dataset.mjs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/public-dataset.mjs",
-          "size": 31123,
-          "sha256": "ab29fc57e4e78e3c6b49bd3aae026d3f310750c974803b7fa00a44906f621981"
-        },
-        "types/nirs4all-io.d.ts": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/types/nirs4all-io.d.ts",
-          "size": 12078,
-          "sha256": "6d6f5a8c0f445e740c15f81e0c00298bfaa9915eba05a1a53b4a1b2bc35c91f5"
-        },
-        "numeric-wire.mjs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/numeric-wire.mjs",
-          "size": 1949,
-          "sha256": "82e35e14f51aa49f6ad2da382e26d080e7b4ec84b257b6cf77da52b5410d618b"
-        },
-        "numeric-wire.d.ts": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/io-wasm-numeric-wire-private/browser-owner-032/package/numeric-wire.d.ts",
-          "size": 744,
-          "sha256": "48a26a8d6754a59e3d074c3c52351970e3f5725f3991899913bf61810229c0b0"
-        }
-      }
+      "commit": "9e4cc95adff9df9180572f2346c47539d8d2d5cc",
+      "tree": "8b67c452644d259c42e506e9f635091b80346753",
+      "tag": "v0.3.3"
     },
     "files": {
-      "COPY_PROVENANCE.md": {
-        "size": 36889,
-        "sha256": "bcc5be99f7294d5c08992d1538069b94b5c9a3863e46c3fa8be95be486ef60f3"
-      },
       "LICENSE": {
         "size": 34020,
         "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
       },
-      "LICENSES/AGPL-3.0-or-later.txt": {
-        "size": 34020,
-        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
-      },
-      "LICENSES/Apache-2.0.txt": {
-        "size": 9723,
-        "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
-      },
-      "LICENSES/BSD-3-Clause.txt": {
-        "size": 1459,
-        "sha256": "3cf06aba3588c41c514f6946bb2d757b413ff6491647d474800f55edca75dcb4"
-      },
-      "LICENSES/COMMERCIAL-LICENSE.md": {
-        "size": 670,
-        "sha256": "e62a66dc45d618d419706048b17a840f87d0c0c5c940eadd1cf6ea13c7eae08f"
+      "nirs4all-io-wasm.cdx.json": {
+        "size": 34796,
+        "sha256": "bbf00325c701d02f734885dc7e0f4387d66a2954916cd37ea935bc5b18e18129"
       },
       "LICENSES/COMMERCIAL-LICENSE_FR.md": {
         "size": 759,
         "sha256": "7d1fd841891d4cb53836a6aca2fbbf7f36ef3bca540a394a9d94633af34ea3d6"
       },
-      "LICENSES/CeCILL-2.1.txt": {
-        "size": 21778,
-        "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+      "LICENSES/COMMERCIAL-LICENSE.md": {
+        "size": 670,
+        "sha256": "e62a66dc45d618d419706048b17a840f87d0c0c5c940eadd1cf6ea13c7eae08f"
       },
-      "LICENSES/MIT.txt": {
-        "size": 1078,
-        "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
-      },
-      "LICENSES/Unicode-3.0.txt": {
-        "size": 1995,
-        "sha256": "f7db81051789b729fea528a63ec4c938fdcb93d9d61d97dc8cc2e9df6d47f2a1"
+      "COPY_PROVENANCE.md": {
+        "size": 36889,
+        "sha256": "bcc5be99f7294d5c08992d1538069b94b5c9a3863e46c3fa8be95be486ef60f3"
       },
       "LICENSING.md": {
         "size": 2113,
@@ -811,965 +658,167 @@
         "size": 5732,
         "sha256": "c2f5c9061e7bc5a259a2d630330930ce9438f157e9646724824730ce516a5179"
       },
-      "idiomatic.d.ts": {
-        "size": 2255,
-        "sha256": "76cac94b2829a64977359ea807dd1c84bef41cb60af291c14eb3eecb372ceef0"
-      },
       "idiomatic.mjs": {
         "size": 2684,
         "sha256": "a041c2304307eccbe805cfb97868eb2640fafe2fc51da8237e0a535135d1bfa3"
-      },
-      "nirs4all-io-wasm.cdx.json": {
-        "size": 34796,
-        "sha256": "c27233f4b1e4e9b38d4f7cf61253c0d39df50c0acc64f43839ec7d2b0d2b66c4"
-      },
-      "nirs4all_io_wasm.d.ts": {
-        "size": 6006,
-        "sha256": "330eb68f22da3e42fcbd3495cce4efcaafceb543cecfef649069f6cd2dc5decf"
-      },
-      "nirs4all_io_wasm.js": {
-        "size": 25905,
-        "sha256": "7dd87d55807f43b163cd017a48751cd56273b044bc731be137f1c9256dbee5f7"
-      },
-      "nirs4all_io_wasm_bg.wasm": {
-        "size": 2674955,
-        "sha256": "9bd041658f0cdb87042926e0ae608af6fc318568bc01d9c594ae33fd0d5f1012"
-      },
-      "nirs4all_io_wasm_bg.wasm.d.ts": {
-        "size": 1348,
-        "sha256": "a3d3595633d4e94fd368535fcbf68a3027a0266abbad91fd9c8cce3510829241"
-      },
-      "package.json": {
-        "size": 1774,
-        "sha256": "6fb190d3d44abcbb5cecfa0833b1044421204c65378160f687a6e8547240c45d"
-      },
-      "public-dataset.d.ts": {
-        "size": 4765,
-        "sha256": "c5f53b89e2ceb21bc9aafe0d6ed8bd2f037eda58f1a36997ca895ec638c181a8"
-      },
-      "public-dataset.mjs": {
-        "size": 31123,
-        "sha256": "ab29fc57e4e78e3c6b49bd3aae026d3f310750c974803b7fa00a44906f621981"
-      },
-      "types/nirs4all-io.d.ts": {
-        "size": 12078,
-        "sha256": "6d6f5a8c0f445e740c15f81e0c00298bfaa9915eba05a1a53b4a1b2bc35c91f5"
       },
       "numeric-wire.mjs": {
         "size": 1949,
         "sha256": "82e35e14f51aa49f6ad2da382e26d080e7b4ec84b257b6cf77da52b5410d618b"
       },
+      "public-dataset.mjs": {
+        "size": 31123,
+        "sha256": "ab29fc57e4e78e3c6b49bd3aae026d3f310750c974803b7fa00a44906f621981"
+      },
+      "idiomatic.d.ts": {
+        "size": 2255,
+        "sha256": "76cac94b2829a64977359ea807dd1c84bef41cb60af291c14eb3eecb372ceef0"
+      },
+      "types/nirs4all-io.d.ts": {
+        "size": 12078,
+        "sha256": "6d6f5a8c0f445e740c15f81e0c00298bfaa9915eba05a1a53b4a1b2bc35c91f5"
+      },
       "numeric-wire.d.ts": {
         "size": 744,
         "sha256": "48a26a8d6754a59e3d074c3c52351970e3f5725f3991899913bf61810229c0b0"
-      }
-    }
-  },
-  "formats": {
-    "package": "nirs4all-formats-wasm",
-    "version": "0.2.16",
-    "destination": "src/engine/wasm/formats",
-    "source": {
-      "kind": "owner-provided-browser-build-from-public-tag",
-      "repository": "https://github.com/GBeurier/nirs4all-formats",
-      "commit": "819f5764a2138d755155e5018d7bbcb178924861",
-      "tree": "6226c70c2638e1b4c8746f24c16626a851c69c06",
-      "tag": "v0.2.16",
-      "browser_artifact_directory": "/mnt/d/nirs4all-owned-compiler-cache-20261107/portable-native-cohort-20261108/formats-0216-browser-web",
-      "build_reported_by_root": {
-        "tool": "wasm-pack",
-        "target": "web",
-        "locked": true
       },
-      "owner_node24_initSync_smoke": "Passed, reported by Root; not rerun by this staging task.",
-      "publication_claimed": false,
-      "artifact_origin": "Exact owner-provided browser build; not the public npm Node payload. Legal notices from the same public source and reader-backports from the previously verified public 0.2.16 archive.",
-      "performed_by_web": false
-    },
-    "local": {
-      "kind": "local-unpublished",
-      "note": "Owner-provided target web build from public v0.2.16; browser bytes are not npm Node bytes. No compilation or runtime test performed during staging.",
-      "files": {
-        "README.md": {
-          "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/portable-native-cohort-20261108/formats-0216-browser-web/README.md",
-          "size": 2918,
-          "sha256": "724b92047f40593956684d2e0e58fced595df93eb01c953792bc5e43ef0345ee"
-        },
-        "nirs4all_formats_wasm.d.ts": {
-          "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/portable-native-cohort-20261108/formats-0216-browser-web/nirs4all_formats_wasm.d.ts",
-          "size": 5249,
-          "sha256": "a1e7f3f502168cd814404b9f8c11a642b5387926fbea4cabe6323b51efc05432"
-        },
-        "nirs4all_formats_wasm.js": {
-          "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/portable-native-cohort-20261108/formats-0216-browser-web/nirs4all_formats_wasm.js",
-          "size": 24737,
-          "sha256": "2a96a157f01238482fe11f8e66d780beef48c2149da17d5dd4bc79d470753f44"
-        },
-        "nirs4all_formats_wasm_bg.wasm": {
-          "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/portable-native-cohort-20261108/formats-0216-browser-web/nirs4all_formats_wasm_bg.wasm",
-          "size": 5982079,
-          "sha256": "f99e6266a037e529e3af6510d21c80ea70862cd31dd02e57259c05fb4b311ced"
-        },
-        "nirs4all_formats_wasm_bg.wasm.d.ts": {
-          "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/portable-native-cohort-20261108/formats-0216-browser-web/nirs4all_formats_wasm_bg.wasm.d.ts",
-          "size": 1882,
-          "sha256": "5ec7880fb0e0d5b871eb0861dedd607460c97195d1db3773064b0a44c4fbe916"
-        },
-        "package.json": {
-          "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/portable-native-cohort-20261108/formats-0216-browser-web/package.json",
-          "size": 609,
-          "sha256": "25f65f2ef2d85314995b754cc40fc4022fd8f522aebec8bc358d0576b41bfc10"
-        },
-        "snippets/rds2rust-777dc4a0b14a5aca/wasm/decompress.js": {
-          "source": "/mnt/d/nirs4all-owned-compiler-cache-20261107/portable-native-cohort-20261108/formats-0216-browser-web/snippets/rds2rust-777dc4a0b14a5aca/wasm/decompress.js",
-          "size": 16502,
-          "sha256": "5258768404663b4b48572796afbe51e2a8669a89d3d5e21cf18c41830bf1d46b"
-        },
-        "reader-backports/hdf5-reader/LICENSE-APACHE": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/LICENSE-APACHE",
-          "size": 8464,
-          "sha256": "7e1c4927d7c8765c73e234c2da19c423dfafc9c662e6d028277f9e77476445bb"
-        },
-        "reader-backports/netcdf-reader/LICENSE-APACHE": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/LICENSE-APACHE",
-          "size": 8464,
-          "sha256": "7e1c4927d7c8765c73e234c2da19c423dfafc9c662e6d028277f9e77476445bb"
-        },
-        "reader-backports/hdf5-reader/LICENSE-MIT": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/LICENSE-MIT",
-          "size": 1067,
-          "sha256": "24a4eeee33afc227bd3e796f772741250b2c93eae1cdba65e775ef8005dfb4b1"
-        },
-        "reader-backports/netcdf-reader/LICENSE-MIT": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/LICENSE-MIT",
-          "size": 1067,
-          "sha256": "24a4eeee33afc227bd3e796f772741250b2c93eae1cdba65e775ef8005dfb4b1"
-        },
-        "reader-backports/hdf5-reader/PROVENANCE.json": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/PROVENANCE.json",
-          "size": 5845,
-          "sha256": "f568cb1ca6c529b6723e56a614a955343b52dea1bd38e3616673d3a867c0a779"
-        },
-        "reader-backports/netcdf-reader/PROVENANCE.json": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/PROVENANCE.json",
-          "size": 3357,
-          "sha256": "d35cc18475750fd1edffb52ea5daec0f85eabd640e64c8978e8af05105bc5c54"
-        },
-        "reader-backports/hdf5-reader/UPSTREAM-VCS.json": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/UPSTREAM-VCS.json",
-          "size": 105,
-          "sha256": "7dfc117addc40f7073a8453b35ce86397924fc1f6b3b19bf0fa6d7dc6aacaeda"
-        },
-        "reader-backports/netcdf-reader/UPSTREAM-VCS.json": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/UPSTREAM-VCS.json",
-          "size": 107,
-          "sha256": "0350ca7a38aff0f50597114289ce104840e38a31ebf10c184b58267eeaf19eb6"
-        },
-        "reader-backports/hdf5-reader/README.md": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/README.md",
-          "size": 12583,
-          "sha256": "fe4b38a268a3ca02d2789b94bca3656a488553b4281b4e682f33201664faedf5"
-        },
-        "reader-backports/netcdf-reader/README.md": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/README.md",
-          "size": 12583,
-          "sha256": "fe4b38a268a3ca02d2789b94bca3656a488553b4281b4e682f33201664faedf5"
-        },
-        "THIRD_PARTY_NOTICES.md": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/formats-browser-owner-stage-20261109/source-legal/THIRD_PARTY_NOTICES.md",
-          "size": 2630,
-          "sha256": "39e06e5ca05c5bc5bab725d15f2eb28bfde7c33d79906c9f38534b7bb731a34a"
-        },
-        "reader-backports/hdf5-reader/src/attribute_api.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/attribute_api.rs",
-          "size": 28630,
-          "sha256": "d450a87a0923a5e835dcdb283c1c7d45e63652a28b500a49f1e2d9f41081ea83"
-        },
-        "reader-backports/hdf5-reader/src/messages/attribute_info.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/messages/attribute_info.rs",
-          "size": 2857,
-          "sha256": "95bd3648eb7d4388b9de9ed4a1e72d12a7c2f1b3d0c71482fae6221315d262a0"
-        },
-        "reader-backports/hdf5-reader/src/messages/attribute.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/messages/attribute.rs",
-          "size": 9848,
-          "sha256": "f02842e5878982785f0b64cd5b4a0d927a9a438ba10392857610f12b422ec5d6"
-        },
-        "reader-backports/netcdf-reader/src/nc4/attributes.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/src/nc4/attributes.rs",
-          "size": 6699,
-          "sha256": "85e0f6fabf31d2e5fd6299e03b75dd634d708aa2b80bd132f0bcab999f3180ef"
-        },
-        "reader-backports/netcdf-reader/src/cf/axes.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/src/cf/axes.rs",
-          "size": 12767,
-          "sha256": "13be78f68255b727b21941495b1683d11a6f0ce731a17965935adbed59b42031"
-        },
-        "reader-backports/netcdf-reader/src/cf/bounds.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/src/cf/bounds.rs",
-          "size": 3217,
-          "sha256": "17ffc45db0989c808d80f3919984ba42f9590c9122408befc06a47e1e477698f"
-        },
-        "reader-backports/hdf5-reader/src/messages/btree_k.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/messages/btree_k.rs",
-          "size": 956,
-          "sha256": "fe9649fd0d398575ae9347c92384dd0dccd9fb53cae7f3a1fcbca2906afa6cd8"
-        },
-        "reader-backports/hdf5-reader/src/btree_v1.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/btree_v1.rs",
-          "size": 24646,
-          "sha256": "6aac11fdb8911480fc638348659eeaed246cbbff5dd127cad957ada9f78a3d9c"
-        },
-        "reader-backports/hdf5-reader/src/btree_v2.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/btree_v2.rs",
-          "size": 68060,
-          "sha256": "36897aef9439121921dfbd573edbd446a6f13d9393c9dd4f8e70221e5c91e60a"
-        },
-        "reader-backports/hdf5-reader/src/cache.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/cache.rs",
-          "size": 11376,
-          "sha256": "91552122c2d4a378e4e9830cdf9de704d196f2d072a4d4d74164bc6b7134a1ac"
-        },
-        "reader-backports/hdf5-reader/src/checksum.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/checksum.rs",
-          "size": 1872,
-          "sha256": "4697049349b0f9f1131e4bfa96b81dc45e9584158fc31432489491d04fbc9419"
-        },
-        "reader-backports/hdf5-reader/src/chunk_index.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/chunk_index.rs",
-          "size": 13644,
-          "sha256": "10a777aae588702777aa15f68ce00c76de5ec0a089546b231d8d24b14a135bc9"
-        },
-        "reader-backports/hdf5-reader/src/messages/continuation.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/messages/continuation.rs",
-          "size": 1270,
-          "sha256": "6a462c49154ad7f176a493d5c8fecc950e1c772b14ab0692a7f5bfdb3ee8dee8"
-        },
-        "reader-backports/netcdf-reader/src/cf/crs.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/src/cf/crs.rs",
-          "size": 9677,
-          "sha256": "2f87cc8f517446768b3ba84e1acb236bcf6746eb1bab8148e81bfd7c8a05230a"
-        },
-        "reader-backports/netcdf-reader/src/classic/data.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/src/classic/data.rs",
-          "size": 51616,
-          "sha256": "1a32f780ad522b7624ceee94d5ea76f7c294e7dd088dd82921aee6347a006e8e"
-        },
-        "reader-backports/hdf5-reader/src/dataset.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/dataset.rs",
-          "size": 173310,
-          "sha256": "13683760cf0f9a393909517feeb3467dc0896a3570d738cf0db29ef85a9eead2"
-        },
-        "reader-backports/hdf5-reader/src/messages/dataspace.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/messages/dataspace.rs",
-          "size": 7688,
-          "sha256": "24054741d6b8fc9b7ab5f2cbfbcedc762d0f3104d899f5810917d92fd16f6fa3"
-        },
-        "reader-backports/hdf5-reader/src/datatype_api.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/datatype_api.rs",
-          "size": 17498,
-          "sha256": "49fee0dd72f083644848eec5a768b0f6ca5ce742f088fdbb0b8cdc6efbfed06a"
-        },
-        "reader-backports/hdf5-reader/src/messages/datatype.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/messages/datatype.rs",
-          "size": 33601,
-          "sha256": "42437abb94aba788374ad8769c284cac94c053a71265b3cc123e2ab01aa22018"
-        },
-        "reader-backports/hdf5-reader/src/filters/deflate.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/filters/deflate.rs",
-          "size": 3598,
-          "sha256": "49e14030b7d1656aa0c193d91be5a6cb670d4eaf94b652be3327ba5cde0cf045"
-        },
-        "reader-backports/netcdf-reader/src/nc4/dimensions.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/src/nc4/dimensions.rs",
-          "size": 4616,
-          "sha256": "39e387a9cfa7b659882f12fa813124a70ccab3d64a752f7ad212f29fcf33cb77"
-        },
-        "reader-backports/hdf5-reader/src/error.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/error.rs",
-          "size": 4703,
-          "sha256": "3d07709e476dc3fcecdfa15fbd5be215b1a7c8e5bc7f8e61bcc4e2ff0e2585c3"
-        },
-        "reader-backports/netcdf-reader/src/error.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/src/error.rs",
-          "size": 1519,
-          "sha256": "eb2f0ad3ffd310804e1bba665713799a01677c87e6868a52522609cf65a8b4b1"
-        },
-        "reader-backports/hdf5-reader/src/extensible_array.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/extensible_array.rs",
-          "size": 62873,
-          "sha256": "2bd54463b5c602f702f3bb515008301d44ac8875b51e7cfc9740d9e00a582fde"
-        },
-        "reader-backports/hdf5-reader/src/messages/external_files.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/messages/external_files.rs",
-          "size": 1472,
-          "sha256": "0e660d862e619276ef6d4fa0f307862a08a18d03f1a0dc819794eeee5e209788"
-        },
-        "reader-backports/hdf5-reader/src/messages/fill_value.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/messages/fill_value.rs",
-          "size": 6654,
-          "sha256": "182ae332c7e11b21db97d1e427593e46a2573b846b638f2d69e10ab759f7b8dc"
-        },
-        "reader-backports/hdf5-reader/src/messages/filter_pipeline.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/messages/filter_pipeline.rs",
-          "size": 4559,
-          "sha256": "3ef8bf0f99a54655a049c2617e176db57f69731957c3d01b992fdcdb41005059"
-        },
-        "reader-backports/hdf5-reader/src/fixed_array.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/fixed_array.rs",
-          "size": 25157,
-          "sha256": "7b45164967fed5c98b3e5a0c94543b2ba5ea0c328424c0d387e1f826b86aefa7"
-        },
-        "reader-backports/hdf5-reader/src/filters/fletcher32.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/filters/fletcher32.rs",
-          "size": 1438,
-          "sha256": "80ac50c90bc0f5aff947a71cb0d47027174c154da1819463a1d8df9ff8cc4ba0"
-        },
-        "reader-backports/hdf5-reader/src/fractal_heap.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/fractal_heap.rs",
-          "size": 78695,
-          "sha256": "8438ecd7ed1c314c8b57d42773838e8a484924eef19910d98b055d4547f526ec"
-        },
-        "reader-backports/hdf5-reader/src/global_heap.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/global_heap.rs",
-          "size": 9783,
-          "sha256": "887e8a63e462053d77475ee6b87f09a19ac8d387822a55e699a557dbcb4951f7"
-        },
-        "reader-backports/hdf5-reader/src/messages/group_info.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/messages/group_info.rs",
-          "size": 3093,
-          "sha256": "f028d7afb028f981cadfb75cd23413c1e61d80b6aac30b2dcb14900345abba0e"
-        },
-        "reader-backports/hdf5-reader/src/group.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/group.rs",
-          "size": 27108,
-          "sha256": "dd19cfdcf4efbe3fedd600110203dd95e85305abbc15c3abe81acc3751ddbb1a"
-        },
-        "reader-backports/netcdf-reader/src/nc4/groups.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/src/nc4/groups.rs",
-          "size": 9821,
-          "sha256": "7ee002d6fc6f9dfc95cd8979f311bdfcaefb0df410adb5f9b852630274d523b9"
-        },
-        "reader-backports/netcdf-reader/src/classic/header.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/src/classic/header.rs",
-          "size": 37154,
-          "sha256": "a428b834edbbace63c725f1ebc08ef3683ea5eac07ee056818a4e1ec2d09d18d"
-        },
-        "reader-backports/hdf5-reader/src/io.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/io.rs",
-          "size": 12400,
-          "sha256": "589621880155b776b5cbd3aa637675e7b9df39fd0d95c39adc00922ae2704f7b"
-        },
-        "reader-backports/hdf5-reader/src/messages/layout.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/messages/layout.rs",
-          "size": 15999,
-          "sha256": "261bc049a8f4566785f4ea7484b8f7645423206ccdc1364ab541237fc559b474"
-        },
-        "reader-backports/hdf5-reader/src/lib.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/lib.rs",
-          "size": 31334,
-          "sha256": "8a7806b8fd93e9cfbdf65abe2a8461ec689dae059ef79dfead83c6c5dd6d23b4"
-        },
-        "reader-backports/netcdf-reader/src/lib.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/src/lib.rs",
-          "size": 57396,
-          "sha256": "3bd98abd9d48643b976ada4f7160c408d9b3d7f3524e85f2216f81089a1ac855"
-        },
-        "reader-backports/hdf5-reader/src/messages/link_info.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/messages/link_info.rs",
-          "size": 4099,
-          "sha256": "4ac49bd26b47d98ca4d585369f5dd779eac1421e0254b67d2c62d5c1dea4a81d"
-        },
-        "reader-backports/hdf5-reader/src/messages/link.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/messages/link.rs",
-          "size": 5202,
-          "sha256": "7b4ab91992e1abd5a2cf2a1f4abf4404782cc9da5733cff3cead7427e76bd136"
-        },
-        "reader-backports/hdf5-reader/src/local_heap.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/local_heap.rs",
-          "size": 9217,
-          "sha256": "b3d6fc565e7d9ff7b2599d6961f5cee884595b821f4d9a5081556b75e4d21a01"
-        },
-        "reader-backports/hdf5-reader/src/filters/lz4.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/filters/lz4.rs",
-          "size": 6701,
-          "sha256": "40f9bb810b0501b5c640905164b23e9056d44fae8a552deb60b050914d918d07"
-        },
-        "reader-backports/netcdf-reader/src/masked.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/src/masked.rs",
-          "size": 5384,
-          "sha256": "a1a4b5b691bfa859c4be977329d236af5114286571121f43661f8afa27716435"
-        },
-        "reader-backports/hdf5-reader/src/filters/mod.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/filters/mod.rs",
-          "size": 11075,
-          "sha256": "8dac60a949d3855b00324eb30d68bc353ccb96605b5c1069201fd7994db29068"
-        },
-        "reader-backports/hdf5-reader/src/messages/mod.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/messages/mod.rs",
-          "size": 13501,
-          "sha256": "379f35317e81da9aa10d994adb4c8d7e6a34228440e31d3f03480dcb9c54a39b"
-        },
-        "reader-backports/netcdf-reader/src/cf/mod.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/src/cf/mod.rs",
-          "size": 1408,
-          "sha256": "29d0eed5f2c4d110a7182900ffb8e61e35a4da2f9523ee9b48d4c25dd5f2007f"
-        },
-        "reader-backports/netcdf-reader/src/classic/mod.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/src/classic/mod.rs",
-          "size": 7584,
-          "sha256": "129aaa7626e40116bc715f71cd5c53201c8f31b114524a11a8de643f7fdc2bc1"
-        },
-        "reader-backports/netcdf-reader/src/nc4/mod.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/src/nc4/mod.rs",
-          "size": 20685,
-          "sha256": "d063257a5f6ff5163cb3335e7c6c1d6c9a278d21ea0e14b7c15be5f2baabea95"
-        },
-        "reader-backports/hdf5-reader/src/messages/modification_time.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/messages/modification_time.rs",
-          "size": 2415,
-          "sha256": "2fa9f219f8f7c6fde7dd3fadf6b37fa5701f3e9105021edfdcfccf904aa3d9dd"
-        },
-        "reader-backports/hdf5-reader/src/filters/nbit.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/filters/nbit.rs",
-          "size": 18874,
-          "sha256": "60cfaf1abfd736bbd9b5a9bb07ac1f2d4e4121a3dd8dad1152565bf0760a07ff"
-        },
-        "reader-backports/hdf5-reader/src/object_header.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/object_header.rs",
-          "size": 65658,
-          "sha256": "bff85df33715d386f0a534d3046705bde979597c78f1b5d91f7f3402b823f0c2"
-        },
-        "reader-backports/hdf5-reader/src/reference.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/reference.rs",
-          "size": 2853,
-          "sha256": "690a8bc74bf9ae47ba1441e6b2b91641606f6b4e5a0f837fd58eedd8fa09c259"
-        },
-        "reader-backports/hdf5-reader/src/filters/scaleoffset.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/filters/scaleoffset.rs",
-          "size": 25405,
-          "sha256": "e6a83219a4a4746fba76df6f31d2f9fd26b0f725f9271e1f62045c0650517cd0"
-        },
-        "reader-backports/hdf5-reader/src/shared_message_table.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/shared_message_table.rs",
-          "size": 14080,
-          "sha256": "50128adef484709e57a4b953ff5dbe93790efbbf2b49fb26177fd684cfc2d8cf"
-        },
-        "reader-backports/hdf5-reader/src/messages/shared_table.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/messages/shared_table.rs",
-          "size": 1835,
-          "sha256": "78027dc7d53d80e081d3e4a4892afa501eff9aea4ba2123ac6ba9467bba90c5c"
-        },
-        "reader-backports/hdf5-reader/src/messages/shared.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/messages/shared.rs",
-          "size": 5180,
-          "sha256": "f80431faf089e51534f3147b9eae81c33353a431aef8c1459929370bd16ad503"
-        },
-        "reader-backports/hdf5-reader/src/filters/shuffle.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/filters/shuffle.rs",
-          "size": 2914,
-          "sha256": "511351d5459beb770bfca11725606e3c6658ce47d89e2971fb98cf66ae2fc1be"
-        },
-        "reader-backports/hdf5-reader/src/storage.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/storage.rs",
-          "size": 16418,
-          "sha256": "2f43fe73dec3cd89367378dcf67e4d517813e7c6b5f5533f84261e4c62f45058"
-        },
-        "reader-backports/netcdf-reader/src/classic/storage.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/src/classic/storage.rs",
-          "size": 6397,
-          "sha256": "79bade957e26c5cfb2a28e8da0eca569c2dc3c52d8ced7a3146354160b72b27b"
-        },
-        "reader-backports/hdf5-reader/src/superblock.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/superblock.rs",
-          "size": 9712,
-          "sha256": "64c28f4b45ab80fc434b0f5f1dac83ff6fafb63577db6c15f405136440ff0fed"
-        },
-        "reader-backports/hdf5-reader/src/messages/symbol_table_msg.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/messages/symbol_table_msg.rs",
-          "size": 1381,
-          "sha256": "f7cb628336027e04f5b47c056e24ccf1643497a9d30ed6e995d53749173ca576"
-        },
-        "reader-backports/hdf5-reader/src/symbol_table.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/src/symbol_table.rs",
-          "size": 10047,
-          "sha256": "b553ba1f5859b187bc22aa146cbec1b1b6e38c611d4ffa92b183f8e327985753"
-        },
-        "reader-backports/netcdf-reader/src/cf/time.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/src/cf/time.rs",
-          "size": 37776,
-          "sha256": "b92b330af8d76d64573e63136e0801542f33510854df6853dea4bc213ae4e6b7"
-        },
-        "reader-backports/netcdf-reader/src/classic/types.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/src/classic/types.rs",
-          "size": 3028,
-          "sha256": "9fe2dd3a7aceb863cd3bef4870aac29c02064d2f830611a04d1989924c3ac8c3"
-        },
-        "reader-backports/netcdf-reader/src/nc4/types.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/src/nc4/types.rs",
-          "size": 9953,
-          "sha256": "8935f3302299de580f1953eb2ff4f74433d648f8554e72bdda650f62eade9750"
-        },
-        "reader-backports/netcdf-reader/src/types.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/src/types.rs",
-          "size": 763,
-          "sha256": "63905e39f6928a08f535394e770d577b880bda9195fcf76759e63ae19032ef20"
-        },
-        "reader-backports/netcdf-reader/src/unpack.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/src/unpack.rs",
-          "size": 3409,
-          "sha256": "389a13a47a282ed95dcfcdb3df07ba039a3c66603d966b4eacd2f6ff8b634977"
-        },
-        "reader-backports/netcdf-reader/src/user_defined.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/src/user_defined.rs",
-          "size": 20136,
-          "sha256": "45803f57ab037a2fcb24e6ad7b5a8f7fb1cf6e50d8f60ad34c8133e1782f7ba2"
-        },
-        "reader-backports/netcdf-reader/src/classic/variable.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/src/classic/variable.rs",
-          "size": 39531,
-          "sha256": "c5c8d3e8cdbd621b01660ec1561bdbe01984a1ed58f84085f61d5992c3aad4ac"
-        },
-        "reader-backports/netcdf-reader/src/nc4/variables.rs": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/src/nc4/variables.rs",
-          "size": 14030,
-          "sha256": "c3dce236701c59be9c77da5ed3806b3884db149caf369c494493bed618daef67"
-        },
-        "reader-backports/hdf5-reader/Cargo.toml": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/Cargo.toml",
-          "size": 2346,
-          "sha256": "e6449fc3b32f5baac92428e3f2e6b6b8a55e7ff1f0d33e8091704402ced8a756"
-        },
-        "reader-backports/netcdf-reader/Cargo.toml": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/Cargo.toml",
-          "size": 2803,
-          "sha256": "3051261e393e6867b065f6740e8b8570b7f95f1d55df6d3d66c88a0e6f077f33"
-        },
-        "reader-backports/hdf5-reader/UPSTREAM-Cargo.toml": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/hdf5-reader/UPSTREAM-Cargo.toml",
-          "size": 1036,
-          "sha256": "d7e2698d77e55a8110db93aef086b17e844b7de158f446437860b41dc6201fd9"
-        },
-        "reader-backports/netcdf-reader/UPSTREAM-Cargo.toml": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/20261109T045130Z/inspection/formats/package/reader-backports/netcdf-reader/UPSTREAM-Cargo.toml",
-          "size": 1347,
-          "sha256": "b635e183e487fd53652f069dc6d8b5b6eee28eeee1417ea015c9f88f73865a8d"
-        },
-        "LICENSE": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/formats-browser-owner-stage-20261109/source-legal/LICENSE",
-          "size": 34020,
-          "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
-        },
-        "LICENSES/AGPL-3.0-or-later.txt": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/formats-browser-owner-stage-20261109/source-legal/LICENSES/AGPL-3.0-or-later.txt",
-          "size": 34020,
-          "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
-        },
-        "LICENSES/Apache-2.0.txt": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/formats-browser-owner-stage-20261109/source-legal/LICENSES/Apache-2.0.txt",
-          "size": 10280,
-          "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
-        },
-        "LICENSES/BSD-3-Clause.txt": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/formats-browser-owner-stage-20261109/source-legal/LICENSES/BSD-3-Clause.txt",
-          "size": 1460,
-          "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
-        },
-        "LICENSES/CeCILL-2.1.txt": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/formats-browser-owner-stage-20261109/source-legal/LICENSES/CeCILL-2.1.txt",
-          "size": 21778,
-          "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
-        },
-        "LICENSES/MIT.txt": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/formats-browser-owner-stage-20261109/source-legal/LICENSES/MIT.txt",
-          "size": 1078,
-          "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
-        },
-        "LICENSING.md": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/formats-browser-owner-stage-20261109/source-legal/LICENSING.md",
-          "size": 1436,
-          "sha256": "a002efcef5dd83e5612fbd38990b0265da5fef66a67bfc7c849bdf06860076fd"
-        },
-        "LICENSING_FR.md": {
-          "source": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/web-quali-public-stage/formats-browser-owner-stage-20261109/source-legal/LICENSING_FR.md",
-          "size": 1551,
-          "sha256": "d3256179c57f9821d53a63e496acfcfc170c5158d7924289ee4a2937fee2fed0"
-        }
-      }
-    },
-    "files": {
-      "README.md": {
-        "size": 2918,
-        "sha256": "724b92047f40593956684d2e0e58fced595df93eb01c953792bc5e43ef0345ee"
+      "public-dataset.d.ts": {
+        "size": 4765,
+        "sha256": "c5f53b89e2ceb21bc9aafe0d6ed8bd2f037eda58f1a36997ca895ec638c181a8"
       },
-      "nirs4all_formats_wasm.d.ts": {
-        "size": 5249,
-        "sha256": "a1e7f3f502168cd814404b9f8c11a642b5387926fbea4cabe6323b51efc05432"
+      "LICENSES/AGPL-3.0-or-later.txt": {
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
       },
-      "nirs4all_formats_wasm.js": {
-        "size": 24737,
-        "sha256": "2a96a157f01238482fe11f8e66d780beef48c2149da17d5dd4bc79d470753f44"
+      "LICENSES/Apache-2.0.txt": {
+        "size": 9723,
+        "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
       },
-      "nirs4all_formats_wasm_bg.wasm": {
-        "size": 5982079,
-        "sha256": "f99e6266a037e529e3af6510d21c80ea70862cd31dd02e57259c05fb4b311ced"
+      "LICENSES/BSD-3-Clause.txt": {
+        "size": 1459,
+        "sha256": "3cf06aba3588c41c514f6946bb2d757b413ff6491647d474800f55edca75dcb4"
       },
-      "nirs4all_formats_wasm_bg.wasm.d.ts": {
-        "size": 1882,
-        "sha256": "5ec7880fb0e0d5b871eb0861dedd607460c97195d1db3773064b0a44c4fbe916"
+      "LICENSES/CeCILL-2.1.txt": {
+        "size": 21778,
+        "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+      },
+      "LICENSES/MIT.txt": {
+        "size": 1078,
+        "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+      },
+      "LICENSES/Unicode-3.0.txt": {
+        "size": 1995,
+        "sha256": "f7db81051789b729fea528a63ec4c938fdcb93d9d61d97dc8cc2e9df6d47f2a1"
+      },
+      "nirs4all_io_wasm.js": {
+        "size": 27221,
+        "sha256": "d3388bccc2540ead86cc41c27d0a932d732293df3ff61df8a85b2ff1f83bdc8c"
+      },
+      "nirs4all_io_wasm.d.ts": {
+        "size": 6417,
+        "sha256": "65b2236b75322c7e2ee2e1ccb0d2303808c43593c5ab7c0ccddf1a79a69f9615"
+      },
+      "nirs4all_io_wasm_bg.wasm": {
+        "size": 2898868,
+        "sha256": "718f5d5d6a45cd107592e5fba603d0201486e455fd44c1ea1b4e91d941f61c45"
+      },
+      "nirs4all_io_wasm_bg.wasm.d.ts": {
+        "size": 1465,
+        "sha256": "7c02f3dc116def130fe58a76321504653d20583636924c1837ab9f31301ef7a5"
       },
       "package.json": {
-        "size": 609,
-        "sha256": "25f65f2ef2d85314995b754cc40fc4022fd8f522aebec8bc358d0576b41bfc10"
-      },
-      "snippets/rds2rust-777dc4a0b14a5aca/wasm/decompress.js": {
-        "size": 16502,
-        "sha256": "5258768404663b4b48572796afbe51e2a8669a89d3d5e21cf18c41830bf1d46b"
-      },
-      "reader-backports/hdf5-reader/LICENSE-APACHE": {
-        "size": 8464,
-        "sha256": "7e1c4927d7c8765c73e234c2da19c423dfafc9c662e6d028277f9e77476445bb"
-      },
-      "reader-backports/netcdf-reader/LICENSE-APACHE": {
-        "size": 8464,
-        "sha256": "7e1c4927d7c8765c73e234c2da19c423dfafc9c662e6d028277f9e77476445bb"
-      },
-      "reader-backports/hdf5-reader/LICENSE-MIT": {
-        "size": 1067,
-        "sha256": "24a4eeee33afc227bd3e796f772741250b2c93eae1cdba65e775ef8005dfb4b1"
-      },
-      "reader-backports/netcdf-reader/LICENSE-MIT": {
-        "size": 1067,
-        "sha256": "24a4eeee33afc227bd3e796f772741250b2c93eae1cdba65e775ef8005dfb4b1"
-      },
-      "reader-backports/hdf5-reader/PROVENANCE.json": {
-        "size": 5845,
-        "sha256": "f568cb1ca6c529b6723e56a614a955343b52dea1bd38e3616673d3a867c0a779"
-      },
-      "reader-backports/netcdf-reader/PROVENANCE.json": {
-        "size": 3357,
-        "sha256": "d35cc18475750fd1edffb52ea5daec0f85eabd640e64c8978e8af05105bc5c54"
-      },
-      "reader-backports/hdf5-reader/UPSTREAM-VCS.json": {
-        "size": 105,
-        "sha256": "7dfc117addc40f7073a8453b35ce86397924fc1f6b3b19bf0fa6d7dc6aacaeda"
-      },
-      "reader-backports/netcdf-reader/UPSTREAM-VCS.json": {
-        "size": 107,
-        "sha256": "0350ca7a38aff0f50597114289ce104840e38a31ebf10c184b58267eeaf19eb6"
-      },
-      "reader-backports/hdf5-reader/README.md": {
-        "size": 12583,
-        "sha256": "fe4b38a268a3ca02d2789b94bca3656a488553b4281b4e682f33201664faedf5"
-      },
-      "reader-backports/netcdf-reader/README.md": {
-        "size": 12583,
-        "sha256": "fe4b38a268a3ca02d2789b94bca3656a488553b4281b4e682f33201664faedf5"
-      },
-      "THIRD_PARTY_NOTICES.md": {
-        "size": 2630,
-        "sha256": "39e06e5ca05c5bc5bab725d15f2eb28bfde7c33d79906c9f38534b7bb731a34a"
-      },
-      "reader-backports/hdf5-reader/src/attribute_api.rs": {
-        "size": 28630,
-        "sha256": "d450a87a0923a5e835dcdb283c1c7d45e63652a28b500a49f1e2d9f41081ea83"
-      },
-      "reader-backports/hdf5-reader/src/messages/attribute_info.rs": {
-        "size": 2857,
-        "sha256": "95bd3648eb7d4388b9de9ed4a1e72d12a7c2f1b3d0c71482fae6221315d262a0"
-      },
-      "reader-backports/hdf5-reader/src/messages/attribute.rs": {
-        "size": 9848,
-        "sha256": "f02842e5878982785f0b64cd5b4a0d927a9a438ba10392857610f12b422ec5d6"
-      },
-      "reader-backports/netcdf-reader/src/nc4/attributes.rs": {
-        "size": 6699,
-        "sha256": "85e0f6fabf31d2e5fd6299e03b75dd634d708aa2b80bd132f0bcab999f3180ef"
-      },
-      "reader-backports/netcdf-reader/src/cf/axes.rs": {
-        "size": 12767,
-        "sha256": "13be78f68255b727b21941495b1683d11a6f0ce731a17965935adbed59b42031"
-      },
-      "reader-backports/netcdf-reader/src/cf/bounds.rs": {
-        "size": 3217,
-        "sha256": "17ffc45db0989c808d80f3919984ba42f9590c9122408befc06a47e1e477698f"
-      },
-      "reader-backports/hdf5-reader/src/messages/btree_k.rs": {
-        "size": 956,
-        "sha256": "fe9649fd0d398575ae9347c92384dd0dccd9fb53cae7f3a1fcbca2906afa6cd8"
-      },
-      "reader-backports/hdf5-reader/src/btree_v1.rs": {
-        "size": 24646,
-        "sha256": "6aac11fdb8911480fc638348659eeaed246cbbff5dd127cad957ada9f78a3d9c"
-      },
-      "reader-backports/hdf5-reader/src/btree_v2.rs": {
-        "size": 68060,
-        "sha256": "36897aef9439121921dfbd573edbd446a6f13d9393c9dd4f8e70221e5c91e60a"
-      },
-      "reader-backports/hdf5-reader/src/cache.rs": {
-        "size": 11376,
-        "sha256": "91552122c2d4a378e4e9830cdf9de704d196f2d072a4d4d74164bc6b7134a1ac"
-      },
-      "reader-backports/hdf5-reader/src/checksum.rs": {
-        "size": 1872,
-        "sha256": "4697049349b0f9f1131e4bfa96b81dc45e9584158fc31432489491d04fbc9419"
-      },
-      "reader-backports/hdf5-reader/src/chunk_index.rs": {
-        "size": 13644,
-        "sha256": "10a777aae588702777aa15f68ce00c76de5ec0a089546b231d8d24b14a135bc9"
-      },
-      "reader-backports/hdf5-reader/src/messages/continuation.rs": {
-        "size": 1270,
-        "sha256": "6a462c49154ad7f176a493d5c8fecc950e1c772b14ab0692a7f5bfdb3ee8dee8"
-      },
-      "reader-backports/netcdf-reader/src/cf/crs.rs": {
-        "size": 9677,
-        "sha256": "2f87cc8f517446768b3ba84e1acb236bcf6746eb1bab8148e81bfd7c8a05230a"
-      },
-      "reader-backports/netcdf-reader/src/classic/data.rs": {
-        "size": 51616,
-        "sha256": "1a32f780ad522b7624ceee94d5ea76f7c294e7dd088dd82921aee6347a006e8e"
-      },
-      "reader-backports/hdf5-reader/src/dataset.rs": {
-        "size": 173310,
-        "sha256": "13683760cf0f9a393909517feeb3467dc0896a3570d738cf0db29ef85a9eead2"
-      },
-      "reader-backports/hdf5-reader/src/messages/dataspace.rs": {
-        "size": 7688,
-        "sha256": "24054741d6b8fc9b7ab5f2cbfbcedc762d0f3104d899f5810917d92fd16f6fa3"
-      },
-      "reader-backports/hdf5-reader/src/datatype_api.rs": {
-        "size": 17498,
-        "sha256": "49fee0dd72f083644848eec5a768b0f6ca5ce742f088fdbb0b8cdc6efbfed06a"
-      },
-      "reader-backports/hdf5-reader/src/messages/datatype.rs": {
-        "size": 33601,
-        "sha256": "42437abb94aba788374ad8769c284cac94c053a71265b3cc123e2ab01aa22018"
-      },
-      "reader-backports/hdf5-reader/src/filters/deflate.rs": {
-        "size": 3598,
-        "sha256": "49e14030b7d1656aa0c193d91be5a6cb670d4eaf94b652be3327ba5cde0cf045"
-      },
-      "reader-backports/netcdf-reader/src/nc4/dimensions.rs": {
-        "size": 4616,
-        "sha256": "39e387a9cfa7b659882f12fa813124a70ccab3d64a752f7ad212f29fcf33cb77"
-      },
-      "reader-backports/hdf5-reader/src/error.rs": {
-        "size": 4703,
-        "sha256": "3d07709e476dc3fcecdfa15fbd5be215b1a7c8e5bc7f8e61bcc4e2ff0e2585c3"
-      },
-      "reader-backports/netcdf-reader/src/error.rs": {
-        "size": 1519,
-        "sha256": "eb2f0ad3ffd310804e1bba665713799a01677c87e6868a52522609cf65a8b4b1"
-      },
-      "reader-backports/hdf5-reader/src/extensible_array.rs": {
-        "size": 62873,
-        "sha256": "2bd54463b5c602f702f3bb515008301d44ac8875b51e7cfc9740d9e00a582fde"
-      },
-      "reader-backports/hdf5-reader/src/messages/external_files.rs": {
-        "size": 1472,
-        "sha256": "0e660d862e619276ef6d4fa0f307862a08a18d03f1a0dc819794eeee5e209788"
-      },
-      "reader-backports/hdf5-reader/src/messages/fill_value.rs": {
-        "size": 6654,
-        "sha256": "182ae332c7e11b21db97d1e427593e46a2573b846b638f2d69e10ab759f7b8dc"
-      },
-      "reader-backports/hdf5-reader/src/messages/filter_pipeline.rs": {
-        "size": 4559,
-        "sha256": "3ef8bf0f99a54655a049c2617e176db57f69731957c3d01b992fdcdb41005059"
-      },
-      "reader-backports/hdf5-reader/src/fixed_array.rs": {
-        "size": 25157,
-        "sha256": "7b45164967fed5c98b3e5a0c94543b2ba5ea0c328424c0d387e1f826b86aefa7"
-      },
-      "reader-backports/hdf5-reader/src/filters/fletcher32.rs": {
-        "size": 1438,
-        "sha256": "80ac50c90bc0f5aff947a71cb0d47027174c154da1819463a1d8df9ff8cc4ba0"
-      },
-      "reader-backports/hdf5-reader/src/fractal_heap.rs": {
-        "size": 78695,
-        "sha256": "8438ecd7ed1c314c8b57d42773838e8a484924eef19910d98b055d4547f526ec"
-      },
-      "reader-backports/hdf5-reader/src/global_heap.rs": {
-        "size": 9783,
-        "sha256": "887e8a63e462053d77475ee6b87f09a19ac8d387822a55e699a557dbcb4951f7"
-      },
-      "reader-backports/hdf5-reader/src/messages/group_info.rs": {
-        "size": 3093,
-        "sha256": "f028d7afb028f981cadfb75cd23413c1e61d80b6aac30b2dcb14900345abba0e"
-      },
-      "reader-backports/hdf5-reader/src/group.rs": {
-        "size": 27108,
-        "sha256": "dd19cfdcf4efbe3fedd600110203dd95e85305abbc15c3abe81acc3751ddbb1a"
-      },
-      "reader-backports/netcdf-reader/src/nc4/groups.rs": {
-        "size": 9821,
-        "sha256": "7ee002d6fc6f9dfc95cd8979f311bdfcaefb0df410adb5f9b852630274d523b9"
-      },
-      "reader-backports/netcdf-reader/src/classic/header.rs": {
-        "size": 37154,
-        "sha256": "a428b834edbbace63c725f1ebc08ef3683ea5eac07ee056818a4e1ec2d09d18d"
-      },
-      "reader-backports/hdf5-reader/src/io.rs": {
-        "size": 12400,
-        "sha256": "589621880155b776b5cbd3aa637675e7b9df39fd0d95c39adc00922ae2704f7b"
-      },
-      "reader-backports/hdf5-reader/src/messages/layout.rs": {
-        "size": 15999,
-        "sha256": "261bc049a8f4566785f4ea7484b8f7645423206ccdc1364ab541237fc559b474"
-      },
-      "reader-backports/hdf5-reader/src/lib.rs": {
-        "size": 31334,
-        "sha256": "8a7806b8fd93e9cfbdf65abe2a8461ec689dae059ef79dfead83c6c5dd6d23b4"
-      },
-      "reader-backports/netcdf-reader/src/lib.rs": {
-        "size": 57396,
-        "sha256": "3bd98abd9d48643b976ada4f7160c408d9b3d7f3524e85f2216f81089a1ac855"
-      },
-      "reader-backports/hdf5-reader/src/messages/link_info.rs": {
-        "size": 4099,
-        "sha256": "4ac49bd26b47d98ca4d585369f5dd779eac1421e0254b67d2c62d5c1dea4a81d"
-      },
-      "reader-backports/hdf5-reader/src/messages/link.rs": {
-        "size": 5202,
-        "sha256": "7b4ab91992e1abd5a2cf2a1f4abf4404782cc9da5733cff3cead7427e76bd136"
-      },
-      "reader-backports/hdf5-reader/src/local_heap.rs": {
-        "size": 9217,
-        "sha256": "b3d6fc565e7d9ff7b2599d6961f5cee884595b821f4d9a5081556b75e4d21a01"
-      },
-      "reader-backports/hdf5-reader/src/filters/lz4.rs": {
-        "size": 6701,
-        "sha256": "40f9bb810b0501b5c640905164b23e9056d44fae8a552deb60b050914d918d07"
-      },
-      "reader-backports/netcdf-reader/src/masked.rs": {
-        "size": 5384,
-        "sha256": "a1a4b5b691bfa859c4be977329d236af5114286571121f43661f8afa27716435"
-      },
-      "reader-backports/hdf5-reader/src/filters/mod.rs": {
-        "size": 11075,
-        "sha256": "8dac60a949d3855b00324eb30d68bc353ccb96605b5c1069201fd7994db29068"
-      },
-      "reader-backports/hdf5-reader/src/messages/mod.rs": {
-        "size": 13501,
-        "sha256": "379f35317e81da9aa10d994adb4c8d7e6a34228440e31d3f03480dcb9c54a39b"
-      },
-      "reader-backports/netcdf-reader/src/cf/mod.rs": {
-        "size": 1408,
-        "sha256": "29d0eed5f2c4d110a7182900ffb8e61e35a4da2f9523ee9b48d4c25dd5f2007f"
-      },
-      "reader-backports/netcdf-reader/src/classic/mod.rs": {
-        "size": 7584,
-        "sha256": "129aaa7626e40116bc715f71cd5c53201c8f31b114524a11a8de643f7fdc2bc1"
-      },
-      "reader-backports/netcdf-reader/src/nc4/mod.rs": {
-        "size": 20685,
-        "sha256": "d063257a5f6ff5163cb3335e7c6c1d6c9a278d21ea0e14b7c15be5f2baabea95"
-      },
-      "reader-backports/hdf5-reader/src/messages/modification_time.rs": {
-        "size": 2415,
-        "sha256": "2fa9f219f8f7c6fde7dd3fadf6b37fa5701f3e9105021edfdcfccf904aa3d9dd"
-      },
-      "reader-backports/hdf5-reader/src/filters/nbit.rs": {
-        "size": 18874,
-        "sha256": "60cfaf1abfd736bbd9b5a9bb07ac1f2d4e4121a3dd8dad1152565bf0760a07ff"
-      },
-      "reader-backports/hdf5-reader/src/object_header.rs": {
-        "size": 65658,
-        "sha256": "bff85df33715d386f0a534d3046705bde979597c78f1b5d91f7f3402b823f0c2"
-      },
-      "reader-backports/hdf5-reader/src/reference.rs": {
-        "size": 2853,
-        "sha256": "690a8bc74bf9ae47ba1441e6b2b91641606f6b4e5a0f837fd58eedd8fa09c259"
-      },
-      "reader-backports/hdf5-reader/src/filters/scaleoffset.rs": {
-        "size": 25405,
-        "sha256": "e6a83219a4a4746fba76df6f31d2f9fd26b0f725f9271e1f62045c0650517cd0"
-      },
-      "reader-backports/hdf5-reader/src/shared_message_table.rs": {
-        "size": 14080,
-        "sha256": "50128adef484709e57a4b953ff5dbe93790efbbf2b49fb26177fd684cfc2d8cf"
-      },
-      "reader-backports/hdf5-reader/src/messages/shared_table.rs": {
-        "size": 1835,
-        "sha256": "78027dc7d53d80e081d3e4a4892afa501eff9aea4ba2123ac6ba9467bba90c5c"
-      },
-      "reader-backports/hdf5-reader/src/messages/shared.rs": {
-        "size": 5180,
-        "sha256": "f80431faf089e51534f3147b9eae81c33353a431aef8c1459929370bd16ad503"
-      },
-      "reader-backports/hdf5-reader/src/filters/shuffle.rs": {
-        "size": 2914,
-        "sha256": "511351d5459beb770bfca11725606e3c6658ce47d89e2971fb98cf66ae2fc1be"
-      },
-      "reader-backports/hdf5-reader/src/storage.rs": {
-        "size": 16418,
-        "sha256": "2f43fe73dec3cd89367378dcf67e4d517813e7c6b5f5533f84261e4c62f45058"
-      },
-      "reader-backports/netcdf-reader/src/classic/storage.rs": {
-        "size": 6397,
-        "sha256": "79bade957e26c5cfb2a28e8da0eca569c2dc3c52d8ced7a3146354160b72b27b"
-      },
-      "reader-backports/hdf5-reader/src/superblock.rs": {
-        "size": 9712,
-        "sha256": "64c28f4b45ab80fc434b0f5f1dac83ff6fafb63577db6c15f405136440ff0fed"
-      },
-      "reader-backports/hdf5-reader/src/messages/symbol_table_msg.rs": {
-        "size": 1381,
-        "sha256": "f7cb628336027e04f5b47c056e24ccf1643497a9d30ed6e995d53749173ca576"
-      },
-      "reader-backports/hdf5-reader/src/symbol_table.rs": {
-        "size": 10047,
-        "sha256": "b553ba1f5859b187bc22aa146cbec1b1b6e38c611d4ffa92b183f8e327985753"
-      },
-      "reader-backports/netcdf-reader/src/cf/time.rs": {
-        "size": 37776,
-        "sha256": "b92b330af8d76d64573e63136e0801542f33510854df6853dea4bc213ae4e6b7"
-      },
-      "reader-backports/netcdf-reader/src/classic/types.rs": {
-        "size": 3028,
-        "sha256": "9fe2dd3a7aceb863cd3bef4870aac29c02064d2f830611a04d1989924c3ac8c3"
-      },
-      "reader-backports/netcdf-reader/src/nc4/types.rs": {
-        "size": 9953,
-        "sha256": "8935f3302299de580f1953eb2ff4f74433d648f8554e72bdda650f62eade9750"
-      },
-      "reader-backports/netcdf-reader/src/types.rs": {
-        "size": 763,
-        "sha256": "63905e39f6928a08f535394e770d577b880bda9195fcf76759e63ae19032ef20"
-      },
-      "reader-backports/netcdf-reader/src/unpack.rs": {
-        "size": 3409,
-        "sha256": "389a13a47a282ed95dcfcdb3df07ba039a3c66603d966b4eacd2f6ff8b634977"
-      },
-      "reader-backports/netcdf-reader/src/user_defined.rs": {
-        "size": 20136,
-        "sha256": "45803f57ab037a2fcb24e6ad7b5a8f7fb1cf6e50d8f60ad34c8133e1782f7ba2"
-      },
-      "reader-backports/netcdf-reader/src/classic/variable.rs": {
-        "size": 39531,
-        "sha256": "c5c8d3e8cdbd621b01660ec1561bdbe01984a1ed58f84085f61d5992c3aad4ac"
-      },
-      "reader-backports/netcdf-reader/src/nc4/variables.rs": {
-        "size": 14030,
-        "sha256": "c3dce236701c59be9c77da5ed3806b3884db149caf369c494493bed618daef67"
-      },
-      "reader-backports/hdf5-reader/Cargo.toml": {
-        "size": 2346,
-        "sha256": "e6449fc3b32f5baac92428e3f2e6b6b8a55e7ff1f0d33e8091704402ced8a756"
-      },
-      "reader-backports/netcdf-reader/Cargo.toml": {
-        "size": 2803,
-        "sha256": "3051261e393e6867b065f6740e8b8570b7f95f1d55df6d3d66c88a0e6f077f33"
-      },
-      "reader-backports/hdf5-reader/UPSTREAM-Cargo.toml": {
-        "size": 1036,
-        "sha256": "d7e2698d77e55a8110db93aef086b17e844b7de158f446437860b41dc6201fd9"
-      },
-      "reader-backports/netcdf-reader/UPSTREAM-Cargo.toml": {
-        "size": 1347,
-        "sha256": "b635e183e487fd53652f069dc6d8b5b6eee28eeee1417ea015c9f88f73865a8d"
-      },
+        "size": 689,
+        "sha256": "07adbcf06fabe95c55a5434b338f9954a5c4a38c3cc330b16762851cce497988"
+      }
+    },
+    "source_files": {},
+    "registry": {
+      "metadata_url": "https://registry.npmjs.org/%40nirs4all%2Fio-wasm/0.3.3",
+      "tarball_url": "https://registry.npmjs.org/@nirs4all/io-wasm/-/io-wasm-0.3.3.tgz",
+      "size": 1120605,
+      "sha256": "e579faf14e9486c65f45cfde2a04f696590d939d1efcf678a105642d0c32c610",
+      "sha1": "37c4d6e74eddb2f06dbe6db592fa44d423829bd4",
+      "integrity": "sha512-m2y1Ja2PmFqQgsOJKJlm7UsEzSbFG2nbPGiHdAecgRdKPV5r/9HarKk+vurbq+KdsUQaQrJzt5ZSiKYuFsNkeA=="
+    },
+    "projection": {
+      "LICENSE": "LICENSE",
+      "nirs4all-io-wasm.cdx.json": "nirs4all-io-wasm.cdx.json",
+      "LICENSES/COMMERCIAL-LICENSE_FR.md": "LICENSES/COMMERCIAL-LICENSE_FR.md",
+      "LICENSES/COMMERCIAL-LICENSE.md": "LICENSES/COMMERCIAL-LICENSE.md",
+      "COPY_PROVENANCE.md": "COPY_PROVENANCE.md",
+      "LICENSING.md": "LICENSING.md",
+      "README.md": "README.md",
+      "THIRD_PARTY_NOTICES.md": "THIRD_PARTY_NOTICES.md",
+      "idiomatic.mjs": "idiomatic.mjs",
+      "numeric-wire.mjs": "numeric-wire.mjs",
+      "public-dataset.mjs": "public-dataset.mjs",
+      "idiomatic.d.ts": "idiomatic.d.ts",
+      "types/nirs4all-io.d.ts": "types/nirs4all-io.d.ts",
+      "numeric-wire.d.ts": "numeric-wire.d.ts",
+      "public-dataset.d.ts": "public-dataset.d.ts",
+      "LICENSES/AGPL-3.0-or-later.txt": "LICENSES/AGPL-3.0-or-later.txt",
+      "LICENSES/Apache-2.0.txt": "LICENSES/Apache-2.0.txt",
+      "LICENSES/BSD-3-Clause.txt": "LICENSES/BSD-3-Clause.txt",
+      "LICENSES/CeCILL-2.1.txt": "LICENSES/CeCILL-2.1.txt",
+      "LICENSES/MIT.txt": "LICENSES/MIT.txt",
+      "LICENSES/Unicode-3.0.txt": "LICENSES/Unicode-3.0.txt"
+    },
+    "browser_files": {
+      "nirs4all_io_wasm.js": {
+        "url": "https://github.com/GBeurier/nirs4all-io/releases/download/v0.3.3/nirs4all-io-browser-web-nirs4all_io_wasm.js",
+        "size": 27221,
+        "sha256": "d3388bccc2540ead86cc41c27d0a932d732293df3ff61df8a85b2ff1f83bdc8c"
+      },
+      "nirs4all_io_wasm.d.ts": {
+        "url": "https://github.com/GBeurier/nirs4all-io/releases/download/v0.3.3/nirs4all-io-browser-web-nirs4all_io_wasm.d.ts",
+        "size": 6417,
+        "sha256": "65b2236b75322c7e2ee2e1ccb0d2303808c43593c5ab7c0ccddf1a79a69f9615"
+      },
+      "nirs4all_io_wasm_bg.wasm": {
+        "url": "https://github.com/GBeurier/nirs4all-io/releases/download/v0.3.3/nirs4all-io-browser-web-nirs4all_io_wasm_bg.wasm",
+        "size": 2898868,
+        "sha256": "718f5d5d6a45cd107592e5fba603d0201486e455fd44c1ea1b4e91d941f61c45"
+      },
+      "nirs4all_io_wasm_bg.wasm.d.ts": {
+        "url": "https://github.com/GBeurier/nirs4all-io/releases/download/v0.3.3/nirs4all-io-browser-web-nirs4all_io_wasm_bg.wasm.d.ts",
+        "size": 1465,
+        "sha256": "7c02f3dc116def130fe58a76321504653d20583636924c1837ab9f31301ef7a5"
+      },
+      "package.json": {
+        "url": "https://github.com/GBeurier/nirs4all-io/releases/download/v0.3.3/nirs4all-io-browser-web-package.json",
+        "size": 689,
+        "sha256": "07adbcf06fabe95c55a5434b338f9954a5c4a38c3cc330b16762851cce497988"
+      }
+    },
+    "browser_deployment": {
+      "payload": "Owner Release browser build; distinct from the registry Node payload.",
+      "receipt_url": "https://github.com/GBeurier/nirs4all-io/releases/download/v0.3.3/nirs4all-io-browser-web.provenance.json",
+      "build": {
+        "tool": "wasm-pack 0.15.0",
+        "target": "web",
+        "profile": "release",
+        "cargo_locked": true,
+        "lock_sha256": "20b3aea89d403a3f98916950e73a7a0270fc34fa796b6a70e94c2f1ba33d21ac",
+        "command": "wasm-pack build bindings/wasm --target web --release -- --locked",
+        "host": "Linux x86_64"
+      }
+    },
+    "staged_package": "nirs4all-io-wasm"
+  },
+  "formats": {
+    "package": "@nirs4all/formats-wasm",
+    "version": "0.2.17",
+    "destination": "src/engine/wasm/formats",
+    "source": {
+      "kind": "owner-browser-build-from-published-tag",
+      "repository": "https://github.com/GBeurier/nirs4all-formats",
+      "commit": "53624331210b1a6e2d797fd13c6f07363386a91e",
+      "tree": "94b8fd7cfd6daec7cd5f5e743a1e0cce427d3993",
+      "tag": "v0.2.17",
+      "artifact_origin": "Browser payload acquired from owner GitHub Release assets; npm identity describes the distinct published Node payload. Unchanged legal files come from the exact tagged owner source.",
+      "independent_rebuild_claimed": false
+    },
+    "files": {
       "LICENSE": {
         "size": 34020,
         "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
@@ -1801,78 +850,585 @@
       "LICENSING_FR.md": {
         "size": 1551,
         "sha256": "d3256179c57f9821d53a63e496acfcfc170c5158d7924289ee4a2937fee2fed0"
+      },
+      "README.md": {
+        "size": 2918,
+        "sha256": "724b92047f40593956684d2e0e58fced595df93eb01c953792bc5e43ef0345ee"
+      },
+      "THIRD_PARTY_NOTICES.md": {
+        "size": 2630,
+        "sha256": "39e06e5ca05c5bc5bab725d15f2eb28bfde7c33d79906c9f38534b7bb731a34a"
+      },
+      "nirs4all_formats_wasm.d.ts": {
+        "size": 5702,
+        "sha256": "289dd577b7042a5ce614b850499e0da09482b68d4594a7f205952b2ea4678f10"
+      },
+      "nirs4all_formats_wasm.js": {
+        "size": 25923,
+        "sha256": "58fa8e66de312bee1bf6f3d055fe86574f74018b851c60a7c7940c0c8ab94d01"
+      },
+      "nirs4all_formats_wasm_bg.wasm": {
+        "size": 5988324,
+        "sha256": "fdc8f7f8e4db280467891ee79fdb1b49d3bfe69385917cc747badb4c245b27ef"
+      },
+      "nirs4all_formats_wasm_bg.wasm.d.ts": {
+        "size": 2073,
+        "sha256": "a832542b730bb41a0481e25e038542f8516be26683538a51a90868a68f8b256f"
+      },
+      "package.json": {
+        "size": 609,
+        "sha256": "2f81e84e03e004298f1edcb62f379dd76bb430afcf32d9e15db7c03288805a2e"
+      },
+      "reader-backports/hdf5-reader/Cargo.toml": {
+        "size": 2346,
+        "sha256": "e6449fc3b32f5baac92428e3f2e6b6b8a55e7ff1f0d33e8091704402ced8a756"
+      },
+      "reader-backports/hdf5-reader/LICENSE-APACHE": {
+        "size": 8464,
+        "sha256": "7e1c4927d7c8765c73e234c2da19c423dfafc9c662e6d028277f9e77476445bb"
+      },
+      "reader-backports/hdf5-reader/LICENSE-MIT": {
+        "size": 1067,
+        "sha256": "24a4eeee33afc227bd3e796f772741250b2c93eae1cdba65e775ef8005dfb4b1"
+      },
+      "reader-backports/hdf5-reader/PROVENANCE.json": {
+        "size": 5845,
+        "sha256": "f568cb1ca6c529b6723e56a614a955343b52dea1bd38e3616673d3a867c0a779"
+      },
+      "reader-backports/hdf5-reader/README.md": {
+        "size": 12583,
+        "sha256": "fe4b38a268a3ca02d2789b94bca3656a488553b4281b4e682f33201664faedf5"
+      },
+      "reader-backports/hdf5-reader/UPSTREAM-Cargo.toml": {
+        "size": 1036,
+        "sha256": "d7e2698d77e55a8110db93aef086b17e844b7de158f446437860b41dc6201fd9"
+      },
+      "reader-backports/hdf5-reader/UPSTREAM-VCS.json": {
+        "size": 105,
+        "sha256": "7dfc117addc40f7073a8453b35ce86397924fc1f6b3b19bf0fa6d7dc6aacaeda"
+      },
+      "reader-backports/hdf5-reader/src/attribute_api.rs": {
+        "size": 28630,
+        "sha256": "d450a87a0923a5e835dcdb283c1c7d45e63652a28b500a49f1e2d9f41081ea83"
+      },
+      "reader-backports/hdf5-reader/src/btree_v1.rs": {
+        "size": 24646,
+        "sha256": "6aac11fdb8911480fc638348659eeaed246cbbff5dd127cad957ada9f78a3d9c"
+      },
+      "reader-backports/hdf5-reader/src/btree_v2.rs": {
+        "size": 68060,
+        "sha256": "36897aef9439121921dfbd573edbd446a6f13d9393c9dd4f8e70221e5c91e60a"
+      },
+      "reader-backports/hdf5-reader/src/cache.rs": {
+        "size": 11376,
+        "sha256": "91552122c2d4a378e4e9830cdf9de704d196f2d072a4d4d74164bc6b7134a1ac"
+      },
+      "reader-backports/hdf5-reader/src/checksum.rs": {
+        "size": 1872,
+        "sha256": "4697049349b0f9f1131e4bfa96b81dc45e9584158fc31432489491d04fbc9419"
+      },
+      "reader-backports/hdf5-reader/src/chunk_index.rs": {
+        "size": 13644,
+        "sha256": "10a777aae588702777aa15f68ce00c76de5ec0a089546b231d8d24b14a135bc9"
+      },
+      "reader-backports/hdf5-reader/src/dataset.rs": {
+        "size": 173310,
+        "sha256": "13683760cf0f9a393909517feeb3467dc0896a3570d738cf0db29ef85a9eead2"
+      },
+      "reader-backports/hdf5-reader/src/datatype_api.rs": {
+        "size": 17498,
+        "sha256": "49fee0dd72f083644848eec5a768b0f6ca5ce742f088fdbb0b8cdc6efbfed06a"
+      },
+      "reader-backports/hdf5-reader/src/error.rs": {
+        "size": 4703,
+        "sha256": "3d07709e476dc3fcecdfa15fbd5be215b1a7c8e5bc7f8e61bcc4e2ff0e2585c3"
+      },
+      "reader-backports/hdf5-reader/src/extensible_array.rs": {
+        "size": 62873,
+        "sha256": "2bd54463b5c602f702f3bb515008301d44ac8875b51e7cfc9740d9e00a582fde"
+      },
+      "reader-backports/hdf5-reader/src/filters/deflate.rs": {
+        "size": 3598,
+        "sha256": "49e14030b7d1656aa0c193d91be5a6cb670d4eaf94b652be3327ba5cde0cf045"
+      },
+      "reader-backports/hdf5-reader/src/filters/fletcher32.rs": {
+        "size": 1438,
+        "sha256": "80ac50c90bc0f5aff947a71cb0d47027174c154da1819463a1d8df9ff8cc4ba0"
+      },
+      "reader-backports/hdf5-reader/src/filters/lz4.rs": {
+        "size": 6701,
+        "sha256": "40f9bb810b0501b5c640905164b23e9056d44fae8a552deb60b050914d918d07"
+      },
+      "reader-backports/hdf5-reader/src/filters/mod.rs": {
+        "size": 11075,
+        "sha256": "8dac60a949d3855b00324eb30d68bc353ccb96605b5c1069201fd7994db29068"
+      },
+      "reader-backports/hdf5-reader/src/filters/nbit.rs": {
+        "size": 18874,
+        "sha256": "60cfaf1abfd736bbd9b5a9bb07ac1f2d4e4121a3dd8dad1152565bf0760a07ff"
+      },
+      "reader-backports/hdf5-reader/src/filters/scaleoffset.rs": {
+        "size": 25405,
+        "sha256": "e6a83219a4a4746fba76df6f31d2f9fd26b0f725f9271e1f62045c0650517cd0"
+      },
+      "reader-backports/hdf5-reader/src/filters/shuffle.rs": {
+        "size": 2914,
+        "sha256": "511351d5459beb770bfca11725606e3c6658ce47d89e2971fb98cf66ae2fc1be"
+      },
+      "reader-backports/hdf5-reader/src/fixed_array.rs": {
+        "size": 25157,
+        "sha256": "7b45164967fed5c98b3e5a0c94543b2ba5ea0c328424c0d387e1f826b86aefa7"
+      },
+      "reader-backports/hdf5-reader/src/fractal_heap.rs": {
+        "size": 78695,
+        "sha256": "8438ecd7ed1c314c8b57d42773838e8a484924eef19910d98b055d4547f526ec"
+      },
+      "reader-backports/hdf5-reader/src/global_heap.rs": {
+        "size": 9783,
+        "sha256": "887e8a63e462053d77475ee6b87f09a19ac8d387822a55e699a557dbcb4951f7"
+      },
+      "reader-backports/hdf5-reader/src/group.rs": {
+        "size": 27108,
+        "sha256": "dd19cfdcf4efbe3fedd600110203dd95e85305abbc15c3abe81acc3751ddbb1a"
+      },
+      "reader-backports/hdf5-reader/src/io.rs": {
+        "size": 12400,
+        "sha256": "589621880155b776b5cbd3aa637675e7b9df39fd0d95c39adc00922ae2704f7b"
+      },
+      "reader-backports/hdf5-reader/src/lib.rs": {
+        "size": 31334,
+        "sha256": "8a7806b8fd93e9cfbdf65abe2a8461ec689dae059ef79dfead83c6c5dd6d23b4"
+      },
+      "reader-backports/hdf5-reader/src/local_heap.rs": {
+        "size": 9217,
+        "sha256": "b3d6fc565e7d9ff7b2599d6961f5cee884595b821f4d9a5081556b75e4d21a01"
+      },
+      "reader-backports/hdf5-reader/src/messages/attribute.rs": {
+        "size": 9848,
+        "sha256": "f02842e5878982785f0b64cd5b4a0d927a9a438ba10392857610f12b422ec5d6"
+      },
+      "reader-backports/hdf5-reader/src/messages/attribute_info.rs": {
+        "size": 2857,
+        "sha256": "95bd3648eb7d4388b9de9ed4a1e72d12a7c2f1b3d0c71482fae6221315d262a0"
+      },
+      "reader-backports/hdf5-reader/src/messages/btree_k.rs": {
+        "size": 956,
+        "sha256": "fe9649fd0d398575ae9347c92384dd0dccd9fb53cae7f3a1fcbca2906afa6cd8"
+      },
+      "reader-backports/hdf5-reader/src/messages/continuation.rs": {
+        "size": 1270,
+        "sha256": "6a462c49154ad7f176a493d5c8fecc950e1c772b14ab0692a7f5bfdb3ee8dee8"
+      },
+      "reader-backports/hdf5-reader/src/messages/dataspace.rs": {
+        "size": 7688,
+        "sha256": "24054741d6b8fc9b7ab5f2cbfbcedc762d0f3104d899f5810917d92fd16f6fa3"
+      },
+      "reader-backports/hdf5-reader/src/messages/datatype.rs": {
+        "size": 33601,
+        "sha256": "42437abb94aba788374ad8769c284cac94c053a71265b3cc123e2ab01aa22018"
+      },
+      "reader-backports/hdf5-reader/src/messages/external_files.rs": {
+        "size": 1472,
+        "sha256": "0e660d862e619276ef6d4fa0f307862a08a18d03f1a0dc819794eeee5e209788"
+      },
+      "reader-backports/hdf5-reader/src/messages/fill_value.rs": {
+        "size": 6654,
+        "sha256": "182ae332c7e11b21db97d1e427593e46a2573b846b638f2d69e10ab759f7b8dc"
+      },
+      "reader-backports/hdf5-reader/src/messages/filter_pipeline.rs": {
+        "size": 4559,
+        "sha256": "3ef8bf0f99a54655a049c2617e176db57f69731957c3d01b992fdcdb41005059"
+      },
+      "reader-backports/hdf5-reader/src/messages/group_info.rs": {
+        "size": 3093,
+        "sha256": "f028d7afb028f981cadfb75cd23413c1e61d80b6aac30b2dcb14900345abba0e"
+      },
+      "reader-backports/hdf5-reader/src/messages/layout.rs": {
+        "size": 15999,
+        "sha256": "261bc049a8f4566785f4ea7484b8f7645423206ccdc1364ab541237fc559b474"
+      },
+      "reader-backports/hdf5-reader/src/messages/link.rs": {
+        "size": 5202,
+        "sha256": "7b4ab91992e1abd5a2cf2a1f4abf4404782cc9da5733cff3cead7427e76bd136"
+      },
+      "reader-backports/hdf5-reader/src/messages/link_info.rs": {
+        "size": 4099,
+        "sha256": "4ac49bd26b47d98ca4d585369f5dd779eac1421e0254b67d2c62d5c1dea4a81d"
+      },
+      "reader-backports/hdf5-reader/src/messages/mod.rs": {
+        "size": 13501,
+        "sha256": "379f35317e81da9aa10d994adb4c8d7e6a34228440e31d3f03480dcb9c54a39b"
+      },
+      "reader-backports/hdf5-reader/src/messages/modification_time.rs": {
+        "size": 2415,
+        "sha256": "2fa9f219f8f7c6fde7dd3fadf6b37fa5701f3e9105021edfdcfccf904aa3d9dd"
+      },
+      "reader-backports/hdf5-reader/src/messages/shared.rs": {
+        "size": 5180,
+        "sha256": "f80431faf089e51534f3147b9eae81c33353a431aef8c1459929370bd16ad503"
+      },
+      "reader-backports/hdf5-reader/src/messages/shared_table.rs": {
+        "size": 1835,
+        "sha256": "78027dc7d53d80e081d3e4a4892afa501eff9aea4ba2123ac6ba9467bba90c5c"
+      },
+      "reader-backports/hdf5-reader/src/messages/symbol_table_msg.rs": {
+        "size": 1381,
+        "sha256": "f7cb628336027e04f5b47c056e24ccf1643497a9d30ed6e995d53749173ca576"
+      },
+      "reader-backports/hdf5-reader/src/object_header.rs": {
+        "size": 65658,
+        "sha256": "bff85df33715d386f0a534d3046705bde979597c78f1b5d91f7f3402b823f0c2"
+      },
+      "reader-backports/hdf5-reader/src/reference.rs": {
+        "size": 2853,
+        "sha256": "690a8bc74bf9ae47ba1441e6b2b91641606f6b4e5a0f837fd58eedd8fa09c259"
+      },
+      "reader-backports/hdf5-reader/src/shared_message_table.rs": {
+        "size": 14080,
+        "sha256": "50128adef484709e57a4b953ff5dbe93790efbbf2b49fb26177fd684cfc2d8cf"
+      },
+      "reader-backports/hdf5-reader/src/storage.rs": {
+        "size": 16418,
+        "sha256": "2f43fe73dec3cd89367378dcf67e4d517813e7c6b5f5533f84261e4c62f45058"
+      },
+      "reader-backports/hdf5-reader/src/superblock.rs": {
+        "size": 9712,
+        "sha256": "64c28f4b45ab80fc434b0f5f1dac83ff6fafb63577db6c15f405136440ff0fed"
+      },
+      "reader-backports/hdf5-reader/src/symbol_table.rs": {
+        "size": 10047,
+        "sha256": "b553ba1f5859b187bc22aa146cbec1b1b6e38c611d4ffa92b183f8e327985753"
+      },
+      "reader-backports/netcdf-reader/Cargo.toml": {
+        "size": 2803,
+        "sha256": "3051261e393e6867b065f6740e8b8570b7f95f1d55df6d3d66c88a0e6f077f33"
+      },
+      "reader-backports/netcdf-reader/LICENSE-APACHE": {
+        "size": 8464,
+        "sha256": "7e1c4927d7c8765c73e234c2da19c423dfafc9c662e6d028277f9e77476445bb"
+      },
+      "reader-backports/netcdf-reader/LICENSE-MIT": {
+        "size": 1067,
+        "sha256": "24a4eeee33afc227bd3e796f772741250b2c93eae1cdba65e775ef8005dfb4b1"
+      },
+      "reader-backports/netcdf-reader/PROVENANCE.json": {
+        "size": 3357,
+        "sha256": "d35cc18475750fd1edffb52ea5daec0f85eabd640e64c8978e8af05105bc5c54"
+      },
+      "reader-backports/netcdf-reader/README.md": {
+        "size": 12583,
+        "sha256": "fe4b38a268a3ca02d2789b94bca3656a488553b4281b4e682f33201664faedf5"
+      },
+      "reader-backports/netcdf-reader/UPSTREAM-Cargo.toml": {
+        "size": 1347,
+        "sha256": "b635e183e487fd53652f069dc6d8b5b6eee28eeee1417ea015c9f88f73865a8d"
+      },
+      "reader-backports/netcdf-reader/UPSTREAM-VCS.json": {
+        "size": 107,
+        "sha256": "0350ca7a38aff0f50597114289ce104840e38a31ebf10c184b58267eeaf19eb6"
+      },
+      "reader-backports/netcdf-reader/src/cf/axes.rs": {
+        "size": 12767,
+        "sha256": "13be78f68255b727b21941495b1683d11a6f0ce731a17965935adbed59b42031"
+      },
+      "reader-backports/netcdf-reader/src/cf/bounds.rs": {
+        "size": 3217,
+        "sha256": "17ffc45db0989c808d80f3919984ba42f9590c9122408befc06a47e1e477698f"
+      },
+      "reader-backports/netcdf-reader/src/cf/crs.rs": {
+        "size": 9677,
+        "sha256": "2f87cc8f517446768b3ba84e1acb236bcf6746eb1bab8148e81bfd7c8a05230a"
+      },
+      "reader-backports/netcdf-reader/src/cf/mod.rs": {
+        "size": 1408,
+        "sha256": "29d0eed5f2c4d110a7182900ffb8e61e35a4da2f9523ee9b48d4c25dd5f2007f"
+      },
+      "reader-backports/netcdf-reader/src/cf/time.rs": {
+        "size": 37776,
+        "sha256": "b92b330af8d76d64573e63136e0801542f33510854df6853dea4bc213ae4e6b7"
+      },
+      "reader-backports/netcdf-reader/src/classic/data.rs": {
+        "size": 51616,
+        "sha256": "1a32f780ad522b7624ceee94d5ea76f7c294e7dd088dd82921aee6347a006e8e"
+      },
+      "reader-backports/netcdf-reader/src/classic/header.rs": {
+        "size": 37154,
+        "sha256": "a428b834edbbace63c725f1ebc08ef3683ea5eac07ee056818a4e1ec2d09d18d"
+      },
+      "reader-backports/netcdf-reader/src/classic/mod.rs": {
+        "size": 7584,
+        "sha256": "129aaa7626e40116bc715f71cd5c53201c8f31b114524a11a8de643f7fdc2bc1"
+      },
+      "reader-backports/netcdf-reader/src/classic/storage.rs": {
+        "size": 6397,
+        "sha256": "79bade957e26c5cfb2a28e8da0eca569c2dc3c52d8ced7a3146354160b72b27b"
+      },
+      "reader-backports/netcdf-reader/src/classic/types.rs": {
+        "size": 3028,
+        "sha256": "9fe2dd3a7aceb863cd3bef4870aac29c02064d2f830611a04d1989924c3ac8c3"
+      },
+      "reader-backports/netcdf-reader/src/classic/variable.rs": {
+        "size": 39531,
+        "sha256": "c5c8d3e8cdbd621b01660ec1561bdbe01984a1ed58f84085f61d5992c3aad4ac"
+      },
+      "reader-backports/netcdf-reader/src/error.rs": {
+        "size": 1519,
+        "sha256": "eb2f0ad3ffd310804e1bba665713799a01677c87e6868a52522609cf65a8b4b1"
+      },
+      "reader-backports/netcdf-reader/src/lib.rs": {
+        "size": 57396,
+        "sha256": "3bd98abd9d48643b976ada4f7160c408d9b3d7f3524e85f2216f81089a1ac855"
+      },
+      "reader-backports/netcdf-reader/src/masked.rs": {
+        "size": 5384,
+        "sha256": "a1a4b5b691bfa859c4be977329d236af5114286571121f43661f8afa27716435"
+      },
+      "reader-backports/netcdf-reader/src/nc4/attributes.rs": {
+        "size": 6699,
+        "sha256": "85e0f6fabf31d2e5fd6299e03b75dd634d708aa2b80bd132f0bcab999f3180ef"
+      },
+      "reader-backports/netcdf-reader/src/nc4/dimensions.rs": {
+        "size": 4616,
+        "sha256": "39e387a9cfa7b659882f12fa813124a70ccab3d64a752f7ad212f29fcf33cb77"
+      },
+      "reader-backports/netcdf-reader/src/nc4/groups.rs": {
+        "size": 9821,
+        "sha256": "7ee002d6fc6f9dfc95cd8979f311bdfcaefb0df410adb5f9b852630274d523b9"
+      },
+      "reader-backports/netcdf-reader/src/nc4/mod.rs": {
+        "size": 20685,
+        "sha256": "d063257a5f6ff5163cb3335e7c6c1d6c9a278d21ea0e14b7c15be5f2baabea95"
+      },
+      "reader-backports/netcdf-reader/src/nc4/types.rs": {
+        "size": 9953,
+        "sha256": "8935f3302299de580f1953eb2ff4f74433d648f8554e72bdda650f62eade9750"
+      },
+      "reader-backports/netcdf-reader/src/nc4/variables.rs": {
+        "size": 14030,
+        "sha256": "c3dce236701c59be9c77da5ed3806b3884db149caf369c494493bed618daef67"
+      },
+      "reader-backports/netcdf-reader/src/types.rs": {
+        "size": 763,
+        "sha256": "63905e39f6928a08f535394e770d577b880bda9195fcf76759e63ae19032ef20"
+      },
+      "reader-backports/netcdf-reader/src/unpack.rs": {
+        "size": 3409,
+        "sha256": "389a13a47a282ed95dcfcdb3df07ba039a3c66603d966b4eacd2f6ff8b634977"
+      },
+      "reader-backports/netcdf-reader/src/user_defined.rs": {
+        "size": 20136,
+        "sha256": "45803f57ab037a2fcb24e6ad7b5a8f7fb1cf6e50d8f60ad34c8133e1782f7ba2"
+      },
+      "snippets/rds2rust-777dc4a0b14a5aca/wasm/decompress.js": {
+        "size": 16502,
+        "sha256": "5258768404663b4b48572796afbe51e2a8669a89d3d5e21cf18c41830bf1d46b"
       }
     },
     "runtime_catalog": {
       "count": 46,
       "json_sha256": "4c74d3aa55dd9563e157c42cdac145250af2d658901da53c0155959df2cf58ed"
+    },
+    "source_files": {
+      "LICENSE": {
+        "source_path": "LICENSE",
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+      },
+      "LICENSES/AGPL-3.0-or-later.txt": {
+        "source_path": "LICENSES/AGPL-3.0-or-later.txt",
+        "size": 34020,
+        "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
+      },
+      "LICENSES/Apache-2.0.txt": {
+        "source_path": "LICENSES/Apache-2.0.txt",
+        "size": 10280,
+        "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+      },
+      "LICENSES/BSD-3-Clause.txt": {
+        "source_path": "LICENSES/BSD-3-Clause.txt",
+        "size": 1460,
+        "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
+      },
+      "LICENSES/CeCILL-2.1.txt": {
+        "source_path": "LICENSES/CeCILL-2.1.txt",
+        "size": 21778,
+        "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
+      },
+      "LICENSES/MIT.txt": {
+        "source_path": "LICENSES/MIT.txt",
+        "size": 1078,
+        "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+      },
+      "LICENSING.md": {
+        "source_path": "LICENSING.md",
+        "size": 1436,
+        "sha256": "a002efcef5dd83e5612fbd38990b0265da5fef66a67bfc7c849bdf06860076fd"
+      },
+      "LICENSING_FR.md": {
+        "source_path": "LICENSING_FR.md",
+        "size": 1551,
+        "sha256": "d3256179c57f9821d53a63e496acfcfc170c5158d7924289ee4a2937fee2fed0"
+      }
+    },
+    "staged_package": "nirs4all-formats-wasm",
+    "registry": {
+      "metadata_url": "https://registry.npmjs.org/@nirs4all%2fformats-wasm/0.2.17",
+      "tarball_url": "https://registry.npmjs.org/@nirs4all/formats-wasm/-/formats-wasm-0.2.17.tgz",
+      "size": 2214836,
+      "sha256": "9e8666899825912aeff640c6071eb7c707637572fcb7447761eb4e8d29231b55",
+      "sha1": "cd33a5775b6424d4fd16189a96ae2cd30747823b",
+      "integrity": "sha512-smeOiQC0l3OZWGaqE0yjImRlux7YzAcVyJH9IKcFiByu7Z8vG5YNFt+usffzBKk5JBBPSNJDq5LsErUqUoJyqg=="
+    },
+    "projection": {
+      "README.md": "README.md",
+      "THIRD_PARTY_NOTICES.md": "THIRD_PARTY_NOTICES.md",
+      "reader-backports/hdf5-reader/Cargo.toml": "reader-backports/hdf5-reader/Cargo.toml",
+      "reader-backports/hdf5-reader/LICENSE-APACHE": "reader-backports/hdf5-reader/LICENSE-APACHE",
+      "reader-backports/hdf5-reader/LICENSE-MIT": "reader-backports/hdf5-reader/LICENSE-MIT",
+      "reader-backports/hdf5-reader/PROVENANCE.json": "reader-backports/hdf5-reader/PROVENANCE.json",
+      "reader-backports/hdf5-reader/README.md": "reader-backports/hdf5-reader/README.md",
+      "reader-backports/hdf5-reader/UPSTREAM-Cargo.toml": "reader-backports/hdf5-reader/UPSTREAM-Cargo.toml",
+      "reader-backports/hdf5-reader/UPSTREAM-VCS.json": "reader-backports/hdf5-reader/UPSTREAM-VCS.json",
+      "reader-backports/hdf5-reader/src/attribute_api.rs": "reader-backports/hdf5-reader/src/attribute_api.rs",
+      "reader-backports/hdf5-reader/src/btree_v1.rs": "reader-backports/hdf5-reader/src/btree_v1.rs",
+      "reader-backports/hdf5-reader/src/btree_v2.rs": "reader-backports/hdf5-reader/src/btree_v2.rs",
+      "reader-backports/hdf5-reader/src/cache.rs": "reader-backports/hdf5-reader/src/cache.rs",
+      "reader-backports/hdf5-reader/src/checksum.rs": "reader-backports/hdf5-reader/src/checksum.rs",
+      "reader-backports/hdf5-reader/src/chunk_index.rs": "reader-backports/hdf5-reader/src/chunk_index.rs",
+      "reader-backports/hdf5-reader/src/dataset.rs": "reader-backports/hdf5-reader/src/dataset.rs",
+      "reader-backports/hdf5-reader/src/datatype_api.rs": "reader-backports/hdf5-reader/src/datatype_api.rs",
+      "reader-backports/hdf5-reader/src/error.rs": "reader-backports/hdf5-reader/src/error.rs",
+      "reader-backports/hdf5-reader/src/extensible_array.rs": "reader-backports/hdf5-reader/src/extensible_array.rs",
+      "reader-backports/hdf5-reader/src/filters/deflate.rs": "reader-backports/hdf5-reader/src/filters/deflate.rs",
+      "reader-backports/hdf5-reader/src/filters/fletcher32.rs": "reader-backports/hdf5-reader/src/filters/fletcher32.rs",
+      "reader-backports/hdf5-reader/src/filters/lz4.rs": "reader-backports/hdf5-reader/src/filters/lz4.rs",
+      "reader-backports/hdf5-reader/src/filters/mod.rs": "reader-backports/hdf5-reader/src/filters/mod.rs",
+      "reader-backports/hdf5-reader/src/filters/nbit.rs": "reader-backports/hdf5-reader/src/filters/nbit.rs",
+      "reader-backports/hdf5-reader/src/filters/scaleoffset.rs": "reader-backports/hdf5-reader/src/filters/scaleoffset.rs",
+      "reader-backports/hdf5-reader/src/filters/shuffle.rs": "reader-backports/hdf5-reader/src/filters/shuffle.rs",
+      "reader-backports/hdf5-reader/src/fixed_array.rs": "reader-backports/hdf5-reader/src/fixed_array.rs",
+      "reader-backports/hdf5-reader/src/fractal_heap.rs": "reader-backports/hdf5-reader/src/fractal_heap.rs",
+      "reader-backports/hdf5-reader/src/global_heap.rs": "reader-backports/hdf5-reader/src/global_heap.rs",
+      "reader-backports/hdf5-reader/src/group.rs": "reader-backports/hdf5-reader/src/group.rs",
+      "reader-backports/hdf5-reader/src/io.rs": "reader-backports/hdf5-reader/src/io.rs",
+      "reader-backports/hdf5-reader/src/lib.rs": "reader-backports/hdf5-reader/src/lib.rs",
+      "reader-backports/hdf5-reader/src/local_heap.rs": "reader-backports/hdf5-reader/src/local_heap.rs",
+      "reader-backports/hdf5-reader/src/messages/attribute.rs": "reader-backports/hdf5-reader/src/messages/attribute.rs",
+      "reader-backports/hdf5-reader/src/messages/attribute_info.rs": "reader-backports/hdf5-reader/src/messages/attribute_info.rs",
+      "reader-backports/hdf5-reader/src/messages/btree_k.rs": "reader-backports/hdf5-reader/src/messages/btree_k.rs",
+      "reader-backports/hdf5-reader/src/messages/continuation.rs": "reader-backports/hdf5-reader/src/messages/continuation.rs",
+      "reader-backports/hdf5-reader/src/messages/dataspace.rs": "reader-backports/hdf5-reader/src/messages/dataspace.rs",
+      "reader-backports/hdf5-reader/src/messages/datatype.rs": "reader-backports/hdf5-reader/src/messages/datatype.rs",
+      "reader-backports/hdf5-reader/src/messages/external_files.rs": "reader-backports/hdf5-reader/src/messages/external_files.rs",
+      "reader-backports/hdf5-reader/src/messages/fill_value.rs": "reader-backports/hdf5-reader/src/messages/fill_value.rs",
+      "reader-backports/hdf5-reader/src/messages/filter_pipeline.rs": "reader-backports/hdf5-reader/src/messages/filter_pipeline.rs",
+      "reader-backports/hdf5-reader/src/messages/group_info.rs": "reader-backports/hdf5-reader/src/messages/group_info.rs",
+      "reader-backports/hdf5-reader/src/messages/layout.rs": "reader-backports/hdf5-reader/src/messages/layout.rs",
+      "reader-backports/hdf5-reader/src/messages/link.rs": "reader-backports/hdf5-reader/src/messages/link.rs",
+      "reader-backports/hdf5-reader/src/messages/link_info.rs": "reader-backports/hdf5-reader/src/messages/link_info.rs",
+      "reader-backports/hdf5-reader/src/messages/mod.rs": "reader-backports/hdf5-reader/src/messages/mod.rs",
+      "reader-backports/hdf5-reader/src/messages/modification_time.rs": "reader-backports/hdf5-reader/src/messages/modification_time.rs",
+      "reader-backports/hdf5-reader/src/messages/shared.rs": "reader-backports/hdf5-reader/src/messages/shared.rs",
+      "reader-backports/hdf5-reader/src/messages/shared_table.rs": "reader-backports/hdf5-reader/src/messages/shared_table.rs",
+      "reader-backports/hdf5-reader/src/messages/symbol_table_msg.rs": "reader-backports/hdf5-reader/src/messages/symbol_table_msg.rs",
+      "reader-backports/hdf5-reader/src/object_header.rs": "reader-backports/hdf5-reader/src/object_header.rs",
+      "reader-backports/hdf5-reader/src/reference.rs": "reader-backports/hdf5-reader/src/reference.rs",
+      "reader-backports/hdf5-reader/src/shared_message_table.rs": "reader-backports/hdf5-reader/src/shared_message_table.rs",
+      "reader-backports/hdf5-reader/src/storage.rs": "reader-backports/hdf5-reader/src/storage.rs",
+      "reader-backports/hdf5-reader/src/superblock.rs": "reader-backports/hdf5-reader/src/superblock.rs",
+      "reader-backports/hdf5-reader/src/symbol_table.rs": "reader-backports/hdf5-reader/src/symbol_table.rs",
+      "reader-backports/netcdf-reader/Cargo.toml": "reader-backports/netcdf-reader/Cargo.toml",
+      "reader-backports/netcdf-reader/LICENSE-APACHE": "reader-backports/netcdf-reader/LICENSE-APACHE",
+      "reader-backports/netcdf-reader/LICENSE-MIT": "reader-backports/netcdf-reader/LICENSE-MIT",
+      "reader-backports/netcdf-reader/PROVENANCE.json": "reader-backports/netcdf-reader/PROVENANCE.json",
+      "reader-backports/netcdf-reader/README.md": "reader-backports/netcdf-reader/README.md",
+      "reader-backports/netcdf-reader/UPSTREAM-Cargo.toml": "reader-backports/netcdf-reader/UPSTREAM-Cargo.toml",
+      "reader-backports/netcdf-reader/UPSTREAM-VCS.json": "reader-backports/netcdf-reader/UPSTREAM-VCS.json",
+      "reader-backports/netcdf-reader/src/cf/axes.rs": "reader-backports/netcdf-reader/src/cf/axes.rs",
+      "reader-backports/netcdf-reader/src/cf/bounds.rs": "reader-backports/netcdf-reader/src/cf/bounds.rs",
+      "reader-backports/netcdf-reader/src/cf/crs.rs": "reader-backports/netcdf-reader/src/cf/crs.rs",
+      "reader-backports/netcdf-reader/src/cf/mod.rs": "reader-backports/netcdf-reader/src/cf/mod.rs",
+      "reader-backports/netcdf-reader/src/cf/time.rs": "reader-backports/netcdf-reader/src/cf/time.rs",
+      "reader-backports/netcdf-reader/src/classic/data.rs": "reader-backports/netcdf-reader/src/classic/data.rs",
+      "reader-backports/netcdf-reader/src/classic/header.rs": "reader-backports/netcdf-reader/src/classic/header.rs",
+      "reader-backports/netcdf-reader/src/classic/mod.rs": "reader-backports/netcdf-reader/src/classic/mod.rs",
+      "reader-backports/netcdf-reader/src/classic/storage.rs": "reader-backports/netcdf-reader/src/classic/storage.rs",
+      "reader-backports/netcdf-reader/src/classic/types.rs": "reader-backports/netcdf-reader/src/classic/types.rs",
+      "reader-backports/netcdf-reader/src/classic/variable.rs": "reader-backports/netcdf-reader/src/classic/variable.rs",
+      "reader-backports/netcdf-reader/src/error.rs": "reader-backports/netcdf-reader/src/error.rs",
+      "reader-backports/netcdf-reader/src/lib.rs": "reader-backports/netcdf-reader/src/lib.rs",
+      "reader-backports/netcdf-reader/src/masked.rs": "reader-backports/netcdf-reader/src/masked.rs",
+      "reader-backports/netcdf-reader/src/nc4/attributes.rs": "reader-backports/netcdf-reader/src/nc4/attributes.rs",
+      "reader-backports/netcdf-reader/src/nc4/dimensions.rs": "reader-backports/netcdf-reader/src/nc4/dimensions.rs",
+      "reader-backports/netcdf-reader/src/nc4/groups.rs": "reader-backports/netcdf-reader/src/nc4/groups.rs",
+      "reader-backports/netcdf-reader/src/nc4/mod.rs": "reader-backports/netcdf-reader/src/nc4/mod.rs",
+      "reader-backports/netcdf-reader/src/nc4/types.rs": "reader-backports/netcdf-reader/src/nc4/types.rs",
+      "reader-backports/netcdf-reader/src/nc4/variables.rs": "reader-backports/netcdf-reader/src/nc4/variables.rs",
+      "reader-backports/netcdf-reader/src/types.rs": "reader-backports/netcdf-reader/src/types.rs",
+      "reader-backports/netcdf-reader/src/unpack.rs": "reader-backports/netcdf-reader/src/unpack.rs",
+      "reader-backports/netcdf-reader/src/user_defined.rs": "reader-backports/netcdf-reader/src/user_defined.rs"
+    },
+    "browser_files": {
+      "nirs4all_formats_wasm.d.ts": {
+        "url": "https://github.com/GBeurier/nirs4all-formats/releases/download/v0.2.17/nirs4all-formats-browser-web-nirs4all_formats_wasm.d.ts",
+        "size": 5702,
+        "sha256": "289dd577b7042a5ce614b850499e0da09482b68d4594a7f205952b2ea4678f10"
+      },
+      "nirs4all_formats_wasm.js": {
+        "url": "https://github.com/GBeurier/nirs4all-formats/releases/download/v0.2.17/nirs4all-formats-browser-web-nirs4all_formats_wasm.js",
+        "size": 25923,
+        "sha256": "58fa8e66de312bee1bf6f3d055fe86574f74018b851c60a7c7940c0c8ab94d01"
+      },
+      "nirs4all_formats_wasm_bg.wasm": {
+        "url": "https://github.com/GBeurier/nirs4all-formats/releases/download/v0.2.17/nirs4all-formats-browser-web-nirs4all_formats_wasm_bg.wasm",
+        "size": 5988324,
+        "sha256": "fdc8f7f8e4db280467891ee79fdb1b49d3bfe69385917cc747badb4c245b27ef"
+      },
+      "nirs4all_formats_wasm_bg.wasm.d.ts": {
+        "url": "https://github.com/GBeurier/nirs4all-formats/releases/download/v0.2.17/nirs4all-formats-browser-web-nirs4all_formats_wasm_bg.wasm.d.ts",
+        "size": 2073,
+        "sha256": "a832542b730bb41a0481e25e038542f8516be26683538a51a90868a68f8b256f"
+      },
+      "package.json": {
+        "url": "https://github.com/GBeurier/nirs4all-formats/releases/download/v0.2.17/nirs4all-formats-browser-web-package.json",
+        "size": 609,
+        "sha256": "2f81e84e03e004298f1edcb62f379dd76bb430afcf32d9e15db7c03288805a2e"
+      },
+      "snippets/rds2rust-777dc4a0b14a5aca/wasm/decompress.js": {
+        "url": "https://github.com/GBeurier/nirs4all-formats/releases/download/v0.2.17/nirs4all-formats-browser-web-snippets__rds2rust-777dc4a0b14a5aca__wasm__decompress.js",
+        "size": 16502,
+        "sha256": "5258768404663b4b48572796afbe51e2a8669a89d3d5e21cf18c41830bf1d46b"
+      }
+    },
+    "browser_deployment": {
+      "target": "web",
+      "version": "0.2.17",
+      "receipt_url": "https://github.com/GBeurier/nirs4all-formats/releases/download/v0.2.17/nirs4all-formats-browser-web.provenance.json",
+      "build": {
+        "target": "web",
+        "profile": "release",
+        "features": [
+          "fmt-hdf5",
+          "fmt-matlab",
+          "fmt-parquet"
+        ],
+        "executions": 1,
+        "independent_rebuild_claimed": false
+      },
+      "publication": "existing owner GitHub Release assets",
+      "independent_rebuild_claimed": false
     }
   },
   "methods": {
     "package": "@nirs4all/methods",
-    "version": "1.3.16",
+    "version": "1.3.17",
     "abi": "2.22.0",
     "destination": "src/engine/wasm/methods",
     "source": {
-      "kind": "published-npm-registry-package",
       "repository": "https://github.com/GBeurier/nirs4all-methods",
-      "commit": "0399906f1d4df256a294d1b4937b4826c828f649",
-      "tree": "6484f475179e6f39dee6e7cb9240356dcf2ec351",
-      "tag": "v1.3.16",
-      "artifact_origin": "Exact cached public npm tarball; replaces the distinct local-unpublished qualification candidate",
-      "public_receipt": {
-        "path": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/public-main-site-integration/methods-row-l2-nov10/public-release-nov10/npm-public/PUBLIC_NPM_RECEIPT.json",
-        "size": 4466,
-        "sha256": "8c32d720be5255374df18a8b5a8d96d3c955e767d468ae7f62ec15600dc84a68"
-      },
-      "registry_metadata": {
-        "path": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/public-main-site-integration/methods-row-l2-nov10/public-release-nov10/npm-public/registry-metadata.json",
-        "size": 4822,
-        "sha256": "5acbab9a13634e856f160d19688bcd28684b64055172c683c727ab076bf296d0"
-      },
-      "provenance": {
-        "registry_attestations": {
-          "url": "https://registry.npmjs.org/-/npm/v1/attestations/@nirs4all%2fmethods@1.3.16",
-          "provenance": {
-            "predicateType": "https://slsa.dev/provenance/v1"
-          }
-        },
-        "retained_bundle": {
-          "path": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/public-main-site-integration/methods-row-l2-nov10/public-release-nov10/npm-public/registry-attestations.json",
-          "size": 17049,
-          "sha256": "63093b0d0057d02d79b2caedb943a8cb6e8fc563b40b89d8f51dec70b6f5268a"
-        },
-        "retained_statements": {
-          "path": "/home/delete/nirs4all/_implementation/2026-11-03-ecosystem-consolidation/release-integration-20261109/public-main-site-integration/methods-row-l2-nov10/public-release-nov10/npm-public/provenance-statements.json",
-          "size": 2085,
-          "sha256": "12c7f2fe0546b281c93474266fc7b0324bb69e6385dd630adbbe55fa45a519ad"
-        },
-        "statement_count": 2,
-        "subject_sha512_verified": true,
-        "source_commit_in_statement_verified": true,
-        "cryptographic_signature_verification": "not repeated locally; registry bundle retained"
-      },
-      "owner_reported_build_profile": "emscripten-analysis; Emscripten3.1.74; Rust1.96.0; releaseNode20; actualpublicsmokeNode22.21.1",
-      "owner_workflow_run": 42805885412,
-      "public_smoke_reported_by_owner": {
-        "started": "2026-11-10T11:21:32.645684+00:00",
-        "exit_code": 0,
-        "stdout": "{\"version\":\"1.3.16+abi.2.22.0\",\"abi\":[2,22,0],\"method\":\"preprocessing.scaling.row_l2_normalize\",\"analytic_zero_extremes_refusal_replay_pipeline\":\"PASS\"}",
-        "reused_witness": "existing run_row_l2_normalize.mjs; only import target changed to extracted public package"
-      },
-      "public_smoke_rerun_by_web": false,
-      "publication_claimed": true,
-      "publication_basis": "Retained public npm metadata, archive integrity and owner receipt",
-      "performed_by_web": false,
-      "independent_rebuild_claimed": false
-    },
-    "registry": {
-      "metadata_url": "https://registry.npmjs.org/@nirs4all%2fmethods/1.3.16",
-      "tarball_url": "https://registry.npmjs.org/@nirs4all/methods/-/methods-1.3.16.tgz",
-      "size": 1940083,
-      "sha256": "2e5c4c45eb5f4010038c14c5737bf7c861ded8a4e206b91bcec27726427cc897",
-      "sha1": "42e44748bdbc718db20f4cdb64416e939294b37d",
-      "integrity": "sha512-Fzk5NofwI2uWxMSqu+hqK0Wc2w8WaGOrTK7NwDZe3s/bZQdxXq2Peaay/QzUY07M0dD4I7CbaZemlYu5A4aOeA=="
+      "commit": "42a589b8d9ca9689b89f56b43b9ef040696c524c",
+      "tree": "48fb34b7e822da27fb0ba6827b87edd44b79d8c2",
+      "tag": "v1.3.17"
     },
     "projection": {
       "LICENSE": "LICENSE",
@@ -1965,12 +1521,12 @@
         "sha256": "653fe6020f043ff47264076ee05d8eaf6b59cfb8fa9fb6ad6697e1b3a799e532"
       },
       "estimatorRoles.js": {
-        "size": 27380,
-        "sha256": "fdf36a65d49049b2390deea222b37528ce85a9aef402270478561c2b0ba25d7a"
+        "size": 28751,
+        "sha256": "294991f1876c9fa97e609f83c356350f7f98973e5a4a3def5b1e79c29111ec5d"
       },
       "estimatorRolesGenerated.js": {
-        "size": 117912,
-        "sha256": "7cfc4a8e1adcd604ceb8eb31162049cf4acbf4c40ea4c2b6af040b4981e625c8"
+        "size": 119184,
+        "sha256": "bfd2ec33d96175f212c86fae64a097430eb65364e778e2877e477d31773726f0"
       },
       "ffi.js": {
         "size": 5296,
@@ -2049,8 +1605,8 @@
         "sha256": "2711cd0c790d2b6de7827c86299481fd64bb39736419d931f482066193bf9f92"
       },
       "package.json": {
-        "size": 3225,
-        "sha256": "30b57ded4de1b270077bb7177b1451af156f1708850fe68bc42e5eb471e9d648"
+        "size": 3266,
+        "sha256": "082c7fda3e6a0e7290a77fe19b2f623e6f7c031f92e1093b8bc592acf3ea7c00"
       },
       "LICENSES/COMMERCIAL-LICENSE_FR.md": {
         "size": 769,
@@ -2081,12 +1637,12 @@
         "sha256": "701d7344a07f4f3f3487ce182a04e3493781f5818e0d69acdb2b11dfaf668ec6"
       },
       "estimatorRoles.d.ts": {
-        "size": 7845,
-        "sha256": "2389591087f0dbea32e6b252ac4f16b51e8bc513f8f1e9f440f50b94f531d38a"
+        "size": 8149,
+        "sha256": "b75afbef4681ab6e8e2bd1b7caa791b723a417897c0c541af3ba09a4285c7856"
       },
       "estimatorRolesGenerated.d.ts": {
-        "size": 174033,
-        "sha256": "c0ee7e5109ed8ffb219d41fcfe26b42ea4da588ceb1539859a3bd620abee7ce3"
+        "size": 176026,
+        "sha256": "71d6191fd64d53fb2c554f086b725a53310c89c9a79003818c033fb90a66f47a"
       },
       "ffi.d.ts": {
         "size": 2285,
@@ -2205,9 +1761,25 @@
         "sha256": "5b87c6cf33f65fa1a3093c03b106954cd38ec40f7d9a8d96c5ddc0df36617db0"
       },
       "n4m.wasm": {
-        "size": 4996427,
-        "sha256": "287b843eccb95c52ff4210390ef12ad55696267699881f7eb8f2f9bd52a53f62"
+        "size": 5035896,
+        "sha256": "844a815b64aefdd97eed99b2611a64937ab2f0f82fe385c9b02c09316e9bb1f1"
       }
+    },
+    "registry": {
+      "metadata_url": "https://registry.npmjs.org/@nirs4all/methods/1.3.17",
+      "tarball_url": "https://registry.npmjs.org/@nirs4all/methods/-/methods-1.3.17.tgz",
+      "size": 1956028,
+      "sha256": "a978f7e9a94b8edd0621cb2c5416e4be518036b2b147b421146b4dc6105642db",
+      "sha1": "7a4721652c30713aa2a3b776b88d3615670ba974",
+      "integrity": "sha512-QdrMCru+i1bo/zT9schSvtbF1O7sNNC9ntkDsASJbqm1jrt2AVbxN6UVfiDd7bzc1zvwE8y540pF0KHJiZy/3A=="
+    },
+    "browser_deployment": {
+      "payload": "Published npm emscripten-analysis browser runtime; no Web rebuild.",
+      "profile": "emscripten-analysis",
+      "features": [
+        "MIXEFF",
+        "RFR"
+      ]
     }
   },
   "datasets": {

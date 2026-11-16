@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest'
 // their own backend calls or assume a Node runtime. Staged WASM glue fetches
 // its same-origin static assets and is excluded from this scan. The hash-bound
 // historical Core test oracle is excluded too; production sources cannot import it.
+// Only the narrow, tested bundled teaching-file transport may fetch static files.
 const SRC_ROOT = fileURLToPath(new URL('..', import.meta.url))
 const APP_ROOT = fileURLToPath(new URL('../..', import.meta.url))
 
@@ -78,6 +79,8 @@ describe('client-side-only contract', () => {
     for (const file of files) {
       const text = readFileSync(file, 'utf8')
       for (const { pattern, why } of FORBIDDEN) {
+        if (pattern.source === /\bfetch\s*\(/.source &&
+          relative(SRC_ROOT, file).split(sep).join('/') === 'multimodal/bundled-file.ts') continue
         const match = pattern.exec(text)
         if (!match) continue
         const line = text.slice(0, match.index).split('\n').length
