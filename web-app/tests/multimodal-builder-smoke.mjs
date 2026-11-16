@@ -108,6 +108,13 @@ try {
     await builder.screenshot({ path: join(output, `${caseId}-role.png`) })
     await builder.getByRole('button', { name: 'Continue to Columns', exact: true }).click()
     await builder.screenshot({ path: join(output, `${caseId}-columns.png`) })
+    if (caseId === 'spectroscopy') {
+      await builder.evaluate(element => element.scrollIntoView({ block: 'start' }))
+      const bounds = await builder.boundingBox()
+      await page.screenshot({ path: join(output, 'builder-to-editor.png'), clip: {
+        x: bounds.x, y: bounds.y, width: bounds.width, height: Math.min(bounds.height, 440),
+      } })
+    }
     await builder.getByRole('button', { name: 'Continue to Validation', exact: true }).click()
     assert.equal(await createButton().isDisabled(), true)
     await ownerValidate(); await expectEnabled(createButton())

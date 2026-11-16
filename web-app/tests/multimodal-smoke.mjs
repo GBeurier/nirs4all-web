@@ -122,10 +122,14 @@ try {
   await page.setViewportSize({ width: 390, height: 844 })
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),
     'the page must reflow; wide diagrams and tables scroll inside their regions')
-  const diagram = page.getByRole('region', { name: /^Branch and merge diagram/ })
+  const diagram = page.getByRole('region', { name: /^Branch and merge canvas/ })
   await diagram.focus()
-  await page.keyboard.press('ArrowRight')
-  await page.waitForFunction(() => document.querySelector('.n4mm-graph__scroll').scrollLeft > 0)
+  assert.ok(await diagram.evaluate(element => element === document.activeElement), 'the pipeline region is keyboard focusable')
+  const needsScroll = await diagram.evaluate(element => element.scrollWidth > element.clientWidth + 1)
+  if (needsScroll) {
+    await page.keyboard.press('ArrowRight')
+    await page.waitForFunction(() => document.querySelector('.n4mm-pe__scroll').scrollLeft > 0)
+  }
   await page.screenshot({ path: join(output, 'mobile.png'), fullPage: true })
   assert.deepEqual(errors, [])
   assert.deepEqual(failedRequests, [])

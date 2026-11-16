@@ -116,6 +116,15 @@ try {
   assert.notDeepEqual(changed.run.candidates[0].oof.rows, before.run.candidates[0].oof.rows)
   await capture('editor-recipe-and-run.png')
 
+  await editor.locator('.n4mm-pe-node[data-kind="source"]').first().click()
+  await inspector.getByRole('combobox', { name: 'Add a step at the end', exact: true }).selectOption('preprocessing.scatter.snv')
+  await inspector.getByRole('button', { name: /Earlier/ }).click()
+  await namePipeline('Early · all sources · Raman SNV first · PLS 6')
+  const processed = await run('early-six-snv-first')
+  assert.deepEqual(processed.run.configs[0].pipeline.branches[0].sourceChains[0].steps.map(step => step.methodId),
+    ['preprocessing.scatter.snv', 'preprocessing.scaling.standard_scale'])
+  assert.deepEqual(processed.run.configs[0].pipeline.branches[0].sourceChains.slice(1), original.branches[0].sourceChains.slice(1))
+
   // Import/export retains the exact editable graph; malformed files preserve its result.
   const current = await exportPipeline('roundtrip')
   const input = editor.locator('input[type="file"]')
@@ -188,13 +197,19 @@ try {
   await inspector.getByRole('spinbutton', { name: 'Embedding size', exact: true }).waitFor()
   await capture('mobile-editor.png', editor, 700)
   await page.setViewportSize({ width: 1600, height: 1000 })
+  await inspector.getByRole('spinbutton', { name: 'Kernel size', exact: true }).fill('31')
+  await inspector.getByRole('spinbutton', { name: 'Kernel size', exact: true }).press('Tab')
+  await runButton.click()
+  await controls.getByRole('alert').waitFor({ timeout: 60000 })
+  assert.equal(await controls.getByText('Pipeline run complete. Native scores are available below.', { exact: true }).count(), 0)
+  assert.equal(await page.locator('.n4mm-run-history tbody tr').count(), 1, 'refused runs never become completed history entries')
   await caseId('spectroscopy')
   await capture('builder-to-editor.png', page.locator('#n4mm-data'), 440)
   assert.deepEqual(errors, [])
   assert.deepEqual(mutations, [])
   await writeFile(join(output, 'report.json'), JSON.stringify({ root, runs, errors, mutations,
-    assertions: ['real node parameter edit', 'source disconnect', 'history restore', 'exact document export/import',
+    assertions: ['real node parameter edit', 'source disconnect', 'add and reorder source preprocessing', 'history restore', 'exact document export/import',
       'refused import preserves active result', 'independent model branches', 'native mean/hybrid/mid execution',
-      'OOF/test/group identities', '390px page containment', 'keyboard model inspector'] }, null, 2))
+      'OOF/test/group identities', '390px page containment', 'keyboard model inspector', 'incompatible native run is reported as refused'] }, null, 2))
   console.log('PASS: editable presets, real source/model/parameter edits, native execution, history, JSON roundtrip, groups, mobile and keyboard')
 } finally { await browser.close() }

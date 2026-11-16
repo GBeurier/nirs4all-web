@@ -254,7 +254,10 @@ export default function MultimodalApp() {
           .filter((entry): entry is [string, string] => typeof entry[1] === 'string')
           .map(([name, version]) => ({ name, version }))
         setRuntime({ state: 'ready', label: 'Local WASM runtime ready', detail: versions.map(v => `${v.name} ${v.version}`).join(' · '), versions })
-        patch(id, current => ({ ...current, run: { kind: 'done' }, results: toWorkbenchResult(result), rawResult: result,
+        patch(id, current => ({ ...current, run: result.candidates.length > 0 ? { kind: 'done' }
+          : { kind: 'error', name: 'NativeExecutionRefusal',
+            message: result.refusals.map(refusal => refusal.reason).join('; ') || 'No pipeline completed.' },
+          results: toWorkbenchResult(result), rawResult: result,
           history: edited && configs[0].pipeline ? [...current.history, ...result.candidates.map(candidate => ({
             label: candidate.label, recipeFingerprint: candidate.recipeFingerprint, foldsFingerprint: candidate.foldsFingerprint,
             rmse: candidate.oof.rmse, holdoutRmse: candidate.holdout?.rmse ?? null,
