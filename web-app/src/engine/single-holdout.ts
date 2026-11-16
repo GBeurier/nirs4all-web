@@ -311,12 +311,27 @@ export async function tryRunSingleHoldout(ds: MaterializedDataset, dsl: Pipeline
 }
 
 export async function predictSingleHoldout(model: FittedPipeline, X: Float64Array, n: number, p: number, names?: string[]): Promise<PredictResult> {
-  checkInputColumns(model, p, names)
-  if (!Number.isSafeInteger(n) || n < 1 || X.length !== n * p) refuse('predict_shape', 'Prediction matrix shape does not match its buffer.')
+  return (await openSingleHoldoutPredictor(model, names))(X, n, p)
+}
+
+/**
+ * Validate a detached single-holdout package and load its owner runtimes ONCE, returning a
+ * predictor that replays each matrix through the same identity-aligned owner route. Used by
+ * Explain, which scores many perturbed batches with one model.
+ */
+export async function openSingleHoldoutPredictor(model: FittedPipeline, names?: string[]): Promise<(X: Float64Array, n: number, p: number) => Promise<PredictResult>> {
   const state = model.state as SingleHoldoutState
   const dag = await loadDagMl(), pkg = checkedPackage(dag, state)
-  if (state.featureNames.length !== p) refuse('columns', 'Detached feature-name width differs from the fitted model.')
   const methods = await loadMethodsWasm(), hash = (await loadDatasetsWasm()).sha256
+  return async (X, n, p) => {
+    checkInputColumns(model, p, names)
+    if (!Number.isSafeInteger(n) || n < 1 || X.length !== n * p) refuse('predict_shape', 'Prediction matrix shape does not match its buffer.')
+    if (state.featureNames.length !== p) refuse('columns', 'Detached feature-name width differs from the fitted model.')
+    return replaySingleHoldout(dag, pkg, methods, hash, state, X, n)
+  }
+}
+
+async function replaySingleHoldout(dag: Dag, pkg: PackageView, methods: Awaited<ReturnType<typeof loadMethodsWasm>>, hash: Hash, state: SingleHoldoutState, X: Float64Array, n: number): Promise<PredictResult> {
   const ids = Array.from({ length: n }, (_, i) => `predict:s${i}`)
   const identity = { rowsOf: new Map(ids.map((id, i) => [id, [i]])) }
   const owner = controller(methods, hash, { X, y: new Float64Array(), identity }, state.featureNames, state.targetNames)

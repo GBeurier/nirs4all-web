@@ -15,7 +15,7 @@ import { backendIdOf, exportPipeline, predictPipeline, predictPipelineMatrix, ty
 import { explainRefusal, type ExplainBinding, type PredictionMatrix, runExplain, validateExplainRequest } from './explain'
 import { loadMethodsWasm } from './nirs4all-core'
 import { isPortableCoreModel, portableCoreRefusal } from './portable-core'
-import { exportSingleHoldoutModel, isSingleHoldoutModel, predictSingleHoldout, tryRunSingleHoldout } from './single-holdout'
+import { exportSingleHoldoutModel, isSingleHoldoutModel, openSingleHoldoutPredictor, predictSingleHoldout, tryRunSingleHoldout } from './single-holdout'
 import { withWasmRobustnessEvidencePublicationTrace } from './robustness-evidence'
 import { createRobustnessEvidencePublisherFromSidecar } from './robustness-evidence-sidecar'
 import { makeRtError, RtErrorException } from './rt'
@@ -186,6 +186,16 @@ export class MainEngine implements Engine {
    * Every other model kind keeps its own predict dispatch.
    */
   private explainPredictor(model: FittedPipeline, featureNames?: string[]): (X: Float64Array, nRows: number, nFeatures: number) => Promise<PredictionMatrix> {
+    if (isSingleHoldoutModel(model)) {
+      // Package validation and owner runtime loading happen once; each batch is still
+      // replayed through the identity-aligned owner route.
+      let opened: ReturnType<typeof openSingleHoldoutPredictor> | null = null
+      return async (X, n, p) => {
+        opened ??= openSingleHoldoutPredictor(model, featureNames)
+        const r = await (await opened)(X, n, p)
+        return { data: r.values, rows: n, cols: 1 }
+      }
+    }
     if (!(model.state as { nativeRefit?: unknown } | null)?.nativeRefit) {
       return (X, n, p) => this.predictMatrix(model, X, n, p, featureNames)
     }
