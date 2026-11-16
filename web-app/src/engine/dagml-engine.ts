@@ -180,7 +180,8 @@ function expandSweepVariants(dsl: PipelineDSL): VariantPlan[] {
   })
 }
 
-export class DagMlEngine implements Engine {
+// The explain verb is hosted by MainEngine over every predict dispatch, not by this sub-engine.
+export class DagMlEngine implements Omit<Engine, 'explain'> {
   readonly name = 'dag-ml-wasm'
   private readonly policy: WebRuntimePolicy
 
@@ -933,9 +934,14 @@ export class DagMlEngine implements Engine {
   }
 
   async predict(model: FittedPipeline, Xnew: Float64Array, nSamples: number, nFeatures: number, featureNames?: string[]): Promise<PredictResult> {
+    return predictionResult(model, await this.predictMatrix(model, Xnew, nSamples, nFeatures, featureNames))
+  }
+
+  /** The replayed prediction matrix (rows x outputs) behind `predict`, before any class relabelling. */
+  async predictMatrix(model: FittedPipeline, Xnew: Float64Array, nSamples: number, nFeatures: number, featureNames?: string[]): Promise<Mat> {
     const backend = (model.state as FittedState).backendId === 'mljs-classic'
       ? await loadMlJsBackend() : await loadLibn4mBackend()
-    return predictionResult(model, await replayWithDagMl(model, Xnew, nSamples, nFeatures, backend, featureNames))
+    return replayWithDagMl(model, Xnew, nSamples, nFeatures, backend, featureNames)
   }
 
   async exportModel(model: FittedPipeline, { allowTrainingRows }: ExportOptions): Promise<FittedPipeline> {

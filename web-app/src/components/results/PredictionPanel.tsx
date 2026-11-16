@@ -95,7 +95,7 @@ function buildRows(
   return { rows, error: null }
 }
 
-export function PredictionPanel({ model, sourceName, targetName, engine, onImportModel }: PredictionPanelProps) {
+export function PredictionPanel({ model, sourceName, targetName, engine, onImportModel, onPredicted }: PredictionPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const n4aRef = useRef<HTMLInputElement>(null)
   const yInputRef = useRef<HTMLInputElement>(null)
@@ -108,6 +108,8 @@ export function PredictionPanel({ model, sourceName, targetName, engine, onImpor
   const request = useRef(0)
   const context = useRef({ model, engine, sourceName, targetName })
   context.current = { model, engine, sourceName, targetName }
+  const predictedSink = useRef(onPredicted)
+  predictedSink.current = onPredicted
   // Hide an old model's result immediately, before the reset effect runs.
   const pred = prediction?.model === model && prediction.engine === engine
     && prediction.sourceName === sourceName && prediction.targetName === targetName ? prediction : null
@@ -147,6 +149,7 @@ export function PredictionPanel({ model, sourceName, targetName, engine, onImpor
     setPred(null)
     setFileName(file.name)
     resetY()
+    predictedSink.current?.(null)
     try {
       const input = await readPredictionFile(file, nFeatures, headerChoice === '' ? undefined : headerChoice === 'yes')
       if (!isCurrent()) return
@@ -156,6 +159,7 @@ export function PredictionPanel({ model, sourceName, targetName, engine, onImpor
       // Reject incomplete output before exposing it in the table or export button.
       validatePredictionResult(result, input.nSamples, model.taskType)
       setPred({ model, engine, sourceName, targetName, result, nSamples: input.nSamples, autoY: input.autoY, columns: columnContract(model, input.featureNames), input })
+      predictedSink.current?.({ model, X: input.X, nSamples: input.nSamples, nFeatures: input.nFeatures, featureNames: input.featureNames, fileName: file.name })
     } catch (e) {
       if (isCurrent()) setError(e instanceof Error ? e.message : String(e))
     } finally {

@@ -11,13 +11,15 @@ import { dagMlAvailable } from './dagml'
 import { assertAomBudget } from './guard'
 import { missingTargetCount } from './partition'
 import { physicalIdentity } from './relations'
-import { backendIdOf, exportPipeline, predictPipeline } from './orchestrate'
+import { backendIdOf, exportPipeline, predictPipeline, predictPipelineMatrix, type ModelBackend } from './orchestrate'
+import { explainRefusal, type ExplainBinding, type PredictionMatrix, runExplain, validateExplainRequest } from './explain'
+import { loadMethodsWasm } from './nirs4all-core'
 import { isPortableCoreModel, portableCoreRefusal } from './portable-core'
 import { exportSingleHoldoutModel, isSingleHoldoutModel, predictSingleHoldout, tryRunSingleHoldout } from './single-holdout'
 import { withWasmRobustnessEvidencePublicationTrace } from './robustness-evidence'
 import { createRobustnessEvidencePublisherFromSidecar } from './robustness-evidence-sidecar'
 import { makeRtError, RtErrorException } from './rt'
-import type { Engine, ExportOptions, FittedPipeline, MaterializedDataset, PipelineDSL, PredictResult, RunOptions, RunResult } from './types'
+import type { Engine, ExplainOptions, ExplainRequest, ExplainResponse, ExportOptions, FittedPipeline, MaterializedDataset, PipelineDSL, PredictResult, RunOptions, RunResult } from './types'
 import { buildWebRuntimeProfile, type WebRuntimePolicy, type WebRuntimeProfile, webRuntimePolicy } from './web-profile'
 
 export interface MainEngineOptions {
@@ -117,6 +119,88 @@ export class MainEngine implements Engine {
       return predictPipeline(model, Xnew, nSamples, nFeatures, await loadMlJsBackend(), featureNames)
     }
     throw javascriptBackendRefusal('predict')
+  }
+
+  /**
+   * The prediction matrix (rows x outputs) of the complete fitted pipeline for an
+   * arbitrary input matrix, through the SAME dispatch as `predict` for every model
+   * kind. Kinds that cannot score an arbitrary matrix are refused with a typed
+   * `explain` RtError. Classification relabelling never happens here; callers refuse
+   * classifiers before calling (scores are not calibrated probabilities).
+   */
+  async predictMatrix(model: FittedPipeline, X: Float64Array, nRows: number, nFeatures: number, featureNames?: string[]): Promise<PredictionMatrix> {
+    if (isArchiveV2Model(model)) {
+      const r = await predictArchiveV2(model, X, nRows, nFeatures)
+      const cols = r.cols ?? 1
+      return { data: r.values, rows: r.rows ?? nRows, cols }
+    }
+    if (isPortableCoreModel(model)) {
+      throw explainRefusal(
+        'Historical portable Core coefficient states have no replay route, so they cannot be explained.',
+        'Keep the original download; refit the pipeline to explain it.',
+        'legacy_portable_core_coefficients',
+      )
+    }
+    if (isSingleHoldoutModel(model)) {
+      const r = await predictSingleHoldout(model, X, nRows, nFeatures, featureNames)
+      return { data: r.values, rows: nRows, cols: 1 }
+    }
+    if ((model.state as { nativeRefit?: unknown } | null)?.nativeRefit) {
+      return this.dagml.predictMatrix(model, X, nRows, nFeatures, featureNames)
+    }
+    if (backendIdOf(model) === 'libn4m-wasm') {
+      return predictPipelineMatrix(model, X, nRows, nFeatures, await loadLibn4mBackend(), featureNames)
+    }
+    if (backendIdOf(model) === 'mljs-classic') {
+      return predictPipelineMatrix(model, X, nRows, nFeatures, await loadMlJsBackend(), featureNames)
+    }
+    throw explainRefusal(
+      'The browser engine cannot replay a JavaScript-backend model, so it cannot be explained.',
+      'Refit the pipeline, or import a current model produced by dag-ml or libn4m WASM.',
+      'javascript_model_backend',
+    )
+  }
+
+  async explain(request: ExplainRequest, opts: ExplainOptions = {}): Promise<ExplainResponse> {
+    // Validation (task type, shapes, settings) precedes any WASM load or model evaluation.
+    validateExplainRequest(request)
+    const methods: ExplainBinding = await loadMethodsWasm()
+    if (typeof methods.explainModel !== 'function') {
+      throw explainRefusal(
+        'The staged Methods WASM does not expose the explain API.',
+        'Restage a Methods build that includes explainModel.',
+        'methods_explain_api',
+      )
+    }
+    const { model, featureNames } = request
+    return runExplain(request, methods, this.explainPredictor(model, featureNames), opts)
+  }
+
+  /**
+   * Batch predictor for one explanation. A native browser REFIT model is validated once:
+   * the first batch goes through the complete dag-ml replay (package + learned-state binding
+   * checks, identity-aligned PREDICT), and the replay's own host-sidecar function
+   * (`predictPipelineMatrix` on the same fitted state) must reproduce it bit for bit. The
+   * remaining perturbed batches — synthetic rows with no sample identity — then call that
+   * validated function directly instead of re-hashing the model and every batch per call.
+   * Every other model kind keeps its own predict dispatch.
+   */
+  private explainPredictor(model: FittedPipeline, featureNames?: string[]): (X: Float64Array, nRows: number, nFeatures: number) => Promise<PredictionMatrix> {
+    if (!(model.state as { nativeRefit?: unknown } | null)?.nativeRefit) {
+      return (X, n, p) => this.predictMatrix(model, X, n, p, featureNames)
+    }
+    let validated: ModelBackend | null = null
+    return async (X, n, p) => {
+      if (validated) return predictPipelineMatrix(model, X, n, p, validated, featureNames)
+      const replayed = await this.dagml.predictMatrix(model, X, n, p, featureNames)
+      const backend = backendIdOf(model) === 'mljs-classic' ? await loadMlJsBackend() : await loadLibn4mBackend()
+      const direct = predictPipelineMatrix(model, X, n, p, backend, featureNames)
+      if (direct.rows !== replayed.rows || direct.cols !== replayed.cols || direct.data.some((v, i) => !Object.is(v, replayed.data[i]))) {
+        throw new Error('The validated dag-ml replay and the fitted browser pipeline disagree; the model cannot be explained.')
+      }
+      validated = backend
+      return replayed
+    }
   }
 
   async exportModel(model: FittedPipeline, { allowTrainingRows }: ExportOptions): Promise<FittedPipeline> {

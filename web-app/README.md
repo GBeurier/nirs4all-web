@@ -3,8 +3,8 @@
 A **single-page, full-WASM "mini nirs4all-studio"** — a public demonstrator that runs the whole
 NIRS modelling loop **in the browser, no Python**: upload spectra → explore & configure the dataset
 → build/choose a simple pipeline from **nirs4all-methods** nodes → **run it** → inspect scores
-(refit / CV / folds) → see residual/parity views → **predict on new spectra**. Everything runs
-locally; nothing is uploaded.
+(refit / CV / folds) → see residual/parity views → **predict on new spectra** → **explain the
+predictions**. Everything runs locally; nothing is uploaded.
 
 The [multimodal laboratory](https://web.nirs4all.org/nirs4all_multimodale/) adds editable
 early/intermediate/late fusion presets, source-specific preprocessing, independently configurable
@@ -53,6 +53,53 @@ The full smoke inventory also contains prerequisite-bearing cross-runtime gates:
 artifacts, `repository-best-pipeline` consumes a Python handoff/oracle, and the
 SPC/amylose dataset checks use optional external fixture directories. Their
 status is separate from the autonomous strict/transitional WEB-001 gates.
+
+## Explain step
+
+The **Explain** step (after Predict, unlocked with the same model) shows which spectral regions
+drive the model's predictions. The **Model** selector (shared with Predict) chooses the explained
+model: any run of the session (its refit model, the variant selected by dag-ml refit on all
+training rows) or the imported `.n4a` model; fold models and non-selected variants are not kept. Attributions are computed in the engine Web Worker by the
+`nirs4all-methods` WASM explain session (`explainModel`), which calls back into the same predict
+dispatch Predict uses; nothing leaves the browser and no attribution numerics live in this app.
+
+- **Rows to explain**: the spectra scored in Predict, or the test, train or test + train
+  partitions of the dataset the selected run was fitted on (at most *Max rows*, default 10,
+  subsampled deterministically by the seed, or *All rows* of the source). Each explained row is shown as `Row i (sample #k)`: `i` is its position in the
+  explanation and `k` the 0-based row of its source; the two are never interchanged.
+- **Background**: the run dataset's train partition when available, otherwise the predicted rows
+  (an imported `.n4a` model has no training rows here). Default 20 rows, subsampled by the seed.
+- **Methods** (status per the explainability contract): permutation SHAP (default, *implemented*,
+  additive, Monte-Carlo standard error), exact SHAP (*implemented*, ≤ 16 groups), occlusion
+  (*implemented*, not additive), kernel SHAP and LIME (*experimental*; LIME is not additive).
+- **Baselines**: `background` (interventional, default), `interpolate` (a straight-line spectral
+  bridge across each absent band; recommended for spectra because perturbed spectra stay
+  continuous) and `mean` (column mean of the background).
+- **Groups**: contiguous fixed-width blocks (default 20 features), chemical bands (the
+  `nirs4all-ui` reference NIR absorption bands mapped to feature indices, with remainder groups for
+  uncovered wavelengths; only when the axis unit is recorded), or one group per wavelength (no
+  size limit; the panel shows the estimated number of pipeline evaluations before running). Groups are disjoint, so the waterfall stays additive: top groups plus one remainder
+  walk from the expected value to the prediction.
+- **Results**: spectral importance curve (mean |attribution| per group, signed group means as
+  regions, the mean explained spectrum, and the candidate absorption bands of the regions whose
+  mean |attribution| reaches half its peak — or all reference bands, or none), a per-row waterfall
+  (bars and a "not additive" note for LIME/occlusion), top groups and a beeswarm. *Download
+  explanation (JSON)* saves the `nirs4all.explanation.v1` envelope.
+
+Performance: a native browser REFIT model is validated once per explanation (complete dag-ml
+replay, bit-identical to the fitted pipeline), then perturbed batches call that validated
+pipeline directly. On the Corn demo (700 wavelengths) the defaults take about 1.3 s; every
+wavelength for all 80 test + train rows with the `mean` baseline takes about 6.4 s in Chrome. Cost
+scales with rows × background rows × groups × permutations.
+
+Limitations: explanations are model-agnostic and describe the complete fitted pipeline
+(preprocessing + model) in the raw spectral space, relative to the chosen baseline; they are not
+chemical causation. The axis and its unit come only from recorded metadata, otherwise the axis is
+the feature index and no bands are offered. Regression only: browser classifiers expose class
+scores or hard labels, not calibrated probabilities, so they are refused. Historical portable Core
+coefficient states and retired JavaScript-backend models are refused. Exact TreeSHAP and linear
+SHAP explainers are available in the nirs4all Python SDK; the web app uses model-agnostic methods.
+Cost grows with rows × background × groups × permutations; Cancel stops the worker.
 
 ## Architecture — the full nirs4all WASM stack
 

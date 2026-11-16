@@ -529,4 +529,126 @@ export interface Engine {
    *  re-serialized by its backend, and one that embeds training rows is refused
    *  unless `opts.allowTrainingRows`. The session model is not an export. */
   exportModel(model: FittedPipeline, opts: ExportOptions): Promise<FittedPipeline>;
+  /** Model-agnostic attributions of the complete fitted pipeline in raw input space,
+   *  computed by the Methods explain session over the same predict dispatch.
+   *  Refuses (typed RtError, verb `explain`) models whose predict path cannot score an
+   *  arbitrary matrix in a continuous output space (e.g. hard class labels). */
+  explain(request: ExplainRequest, opts?: ExplainOptions): Promise<ExplainResponse>;
+}
+
+// ---------------------------------------------------------------------------
+// Explain (model-agnostic attributions of the complete fitted pipeline)
+// ---------------------------------------------------------------------------
+// Numerics are owned by the Methods explain session (`explainModel`); the web
+// engine only feeds it the existing predict dispatch and wraps its result in the
+// `nirs4all.explanation.v1` envelope.
+export type ExplainMethod = 'permutation_shap' | 'kernel_shap' | 'exact_shap' | 'lime' | 'occlusion';
+export type ExplainBaseline = 'background' | 'interpolate' | 'mean';
+/** An axis-unit range to explain as one group (e.g. a reference absorption band). */
+export interface ExplainAxisRange {
+  label: string;
+  /** first and last axis coordinate covered (inclusive), in the request axis unit */
+  axisStart: number;
+  axisEnd: number;
+}
+export type ExplainGrouping =
+  /** one group per feature (only for nFeatures <= 64) */
+  | { kind: 'per_feature' }
+  /** contiguous fixed-width groups of `width` features (the last may be shorter) */
+  | { kind: 'fixed_width'; width: number }
+  /** axis ranges (needs a known axis unit) mapped to disjoint feature ranges;
+   *  uncovered runs become remainder groups */
+  | { kind: 'ranges'; ranges: ExplainAxisRange[]; source?: string };
+/** Where the explained / background rows come from. */
+export type ExplainRowSource = 'predicted_rows' | 'dataset_test_partition' | 'dataset_train_partition' | 'dataset_rows';
+export interface ExplainRows {
+  /** row-major nRows x nFeatures, in the model input feature space */
+  X: Float64Array;
+  nRows: number;
+  /** source-partition index of each row (length nRows); never an explained-row index */
+  sourceIndices: number[];
+  source: ExplainRowSource;
+}
+/** Recorded spectral axis of the explained features. `unit` null means unknown. */
+export interface ExplainAxis {
+  values: number[];
+  unit: string | null;
+}
+export interface ExplainRequest {
+  /** the same model reference predict uses */
+  model: FittedPipeline;
+  nFeatures: number;
+  /** input column names in order (checked by predict exactly like a Predict file) */
+  featureNames?: string[];
+  /** candidate rows to explain; at most `maxRows` are subsampled deterministically by `seed` */
+  rows: ExplainRows;
+  /** background rows; subsampled deterministically to at most `maxBackground` */
+  background: ExplainRows;
+  method?: ExplainMethod;
+  baseline?: ExplainBaseline;
+  grouping?: ExplainGrouping;
+  nPermutations?: number;
+  seed?: number;
+  /** default 20 */
+  maxRows?: number;
+  /** default 50 */
+  maxBackground?: number;
+  /** selected target column (multi-target models); default 0 */
+  outputIndex?: number;
+  /** display label of the explained output (target name) */
+  outputLabel?: string;
+  /** recorded axis metadata only; absent/unknown unit → `feature_index` */
+  axis?: ExplainAxis | null;
+}
+export interface ExplainProgress {
+  done: number;
+  total: number;
+}
+export interface ExplainOptions {
+  onProgress?: (p: ExplainProgress) => void;
+  signal?: AbortSignal;
+}
+export type ExplanationGroupSource = 'per_feature' | 'fixed_width' | 'ranges' | 'remainder';
+export interface ExplanationGroup {
+  label: string;
+  /** half-open feature index range [feature_start, feature_end) */
+  feature_start: number;
+  feature_end: number;
+  /** first / last axis coordinate covered (inclusive) */
+  axis_start: number;
+  axis_end: number;
+  source: ExplanationGroupSource;
+}
+/** The `nirs4all.explanation.v1` envelope (Methods docs/explain/explanation_v1.schema.json). */
+export interface ExplanationV1 {
+  schema: 'nirs4all.explanation.v1';
+  kind: string;
+  engine: { name: string; version: string; abi?: string };
+  exactness: 'exact' | 'sampled' | 'surrogate' | 'perturbation';
+  additive: boolean;
+  group_aggregation: 'group_game' | 'sum_of_feature_values' | 'none';
+  attribution_space: 'raw_input' | 'transformed_features';
+  output: { index: number; label: string | null; space: 'target' | 'class_probability' | 'decision' };
+  axis: { values: number[]; unit: string | null; kind: 'wavelength' | 'wavenumber' | 'feature_index' };
+  feature_names: string[] | null;
+  groups: ExplanationGroup[];
+  /** `sample_indices[i]` is the source-partition index of explained row i */
+  rows: { count: number; sample_indices: number[]; source?: ExplainRowSource };
+  /** [row][group][output] */
+  attributions: number[][][];
+  std_error: number[][][] | null;
+  /** [row][output] */
+  expected_value: number[][];
+  prediction: number[][];
+  additivity_max_abs_error: number | null;
+  settings: Record<string, number | string | boolean | null>;
+  /** per-group over explained rows, for `output_index` (Methods summarizeAttributions) */
+  summary: { output_index: number; mean_abs: number[]; mean_signed: number[] };
+}
+export interface ExplainResponse {
+  envelope: ExplanationV1;
+  /** raw values of the explained rows (row-major count x nFeatures), for display only */
+  explainedX: Float64Array;
+  /** model rows evaluated by the explainer */
+  evaluations: number;
 }

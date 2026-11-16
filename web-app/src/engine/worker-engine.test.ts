@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { isRtErrorException, makeRtError, RtErrorException } from './rt'
 import type { RtResultWire } from './rt-result'
 import { WorkerEngine } from './worker-engine'
-import type { MaterializedDataset, NativeRobustnessEvidencePublicationHandoff, PipelineDSL } from './types'
+import type { FittedPipeline, MaterializedDataset, NativeRobustnessEvidencePublicationHandoff, PipelineDSL } from './types'
 
 class FakeWorker extends EventTarget {
   terminated = false
@@ -66,6 +66,28 @@ const rtResult: RtResultWire = {
 }
 
 describe('WorkerEngine', () => {
+  it('runs explain in the worker, relays evaluation progress and cancels by terminating', async () => {
+    const fake = new FakeWorker()
+    const engine = new WorkerEngine(() => fake as unknown as Worker)
+    const model = { dsl, taskType: 'regression', nFeatures: 2, state: {} } as FittedPipeline
+    const rows = { X: ds.X, nRows: 2, sourceIndices: [0, 1], source: 'predicted_rows' as const }
+    const progress: unknown[] = []
+    const request = { model, nFeatures: 2, rows, background: rows }
+    const done = engine.explain(request, { onProgress: (p) => progress.push(p) })
+    expect(fake.messages[0]).toMatchObject({ type: 'explain', id: 'job-1', request })
+    fake.dispatchEvent(new MessageEvent('message', { data: { type: 'progress', id: 'job-1', progress: { done: 5, total: 10 } } }))
+    fake.dispatchEvent(new MessageEvent('message', { data: { type: 'result', id: 'job-1', result: { evaluations: 10 } } }))
+    await expect(done).resolves.toEqual({ evaluations: 10 })
+    expect(progress).toEqual([{ done: 5, total: 10 }])
+
+    const ctrl = new AbortController()
+    const cancelled = engine.explain(request, { signal: ctrl.signal })
+    const worker = fake
+    ctrl.abort()
+    await expect(cancelled).rejects.toMatchObject({ name: 'AbortError' })
+    expect(worker.terminated).toBe(true)
+  })
+
   it('terminates a completed worker so the next run starts with fresh WASM state', async () => {
     const fake = new FakeWorker()
     const engine = new WorkerEngine(() => fake as unknown as Worker)

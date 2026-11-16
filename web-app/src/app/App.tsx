@@ -7,6 +7,7 @@ import {
   LineChart,
   Loader2,
   Lock,
+  Microscope,
   Moon,
   Play,
   Sparkles,
@@ -22,6 +23,10 @@ import { PlaygroundPanel } from '@/components/dataset/PlaygroundPanel'
 import { ExecutionLog, PipelineBuilder } from '@/components/pipeline'
 import { migrateLegacyBranch } from '@/components/pipeline/_helpers'
 import { PredictionPanel } from '@/components/results/PredictionPanel'
+import { ExplainPanel } from '@/components/explain/ExplainPanel'
+import { ModelPicker, type ModelChoice } from '@/components/results/ModelPicker'
+import { explainAxisFor, modelTargetNames } from '@/components/explain/explainView'
+import { enabledSteps, type StepId } from '@/app/steps'
 import { ResultsList } from '@/components/results/ResultsList'
 import { ResultsVisualization } from '@/components/results/ResultsVisualization'
 import { ResultsNotices } from '@/components/results/ResultsNotices'
@@ -41,11 +46,10 @@ import { cn } from '@/app/components/ui/utils'
 import { formatRuntimeErrorForUi } from '@/app/runtimeErrors'
 import { RuntimeEngineBadge } from 'nirs4all-ui/components'
 import { ioRetainedOf, type Analysis } from '@/data/wasm-io'
-import type { DatasetConfigPatch } from '@/components/contracts'
+import type { DatasetConfigPatch, PredictedRows } from '@/components/contracts'
 import type { DagMlLineage } from '@/engine/dagml'
 import type { MaterializedDataset, PipelineDSL, Partition, RunLogEntry, RunProgress, RunResult, ScoreNode, TaskType } from '@/engine/types'
 
-type StepId = 'dataset' | 'explore' | 'pipeline' | 'results' | 'predict'
 type DatasetSourceKind = 'upload' | 'sample' | 'server'
 type E2EDatasetPayload = Omit<MaterializedDataset, 'X' | 'y'> & { X: number[]; y: number[] }
 
@@ -72,6 +76,7 @@ const STEPS: { id: StepId; label: string; hint: string; icon: typeof Upload }[] 
   { id: 'pipeline', label: 'Pipeline', hint: 'Build & run', icon: GitBranch },
   { id: 'results', label: 'Results', hint: 'Scores & residuals', icon: LineChart },
   { id: 'predict', label: 'Predict', hint: 'New spectra', icon: Sparkles },
+  { id: 'explain', label: 'Explain', hint: 'Why this prediction', icon: Microscope },
 ]
 
 export default function App() {
@@ -99,6 +104,8 @@ export default function App() {
   const loadedModel = importedModel.model
   const loadedModelArchive = loadedModel && importedModel.archive ? { model: loadedModel, archive: importedModel.archive } : null
   const [step, setStep] = useState<StepId>('dataset')
+  // the last Predict input; Explain uses it only while its model is the active one
+  const [predictedRows, setPredictedRows] = useState<PredictedRows | null>(null)
   const [workbench, setWorkbench] = useState<'playground' | 'inspector' | null>(null)
   const [openedWorkbenches, setOpenedWorkbenches] = useState({ playground: false, inspector: false })
   const workbenchHeading = useRef<HTMLHeadingElement | null>(null)
@@ -255,7 +262,7 @@ export default function App() {
         setRunning(false)
         setProgress(null)
         setRunLog([])
-        setStep((s) => (s === 'results' || s === 'predict' ? 'pipeline' : s))
+        setStep((s) => (s === 'results' || s === 'predict' || s === 'explain' ? 'pipeline' : s))
       }
       setDataset((prev) => {
         if (!prev) return prev
@@ -341,6 +348,13 @@ export default function App() {
     setSelectedScore(null)
   }, [])
   const onClearSelection = useCallback(() => setSelectedScore(null), [])
+  // Predict/Explain model choice: a run's refit model or the imported .n4a model. Rows scored by
+  // the previous model are dropped so Explain never presents them as this model's predictions.
+  const onPickModel = useCallback((choice: ModelChoice) => {
+    setSelectedRunId(choice.kind === 'run' ? choice.runId : null)
+    setSelectedScore(null)
+    setPredictedRows(null)
+  }, [])
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('n4a_e2e') !== '1') return
@@ -424,13 +438,7 @@ export default function App() {
   const selectedRun = runs.find((r) => r.id === selectedRunId) ?? null
 
   const enabled = useMemo<Record<StepId, boolean>>(
-    () => ({
-      dataset: true,
-      explore: !!dataset,
-      pipeline: !!dataset,
-      results: runs.length > 0,
-      predict: !!selectedRun || !!loadedModel,
-    }),
+    () => enabledSteps({ hasDataset: !!dataset, runCount: runs.length, hasSelectedRun: !!selectedRun, hasLoadedModel: !!loadedModel }),
     [dataset, runs.length, selectedRun, loadedModel],
   )
 
@@ -488,7 +496,7 @@ export default function App() {
 
         <div className="ml-auto flex items-center gap-2">
           <ServerWorkspacePanel
-            input={{ pipeline, editor: { step, theme }, dataset, datasetName: datasetInfo?.name, selectedRun: runs.find((run) => run.id === selectedRunId) ?? null, loadedModel, loadedModelArchive }}
+            input={{ pipeline, editor: { step: step === 'explain' ? 'predict' : step, theme }, dataset, datasetName: datasetInfo?.name, selectedRun: runs.find((run) => run.id === selectedRunId) ?? null, loadedModel, loadedModelArchive }}
             onRestore={onRestoreWorkspace}
             onDisconnect={clearServerSessionModel}
           />
@@ -671,6 +679,10 @@ export default function App() {
                 selectedScoreId={selectedScore?.id ?? null}
                 onGoDataset={() => go('dataset')}
                 onGoPipeline={() => go('pipeline')}
+                predictedRows={predictedRows}
+                onPredicted={setPredictedRows}
+                onPickModel={onPickModel}
+                onGoPredict={() => go('predict')}
               />
             </div>
           </div>
@@ -903,10 +915,14 @@ interface StepPanelProps {
   onSelectScore: (run: RunResult, score: ScoreNode) => void
   onSelectRun: (run: RunResult) => void
   onClearSelection: () => void
+  onPickModel: (choice: ModelChoice) => void
   onOpenPlayground: () => void
   onOpenInspector: () => void
   onGoDataset: () => void
   onGoPipeline: () => void
+  predictedRows: PredictedRows | null
+  onPredicted: (rows: PredictedRows | null) => void
+  onGoPredict: () => void
 }
 
 function StepPanel(props: StepPanelProps) {
@@ -1040,13 +1056,42 @@ function StepPanel(props: StepPanelProps) {
     )
   }
 
-  // predict — from the selected run's model, or a model imported from a .n4a bundle
+  // predict / explain — from the selected run's model, or a model imported from a .n4a bundle
   const predictModel = selectedRun ? selectedRun.model : loadedModel?.model
   const predictName = selectedRun ? selectedRun.pipelineName : loadedModel?.name
+  const modelKey = selectedRun ? `run:${selectedRun.id}` : 'imported'
+  const modelPicker = (
+    <div className="mb-4 max-w-3xl">
+      <ModelPicker runs={props.runs} selectedRunId={selectedRun?.id ?? null} importedName={loadedModel?.name ?? null} onChange={props.onPickModel} />
+    </div>
+  )
+  if (step === 'explain') {
+    if (!predictModel || !predictName) return <LockedNote>Run a pipeline first, or load a saved .n4a model — then explain its predictions.</LockedNote>
+    // Only the dataset the selected run was fitted on supplies partitions, background and axis.
+    const runDataset = selectedRun ? dataset : null
+    return (
+      <Panel title="Explain" subtitle="Which spectral regions drive the model's predictions — model-agnostic SHAP-family attributions computed in your browser." icon={Microscope}>
+        {modelPicker}
+        <ExplainPanel
+          key={modelKey}
+          model={predictModel}
+          sourceName={predictName}
+          targetName={selectedRun?.targetName ?? loadedModel?.targetName}
+          targetNames={modelTargetNames(predictModel)}
+          engine={engine}
+          dataset={runDataset}
+          predicted={props.predictedRows}
+          axis={explainAxisFor(predictModel, runDataset)}
+          onGoPredict={props.onGoPredict}
+        />
+      </Panel>
+    )
+  }
   if (!predictModel || !predictName) return <LockedNote>Run a pipeline first, or load a saved .n4a model — then predict on new spectra.</LockedNote>
   return (
     <Panel title="Predict" subtitle="Score new spectra with the selected model — drag a CSV in, or load a saved .n4a model." icon={Sparkles}>
-      <PredictionPanel model={predictModel} sourceName={predictName} targetName={selectedRun?.targetName ?? loadedModel?.targetName} engine={engine} onImportModel={props.onImportModel} />
+      {modelPicker}
+      <PredictionPanel key={modelKey} model={predictModel} sourceName={predictName} targetName={selectedRun?.targetName ?? loadedModel?.targetName} engine={engine} onImportModel={props.onImportModel} onPredicted={props.onPredicted} />
     </Panel>
   )
 }

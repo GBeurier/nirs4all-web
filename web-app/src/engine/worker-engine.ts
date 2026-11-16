@@ -8,6 +8,10 @@ import { type RtError, RtErrorException } from './rt'
 import type { RtResultWire } from './rt-result'
 import type {
   Engine,
+  ExplainOptions,
+  ExplainProgress,
+  ExplainRequest,
+  ExplainResponse,
   ExportOptions,
   FittedPipeline,
   MaterializedDataset,
@@ -17,8 +21,9 @@ import type {
   RunResult,
 } from './types'
 
+type RunProgressPayload = Parameters<NonNullable<RunOptions['onProgress']>>[0]
 type OutMsg =
-  | { type: 'progress'; id: string; progress: Parameters<NonNullable<RunOptions['onProgress']>>[0] }
+  | { type: 'progress'; id: string; progress: RunProgressPayload | ExplainProgress }
   | { type: 'result'; id: string; result: unknown; rtResult?: RtResultWire }
   | { type: 'error'; id: string; name: string; message: string; rtError?: RtError }
 
@@ -49,7 +54,8 @@ export class WorkerEngine implements Engine {
     worker.terminate()
   }
 
-  private call<T>(payload: Record<string, unknown>, opts?: RunOptions): Promise<T> {
+  /** `onProgress` receives the progress payload of the job's own verb (run or explain). */
+  private call<T>(payload: Record<string, unknown>, opts?: { signal?: AbortSignal; onProgress?: (p: never) => void }): Promise<T> {
     const worker = this.ensure()
     const id = `job-${++this.seq}`
     return new Promise<T>((resolve, reject) => {
@@ -64,7 +70,7 @@ export class WorkerEngine implements Engine {
         const m = ev.data
         if (!m || m.id !== id) return
         if (m.type === 'progress') {
-          opts?.onProgress?.(m.progress)
+          opts?.onProgress?.(m.progress as never)
           return
         }
         finish(() => {
@@ -136,5 +142,10 @@ export class WorkerEngine implements Engine {
 
   exportModel(model: FittedPipeline, opts: ExportOptions): Promise<FittedPipeline> {
     return this.call<FittedPipeline>({ type: 'export', model, allowTrainingRows: opts.allowTrainingRows })
+  }
+
+  /** Runs in the worker; Cancel terminates the worker like a cancelled run. */
+  explain(request: ExplainRequest, opts: ExplainOptions = {}): Promise<ExplainResponse> {
+    return this.call<ExplainResponse>({ type: 'explain', request }, opts)
   }
 }

@@ -88,14 +88,14 @@ run    → dag-ml-data WASM (WasmInMemoryProvider): schema + plan + sample relat
 
 The UI is a **studio workbench** (`src/app/App.tsx`): a top runtime bar (brand + active-dataset
 chip + dag-ml / dag-ml-data badges), a left workflow rail (Dataset → Explore → Pipeline → Results →
-Predict) with progressive unlock, and one work panel per step. The pipeline step is a three-pane
+Predict → Explain) with progressive unlock, and one work panel per step. The pipeline step is a three-pane
 editor — operator palette (`NodePalette`) → drag-and-drop flow canvas (`CanvasFlow`) → context
 inspector (`Inspector`) — over the flat DSL, mirroring nirs4all-studio's editor in spirit.
 
 Load-bearing concepts (require reading several files):
 
 - **The `Engine` contract is the keystone.** `src/engine/types.ts` defines `Engine` (`run`,
-  `predict`) plus `MaterializedDataset`, `PipelineDSL`, `RunResult`, etc. Everything — UI, data,
+  `predict`, `exportModel`, `explain`) plus `MaterializedDataset`, `PipelineDSL`, `RunResult`, etc. Everything — UI, data,
   catalog — is written against these types, and `src/components/contracts.ts` defines the prop
   interface for every feature component. Change a shape here and you change the whole app; keep these
   two files authoritative.
