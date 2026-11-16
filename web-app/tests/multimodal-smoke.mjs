@@ -87,6 +87,8 @@ try {
   await page.getByRole('heading', { name: 'Multisource and multimodal fusion', exact: true }).waitFor()
   for (const [caseId, count] of [['spectroscopy', 10], ['genetics', 9], ['images', 9]]) {
     await page.locator(`input[name="n4mm-case"][value="${caseId}"]`).check()
+    await page.locator('#n4mm-pipeline').waitFor({ timeout: 30000 })
+    await page.getByText('Compare unedited presets', { exact: true }).click()
     const runButton = page.getByRole('button', { name: 'Run comparison', exact: true })
     await runButton.waitFor({ timeout: 30000 })
     const preset = { spectroscopy: 'spectroscopy-complementary', genetics: 'genetics-replicates', images: 'images-spatial' }[caseId]

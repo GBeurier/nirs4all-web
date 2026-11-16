@@ -27,11 +27,34 @@ export interface LabDataset {
   provenance: Record<string, unknown>
 }
 export interface LabStep { methodId: string; params: Record<string, unknown> }
+export interface LabPipelineStep { methodId: string; params: Record<string, number | string | boolean> }
+export interface LabSourceChain { readonly sourceId: string; readonly steps: readonly LabPipelineStep[] }
+export interface LabPipelineBranch {
+  readonly id: string
+  readonly label: string
+  readonly sourceIds: readonly string[]
+  readonly sourceChains: readonly LabSourceChain[]
+  readonly head: LabPipelineStep
+}
+export interface LabPipelineDocument {
+  readonly label: string
+  readonly branches: readonly LabPipelineBranch[]
+  readonly merge: {
+    readonly kind: 'none' | 'mean' | 'model'
+    readonly head: LabPipelineStep
+    readonly sourceIds: readonly string[]
+    readonly sourceChains: readonly LabSourceChain[]
+  }
+}
+export interface LabPipelinePreset {
+  id: string; label: string; description: string; strategy: LabStrategy; document: LabPipelineDocument
+}
 export interface LabCnnConfig {
   filters: number; kernel_size: number; embedding_dim: number; head_hidden: number
   epochs: number; batch_size: number; learning_rate: number; weight_decay: number
 }
 export interface LabConfig {
+  pipeline?: LabPipelineDocument
   caseId: LabCase
   sourceIds: string[]
   strategy: LabStrategy

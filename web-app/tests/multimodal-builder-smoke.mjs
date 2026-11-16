@@ -52,6 +52,9 @@ async function inputFiles(caseId, { manifest = true, renameVcf = false, missingS
 }
 async function openCase(caseId) {
   await page.locator(`input[name="n4mm-case"][value="${caseId}"]`).check()
+  await page.locator('#n4mm-pipeline').waitFor({ timeout: 30000 })
+  const comparison = page.getByText('Compare unedited presets', { exact: true })
+  if (!await page.getByRole('button', { name: 'Run comparison', exact: true }).isVisible()) await comparison.click()
   await page.getByRole('button', { name: 'Run comparison', exact: true }).waitFor({ timeout: 30000 })
   await page.getByRole('button', { name: 'Import your files', exact: true }).click()
   await builder.waitFor()

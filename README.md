@@ -23,6 +23,28 @@ The canonical multi-language aggregate target is `nirs4all-core`; this repositor
 client-side Web/WASM product surface and does not publish aggregate bindings or release-factory
 artifacts.
 
+## Editable multimodal pipelines
+
+Open the [multimodal laboratory](https://web.nirs4all.org/nirs4all_multimodale/), or choose
+**Multimodal lab** in the Web toolbar. The three examples pair Raman/NIRS/MIR, NIRS/genetic
+markers, and NIRS/images. Each fusion preset loads an editable pipeline: connect source inputs,
+add or duplicate model branches, reorder source preprocessing, change each model and its
+parameters, and choose a fixed prediction mean or learned meta-model with optional source features.
+Early and intermediate fusion use several source inputs inside one model branch; late fusion
+combines independently trained model branches.
+
+**Run edited pipeline** executes that exact draft through the native owners in a worker. Completed
+drafts stay in the run history with their scores and fold fingerprints, and can be restored.
+Export/import JSON preserves the editable composition. The controlled Source → Role → Columns →
+Validation Dataset Builder accepts local files; all data and computation stay in the browser.
+
+The practical workshop includes [PowerPoint](https://web.nirs4all.org/multimodal-training/nirs4all_multimodal_training.pptx),
+[PDF](https://web.nirs4all.org/multimodal-training/nirs4all_multimodal_training.pdf), and a
+[demo guide](https://web.nirs4all.org/multimodal-training/demo-guide.html). It explains the actual
+inputs and operations of early, intermediate and late fusion, then demonstrates concrete edits
+on the synthetic teaching datasets. The fixed 28-recipe comparison remains available under
+**Compare unedited presets**.
+
 ## What Lives Here
 
 - `web-app/`: current source directory for the nirs4all-web React/Vite app and GitHub Pages deliverable.
@@ -78,8 +100,9 @@ scoring cohort must contain an original observation.
 The existing preprocessing/feature-branch CV path still executes the browser
 operator chain on native folds; its lineage distinguishes that host CV from the
 native model-only scheduler. REFIT/PREDICT use the native package in both cases.
-This change does not introduce multi-source source-selection UI or an Archive
-V2 multi-source writer (WEB-03), nor a Python/browser server bridge.
+The main workbench retains its single-feature-source import profile; the dedicated laboratory
+above supplies the multisource editor. An Archive V2 multisource writer (WEB-03) and a
+Python/browser server bridge remain separate capabilities.
 
 The staged browser cohort is pinned in `web-app/scripts/public-packages.v1.json`.
 Published npm payloads are integrity-checked before projection; Formats uses its

@@ -1,5 +1,5 @@
 import type { LabCandidateResult, LabConfig, LabDataset, LabMetricScope, LabProgress, LabRunResult, LabSource } from './types'
-import { describeRecipe } from './recipes'
+import { describeRecipe, pipelineSourceIds, pipelineStrategy, validatePipelineDocument } from './recipes'
 import { loadLabRuntime, nativeJson, N4mWasmSourceController, SEED_TOKEN, stableJson } from './runtime'
 
 type Json = Record<string, any>
@@ -19,6 +19,7 @@ function validate(dataset: LabDataset, configs: LabConfig[]): void {
   assertLab(!dataset.groupIds || dataset.groupIds.length === dataset.sampleIds.length && dataset.groupIds.every(id => id.length > 0), 'Declared groups must cover every sample')
   assertLab(!dataset.partitions || dataset.partitions.length === dataset.sampleIds.length && dataset.partitions.every(part => ['train', 'test'].includes(part)), 'Invalid declared partition inventory')
   const reference = configs[0]
+  const usedSources = new Set<string>()
   for (const config of configs) {
     assertLab(config.caseId === dataset.caseId && unique(config.sourceIds) &&
       stableJson(config.validation) === stableJson(reference.validation) && stableJson(config.sourceIds) === stableJson(reference.sourceIds),
@@ -26,12 +27,18 @@ function validate(dataset: LabDataset, configs: LabConfig[]): void {
     nativeJson({}, config.validation.seed)
     assertLab(Number.isSafeInteger(config.validation.outerFolds) && config.validation.outerFolds >= 2 &&
       Number.isSafeInteger(config.validation.innerFolds) && config.validation.innerFolds >= 2, 'Outer and inner fold counts must be at least two')
+    if (config.pipeline !== undefined) {
+      const document = validatePipelineDocument(dataset, config.pipeline)
+      pipelineSourceIds(document).forEach(id => usedSources.add(id))
+      continue
+    }
+    config.sourceIds.forEach(id => usedSources.add(id))
     assertLab(Number.isSafeInteger(config.nComponents) && config.nComponents >= 1 && Number.isFinite(config.ridgeAlpha) && config.ridgeAlpha >= 0,
       'PLS components and Ridge alpha must be fixed admissible values')
     assertLab(config.baseModels.length > 0 && new Set(config.baseModels).size === config.baseModels.length &&
       config.baseModels.every(family => family === 'pls' || family === 'ridge'), 'Declare one or both supported base model families')
   }
-  for (const id of reference.sourceIds) {
+  for (const id of usedSources) {
     const source = dataset.sources.find(source => source.id === id)
     assertLab(source, `Unknown selected source ${id}`)
     const value = source!
@@ -153,11 +160,11 @@ export async function executeLab(dataset: LabDataset, configs: LabConfig[], onPr
   const targetRows = new Map(dataset.sampleIds.map((id, index) => [id, index]))
   const candidates: LabCandidateResult[] = [], refusals: LabRunResult['refusals'] = []
   for (let candidateIndex = 0; candidateIndex < configs.length; candidateIndex++) {
-    const config = configs[candidateIndex], strategy = config.strategy
-    const candidateId = strategy === 'single' ? `single:${config.singleSourceId}` : strategy
+    const config = configs[candidateIndex], strategy = config.pipeline ? pipelineStrategy(config.pipeline) : config.strategy
+    const candidateId = config.pipeline ? `pipeline:${fingerprint(config.pipeline)}` : strategy === 'single' ? `single:${config.singleSourceId}` : strategy
     const reportProgress = (phase: string, message: string, nodeId?: string, foldId?: string | null) =>
       onProgress?.({ candidateIndex, candidateCount: configs.length, strategy, phase, message, nodeId, foldId })
-    reportProgress('COMPILE', 'Compiling the fixed native recipe')
+    reportProgress('COMPILE', 'Compiling the current native pipeline')
     const begun = performance.now()
     let controller: N4mWasmSourceController | undefined
     try {
@@ -177,7 +184,7 @@ export async function executeLab(dataset: LabDataset, configs: LabConfig[], onPr
         onTask: task => reportProgress(task.phase, 'Native DAG task executing', task.nodeId, task.foldId),
       })
       const manifests: Json[] = [controller.manifest(dag)]
-      if (strategy === 'late') manifests.push(JSON.parse(dag.derive_controller_manifest_json(JSON.stringify({
+      if (description.targetNode === 'merge:mean') manifests.push(JSON.parse(dag.derive_controller_manifest_json(JSON.stringify({
         controller_id: 'controller:native.prediction-merge', controller_version: '1.0.0',
         operator_kind: 'prediction_join', added_capabilities: ['consumes_oof_predictions', 'emits_predictions'],
       }))))

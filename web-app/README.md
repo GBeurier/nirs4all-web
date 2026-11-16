@@ -6,6 +6,12 @@ NIRS modelling loop **in the browser, no Python**: upload spectra → explore & 
 (refit / CV / folds) → see residual/parity views → **predict on new spectra**. Everything runs
 locally; nothing is uploaded.
 
+The [multimodal laboratory](https://web.nirs4all.org/nirs4all_multimodale/) adds editable
+early/intermediate/late fusion presets, source-specific preprocessing, independently configurable
+model branches, a controlled Dataset Builder and native execution history. See the
+[workshop and entry points](../README.md#editable-multimodal-pipelines) for the PowerPoint, PDF
+and practical guide.
+
 > Part of the [nirs4all](https://nirs4all.org) ecosystem. This is the standalone browser/WASM
 > client, not new numerical code: the
 > numerics live upstream in `nirs4all-methods` (libn4m), the portable subset is exposed through

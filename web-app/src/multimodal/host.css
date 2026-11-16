@@ -1,0 +1,14 @@
+.n4mm-pipeline-run {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--n4mm-border-warm);
+  border-radius: var(--n4mm-radius);
+  background: var(--n4mm-master-pale);
+}
+.n4mm-pipeline-run p { margin: .6rem 0 0; }
+.n4mm-pipeline-run [role="status"] { display: flex; align-items: center; gap: .75rem; }
+.n4mm-pipeline-run progress { width: 7rem; accent-color: var(--n4mm-master-dark); }
+.n4mm-run-history { margin-top: 1rem; }
+.n4mm-run-history summary { cursor: pointer; font-weight: 600; }
+.n4mm-training-downloads { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; margin-top: 1rem; }
+.n4mm-training-downloads a { min-height: 2.75rem; display: inline-flex; align-items: center; }
