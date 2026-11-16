@@ -47,6 +47,7 @@ export default defineConfig({
       // Public DAG subpaths must precede the bare package alias.
       'dag-ml-wasm/n4m-estimator-controller': path.resolve(__dirname, './src/engine/wasm/dagml/n4m_estimator_controller.mjs'),
       'dag-ml-wasm/n4m-controller': path.resolve(__dirname, './src/engine/wasm/dagml/n4m_controller.mjs'),
+      'dag-ml-wasm/n4m-source-controller': path.resolve(__dirname, './src/engine/wasm/dagml/n4m_source_controller.mjs'),
       'dag-ml-wasm/n4m-optimizer': path.resolve(__dirname, './src/engine/wasm/dagml/n4m_hpo_optimizer.mjs'),
       'dag-ml-wasm/multimodal_dataset_replay': path.resolve(__dirname, './src/engine/wasm/dagml/multimodal_dataset_replay.mjs'),
       'dag-ml-wasm/multimodal_dataset_replay.mjs': path.resolve(__dirname, './src/engine/wasm/dagml/multimodal_dataset_replay.mjs'),

@@ -13,4 +13,4 @@ if (module.dag_ml_version() !== pin.version || manifest.crate !== 'dag-ml' ||
     !manifest.capabilities.includes('loss_execution_attestation')) {
   throw new Error('dag-ml public WASM runtime witness failed')
 }
-console.log(`dag-ml WASM ${pin.version} published bytes, source legal payload and runtime verified`)
+console.log(`dag-ml WASM ${pin.version} staged bytes, source legal payload and runtime verified`)

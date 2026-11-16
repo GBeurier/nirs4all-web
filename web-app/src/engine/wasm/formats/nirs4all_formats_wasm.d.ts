@@ -4,6 +4,11 @@
 export function _start(): void;
 
 /**
+ * Decode an explicitly declared non-spectral PNG/VCF profile through the Rust owner.
+ */
+export function decodeMultimodalBytes(profile: string, bytes: Uint8Array | number[], max_decoded_bytes: number): any;
+
+/**
  * Feature flags the WASM build was compiled with. Useful for runtime checks
  * from JS ("does this WASM bundle have HDF5 support?").
  *
@@ -11,6 +16,8 @@ export function _start(): void;
  * `fmt-parquet`, including snappy, uncompressed, and zstd Parquet pages.
  */
 export function features(): any;
+
+export function multimodalReaderCatalog(): any;
 
 /**
  * Decode a file by name + bytes. Returns the spectral records as a JS array
@@ -70,7 +77,9 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly _start: () => void;
+    readonly decodeMultimodalBytes: (a: number, b: number, c: number, d: number, e: number) => [number, number, number];
     readonly features: () => [number, number, number];
+    readonly multimodalReaderCatalog: () => [number, number, number];
     readonly openBytes: (a: number, b: number, c: number, d: number) => [number, number, number];
     readonly openWithSidecars: (a: number, b: number, c: number, d: number, e: any) => [number, number, number];
     readonly probeBytes: (a: number, b: number, c: number, d: number) => [number, number, number];

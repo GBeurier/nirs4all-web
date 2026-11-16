@@ -5,7 +5,7 @@
     "G. Beurier <beurier@cirad.fr>"
   ],
   "description": "WASM bindings for DAG-ML JSON contracts.",
-  "version": "0.4.0",
+  "version": "0.4.2",
   "license": "CECILL-2.1 OR AGPL-3.0-or-later",
   "repository": {
     "type": "git",
@@ -20,6 +20,8 @@
     "n4m_estimator_controller.d.ts",
     "n4m_controller.mjs",
     "n4m_controller.d.ts",
+    "n4m_source_controller.mjs",
+    "n4m_source_controller.d.ts",
     "n4m_hpo_optimizer.mjs",
     "n4m_hpo_optimizer.d.ts",
     "n4m_multimodal_controller.mjs",
@@ -44,6 +46,10 @@
     "./n4m-controller": {
       "types": "./n4m_controller.d.ts",
       "import": "./n4m_controller.mjs"
+    },
+    "./n4m-source-controller": {
+      "types": "./n4m_source_controller.d.ts",
+      "import": "./n4m_source_controller.mjs"
     },
     "./n4m-optimizer": {
       "types": "./n4m_hpo_optimizer.d.ts",

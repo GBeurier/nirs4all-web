@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.5.1 — 2026-11-16
+
+### Added
+
+- A separate `/nirs4all_multimodale/` teaching laboratory, linked from the Web
+  workbench, with Raman/NIRS/MIR, NIRS/genetics and NIRS/image collections.
+- Local identity-aligned CSV/VCF/PNG import, linked source exploration and
+  source-specific preprocessing. Deterministic CC0 examples include editable
+  import manifests and an offline generator in the Python SDK examples.
+- Single-source, early, centered-block equal-super-weight MBPLS, fixed-mean
+  late, nested OOF stacking, hybrid, jointly trained network and network-stacking
+  comparisons. Native DAG owns folds, scoring and fitted replay; Methods owns
+  numerics, including the trainable convolution/dense branches.
+- Explicit OOF/held-out scopes, biological groups, prediction/residual tables,
+  run provenance, configuration/result downloads and worker cancellation.
+  Downloads document experiments; they are not executable model bundles.
+
+### Changed
+
+- Consume Methods 1.3.17 (ABI 2.22.0), Formats 0.2.17, IO 0.3.3, DAG 0.4.2 and
+  shared UI 0.2.3 with exact public acquisition receipts. Retain Core 0.5.0,
+  DMD 0.2.16 and Datasets 0.3.18.
+- Qualify the three-case native browser comparison before Pages deployment.
+
 ## 0.5.0 — 2026-11-03
 
 ### Added

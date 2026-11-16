@@ -106,8 +106,8 @@
         },
         {
           "path": "PROVENANCE.json",
-          "size": 4097,
-          "sha256": "3072579b08ad8f2433678d8055762c94d7fb6efe955f5d69d751136d0a29eede"
+          "size": 4586,
+          "sha256": "f446326eaa84850ef04ac8469ca50cafa9099ffebda405c1f41762ee1642f9d4"
         },
         {
           "path": "THIRD_PARTY_NOTICES.md",
@@ -236,8 +236,8 @@
         },
         {
           "path": "PROVENANCE.json",
-          "size": 58747,
-          "sha256": "f28434d9cb66ef80766457844fb1ddbc5ec6c52ee8a0adc45c0a894fba76927e"
+          "size": 18398,
+          "sha256": "2e2d25d62a47984dcd28a30942a521d9e944b6f160e2fc3be30b57893dbdfc27"
         },
         {
           "path": "THIRD_PARTY_NOTICES.md",
@@ -336,8 +336,8 @@
         },
         {
           "path": "PROVENANCE.json",
-          "size": 14074,
-          "sha256": "6de649a40e89608e8d6df2971fb5a979380a5c173c6ad5ec4ffc5af3c453c549"
+          "size": 5138,
+          "sha256": "a2d0409613497caaf6a44343a70105a611f302bf82b119e83a38823689714d35"
         },
         {
           "path": "THIRD_PARTY_NOTICES.md",
@@ -347,7 +347,7 @@
         {
           "path": "nirs4all-io-wasm.cdx.json",
           "size": 34796,
-          "sha256": "c27233f4b1e4e9b38d4f7cf61253c0d39df50c0acc64f43839ec7d2b0d2b66c4"
+          "sha256": "bbf00325c701d02f734885dc7e0f4387d66a2954916cd37ea935bc5b18e18129"
         }
       ]
     },
@@ -431,8 +431,8 @@
         },
         {
           "path": "PROVENANCE.json",
-          "size": 12978,
-          "sha256": "5169fabafe8b8eca14b1d370845d835e39652dfabdce377dcc384a98bf8c3196"
+          "size": 10235,
+          "sha256": "f249237050fda9c6aac598ec980af652418fa28dd3f790b1c7f774365c7a6926"
         },
         {
           "path": "THIRD_PARTY_LICENSES.md",

@@ -10,13 +10,13 @@ import { fileURLToPath } from 'node:url'
 const here = dirname(fileURLToPath(import.meta.url))
 const root = resolve(here, '..')
 const packageName = 'nirs4all-ui'
-const version = '0.2.2-local.20261107.2'
+const version = '0.2.3'
 const filename = `${packageName}-${version}.tgz`
 const tarballPath = resolve(root, 'vendor', 'npm', filename)
 const receiptPath = resolve(root, 'vendor', 'npm', `${packageName}-${version}.provenance.json`)
 const legacyShimPath = resolve(root, 'vendor', packageName)
-const expectedSha256 = '237a3bf306bdb6fec5088783c425381bcf125540ba7ad25e1aec0604198d7728'
-const expectedIntegrity = 'sha512-mgqNsWzwV7WMtsAI9kcwik2/4lLakm3R8mmhSs4nRMl37wdzbA61tz1lUxsVMaMVeyZLm5+DFSkgKQKU4BVI7w=='
+const expectedSha256 = 'e37d242db4a54daf932bf560081ac21e40778208a22900afc006ac02f8f0646f'
+const expectedIntegrity = 'sha512-omQ4EiBLz1kGY80bMfduU4ppG8dg2A4IpcDWAU0KE5llajZWSzxQqe5E4i5abwrlYlRs5LYIAEHQwp9F8fnYSQ=='
 
 function fail(message) {
   throw new Error(`[check-ui-package] ${message}`)
@@ -64,9 +64,8 @@ if (integrity !== expectedIntegrity) fail(`npm integrity mismatch: ${integrity}`
 
 const receipt = JSON.parse(readFileSync(receiptPath, 'utf8'))
 if (receipt.package?.name !== packageName || receipt.package?.version !== version) fail('receipt package identity mismatch')
-if (receipt.source?.base_commit_sha !== '8bfc5f51600b59fc5cc899cd93f58da98fb2f851') fail('receipt source commit mismatch')
-if (receipt.source?.base_tree_sha !== '661969ee14dd00330aa50e58bab254fe68a048a3') fail('receipt source tree mismatch')
-if (receipt.source?.kind !== 'local-private-full-source-export' || receipt.source?.overlay_manifest_sha256 !== '72d4a4ecddf1f82508bc0db2abc98cf9ddf127486e3d78da620cf80baf479a6e') fail('receipt local source overlay mismatch')
+if (receipt.schema_version !== 'nirs4all.ui-release-artifact/v1' || receipt.source?.dirty !== false) fail('receipt is not a clean owner release artifact')
+if (receipt.source?.commit_sha !== 'e3f515a00394cddef88ca3afa2a625ea71ebc44d') fail('receipt source commit mismatch')
 if (receipt.artifact?.filename !== filename || receipt.artifact?.size !== bytes.length) fail('receipt artifact identity mismatch')
 if (receipt.artifact?.sha256 !== sha256 || receipt.artifact?.npm_integrity !== integrity) fail('receipt digest mismatch')
 
@@ -86,7 +85,7 @@ for (const target of exportTargets(packaged.exports)) {
   }
 }
 
-for (const licenseFile of receipt.license_files ?? []) {
+for (const licenseFile of ['LICENSE', 'LICENSING.md', 'THIRD_PARTY_NOTICES.md']) {
   if (!entries.has(`package/${licenseFile}`)) fail(`missing license or notice: ${licenseFile}`)
 }
 

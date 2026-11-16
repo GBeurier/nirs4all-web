@@ -59,3 +59,5 @@ jobs:
       - run: npm run build
       - name: Built UI starts in the browser
         run: npm run smoke -- --out-dir dist --profile strict-wasm ui-startup-smoke.mjs
+      - name: Multimodal laboratory executes all three native comparisons
+        run: npm run smoke -- --out-dir dist --profile strict-wasm multimodal-smoke.mjs

@@ -33,6 +33,25 @@ export function assembleDataset(files, record_sets, spec) {
 }
 
 /**
+ * Explicit multimodal file profile. IO parses declarations/CSV and aligns IDs;
+ * the supplied synchronous Formats owner callback decodes non-spectral bytes.
+ * @param {string} manifest_json
+ * @param {any} files
+ * @param {Function} decode
+ * @param {number} max_decoded_bytes
+ * @returns {any}
+ */
+export function assembleMultimodalFiles(manifest_json, files, decode, max_decoded_bytes) {
+    const ptr0 = passStringToWasm0(manifest_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.assembleMultimodalFiles(ptr0, len0, files, decode, max_decoded_bytes);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
  * Inspect each original table independently, retaining NA and assembler column names.
  * Per-file read refusals are returned in the descriptions; invalid arguments throw.
  * @param {any} files
@@ -295,6 +314,10 @@ function __wbg_get_imports() {
         __wbg___wbindgen_throw_1506f2235d1bdba0: function(arg0, arg1) {
             throw new Error(getStringFromWasm0(arg0, arg1));
         },
+        __wbg_call_6e37a87ff352da3d: function() { return handleError(function (arg0, arg1, arg2, arg3, arg4) {
+            const ret = arg0.call(arg1, arg2, arg3, arg4);
+            return ret;
+        }, arguments); },
         __wbg_call_8a89609d89f6608a: function() { return handleError(function (arg0, arg1) {
             const ret = arg0.call(arg1);
             return ret;
@@ -385,6 +408,10 @@ function __wbg_get_imports() {
             const ret = new Uint8Array(arg0);
             return ret;
         },
+        __wbg_new_from_slice_18fa1f71286d66b8: function(arg0, arg1) {
+            const ret = new Uint8Array(getArrayU8FromWasm0(arg0, arg1));
+            return ret;
+        },
         __wbg_new_from_slice_3c93d0bc613de8f0: function(arg0, arg1) {
             const ret = new Float64Array(getArrayF64FromWasm0(arg0, arg1));
             return ret;
@@ -421,16 +448,21 @@ function __wbg_get_imports() {
             return ret;
         },
         __wbindgen_cast_0000000000000001: function(arg0) {
+            // Cast intrinsic for `F64 -> Externref`.
+            const ret = arg0;
+            return ret;
+        },
+        __wbindgen_cast_0000000000000002: function(arg0) {
             // Cast intrinsic for `I64 -> Externref`.
             const ret = arg0;
             return ret;
         },
-        __wbindgen_cast_0000000000000002: function(arg0, arg1) {
+        __wbindgen_cast_0000000000000003: function(arg0, arg1) {
             // Cast intrinsic for `Ref(String) -> Externref`.
             const ret = getStringFromWasm0(arg0, arg1);
             return ret;
         },
-        __wbindgen_cast_0000000000000003: function(arg0) {
+        __wbindgen_cast_0000000000000004: function(arg0) {
             // Cast intrinsic for `U64 -> Externref`.
             const ret = BigInt.asUintN(64, arg0);
             return ret;

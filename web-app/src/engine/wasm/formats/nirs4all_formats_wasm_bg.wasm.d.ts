@@ -2,7 +2,9 @@
 /* eslint-disable */
 export const memory: WebAssembly.Memory;
 export const _start: () => void;
+export const decodeMultimodalBytes: (a: number, b: number, c: number, d: number, e: number) => [number, number, number];
 export const features: () => [number, number, number];
+export const multimodalReaderCatalog: () => [number, number, number];
 export const openBytes: (a: number, b: number, c: number, d: number) => [number, number, number];
 export const openWithSidecars: (a: number, b: number, c: number, d: number, e: any) => [number, number, number];
 export const probeBytes: (a: number, b: number, c: number, d: number) => [number, number, number];

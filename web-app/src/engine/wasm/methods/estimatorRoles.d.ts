@@ -103,6 +103,12 @@ export declare abstract class NativeEstimator extends NativeMethod {
     /** True when the fitted state embeds training rows (kernel PLS, GPR-PLS, LW-PLS, ...). */
     containsTrainingRows(): boolean;
     /**
+     * Named diagnostics of the last fit (n4m_estimator_fit_result), for
+     * example the training loss history of a neural regressor; null when the
+     * method keeps none, including after fromN4me (diagnostics are not state).
+     */
+    fitResult(): Record<string, ProcedureOutput> | null;
+    /**
      * Portable fitted state (N4ME bytes), readable by every n4m binding. A
      * state that embeds training rows (containsTrainingRows()) is refused
      * unless `allowTrainingRows` is set: sharing the export shares them.

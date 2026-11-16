@@ -7276,6 +7276,158 @@
       ]
     },
     {
+      "method_id": "models.neural.multibranch_regressor",
+      "fq_name": "n4m.estimators.neural.multibranch_regressor",
+      "kind": "estimator",
+      "roles": [
+        "transformer",
+        "regressor"
+      ],
+      "node_kinds": [
+        "model",
+        "transform"
+      ],
+      "capabilities": [
+        "transform",
+        "predict",
+        "serializable"
+      ],
+      "state_format": "multibranch_network",
+      "inputs": {
+        "y": "required",
+        "labels": "none",
+        "sample_weight": "none",
+        "groups": "none",
+        "feature_groups": "none",
+        "blocks": "optional",
+        "axis": "none",
+        "target_domain": "none",
+        "fold_ids": "none"
+      },
+      "params": [
+        {
+          "name": "branch_kinds",
+          "type": "int_array",
+          "required": false,
+          "default": [],
+          "min": 0,
+          "max": 2,
+          "choices": [],
+          "recorded": false
+        },
+        {
+          "name": "branch_shapes",
+          "type": "int_array",
+          "required": false,
+          "default": [],
+          "min": 1,
+          "max": null,
+          "choices": [],
+          "recorded": false
+        },
+        {
+          "name": "filters",
+          "type": "int",
+          "required": false,
+          "default": 4,
+          "min": 1,
+          "max": 64,
+          "choices": [],
+          "recorded": true
+        },
+        {
+          "name": "kernel_size",
+          "type": "int",
+          "required": false,
+          "default": 5,
+          "min": 1,
+          "max": 31,
+          "choices": [],
+          "recorded": true
+        },
+        {
+          "name": "pool_size",
+          "type": "int",
+          "required": false,
+          "default": 2,
+          "min": 1,
+          "max": 16,
+          "choices": [],
+          "recorded": true
+        },
+        {
+          "name": "embedding_dim",
+          "type": "int",
+          "required": false,
+          "default": 8,
+          "min": 1,
+          "max": 256,
+          "choices": [],
+          "recorded": true
+        },
+        {
+          "name": "head_hidden",
+          "type": "int",
+          "required": false,
+          "default": 8,
+          "min": 0,
+          "max": 256,
+          "choices": [],
+          "recorded": true
+        },
+        {
+          "name": "epochs",
+          "type": "int",
+          "required": false,
+          "default": 100,
+          "min": 0,
+          "max": 100000,
+          "choices": [],
+          "recorded": false
+        },
+        {
+          "name": "batch_size",
+          "type": "int",
+          "required": false,
+          "default": 16,
+          "min": 1,
+          "max": 1048576,
+          "choices": [],
+          "recorded": false
+        },
+        {
+          "name": "learning_rate",
+          "type": "double",
+          "required": false,
+          "default": 0.01,
+          "min": 0,
+          "max": 10,
+          "choices": [],
+          "recorded": false
+        },
+        {
+          "name": "weight_decay",
+          "type": "double",
+          "required": false,
+          "default": 0.0001,
+          "min": 0,
+          "max": 10,
+          "choices": [],
+          "recorded": false
+        },
+        {
+          "name": "seed",
+          "type": "int",
+          "required": false,
+          "default": null,
+          "min": null,
+          "max": null,
+          "choices": [],
+          "recorded": false
+        }
+      ]
+    },
+    {
       "method_id": "models.pls.cppls",
       "fq_name": "n4m.estimators.regression.latent.cppls",
       "kind": "estimator",
@@ -10399,6 +10551,34 @@
         "serializable"
       ],
       "state_format": "column_mean",
+      "inputs": {
+        "y": "optional",
+        "labels": "none",
+        "sample_weight": "none",
+        "groups": "none",
+        "feature_groups": "none",
+        "blocks": "none",
+        "axis": "none",
+        "target_domain": "none",
+        "fold_ids": "none"
+      },
+      "params": []
+    },
+    {
+      "method_id": "preprocessing.scaling.block_rms",
+      "fq_name": "n4m.transform.scaling.block_rms",
+      "kind": "estimator",
+      "roles": [
+        "transformer"
+      ],
+      "node_kinds": [
+        "transform"
+      ],
+      "capabilities": [
+        "transform",
+        "serializable"
+      ],
+      "state_format": "block_rms",
       "inputs": {
         "y": "optional",
         "labels": "none",
