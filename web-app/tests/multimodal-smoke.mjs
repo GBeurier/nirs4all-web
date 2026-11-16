@@ -87,6 +87,8 @@ try {
   await page.getByRole('heading', { name: 'Multisource and multimodal fusion', exact: true }).waitFor()
   for (const [caseId, count] of [['spectroscopy', 10], ['genetics', 9], ['images', 9]]) {
     await page.locator(`input[name="n4mm-case"][value="${caseId}"]`).check()
+    await page.locator('#n4mm-pipeline').waitFor({ timeout: 30000 })
+    await page.getByText('Compare unedited presets', { exact: true }).click()
     const runButton = page.getByRole('button', { name: 'Run comparison', exact: true })
     await runButton.waitFor({ timeout: 30000 })
     const preset = { spectroscopy: 'spectroscopy-complementary', genetics: 'genetics-replicates', images: 'images-spatial' }[caseId]
@@ -120,10 +122,14 @@ try {
   await page.setViewportSize({ width: 390, height: 844 })
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),
     'the page must reflow; wide diagrams and tables scroll inside their regions')
-  const diagram = page.getByRole('region', { name: /^Branch and merge diagram/ })
+  const diagram = page.getByRole('region', { name: /^Branch and merge canvas/ })
   await diagram.focus()
-  await page.keyboard.press('ArrowRight')
-  await page.waitForFunction(() => document.querySelector('.n4mm-graph__scroll').scrollLeft > 0)
+  assert.ok(await diagram.evaluate(element => element === document.activeElement), 'the pipeline region is keyboard focusable')
+  const needsScroll = await diagram.evaluate(element => element.scrollWidth > element.clientWidth + 1)
+  if (needsScroll) {
+    await page.keyboard.press('ArrowRight')
+    await page.waitForFunction(() => document.querySelector('.n4mm-pe__scroll').scrollLeft > 0)
+  }
   await page.screenshot({ path: join(output, 'mobile.png'), fullPage: true })
   assert.deepEqual(errors, [])
   assert.deepEqual(failedRequests, [])

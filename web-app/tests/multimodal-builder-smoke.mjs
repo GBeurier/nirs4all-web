@@ -52,6 +52,9 @@ async function inputFiles(caseId, { manifest = true, renameVcf = false, missingS
 }
 async function openCase(caseId) {
   await page.locator(`input[name="n4mm-case"][value="${caseId}"]`).check()
+  await page.locator('#n4mm-pipeline').waitFor({ timeout: 30000 })
+  const comparison = page.getByText('Compare unedited presets', { exact: true })
+  if (!await page.getByRole('button', { name: 'Run comparison', exact: true }).isVisible()) await comparison.click()
   await page.getByRole('button', { name: 'Run comparison', exact: true }).waitFor({ timeout: 30000 })
   await page.getByRole('button', { name: 'Import your files', exact: true }).click()
   await builder.waitFor()
@@ -105,6 +108,13 @@ try {
     await builder.screenshot({ path: join(output, `${caseId}-role.png`) })
     await builder.getByRole('button', { name: 'Continue to Columns', exact: true }).click()
     await builder.screenshot({ path: join(output, `${caseId}-columns.png`) })
+    if (caseId === 'spectroscopy') {
+      await builder.evaluate(element => element.scrollIntoView({ block: 'start' }))
+      const bounds = await builder.boundingBox()
+      await page.screenshot({ path: join(output, 'builder-to-editor.png'), clip: {
+        x: bounds.x, y: bounds.y, width: bounds.width, height: Math.min(bounds.height, 440),
+      } })
+    }
     await builder.getByRole('button', { name: 'Continue to Validation', exact: true }).click()
     assert.equal(await createButton().isDisabled(), true)
     await ownerValidate(); await expectEnabled(createButton())

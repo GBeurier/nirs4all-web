@@ -63,3 +63,5 @@ jobs:
         run: npm run smoke -- --out-dir dist --profile strict-wasm multimodal-smoke.mjs
       - name: Multimodal Dataset Builder imports and validates local files
         run: npm run smoke -- --out-dir dist --profile strict-wasm multimodal-builder-smoke.mjs
+      - name: Edited multimodal pipelines execute their actual source and model changes
+        run: npm run smoke -- --out-dir dist --profile strict-wasm multimodal-editor-smoke.mjs
