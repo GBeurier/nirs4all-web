@@ -14,9 +14,14 @@ const valueOf = (metrics: Metrics | undefined, metric: Metric): number | null =>
 export const selectionValidation = (run: RunResult): boolean => run.refit.scoreContext?.evaluation === 'selection_validation'
 export const refitIsTest = (run: RunResult): boolean => !selectionValidation(run) && /test/i.test(run.refit.name)
 
+/** The run's final node is a training resubstitution score: an owner refit block that is neither a
+ *  held-out test nor a selection validation. An owner result that carries only CV fold blocks has no
+ *  refit; its last fold stands in as the final node and stays a validation score, never a training one. */
+export const trainingRefit = (run: RunResult): boolean => run.refit.kind === 'refit' && !selectionValidation(run) && !refitIsTest(run)
+
 /** Training resubstitution is available only through an explicit UI opt-in. */
 export const defaultEvaluationScore = (run: RunResult): ScoreNode | null =>
-  run.cv ?? (selectionValidation(run) || refitIsTest(run) ? run.refit : null)
+  run.cv ?? (trainingRefit(run) ? null : run.refit)
 
 export function scoreEvaluationLabel(run: RunResult, score: ScoreNode): string {
   if (score.scoreContext?.evaluation === 'selection_validation') return 'Selection validation'
@@ -24,6 +29,9 @@ export function scoreEvaluationLabel(run: RunResult, score: ScoreNode): string {
   if (score.kind === 'fold') return 'CV fold validation'
   return refitIsTest(run) ? 'Held-out test' : 'Training resubstitution'
 }
+
+/** The owner supplied CV validation scores: an aggregate block, or fold blocks without one. */
+const hasCvScores = (run: RunResult): boolean => Boolean(run.cv) || run.folds.length > 0
 
 export function inspectorScoreRef(run: RunResult, score: ScoreNode, refs: readonly ScoreRef[], metric: string = run.scoreMetric): string | null {
   const protocol = score.kind === 'cv' || score.kind === 'fold' ? 'cv'
@@ -37,7 +45,7 @@ export function scoreForInspectorRef(run: RunResult, ref: ScoreRef, previous?: S
     && [run.cv, ...run.folds].some((score) => score?.id === previous.id) ? previous : run.cv ?? null
   if (ref.protocol === 'selection_validation') return selectionValidation(run) ? run.refit : null
   if (ref.protocol === 'final') return refitIsTest(run) ? run.refit : null
-  return ref.protocol === 'refit-resubstitution' && !selectionValidation(run) && !refitIsTest(run) ? run.refit : null
+  return ref.protocol === 'refit-resubstitution' && trainingRefit(run) ? run.refit : null
 }
 
 /** Project owner results only; no scoring, selection, averaging or row joins by position. */
@@ -54,10 +62,10 @@ export function inspectorResults(runs: readonly RunResult[], dataset: Materializ
     for (const metric of metrics) scoreRefs.push({ key: `${metric}:${suffix}`, metric, partition, protocol,
       label: `${metric.toUpperCase()} · ${label}`, lowerIsBetter: DIRECTIONS[metric] })
   }
-  if (runs.some((run) => run.cv)) addRefs('cv', 'validation', 'cv', 'CV validation')
+  if (runs.some(hasCvScores)) addRefs('cv', 'validation', 'cv', 'CV validation')
   if (runs.some(selectionValidation)) addRefs('selection-validation', 'validation', 'selection_validation', 'Selection validation')
   if (runs.some(refitIsTest)) addRefs('refit', 'test', 'final', 'Refit · test')
-  if (runs.some((run) => !refitIsTest(run) && !selectionValidation(run))) addRefs(runs.some(refitIsTest) ? 'refit-resubstitution' : 'refit', 'train', 'refit-resubstitution', 'Refit · train (resubstitution)')
+  if (runs.some(trainingRefit)) addRefs(runs.some(refitIsTest) ? 'refit-resubstitution' : 'refit', 'train', 'refit-resubstitution', 'Refit · train (resubstitution)')
   // A refit-only training score requires an explicit host opt-in to display.
   const defaultScoreRef = scoreRefs.find((ref) => ref.protocol === 'cv')?.key
     ?? scoreRefs.find((ref) => ref.protocol === 'selection_validation')?.key
@@ -84,7 +92,7 @@ export function inspectorResults(runs: readonly RunResult[], dataset: Materializ
         const metric = ref.metric as Metric
         const contextMatches = ref.protocol === 'selection_validation' ? selectionValidation(run)
           : ref.protocol === 'final' ? refitIsTest(run)
-          : ref.protocol === 'refit-resubstitution' ? !refitIsTest(run) && !selectionValidation(run) : Boolean(run.cv)
+          : ref.protocol === 'refit-resubstitution' ? trainingRefit(run) : hasCvScores(run)
         scores[ref.key] = !contextMatches ? null : ref.protocol === 'selection_validation'
           ? valueOf(variant.metrics, metric) : ref.protocol === 'cv'
           ? valueOf(hasVariants ? variant.metrics : run.cv?.metrics, metric)
@@ -118,7 +126,8 @@ export function inspectorResults(runs: readonly RunResult[], dataset: Materializ
       for (const fold of run.folds) for (const row of fold.predictions) {
         foldBySample.set(row.sampleId, foldBySample.has(row.sampleId) ? null : fold.id)
       }
-      for (const row of run.cv?.predictions ?? []) rows.push({ row, partition: 'validation', fold: foldBySample.get(row.sampleId) ?? null })
+      // without an owner aggregate block, the CV validation rows are the fold blocks' own rows
+      for (const row of run.cv ? run.cv.predictions : run.folds.flatMap((fold) => fold.predictions)) rows.push({ row, partition: 'validation', fold: foldBySample.get(row.sampleId) ?? null })
       if (selectionValidation(run)) for (const row of run.refit.predictions) rows.push({ row, partition: 'validation', fold: null })
       if (refitIsTest(run)) for (const row of run.refit.predictions) rows.push({ row, partition: 'test', fold: null })
       const unique = new Set(rows.map(({ row }) => row.sampleId)).size === rows.length

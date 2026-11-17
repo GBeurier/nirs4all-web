@@ -32,7 +32,7 @@ import { cn } from '@/app/components/ui/utils'
 import { downloadN4a, downloadPipeline, downloadRunCsv, downloadRunJson } from '@/lib/download'
 
 import { formatDate, variantChains } from './_helpers'
-import { defaultEvaluationScore, refitIsTest, scoreEvaluationLabel, selectionValidation } from './inspectorAdapter'
+import { defaultEvaluationScore, scoreEvaluationLabel, trainingRefit as isTrainingRefit } from './inspectorAdapter'
 
 function StatusIcon({ status }: { status: ScoreNode['status'] }) {
   if (status === 'running') return <Loader2 className="size-4 animate-spin text-brand-teal" />
@@ -256,7 +256,7 @@ function RunCard({
   const modelExport = useModelExport(run, engine)
   const pm = primaryMetric(run.taskType)
   const [showTraining, setShowTraining] = useState(false)
-  const trainingRefit = !selectionValidation(run) && !refitIsTest(run)
+  const trainingRefit = isTrainingRefit(run)
   const selectedTraining = trainingRefit && selectedRunId === run.id && selectedScoreId === run.refit.id
   const trainingVisible = showTraining || selectedTraining
   const headlineNode = defaultEvaluationScore(run) ?? (trainingVisible ? run.refit : null)
