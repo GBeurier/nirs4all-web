@@ -285,9 +285,14 @@ without the local vendors.
   uploads are allowed for explore/predict; the engine refuses to *train* without targets.
   A dataset with several target columns and missing values loads as nirs4all-io reports it: every
   target is kept with its value count, missing spectral values stay masked and counted, and no row
-  is dropped. Explore and the Playground show a target of your choice; the target to model and what
-  a run does with missing values (leave out incomplete samples or wavelengths, or stop) are chosen
-  in the run settings of the Pipeline step and apply to that run only.
+  is dropped. Explore and the Playground show a target of your choice and compute on the samples with
+  complete spectra, stating how many they left out. The run settings of the Pipeline step hold the
+  launch choices, which apply to that run only: the target to model, what to do with samples that
+  have no value for it (leave them out, or stop), and — asked only when the spectra hold missing
+  values, with their counts and no default — whether to remove the affected samples, replace the
+  missing values (nirs4all-io: previous or next wavelength of the same spectrum, or a constant; no
+  mean/median across samples), or leave them as they are (the WASM execution path accepts only
+  finite spectra, so such a run is refused with that explanation).
 
 ## Roadmap
 

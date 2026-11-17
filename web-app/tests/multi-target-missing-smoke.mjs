@@ -3,10 +3,12 @@
 // and two spectra with an empty cell.
 // 1. It LOADS: no refusal, every row kept, the 12 targets and the missing values stated.
 // 2. Explore shows a target of the user's choice; the Playground opens and projects the complete spectra.
-// 3. The target to model and the missing-value option are chosen in the run settings:
-//    "Stop if a value is missing" stops before running; "Leave out incomplete samples" runs.
-// 4. The run models the chosen target: rows without it are excluded and counted by the engine, the
-//    two incomplete spectra are left out, the scores cover exactly the remaining rows, and the
+// 3. The launch choices are made in the run settings: the target, the missing-target strategy, and —
+//    because the spectra hold missing values — an explicit choice among remove / replace / leave as
+//    is. Without that choice nothing runs; "leave as is" is refused with an explanation; "replace"
+//    (by nirs4all-io) runs on every sample.
+// 4. "Remove" models the chosen target: rows without it are excluded and counted by the engine, the
+//    two incomplete spectra are removed, the scores cover exactly the remaining rows, and the
 //    loaded dataset is unchanged.
 import { chromium } from 'playwright-core'
 
@@ -85,7 +87,7 @@ try {
   const playground = page.locator('[data-owner-playground]')
   await playground.waitFor({ state: 'visible' })
   await playground.getByText('PCA computed by Methods', { exact: false }).waitFor({ timeout: 30000 })
-  await playground.getByText(`2 of ${expected.samples} rows have missing spectral values and are left out of this preview`, { exact: false }).waitFor({ timeout: 10000 })
+  await playground.getByText(`2 samples left out: missing values. This preview (preprocessing, PCA and folds) is computed on the ${expected.samples - 2} of ${expected.samples} samples with complete spectra`, { exact: false }).waitFor({ timeout: 10000 })
   check(await playground.locator('canvas:visible').count() >= 1, 'the Playground opened: spectra and Methods PCA on the complete rows, the 2 incomplete rows flagged', 'the Playground drew no canvas')
   const playgroundTargets = await playground.getByText(TARGETS[5], { exact: true }).count()
   check(playgroundTargets >= 1, 'the Playground offers the other targets in its own colour/target controls', `the Playground does not list target ${TARGETS[5]}`)
@@ -94,21 +96,49 @@ try {
   // 3. launch choices
   await page.locator('[data-step="pipeline"]').click()
   await page.locator('#run-target').selectOption(TARGET)
-  await page.locator('#run-missing-values').selectOption('refuse')
-  await page.getByRole('button', { name: /Run pipeline/i }).click()
-  await page.waitForSelector('text=/This run is set to stop on missing values/', { timeout: 10000 })
-  check((await page.evaluate(() => window.__n4aLastRun)) === undefined, '"Stop if a value is missing" stopped before anything ran, and said why', 'a run happened although the option was to stop')
+  const runButton = page.getByRole('button', { name: /Run pipeline/i })
+  const spectraChoice = (value) => page.locator(`[data-run-missing-spectra] input[type=radio][value="${value}"]`)
+  const legend = await text('[data-run-missing-spectra] legend')
+  check(/2 values in 2 samples, 1 wavelength/.test(legend) && !(await page.locator('[data-run-missing-spectra] input[type=radio]:checked').count()),
+    `missing spectral values are asked with their counts and no preselected choice → "${legend}"`, `unexpected missing-spectra question: "${legend}"`)
+  await runButton.click()
+  await page.waitForSelector('text=/Choose in the run settings what this run does with them/', { timeout: 10000 })
+  check((await page.evaluate(() => window.__n4aLastRun)) === undefined, 'without a choice for the missing spectral values nothing ran', 'a run happened although no choice was made')
 
+  await spectraChoice('remove_samples').check()
+  await page.locator('#run-missing-values').selectOption('refuse')
+  await runButton.click()
+  await page.waitForSelector('text=/This run is set to stop on missing target values/', { timeout: 10000 })
+  check((await page.evaluate(() => window.__n4aLastRun)) === undefined, 'the "stop" missing-target strategy stopped before anything ran, and said why', 'a run happened although the strategy was to stop')
   await page.locator('#run-missing-values').selectOption('exclude_samples')
+
+  await spectraChoice('keep').check()
+  await runButton.click()
+  await page.waitForSelector('text=/This run left the 2 missing spectral values as they are/', { timeout: 60000 })
+  check((await page.evaluate(() => window.__n4aLastRun)) === undefined, '"leave as is" reached the execution path, which refused the missing values; the refusal explains it', 'a run completed with missing spectral values left as is')
+
+  await spectraChoice('replace').check()
+  await page.locator('#run-missing-spectra-method').selectOption('backward_fill')
+  await runButton.click()
+  await page.waitForFunction(() => window.__n4aLastRun?.dataSelection?.missingSpectra?.action === 'replace', null, { timeout: 120000 })
+  await page.waitForSelector('text=/CV Scores/', { timeout: 20000 })
+  const replacedRun = await page.evaluate(() => { const r = window.__n4aLastRun; return { selection: r.dataSelection, cv: r.cv?.predictions.length ?? 0, refit: r.refit.predictions.length } })
+  const allRows = (rows) => rows.filter((i) => !missing(i, t)).length
+  check(replacedRun.selection.replacedCells === 2 && replacedRun.selection.excludedSamples === 0 && replacedRun.cv === allRows(train) && replacedRun.refit === allRows(test),
+    `"replace" (nirs4all-io, next wavelength) ran on every sample with the target: CV ${replacedRun.cv} train, test ${replacedRun.refit}, 2 values replaced → "${await text('[data-replaced-cells]')}"`, `unexpected run with replaced values: ${JSON.stringify(replacedRun)}`)
+
+  await page.locator('[data-step="pipeline"]').click()
+  await spectraChoice('remove_samples').check()
   const announced = await text('[data-run-selection]')
   check(announced.includes(`${expected.train} train samples and ${expected.test} test samples with a value for “${TARGET}”`)
     && announced.includes(`${expected.missingTargets} samples without a value left out of fitting and scoring`)
-    && announced.includes(`${expected.excludedSamples} samples with missing spectral values left out`),
+    && announced.includes(`${expected.excludedSamples} samples with missing spectral values removed`),
   `the run settings announce what the run uses → "${announced}"`, `unexpected run announcement: "${announced}"`)
 
   // 4. the run
-  await page.getByRole('button', { name: /Run pipeline/i }).click()
-  await page.waitForSelector('text=/CV Scores/', { timeout: 120000 })
+  await runButton.click()
+  await page.waitForFunction(() => window.__n4aLastRun?.dataSelection?.missingSpectra?.action === 'remove_samples', null, { timeout: 120000 })
+  await page.waitForSelector('text=/CV Scores/', { timeout: 20000 })
   const run = await page.evaluate(() => {
     const r = window.__n4aLastRun
     return {
@@ -119,11 +149,11 @@ try {
   })
   check(run.target === TARGET, `the run modelled the chosen target "${run.target}"`, `the run modelled "${run.target}", not "${TARGET}"`)
   check(run.missingTargets === expected.missingTargets && run.selection?.excludedSamples === expected.excludedSamples && run.selection?.missingValues === 'exclude_samples',
-    `${run.missingTargets} rows without the target excluded by the engine, ${run.selection?.excludedSamples} incomplete spectra left out`, `expected ${expected.missingTargets} missing targets / ${expected.excludedSamples} left out, got ${JSON.stringify(run)}`)
+    `${run.missingTargets} rows without the target excluded by the engine, ${run.selection?.excludedSamples} incomplete spectra removed`, `expected ${expected.missingTargets} missing targets / ${expected.excludedSamples} left out, got ${JSON.stringify(run)}`)
   check(run.cv === expected.train && run.refit === expected.test && run.actuals && Number.isFinite(run.rmse) && Number.isFinite(run.testRmse),
     `scores cover exactly the remaining rows: CV ${run.cv} train, test ${run.refit} (RMSECV ${run.rmse?.toFixed(3)}, test RMSE ${run.testRmse?.toFixed(3)})`, `expected CV ${expected.train} / test ${expected.test} finite predictions, got ${JSON.stringify(run)}`)
   const shown = `${await text('[data-run-target]')} | ${await text('[data-missing-targets]')} | ${await text('[data-excluded-samples]')}`
-  check(shown === `target: ${TARGET} | ${expected.missingTargets} without target excluded | ${expected.excludedSamples} with missing spectral values left out`, `the result states it → "${shown}"`, `unexpected result badges: "${shown}"`)
+  check(shown === `target: ${TARGET} | ${expected.missingTargets} without target excluded | ${expected.excludedSamples} with missing spectral values removed`, `the result states it → "${shown}"`, `unexpected result badges: "${shown}"`)
 
   // the loaded dataset is unchanged: still every row and every target
   await page.locator('[data-step="explore"]').click()

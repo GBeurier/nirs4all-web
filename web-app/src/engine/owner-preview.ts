@@ -33,7 +33,7 @@ export async function runOwnerPreview(msg: OwnerPreviewMessage, signal: AbortSig
     if (complete) rows.push(row)
   }
   const omitted = ds.nSamples - rows.length
-  if (omitted && !rows.length) throw new Error(`Every row has a missing spectral value: this preview needs at least one complete spectrum. The dataset is unchanged; a run can leave out the incomplete wavelengths instead (run settings).`)
+  if (omitted && !rows.length) throw new Error(`Every sample has a missing spectral value: this preview needs at least one complete spectrum. The dataset is unchanged; a run can replace the missing values instead (run settings).`)
   const outputRow = new Map(rows.map((row, index) => [row, index]))
   const takeRows = (picked: readonly number[]): Matrix => {
     const data = new Float64Array(picked.length * ds.nFeatures)
@@ -48,7 +48,7 @@ export async function runOwnerPreview(msg: OwnerPreviewMessage, signal: AbortSig
     ? 'Preprocessing is fitted on labelled train rows (all labelled non-predict rows when no train partition exists), then applied to all displayed rows.'
     : 'Preprocessing is fitted on all displayed rows.'
   const warnings = [`${fitMessage} Centred PCA uses all displayed rows; exploration only, no model is trained or scored.`]
-  if (omitted) warnings.push(`${omitted} of ${ds.nSamples} rows have missing spectral values and are left out of this preview (preprocessing, PCA and folds); they stay in the dataset.`)
+  if (omitted) warnings.push(`${omitted} sample${omitted === 1 ? '' : 's'} left out: missing values. This preview (preprocessing, PCA and folds) is computed on the ${rows.length} of ${ds.nSamples} samples with complete spectra; the dataset is unchanged.`)
   // fit rows as output rows of the preview (the training cohort restricted to complete spectra)
   const fitRows = trainFit ? trainRowsOf(ds).flatMap((row) => outputRow.get(row) ?? []) : null
   const fitMatrix = (matrix: Matrix): Matrix => {

@@ -238,7 +238,7 @@ describe('DatasetView native owner preview contracts (conditions 2–5)', () => 
     const foldRows = result.folds!.folds.flatMap((fold) => [...fold.train, ...fold.test])
     expect(foldRows.every((row) => row >= 0 && row < kept.length)).toBe(true)
     expect(foldRows.map((row) => kept[row])).not.toContain(3)
-    expect(result.warnings?.join(' ')).toContain('2 of 14 rows have missing spectral values and are left out of this preview')
+    expect(result.warnings?.join(' ')).toContain('2 samples left out: missing values. This preview (preprocessing, PCA and folds) is computed on the 12 of 14 samples with complete spectra')
     expect(result.warnings?.join(' ')).not.toMatch(/preflight/i)
     expect(Number.isNaN(ds.X[3 * ds.nFeatures + 1])).toBe(true) // the dataset is not altered
   })
@@ -246,6 +246,6 @@ describe('DatasetView native owner preview contracts (conditions 2–5)', () => 
   it('states that no complete spectrum exists instead of failing inside Methods', async () => {
     const ds = dataset()
     for (let row = 0; row < ds.nSamples; row++) ds.X[row * ds.nFeatures] = NaN
-    await expect(runPreview(request(ds, { projection: true }))).rejects.toThrow(/Every row has a missing spectral value/)
+    await expect(runPreview(request(ds, { projection: true }))).rejects.toThrow(/Every sample has a missing spectral value/)
   })
 })

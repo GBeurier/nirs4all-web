@@ -290,12 +290,17 @@ function RunCard({
             ) : null}
             {run.dataSelection?.excludedSamples ? (
               <Badge variant="outline" className="border-brand-amber/40 text-brand-amber" data-excluded-samples>
-                {run.dataSelection.excludedSamples} with missing spectral values left out
+                {run.dataSelection.excludedSamples} with missing spectral values removed
               </Badge>
             ) : null}
-            {run.dataSelection?.excludedFeatures ? (
-              <Badge variant="outline" className="border-brand-amber/40 text-brand-amber" data-excluded-features>
-                {run.dataSelection.excludedFeatures} incomplete wavelengths left out
+            {run.dataSelection?.replacedCells ? (
+              <Badge variant="outline" className="border-brand-amber/40 text-brand-amber" data-replaced-cells>
+                {run.dataSelection.replacedCells} missing spectral values replaced
+              </Badge>
+            ) : null}
+            {run.dataSelection?.missingSpectra?.action === 'keep' ? (
+              <Badge variant="outline" className="border-brand-amber/40 text-brand-amber" data-kept-missing-cells>
+                {run.dataSelection.missingCells} missing spectral values left as is
               </Badge>
             ) : null}
             <span>{formatDate(run.createdAt)}</span>

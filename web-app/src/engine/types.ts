@@ -58,9 +58,18 @@ export interface MissingFeatures {
   columns: number;
 }
 
-/** What a run does with missing values: an explicit launch choice, applied to the run's own view of
- *  the data and never to the loaded dataset (`data/targets.ts`). */
-export type MissingValuePolicy = 'exclude_samples' | 'exclude_features' | 'refuse';
+/** What a run does with train/test samples that have no value for its target: left out of fitting
+ *  and scoring (natively, by the engine), or the run stops. A launch choice with a visible default. */
+export type MissingValuePolicy = 'exclude_samples' | 'refuse';
+
+/** What a run does with missing spectral values (NA in X). Asked explicitly when the dataset has
+ *  some — there is no default — and applied to the run's own view, never to the loaded dataset:
+ *  remove the affected samples, replace the values with a method nirs4all-io supports (within each
+ *  spectrum; io refuses statistics across samples), or leave them as they are for the pipeline. */
+export type MissingSpectraChoice =
+  | { action: 'remove_samples' }
+  | { action: 'replace'; method: 'forward_fill' | 'backward_fill' | 'value'; value?: number }
+  | { action: 'keep' };
 
 /** The launch choices of a run and what they left out of it (counted before the run). */
 export interface RunDataSelection {
@@ -69,12 +78,15 @@ export interface RunDataSelection {
   missingValues: MissingValuePolicy;
   /** train/test rows without a value for the target: never fitted or scored */
   missingTargets: number;
-  /** rows / feature columns of the dataset with a missing spectral value */
+  /** the choice made for missing spectral values (absent: the spectra are complete) */
+  missingSpectra?: MissingSpectraChoice;
+  /** missing spectral cells of the dataset, and the rows that hold them */
+  missingCells: number;
   incompleteSamples: number;
-  incompleteFeatures: number;
-  /** rows / feature columns left out of the run's view because of a missing spectral value */
+  /** rows left out of the run's view because of a missing spectral value */
   excludedSamples: number;
-  excludedFeatures: number;
+  /** missing spectral cells replaced by nirs4all-io in the run's view */
+  replacedCells: number;
   /** labelled rows the run fits on, and scores as the held-out test set */
   train: number;
   test: number;

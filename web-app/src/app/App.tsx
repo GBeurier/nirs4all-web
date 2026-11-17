@@ -37,7 +37,7 @@ import { defaultPipeline } from '@/catalog/build'
 import { engine } from '@/engine/client'
 import { rtResultEnvelopeToDisplayRunResult, type RtResultWire } from '@/engine/rt-result'
 import { type DatasetSummary, reencodeTarget, summarize } from '@/data/dataset'
-import { prepareRunDataset, renameTarget, selectDatasetTarget, setTargetTask } from '@/data/targets'
+import { keptMissingSpectraNotice, prepareRunDataset, renameTarget, selectDatasetTarget, setTargetTask } from '@/data/targets'
 import { loadSampleDataset, SAMPLES, type SampleId } from '@/data/samples'
 import { type LoadedModel, parseN4aFile } from '@/lib/n4a'
 import { applyTheme, clearServerSessionModel, loadSession, loadTheme, saveSession, type Theme } from '@/lib/persist'
@@ -47,10 +47,10 @@ import { Progress } from '@/app/components/ui/progress'
 import { cn } from '@/app/components/ui/utils'
 import { formatRuntimeErrorForUi } from '@/app/runtimeErrors'
 import { RuntimeEngineBadge } from 'nirs4all-ui/components'
-import { ioRetainedOf, type Analysis } from '@/data/wasm-io'
+import { ioRetainedOf, replaceMissingSpectra, type Analysis } from '@/data/wasm-io'
 import type { DatasetConfigPatch, PredictedRows } from '@/components/contracts'
 import type { DagMlLineage } from '@/engine/dagml'
-import type { MaterializedDataset, MissingValuePolicy, PipelineDSL, Partition, RunLogEntry, RunProgress, RunResult, ScoreNode, TaskType } from '@/engine/types'
+import type { MaterializedDataset, MissingSpectraChoice, MissingValuePolicy, PipelineDSL, Partition, RunLogEntry, RunProgress, RunResult, ScoreNode, TaskType } from '@/engine/types'
 
 type DatasetSourceKind = 'upload' | 'sample' | 'server'
 type E2EDatasetPayload = Omit<MaterializedDataset, 'X' | 'y'> & { X: number[]; y: number[] }
@@ -92,9 +92,11 @@ export default function App() {
     return restored ? migrateLegacyBranch(restored) : defaultPipeline('regression')
   })
   const [sampleId, setSampleId] = useState<SampleId | null>(null)
-  // Launch choice of the next run: what it does with missing values (the target is the dataset's
-  // projected target, shown and changeable in the run settings). Never applied to the dataset itself.
+  // Launch choices of the next run (the target is the dataset's projected target, shown and changeable
+  // in the run settings): what it does with samples without a target value, and — asked only when the
+  // spectra hold missing values, with no default — what it does with those. Never applied to the dataset.
   const [missingValues, setMissingValues] = useState<MissingValuePolicy>('exclude_samples')
+  const [missingSpectra, setMissingSpectra] = useState<MissingSpectraChoice | null>(null)
   // The exact view of the data each run executed on (its target, its left-out rows/columns).
   const runDatasets = useRef(new WeakMap<RunResult, MaterializedDataset>())
   // The pipeline edited for the other task family (regression / classification) of this dataset's
@@ -144,6 +146,7 @@ export default function App() {
     setConfigOpen(false)
     sessionActivity.current.datasetLoads++
     setMissingValues('exclude_samples')
+    setMissingSpectra(null)
     pipelineByFamily.current = {}
     setDataset(ds)
     setSummary(summarize(ds))
@@ -334,10 +337,14 @@ export default function App() {
       return
     }
     // The run's own view of the data: the launch target, and — when values are missing — what the
-    // user chose to leave out. A `refuse` choice stops here, before anything runs.
+    // user chose for them (replacement values come from nirs4all-io). A missing choice or a `refuse`
+    // strategy stops here, before anything runs.
     let prepared: ReturnType<typeof prepareRunDataset>
     try {
-      prepared = prepareRunDataset(dataset, { target: dataset.targetName, missingValues })
+      const selection = { target: dataset.targetName, missingValues, missingSpectra }
+      prepareRunDataset(dataset, { ...selection, missingSpectra: missingSpectra?.action === 'replace' ? { action: 'keep' } : missingSpectra }) // choices are checked before io is asked
+      const replaced = dataset.missingFeatures && missingSpectra?.action === 'replace' ? await replaceMissingSpectra(dataset, missingSpectra) : undefined
+      prepared = prepareRunDataset(dataset, selection, replaced)
     } catch (e) {
       setError(formatRuntimeErrorForUi(e))
       setStep('pipeline')
@@ -376,7 +383,10 @@ export default function App() {
       setSelectedScore(defaultEvaluationScore(result))
       setStep('results')
     } catch (e) {
-      if (token === runTokenRef.current && !(e instanceof DOMException && e.name === 'AbortError')) setError(formatRuntimeErrorForUi(e))
+      if (token === runTokenRef.current && !(e instanceof DOMException && e.name === 'AbortError')) {
+        // a refusal after “leave as is” is explained in the user's terms, followed by the owner's own message
+        setError([keptMissingSpectraNotice(prepared.effect), formatRuntimeErrorForUi(e)].filter(Boolean).join('\n'))
+      }
     } finally {
       // only the latest run owns the run-scoped UI state
       if (token === runTokenRef.current) {
@@ -385,7 +395,7 @@ export default function App() {
       }
       if (abortRef.current === ctrl) abortRef.current = null
     }
-  }, [dataset, pipeline, missingValues])
+  }, [dataset, pipeline, missingValues, missingSpectra])
 
   const onCancel = useCallback(() => abortRef.current?.abort(), [])
 
@@ -711,6 +721,8 @@ export default function App() {
                 runDataset={selectedRun ? runDatasets.current.get(selectedRun) ?? dataset : null}
                 missingValues={missingValues}
                 onMissingValues={setMissingValues}
+                missingSpectra={missingSpectra}
+                onMissingSpectra={setMissingSpectra}
                 onSelectTarget={onSelectTarget}
                 selectedScore={selectedScore}
                 loadedModel={loadedModel}
@@ -956,6 +968,8 @@ interface StepPanelProps {
   runDataset: MaterializedDataset | null
   missingValues: MissingValuePolicy
   onMissingValues: (policy: MissingValuePolicy) => void
+  missingSpectra: MissingSpectraChoice | null
+  onMissingSpectra: (choice: MissingSpectraChoice) => void
   onSelectTarget: (name: string) => void
   selectedScore: ScoreNode | null
   loadedModel: LoadedModel | null
@@ -1056,7 +1070,7 @@ function StepPanel(props: StepPanelProps) {
             onCancel={props.onCancel}
           />
         ) : null}
-        <RunSettings ds={dataset} missingValues={props.missingValues} disabled={props.running} onTarget={props.onSelectTarget} onMissingValues={props.onMissingValues} />
+        <RunSettings ds={dataset} missingValues={props.missingValues} missingSpectra={props.missingSpectra} disabled={props.running} onTarget={props.onSelectTarget} onMissingValues={props.onMissingValues} onMissingSpectra={props.onMissingSpectra} />
         <PipelineBuilder
           pipeline={props.pipeline}
           taskType={dataset.taskType}

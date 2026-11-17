@@ -11,10 +11,14 @@
   of the user's choice, and the target to model is chosen in the run settings.
 - Missing values no longer block a dataset. Missing spectral values are loaded
   under nirs4all-io's `ignore` NA policy (kept, counted, shown as gaps) instead of
-  aborting; previews and the Playground run on the complete spectra and flag the
-  rows they leave out. What a run does with missing values is an explicit launch
-  option (leave out incomplete samples or wavelengths, or stop); no row is dropped
-  from the loaded dataset.
+  aborting; previews and the Playground compute on the complete spectra and say
+  how many samples they left out. When the spectra hold missing values, a run
+  asks what to do with them, with their counts and no default: remove the
+  affected samples, replace the values (by nirs4all-io: previous or next
+  wavelength of the same spectrum, or a constant), or leave them as they are
+  (the execution path then refuses non-finite spectra, and the refusal says so).
+  Samples without a target value are left out of fitting and scoring, or stop
+  the run, as chosen. No row is dropped from the loaded dataset.
 - A target that nirs4all-io reads as text labels (a stray text cell among numbers)
   is a classification target with a visible hint, never a regression on its class
   codes; a target read differently across partitions is flagged instead of

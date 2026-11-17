@@ -559,6 +559,38 @@ export async function assembleDataset(
   return retain(mapAssembledToMaterialized(record, choice), { inputs: files, analysis, spec, record })
 }
 
+/** A replacement of missing spectral values nirs4all-io supports: within each spectrum (the previous
+ *  or next wavelength) or a constant. io refuses statistics across samples (`mean`, `median`). */
+export interface SpectraFill { method: 'forward_fill' | 'backward_fill' | 'value'; value?: number }
+
+/**
+ * The spectra of a loaded dataset with their missing values replaced BY nirs4all-io: the retained
+ * inputs are assembled again under io's `replace` NA policy on the feature sources only (targets and
+ * metadata keep their missing values). Web computes no replacement value; it checks that io returned
+ * the same rows and columns and hands the matrix to the run's own view (`prepareRunDataset`). A cell
+ * io could not replace (nothing before/after it in its spectrum) stays NaN and is reported there.
+ */
+export async function replaceMissingSpectra(dataset: MaterializedDataset, fill: SpectraFill): Promise<Float64Array> {
+  const retained = ioRetainedOf(dataset)
+  if (!retained) throw new Error('Missing spectral values can be replaced only in a dataset nirs4all-io assembled in this session; reload the files, or remove the affected samples.')
+  if (fill.method === 'value' && !Number.isFinite(fill.value)) throw new Error('Enter the number that replaces the missing spectral values.')
+  const na = { policy: 'replace', fill: { method: fill.method, ...(fill.method === 'value' ? { fill_value: fill.value } : {}) } }
+  const spec: DatasetSpec = {
+    ...retained.spec,
+    sources: retained.spec.sources?.map((source) => (source.role === 'features' ? { ...source, params: { ...source.params, na } } : source)),
+  }
+  let replaced: MaterializedDataset
+  try {
+    replaced = mapAssembledToMaterialized(await assembleSpec(spec, retained.analysis.decoded, retained.inputs))
+  } catch (e) {
+    throw new Error(`nirs4all-io could not replace the missing spectral values: ${cause(e)}.`)
+  }
+  if (replaced.nSamples !== dataset.nSamples || replaced.nFeatures !== dataset.nFeatures || replaced.sampleIds.some((id, row) => id !== dataset.sampleIds[row])) {
+    throw new Error('nirs4all-io returned different rows or columns when replacing the missing spectral values; the run was not started.')
+  }
+  return replaced.X
+}
+
 /** io could not assemble these inputs, or Web cannot represent the record io assembled.
  *  The complete input bytes, the io analysis and — when io did assemble — the original record and
  *  spec are kept here unchanged for the host; Web never assembles delimited text locally instead. */

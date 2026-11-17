@@ -188,7 +188,7 @@ export function DatasetView({ ds, summary, onOpenConfig, cv, onSelectTarget }: D
         <p role="status" data-dataset-missing className="mb-3 text-sm text-muted-foreground">
           {targets.length > 1 ? `nirs4all-io assembled ${targets.length} targets; all are kept. The views show “${ds.targetName}” (change it above); the target to model is chosen in the run settings of the Pipeline step. ` : ''}
           {missingViewTargets > 0 ? `${missingViewTargets} of ${ds.nSamples} samples have no value for “${ds.targetName}”: they stay in the dataset and are omitted from target statistics and colours. ` : ''}
-          {ds.missingFeatures ? `${ds.missingFeatures.cells} spectral value${ds.missingFeatures.cells === 1 ? ' is' : 's are'} missing (${ds.missingFeatures.rows} sample${ds.missingFeatures.rows === 1 ? '' : 's'}, ${ds.missingFeatures.columns} wavelength${ds.missingFeatures.columns === 1 ? '' : 's'}): they are shown as gaps, and the samples concerned are left out of the preprocessing and PCA previews. ` : ''}
+          {ds.missingFeatures ? `${ds.missingFeatures.cells} spectral value${ds.missingFeatures.cells === 1 ? ' is' : 's are'} missing (${ds.missingFeatures.rows} sample${ds.missingFeatures.rows === 1 ? '' : 's'}, ${ds.missingFeatures.columns} wavelength${ds.missingFeatures.columns === 1 ? '' : 's'}): they are shown as gaps in the spectra, and the ${ds.missingFeatures.rows} sample${ds.missingFeatures.rows === 1 ? '' : 's'} concerned ${ds.missingFeatures.rows === 1 ? 'is' : 'are'} left out of the computations that need complete values (preprocessing and PCA previews). ` : ''}
           No row is dropped; what a run does with missing values is chosen in its run settings.
         </p>
       )}

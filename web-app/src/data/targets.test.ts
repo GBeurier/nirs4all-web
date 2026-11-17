@@ -9,9 +9,9 @@ import { initSync as initDagMl } from '@/engine/wasm/dagml/dag_ml_wasm.js'
 import { initSync as initData } from '@/engine/wasm/dagml-data/dag_ml_data_wasm.js'
 import { initSync as initDatasets } from '@/engine/wasm/datasets/nirs4all_datasets_wasm.js'
 import type { DatasetTarget, MaterializedDataset, PipelineDSL } from '@/engine/types'
-import { analyzeFiles, assembleDataset, ingestFiles, ioRetainedOf } from './wasm-io'
+import { analyzeFiles, assembleDataset, ingestFiles, ioRetainedOf, replaceMissingSpectra } from './wasm-io'
 import {
-  inferTargetTask, prepareRunDataset, projectTarget, renameTarget, runSelectionEffect, selectDatasetTarget,
+  inferTargetTask, keptMissingSpectraNotice, prepareRunDataset, projectTarget, renameTarget, runSelectionEffect, selectDatasetTarget,
   setTargetTask, textLabelsAmongNumbers,
 } from './targets'
 
@@ -126,7 +126,7 @@ describe('a run honours its launch target and missing-value option', () => {
   it('models the launch target; rows without it are excluded by the owner and counted, as if they were absent', async () => {
     const ds = await ingest(upload())
     const { dataset: view, effect } = prepareRunDataset(ds, { target: 'sugars', missingValues: 'exclude_samples' })
-    expect(effect).toMatchObject({ target: 'sugars', missingTargets: 7, train: 35, test: 10, excludedSamples: 0, excludedFeatures: 0 })
+    expect(effect).toMatchObject({ target: 'sugars', missingTargets: 7, train: 35, test: 10, excludedSamples: 0, missingCells: 0 })
     expect(view.nSamples).toBe(52) // rows without the target stay in the view: the engine excludes them natively
     expect(view.targets).toBeUndefined() // single-target projection sent to the engine worker
     expect(ds.targets).toHaveLength(3) // the loaded dataset is untouched
@@ -144,21 +144,34 @@ describe('a run honours its launch target and missing-value option', () => {
     expect(result.refit.metrics.rmse).toBeCloseTo(reference.refit.metrics.rmse!, 10)
   })
 
-  it('stops before running when the option is to stop on missing values', async () => {
-    const ds = await ingest(upload({ holes: [[2, 4]] }))
-    expect(() => prepareRunDataset(ds, { target: 'sugars', missingValues: 'refuse' })).toThrow(/stop on missing values: 7 train\/test samples have no value for "sugars" and 1 sample has missing spectral values/)
-    const complete = await ingest(upload())
-    expect(() => prepareRunDataset(complete, { target: 'dry_matter', missingValues: 'refuse' })).toThrow(/stop on missing values: 1 train\/test sample has no value for "dry_matter"\./)
+  it('stops before running when the missing-target strategy is to stop', async () => {
+    const ds = await ingest(upload())
+    expect(() => prepareRunDataset(ds, { target: 'sugars', missingValues: 'refuse' })).toThrow(/stop on missing target values: 7 train\/test samples have no value for "sugars"\./)
+    expect(() => prepareRunDataset(ds, { target: 'dry_matter', missingValues: 'refuse' })).toThrow(/stop on missing target values: 1 train\/test sample has no value for "dry_matter"\./)
     expect(prepareRunDataset(await ingest(upload({ only: 0 })), { target: 'dry_matter', missingValues: 'refuse' }).effect.missingTargets).toBe(0) // complete data runs
   })
+})
 
-  it('leaves incomplete samples out of the run exactly as io `remove_sample` assembles them', async () => {
-    const files = upload({ holes: [[2, 4], [2, 5], [17, 4], [44, 0]], only: 0 })
+describe('missing spectral values are an explicit launch choice', () => {
+  const HOLES: [number, number][] = [[2, 4], [2, 5], [17, 4], [44, 0]]
+  const selection = { target: 'dry_matter', missingValues: 'exclude_samples' as const }
+
+  it('does not start a run, and applies nothing, until a choice is made', async () => {
+    const ds = await ingest(upload({ holes: HOLES, only: 0 }))
+    expect(() => prepareRunDataset(ds, selection)).toThrow(/4 missing values in 3 samples\. Choose in the run settings what this run does with them: remove the affected samples, replace the missing values, or leave them as they are\./)
+    expect(() => prepareRunDataset(ds, { ...selection, missingSpectra: null })).toThrow(/Choose in the run settings/)
+    expect(runSelectionEffect(ds, selection)).toMatchObject({ missingCells: 4, incompleteSamples: 3, excludedSamples: 0, replacedCells: 0 })
+    // complete spectra: nothing is asked
+    expect(prepareRunDataset(await ingest(upload({ only: 0 })), selection).effect).toMatchObject({ missingCells: 0, incompleteSamples: 0 })
+  })
+
+  it('remove: the affected samples leave the run exactly as io `remove_sample` assembles them', async () => {
+    const files = upload({ holes: HOLES, only: 0 })
     const ds = await ingest(files)
-    const { dataset: view, effect } = prepareRunDataset(ds, { target: 'dry_matter', missingValues: 'exclude_samples' })
-    expect(effect).toMatchObject({ incompleteSamples: 3, excludedSamples: 3, excludedFeatures: 0 })
+    const { dataset: view, effect } = prepareRunDataset(ds, { ...selection, missingSpectra: { action: 'remove_samples' } })
+    expect(effect).toMatchObject({ missingCells: 4, incompleteSamples: 3, excludedSamples: 3, replacedCells: 0 })
     expect(ds.nSamples).toBe(51) // `only` wrote the 51 rows with a dry_matter value; the dataset keeps them all
-    const owner = await withNaPolicy(files, 'remove_sample')
+    const owner = await withFeatureNa(files, { policy: 'remove_sample' })
     expect(view.nSamples).toBe(owner.nSamples)
     expect(Array.from(view.X)).toEqual(Array.from(owner.X))
     expect(Array.from(view.y)).toEqual(Array.from(owner.y))
@@ -169,29 +182,61 @@ describe('a run honours its launch target and missing-value option', () => {
     expect(result.refit.predictions).toHaveLength(11) // 12 test rows minus row 44
   })
 
-  it('leaves incomplete wavelengths out of the run exactly as io `remove_feature` assembles them', async () => {
-    // the same holes in both partitions: io removes features per source, so the columns stay aligned
-    const files = upload({ holes: [[2, 4], [17, 4], [44, 4], [45, 9], [5, 9]], only: 0 })
+  it('replace: the values come from io `replace` on the feature sources only, and every sample runs', async () => {
+    const files = upload({ holes: [[2, 4], [2, 5], [17, 4], [44, 3]] })
     const ds = await ingest(files)
-    const { dataset: view, effect } = prepareRunDataset(ds, { target: 'dry_matter', missingValues: 'exclude_features' })
-    expect(effect).toMatchObject({ incompleteFeatures: 2, excludedFeatures: 2, excludedSamples: 0 })
-    const owner = await withNaPolicy(files, 'remove_feature')
-    expect(view.nFeatures).toBe(P - 2)
-    expect(view.axis).toEqual(owner.axis)
-    expect(Array.from(view.X)).toEqual(Array.from(owner.X))
-    expect(view.nSamples).toBe(ds.nSamples) // every sample stays
+    const choice = { action: 'replace', method: 'forward_fill' } as const
+    const replaced = await replaceMissingSpectra(ds, choice)
+    const { dataset: view, effect } = prepareRunDataset(ds, { ...selection, missingSpectra: choice }, replaced)
+    expect(effect).toMatchObject({ missingCells: 4, replacedCells: 4, excludedSamples: 0 })
+    expect(view.nSamples).toBe(ds.nSamples)
+    expect(Array.from(view.X).every(Number.isFinite)).toBe(true)
+    // forward fill within the spectrum: the previous wavelength of the same row
+    const [r2, r17] = [rowOf(ds, 2), rowOf(ds, 17)]
+    expect(view.X[r2 * P + 4]).toBe(ds.X[r2 * P + 3])
+    expect(view.X[r2 * P + 5]).toBe(ds.X[r2 * P + 3])
+    expect(view.X[r17 * P + 4]).toBe(ds.X[r17 * P + 3])
+    // every other cell is the loaded value, and the missing targets are still missing (never filled)
+    expect(Array.from(view.X).filter((v, i) => !Object.is(v, ds.X[i]))).toHaveLength(4)
+    expect(ds.targets!.map((target) => target.missing)).toEqual([1, 7, 17])
+    expect(Number.isNaN(ds.X[r2 * P + 4])).toBe(true) // the loaded dataset keeps its missing values
     const result = await run(view)
-    expect(result.model.nFeatures).toBe(P - 2)
-    expect(result.refit.predictions).toHaveLength(12)
+    expect(result.missingTargets).toBe(1)
+    expect(result.cv!.predictions.length + result.refit.predictions.length).toBe(51)
+    // a constant, also from io
+    const constant = await replaceMissingSpectra(ds, { method: 'value', value: 0.25 })
+    expect([constant[r2 * P + 4], constant[r2 * P + 5], constant[r17 * P + 4]]).toEqual([0.25, 0.25, 0.25])
+    await expect(replaceMissingSpectra(ds, { method: 'value' })).rejects.toThrow(/Enter the number/)
+  })
+
+  it('replace: a value io cannot replace within its spectrum is reported, never guessed', async () => {
+    const ds = await ingest(upload({ holes: [[44, 0], [2, 4]], only: 0 }))
+    const choice = { action: 'replace', method: 'forward_fill' } as const
+    const replaced = await replaceMissingSpectra(ds, choice)
+    expect(() => prepareRunDataset(ds, { ...selection, missingSpectra: choice }, replaced)).toThrow(/1 of the 2 missing spectral values could not be replaced \(no earlier value in their spectrum\)\. Choose another replacement method, or remove the affected samples\./)
+    const backward = await replaceMissingSpectra(ds, { method: 'backward_fill' })
+    expect(prepareRunDataset(ds, { ...selection, missingSpectra: { action: 'replace', method: 'backward_fill' } }, backward).effect.replacedCells).toBe(2)
+  })
+
+  it('leave as is: the pipeline receives the missing values and the refusal says so', async () => {
+    const ds = await ingest(upload({ holes: HOLES, only: 0 }))
+    const { dataset: view, effect } = prepareRunDataset(ds, { ...selection, missingSpectra: { action: 'keep' } })
+    expect(effect).toMatchObject({ missingCells: 4, excludedSamples: 0, replacedCells: 0 })
+    expect(view.nSamples).toBe(ds.nSamples)
+    expect(Array.from(view.X).filter(Number.isNaN)).toHaveLength(4)
+    // the WASM execution path has no NaN-tolerant route: dag-ml-data refuses the first non-finite cell
+    const refusal = await run(view).then(() => null, (error: unknown) => error as { rtError?: { detail?: string } })
+    expect(refusal?.rtError?.detail).toMatch(/f64 feature matrix `X` value \d+ is not finite/)
+    expect(keptMissingSpectraNotice(effect)).toMatch(/left the 4 missing spectral values as they are .* accepts only finite spectral values .* Choose “Remove” or “Replace”/)
+    expect(keptMissingSpectraNotice(prepareRunDataset(ds, { ...selection, missingSpectra: { action: 'remove_samples' } }).effect)).toBeNull()
   })
 })
 
-/** The same files assembled by nirs4all-io under an explicit NA policy on the feature sources. */
-async function withNaPolicy(files: { name: string; bytes: Uint8Array }[], policy: 'remove_sample' | 'remove_feature'): Promise<MaterializedDataset> {
+/** The same files assembled by nirs4all-io under an explicit NA policy on the feature sources only. */
+async function withFeatureNa(files: { name: string; bytes: Uint8Array }[], na: Record<string, unknown>): Promise<MaterializedDataset> {
   const analysis = await analyzeFiles(files)
   const spec = structuredClone(analysis.plan!.resolved_spec!)
-  spec.params = { ...(spec.params as object), na: { policy } }
-  for (const source of spec.sources!) source.params = { ...source.params, na: { policy } }
+  for (const source of spec.sources!) if (source.role === 'features') source.params = { ...source.params, na }
   return assembleDataset(analysis.decoded, { ...analysis.plan, resolved_spec: spec }, files)
 }
 
@@ -233,8 +278,9 @@ describe('target projection (pure)', () => {
     const ds = base([numeric('p', [1, 2, 3, 4]), text('g', ['u', 'v', '', 'u'])])
     ds.X[2] = NaN // row 1
     const withIds: MaterializedDataset = { ...ds, groupIds: ['g1', 'g2', 'g3', null], observationIds: ['o1', 'o2', 'o3', 'o4'], partitionNames: ['cal', 'cal', 'val', 'new'] }
-    expect(runSelectionEffect(withIds, { target: 'p', missingValues: 'exclude_samples' })).toMatchObject({ train: 1, test: 1, missingTargets: 0, incompleteSamples: 1, incompleteFeatures: 1, excludedSamples: 1 })
-    const { dataset: view } = prepareRunDataset(withIds, { target: 'g', missingValues: 'exclude_samples' })
+    const remove = { action: 'remove_samples' } as const
+    expect(runSelectionEffect(withIds, { target: 'p', missingValues: 'exclude_samples', missingSpectra: remove })).toMatchObject({ train: 1, test: 1, missingTargets: 0, incompleteSamples: 1, missingCells: 1, excludedSamples: 1 })
+    const { dataset: view } = prepareRunDataset(withIds, { target: 'g', missingValues: 'exclude_samples', missingSpectra: remove })
     expect(view.nSamples).toBe(3)
     expect(Array.from(view.X)).toEqual([1, 2, 5, 6, 7, 8])
     expect(view.sampleIds).toEqual(['a', 'c', 'd'])
@@ -246,6 +292,5 @@ describe('target projection (pure)', () => {
     expect(view.classes).toEqual(['u', '', 'u']) // re-projected on the kept rows: class "v" is gone with its row
     expect([0, 1, 2].map((row) => hasTarget(view, row))).toEqual([true, false, true])
     expect(withIds.nSamples).toBe(4) // the loaded dataset is not modified
-    expect(() => prepareRunDataset({ ...withIds, X: withIds.X.map(() => NaN) }, { target: 'p', missingValues: 'exclude_features' })).toThrow(/no spectral column would remain/)
   })
 })

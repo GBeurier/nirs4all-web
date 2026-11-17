@@ -1,10 +1,11 @@
 // Target projection and run-scoped missing-value selection over a dataset nirs4all-io assembled.
 // A dataset keeps EVERY owner target column (`MaterializedDataset.targets`) and every missing cell
 // the owner reports; nothing is dropped at load. One target is projected onto `y` for the views
-// and for a run, and a run leaves incomplete samples (or wavelengths) out of ITS OWN view of the
-// data, on the user's explicit launch choice. No value is parsed, imputed or computed here: rows
-// and columns are selected on the owner's values and masks only.
-import type { DatasetTarget, MaterializedDataset, MissingValuePolicy, RunDataSelection, TaskType } from '@/engine/types'
+// and for a run. When the spectra hold missing values a run removes the affected samples from ITS
+// OWN view, uses the spectra nirs4all-io replaced, or keeps them, on the user's explicit launch
+// choice. No value is parsed, imputed or computed here: rows are selected on the owner's values and
+// masks only.
+import type { DatasetTarget, MaterializedDataset, MissingSpectraChoice, MissingValuePolicy, RunDataSelection, TaskType } from '@/engine/types'
 import { inferTaskType } from './dataset'
 
 /** The default task of a target: an owner text-label column is a classification target; a numeric
@@ -69,11 +70,12 @@ export function textLabelsAmongNumbers(target: DatasetTarget): string[] {
 
 // --- run-scoped selection ---------------------------------------------------------------------
 
-/** The two launch choices of a run. */
-export type RunSelection = Pick<RunDataSelection, 'target' | 'missingValues'>
-export type { MissingValuePolicy }
+/** The launch choices of a run: target, missing-target strategy and, when the spectra hold missing
+ *  values, what to do with them (`null`/absent: not chosen yet — the run does not start). */
+export interface RunSelection extends Pick<RunDataSelection, 'target' | 'missingValues'> { missingSpectra?: MissingSpectraChoice | null }
+export type { MissingSpectraChoice, MissingValuePolicy }
 
-interface Incomplete { rows: boolean[]; columns: boolean[]; nRows: number; nColumns: number }
+interface Incomplete { rows: boolean[]; columns: boolean[]; nRows: number; nColumns: number; cells: number }
 const incompleteCache = new WeakMap<Float64Array, Incomplete>()
 /** Rows and columns of X with a missing cell (NaN under the owner mask; an infinite value is not a
  *  missing value and is left to the engine's own refusal). Cached per X buffer: X is never mutated. */
@@ -82,12 +84,13 @@ function incompleteOf(ds: MaterializedDataset): Incomplete {
   if (cached) return cached
   const rows = new Array<boolean>(ds.nSamples).fill(false)
   const columns = new Array<boolean>(ds.nFeatures).fill(false)
+  let cells = 0
   for (let i = 0; i < ds.nSamples; i++) {
     for (let j = 0; j < ds.nFeatures; j++) {
-      if (Number.isNaN(ds.X[i * ds.nFeatures + j])) rows[i] = columns[j] = true
+      if (Number.isNaN(ds.X[i * ds.nFeatures + j])) { rows[i] = columns[j] = true; cells++ }
     }
   }
-  const found = { rows, columns, nRows: rows.filter(Boolean).length, nColumns: columns.filter(Boolean).length }
+  const found = { rows, columns, nRows: rows.filter(Boolean).length, nColumns: columns.filter(Boolean).length, cells }
   incompleteCache.set(ds.X, found)
   return found
 }
@@ -126,14 +129,6 @@ function keepRows(ds: MaterializedDataset, keep: readonly boolean[]): Materializ
   return next
 }
 
-/** The dataset restricted to the kept feature columns (spectra, axis and column names). */
-function keepFeatures(ds: MaterializedDataset, keep: readonly boolean[]): MaterializedDataset {
-  const columns = keep.flatMap((kept, j) => (kept ? [j] : []))
-  const X = new Float64Array(ds.nSamples * columns.length)
-  for (let i = 0; i < ds.nSamples; i++) columns.forEach((j, k) => { X[i * columns.length + k] = ds.X[i * ds.nFeatures + j] })
-  return { ...ds, X, nFeatures: columns.length, axis: pick(ds.axis, keep), ...(ds.featureNames ? { featureNames: pick(ds.featureNames, keep) } : {}) }
-}
-
 const labelled = (ds: MaterializedDataset, target: DatasetTarget | undefined, row: number): boolean =>
   target ? (target.labels ? target.labels[row] !== '' : Number.isFinite(target.values[row])) : Number.isFinite(ds.y[row])
 
@@ -141,7 +136,8 @@ const labelled = (ds: MaterializedDataset, target: DatasetTarget | undefined, ro
 export function runSelectionEffect(ds: MaterializedDataset, selection: RunSelection): RunDataSelection {
   const target = ds.targets?.find((candidate) => candidate.name === selection.target)
   const incomplete = incompleteOf(ds)
-  const dropRows = selection.missingValues === 'exclude_samples'
+  const choice = incomplete.cells ? selection.missingSpectra ?? undefined : undefined
+  const dropRows = choice?.action === 'remove_samples'
   // the engine fits on the train partition, or on every non-predict row when there is none
   const hasTrain = ds.partitions.includes('train')
   let missingTargets = 0
@@ -156,34 +152,49 @@ export function runSelectionEffect(ds: MaterializedDataset, selection: RunSelect
     if (ds.partitions[i] === 'train' || !hasTrain) train++
   }
   return {
-    ...selection, missingTargets, train, test, excludedSamples,
-    incompleteSamples: incomplete.nRows, incompleteFeatures: incomplete.nColumns,
-    excludedFeatures: selection.missingValues === 'exclude_features' ? incomplete.nColumns : 0,
+    target: selection.target, missingValues: selection.missingValues, ...(choice ? { missingSpectra: choice } : {}),
+    missingTargets, train, test, excludedSamples,
+    missingCells: incomplete.cells, incompleteSamples: incomplete.nRows,
+    replacedCells: choice?.action === 'replace' ? incomplete.cells : 0,
   }
+}
+
+/** Why a run that left missing spectral values as they are was refused (null for any other run): the
+ *  owner's refusal names a non-finite cell, not the launch choice that sent it. */
+export function keptMissingSpectraNotice(effect: RunDataSelection): string | null {
+  if (effect.missingSpectra?.action !== 'keep') return null
+  return `This run left the ${effect.missingCells} missing spectral value${effect.missingCells === 1 ? '' : 's'} as ${effect.missingCells === 1 ? 'it is' : 'they are'} (run settings). The execution path accepts only finite spectral values — dag-ml-data checks every cell before any pipeline step — so no step of this pipeline could handle them. Choose “Remove” or “Replace” in the run settings to run this pipeline.`
 }
 
 /**
  * The view of the dataset a run executes on: the launch target projected onto `y`, and — only when
- * the spectra hold missing values — the incomplete samples or wavelengths left out as the user chose.
+ * the spectra hold missing values — what the user chose for them: the affected samples removed, the
+ * values replaced (`replaced`: the spectra nirs4all-io assembled under its `replace` policy, see
+ * `replaceMissingSpectra` in `data/wasm-io.ts`; no value is computed here), or left as they are for
+ * the pipeline. Without a choice the run does not start: nothing is applied by default.
  * Rows without a value for the target stay in the view: the engine excludes them from fitting and
- * scoring through the owner relations (dag-ml-data `excluded`, dag-ml `target_missing_sample_ids`).
- * `refuse` stops before anything runs. The loaded dataset is never modified.
+ * scoring through the owner relations (dag-ml-data `excluded`, dag-ml `target_missing_sample_ids`),
+ * unless the missing-target strategy is to stop. The loaded dataset is never modified.
  */
-export function prepareRunDataset(ds: MaterializedDataset, selection: RunSelection): { dataset: MaterializedDataset; effect: RunDataSelection } {
+export function prepareRunDataset(ds: MaterializedDataset, selection: RunSelection, replaced?: Float64Array): { dataset: MaterializedDataset; effect: RunDataSelection } {
   const effect = runSelectionEffect(ds, selection)
-  if (selection.missingValues === 'refuse' && (effect.missingTargets || effect.incompleteSamples)) {
-    const found = [
-      ...(effect.missingTargets ? [`${effect.missingTargets} train/test sample${effect.missingTargets === 1 ? ' has' : 's have'} no value for "${selection.target}"`] : []),
-      ...(effect.incompleteSamples ? [`${effect.incompleteSamples} sample${effect.incompleteSamples === 1 ? ' has' : 's have'} missing spectral values`] : []),
-    ]
-    throw new Error(`This run is set to stop on missing values: ${found.join(' and ')}. Choose another missing-value option in the run settings to leave them out of the run.`)
+  if (effect.missingCells && !effect.missingSpectra) {
+    throw new Error(`The spectra hold ${effect.missingCells} missing value${effect.missingCells === 1 ? '' : 's'} in ${effect.incompleteSamples} sample${effect.incompleteSamples === 1 ? '' : 's'}. Choose in the run settings what this run does with them: remove the affected samples, replace the missing values, or leave them as they are.`)
+  }
+  if (selection.missingValues === 'refuse' && effect.missingTargets) {
+    throw new Error(`This run is set to stop on missing target values: ${effect.missingTargets} train/test sample${effect.missingTargets === 1 ? ' has' : 's have'} no value for "${selection.target}". Choose to leave them out in the run settings to run without them.`)
   }
   let view = ds
   const incomplete = incompleteOf(ds)
   if (effect.excludedSamples) view = keepRows(view, incomplete.rows.map((missing) => !missing))
-  if (effect.excludedFeatures) {
-    if (effect.excludedFeatures === ds.nFeatures) throw new Error('Every wavelength has a missing value: no spectral column would remain. Leave out the incomplete samples instead.')
-    view = keepFeatures(view, incomplete.columns.map((missing) => !missing))
+  if (effect.missingSpectra?.action === 'replace') {
+    if (!replaced || replaced.length !== ds.X.length) throw new Error('The replaced spectra from nirs4all-io are required to run with replaced missing values.')
+    const remaining = replaced.reduce((count, value) => count + (Number.isNaN(value) ? 1 : 0), 0)
+    if (remaining) {
+      const edge = effect.missingSpectra.method === 'forward_fill' ? 'no earlier value in their spectrum' : 'no later value in their spectrum'
+      throw new Error(`${remaining} of the ${effect.missingCells} missing spectral values could not be replaced (${edge}). Choose another replacement method, or remove the affected samples.`)
+    }
+    view = { ...view, X: replaced }
   }
   view = selectDatasetTarget(view, selection.target)
   if (view.targets || view.missingFeatures) {

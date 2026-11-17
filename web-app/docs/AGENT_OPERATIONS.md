@@ -142,10 +142,15 @@ Load-bearing concepts (require reading several files):
   classification target (never a regression on its class codes). **The target to model and the
   missing-value option are launch choices** (`RunSettings`, `prepareRunDataset`): the run executes on
   its own view — the chosen target projected onto `y`, rows without it excluded natively by the engine
-  (dag-ml-data `excluded`, dag-ml `target_missing_sample_ids`), and, only when spectra hold missing
-  values, the incomplete samples or wavelengths left out as chosen (pinned equal to io's
-  `remove_sample` / `remove_feature` by `src/data/targets.test.ts`), or the run refused. Previews run on
-  the rows with complete spectra and flag the rows they leave out. Rows that repeat a declared sample id are one physical sample (grouped CV by default)
+  (dag-ml-data `excluded`, dag-ml `target_missing_sample_ids`), unless the missing-target strategy
+  is to stop. **Missing spectral values are asked at launch, with no default** (`MissingSpectraChoice`;
+  nothing extra is shown for complete spectra): *remove* the affected samples (row selection on the
+  owner mask, pinned equal to io's `remove_sample` by `src/data/targets.test.ts`), *replace* them
+  (`replaceMissingSpectra`: the retained inputs re-assembled by io under its `replace` policy on the
+  feature sources only — `forward_fill`, `backward_fill` or `value`; Web computes no value; io refuses
+  `mean`/`median`), or *leave as is* (dag-ml-data refuses any non-finite `X` cell, so the run is refused
+  and `keptMissingSpectraNotice` explains it). Previews compute on the samples with complete spectra and
+  state "N samples left out: missing values". Rows that repeat a declared sample id are one physical sample (grouped CV by default)
   and need io's declared, unique observation ids, otherwise they are refused (nothing is
   synthesised; `s{i}` stays an internal row handle). A declared sample key that a partition does not
   carry is refused, not downgraded to positions. The feature axis is the owner's `feature_axes`
