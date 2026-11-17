@@ -14,6 +14,8 @@ try {
   await page.locator('[data-step="pipeline"]').click()
   const recipe = getStudioPipelinePresets().find((preset) => preset.id === 'simple_pls').variants.regression.pipeline
   await page.locator('input[type=file]').last().setInputFiles({ name: 'pipeline.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ pipeline: recipe })) })
+  // the import reads the file asynchronously: wait for the editor to adopt the recipe before asserting on it
+  await page.locator('[data-variant-chip]').waitFor({ timeout: 10000 })
   assert.equal(await page.getByLabel('Pipeline name').inputValue(), 'Simple PLS')
   assert.match(await page.locator('[data-variant-chip]').innerText(), /24 variants/)
   await page.getByRole('button', { name: /Run pipeline/i }).click()
