@@ -280,9 +280,22 @@ function RunCard({
                 {run.variantCount} variants
               </Badge>
             ) : null}
+            <Badge variant="outline" className="border-border font-mono text-muted-foreground" data-run-target>
+              target: {run.targetName}
+            </Badge>
             {run.missingTargets ? (
               <Badge variant="outline" className="border-brand-amber/40 text-brand-amber" data-missing-targets>
                 {run.missingTargets} without target excluded
+              </Badge>
+            ) : null}
+            {run.dataSelection?.excludedSamples ? (
+              <Badge variant="outline" className="border-brand-amber/40 text-brand-amber" data-excluded-samples>
+                {run.dataSelection.excludedSamples} with missing spectral values left out
+              </Badge>
+            ) : null}
+            {run.dataSelection?.excludedFeatures ? (
+              <Badge variant="outline" className="border-brand-amber/40 text-brand-amber" data-excluded-features>
+                {run.dataSelection.excludedFeatures} incomplete wavelengths left out
               </Badge>
             ) : null}
             <span>{formatDate(run.createdAt)}</span>

@@ -32,6 +32,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/ta
 import { CHART, histogram } from './_helpers'
 import { physicalIdentity } from '@/engine/relations'
 import { hasTarget, missingTargetCount } from '@/engine/partition'
+import { textLabelsAmongNumbers } from '@/data/targets'
+import { TargetSelect, targetCoverage } from './TargetSelect'
 import { useDatasetPreview } from './useDatasetPreview'
 import {
   buildSpectraChart,
@@ -115,7 +117,7 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
  * (raw / processed / both / difference), owner PCA and native CV fold colours.
  * Only display summaries run here; preprocessing/PCA/folds use the owner worker.
  */
-export function DatasetView({ ds, summary, onOpenConfig, cv }: DatasetViewProps) {
+export function DatasetView({ ds, summary, onOpenConfig, cv, onSelectTarget }: DatasetViewProps) {
   const [tab, setTab] = useState('spectra')
   const [filter, setFilter] = useState<PartitionFilter>('all')
   const [opId, setOpId] = useState('none')
@@ -142,6 +144,10 @@ export function DatasetView({ ds, summary, onOpenConfig, cv }: DatasetViewProps)
   )
 
   const targetBins = useMemo(() => (isReg ? histogram(Array.from(ds.y), 24) : []), [ds, isReg])
+  const targets = ds.targets ?? []
+  const activeTarget = targets.find((target) => target.name === ds.targetName)
+  const missingViewTargets = useMemo(() => Array.from({ length: ds.nSamples }, (_, row) => row).filter((row) => !hasTarget(ds, row)).length, [ds])
+  const textAmongNumbers = activeTarget ? textLabelsAmongNumbers(activeTarget) : []
 
   const partitionOptions: { value: PartitionFilter; label: string }[] = hasTest
     ? [{ value: 'all', label: 'All' }, { value: 'train', label: 'Train' }, { value: 'test', label: 'Test' }]
@@ -161,6 +167,12 @@ export function DatasetView({ ds, summary, onOpenConfig, cv }: DatasetViewProps)
             </Badge>
           </div>
         </div>
+        {targets.length > 1 && (
+          <label className="flex min-w-0 flex-1 items-center justify-end gap-2 text-xs text-muted-foreground" data-view-target>
+            <span className="shrink-0 font-medium uppercase tracking-wide">Target shown ({targets.length} targets)</span>
+            <TargetSelect ds={ds} value={ds.targetName} onChange={(name) => onSelectTarget?.(name)} disabled={!onSelectTarget} />
+          </label>
+        )}
         <Button variant="outline" size="sm" className="gap-2" onClick={onOpenConfig}>
           <Settings2 className="h-4 w-4" />
           Configure
@@ -172,6 +184,26 @@ export function DatasetView({ ds, summary, onOpenConfig, cv }: DatasetViewProps)
         centred PCA uses all raw spectra and the partition filter changes only the displayed points. Pipeline training remains separate.
         {summary.axisUnit === 'index' ? ' Feature index is positional; no physical wavelength unit was supplied.' : ''}
       </p>
+      {(targets.length > 1 || missingViewTargets > 0 || ds.missingFeatures) && (
+        <p role="status" data-dataset-missing className="mb-3 text-sm text-muted-foreground">
+          {targets.length > 1 ? `nirs4all-io assembled ${targets.length} targets; all are kept. The views show “${ds.targetName}” (change it above); the target to model is chosen in the run settings of the Pipeline step. ` : ''}
+          {missingViewTargets > 0 ? `${missingViewTargets} of ${ds.nSamples} samples have no value for “${ds.targetName}”: they stay in the dataset and are omitted from target statistics and colours. ` : ''}
+          {ds.missingFeatures ? `${ds.missingFeatures.cells} spectral value${ds.missingFeatures.cells === 1 ? ' is' : 's are'} missing (${ds.missingFeatures.rows} sample${ds.missingFeatures.rows === 1 ? '' : 's'}, ${ds.missingFeatures.columns} wavelength${ds.missingFeatures.columns === 1 ? '' : 's'}): they are shown as gaps, and the samples concerned are left out of the preprocessing and PCA previews. ` : ''}
+          No row is dropped; what a run does with missing values is chosen in its run settings.
+        </p>
+      )}
+      {targets.some((target) => target.issue) && (
+        <div role="status" data-target-issues className="mb-3 text-sm text-brand-amber">
+          {targets.filter((target) => target.issue).map((target) => (
+            <p key={target.name}>Target “{target.name}” cannot be used as it is: {target.issue}. It is kept in the dataset without values; make its cells consistent in the files (empty, NA or NaN for a missing value) to use it. The other targets are unaffected.</p>
+          ))}
+        </div>
+      )}
+      {textAmongNumbers.length > 0 && (
+        <p role="status" data-target-text-labels className="mb-3 text-sm text-brand-amber">
+          nirs4all-io read “{ds.targetName}” as text labels because of {textAmongNumbers.map((label) => `“${label}”`).join(', ')}. If these mark missing values, use an empty cell, NA, NaN, N/A or null in the file so the column is read as numbers.
+        </p>
+      )}
       {ds.folds?.length ? <p role="status" className="mb-3 text-sm text-muted-foreground">Dataset-declared folds are present. Web CV does not use dataset-declared folds; preview assignments use the native run CV configuration.</p> : null}
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="w-full">
@@ -385,7 +417,7 @@ export function DatasetView({ ds, summary, onOpenConfig, cv }: DatasetViewProps)
               </BarChart>
             </ResponsiveContainer>
           )}
-          <p className="mt-2 text-sm text-muted-foreground">Target distribution over all displayed rows. {Array.from({ length: ds.nSamples }, (_, row) => row).filter((row) => !hasTarget(ds, row)).length} missing targets are excluded from the counts.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Distribution of “{summary.targetName}” over all displayed rows. {missingViewTargets} missing targets are excluded from the counts.</p>
           <details className="mt-3 text-sm">
             <summary>Target distribution counts</summary>
             <table className="w-full text-left text-xs">
@@ -413,7 +445,26 @@ export function DatasetView({ ds, summary, onOpenConfig, cv }: DatasetViewProps)
             />
             <Stat label="Task" value={summary.taskType} />
             <Stat label="Target" value={summary.targetName} />
+            <Stat label="Targets" value={ds.targets ? targets.length : 1} />
+            <Stat label="Missing spectral values" value={ds.missingFeatures ? `${ds.missingFeatures.cells} (${ds.missingFeatures.rows} samples, ${ds.missingFeatures.columns} wavelengths)` : 0} />
           </div>
+          {targets.length > 0 && (
+            <details className="mt-4 text-sm" open={targets.length > 1} data-targets-table>
+              <summary>Targets assembled by nirs4all-io ({targets.length})</summary>
+              <div role="region" aria-label="Dataset targets" tabIndex={0} className="mt-2 max-h-80 overflow-auto">
+                <table className="w-full text-left text-xs">
+                  <caption>Every target column of the dataset, in file order, with the values nirs4all-io reports. Missing values are counted, never filled.</caption>
+                  <thead><tr><th scope="col">Target</th><th scope="col">Kind</th><th scope="col">Values</th><th scope="col">Missing</th></tr></thead>
+                  <tbody>{targets.map((target) => <tr key={target.name} className={target.name === ds.targetName ? 'font-semibold text-foreground' : undefined}>
+                    <th scope="row" className="font-mono">{target.name}{target.name === ds.targetName ? ' (shown)' : ''}</th>
+                    <td>{target.issue ? 'inconsistent across partitions' : target.kind === 'classification_string' ? 'text labels' : target.kind === 'classification_integer' ? 'integer classes' : 'numeric'}</td>
+                    <td>{target.issue ? 'unusable' : targetCoverage(target, ds.nSamples)}</td>
+                    <td>{target.missing}</td>
+                  </tr>)}</tbody>
+                </table>
+              </div>
+            </details>
+          )}
         </TabsContent>
       </Tabs>
     </Card>
@@ -479,7 +530,9 @@ function PcaPanel({
   // Row → owner CV fold index, using the exact run cohort and configuration.
   const foldOf = useMemo(() => {
     const m = new Map<number, number>()
-    preview.result?.folds?.folds.forEach((fold, index) => fold.test.forEach((row) => m.set(row, index)))
+    // fold rows are output rows of the preview; `rows` maps them back to dataset rows
+    const datasetRow = (output: number) => preview.result?.rows?.[output] ?? output
+    preview.result?.folds?.folds.forEach((fold, index) => fold.test.forEach((row) => m.set(datasetRow(row), index)))
     return m
   }, [preview.result])
 

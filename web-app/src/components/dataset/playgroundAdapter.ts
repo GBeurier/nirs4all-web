@@ -1,7 +1,8 @@
-import type { OperatorDefinition, PlaygroundDataset } from 'nirs4all-ui/playground'
+import type { OperatorDefinition, PlaygroundDataset, PlaygroundTarget } from 'nirs4all-ui/playground'
 import type { RowColumn } from 'nirs4all-ui/workbench'
 import { PREPROCESSING_NODES } from '@/catalog/nodes'
-import type { MaterializedDataset } from '@/engine/types'
+import { inferTargetTask, projectTarget } from '@/data/targets'
+import type { MaterializedDataset, TaskType } from '@/engine/types'
 
 // App replaces this immutable projection for every load/configuration edit.
 // Identity includes target, task, partitions and repetition without hashing X.
@@ -17,6 +18,13 @@ export function playgroundDatasetKey(ds: MaterializedDataset): string {
   return key
 }
 
+/** A target switch keeps the dataset identity: same rows and spectra, another projected target.
+ *  Views keyed by the dataset stay mounted; their previews are requested again for the new target. */
+export function inheritPlaygroundDatasetKey(from: MaterializedDataset, to: MaterializedDataset): MaterializedDataset {
+  datasetKeys.set(to, playgroundDatasetKey(from))
+  return to
+}
+
 /** Display views share the host's Float64 rows; no spectral values are copied. */
 export function playgroundDataset(ds: MaterializedDataset, name: string): PlaygroundDataset {
   const categorical = (key: string, label: string, values: RowColumn['values']): RowColumn => ({
@@ -30,8 +38,29 @@ export function playgroundDataset(ds: MaterializedDataset, name: string): Playgr
     ?? ds.metadata?.find((column) => column.name === ds.repetition)?.values
     ?? (ds.repetition && ds.repetition === ds.sampleIdColumn ? ds.sampleIds : undefined)
   if (repetition) metadata.push(categorical('role:repetition', ds.repetition ?? 'Repetition', repetition))
-  const classification = ds.taskType !== 'regression'
-  const classes = classification ? [...new Set(ds.classes ?? [])].filter((label) => label !== '').sort() : undefined
+  // One display target per owner target; a missing value is `null` (omitted by the views, never 0).
+  const displayTarget = (name: string, task: TaskType, y: Float64Array, labels: string[] | undefined): PlaygroundTarget => {
+    const classification = task !== 'regression'
+    const classes = classification ? [...new Set(labels ?? [])].filter((label) => label !== '').sort() : undefined
+    return {
+      name,
+      kind: classification ? 'classification' : 'regression',
+      values: Array.from(y, (value, row) => Number.isFinite(value)
+        ? classification ? labels?.[row] ?? classes?.[value] ?? null : value
+        : null),
+      ...(classes && { classes }),
+    }
+  }
+  // The projected target comes first (the Playground starts on its first target); the others follow in
+  // owner order and are chosen in the Playground's own target control, without changing the dataset.
+  const targets = [
+    displayTarget(ds.targetName, ds.taskType, ds.y, ds.classes),
+    ...(ds.targets ?? []).filter((target) => target.name !== ds.targetName).map((target) => {
+      const task = target.taskType ?? inferTargetTask(target)
+      const projected = projectTarget(target, task)
+      return displayTarget(target.name, task, projected.y, projected.classes)
+    }),
+  ]
   return {
     id: playgroundDatasetKey(ds),
     name,
@@ -40,14 +69,7 @@ export function playgroundDataset(ds: MaterializedDataset, name: string): Playgr
     unit: ds.axisUnit,
     sampleIds: ds.sampleIds,
     partition: ds.partitions,
-    targets: [{
-      name: ds.targetName,
-      kind: classification ? 'classification' : 'regression',
-      values: Array.from(ds.y, (value, row) => Number.isFinite(value)
-        ? classification ? ds.classes?.[row] ?? classes?.[value] ?? null : value
-        : null),
-      ...(classes && { classes }),
-    }],
+    targets,
     metadata,
     ...(repetition && { groupColumn: 'role:repetition' }),
     description: ds.axisUnit === 'index'

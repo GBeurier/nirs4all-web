@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Datasets with several target columns load again. Since 0.5.1 an upload whose
+  target table held more than one column was refused at load ("choose the one to
+  model — Web does not take the first"). Every target nirs4all-io assembles is now
+  kept with its value and missing counts; Explore and the Playground show a target
+  of the user's choice, and the target to model is chosen in the run settings.
+- Missing values no longer block a dataset. Missing spectral values are loaded
+  under nirs4all-io's `ignore` NA policy (kept, counted, shown as gaps) instead of
+  aborting; previews and the Playground run on the complete spectra and flag the
+  rows they leave out. What a run does with missing values is an explicit launch
+  option (leave out incomplete samples or wavelengths, or stop); no row is dropped
+  from the loaded dataset.
+- A target that nirs4all-io reads as text labels (a stray text cell among numbers)
+  is a classification target with a visible hint, never a regression on its class
+  codes; a target read differently across partitions is flagged instead of
+  refusing the whole dataset.
+- Reworded load refusals (no doubled period, no "did not assemble … assembled")
+  and removed an owner function name from the PCA notice.
+
 ## 0.5.2 — 2026-11-16
 
 ### Fixed

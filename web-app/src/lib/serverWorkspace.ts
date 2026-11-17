@@ -88,6 +88,10 @@ function validateDataset(value: unknown): asserts value is MaterializedDataset {
   if (value.featureNames !== undefined && !strings(value.featureNames, p)) refuse()
   if (value.yRaw !== undefined && (!(value.yRaw instanceof Float64Array) || value.yRaw.length !== n)) refuse()
   if (value.classes !== undefined && !strings(value.classes)) refuse()
+  // every owner target travels with the view: values (and text labels) aligned with the rows
+  if (value.targets !== undefined && (!Array.isArray(value.targets) || !value.targets.every((target) => object(target) && typeof target.name === 'string'
+    && ['numeric', 'classification_integer', 'classification_string'].includes(String(target.kind)) && target.values instanceof Float64Array && target.values.length === n
+    && (target.labels === undefined || strings(target.labels, n)) && Number.isSafeInteger(target.missing)))) refuse()
   if (value.metadata !== undefined && (!Array.isArray(value.metadata) || !value.metadata.every((column) => object(column) && typeof column.name === 'string' && ['numeric', 'categorical'].includes(String(column.kind)) && Array.isArray(column.values) && column.values.length === n))) refuse()
   if (value.folds !== undefined && (!Array.isArray(value.folds) || !value.folds.every((fold) => object(fold) && Number.isSafeInteger(fold.foldId) && strings(fold.valSampleIds)))) refuse()
 }

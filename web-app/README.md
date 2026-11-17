@@ -271,6 +271,11 @@ without the local vendors.
   evidence + reader catalog + schema-validated `DatasetSpec` in the config dialog, and materializes
   X/y. Three bundled demos (Fruit purée regression, NIR protein regression & 7-class). Targetless
   uploads are allowed for explore/predict; the engine refuses to *train* without targets.
+  A dataset with several target columns and missing values loads as nirs4all-io reports it: every
+  target is kept with its value count, missing spectral values stay masked and counted, and no row
+  is dropped. Explore and the Playground show a target of your choice; the target to model and what
+  a run does with missing values (leave out incomplete samples or wavelengths, or stop) are chosen
+  in the run settings of the Pipeline step and apply to that run only.
 
 ## Roadmap
 

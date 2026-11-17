@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { Upload, FileText, FileUp, Loader2, ShieldCheck, Sparkles, AlertTriangle } from 'lucide-react'
 import { datasetInputName } from '@/data/dataset'
 import { SAMPLES } from '@/data/samples'
-import { datasetSpecInputName, ingestFiles, IoIngestionRefusal, resumeIngestion } from '@/data/wasm-io'
+import { ingestFiles } from '@/data/wasm-io'
 import type { DatasetUploadProps } from '@/components/contracts'
 import { Button } from '@/app/components/ui/button'
 import { cn } from '@/app/components/ui/utils'
@@ -20,15 +20,10 @@ export function DatasetUpload({ onDataset, onLoadSample, onImportModel, busy: bu
   const [busyLocal, setBusyLocal] = useState(false)
   const busy = busyProp || busyLocal
 
-  // The refusal keeps the input bytes, the io analysis and (when io assembled) the original record,
-  // so a user decision resumes from the owner evidence instead of re-reading or guessing.
-  const [refusal, setRefusal] = useState<IoIngestionRefusal | null>(null)
-
   const shownError = error ?? localError
 
   const ingest = async (fileList: FileList | File[]) => {
     setLocalError(null)
-    setRefusal(null)
     const files = Array.from(fileList)
     if (files.length === 0) return
     const name = datasetInputName(files)
@@ -36,29 +31,17 @@ export function DatasetUpload({ onDataset, onLoadSample, onImportModel, busy: bu
     try {
       // Every upload — delimited text and vendor formats alike — goes through the
       // nirs4all-formats decode + nirs4all-io inference and assembly (roles, joins,
-      // partitions, identity, axis, task type). When io cannot assemble it, the
-      // refusal is shown as is; there is no local assembler to fall back on.
+      // partitions, identity, axis, task type). A dataset with several targets or missing
+      // values loads as it is: every target and every missing cell io reports is kept, and
+      // the target to model is chosen when a run is launched. When io cannot assemble the
+      // files, the refusal is shown as is; there is no local assembler to fall back on.
       const withBytes = await Promise.all(files.map(async (f) => ({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) })))
       const { dataset, name: datasetName, analysis } = await ingestFiles(withBytes, name)
       onDataset(dataset, datasetName, analysis)
     } catch (e) {
-      if (e instanceof IoIngestionRefusal) setRefusal(e)
       setLocalError(e instanceof Error ? e.message : 'Could not read the selected files.')
     } finally {
       setBusyLocal(false)
-    }
-  }
-
-  // Resume a refused ingestion with the user's target choice, from the retained owner record.
-  const chooseTarget = (target: string) => {
-    if (!refusal) return
-    try {
-      const resumed = resumeIngestion(refusal, { target })
-      setRefusal(null)
-      setLocalError(null)
-      onDataset(resumed.dataset, datasetSpecInputName(resumed.analysis.plan) ?? datasetInputName(refusal.inputs), resumed.analysis)
-    } catch (e) {
-      setLocalError(e instanceof Error ? e.message : 'Could not use the chosen target.')
     }
   }
 
@@ -156,17 +139,6 @@ export function DatasetUpload({ onDataset, onLoadSample, onImportModel, busy: bu
         </div>
       )}
 
-      {refusal?.decision && (
-        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground" data-target-choice>
-          <span>Model which target? (the other columns stay in the retained io record)</span>
-          {refusal.decision.target.map((target) => (
-            <Button key={target} type="button" variant="outline" size="sm" className="h-7" onClick={() => chooseTarget(target)}>
-              {target}
-            </Button>
-          ))}
-        </div>
-      )}
-
       <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
         <ShieldCheck className="h-4 w-4 text-brand-green" />
         <span>Runs entirely in your browser — no files are uploaded.</span>
@@ -203,7 +175,10 @@ export function DatasetUpload({ onDataset, onLoadSample, onImportModel, busy: bu
           <code className="font-mono text-foreground">metadata.csv</code>), or a single{' '}
           <code className="font-mono text-foreground">X</code> +{' '}
           <code className="font-mono text-foreground">y</code> pair. nirs4all-io decides the header
-          row, the spectral axis and the column roles.
+          row, the spectral axis and the column roles. Several target columns and missing values
+          (empty, <code className="font-mono text-foreground">NA</code>,{' '}
+          <code className="font-mono text-foreground">NaN</code>) are kept as they are: you choose the
+          target and how missing values are handled when you run a pipeline.
         </p>
       </div>
     </div>
