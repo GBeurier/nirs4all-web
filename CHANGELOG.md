@@ -21,6 +21,13 @@
   refusing the whole dataset.
 - Reworded load refusals (no doubled period, no "did not assemble … assembled")
   and removed an owner function name from the PCA notice.
+- An imported owner result that carries only CV fold validation blocks (no
+  aggregate, no refit; e.g. converted legacy predictions) is shown as validation
+  evidence. Since 0.5.1 its fold was presented as a hidden training
+  resubstitution score and the Results Inspector offered no evaluation score.
+- The smoke runner resolves the cross-runtime prerequisites (ecosystem E2E
+  artifacts, Python oracle) from the workspace, including from a Git worktree,
+  instead of failing a plain local run on unset variables.
 
 ## 0.5.2 — 2026-11-16
 

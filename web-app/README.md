@@ -54,6 +54,18 @@ artifacts, `repository-best-pipeline` consumes a Python handoff/oracle, and the
 SPC/amylose dataset checks use optional external fixture directories. Their
 status is separate from the autonomous strict/transitional WEB-001 gates.
 
+`scripts/run-smokes.mjs` resolves these prerequisites from the workspace when they
+are not passed explicitly: the generated artifacts from the sibling
+`nirs4all-ecosystem/.n4a-e2e-artifacts/` (`N4A_E2E_ARTIFACTS_DIR` overrides it; the
+ecosystem E2E scenarios produce them) and the Python oracle from the sibling SDK
+environment `nirs4all/.venv` (`N4A_WEB_PYTHON` overrides it). This also works from
+a Git worktree nested below the workspace root (`N4A_WORKSPACE_ROOT` overrides the
+lookup). Explicit `ARTIFACTS_DIR`, `RT_RESULT`, `PIPELINE_FAMILY`,
+`PIPELINE_CANDIDATE`, `WEB_DATASET` and `N4A_REPOSITORY_EVIDENCE` always win;
+evidence written by a plain local run goes to a temporary directory. A missing
+input is reported with the scenario that produces it and the smoke fails; it is
+never skipped.
+
 ## Explain step
 
 The **Explain** step (after Predict, unlocked with the same model) shows which spectral regions
