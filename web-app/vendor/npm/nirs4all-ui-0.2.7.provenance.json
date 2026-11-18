@@ -6,15 +6,15 @@
     "repository": "git+https://github.com/GBeurier/nirs4all-ui.git"
   },
   "source": {
-    "commit_sha": "787699446281d2a4a5a45cf73847b2cc3d90828e",
+    "commit_sha": "ee68f473cf01ee7550d132ad13e6b961346eafdb",
     "dirty": false
   },
   "artifact": {
     "filename": "nirs4all-ui-0.2.7.tgz",
-    "size": 4032291,
-    "sha256": "ff0b25d39bfdada083ff4370e7781724436a03d0042dfb377dbf6e27f8aaf849",
-    "npm_integrity": "sha512-nG+mdqe2nxuU2V8ama2dzUwxFJmSxgkdTo7gnYI8Wo7yMeNpkq1jy5YaJpQphlwE1Xs4jsqDfNtktNUlUVUCVA==",
-    "npm_shasum": "5ca7684f61e5d3e8fdc0fd483ea417e7e16f1096",
+    "size": 4032417,
+    "sha256": "182727377ef0412544461e2a3527c6288a2f0a390d095b056f673a26d4a8f682",
+    "npm_integrity": "sha512-biDWJFPwuYCDX5S7jcZyOFlPB6eep4+EmGMuaNU6IUouJmUfjJ2jy+O60rh6eornT5fLjaQTpLi4GeiYnMrtEA==",
+    "npm_shasum": "86702b90e7ec636de041acecc00dad7a1ffe03dd",
     "entry_count": 1304,
     "required_files": [
       "LICENSE",

@@ -15,8 +15,8 @@ const filename = `${packageName}-${version}.tgz`
 const tarballPath = resolve(root, 'vendor', 'npm', filename)
 const receiptPath = resolve(root, 'vendor', 'npm', `${packageName}-${version}.provenance.json`)
 const legacyShimPath = resolve(root, 'vendor', packageName)
-const expectedSha256 = 'ff0b25d39bfdada083ff4370e7781724436a03d0042dfb377dbf6e27f8aaf849'
-const expectedIntegrity = 'sha512-nG+mdqe2nxuU2V8ama2dzUwxFJmSxgkdTo7gnYI8Wo7yMeNpkq1jy5YaJpQphlwE1Xs4jsqDfNtktNUlUVUCVA=='
+const expectedSha256 = '182727377ef0412544461e2a3527c6288a2f0a390d095b056f673a26d4a8f682'
+const expectedIntegrity = 'sha512-biDWJFPwuYCDX5S7jcZyOFlPB6eep4+EmGMuaNU6IUouJmUfjJ2jy+O60rh6eornT5fLjaQTpLi4GeiYnMrtEA=='
 
 function fail(message) {
   throw new Error(`[check-ui-package] ${message}`)
@@ -65,7 +65,7 @@ if (integrity !== expectedIntegrity) fail(`npm integrity mismatch: ${integrity}`
 const receipt = JSON.parse(readFileSync(receiptPath, 'utf8'))
 if (receipt.package?.name !== packageName || receipt.package?.version !== version) fail('receipt package identity mismatch')
 if (receipt.schema_version !== 'nirs4all.ui-release-artifact/v1' || receipt.source?.dirty !== false) fail('receipt is not a clean owner release artifact')
-if (receipt.source?.commit_sha !== '787699446281d2a4a5a45cf73847b2cc3d90828e') fail('receipt source commit mismatch')
+if (receipt.source?.commit_sha !== 'ee68f473cf01ee7550d132ad13e6b961346eafdb') fail('receipt source commit mismatch')
 if (receipt.artifact?.filename !== filename || receipt.artifact?.size !== bytes.length) fail('receipt artifact identity mismatch')
 if (receipt.artifact?.sha256 !== sha256 || receipt.artifact?.npm_integrity !== integrity) fail('receipt digest mismatch')
 

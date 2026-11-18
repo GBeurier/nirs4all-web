@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+### Added
+
+- Multimodal laboratory: fusion pipelines are edited in the shared rack editor
+  (nirs4all-ui 0.2.7) as canonical nirs4all pipelines, one lane per source.
+  Presets cover single-source baselines and early, embedding (training-fitted
+  PCA scores), intermediate (MB-PLS, native multibranch network) and late
+  (average, stacking) fusion; unsupported edits are refused with a reason.
+  Every completed run of a dataset is compared in the shared Inspector.
+- Training slides at `/multimodal-training/slides/` (presenter window, notes,
+  PDF export) with conclusion charts from native laboratory scores.
+
+### Removed
+
+- The previous multimodal workshop PowerPoint, PDF and demo guide.
+
 ### Fixed
 
 - Datasets with several target columns load again. Since 0.5.1 an upload whose
