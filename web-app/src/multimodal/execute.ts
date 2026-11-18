@@ -1,6 +1,7 @@
 import type { LabCandidateResult, LabConfig, LabDataset, LabMetricScope, LabProgress, LabRunResult, LabSource } from './types'
 import { describeRecipe, pipelineSourceIds, pipelineStrategy, validatePipelineDocument } from './recipes'
 import { loadLabRuntime, nativeJson, N4mWasmSourceController, SEED_TOKEN, stableJson } from './runtime'
+import { loadHostModels, withHostModels } from './hostModels'
 
 type Json = Record<string, any>
 interface FoldSet {
@@ -153,7 +154,12 @@ function metricScope(runtime: Awaited<ReturnType<typeof loadLabRuntime>>, datase
 export async function executeLab(dataset: LabDataset, configs: LabConfig[], onProgress?: (progress: LabProgress) => void): Promise<LabRunResult> {
   const started = performance.now()
   validate(dataset, configs)
-  const runtime = await loadLabRuntime(), { dag, methods, hash, fingerprint } = runtime
+  const native = await loadLabRuntime()
+  // Host JavaScript models (random forest, TF.js CNN) are loaded only when a recipe uses them.
+  const heads = configs.flatMap(config => config.pipeline ? [...config.pipeline.branches.map(branch => branch.head.methodId), config.pipeline.merge.head.methodId] : [])
+  const hostVersions = await loadHostModels(heads)
+  const runtime = { ...native, methods: withHostModels(native.methods), ownerVersions: { ...native.ownerVersions, ...hostVersions } }
+  const { dag, methods, hash, fingerprint } = runtime
   const protocol = cohorts(runtime, dataset, configs[0]), seed = configs[0].validation.seed
   const trainingEnvelope = envelopeFor(dataset, protocol.calibrationIds, runtime)
   const sourceRows = new Map(dataset.sources.map(source => [source.id, new Map(source.sampleIds.map((id, index) => [id, index]))]))

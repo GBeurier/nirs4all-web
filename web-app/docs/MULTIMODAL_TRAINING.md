@@ -54,6 +54,24 @@ marker or image lanes, a source merge before a multiblock model, …). The
 preset recipes compile to exactly the native recipes of the previous teaching
 strategies (`src/multimodal/fusion.test.ts`).
 
+### Browser models (laboratory only)
+
+Besides the native Methods models, three host models can end a branch. They run
+behind the same native DAG-ML controller (same folds, OOF predictions, refit and
+held-out replay) but exist only in the browser: no Python/R equivalent and no
+portable Methods state. The maintainer accepted this exception for the teaching
+laboratory.
+
+| Operator | Engine | Preset | Notes |
+| --- | --- | --- | --- |
+| `host.mljs.random_forest_regressor` | ml.js (Core `classic-ml` adapter) | Early · random forest | 50 trees; long spectra resampled to 128 points first |
+| `host.tfjs.cnn_regressor` | TensorFlow.js 3.21 (WebGL on a hardware GPU, otherwise CPU) | Mid · CNN (TF.js), markers · CNN (TF.js) | offered when a marker table is present; 1-D convolution along the marker order |
+| `host.burn.cnn_regressor` | Burn 0.16.1 compiled to WebAssembly (`lab-burn/`) | Mid · NICON (Burn) | the nirs4all NICON 1-D CNN per spectrum (≥ 175 points; resampled to 256), SNV and Savitzky–Golay first |
+
+On the 294-sample cocaine collection (three spectra of 778–3,734 points), running
+every preset takes about three minutes in a desktop browser; NICON is the longest
+step (about two minutes).
+
 **Run this pipeline** adds one run; **Run all presets** adds every preset of the
 dataset. Every completed run stays in the shared Inspector in section 6 until the
 data change or **Clear runs**; rank on the OOF scores and check that runs share

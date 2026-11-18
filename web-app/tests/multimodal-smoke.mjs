@@ -19,7 +19,7 @@ page.on('console', message => { if (message.type() === 'error') errors.push(mess
 page.on('response', response => { if (response.status() >= 400) failedRequests.push(`${response.status()} ${response.url()}`) })
 page.on('request', request => { if (!['GET', 'HEAD'].includes(request.method())) mutations.push(request.url()) })
 const sameIds = (a, b) => assert.deepEqual([...a].sort(), [...b].sort())
-const LEVELS = { spectroscopy: 9, genetics: 8, images: 8 }
+const LEVELS = { spectroscopy: 10, genetics: 11, images: 9 }
 
 async function downloadResult(caseId) {
   const [download] = await Promise.all([page.waitForEvent('download'),
@@ -32,7 +32,7 @@ async function downloadResult(caseId) {
 async function runAll() {
   await page.getByRole('button', { name: /^Run all \d+ presets/ }).click()
   await page.getByRole('button', { name: 'Cancel', exact: true }).waitFor()
-  await page.waitForFunction(() => /added to the comparison/.test(document.querySelector('.n4fl-status')?.textContent ?? ''), null, { timeout: 600000 })
+  await page.waitForFunction(() => /added to the comparison/.test(document.querySelector('.n4fl-status')?.textContent ?? ''), null, { timeout: 1500000 })
 }
 
 function verifyRuns(document, count) {

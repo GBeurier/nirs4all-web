@@ -1,0 +1,17 @@
+{
+  "name": "lab-burn-cnn",
+  "type": "module",
+  "description": "Browser-only CNN regressors (NICON and a compact CNN) trained with Burn for the nirs4all multimodal laboratory. Not part of the nirs4all owner libraries.",
+  "version": "0.1.0",
+  "license": "CECILL-2.1 OR AGPL-3.0-or-later",
+  "files": [
+    "lab_burn_cnn_bg.wasm",
+    "lab_burn_cnn.js",
+    "lab_burn_cnn.d.ts"
+  ],
+  "main": "lab_burn_cnn.js",
+  "types": "lab_burn_cnn.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

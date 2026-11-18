@@ -18,6 +18,9 @@ It is a standalone browser client built on the npm/Node ecosystem (Vite + React 
 | three.js, `@react-three/*` | MIT | https://github.com/mrdoob/three.js |
 | Recharts | MIT | https://github.com/recharts/recharts |
 | `zod`, `clsx`, `lucide-react`, `framer-motion` | MIT | (respective repos) |
+| ml.js (`ml`, random forest; multimodal laboratory) | MIT | https://github.com/mljs/ml |
+| TensorFlow.js (`@tensorflow/tfjs` 3.21; multimodal laboratory CNN) | Apache-2.0 | https://github.com/tensorflow/tfjs |
+| Burn 0.16.1 (Rust, compiled to `web-app/src/engine/wasm/lab-burn`; multimodal laboratory CNN) | MIT OR Apache-2.0 | https://github.com/tracel-ai/burn |
 | TypeScript | Apache-2.0 | https://github.com/microsoft/TypeScript |
 
 `web-app/package-lock.json` is the authoritative version-pinned npm dependency graph. A local

@@ -1,3 +1,4 @@
+import { BURN_CNN, RANDOM_FOREST, TFJS_CNN } from './hostModelIds'
 import type { LabConfig, LabDataset, LabPipelineBranch, LabPipelineDocument, LabPipelinePreset, LabSource, LabStep, LabStrategy } from './types'
 
 export const SOURCE_RECIPE_PARAM = 'source_composition_v1'
@@ -121,7 +122,7 @@ function describeLegacyRecipe(dataset: LabDataset, config: LabConfig): RecipeDes
     label: strategyLabel[name] + (config.blockScaling ? '; Train-fitted block RMS scaling' : '') }
 }
 
-const HEADS = new Set([PLS, RIDGE, 'models.multiblock.mb_pls', NEURAL])
+const HEADS = new Set([PLS, RIDGE, 'models.multiblock.mb_pls', NEURAL, RANDOM_FOREST, TFJS_CNN, BURN_CNN])
 const META_HEADS = new Set([PLS, RIDGE])
 const object = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -140,7 +141,7 @@ function validateStep(value: unknown, heads?: Set<string>): asserts value is Lab
     typeof param === 'number' && Number.isFinite(param)),
   'Operation parameters must be finite primitive values; native network geometry is derived from the selected sources')
   const params = value.params
-  if (value.methodId === NEURAL) insist(!['branch_kinds', 'branch_shapes', 'seed'].some(key => Object.hasOwn(params, key)),
+  if (value.methodId === NEURAL || value.methodId === TFJS_CNN || value.methodId === BURN_CNN || value.methodId === RANDOM_FOREST) insist(!['branch_kinds', 'branch_shapes', 'seed'].some(key => Object.hasOwn(params, key)),
     'Network branch geometry and task seeds are derived by the host/native controller; remove these low-level parameters')
 }
 
@@ -252,9 +253,25 @@ function describeDocument(dataset: LabDataset, config: LabConfig): RecipeDescrip
   const model = (id: string, input: Pick<LabPipelineBranch, 'sourceIds' | 'sourceChains' | 'head'>, hybrid = false) => {
     const sources = input.sourceIds.map(sourceId => dataset.sources.find(source => source.id === sourceId)!)
     const head: LabStep = structuredClone(input.head)
+    // CNN branch geometry follows each source after its chain (resampling or PCA change the width).
+    const widthAfter = (source: LabSource) => (input.sourceChains.find(chain => chain.sourceId === source.id)?.steps ?? []).reduce((width, item) => {
+      if (item.methodId === 'preprocessing.resampling.resample_transformer') return Number(item.params.num_samples)
+      if (item.methodId === 'preprocessing.feature_selection.flexible_pca') {
+        insist(Number.isInteger(Number(item.params.n_components)) && Number(item.params.n_components) >= 1, 'A CNN after PCA needs a whole number of components')
+        return Number(item.params.n_components)
+      }
+      return width
+    }, source.shape[0])
+    const lineShape = (source: LabSource) => source.modality === 'image' ? source.shape : [widthAfter(source), 1, 1]
+    // Host models take the task seed as a decimal string; the TF.js CNN reads ordered markers with a 1-D convolution.
+    if (head.methodId === RANDOM_FOREST) head.params = { ...head.params, seed: config.validation.seed }
+    if (head.methodId === TFJS_CNN || head.methodId === BURN_CNN) head.params = { ...head.params,
+      branch_kinds: sources.map(source => source.modality === 'image' ? 2 : 1),
+      branch_shapes: sources.flatMap(lineShape),
+      seed: config.validation.seed }
     if (head.methodId === NEURAL) head.params = { ...head.params,
       branch_kinds: sources.map(source => source.modality === 'image' ? 2 : source.modality === 'genetics' ? 0 : 1),
-      branch_shapes: sources.flatMap(source => source.modality === 'image' ? source.shape : [source.shape[0], 1, 1]),
+      branch_shapes: sources.flatMap(lineShape),
       pool_size: head.params.pool_size ?? 2, seed: BigInt.asIntN(64, BigInt(config.validation.seed)).toString() }
     const localConfig: LabConfig = { ...config, blockScaling: false,
       sourceChains: input.sourceChains.map(chain => ({ sourceId: chain.sourceId, steps: structuredClone([...chain.steps]) })) }
