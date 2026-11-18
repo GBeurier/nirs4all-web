@@ -38,7 +38,7 @@ it('delegates a declared prediction operation to the native validator even witho
 
 it('does not borrow a calibration entrypoint feature to execute an unknown operation', async () => {
   route.manifest.entrypoints = [{ ...prediction, operation: 'future.predict' }, calibration]
-  await expect(parseN4aFile(file())).rejects.toThrow(/readable here but not executable/)
+  await expect(parseN4aFile(file())).rejects.toThrow(/can open the file but cannot run it/)
   expect(route.readArchive).not.toHaveBeenCalled()
   expect(route.nativeImport).not.toHaveBeenCalled()
   expect(route.close).toHaveBeenCalledOnce()
@@ -47,7 +47,7 @@ it('does not borrow a calibration entrypoint feature to execute an unknown opera
 it('does not infer a prediction operation from a global native feature alone', async () => {
   route.manifest.required_features = [nativeFeature]
   route.manifest.entrypoints = [calibration]
-  await expect(parseN4aFile(file())).rejects.toThrow(/readable here but not executable/)
+  await expect(parseN4aFile(file())).rejects.toThrow(/can open the file but cannot run it/)
   expect(route.nativeImport).not.toHaveBeenCalled()
 })
 

@@ -206,7 +206,7 @@ describe('Core V1 host container', () => {
     manifest.entrypoints[0].owner = 'nirs4all.python-host'
     manifest.entrypoints[0].required_features = ['nirs4all-python-host@1']
     const foreign = await writeN4aContainer(manifest, [{ path: 'host/bundle.json', bytes: new TextEncoder().encode('{}') }])
-    await expect(parseN4aFile(fileOf(foreign.archiveBytes, 'looks-like-web.n4a'))).rejects.toThrow(/nirs4all-python-host@1.*not executable/)
+    await expect(parseN4aFile(fileOf(foreign.archiveBytes, 'looks-like-web.n4a'))).rejects.toThrow(/nirs4all for Python.*cannot run it.*requires nirs4all-python-host@1/)
   })
 
   // The native-methods-package route (open + replay of the genuine Core V1 Package2) is exercised
