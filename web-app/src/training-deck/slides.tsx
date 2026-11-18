@@ -59,9 +59,9 @@ export const SLIDES: Slide[] = [
       <div className="deck-title">
         <p className="deck-kicker">formation nirs4all · session multimodale</p>
         <h1>Un échantillon, plusieurs mesures,<br /><span className="n4-gradient-text">une prédiction défendable</span></h1>
-        <p className="deck-lead">Les données multimodales · quatre niveaux de fusion · trois démonstrations</p>
+        <p className="deck-lead">Les données multimodales · early, mid et late fusion · trois démonstrations</p>
         <div className="deck-title-levels">
-          <LevelTag level="early" /><LevelTag level="mid" /><LevelTag level="joint" /><LevelTag level="late" />
+          <LevelTag level="early" /><LevelTag level="mid" /><LevelTag level="late" />
         </div>
         <p className="deck-url">web.nirs4all.org/nirs4all_multimodale</p>
       </div>
@@ -129,8 +129,8 @@ export const SLIDES: Slide[] = [
         <FusionPointsDiagram />
         <div className="deck-columns deck-columns--4">
           <div><LevelTag level="early" /><p>les <strong>variables</strong></p></div>
-          <div><LevelTag level="mid" /><p>des <strong>caractéristiques</strong> extraites par source</p></div>
-          <div><LevelTag level="joint" /><p><strong>dans</strong> un seul modèle appris</p></div>
+          <div><LevelTag level="mid">Mid · scores</LevelTag><p>des <strong>caractéristiques</strong> extraites par source</p></div>
+          <div><LevelTag level="mid">Mid · réseau</LevelTag><p>des caractéristiques <strong>apprises</strong>, concaténées au milieu</p></div>
           <div><LevelTag level="late" /><p>les <strong>prédictions</strong></p></div>
         </div>
       </>
@@ -138,13 +138,13 @@ export const SLIDES: Slide[] = [
     notes: [
       'Voici la carte pour la suite. Suivez chaque source de gauche à droite : données brutes, prétraitement, un résumé, un modèle, une prédiction.',
       'La seule question est : à quel endroit les sources se rejoignent-elles ?',
-      'Un : bas niveau, ou early fusion. On met les variables prétraitées côte à côte. Deux : niveau intermédiaire. Chaque source est d’abord résumée par quelques caractéristiques, par exemple des scores ACP ou PLS, puis on fusionne ces résumés. Trois : haut niveau, ou late fusion. Chaque source a son modèle, et on combine les prédictions.',
-      'Et un cas à part, que le monde du deep learning appelle souvent « intermediate fusion » : un seul modèle, un réseau, qui apprend en même temps une représentation par source et la façon de les combiner. On l’appellera modèle conjoint, pour ne pas le confondre avec le niveau intermédiaire des chimiométriciens.',
+      'Early fusion, ou bas niveau : on met les variables prétraitées côte à côte. Late fusion, ou haut niveau : chaque source a son modèle et on combine les prédictions.',
+      'Entre les deux, la mid fusion : on fusionne des caractéristiques. Deux façons de les obtenir. Soit on les extrait à part pour chaque source, par exemple des scores ACP ou PLS : c’est le « mid-level » des chimiométriciens. Soit un réseau les apprend, une branche par source, et on les concatène au milieu du réseau : c’est la mid fusion, ou intermediate fusion, du deep learning.',
       'Les couleurs que vous voyez ici sont utilisées partout ensuite : slides, presets du labo et graphiques de résultats.',
     ],
   },
   {
-    id: 'early', section: 'Concepts', title: 'Bas niveau : les variables côte à côte', minutes: 2.5,
+    id: 'early', section: 'Concepts', title: 'Early fusion : les variables côte à côte', minutes: 2.5,
     body: () => (
       <>
         <div className="deck-heading-tag"><LevelTag level="early" /></div>
@@ -161,7 +161,7 @@ export const SLIDES: Slide[] = [
     ],
   },
   {
-    id: 'mid', section: 'Concepts', title: 'Niveau intermédiaire : résumer chaque source', minutes: 2,
+    id: 'mid', section: 'Concepts', title: 'Mid fusion ① : résumer chaque source', minutes: 2,
     body: () => (
       <>
         <div className="deck-heading-tag"><LevelTag level="mid" /></div>
@@ -171,31 +171,55 @@ export const SLIDES: Slide[] = [
       </>
     ),
     notes: [
-      'Au niveau intermédiaire, on ne fusionne plus les variables mais des caractéristiques extraites de chaque source. Le cas le plus classique en chimiométrie : les scores d’une ACP ou d’un PLS par bloc. On peut aussi y mettre des variables sélectionnées, ou des descripteurs calculés.',
+      'Première forme de mid fusion : on ne fusionne plus les variables mais des caractéristiques extraites à part pour chaque source. Le cas le plus classique en chimiométrie, le « mid-level » : les scores d’une ACP ou d’un PLS par bloc. On peut aussi y mettre des variables sélectionnées, ou des descripteurs calculés.',
       'Ici, chaque source est résumée par cinq scores ACP, et seuls ces scores sont concaténés avant le modèle. Chaque source pèse alors le même nombre de colonnes, quel que soit son nombre de longueurs d’onde ou de pixels.',
       'En deep learning, on fait la même chose avec des encodeurs pré-entraînés : un réseau d’images ou un modèle de langage transforme une image ou un texte en vecteur — un « embedding » — et ce sont ces vecteurs qu’on fusionne. Le principe est le même.',
-      'L’ACP est ajustée dans chaque fold d’entraînement, jamais sur les échantillons de validation. Sa limite : elle garde les directions de plus grande variance, qui ne sont pas forcément celles liées à y. Des scores PLS par bloc tiendraient compte de y.',
+      'L’ACP est ajustée dans chaque fold d’entraînement, jamais sur les échantillons de validation. Sa limite : elle garde les directions de plus grande variance, qui ne sont pas forcément celles liées à y, et elle est calculée sans regarder les autres sources. La deuxième forme corrige les deux.',
     ],
   },
   {
-    id: 'joint', section: 'Concepts', title: 'Modèle conjoint : une branche par source, un seul réseau', minutes: 2.5,
+    id: 'mid-cnn', section: 'Concepts', title: 'Mid fusion ② : concaténer au milieu d’un CNN', minutes: 2.5,
     body: () => (
       <>
-        <div className="deck-heading-tag"><LevelTag level="joint" /></div>
+        <div className="deck-heading-tag"><LevelTag level="mid" /></div>
         <IntermediateDiagram />
-        <PipelineView preset="network" caseId="images" />
-        <ProsCons pro="chaque source garde sa structure · représentation apprise pour y" con="demande beaucoup d’échantillons et du réglage" />
+        <PipelineView preset="cnn" caseId="images" />
+        <ProsCons pro="chaque source garde sa structure · caractéristiques apprises pour y" con="demande des échantillons et du réglage" />
       </>
     ),
     notes: [
-      'Le modèle conjoint, c’est ce que le deep learning appelle « intermediate fusion ». Les blocs restent séparés jusqu’au modèle, et c’est le modèle lui-même qui fait la fusion.',
-      'Chaque source a une branche adaptée à sa nature : une convolution 1D glisse le long du spectre, une couche dense lit le tableau de marqueurs, une convolution 2D lit l’image. Chaque branche produit un petit vecteur ; on les concatène et une tête commune prédit y. Tout est entraîné d’un bloc : les branches apprennent ce qui est utile pour y. C’est la différence avec les scores ACP du niveau intermédiaire, qui sont calculés sans regarder y.',
-      'Le labo entraîne vraiment un tel réseau dans le navigateur. Ce n’est ni PyTorch ni TensorFlow : c’est un petit réseau écrit en C++ dans Methods, compilé en WebAssembly avec le reste. Rétropropagation, optimiseur Adam, erreur quadratique, graine fixée : le résultat est reproductible. Il est volontairement minuscule, quelques milliers de paramètres, et tourne sur le processeur sans GPU.',
-      'Le prix : beaucoup plus de paramètres qu’un PLS, donc plus d’échantillons nécessaires, et des choix d’entraînement — nombre d’epochs, taux d’apprentissage — qui comptent.',
+      'Deuxième forme de mid fusion, celle du deep learning. Les blocs restent séparés jusque dans le réseau, et la fusion se fait au milieu, par concaténation.',
+      'Chaque source a une branche adaptée à sa nature : une convolution 1D glisse le long du spectre, une couche dense lit le tableau de marqueurs, une convolution 2D lit l’image. Chaque branche produit un petit vecteur, un embedding ; on concatène ces vecteurs au milieu du réseau et une tête commune prédit y. Tout est entraîné d’un bloc : les branches apprennent ce qui est utile pour y, en tenant compte des autres sources. C’est la différence avec les scores ACP, calculés à part et sans regarder y.',
+      'Le labo entraîne vraiment ce CNN dans le navigateur. Ce n’est ni PyTorch ni TensorFlow : c’est un petit réseau écrit en C++ dans Methods, compilé en WebAssembly avec le reste. Rétropropagation, optimiseur Adam, erreur quadratique, graine fixée : le résultat est reproductible. Il reste petit — 8 filtres par branche, des embeddings de 16, 150 epochs — et tourne sur le processeur, sans GPU, en quelques secondes.',
+      'Le prix : beaucoup plus de paramètres qu’un PLS, donc plus d’échantillons nécessaires, et des choix d’entraînement — taille, nombre d’epochs, taux d’apprentissage — qui comptent.',
     ],
   },
   {
-    id: 'late', section: 'Concepts', title: 'Haut niveau : un modèle par source, puis on combine', minutes: 2,
+    id: 'ml-names', section: 'Concepts', title: 'Mid fusion : comment le ML l’appelle', minutes: 1.5,
+    body: () => (
+      <>
+        <table className="deck-table deck-table--terms">
+          <thead><tr><th>Terme</th><th>Où on le lit</th><th>Ce que ça désigne</th></tr></thead>
+          <tbody>
+            <tr><td><strong>intermediate fusion</strong></td><td>revues de deep learning multimodal</td><td>fusion des représentations intermédiaires d’un réseau</td></tr>
+            <tr><td><strong>mid fusion</strong> · middle fusion</td><td>vision, audio-vidéo, capteurs</td><td>concaténation au milieu du réseau, entre les branches et la tête</td></tr>
+            <tr><td><strong>joint fusion</strong></td><td>imagerie médicale (Huang et al., 2020)</td><td>idem, avec la perte rétropropagée jusqu’aux branches : entraînement de bout en bout</td></tr>
+            <tr><td><strong>feature-level fusion</strong></td><td>ML classique · chimiométrie « mid-level » (Borràs et al., 2015)</td><td>fusion de caractéristiques extraites à part (ACP, PLS, sélection)</td></tr>
+            <tr><td><strong>embedding fusion</strong></td><td>modèles de fondation</td><td>fusion des vecteurs d’encodeurs pré-entraînés, souvent gelés</td></tr>
+          </tbody>
+        </table>
+        <Callout>Même idée : on fusionne des <strong>caractéristiques</strong>. La vraie différence : <strong>extraites à part</strong> (ACP, encodeur gelé) ou <strong>apprises ensemble</strong> pour y (CNN entraîné de bout en bout).</Callout>
+      </>
+    ),
+    notes: [
+      'Le vocabulaire n’est pas stabilisé, et vous lirez tous ces termes pour la même famille d’idées.',
+      'En deep learning, « intermediate fusion » et « mid fusion » désignent la concaténation au milieu d’un réseau, entre les branches par modalité et la tête de prédiction. En imagerie médicale, la revue de Huang et collègues (npj Digital Medicine, 2020) parle de « joint fusion » quand la perte est rétropropagée jusqu’aux branches, autrement dit quand tout est appris de bout en bout.',
+      '« Feature-level fusion » est plus large : n’importe quelle fusion de caractéristiques, y compris des scores ACP ou PLS calculés à part. C’est le « mid-level » des chimiométriciens, par exemple dans la revue de Borràs et collègues (Analytica Chimica Acta, 2015). « Embedding fusion » s’emploie surtout quand les caractéristiques viennent d’encodeurs pré-entraînés et gelés.',
+      'Le critère qui compte en pratique : les caractéristiques sont-elles extraites à part, sans regarder y ni les autres sources, ou apprises ensemble pour y ? La deuxième option est plus puissante, mais demande des données.',
+    ],
+  },
+  {
+    id: 'late', section: 'Concepts', title: 'Late fusion : un modèle par source, puis on combine', minutes: 2,
     body: () => (
       <>
         <div className="deck-heading-tag"><LevelTag level="late" /></div>
@@ -226,21 +250,21 @@ export const SLIDES: Slide[] = [
     ],
   },
   {
-    id: 'summary', section: 'Concepts', title: 'Les quatre niveaux, deux vocabulaires', minutes: 1.5,
+    id: 'summary', section: 'Concepts', title: 'Récapitulatif, deux vocabulaires', minutes: 1,
     body: () => (
       <table className="deck-table">
         <thead><tr><th>Chimiométrie</th><th>Machine learning</th><th>Ce qui est fusionné</th><th>Modèles du labo</th><th>Attention</th></tr></thead>
         <tbody>
-          <tr><td><LevelTag level="early">Bas niveau</LevelTag></td><td>early fusion</td><td>les variables prétraitées</td><td>PLS sur la concaténation · MB-PLS</td><td>pondération des blocs, nombre de VL</td></tr>
-          <tr><td><LevelTag level="mid">Niveau intermédiaire</LevelTag></td><td>feature-level · embeddings</td><td>des caractéristiques par source (scores ACP/PLS)</td><td>ACP par source → PLS</td><td>le résumé peut perdre le signal</td></tr>
-          <tr><td><LevelTag level="joint">Modèle conjoint</LevelTag></td><td>intermediate fusion</td><td>des représentations apprises ensemble</td><td>réseau multibranche</td><td>données et réglage</td></tr>
-          <tr><td><LevelTag level="late">Haut niveau</LevelTag></td><td>late fusion · decision-level</td><td>les prédictions</td><td>moyenne · stacking</td><td>pas d’interaction entre sources</td></tr>
+          <tr><td>bas niveau</td><td><LevelTag level="early">early fusion</LevelTag></td><td>les variables prétraitées</td><td>PLS sur la concaténation · MB-PLS</td><td>pondération des blocs, nombre de VL</td></tr>
+          <tr><td>niveau intermédiaire</td><td><LevelTag level="mid">feature-level</LevelTag></td><td>des caractéristiques extraites à part (scores ACP/PLS)</td><td>ACP par source → PLS</td><td>le résumé peut perdre le signal</td></tr>
+          <tr><td>—</td><td><LevelTag level="mid">mid · intermediate · joint</LevelTag></td><td>des caractéristiques apprises, concaténées dans le réseau</td><td>CNN multibranche</td><td>données et réglage</td></tr>
+          <tr><td>haut niveau</td><td><LevelTag level="late">late fusion</LevelTag></td><td>les prédictions</td><td>moyenne · stacking</td><td>pas d’interaction entre sources</td></tr>
         </tbody>
       </table>
     ),
     notes: [
       'Un résumé à garder, avec les deux vocabulaires, parce que vous lirez les deux. Les chimiométriciens parlent de bas, moyen et haut niveau ; la littérature machine learning parle d’early, intermediate et late fusion.',
-      'Attention au faux ami : l’« intermediate fusion » du machine learning désigne en général un réseau qui apprend tout ensemble, pas les scores ACP par bloc du niveau intermédiaire chimiométrique. Et le MB-PLS reste du bas niveau, avec une structure de blocs.',
+      'Les deux formes de mid fusion fusionnent des caractéristiques ; la chimiométrie classique n’a que la première. Et le MB-PLS reste du bas niveau, avec une structure de blocs.',
       'Aucun niveau n’est le meilleur en général. Ce sont les données qui décident, et la seule façon de le savoir est de comparer sous la même validation. C’est ce qu’on fait maintenant.',
     ],
   },
@@ -265,7 +289,7 @@ export const SLIDES: Slide[] = [
     ],
   },
   {
-    id: 'lab', section: 'Démonstration', title: 'Le labo multimodal', minutes: 1,
+    id: 'lab', section: 'Démonstration', title: 'Le labo multimodal', minutes: 0.5,
     body: () => (
       <div className="deck-split deck-split--wide">
         <Capture src="../captures/lab-editor.png" alt="L’éditeur de pipeline de fusion, avec les presets et une voie par source" />
@@ -334,7 +358,7 @@ export const SLIDES: Slide[] = [
     ],
   },
   {
-    id: 'demo-genetics', section: 'Démonstration', title: 'Démo 2 · NIRS + marqueurs génétiques', minutes: 4.5,
+    id: 'demo-genetics', section: 'Démonstration', title: 'Démo 2 · NIRS + marqueurs génétiques', minutes: 4,
     body: () => (
       <div className="deck-split deck-split--demo">
         <div>
@@ -365,7 +389,7 @@ export const SLIDES: Slide[] = [
           <Points items={[
             <><strong>Faible seule ≠ inutile</strong> : marqueurs {fmt(R.gen('Marqueurs seuls'))}, mais fusion {fmt(edit('genetics', 'Early · PLS 5').oofRmse)} contre NIRS {fmt(edit('genetics', 'NIRS seul · PLS 5').oofRmse)}</>,
             <><strong>Le bas niveau gagne</strong> : MB-PLS {fmt(R.gen('Early · MB-PLS'))} ; moyenne {fmt(R.gen('Late · moyenne'))}</>,
-            <><strong>Réseau</strong> {fmt(R.gen('Conjoint · réseau'))} : pas avec 96 échantillons</>,
+            <><strong>CNN</strong> {fmt(R.gen('Mid · CNN'))} : bat le NIRS seul, pas le bas niveau</>,
           ]} />
           <Provenance caseId="genetics" />
         </div>
@@ -374,7 +398,7 @@ export const SLIDES: Slide[] = [
     notes: [
       'Message principal : on juge une source sur ce qu’elle apporte, pas sur son score seule. Les marqueurs seuls sont inutiles comme prédicteur, mais combinés au spectre ils divisent l’erreur par deux.',
       'Les fusions de bas niveau voient les deux blocs en même temps ; la fusion late voit chaque bloc séparément, elle exploite moins bien la complémentarité, et la moyenne fait même moins bien que le NIRS seul.',
-      'Le petit réseau est nettement derrière ici. Avec 96 échantillons et des réglages par défaut, il n’est pas compétitif : un modèle plus complexe n’est pas automatiquement meilleur.',
+      'Le CNN fait mieux que le NIRS seul et que la fusion late, mais reste derrière la fusion de bas niveau : avec 96 échantillons, un modèle plus complexe n’est pas automatiquement meilleur.',
     ],
   },
   {
@@ -384,40 +408,41 @@ export const SLIDES: Slide[] = [
         <div>
           <p className="deck-case">120 échantillons · NIRS 64 · une image 12 × 12 en niveaux de gris par échantillon · 96 calibration / 24 test</p>
           <Steps items={[
-            <><a href={labLink('images', 'network')}>Ouvrir le cas</a> : spectre + image</>,
-            <><LevelTag level="joint">Réseau</LevelTag> : branches 1D et 2D</>,
+            <><a href={labLink('images', 'cnn')}>Ouvrir le cas</a> : spectre + image</>,
+            <><LevelTag level="mid">Mid · CNN</LevelTag> : branches 1D et 2D, concaténées au milieu</>,
             <><strong>« Run all presets »</strong></>,
-            <>En option : <strong>100 epochs</strong></>,
+            <>CNN minuscule : <strong>4 filtres, 24 epochs</strong>, relancer</>,
           ]} />
         </div>
         <Capture src="../captures/images-inspector.png" alt="L’Inspector classe les recettes du cas images" />
       </div>
     ),
     notes: [
-      'Dernier cas : un spectre et une petite image par échantillon. La fusion early et le PLS traitent les 144 pixels comme 144 variables indépendantes ; le réseau garde la disposition 2D avec une convolution.',
-      'Montrer le preset réseau dans l’éditeur : les mêmes voies par source, et c’est l’étape modèle qui fait la fusion. Lancer tous les presets.',
-      'S’il reste du temps, passer à 100 epochs et relancer : le score bouge à peine. Ce n’est pas l’entraînement qui manque ici ; avec 96 petites images synthétiques, ce réseau compact ne bat pas les modèles linéaires.',
+      'Dernier cas : un spectre et une petite image par échantillon. La fusion early et le PLS traitent les 144 pixels comme 144 variables indépendantes ; le CNN garde la disposition 2D avec une convolution, et fusionne au milieu du réseau.',
+      'Montrer le preset Mid · CNN dans l’éditeur : les mêmes voies par source, et c’est l’étape modèle qui contient les branches et la concaténation. Lancer tous les presets.',
+      'Puis réduire le CNN — 4 filtres, embeddings de 6, 24 epochs, taux d’apprentissage 0,003 — et relancer : il perd beaucoup. La taille du réseau et l’entraînement comptent autant que l’architecture.',
+      'Honnêteté : les réglages du CNN ont été choisis après quelques essais sur ces mêmes données, son score est donc un peu optimiste.',
     ],
   },
   {
     id: 'concl-images', section: 'Démonstration', title: 'Démo 3 · ce qu’on retient', minutes: 1.5,
     body: () => (
       <div className="deck-split deck-split--chart">
-        <ResultsChart caseId="images" highlight={['Image seule', 'Early · concaténation', 'Intermédiaire · scores ACP', 'Conjoint · réseau']} />
+        <ResultsChart caseId="images" highlight={['Image seule', 'Early · concaténation', 'Mid · CNN', 'CNN minuscule']} />
         <div>
           <Points items={[
             <><strong>L’image domine</strong> ({fmt(R.img('Image seule'))}), le spectre complète : early {fmt(R.img('Early · concaténation'))}</>,
-            <><strong>Niveau intermédiaire</strong> {fmt(R.img('Intermédiaire · scores ACP'))} avec 10 colonnes au lieu de 208</>,
-            <><strong>Réseau 2D</strong> {fmt(R.img('Conjoint · réseau'))} : bonne idée, trop peu d’échantillons</>,
+            <><strong>Mid · CNN</strong> {fmt(R.img('Mid · CNN'))} : bat l’image seule ; minuscule : {fmt(edit('images', 'CNN minuscule').oofRmse)}</>,
+            <><strong>Mid · scores ACP</strong> {fmt(R.img('Mid · scores ACP'))} avec 10 colonnes au lieu de 208</>,
           ]} />
           <Provenance caseId="images" />
         </div>
       </div>
     ),
     notes: [
-      'Ici la fusion aide clairement : early comme niveau intermédiaire battent la meilleure source seule.',
-      'Le niveau intermédiaire est intéressant : cinq scores par source font presque aussi bien que les 208 variables. C’est l’idée qu’on reprend avec des encodeurs pré-entraînés d’images ou de spectres sur de plus gros problèmes.',
-      'Le réseau respecte la structure de l’image, ce qui est la bonne idée pour de vraies images, mais avec 96 petites images synthétiques il ne bat pas le PLS. Avec de vraies images et plus d’échantillons, l’équilibre peut changer.',
+      'Ici la fusion aide clairement : early comme mid fusion battent la meilleure source seule.',
+      'Le CNN, avec sa fusion au milieu, bat l’image seule et se rapproche du PLS ; le CNN minuscule est loin derrière. Avec de vraies images et plus d’échantillons, l’avantage de la convolution peut grandir.',
+      'Les scores ACP sont aussi intéressants : cinq scores par source font presque aussi bien que les 208 variables. C’est l’idée qu’on reprend avec des encodeurs pré-entraînés d’images ou de spectres sur de plus gros problèmes.',
     ],
   },
   {
@@ -426,14 +451,14 @@ export const SLIDES: Slide[] = [
       <div className="deck-guide">
         <div><span className="deck-guide-key"><span className="deck-num">1</span>Références</span><p>chaque source seule</p></div>
         <div><span className="deck-guide-key"><LevelTag level="early" /></span><p>pondérer les blocs, laisser croître les VL · MB-PLS</p></div>
-        <div><span className="deck-guide-key"><LevelTag level="mid" /></span><p>blocs très déséquilibrés : scores par source</p></div>
+        <div><span className="deck-guide-key"><LevelTag level="mid">Mid · scores</LevelTag></span><p>blocs très déséquilibrés : scores par source</p></div>
         <div><span className="deck-guide-key"><LevelTag level="late" /></span><p>instruments pas toujours disponibles : stacking</p></div>
-        <div><span className="deck-guide-key"><LevelTag level="joint" /></span><p>beaucoup d’échantillons, vraies images</p></div>
+        <div><span className="deck-guide-key"><LevelTag level="mid">Mid · CNN</LevelTag></span><p>beaucoup d’échantillons, vraies images</p></div>
         <div><span className="deck-guide-key"><span className="deck-num">✓</span>Protocole</span><p>mêmes folds · OOF · test une fois</p></div>
       </div>
     ),
     notes: [
-      'À retenir : commencer par les sources seules, puis une fusion de bas niveau bien faite. Passer au niveau intermédiaire quand les blocs sont déséquilibrés, au haut niveau quand les instruments ne sont pas toujours là. Le modèle conjoint quand on a beaucoup d’échantillons ou de vraies images.',
+      'À retenir : commencer par les sources seules, puis une fusion early bien faite. Passer à la mid fusion par scores quand les blocs sont déséquilibrés, à la late fusion quand les instruments ne sont pas toujours là. La mid fusion dans un CNN quand on a beaucoup d’échantillons ou de vraies images.',
       'Et toujours le même protocole. Merci ; place aux questions — le labo reste ouvert à l’écran.',
     ],
   },

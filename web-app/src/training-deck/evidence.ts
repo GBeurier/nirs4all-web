@@ -27,14 +27,13 @@ type Recorded = { capturedAt: string; source: { web: string; ui: string }; cases
 
 /**
  * Display names (French) and fusion levels for the recorded runs. The JSON keeps
- * the names under which the runs were recorded; MB-PLS is low-level fusion,
- * PCA scores are mid-level fusion and the network is a joint model.
+ * the names under which the runs were recorded.
  */
 const DISPLAY: Record<string, [string, LevelKind]> = {
   'Raman alone': ['Raman seul', 'single'], 'NIRS alone': ['NIRS seul', 'single'], 'MIR alone': ['MIR seul', 'single'],
   'Genetic markers alone': ['Marqueurs seuls', 'single'], 'Grayscale images alone': ['Image seule', 'single'],
-  'Early · concatenate': ['Early · concaténation', 'early'], 'Intermediate · MB-PLS': ['Early · MB-PLS', 'early'],
-  'Embedding · PCA scores': ['Intermédiaire · scores ACP', 'mid'], 'Intermediate · network': ['Conjoint · réseau', 'joint'],
+  'Early · concatenate': ['Early · concaténation', 'early'], 'Early · MB-PLS': ['Early · MB-PLS', 'early'],
+  'Mid · PCA scores': ['Mid · scores ACP', 'mid'], 'Mid · CNN': ['Mid · CNN', 'mid'],
   'Late · average': ['Late · moyenne', 'late'], 'Late · stacking': ['Late · stacking', 'late'],
 }
 const EDITS: Record<string, [string, LevelKind]> = {
@@ -42,7 +41,7 @@ const EDITS: Record<string, [string, LevelKind]> = {
   'Raman alone · PLS 6': ['Raman seul · PLS 6', 'single'], 'Early · PLS 5': ['Early · PLS 5', 'early'],
   'NIRS alone · PLS 5': ['NIRS seul · PLS 5', 'single'], 'Markers alone · PLS 5': ['Marqueurs seuls · PLS 5', 'single'],
   'MB-PLS · 5 components': ['MB-PLS · 5 composantes', 'early'], 'Image alone · PLS 6': ['Image seule · PLS 6', 'single'],
-  'Network · 100 epochs': ['Réseau · 100 epochs', 'joint'],
+  'Tiny CNN (4 filters, 24 epochs)': ['CNN minuscule', 'mid'],
 }
 function relabel(run: EvidenceRun, table: Record<string, [string, LevelKind]>, key: string): EvidenceRun {
   const entry = table[key]

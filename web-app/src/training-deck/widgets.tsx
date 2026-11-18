@@ -5,7 +5,7 @@ import { LEVEL_COLORS, type LevelKind } from './diagrams'
 import { EVIDENCE, fmt, type CaseId, type EvidenceRun } from './evidence'
 
 const LEVEL_LABEL: Record<LevelKind, string> = {
-  single: 'Source seule', early: 'Bas niveau · early', mid: 'Niveau intermédiaire', joint: 'Modèle conjoint', late: 'Haut niveau · late',
+  single: 'Source seule', early: 'Early · bas niveau', mid: 'Mid fusion', late: 'Late · haut niveau',
 }
 
 /** Display-only dataset stand-in: the presets read source IDs and labels only. */
@@ -82,7 +82,7 @@ export function Provenance({ caseId }: { caseId: CaseId }) {
   const data = EVIDENCE.cases[caseId]
   return (
     <p className="deck-provenance">
-      Scores natifs enregistrés le {EVIDENCE.capturedAt} dans le labo · DAG-ML {data.ownerVersions.dag} · Methods {data.ownerVersions.methods} (identiques en DAG-ML 0.4.4 · Methods 1.3.19) · folds {data.foldsFingerprint.slice(0, 10)} · données pédagogiques synthétiques
+      Scores natifs enregistrés le {EVIDENCE.capturedAt} dans le labo · DAG-ML {data.ownerVersions.dag} · Methods {data.ownerVersions.methods} · folds {data.foldsFingerprint.slice(0, 10)} · données pédagogiques synthétiques
     </p>
   )
 }

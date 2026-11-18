@@ -146,3 +146,7 @@ kbd { font: 700 .8em var(--mono); padding: 1px 8px; border-radius: 6px; border: 
 .deck-columns p { color: var(--text-2); }
 .deck-steps { font-size: 27px; gap: 16px; }
 .deck-split--chart .deck-points { gap: 22px; }
+
+.deck-table--terms td { padding: 14px; font-size: 21px; }
+.deck-table--terms td:first-child { font-size: 22px; white-space: nowrap; }
+.deck-table--terms + .deck-callout { margin-top: 18px; }
