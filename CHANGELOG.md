@@ -67,6 +67,13 @@
   exact published acquisition receipts. Their user-facing error messages no
   longer say "preflight"; nothing else changes. Core 0.5.1 peer ranges already
   accept both.
+- Consume the published Methods 1.4.0 (ABI 2.24.0: model importances, affine
+  pipeline coefficients, gradient explanations, near-zero scale guard) and
+  nirs4all-ui 0.3.0 (importance comparison charts, spreadsheet-friendly CSV)
+  with exact registry acquisition receipts, replacing the local unpublished
+  builds labelled Methods 1.3.19+local and nirs4all-ui 0.2.7-importance.2.
+  Core 0.5.1 (`@nirs4all/methods ^1.3.0`) and DAG-ML 0.4.4 (`^1.2.0`) peer
+  ranges accept Methods 1.4.0.
 
 ## 0.5.2 — 2026-11-16
 

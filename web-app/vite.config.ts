@@ -35,7 +35,7 @@ export default defineConfig(({ mode }) => {
             source: `${JSON.stringify({
               version: packageJson.version,
               upstreams: Object.fromEntries(Object.entries(publicPackages).map(([key, pin]) => [key, pin.version])),
-              ui: '0.2.7-importance.2',
+              ui: '0.3.0',
             }, null, 2)}\n`,
           })
           this.emitFile({
