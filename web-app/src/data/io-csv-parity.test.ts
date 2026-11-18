@@ -66,5 +66,6 @@ describe.each(SAMPLES.map((s) => s.id))('io vs local-builder oracle parity: %s',
       expect(multi.blocks.test.x).toHaveLength(1)
       expect(() => mapAssembledToMaterialized(multi)).toThrow(/2 feature sources in partition "train"/)
     }
-  })
+    // anopheles alone takes ~4.5 s on an idle host (element-wise checks over every row).
+  }, 30_000)
 })
