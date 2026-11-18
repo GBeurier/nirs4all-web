@@ -109,6 +109,7 @@ export const LAB_OPERATORS: readonly PipelineOperatorDefinition[] = [
   op('model', 'Browser models (JavaScript)', TFJS_CNN, 'CNN (TensorFlow.js)',
     'CNN trained in the browser with TensorFlow.js (WebGL when available): 1-D convolution per spectrum or ordered marker table, 2-D convolution per image, embeddings concatenated mid-network, common head.', [
       int('filters', 'Filters per branch', 8, 1, 64), int('kernel_size', 'Kernel size', 5, 1, 15, 2),
+      int('pool_size', 'Pooling size (compact)', 2, 1, 32),
       int('embedding_dim', 'Embedding size', 16, 1, 128), int('head_hidden', 'Head hidden units', 16, 1, 256),
       int('epochs', 'Epochs', 60, 1, 500), int('batch_size', 'Batch size', 64, 1, 256),
       float('learning_rate', 'Learning rate', 0.005, 0),
@@ -165,6 +166,8 @@ const cnnChain = (source: LabSource): Json[] => source.modality === 'spectroscop
   ? [step(RESAMPLE, { num_samples: CNN_MAX_POINTS }), ...sourceChain()] : sourceChain()
 /** NICON keeps more of the spectrum (it needs at least 175 points) but stays browser-sized. */
 const NICON_POINTS = 256
+/** Compact Burn CNN for marker tables and mixed sources: fastest browser CNN on CPU. */
+const COMPACT_CNN = { architecture: 'compact', filters: 4, epochs: 30, learning_rate: 0.005 }
 /** AOM screens many chains per component: long spectra are resampled first in the browser. */
 const AOM_POINTS = 256
 const niconChain = (source: LabSource): Json[] => source.modality === 'spectroscopy'
@@ -184,11 +187,11 @@ export function fusionPresets(dataset: LabDataset): FusionPreset[] {
     summary: `Baseline: ${source.label} only, standard scaling and PLS. Every fusion must beat the best single source.`,
     document: { name: `${source.label} alone · PLS`, pipeline: [{ source_branch: lanes([source], sourceChain) }, pls] },
   }))
-  // Ordered marker tables: a 1-D CNN trained with TensorFlow.js on the markers alone.
+  // Ordered marker tables: a compact 1-D CNN (Burn, WebAssembly) on the markers alone.
   for (const source of sources.filter(item => item.modality === 'genetics')) presets.push({
-    id: `cnn-tfjs:${source.id}`, label: `${source.label} · CNN (TF.js)`, level: 'single',
-    summary: `${source.label} only, read by a 1-D convolution along the marker order, trained in the browser with TensorFlow.js.`,
-    document: { name: `${source.label} alone · TF.js CNN`, pipeline: [{ source_branch: lanes([source], sourceChain) }, model(TFJS_CNN, defaults(TFJS_CNN), 'CNN (TF.js)')] },
+    id: `cnn-burn:${source.id}`, label: `${source.label} · CNN (Burn)`, level: 'single',
+    summary: `${source.label} only, read by a 1-D convolution along the marker order, trained in the browser with Burn (Rust compiled to WebAssembly).`,
+    document: { name: `${source.label} alone · Burn CNN`, pipeline: [{ source_branch: lanes([source], sourceChain) }, model(BURN_CNN, { ...defaults(BURN_CNN), ...COMPACT_CNN }, 'CNN (Burn)')] },
   })
   if (sources.length < 2) return presets
   const all = sources.map(source => source.label).join(' + ')
@@ -225,11 +228,11 @@ export function fusionPresets(dataset: LabDataset): FusionPreset[] {
       document: { name: `Early fusion · ${all} → random forest`, pipeline: [{ source_branch: lanes(sources, cnnChain) }, { merge_sources: 'concat' },
         model(RANDOM_FOREST, defaults(RANDOM_FOREST), 'Random forest')] },
     },
-    // TensorFlow.js CNN: offered where it is justified, a 1-D CNN that also reads ordered marker tables.
+    // Compact Burn CNN where marker tables are present: a 1-D branch also reads the marker order.
     ...(sources.some(source => source.modality === 'genetics') ? [{
-      id: 'cnn-tfjs', label: 'Mid · CNN (TF.js)', level: 'mid' as const,
-      summary: 'The same mid-fusion CNN idea, trained with TensorFlow.js: one convolution branch per source, embeddings concatenated mid-network.',
-      document: { name: `Mid fusion · TF.js CNN on ${all}`, pipeline: [{ source_branch: lanes(sources, cnnChain) }, model(TFJS_CNN, defaults(TFJS_CNN), 'CNN (TF.js)')] },
+      id: 'cnn-burn', label: 'Mid · CNN (Burn)', level: 'mid' as const,
+      summary: 'The same mid-fusion CNN idea, trained with Burn (Rust compiled to WebAssembly): one convolution branch per source, embeddings concatenated mid-network.',
+      document: { name: `Mid fusion · Burn CNN on ${all}`, pipeline: [{ source_branch: lanes(sources, cnnChain) }, model(BURN_CNN, { ...defaults(BURN_CNN), ...COMPACT_CNN }, 'CNN (Burn)')] },
     }] : []),
     ...(sources.every(source => source.modality === 'image' || source.shape[0] >= 175) && sources.some(source => source.modality === 'spectroscopy') ? [{
       id: 'nicon', label: 'Mid · NICON (Burn)', level: 'mid' as const,

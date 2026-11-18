@@ -125,7 +125,7 @@ function tfjsCnn(params: Record<string, unknown>, saved?: CnnState): HostModel {
   const shapes = (params.branch_shapes as number[]) ?? []
   const filters = Number(params.filters ?? 8), kernel = Number(params.kernel_size ?? 5), embedding = Number(params.embedding_dim ?? 16)
   const hidden = Number(params.head_hidden ?? 16), epochs = Number(params.epochs ?? 150), batch = Number(params.batch_size ?? 16)
-  const rate = Number(params.learning_rate ?? 0.005), seed = seed32(params.seed)
+  const rate = Number(params.learning_rate ?? 0.005), seed = seed32(params.seed), pool = Number(params.pool_size ?? 2)
   // 'nicon' reproduces the nirs4all NICON 1-D CNN (TensorFlow version) for each sequence branch,
   // with its sigmoid head on a target min-max scaled to [0, 1] on the training rows.
   const nicon = String(params.architecture ?? 'compact') === 'nicon'
@@ -153,11 +153,11 @@ function tfjsCnn(params: Record<string, unknown>, saved?: CnnState): HostModel {
     }
     if (branch.kind === 1) {
       h = tf.layers.conv1d({ filters, kernelSize: Math.min(kernel, branch.shape[0]), activation: 'relu', kernelInitializer: init() }).apply(h)
-      h = tf.layers.averagePooling1d({ poolSize: 2 }).apply(h)
+      h = tf.layers.averagePooling1d({ poolSize: Math.min(pool, branch.shape[0]) }).apply(h)
       h = tf.layers.flatten().apply(h)
     } else if (branch.kind === 2) {
       h = tf.layers.conv2d({ filters, kernelSize: Math.min(kernel, branch.shape[0], branch.shape[1]), activation: 'relu', kernelInitializer: init() }).apply(h)
-      h = tf.layers.averagePooling2d({ poolSize: 2 }).apply(h)
+      h = tf.layers.averagePooling2d({ poolSize: Math.min(pool, branch.shape[0], branch.shape[1]) }).apply(h)
       h = tf.layers.flatten().apply(h)
     }
     return tf.layers.dense({ units: embedding, activation: 'relu', kernelInitializer: init() }).apply(h)

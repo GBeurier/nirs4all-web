@@ -43,21 +43,34 @@ function sourceLabel(dataset: LabDataset, id: string): string {
   return dataset.sources.find(source => source.id === id)?.label ?? id
 }
 
-/** Steps shown by the Inspector: per-source preprocessing tokens, then the fused model. */
-function chainSteps(document: LabPipelineDocument): InspectorChain['steps'] {
+/**
+ * Steps shown by the Inspector, readable per source: "NIRS · SNV", "MIR · Standard scaling",
+ * then the fusion and the model(s). Tokens carry the source so step effects compare like with like.
+ */
+function chainSteps(dataset: LabDataset, document: LabPipelineDocument): InspectorChain['steps'] {
   const level = fusionLevel(document)
   const steps: Array<InspectorChain['steps'][number]> = []
   const seen = new Set<string>()
+  const push = (step: InspectorChain['steps'][number]) => { if (!seen.has(step.token)) { seen.add(step.token); steps.push(step) } }
+  const token = (methodId: string) => TOKENS[methodId] ?? methodId.split('.').pop()!
   for (const branch of document.branches) for (const chain of branch.sourceChains) for (const step of chain.steps) {
-    const token = TOKENS[step.methodId] ?? step.methodId.split('.').pop()!
-    if (seen.has(token)) continue
-    seen.add(token)
-    steps.push({ token, label: operatorName(step.methodId), role: token === 'pca' ? 'feature' : 'preprocess' })
+    const t = token(step.methodId)
+    push({ token: `${chain.sourceId}:${t}`, label: `${sourceLabel(dataset, chain.sourceId)} · ${operatorName(step.methodId)}`, role: t === 'pca' ? 'feature' : 'preprocess' })
   }
-  steps.push({ token: `fusion:${level}`, label: FUSION_LEVEL_LABEL[level], role: 'other' })
-  const head = document.merge.kind === 'model' ? document.merge.head : document.merge.kind === 'mean' ? null : document.branches[0].head
-  steps.push(head ? { token: head.methodId.split('.').pop()!, label: operatorName(head.methodId), role: 'model' }
-    : { token: 'mean', label: 'Mean of predictions', role: 'model' })
+  if (document.merge.kind === 'none') {
+    const head = document.branches[0].head
+    if (level !== 'single') push({ token: `fusion:${level}`, label: FUSION_LEVEL_LABEL[level], role: 'other' })
+    push({ token: token(head.methodId), label: operatorName(head.methodId), role: 'model' })
+    return steps
+  }
+  // Late fusion: one model per source, then the combination of their predictions.
+  for (const branch of document.branches) {
+    const sources = branch.sourceIds.map(id => sourceLabel(dataset, id)).join(' + ')
+    push({ token: `${branch.sourceIds.join('+')}:${token(branch.head.methodId)}`, label: `${sources} · ${operatorName(branch.head.methodId)}`, role: 'model' })
+  }
+  push(document.merge.kind === 'mean'
+    ? { token: 'fusion:late:mean', label: 'Late fusion · mean of predictions', role: 'other' }
+    : { token: `fusion:late:${token(document.merge.head.methodId)}`, label: `Late fusion · ${operatorName(document.merge.head.methodId)} on predictions`, role: 'model' })
   return steps
 }
 
@@ -87,7 +100,7 @@ export function inspectorChains(dataset: LabDataset, runs: readonly LabRunRecord
       target: dataset.target.name,
       model: run.name,
       modelFamily: FUSION_LEVEL_LABEL[level],
-      steps: chainSteps(document),
+      steps: chainSteps(dataset, document),
       params: Object.fromEntries(Object.entries(params).filter(([key]) => !['branch_kinds', 'branch_shapes', 'seed'].includes(key))),
       scores: {
         oof_rmse: finite(candidate.oof.rmse), oof_r2: finite(candidate.oof.r2), oof_mae: finite(candidate.oof.mae),

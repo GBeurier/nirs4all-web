@@ -26,6 +26,7 @@ import { pipelineStrategy } from './recipes'
 import { fusionPresets, toLabDocument, type FusionPreset } from './fusion'
 import type { LabRunRecord } from './inspector'
 import { FusionEditor, FusionResults } from './FusionLab'
+import { LabShell } from './LabShell'
 
 const DEFAULT_PRESET = 'early'
 const HISTORY_LIMIT = 50
@@ -393,7 +394,9 @@ export default function MultimodalApp() {
     : null
 
   return (
+    <LabShell runtime={runtime} running={running} revision={`${caseId}:${workspace.dataset?.fingerprint ?? workspace.dataset?.name ?? ''}:${Boolean(workspace.dataset && workspace.config)}:${workspace.runs.length}`}>
     <MultimodalWorkbench
+      className="n4mm-embedded"
       brand={brand}
       backHref={BACK_HREF}
       backLabel="nirs4all Web workbench"
@@ -461,5 +464,6 @@ export default function MultimodalApp() {
       onExportConfig={onExportConfig}
       onExportResults={onExportResults}
     />
+    </LabShell>
   )
 }

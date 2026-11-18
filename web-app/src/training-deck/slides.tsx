@@ -224,7 +224,7 @@ export const SLIDES: Slide[] = [
       <>
         <div className="deck-engines">
           <div><h3>Random forest</h3><p className="deck-engine-tech">ml.js · JavaScript</p><p>forêt d’arbres de décision, sur les variables concaténées</p></div>
-          <div><h3>CNN</h3><p className="deck-engine-tech">TensorFlow.js · GPU (WebGL) si disponible</p><p>convolution 1-D le long des marqueurs ou des spectres</p></div>
+          <div><h3>CNN compact</h3><p className="deck-engine-tech">Burn · Rust → WebAssembly</p><p>convolution 1-D le long des marqueurs ou des spectres</p></div>
           <div><h3>NICON</h3><p className="deck-engine-tech">Burn · Rust → WebAssembly</p><p>le CNN de nirs4all, une branche par spectre, mid fusion</p></div>
         </div>
         <Callout>Même protocole que les modèles natifs : mêmes folds, prédictions OOF, test jamais vu. Mais ces modèles n’existent que dans le navigateur.</Callout>
@@ -232,7 +232,7 @@ export const SLIDES: Slide[] = [
     ),
     notes: [
       'En plus des modèles natifs de nirs4all, le labo propose trois moteurs qui tournent dans le navigateur.',
-      'Une random forest, écrite en JavaScript (ml.js) : utile pour comparer une méthode non linéaire classique à la PLS. Un CNN avec TensorFlow.js, la bibliothèque de Google, qui utilise le GPU via WebGL quand il y en a un : on s’en sert notamment pour une convolution le long des marqueurs génétiques. Et NICON, le CNN de nirs4all, entraîné avec Burn, une bibliothèque Rust compilée en WebAssembly.',
+      'Une random forest, écrite en JavaScript (ml.js) : utile pour comparer une méthode non linéaire classique à la PLS. Deux CNN entraînés avec Burn, une bibliothèque Rust compilée en WebAssembly : un CNN compact, qui fait notamment une convolution le long des marqueurs génétiques, et NICON, le CNN de nirs4all. Burn s’est révélé plus rapide que TensorFlow.js sur processeur ; TensorFlow.js reste disponible dans l’éditeur.',
       'Point important : DAG-ML garde le même protocole pour tous — mêmes folds, prédictions out-of-fold, jeu de test jamais vu — la comparaison reste honnête. En revanche, ces trois modèles n’existent que dans le navigateur : pas d’équivalent Python ou R, pas d’export portable.',
       'Les spectres longs sont rééchantillonnés avant ces modèles pour rester rapides : quelques secondes à environ deux minutes par modèle.',
     ],
