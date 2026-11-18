@@ -267,10 +267,23 @@ export async function parseN4aFile(file: Blob & { name?: string }): Promise<Load
     if (manifest.entrypoints.some((entry) => entry.owner === 'dag-ml' && entry.operation === 'predict-external')) {
       return importArchiveV2Model(await container.readArchive(), file.name)
     }
-    throw new Error(`This .n4a container requires ${manifest.required_features.join(', ') || 'no declared feature'}; the Web app runs only ${WEB_HOST.feature} bundles and ${NATIVE_METHODS_FEATURE} models. It is readable here but not executable.`)
+    throw new Error(unsupportedN4aMessage(manifest.required_features))
   } finally {
     container.close()
   }
+}
+
+const PYTHON_HOST_FEATURE = 'nirs4all-python-host@1'
+
+/** Plain-language refusal for a valid `.n4a` that this app can open but not run. */
+function unsupportedN4aMessage(features: readonly string[]): string {
+  const origin = features.includes(PYTHON_HOST_FEATURE)
+    ? 'This model was saved by nirs4all for Python (nirs4all Studio or the Python library) and contains Python-only fitted objects.'
+    : 'This model was saved in a format the Web app does not support.'
+  const required = features.join(', ') || 'no declared feature'
+  return `${origin} The Web app can open the file but cannot run it. To predict here, train the pipeline in the Web app, `
+    + 'or export it from Python with the portable native engine (engine="native"). '
+    + `Details: the file requires ${required}; the Web app runs ${WEB_HOST.feature} and ${NATIVE_METHODS_FEATURE}.`
 }
 
 /** Parse + validate a Web host payload into a model ready for Predict. Throws on invalid. */
