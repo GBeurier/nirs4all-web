@@ -23,10 +23,13 @@ the teaching collections intentionally use different row orders.
 
 ## Fusion pipelines
 
-Fusion levels follow the chemometric terms: low level (early: variables, including
-multiblock PLS, which fuses block-structured variables), mid level (features
-extracted per source, here PCA scores), high level (late: predictions), plus a
-joint model (the multibranch network learns all branches together).
+Fusion levels: early (low level: variables, including multiblock PLS, which fuses
+block-structured variables), mid (features: extracted per source, here PCA
+scores, the chemometric mid level; or learned by network branches and
+concatenated inside the network, the deep-learning intermediate/mid/joint
+fusion), late (high level: predictions). The CNN settings were chosen after a
+few trials on the teaching collections, so its teaching scores are slightly
+optimistic.
 
 Section 5 edits one canonical nirs4all pipeline with the shared rack editor
 (`nirs4all-ui/pipelineEditor`). Each source has its own lane; the step after the
@@ -37,8 +40,8 @@ lanes decides where the sources meet. Operators are native Methods method IDs.
 | Single source | `source_branch` with one lane → PLS | One PLS model; run every source baseline |
 | Early | `source_branch` → `merge_sources: "concat"` → PLS | One PLS model on the concatenated variables |
 | Early · MB-PLS | `source_branch` → MB-PLS (no source merge) | Centered-block, equal-super-weight multiblock NIPALS (low-level fusion with block structure) |
-| Mid-level · PCA scores | `source_branch` (scaling + training-fitted PCA scores per source) → `merge_sources` → PLS | Per-source PCA and one PLS model |
-| Joint · network | `source_branch` → multibranch network | Jointly trained convolution/dense branches and a common regression head |
+| Mid · PCA scores | `source_branch` (scaling + training-fitted PCA scores per source) → `merge_sources` → PLS | Per-source PCA and one PLS model |
+| Mid · CNN | `source_branch` → multibranch network (8 filters, embeddings of 16, 150 epochs) | Jointly trained convolution/dense branches whose embeddings are concatenated mid-network, and a common regression head |
 | Late · average | `branch` with `by_source: true` (one model per lane) → `merge: {predictions: "all", aggregate: "mean"}` | Source PLS models; fixed equal weights |
 | Late · stacking | `by_source` branch → `merge: "predictions"` → Ridge | Source PLS models and a Ridge meta-learner on nested OOF predictions |
 

@@ -18,7 +18,7 @@ function dataset(caseId: LabCase): LabDataset {
 }
 
 const LEGACY: Record<string, 'single' | 'early' | 'mbpls' | 'mid' | 'late' | 'stacking'> = {
-  early: 'early', mbpls: 'mbpls', network: 'mid', 'late-mean': 'late', 'late-stacking': 'stacking',
+  early: 'early', mbpls: 'mbpls', 'late-mean': 'late', 'late-stacking': 'stacking',
 }
 
 for (const caseId of ['spectroscopy', 'genetics', 'images'] as const) {
@@ -34,8 +34,10 @@ for (const caseId of ['spectroscopy', 'genetics', 'images'] as const) {
           return
         }
         const single = preset.id.startsWith('single:') ? preset.id.slice('single:'.length) : null
-        const expected = describeRecipe(data, { ...config, strategy: single ? 'single' : LEGACY[preset.id], baseModels: ['pls'],
-          ...(single ? { singleSourceId: single } : {}) })
+        // The CNN preset is the qualified multibranch recipe with the lab's CNN settings.
+        const cnn = { filters: 8, kernel_size: 3, embedding_dim: 16, head_hidden: 16, epochs: 150, batch_size: 16, learning_rate: 0.01, weight_decay: 0.0001 }
+        const expected = describeRecipe(data, { ...config, strategy: single ? 'single' : preset.id === 'cnn' ? 'mid' : LEGACY[preset.id], baseModels: ['pls'],
+          ...(single ? { singleSourceId: single } : {}), ...(preset.id === 'cnn' ? { cnn } : {}) })
         if (preset.level === 'late') {
           // Per-source node IDs follow the source names; the operators and merge are the qualified ones.
           const operators = (recipe: typeof actual) => Object.values(recipe.operators).map(operator => JSON.stringify(operator)).sort()

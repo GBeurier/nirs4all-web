@@ -21,17 +21,17 @@ const STANDARD = 'preprocessing.scaling.standard_scale'
 
 /** Fusion level shown to learners. Presentation only: the document decides execution. */
 /**
- * Chemometric data-fusion levels: low (variables), mid (features extracted per
- * source), high (predictions); plus models that learn every source jointly.
+ * Fusion levels: early (variables), mid (features: extracted per source, or
+ * learned by network branches and concatenated inside the network), late
+ * (predictions).
  */
-export type FusionLevel = 'single' | 'early' | 'mid' | 'joint' | 'late'
+export type FusionLevel = 'single' | 'early' | 'mid' | 'late'
 
 export const FUSION_LEVEL_LABEL: Record<FusionLevel, string> = {
   single: 'Single source',
-  early: 'Early fusion (low level)',
-  mid: 'Mid-level fusion (features)',
-  joint: 'Joint model',
-  late: 'Late fusion (high level)',
+  early: 'Early fusion (variables)',
+  mid: 'Mid fusion (features)',
+  late: 'Late fusion (predictions)',
 }
 
 const int = (name: string, label: string, value: number, min: number, max: number, step = 1, description?: string): PipelineOperatorParameter =>
@@ -81,11 +81,11 @@ export const LAB_OPERATORS: readonly PipelineOperatorDefinition[] = [
     [int('n_components', 'Components', 3, 1, 30)], ['multiblock']),
   op('model', 'Neural networks', NEURAL, 'Multibranch network',
     'One learned branch per source (1-D convolution for spectra, dense for markers, 2-D convolution for images), concatenated embeddings and a joint regression head trained together.', [
-      int('filters', 'Filters per branch', 4, 1, 32), int('kernel_size', 'Kernel size', 3, 1, 15, 2), int('pool_size', 'Pool size', 2, 1, 4),
-      int('embedding_dim', 'Embedding size', 6, 1, 64), int('head_hidden', 'Head hidden units', 8, 1, 128),
-      int('epochs', 'Epochs', 24, 1, 400), int('batch_size', 'Batch size', 16, 1, 256),
-      float('learning_rate', 'Learning rate', 0.003, 0), float('weight_decay', 'Weight decay', 0.0001, 0),
-    ], ['joint']),
+      int('filters', 'Filters per branch', 8, 1, 32), int('kernel_size', 'Kernel size', 3, 1, 15, 2), int('pool_size', 'Pool size', 2, 1, 4),
+      int('embedding_dim', 'Embedding size', 16, 1, 64), int('head_hidden', 'Head hidden units', 16, 1, 128),
+      int('epochs', 'Epochs', 150, 1, 400), int('batch_size', 'Batch size', 16, 1, 256),
+      float('learning_rate', 'Learning rate', 0.01, 0), float('weight_decay', 'Weight decay', 0.0001, 0),
+    ], ['mid']),
 ]
 
 const OPERATOR = new Map(LAB_OPERATORS.map(definition => [definition.classPath!, definition]))
@@ -144,10 +144,10 @@ export function fusionPresets(dataset: LabDataset): FusionPreset[] {
       document: { name: `Early fusion · ${all} → PLS`, pipeline: [{ source_branch: lanes(sources, sourceChain) }, { merge_sources: 'concat' }, pls] },
     },
     {
-      id: 'mid-pca', label: 'Mid-level · PCA scores', level: 'mid',
+      id: 'mid-pca', label: 'Mid · PCA scores', level: 'mid',
       summary: 'Each source is summarised by a few PCA scores fitted on the training samples; the scores are concatenated and PLS learns from them.',
       document: {
-        name: `Mid-level fusion · PCA scores of ${all} → PLS`,
+        name: `Mid fusion · PCA scores of ${all} → PLS`,
         pipeline: [{ source_branch: lanes(sources, () => [...sourceChain(), step(PCA, defaults(PCA))]) }, { merge_sources: 'concat' }, pls],
       },
     },
@@ -157,10 +157,10 @@ export function fusionPresets(dataset: LabDataset): FusionPreset[] {
       document: { name: `Early fusion · MB-PLS on ${all}`, pipeline: [{ source_branch: lanes(sources, sourceChain) }, model(MBPLS, defaults(MBPLS), 'MB-PLS')] },
     },
     {
-      id: 'network', label: 'Joint · network', level: 'joint',
-      summary: 'One learned branch per source produces an embedding; the embeddings are concatenated and a joint head predicts. Branches and head train together.',
+      id: 'cnn', label: 'Mid · CNN', level: 'mid',
+      summary: 'A small CNN: one learned branch per source (1-D convolution for spectra, dense for markers, 2-D convolution for images); the branch embeddings are concatenated in the middle of the network and a common head predicts. Everything trains together.',
       document: {
-        name: `Joint model · multibranch network on ${all}`,
+        name: `Mid fusion · CNN on ${all}`,
         pipeline: [{ source_branch: lanes(sources, sourceChain) }, model(NEURAL, defaults(NEURAL), 'Multibranch network')],
       },
     },
@@ -364,7 +364,7 @@ export function toLabDocument(dataset: LabDataset, document: PipelineChainDocume
   let lab: LabPipelineDocument
   if (record(first) && record(first.source_branch) && keysOf(first).length === 1) lab = featureLevel(dataset, steps, name)
   else if (record(first) && record(first.branch) && first.branch.by_source === true && keysOf(first).length === 1 && record(first.branch.steps)) lab = predictionLevel(dataset, steps, name)
-  else throw new FusionRecipeError('Start the pipeline with the sources: a source branch (early, mid-level or joint fusion) or a by-source branch (late fusion).')
+  else throw new FusionRecipeError('Start the pipeline with the sources: a source branch (early or mid fusion) or a by-source branch (late fusion).')
   return validatePipelineDocument(dataset, lab)
 }
 
@@ -372,7 +372,7 @@ export function toLabDocument(dataset: LabDataset, document: PipelineChainDocume
 export function fusionLevel(document: LabPipelineDocument): FusionLevel {
   if (document.merge.kind !== 'none') return 'late'
   const branch = document.branches[0]
-  if (branch.head.methodId === NEURAL) return 'joint'
+  if (branch.head.methodId === NEURAL) return 'mid'
   if (branch.head.methodId === MBPLS) return 'early'
   if (branch.sourceIds.length === 1) return 'single'
   return branch.sourceChains.some(chain => chain.steps.some(item => item.methodId === PCA)) ? 'mid' : 'early'

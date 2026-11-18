@@ -10,7 +10,7 @@ export const SOURCE_COLORS = {
   raman: '#be123c', nirs: '#4f46e5', mir: '#a16207', markers: '#15803d', image: '#475569', y: '#0f172a',
 } as const
 export const LEVEL_COLORS = {
-  single: '#64748b', early: '#0891b2', mid: '#7c3aed', joint: '#0d9488', late: '#d97706',
+  single: '#64748b', early: '#0891b2', mid: '#7c3aed', late: '#d97706',
 } as const
 export type SourceKind = keyof typeof SOURCE_COLORS
 export type LevelKind = keyof typeof LEVEL_COLORS
@@ -271,7 +271,7 @@ export function FusionPointsDiagram() {
   const yOf = (index: number) => 70 + index * 95
   const col = { src: 40, pre: 200, rep: 400, model: 600, pred: 800 }
   return (
-    <svg viewBox="0 0 1000 400" role="img" aria-label="Quatre points de fusion : bas niveau après prétraitement, niveau intermédiaire après extraction de caractéristiques, modèle conjoint, haut niveau après les prédictions">
+    <svg viewBox="0 0 1000 400" role="img" aria-label="Points de fusion : early après prétraitement, mid fusion sur des caractéristiques extraites ou au milieu d’un réseau, late après les prédictions">
       {['Sources', 'Prétraiter', 'Résumer', 'Modéliser', 'Prédire'].map((label, index) => (
         <Caption key={label} x={[95, 270, 470, 670, 870][index]} y={26} color="var(--text-3)" size={13} weight={700}>{label.toUpperCase()}</Caption>
       ))}
@@ -293,15 +293,15 @@ export function FusionPointsDiagram() {
         )
       })}
       <Junction x={370} y={350} level="early" label="1" />
-      <Caption x={370} y={392} color={LEVEL_COLORS.early} weight={800}>Bas niveau</Caption>
+      <Caption x={370} y={392} color={LEVEL_COLORS.early} weight={800}>Early</Caption>
       <Junction x={570} y={350} level="mid" label="2" />
-      <Caption x={570} y={392} color={LEVEL_COLORS.mid} weight={800}>Intermédiaire</Caption>
-      <Junction x={670} y={350} level="joint" label="3" />
-      <Caption x={690} y={392} color={LEVEL_COLORS.joint} weight={800}>Conjoint</Caption>
+      <Caption x={570} y={392} color={LEVEL_COLORS.mid} weight={800}>Mid · scores</Caption>
+      <Junction x={670} y={350} level="mid" label="3" />
+      <Caption x={690} y={392} color={LEVEL_COLORS.mid} weight={800}>Mid · réseau</Caption>
       <Junction x={900} y={350} level="late" label="4" />
-      <Caption x={900} y={392} color={LEVEL_COLORS.late} weight={800}>Haut niveau</Caption>
+      <Caption x={900} y={392} color={LEVEL_COLORS.late} weight={800}>Late</Caption>
       {[370, 570, 670, 900].map((x, index) => (
-        <line key={x} x1={x} y1={42} x2={x} y2={328} stroke={Object.values(LEVEL_COLORS)[index + 1]} strokeWidth={2} strokeDasharray="4 6" opacity={0.7} />
+        <line key={x} x1={x} y1={42} x2={x} y2={328} stroke={[LEVEL_COLORS.early, LEVEL_COLORS.mid, LEVEL_COLORS.mid, LEVEL_COLORS.late][index]} strokeWidth={2} strokeDasharray="4 6" opacity={0.7} />
       ))}
     </svg>
   )
@@ -372,20 +372,21 @@ export function IntermediateDiagram() {
     <g key={kind}>
       <Block x={20} y={y} w={kind === 'image' ? 70 : 120} h={56} kind={kind} motif={kind === 'image' ? 'image' : kind === 'markers' ? 'table' : 'spectrum'} />
       <Arrow x1={145} y1={y + 28} x2={190} y2={y + 28} />
-      <StepBox x={195} y={y + 4} w={170} h={48} title={layer} detail="branche apprise" accent={LEVEL_COLORS.joint} />
+      <StepBox x={195} y={y + 4} w={170} h={48} title={layer} detail="branche apprise" accent={LEVEL_COLORS.mid} />
       <Arrow x1={367} y1={y + 28} x2={402} y2={y + 28} />
       <Block x={407} y={y + 8} w={40} h={40} kind={kind} motif="scores" />
       <path d={`M449 ${y + 28} C 490 ${y + 28}, 490 140, 530 140`} fill="none" stroke="var(--text-3)" strokeWidth={2} />
     </g>
   )
   return (
-    <svg viewBox="0 0 1000 300" role="img" aria-label="Modèle conjoint : une branche apprise par source, embeddings concaténés, une tête commune ; tout est entraîné ensemble">
-      <rect x={180} y={6} width={600} height={268} rx={16} fill={LEVEL_COLORS.joint} opacity={0.06} stroke={LEVEL_COLORS.joint} strokeDasharray="6 6" />
-      <Caption x={480} y={292} color={LEVEL_COLORS.joint} weight={700} size={13.5}>un seul modèle, entraîné d’un bloc : chaque branche apprend ce qui compte pour y</Caption>
+    <svg viewBox="0 0 1000 300" role="img" aria-label="Mid fusion dans un CNN : une branche apprise par source, embeddings concaténés au milieu du réseau, une tête commune ; tout est entraîné ensemble">
+      <rect x={180} y={6} width={600} height={268} rx={16} fill={LEVEL_COLORS.mid} opacity={0.06} stroke={LEVEL_COLORS.mid} strokeDasharray="6 6" />
+      <Caption x={480} y={292} color={LEVEL_COLORS.mid} weight={700} size={13.5}>un seul modèle, entraîné d’un bloc : chaque branche apprend ce qui compte pour y</Caption>
       {branch('nirs', 26, 'convolution 1D')}
       {branch('markers', 112, 'couche dense')}
       {branch('image', 198, 'convolution 2D')}
-      <Junction x={545} y={140} level="joint" />
+      <Junction x={545} y={140} level="mid" />
+      <Caption x={545} y={108} color={LEVEL_COLORS.mid} weight={800} size={14}>concaténation</Caption>
       <StepBox x={590} y={113} w={170} h={54} title="tête commune" detail="dense → ŷ" accent="var(--teal)" />
       <Arrow x1={762} y1={140} x2={800} y2={140} />
       <Caption x={822} y={146} weight={800} color="var(--text)" size={18}>ŷ</Caption>

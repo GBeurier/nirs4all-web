@@ -2,9 +2,9 @@
  "schema": "nirs4all.multimodal-training.evidence.v1",
  "capturedAt": "2026-11-18",
  "source": {
-  "web": "078908c9a91ded535782936ea676650e9e320ecf",
+  "web": "e1929293605571d4752fdd7ecd9d9afa3dcb9604 (+ CNN preset change)",
   "ui": "787699446281d2a4a5a45cf73847b2cc3d90828e",
-  "build": "local served build of the multimodal laboratory (tests/multimodal-smoke.mjs and recorded browser edits)"
+  "build": "local served build of the multimodal laboratory; presets re-run with the Mid \u00b7 CNN preset, edits from the earlier recording on the same folds"
  },
  "note": "Native owner outputs (IO import, DAG-ML folds/merges, Methods models) from the browser worker. OOF = outer 3-fold cross-validation on the 96 calibration samples; test = the 24 declared held-out samples. No value is computed by the slides.",
  "cases": {
@@ -69,9 +69,9 @@
     ]
    },
    "ownerVersions": {
-    "dag": "0.4.3",
-    "methods": "1.3.18+abi.2.23.0",
-    "methodsAbi": "2.23.0",
+    "dag": "0.4.4",
+    "methods": "1.3.19+abi.2.24.0",
+    "methodsAbi": "2.24.0",
     "sourceProfile": "source_composition.v1"
    },
    "calibration": 96,
@@ -85,7 +85,7 @@
      "oofR2": 0.9715543487608989,
      "testRmse": 0.15316358501294527,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "b4c1833976b7748ec5c68691e5e275025be0fc2f90dd0f98a5ba5a31710e55d0",
+     "recipeFingerprint": "abe843ab4173e3414adb03efcfa2bdae1583d69b739e6d8fe1890cfc26ebe206",
      "pipeline": [
       {
        "source_branch": {
@@ -94,7 +94,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ]
@@ -122,7 +123,7 @@
      "oofR2": 0.4299040485050367,
      "testRmse": 0.5652345864186454,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "01de9c661d30ab58f90b9f583deab0160712fdb70638b18f1c36d539d95ad167",
+     "recipeFingerprint": "bb5647307e1ba0fe475397146a4e711fbf091ed50e8b5c9f7393bd538aec32ef",
      "pipeline": [
       {
        "source_branch": {
@@ -131,7 +132,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ]
@@ -159,7 +161,7 @@
      "oofR2": 0.3723700723082459,
      "testRmse": 0.6382441730604834,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "0db6284d2c8db75bc755ddaaabfc4f867ba89e0e9adb2ca3fa7e923649a9fac0",
+     "recipeFingerprint": "6f4a6dff6f8501786d1d9a942f20f287a32b8fc8437c5ebc289d786f3dc22192",
      "pipeline": [
       {
        "source_branch": {
@@ -168,7 +170,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ]
@@ -196,7 +199,7 @@
      "oofR2": 0.87580637668738,
      "testRmse": 0.25605361529953957,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "1db373b1f4e3dc301297880db4b9cfb6a13fa6d5bfa79c12a1505183d9a72f26",
+     "recipeFingerprint": "801328c570d7460dc2667ab43c1175d380469c7b9a837cf1a62fda5a1033f328",
      "pipeline": [
       {
        "source_branch": {
@@ -205,7 +208,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ],
@@ -214,7 +218,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ],
@@ -223,7 +228,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ]
@@ -248,13 +254,13 @@
      ]
     },
     {
-     "name": "Embedding \u00b7 PCA scores",
-     "level": "embedding",
+     "name": "Mid \u00b7 PCA scores",
+     "level": "mid",
      "oofRmse": 0.2557185800562559,
      "oofR2": 0.8730671796395335,
      "testRmse": 0.2621444564871366,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "df844c082665a80c321dfdd2a97e159bf2110a89f780e3ca2b2c6650551794e5",
+     "recipeFingerprint": "9cbcdae1467f60636629a2bedd3865eb4182392467c489da4e333d651f1187b3",
      "pipeline": [
       {
        "source_branch": {
@@ -263,7 +269,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          },
          {
@@ -278,7 +285,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          },
          {
@@ -293,7 +301,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          },
          {
@@ -324,13 +333,13 @@
      ]
     },
     {
-     "name": "Intermediate \u00b7 MB-PLS",
-     "level": "intermediate",
+     "name": "Early \u00b7 MB-PLS",
+     "level": "early",
      "oofRmse": 0.2638862117323863,
      "oofR2": 0.8648292390864414,
      "testRmse": 0.27494091854387126,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "074e0a5bd507c18deae75916df28807838df98b958b5fd661b15218aba0c52e6",
+     "recipeFingerprint": "c94427899e1b40eb60b5b953dfe8161b2b26a708a51605273ec637400fd139ca",
      "pipeline": [
       {
        "source_branch": {
@@ -339,7 +348,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ],
@@ -348,7 +358,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ],
@@ -357,7 +368,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ]
@@ -375,13 +387,13 @@
      ]
     },
     {
-     "name": "Intermediate \u00b7 network",
-     "level": "intermediate",
-     "oofRmse": 0.33558656647771573,
-     "oofR2": 0.7813958024576962,
-     "testRmse": 0.24621717523443476,
+     "name": "Mid \u00b7 CNN",
+     "level": "mid",
+     "oofRmse": 0.23847194620964876,
+     "oofR2": 0.8896114691119128,
+     "testRmse": 0.15187196336011952,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "5eca45829e3bbbbc2969dfd15b0f8da77c9354110b823ea5ef4c05d63e374e69",
+     "recipeFingerprint": "459346b6e3cadd7b20df04a28e0fd6ba42dc74cf2413326471ebce97f1b11fdd",
      "pipeline": [
       {
        "source_branch": {
@@ -390,7 +402,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ],
@@ -399,7 +412,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ],
@@ -408,7 +422,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ]
@@ -418,14 +433,14 @@
        "model": {
         "class": "models.neural.multibranch_regressor",
         "params": {
-         "filters": 4,
+         "filters": 8,
          "kernel_size": 3,
          "pool_size": 2,
-         "embedding_dim": 6,
-         "head_hidden": 8,
-         "epochs": 24,
+         "embedding_dim": 16,
+         "head_hidden": 16,
+         "epochs": 150,
          "batch_size": 16,
-         "learning_rate": 0.003,
+         "learning_rate": 0.01,
          "weight_decay": 0.0001
         }
        },
@@ -440,7 +455,7 @@
      "oofR2": 0.7415074969350103,
      "testRmse": 0.42145899756430555,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "dbdab8dd9394e87c6e30585791ad5088afac66363e657667b2ebac68806721ce",
+     "recipeFingerprint": "284c07665e2c1a5e7c31288d9ce17ee1d0af687dba0b06c7e75e1ed94a8b0b9b",
      "pipeline": [
       {
        "branch": {
@@ -451,7 +466,8 @@
            "class": "preprocessing.scaling.standard_scale",
            "params": {
             "with_mean": true,
-            "with_std": true
+            "with_std": true,
+            "ddof": 0
            }
           },
           {
@@ -473,7 +489,8 @@
            "class": "preprocessing.scaling.standard_scale",
            "params": {
             "with_mean": true,
-            "with_std": true
+            "with_std": true,
+            "ddof": 0
            }
           },
           {
@@ -495,7 +512,8 @@
            "class": "preprocessing.scaling.standard_scale",
            "params": {
             "with_mean": true,
-            "with_std": true
+            "with_std": true,
+            "ddof": 0
            }
           },
           {
@@ -530,7 +548,7 @@
      "oofR2": 0.9715297752061292,
      "testRmse": 0.17574971087891045,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "ed5c91e1ec00e724bcebfc83eaed4d116b4aefd815acbf35a69fddc50d89873d",
+     "recipeFingerprint": "b99b7f907b623c290a5a6bc58e608e54b867a32aed16438197a852b04bef9991",
      "pipeline": [
       {
        "branch": {
@@ -541,7 +559,8 @@
            "class": "preprocessing.scaling.standard_scale",
            "params": {
             "with_mean": true,
-            "with_std": true
+            "with_std": true,
+            "ddof": 0
            }
           },
           {
@@ -563,7 +582,8 @@
            "class": "preprocessing.scaling.standard_scale",
            "params": {
             "with_mean": true,
-            "with_std": true
+            "with_std": true,
+            "ddof": 0
            }
           },
           {
@@ -585,7 +605,8 @@
            "class": "preprocessing.scaling.standard_scale",
            "params": {
             "with_mean": true,
-            "with_std": true
+            "with_std": true,
+            "ddof": 0
            }
           },
           {
@@ -770,6 +791,66 @@
       }
      ],
      "edit": "Raman alone \u00b7 PLS 6"
+    },
+    {
+     "name": "Edited Intermediate \u00b7 network",
+     "level": "intermediate",
+     "oofRmse": 0.33558656647771573,
+     "oofR2": 0.7813958024576962,
+     "testRmse": 0.24621717523443476,
+     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+     "recipeFingerprint": "5eca45829e3bbbbc2969dfd15b0f8da77c9354110b823ea5ef4c05d63e374e69",
+     "pipeline": [
+      {
+       "source_branch": {
+        "raman": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ],
+        "nirs": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ],
+        "mir": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "model": {
+        "class": "models.neural.multibranch_regressor",
+        "params": {
+         "filters": 4,
+         "kernel_size": 3,
+         "pool_size": 2,
+         "embedding_dim": 6,
+         "head_hidden": 8,
+         "epochs": 24,
+         "batch_size": 16,
+         "learning_rate": 0.003,
+         "weight_decay": 0.0001
+        }
+       },
+       "name": "Multibranch network"
+      }
+     ],
+     "edit": "Tiny CNN (4 filters, 24 epochs)"
     }
    ]
   },
@@ -812,9 +893,9 @@
     ]
    },
    "ownerVersions": {
-    "dag": "0.4.3",
-    "methods": "1.3.18+abi.2.23.0",
-    "methodsAbi": "2.23.0",
+    "dag": "0.4.4",
+    "methods": "1.3.19+abi.2.24.0",
+    "methodsAbi": "2.24.0",
     "sourceProfile": "source_composition.v1"
    },
    "calibration": 96,
@@ -828,7 +909,7 @@
      "oofR2": 0.4922194214812673,
      "testRmse": 0.36510201942051895,
      "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
-     "recipeFingerprint": "ec77a5476b595aee3274e5e58bb1200cd2e9bb44f58f03bc0399a1fc7e03433c",
+     "recipeFingerprint": "bc8d53ed53a3f88ef08bb9e974dedb8accbbfa21428265b2fd01add9727d0faa",
      "pipeline": [
       {
        "source_branch": {
@@ -837,7 +918,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ]
@@ -865,7 +947,7 @@
      "oofR2": -0.8923497404652063,
      "testRmse": 0.28911857796974966,
      "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
-     "recipeFingerprint": "07cbc6967440ccb6895d34bc5baeb6c6c68fdbc62dbfeca894f1c0aae607af6a",
+     "recipeFingerprint": "b7ce35485a6ce887fb9af876b75cdd06c054379ba0a985a5ac513d64fc1f87e9",
      "pipeline": [
       {
        "source_branch": {
@@ -874,7 +956,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ]
@@ -902,7 +985,7 @@
      "oofR2": 0.7740557996580866,
      "testRmse": 0.27174790337411886,
      "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
-     "recipeFingerprint": "d7b165c146e775d56447c53ab414e95d57caf8d5b5b659a95ec35a0fb97d304e",
+     "recipeFingerprint": "f606c8b16823b4cf09186d4a1724bc59a39d3150de1c9a1888911647e94a0d5b",
      "pipeline": [
       {
        "source_branch": {
@@ -911,7 +994,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ],
@@ -920,7 +1004,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ]
@@ -945,13 +1030,13 @@
      ]
     },
     {
-     "name": "Embedding \u00b7 PCA scores",
-     "level": "embedding",
+     "name": "Mid \u00b7 PCA scores",
+     "level": "mid",
      "oofRmse": 0.38757467876830964,
      "oofR2": 0.5270860309323337,
      "testRmse": 0.3448699847784177,
      "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
-     "recipeFingerprint": "eb5e430a596c0545f85ec8835ae3c47bfebd30cc43eb840178c4237e8166ebbb",
+     "recipeFingerprint": "fefc6e8b0ada48832e9632e155ea8b6d441bb2144c5434af44171190110ba278",
      "pipeline": [
       {
        "source_branch": {
@@ -960,7 +1045,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          },
          {
@@ -975,7 +1061,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          },
          {
@@ -1006,13 +1093,13 @@
      ]
     },
     {
-     "name": "Intermediate \u00b7 MB-PLS",
-     "level": "intermediate",
+     "name": "Early \u00b7 MB-PLS",
+     "level": "early",
      "oofRmse": 0.23948185570390484,
      "oofR2": 0.8194420644319805,
      "testRmse": 0.2028431608627851,
      "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
-     "recipeFingerprint": "1008eb2b5e5fd69603af3c769e0e004b45ebec37a0599e4e4d419fea15124d57",
+     "recipeFingerprint": "69f8458e57e733bdd084a5cc0d27a089e7af293a28b079c7c73a25ef15133695",
      "pipeline": [
       {
        "source_branch": {
@@ -1021,7 +1108,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ],
@@ -1030,7 +1118,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ]
@@ -1048,13 +1137,13 @@
      ]
     },
     {
-     "name": "Intermediate \u00b7 network",
-     "level": "intermediate",
-     "oofRmse": 0.6021201538941915,
-     "oofR2": -0.14139950254679756,
-     "testRmse": 0.4798592872579778,
+     "name": "Mid \u00b7 CNN",
+     "level": "mid",
+     "oofRmse": 0.31319902278355466,
+     "oofR2": 0.691175215031762,
+     "testRmse": 0.36274097400126937,
      "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
-     "recipeFingerprint": "aa47ff2a9b99f5c9bb6a01227e0f9c5237866d36bd4252791a78149c755c4747",
+     "recipeFingerprint": "d997bd4f72a26b250ea1f3155b13b79deee2be8358f20419bbaae329f1ae139b",
      "pipeline": [
       {
        "source_branch": {
@@ -1063,7 +1152,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ],
@@ -1072,7 +1162,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ]
@@ -1082,14 +1173,14 @@
        "model": {
         "class": "models.neural.multibranch_regressor",
         "params": {
-         "filters": 4,
+         "filters": 8,
          "kernel_size": 3,
          "pool_size": 2,
-         "embedding_dim": 6,
-         "head_hidden": 8,
-         "epochs": 24,
+         "embedding_dim": 16,
+         "head_hidden": 16,
+         "epochs": 150,
          "batch_size": 16,
-         "learning_rate": 0.003,
+         "learning_rate": 0.01,
          "weight_decay": 0.0001
         }
        },
@@ -1104,7 +1195,7 @@
      "oofR2": 0.4401741590247673,
      "testRmse": 0.22731132837967793,
      "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
-     "recipeFingerprint": "886e7263f2914f786e8db902580324b193f84b001fe3036e221357341e307388",
+     "recipeFingerprint": "5b96f223f945076edc7997bedd4e347f5eec9c9214c9bbc8745fa173c23e59f6",
      "pipeline": [
       {
        "branch": {
@@ -1115,7 +1206,8 @@
            "class": "preprocessing.scaling.standard_scale",
            "params": {
             "with_mean": true,
-            "with_std": true
+            "with_std": true,
+            "ddof": 0
            }
           },
           {
@@ -1137,7 +1229,8 @@
            "class": "preprocessing.scaling.standard_scale",
            "params": {
             "with_mean": true,
-            "with_std": true
+            "with_std": true,
+            "ddof": 0
            }
           },
           {
@@ -1172,7 +1265,7 @@
      "oofR2": 0.6128366606817521,
      "testRmse": 0.26019092415810224,
      "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
-     "recipeFingerprint": "612ce7a5bc9820aa8ade3aba3411947f0927620b721bcd865862c337d7524319",
+     "recipeFingerprint": "6f7053625d329f6ac26ecc3df9ec209f8fc44ad3b458ad9de7311298c690646b",
      "pipeline": [
       {
        "branch": {
@@ -1183,7 +1276,8 @@
            "class": "preprocessing.scaling.standard_scale",
            "params": {
             "with_mean": true,
-            "with_std": true
+            "with_std": true,
+            "ddof": 0
            }
           },
           {
@@ -1205,7 +1299,8 @@
            "class": "preprocessing.scaling.standard_scale",
            "params": {
             "with_mean": true,
-            "with_std": true
+            "with_std": true,
+            "ddof": 0
            }
           },
           {
@@ -1412,6 +1507,57 @@
       }
      ],
      "edit": "MB-PLS \u00b7 5 components"
+    },
+    {
+     "name": "Edited Intermediate \u00b7 network",
+     "level": "intermediate",
+     "oofRmse": 0.6021201538941915,
+     "oofR2": -0.14139950254679756,
+     "testRmse": 0.4798592872579778,
+     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
+     "recipeFingerprint": "aa47ff2a9b99f5c9bb6a01227e0f9c5237866d36bd4252791a78149c755c4747",
+     "pipeline": [
+      {
+       "source_branch": {
+        "nirs": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ],
+        "genetics": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "model": {
+        "class": "models.neural.multibranch_regressor",
+        "params": {
+         "filters": 4,
+         "kernel_size": 3,
+         "pool_size": 2,
+         "embedding_dim": 6,
+         "head_hidden": 8,
+         "epochs": 24,
+         "batch_size": 16,
+         "learning_rate": 0.003,
+         "weight_decay": 0.0001
+        }
+       },
+       "name": "Multibranch network"
+      }
+     ],
+     "edit": "Tiny CNN (4 filters, 24 epochs)"
     }
    ]
   },
@@ -1456,9 +1602,9 @@
     ]
    },
    "ownerVersions": {
-    "dag": "0.4.3",
-    "methods": "1.3.18+abi.2.23.0",
-    "methodsAbi": "2.23.0",
+    "dag": "0.4.4",
+    "methods": "1.3.19+abi.2.24.0",
+    "methodsAbi": "2.24.0",
     "sourceProfile": "source_composition.v1"
    },
    "calibration": 96,
@@ -1472,7 +1618,7 @@
      "oofR2": 0.4697602074102032,
      "testRmse": 0.4076473391687005,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "08be0232a4a7c64a5d8250d9c7265d6c4c66e6e93d39ad90a99f40960abf9c8d",
+     "recipeFingerprint": "204778b4ad80409defcb5d496f628c9309cd2db798fde5647411d0ed761aac14",
      "pipeline": [
       {
        "source_branch": {
@@ -1481,7 +1627,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ]
@@ -1509,7 +1656,7 @@
      "oofR2": 0.8834543976885896,
      "testRmse": 0.17022930836054034,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "7affe7cc75d32b71a93e7ad8823b27b1d8d55febcaa949899309ee7df54abdb4",
+     "recipeFingerprint": "4b45627e8008cf2e1f913d3b0d06b2b0818c989d1e595012c035650b8483e102",
      "pipeline": [
       {
        "source_branch": {
@@ -1518,7 +1665,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ]
@@ -1546,7 +1694,7 @@
      "oofR2": 0.9581950227519475,
      "testRmse": 0.1305451610459616,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "e0e3f9d4a2279c09b6abce4e38e24f3887382830bb7211e88b1f6e17970765c6",
+     "recipeFingerprint": "372d807cb6911372f63d6c3b76ceeddb67c8d9fc5d51916d4bae818fb2e9a3c1",
      "pipeline": [
       {
        "source_branch": {
@@ -1555,7 +1703,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ],
@@ -1564,7 +1713,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ]
@@ -1589,13 +1739,13 @@
      ]
     },
     {
-     "name": "Embedding \u00b7 PCA scores",
-     "level": "embedding",
+     "name": "Mid \u00b7 PCA scores",
+     "level": "mid",
      "oofRmse": 0.10265453934471513,
      "oofR2": 0.9564243894370702,
      "testRmse": 0.13639279906629884,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "d1a0c5ae7fb34c0e6f5dd3300b290dd049f9183eac941fc3964983a5fd082915",
+     "recipeFingerprint": "0433394459a00c116ca1fdc0f73555e551d9d3102b5482389845b74370daae8b",
      "pipeline": [
       {
        "source_branch": {
@@ -1604,7 +1754,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          },
          {
@@ -1619,7 +1770,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          },
          {
@@ -1650,13 +1802,13 @@
      ]
     },
     {
-     "name": "Intermediate \u00b7 MB-PLS",
-     "level": "intermediate",
+     "name": "Early \u00b7 MB-PLS",
+     "level": "early",
      "oofRmse": 0.11731526266311992,
      "oofR2": 0.9430890023766446,
      "testRmse": 0.13121068202392858,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "f87e6aafcd53a5628869a1899a6363d5f78a1cda141abba5f5ac29fc883c9ca7",
+     "recipeFingerprint": "c763e3666a87d5c39dbef0506a156e89209af5a7027989618d44a62ff7dc97b1",
      "pipeline": [
       {
        "source_branch": {
@@ -1665,7 +1817,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ],
@@ -1674,7 +1827,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ]
@@ -1692,13 +1846,13 @@
      ]
     },
     {
-     "name": "Intermediate \u00b7 network",
-     "level": "intermediate",
-     "oofRmse": 0.2056874437919952,
-     "oofR2": 0.825054520123115,
-     "testRmse": 0.16861074130400397,
+     "name": "Mid \u00b7 CNN",
+     "level": "mid",
+     "oofRmse": 0.12306307754684255,
+     "oofR2": 0.9373757255338714,
+     "testRmse": 0.12630593937218973,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "02571ba926cafe3c6c170040e990f9a71a1d7d8f51c93c5b3210975073f68c09",
+     "recipeFingerprint": "4fa931460864c103fb1631cffd1a4d67bf7beb0443acf7b5ba945f15c2fd4988",
      "pipeline": [
       {
        "source_branch": {
@@ -1707,7 +1861,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ],
@@ -1716,7 +1871,8 @@
           "class": "preprocessing.scaling.standard_scale",
           "params": {
            "with_mean": true,
-           "with_std": true
+           "with_std": true,
+           "ddof": 0
           }
          }
         ]
@@ -1726,14 +1882,14 @@
        "model": {
         "class": "models.neural.multibranch_regressor",
         "params": {
-         "filters": 4,
+         "filters": 8,
          "kernel_size": 3,
          "pool_size": 2,
-         "embedding_dim": 6,
-         "head_hidden": 8,
-         "epochs": 24,
+         "embedding_dim": 16,
+         "head_hidden": 16,
+         "epochs": 150,
          "batch_size": 16,
-         "learning_rate": 0.003,
+         "learning_rate": 0.01,
          "weight_decay": 0.0001
         }
        },
@@ -1748,7 +1904,7 @@
      "oofR2": 0.8014924399633957,
      "testRmse": 0.2521963076818305,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "20336324278bc759a0566276e69e1df0e8eb09f6b3884c9ee789650f9255e277",
+     "recipeFingerprint": "78a694c77557b815296d80df3adfe8eb01a47e1c4aa0bfafff073bf5b8a34caf",
      "pipeline": [
       {
        "branch": {
@@ -1759,7 +1915,8 @@
            "class": "preprocessing.scaling.standard_scale",
            "params": {
             "with_mean": true,
-            "with_std": true
+            "with_std": true,
+            "ddof": 0
            }
           },
           {
@@ -1781,7 +1938,8 @@
            "class": "preprocessing.scaling.standard_scale",
            "params": {
             "with_mean": true,
-            "with_std": true
+            "with_std": true,
+            "ddof": 0
            }
           },
           {
@@ -1816,7 +1974,7 @@
      "oofR2": 0.8806941085393784,
      "testRmse": 0.1807367771585381,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "3d1481c758ce1cac50ff2104df0962483befd2eb3927ef94fcc9f40f42cfabe0",
+     "recipeFingerprint": "beac3f1954297e01f427e8a56c6fcfb3730dd3e92411926a01b19253f28abe56",
      "pipeline": [
       {
        "branch": {
@@ -1827,7 +1985,8 @@
            "class": "preprocessing.scaling.standard_scale",
            "params": {
             "with_mean": true,
-            "with_std": true
+            "with_std": true,
+            "ddof": 0
            }
           },
           {
@@ -1849,7 +2008,8 @@
            "class": "preprocessing.scaling.standard_scale",
            "params": {
             "with_mean": true,
-            "with_std": true
+            "with_std": true,
+            "ddof": 0
            }
           },
           {
@@ -1979,11 +2139,11 @@
     {
      "name": "Edited Intermediate \u00b7 network",
      "level": "intermediate",
-     "oofRmse": 0.20556301723239914,
-     "oofR2": 0.8252661157339785,
-     "testRmse": 0.16297893957469592,
+     "oofRmse": 0.2056874437919952,
+     "oofR2": 0.825054520123115,
+     "testRmse": 0.16861074130400397,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "f3b2e893ca6fb1d93eee44ab257d5ad26d03eba66ce6f4c67eec3a1e7fb14174",
+     "recipeFingerprint": "02571ba926cafe3c6c170040e990f9a71a1d7d8f51c93c5b3210975073f68c09",
      "pipeline": [
       {
        "source_branch": {
@@ -2016,7 +2176,7 @@
          "pool_size": 2,
          "embedding_dim": 6,
          "head_hidden": 8,
-         "epochs": 100,
+         "epochs": 24,
          "batch_size": 16,
          "learning_rate": 0.003,
          "weight_decay": 0.0001
@@ -2025,7 +2185,7 @@
        "name": "Multibranch network"
       }
      ],
-     "edit": "Network \u00b7 100 epochs"
+     "edit": "Tiny CNN (4 filters, 24 epochs)"
     }
    ]
   }
