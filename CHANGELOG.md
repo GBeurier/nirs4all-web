@@ -48,6 +48,10 @@
   with exact published acquisition receipts. The io browser payload is the
   owner's v0.3.6 release build; DMD 0.2.16, Formats 0.2.17, Datasets 0.3.18 and
   Methods 1.3.18 are unchanged.
+- Consume DAG-ML 0.4.4 and Methods 1.3.19 (Methods ABI 2.23 unchanged), with
+  exact published acquisition receipts. Their user-facing error messages no
+  longer say "preflight"; nothing else changes. Core 0.5.1 peer ranges already
+  accept both.
 
 ## 0.5.2 — 2026-11-16
 

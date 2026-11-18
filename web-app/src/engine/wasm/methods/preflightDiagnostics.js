@@ -18,7 +18,7 @@ function validatePermutation(nPermutations, seed) {
 function validateMatrix(X) {
     if (!Number.isSafeInteger(X.rows) || !Number.isSafeInteger(X.cols) ||
         X.rows < 1 || X.cols < 1 || X.data.length !== X.rows * X.cols) {
-        throw new RangeError("invalid Preflight matrix dimensions");
+        throw new RangeError("invalid diagnostic matrix dimensions");
     }
 }
 /** Integer in [lo, hi] and representable as a C int32_t (Emscripten passes
@@ -46,7 +46,7 @@ class NativeScope {
     releases = [];
     alloc(bytes) {
         if (!Number.isSafeInteger(bytes) || bytes < 0 || bytes > 0x7fffffff) {
-            throw new RangeError("Preflight buffer exceeds WASM allocation limit");
+            throw new RangeError("diagnostic buffer exceeds WASM allocation limit");
         }
         const m = getModule();
         const ptr = m._malloc(Math.max(1, bytes));
