@@ -8,7 +8,7 @@ import { LevelTag, PipelineView, Provenance, ResultsChart } from './widgets'
 
 export interface Slide {
   id: string
-  section: 'Concepts' | 'Live demonstration' | 'Wrap-up' | ''
+  section: 'Concepts' | 'Démonstration' | 'Synthèse' | ''
   title: string
   /** Planned minutes, including live time. The plan totals 40. */
   minutes: number
@@ -46,7 +46,7 @@ function Capture({ src, alt }: { src: string; alt: string }) {
 }
 
 const R = {
-  ramanAlone: () => preset('spectroscopy', 'Raman alone').oofRmse,
+  ramanAlone: () => preset('spectroscopy', 'Raman seul').oofRmse,
   spec: (name: string) => preset('spectroscopy', name).oofRmse,
   gen: (name: string) => preset('genetics', name).oofRmse,
   img: (name: string) => preset('images', name).oofRmse,
@@ -54,393 +54,398 @@ const R = {
 
 export const SLIDES: Slide[] = [
   {
-    id: 'title', section: '', title: 'Multimodal data in nirs4all', minutes: 0.5,
+    id: 'title', section: '', title: 'Données multimodales dans nirs4all', minutes: 0.5,
     body: () => (
       <div className="deck-title">
-        <p className="deck-kicker">nirs4all training · multimodal session</p>
-        <h1>One sample, several measurements,<br /><span className="n4-gradient-text">one honest prediction</span></h1>
-        <p className="deck-lead">What multimodal data is · four ways to fuse sources · three live comparisons</p>
+        <p className="deck-kicker">formation nirs4all · session multimodale</p>
+        <h1>Un échantillon, plusieurs mesures,<br /><span className="n4-gradient-text">une prédiction défendable</span></h1>
+        <p className="deck-lead">Les données multimodales · quatre niveaux de fusion · trois démonstrations</p>
         <div className="deck-title-levels">
-          <LevelTag level="early" /><LevelTag level="embedding" /><LevelTag level="intermediate" /><LevelTag level="late" />
+          <LevelTag level="early" /><LevelTag level="mid" /><LevelTag level="joint" /><LevelTag level="late" />
         </div>
         <p className="deck-url">web.nirs4all.org/nirs4all_multimodale</p>
       </div>
     ),
     notes: [
-      'Welcome. In this session we look at what happens when one sample is measured by more than one instrument.',
-      'Plan: about 20 minutes of concepts with one picture per idea, then three live demonstrations in the browser laboratory, one dataset each, and a short wrap-up.',
-      'Everything you will see runs locally in the browser; nothing is uploaded.',
+      'Bienvenue. Dans cette session, on regarde ce qui se passe quand un même échantillon est mesuré par plusieurs instruments.',
+      'Le plan : une vingtaine de minutes de concepts, une image par idée, puis trois démonstrations en direct dans le labo du navigateur, une par jeu de données, et une courte synthèse.',
+      'Tout ce que vous allez voir tourne localement dans le navigateur ; aucune donnée n’est envoyée.',
     ],
   },
   {
-    id: 'why', section: 'Concepts', title: 'Why combine measurements?', minutes: 1.5,
+    id: 'why', section: 'Concepts', title: 'Pourquoi combiner des mesures ?', minutes: 1.5,
     body: () => (
       <div className="deck-split deck-split--hero">
         <SampleViewsDiagram />
         <div>
-          <p className="deck-big">Each instrument sees <strong>part</strong> of the sample.</p>
-          <Callout>Does the second source <strong>really improve</strong> the prediction?</Callout>
+          <p className="deck-big">Chaque instrument voit <strong>une partie</strong> de l’échantillon.</p>
+          <Callout>La deuxième source améliore-t-elle <strong>vraiment</strong> la prédiction ?</Callout>
         </div>
       </div>
     ),
     notes: [
-      'Think of a grain sample. NIRS sees overtones of C–H, O–H and N–H bonds; Raman sees other vibrations; a genotype tells us something the spectrum cannot see; an image sees shape and colour.',
-      'Each instrument gives a partial view. When the views are complementary, combining them can predict better than any single one.',
-      'But a second source also brings its own noise, its own preprocessing problems and a measurement cost. So the practical question is: does it really improve a prediction I can defend?',
-      'That is exactly what we will test in the demonstrations: every fusion is compared with the best single source.',
+      'Prenons un échantillon de grain. Le NIRS voit les harmoniques des liaisons C–H, O–H et N–H ; le Raman voit d’autres vibrations ; le génotype dit quelque chose que le spectre ne voit pas ; l’image voit la forme et la couleur.',
+      'Chaque instrument donne une vue partielle. Quand les vues sont complémentaires, les combiner peut prédire mieux que n’importe laquelle seule.',
+      'Mais une deuxième source apporte aussi son bruit, ses problèmes de prétraitement et un coût de mesure. La vraie question est donc : améliore-t-elle une prédiction que je peux défendre ?',
+      'C’est exactement ce qu’on va tester en démonstration : chaque fusion est comparée à la meilleure source seule.',
     ],
   },
   {
-    id: 'vocabulary', section: 'Concepts', title: 'What “multimodal” means here', minutes: 2,
+    id: 'vocabulary', section: 'Concepts', title: 'Ce que « multimodal » veut dire ici', minutes: 2,
     body: () => (
       <>
         <DatasetShapeDiagram />
         <div className="deck-columns">
-          <div><h3>Source = block</h3><p>one table per instrument, same samples</p></div>
-          <div><h3>Multisource</h3><p>same kind of data: NIRS + Raman + MIR</p></div>
-          <div><h3>Multimodal</h3><p>different kinds: spectra, markers, images</p></div>
+          <div><h3>Source = bloc</h3><p>une table par instrument, mêmes échantillons</p></div>
+          <div><h3>Multisource</h3><p>même nature de données : NIRS + Raman + MIR</p></div>
+          <div><h3>Multimodal</h3><p>natures différentes : spectres, marqueurs, images</p></div>
         </div>
       </>
     ),
     notes: [
-      'Vocabulary first, because it is simple. A dataset is still samples in rows. The difference is that the columns come in blocks: one block per source.',
-      'If all blocks are spectra, we often say multisource or multiblock, a term you may know from chemometrics. If the blocks are of different nature, for example a spectrum, a table of genetic marker dosages and an image, we say multimodal.',
-      'nirs4all keeps each block with its own axis and unit: wavelengths in nm for NIRS, Raman shift in cm⁻¹, no axis for markers, height × width for images. Nothing is silently merged at loading time.',
+      'D’abord le vocabulaire, parce qu’il est simple. Un jeu de données, ce sont toujours des échantillons en lignes. La différence, c’est que les colonnes arrivent par blocs : un bloc par source.',
+      'Si tous les blocs sont des spectres, on parle de multisource ou de multibloc, un terme que vous connaissez en chimiométrie. Si les blocs sont de nature différente — un spectre, un tableau de dosages de marqueurs, une image — on parle de multimodal.',
+      'nirs4all garde chaque bloc avec son axe et son unité : longueurs d’onde en nm pour le NIRS, déplacement Raman en cm⁻¹, pas d’axe pour les marqueurs, hauteur × largeur pour les images. Rien n’est fusionné en douce au chargement.',
     ],
   },
   {
-    id: 'alignment', section: 'Concepts', title: 'Rule zero: align by sample identity', minutes: 1.5,
+    id: 'alignment', section: 'Concepts', title: 'Règle zéro : aligner par identifiant', minutes: 1.5,
     body: () => (
       <>
         <AlignmentDiagram />
-        <Callout>Join by <strong>sample ID</strong>, never by row number · keep replicate <strong>groups</strong> together</Callout>
+        <Callout>Jointure par <strong>identifiant d’échantillon</strong>, jamais par numéro de ligne · les <strong>groupes</strong> de répétitions restent ensemble</Callout>
       </>
     ),
     notes: [
-      'Before any fusion, the rows must describe the same samples. Two files exported by two instruments are almost never in the same order.',
-      'nirs4all matches by sample identifier, exactly. If a sample is missing in one source, you see it in the alignment table; it is not filled in by row number.',
-      'Second rule: repeated measurements of the same plant or batch share a group. The group must stay entirely in training or entirely in validation, otherwise scores are optimistic. The genetics example will use this.',
+      'Avant toute fusion, les lignes doivent décrire les mêmes échantillons. Deux fichiers exportés par deux instruments ne sont presque jamais dans le même ordre.',
+      'nirs4all joint par identifiant, exactement. S’il manque un échantillon dans une source, vous le voyez dans le tableau d’alignement ; il n’est jamais complété par numéro de ligne.',
+      'Deuxième règle : les mesures répétées d’une même plante ou d’un même lot forment un groupe. Le groupe doit rester entièrement en entraînement ou entièrement en validation, sinon les scores sont optimistes. L’exemple génétique s’en sert.',
     ],
   },
   {
-    id: 'fusion-points', section: 'Concepts', title: 'Four places where sources can meet', minutes: 2,
+    id: 'fusion-points', section: 'Concepts', title: 'Quatre endroits où les sources se rejoignent', minutes: 2,
     body: () => (
       <>
         <FusionPointsDiagram />
         <div className="deck-columns deck-columns--4">
-          <div><LevelTag level="early" /><p><strong>variables</strong></p></div>
-          <div><LevelTag level="embedding" /><p><strong>summaries</strong> of each source</p></div>
-          <div><LevelTag level="intermediate" /><p><strong>inside</strong> one model</p></div>
-          <div><LevelTag level="late" /><p><strong>predictions</strong></p></div>
+          <div><LevelTag level="early" /><p>les <strong>variables</strong></p></div>
+          <div><LevelTag level="mid" /><p>des <strong>caractéristiques</strong> extraites par source</p></div>
+          <div><LevelTag level="joint" /><p><strong>dans</strong> un seul modèle appris</p></div>
+          <div><LevelTag level="late" /><p>les <strong>prédictions</strong></p></div>
         </div>
       </>
     ),
     notes: [
-      'This is the map for the rest of the session. Follow each source from left to right: raw data, preprocessing, a representation, a model, a prediction.',
-      'The only question is: at which point do the sources meet?',
-      'One: early fusion, right after preprocessing, we put the variables side by side. Two: embedding fusion, each source is first summarised into a few numbers, and the summaries are joined. Three: intermediate fusion, the blocks stay separate but one single model learns from all of them together. Four: late fusion, each source has its own model and we combine the predictions.',
-      'The colours you see here are used everywhere afterwards: in the slides, in the laboratory presets and in the result charts.',
+      'Voici la carte pour la suite. Suivez chaque source de gauche à droite : données brutes, prétraitement, un résumé, un modèle, une prédiction.',
+      'La seule question est : à quel endroit les sources se rejoignent-elles ?',
+      'Un : bas niveau, ou early fusion. On met les variables prétraitées côte à côte. Deux : niveau intermédiaire. Chaque source est d’abord résumée par quelques caractéristiques, par exemple des scores ACP ou PLS, puis on fusionne ces résumés. Trois : haut niveau, ou late fusion. Chaque source a son modèle, et on combine les prédictions.',
+      'Et un cas à part, que le monde du deep learning appelle souvent « intermediate fusion » : un seul modèle, un réseau, qui apprend en même temps une représentation par source et la façon de les combiner. On l’appellera modèle conjoint, pour ne pas le confondre avec le niveau intermédiaire des chimiométriciens.',
+      'Les couleurs que vous voyez ici sont utilisées partout ensuite : slides, presets du labo et graphiques de résultats.',
     ],
   },
   {
-    id: 'early', section: 'Concepts', title: 'Early fusion: put the variables side by side', minutes: 2.5,
+    id: 'early', section: 'Concepts', title: 'Bas niveau : les variables côte à côte', minutes: 2.5,
     body: () => (
       <>
         <div className="deck-heading-tag"><LevelTag level="early" /></div>
         <EarlyDiagram />
         <PipelineView preset="early" />
-        <ProsCons pro="simple · one model · usual PLS tools" con="scale each block · more variables need more LVs" />
+        <ProsCons pro="simple · un seul modèle · outils PLS habituels" con="pondérer les blocs · plus de variables → plus de VL" />
       </>
     ),
     notes: [
-      'Early fusion is what most of you have already done by hand: you concatenate the columns of the different instruments and you fit one PLS.',
-      'Each source still gets its own preprocessing, in its own lane. In nirs4all this is a “source branch” followed by “merge sources: concat”, then the model. What you see under the drawing is the real pipeline editor of the laboratory, with one lane per source.',
-      'Two cautions. First, a block with many variables or a large variance can dominate the PLS; that is why each block is scaled, and block scaling exists for that. Second, the combined matrix has more variables, so the model usually needs more latent variables than each single source. Keep that in mind: it is the key point of the first demonstration.',
+      'La fusion de bas niveau, c’est ce que la plupart d’entre vous ont déjà fait à la main : on concatène les colonnes des différents instruments et on ajuste un seul PLS.',
+      'Chaque source garde son propre prétraitement, dans sa propre voie. Dans nirs4all, c’est une « source branch » suivie de « merge sources : concat », puis le modèle. Ce que vous voyez sous le dessin est le vrai éditeur de pipeline du labo, avec une voie par source.',
+      'Deux précautions. Un bloc avec beaucoup de variables, ou une grande variance, peut dominer le PLS : c’est pour ça qu’on pondère chaque bloc. Et la matrice combinée a plus de variables : le modèle a généralement besoin de plus de variables latentes qu’une source seule. Retenez-le, c’est le point clé de la première démonstration.',
+      'Le MB-PLS est une variante multibloc de ce niveau. Chaque bloc donne un score, les scores de blocs sont combinés en un super-score commun, et on retire de toutes les variables la part qu’il explique. Westerhuis a montré en 1998 que ce MB-PLS équivaut à un PLS sur la concaténation des blocs pondérés. On travaille donc bien sur les variables : c’est du bas niveau, avec la structure en blocs en plus, notamment des poids par bloc à interpréter.',
     ],
   },
   {
-    id: 'embedding', section: 'Concepts', title: 'Embedding fusion: summarise each source first', minutes: 2,
+    id: 'mid', section: 'Concepts', title: 'Niveau intermédiaire : résumer chaque source', minutes: 2,
     body: () => (
       <>
-        <div className="deck-heading-tag"><LevelTag level="embedding" /></div>
+        <div className="deck-heading-tag"><LevelTag level="mid" /></div>
         <EmbeddingDiagram />
-        <PipelineView preset="embedding" />
-        <ProsCons pro="same weight per source · few columns · less noise" con="PCA ignores y: it may drop the useful signal" />
+        <PipelineView preset="mid-pca" />
+        <ProsCons pro="même poids par source · peu de colonnes · moins de bruit" con="l’ACP ignore y : elle peut perdre le signal utile" />
       </>
     ),
     notes: [
-      'An embedding is just a compact numerical summary of a sample. You already know one: PCA scores.',
-      'In embedding fusion, each source is compressed separately, here to five PCA scores, and only the scores are concatenated before the model. Each source then has the same weight in terms of columns, whatever its number of wavelengths or pixels.',
-      'In deep learning the same idea is used with pre-trained encoders: an image network or a language model turns an image or a text into a vector, and vectors from several modalities are fused. The principle is identical.',
-      'The PCA is fitted inside each training fold, never on the validation samples. Its limitation: it keeps the directions of largest variance, which are not necessarily those related to y.',
+      'Au niveau intermédiaire, on ne fusionne plus les variables mais des caractéristiques extraites de chaque source. Le cas le plus classique en chimiométrie : les scores d’une ACP ou d’un PLS par bloc. On peut aussi y mettre des variables sélectionnées, ou des descripteurs calculés.',
+      'Ici, chaque source est résumée par cinq scores ACP, et seuls ces scores sont concaténés avant le modèle. Chaque source pèse alors le même nombre de colonnes, quel que soit son nombre de longueurs d’onde ou de pixels.',
+      'En deep learning, on fait la même chose avec des encodeurs pré-entraînés : un réseau d’images ou un modèle de langage transforme une image ou un texte en vecteur — un « embedding » — et ce sont ces vecteurs qu’on fusionne. Le principe est le même.',
+      'L’ACP est ajustée dans chaque fold d’entraînement, jamais sur les échantillons de validation. Sa limite : elle garde les directions de plus grande variance, qui ne sont pas forcément celles liées à y. Des scores PLS par bloc tiendraient compte de y.',
     ],
   },
   {
-    id: 'intermediate', section: 'Concepts', title: 'Intermediate fusion: one model, separate blocks', minutes: 2.5,
+    id: 'joint', section: 'Concepts', title: 'Modèle conjoint : une branche par source, un seul réseau', minutes: 2.5,
     body: () => (
       <>
-        <div className="deck-heading-tag"><LevelTag level="intermediate" /></div>
+        <div className="deck-heading-tag"><LevelTag level="joint" /></div>
         <IntermediateDiagram />
-        <PipelineView preset="mid" caseId="images" />
-        <ProsCons pro="each source keeps its structure · learned for y" con="needs many samples and some tuning" />
+        <PipelineView preset="network" caseId="images" />
+        <ProsCons pro="chaque source garde sa structure · représentation apprise pour y" con="demande beaucoup d’échantillons et du réglage" />
       </>
     ),
     notes: [
-      'Intermediate, or mid-level, fusion keeps the blocks separate up to the model, and the model itself does the fusion.',
-      'With a neural network, each source has a branch adapted to its nature: a one-dimensional convolution slides along the spectrum, a dense layer reads the marker table, a two-dimensional convolution reads the image. Each branch produces a small embedding; the embeddings are concatenated and a common head predicts y. Everything is trained at once, so the branches learn what is useful for y — this is the difference with the PCA embedding.',
-      'The laboratory really trains such a network in the browser, with the native Methods engine. It is small on purpose.',
-      'The chemometric cousin is multiblock PLS: blocks stay separate, latent variables are shared, each block gets a weight. Both are available as presets.',
-      'Price: more parameters, so more samples are needed, and training choices such as epochs and learning rate matter.',
+      'Le modèle conjoint, c’est ce que le deep learning appelle « intermediate fusion ». Les blocs restent séparés jusqu’au modèle, et c’est le modèle lui-même qui fait la fusion.',
+      'Chaque source a une branche adaptée à sa nature : une convolution 1D glisse le long du spectre, une couche dense lit le tableau de marqueurs, une convolution 2D lit l’image. Chaque branche produit un petit vecteur ; on les concatène et une tête commune prédit y. Tout est entraîné d’un bloc : les branches apprennent ce qui est utile pour y. C’est la différence avec les scores ACP du niveau intermédiaire, qui sont calculés sans regarder y.',
+      'Le labo entraîne vraiment un tel réseau dans le navigateur. Ce n’est ni PyTorch ni TensorFlow : c’est un petit réseau écrit en C++ dans Methods, compilé en WebAssembly avec le reste. Rétropropagation, optimiseur Adam, erreur quadratique, graine fixée : le résultat est reproductible. Il est volontairement minuscule, quelques milliers de paramètres, et tourne sur le processeur sans GPU.',
+      'Le prix : beaucoup plus de paramètres qu’un PLS, donc plus d’échantillons nécessaires, et des choix d’entraînement — nombre d’epochs, taux d’apprentissage — qui comptent.',
     ],
   },
   {
-    id: 'late', section: 'Concepts', title: 'Late fusion: one model per source, then combine', minutes: 2,
+    id: 'late', section: 'Concepts', title: 'Haut niveau : un modèle par source, puis on combine', minutes: 2,
     body: () => (
       <>
         <div className="deck-heading-tag"><LevelTag level="late" /></div>
         <LateDiagram />
         <PipelineView preset="late-stacking" />
-        <ProsCons pro="modular · robust to a missing instrument" con="no interaction between sources" />
+        <ProsCons pro="modulaire · robuste à un instrument absent" con="aucune interaction entre les sources" />
       </>
     ),
     notes: [
-      'Late fusion builds one complete model per source, exactly as you would for a single instrument, and combines the predictions.',
-      'The simplest combination is the average. Nothing is learned; a weak source pulls the average towards its errors.',
-      'Stacking learns the combination: a small meta-model, here a Ridge regression, receives the predictions of the source models as inputs and learns how much to trust each one.',
-      'Late fusion is modular and robust; it is the natural choice when instruments are not always available. Its limit: the information is combined only at the end, so effects that appear only when the sources are seen together are lost.',
+      'La fusion de haut niveau construit un modèle complet par source, exactement comme pour un seul instrument, puis combine les prédictions.',
+      'La combinaison la plus simple est la moyenne. Rien n’est appris : une source faible tire la moyenne vers ses erreurs.',
+      'Le stacking apprend la combinaison : un petit méta-modèle, ici une régression Ridge, reçoit en entrée les prédictions des modèles par source et apprend la confiance à accorder à chacune.',
+      'Cette fusion est modulaire et robuste ; c’est le choix naturel quand les instruments ne sont pas toujours disponibles. Sa limite : l’information n’est combinée qu’à la fin, donc les effets qui n’apparaissent qu’en regardant les sources ensemble sont perdus.',
     ],
   },
   {
-    id: 'oof', section: 'Concepts', title: 'Stacking needs out-of-fold predictions', minutes: 1.5,
+    id: 'oof', section: 'Concepts', title: 'Le stacking demande des prédictions out-of-fold', minutes: 1.5,
     body: () => (
       <>
         <OofDiagram />
-        <Callout tone="amber">nirs4all builds the meta-model inputs from out-of-fold predictions inside every training scope, automatically. You only choose the meta-model.</Callout>
+        <Callout tone="amber">nirs4all construit automatiquement les entrées du méta-modèle à partir de prédictions OOF, dans chaque périmètre d’entraînement. Vous choisissez seulement le méta-modèle.</Callout>
       </>
     ),
     notes: [
-      'One technical point, because it is the classic trap of stacking.',
-      'If the meta-model learns from predictions made on the same samples that trained the source models, those predictions are too good. The meta-model then trusts the most flexible source too much.',
-      'So each sample must be predicted by a model that did not see it: cross-validation within the training set, the out-of-fold predictions. nirs4all does this for you, nested inside the outer validation. You do not have to code it, but you should know why the stacking result is honest.',
+      'Un point technique, parce que c’est le piège classique du stacking.',
+      'Si le méta-modèle apprend sur des prédictions faites sur les échantillons mêmes qui ont entraîné les modèles par source, ces prédictions sont trop bonnes. Le méta-modèle fait alors trop confiance à la source la plus flexible.',
+      'Chaque échantillon doit donc être prédit par un modèle qui ne l’a pas vu : une validation croisée à l’intérieur du train, les prédictions out-of-fold. nirs4all le fait pour vous, imbriqué dans la validation externe. Vous n’avez pas à le coder, mais il faut savoir pourquoi le résultat du stacking est honnête.',
     ],
   },
   {
-    id: 'summary', section: 'Concepts', title: 'The four levels at a glance', minutes: 1.5,
+    id: 'summary', section: 'Concepts', title: 'Les quatre niveaux, deux vocabulaires', minutes: 1.5,
     body: () => (
       <table className="deck-table">
-        <thead><tr><th>Level</th><th>What is merged</th><th>Typical model</th><th>Strength</th><th>Watch out</th></tr></thead>
+        <thead><tr><th>Chimiométrie</th><th>Machine learning</th><th>Ce qui est fusionné</th><th>Modèles du labo</th><th>Attention</th></tr></thead>
         <tbody>
-          <tr><td><LevelTag level="early" /></td><td>preprocessed variables</td><td>PLS on the concatenation</td><td>simple, strong baseline</td><td>block scaling, number of LVs</td></tr>
-          <tr><td><LevelTag level="embedding" /></td><td>compact summaries (PCA scores, encoder vectors)</td><td>PLS / Ridge</td><td>balanced, low dimension</td><td>summary may lose y-signal</td></tr>
-          <tr><td><LevelTag level="intermediate" /></td><td>learned representations inside one model</td><td>MB-PLS, multibranch network</td><td>uses each modality’s structure</td><td>needs data and tuning</td></tr>
-          <tr><td><LevelTag level="late" /></td><td>predictions</td><td>average or stacking</td><td>modular, robust</td><td>no interaction between sources</td></tr>
+          <tr><td><LevelTag level="early">Bas niveau</LevelTag></td><td>early fusion</td><td>les variables prétraitées</td><td>PLS sur la concaténation · MB-PLS</td><td>pondération des blocs, nombre de VL</td></tr>
+          <tr><td><LevelTag level="mid">Niveau intermédiaire</LevelTag></td><td>feature-level · embeddings</td><td>des caractéristiques par source (scores ACP/PLS)</td><td>ACP par source → PLS</td><td>le résumé peut perdre le signal</td></tr>
+          <tr><td><LevelTag level="joint">Modèle conjoint</LevelTag></td><td>intermediate fusion</td><td>des représentations apprises ensemble</td><td>réseau multibranche</td><td>données et réglage</td></tr>
+          <tr><td><LevelTag level="late">Haut niveau</LevelTag></td><td>late fusion · decision-level</td><td>les prédictions</td><td>moyenne · stacking</td><td>pas d’interaction entre sources</td></tr>
         </tbody>
       </table>
     ),
     notes: [
-      'A summary to keep. Read it by column: what is merged, which model, the strength and the trap.',
-      'None of the four levels is best in general. The data decide, and the only way to know is to compare them under the same validation, which is what we do now.',
+      'Un résumé à garder, avec les deux vocabulaires, parce que vous lirez les deux. Les chimiométriciens parlent de bas, moyen et haut niveau ; la littérature machine learning parle d’early, intermediate et late fusion.',
+      'Attention au faux ami : l’« intermediate fusion » du machine learning désigne en général un réseau qui apprend tout ensemble, pas les scores ACP par bloc du niveau intermédiaire chimiométrique. Et le MB-PLS reste du bas niveau, avec une structure de blocs.',
+      'Aucun niveau n’est le meilleur en général. Ce sont les données qui décident, et la seule façon de le savoir est de comparer sous la même validation. C’est ce qu’on fait maintenant.',
     ],
   },
   {
-    id: 'honest', section: 'Concepts', title: 'Compare fusions honestly', minutes: 1.5,
+    id: 'honest', section: 'Concepts', title: 'Comparer les fusions honnêtement', minutes: 1.5,
     body: () => (
       <div className="deck-split">
         <Steps items={[
-          <><strong>Baselines</strong>: each source alone</>,
-          <><strong>Same folds</strong> for every recipe</>,
-          <>Rank on <strong>cross-validation</strong> (OOF)</>,
-          <><strong>Test set</strong>: once, at the end</>,
-          <>Many edits = a little overfitting</>,
+          <><strong>Références</strong> : chaque source seule</>,
+          <><strong>Mêmes folds</strong> pour toutes les recettes</>,
+          <>Classer sur la <strong>validation croisée</strong> (OOF)</>,
+          <><strong>Jeu de test</strong> : une seule fois, à la fin</>,
+          <>Beaucoup d’essais = un peu de sur-apprentissage</>,
         ]} />
-        <Callout>A fusion is worth it only if it beats the <strong>best single source</strong>.</Callout>
+        <Callout>Une fusion ne vaut que si elle bat la <strong>meilleure source seule</strong>.</Callout>
       </div>
     ),
     notes: [
-      'Before the demonstrations, the rules of the game.',
-      'First, single-source baselines are part of every comparison. Second, all recipes share exactly the same folds; you will see the fold fingerprint in the Inspector. Third, we rank on cross-validated out-of-fold predictions. Fourth, the test set is looked at once, at the end.',
-      'Last point: when I edit a pipeline live and keep the best variant, I am also making a selection. With a handful of edits on 96 samples it is acceptable for teaching, but in a real study you would confirm on new data.',
+      'Avant les démonstrations, les règles du jeu.',
+      'Un : les références source par source font partie de chaque comparaison. Deux : toutes les recettes utilisent exactement les mêmes folds ; vous verrez leur empreinte dans l’Inspector. Trois : on classe sur les prédictions out-of-fold de la validation croisée. Quatre : le jeu de test se regarde une fois, à la fin.',
+      'Dernier point : quand je modifie un pipeline en direct et que je garde la meilleure variante, je fais aussi une sélection. Avec quelques essais sur 96 échantillons, c’est acceptable pour l’enseignement ; dans une vraie étude, on confirme sur de nouvelles données.',
     ],
   },
   {
-    id: 'lab', section: 'Live demonstration', title: 'The multimodal laboratory', minutes: 1,
+    id: 'lab', section: 'Démonstration', title: 'Le labo multimodal', minutes: 1,
     body: () => (
       <div className="deck-split deck-split--wide">
-        <Capture src="../captures/lab-editor.png" alt="The fusion pipeline editor with presets and one lane per source" />
+        <Capture src="../captures/lab-editor.png" alt="L’éditeur de pipeline de fusion, avec les presets et une voie par source" />
         <div>
           <Steps items={[
-            <>Choose a case</>,
-            <>Pick a <strong>fusion preset</strong>, edit it</>,
-            <><strong>Run</strong> one or all presets</>,
-            <>Compare in the <strong>Inspector</strong></>,
+            <>Choisir un cas</>,
+            <>Choisir un <strong>preset</strong> de fusion, l’éditer</>,
+            <>Lancer un ou tous les presets</>,
+            <>Comparer dans l’<strong>Inspector</strong></>,
           ]} />
           <p className="deck-url"><a href={labLink('spectroscopy')}>web.nirs4all.org/nirs4all_multimodale</a></p>
         </div>
       </div>
     ),
     notes: [
-      'Switch to the browser now. Show the page top to bottom quickly: the case, the data and the sources, the validation protocol, the pipeline editor with its presets grouped by fusion level, and the results Inspector.',
-      'The presets are canonical nirs4all pipelines: the same structure you would write in Python with source_branch or a by-source branch. Execution is native WebAssembly, in a background worker.',
+      'On passe au navigateur. Parcourir la page de haut en bas rapidement : le cas, les données et les sources, le protocole de validation, l’éditeur de pipeline avec ses presets rangés par niveau de fusion, et l’Inspector des résultats.',
+      'L’interface du labo est en anglais : « Run this pipeline » lance le pipeline affiché, « Run all presets » lance tous les presets du jeu de données.',
+      'Les presets sont des pipelines nirs4all canoniques : la même structure qu’en Python avec source_branch ou une branche par source. L’exécution est native, en WebAssembly, dans un worker en arrière-plan.',
     ],
   },
   {
-    id: 'demo-spectro', section: 'Live demonstration', title: 'Demo 1 · Raman + NIRS + MIR', minutes: 5,
+    id: 'demo-spectro', section: 'Démonstration', title: 'Démo 1 · Raman + NIRS + MIR', minutes: 5,
     body: () => (
       <div className="deck-split deck-split--demo">
         <div>
-          <p className="deck-case">120 samples · Raman 48 · NIRS 64 · MIR 56 variables · 96 calibration / 24 test</p>
+          <p className="deck-case">120 échantillons · Raman 48 · NIRS 64 · MIR 56 variables · 96 calibration / 24 test</p>
           <Steps items={[
-            <><a href={labLink('spectroscopy')}>Open the case</a>, follow one sample</>,
-            <><strong>Run all presets</strong>: who wins?</>,
-            <><LevelTag level="early">Early</LevelTag> PLS components <strong>3 → 6</strong></>,
-            <>Delete the <em>MIR</em> lane, run again</>,
+            <><a href={labLink('spectroscopy')}>Ouvrir le cas</a>, suivre un échantillon</>,
+            <><strong>« Run all presets »</strong> : qui gagne ?</>,
+            <><LevelTag level="early">Early</LevelTag> composantes PLS <strong>3 → 6</strong></>,
+            <>Supprimer la voie <em>MIR</em>, relancer</>,
           ]} />
         </div>
-        <Capture src="../captures/spectroscopy-inspector.png" alt="Inspector ranking the spectroscopy recipes" />
+        <Capture src="../captures/spectroscopy-inspector.png" alt="L’Inspector classe les recettes du cas spectroscopie" />
       </div>
     ),
     notes: [
-      'Three spectroscopies measured on the same samples. Each technique has its own axis and noise; the target depends on chemistry that each window sees partially.',
-      'Run all presets. It takes a few seconds. In the Inspector, sort by cross-validation RMSE.',
-      'Surprise: with the default settings, Raman alone is as good as anything, and early fusion is worse than Raman alone. Ask the audience why.',
-      'Answer: early fusion has 168 variables and only 3 PLS components; it is under-fitted. Click on the PLS cell and set 6 components; run. Now early fusion clearly beats Raman alone.',
-      'Then select the MIR lane and delete it: two sources, run again. Show that removing a source can help.',
-      'Note that stacking found the right answer by itself: it learned to trust Raman.',
+      'Trois spectroscopies mesurées sur les mêmes échantillons. Chaque technique a son axe et son bruit ; la cible dépend d’une chimie que chaque fenêtre voit en partie.',
+      'Lancer tous les presets. Cela prend quelques secondes. Dans l’Inspector, trier par RMSE de validation croisée.',
+      'Surprise : avec les réglages par défaut, le Raman seul vaut tout le reste, et la fusion early est moins bonne que le Raman seul. Demander à la salle pourquoi.',
+      'Réponse : la fusion early a 168 variables et seulement 3 composantes PLS ; elle est sous-ajustée. Cliquer sur la cellule PLS et mettre 6 composantes ; relancer. La fusion early bat alors nettement le Raman seul.',
+      'Puis sélectionner la voie MIR et la supprimer : deux sources, relancer. Montrer qu’enlever une source peut aider.',
+      'Noter que le stacking a trouvé tout seul la bonne réponse : il a appris à faire confiance au Raman.',
     ],
   },
   {
-    id: 'concl-spectro', section: 'Live demonstration', title: 'Demo 1 · what we learned', minutes: 1.5,
+    id: 'concl-spectro', section: 'Démonstration', title: 'Démo 1 · ce qu’on retient', minutes: 1.5,
     body: () => (
       <div className="deck-split deck-split--chart">
-        <ResultsChart caseId="spectroscopy" highlight={['Raman alone', 'Late · stacking', 'Early · PLS 6', 'Early · PLS 6 · without MIR']} />
+        <ResultsChart caseId="spectroscopy" highlight={['Raman seul', 'Late · stacking', 'Early · PLS 6', 'Early · PLS 6 · sans MIR']} />
         <div>
           <Points items={[
-            <><strong>Not automatic</strong>: early PLS‑3 {fmt(R.spec('Early · concatenate'))} vs Raman {fmt(R.ramanAlone())}</>,
-            <><strong>More LVs</strong>: PLS‑6 fusion {fmt(edit('spectroscopy', 'Early · PLS 6').oofRmse)} (Raman PLS‑6: {fmt(edit('spectroscopy', 'Raman alone · PLS 6').oofRmse)})</>,
-            <><strong>Average dilutes</strong> ({fmt(R.spec('Late · average'))}), <strong>stacking</strong> trusts Raman ({fmt(R.spec('Late · stacking'))})</>,
+            <><strong>Pas automatique</strong> : early PLS‑3 {fmt(R.spec('Early · concaténation'))} contre Raman {fmt(R.ramanAlone())}</>,
+            <><strong>Plus de VL</strong> : fusion PLS‑6 {fmt(edit('spectroscopy', 'Early · PLS 6').oofRmse)} (Raman PLS‑6 : {fmt(edit('spectroscopy', 'Raman seul · PLS 6').oofRmse)})</>,
+            <><strong>La moyenne dilue</strong> ({fmt(R.spec('Late · moyenne'))}), le <strong>stacking</strong> mise sur le Raman ({fmt(R.spec('Late · stacking'))})</>,
           ]} />
           <Provenance caseId="spectroscopy" />
         </div>
       </div>
     ),
     notes: [
-      'All bars are cross-validated RMSE on the same 96 samples and the same folds; the dashed line is the best single source. Hatched bars are the live edits.',
-      'Three messages. One: concatenating is not enough; the model capacity must follow the number of variables. Two: the comparison is fair — Raman alone does not improve with more components, the gain really comes from the other sources. Three: averaging gives the weak sources the same weight as the strong one; stacking learns the weights.',
-      'Removing MIR improved the score further, but remember the rule: every edit tested on the same folds is a selection; confirm on the test set once, or on new samples.',
+      'Toutes les barres sont des RMSE de validation croisée sur les mêmes 96 échantillons et les mêmes folds ; la ligne pointillée est la meilleure source seule. Les barres hachurées sont les modifications faites en direct.',
+      'Trois messages. Un : concaténer ne suffit pas ; la capacité du modèle doit suivre le nombre de variables. Deux : la comparaison est loyale — le Raman seul ne s’améliore pas avec plus de composantes, le gain vient bien des autres sources. Trois : la moyenne donne aux sources faibles le même poids qu’à la forte ; le stacking apprend les poids.',
+      'Retirer le MIR améliore encore le score, mais rappelez-vous la règle : chaque essai sur les mêmes folds est une sélection ; on confirme sur le jeu de test une seule fois, ou sur de nouveaux échantillons.',
+      'Ces données sont des simulations pédagogiques : ces classements illustrent des mécanismes, pas des résultats généralisables.',
     ],
   },
   {
-    id: 'demo-genetics', section: 'Live demonstration', title: 'Demo 2 · NIRS + genetic markers', minutes: 4.5,
+    id: 'demo-genetics', section: 'Démonstration', title: 'Démo 2 · NIRS + marqueurs génétiques', minutes: 4.5,
     body: () => (
       <div className="deck-split deck-split--demo">
         <div>
-          <p className="deck-case">60 plants × 2 measurements = 120 samples · NIRS 64 · 16 marker dosages (0/1/2) · groups kept whole</p>
+          <p className="deck-case">60 plantes × 2 mesures = 120 échantillons · NIRS 64 · 16 dosages de marqueurs (0/1/2) · groupes gardés entiers</p>
           <Steps items={[
-            <><a href={labLink('genetics')}>Open the case</a>: one plant, two samples</>,
-            <><strong>Run all presets</strong></>,
-            <><LevelTag level="early">Early</LevelTag> and <em>NIRS alone</em>: PLS <strong>3 → 5</strong></>,
-            <><LevelTag level="late">Average</LevelTag> vs <LevelTag level="intermediate">MB-PLS</LevelTag></>,
+            <><a href={labLink('genetics')}>Ouvrir le cas</a> : une plante, deux échantillons</>,
+            <><strong>« Run all presets »</strong></>,
+            <><LevelTag level="early">Early</LevelTag> et <em>NIRS seul</em> : PLS <strong>3 → 5</strong></>,
+            <><LevelTag level="late">Moyenne</LevelTag> contre <LevelTag level="early">MB-PLS</LevelTag></>,
           ]} />
         </div>
-        <Capture src="../captures/genetics-inspector.png" alt="Inspector ranking the genetics recipes" />
+        <Capture src="../captures/genetics-inspector.png" alt="L’Inspector classe les recettes du cas génétique" />
       </div>
     ),
     notes: [
-      'Second case: two really different modalities, a continuous spectrum and a small table of genotype dosages. Each plant was measured twice: the two rows share the markers but not the spectrum. They form a group and the folds keep groups whole.',
-      'Run all presets. The markers alone predict badly, worse than the mean. Would you drop them? Look at the fusions: early and MB-PLS are much better than NIRS alone. The markers carry information that only shows up together with the spectrum.',
-      'Then the fair comparison: increase the PLS components for early fusion and for NIRS alone. The gap remains.',
-      'Finally compare late average with MB-PLS: averaging with a weak source makes things worse than NIRS alone.',
+      'Deuxième cas : deux modalités vraiment différentes, un spectre continu et un petit tableau de dosages génotypiques. Chaque plante a été mesurée deux fois : les deux lignes ont les mêmes marqueurs mais pas le même spectre. Elles forment un groupe, et les folds gardent les groupes entiers.',
+      'Lancer tous les presets. Les marqueurs seuls prédisent mal, moins bien que la moyenne. Faut-il les jeter ? Regardez les fusions : early et MB-PLS font bien mieux que le NIRS seul. Les marqueurs apportent une information qui n’apparaît qu’avec le spectre.',
+      'Puis la comparaison loyale : augmenter les composantes PLS pour la fusion early et pour le NIRS seul. L’écart reste.',
+      'Enfin comparer la moyenne late et le MB-PLS : moyenner avec une source faible fait pire que le NIRS seul.',
     ],
   },
   {
-    id: 'concl-genetics', section: 'Live demonstration', title: 'Demo 2 · what we learned', minutes: 1.5,
+    id: 'concl-genetics', section: 'Démonstration', title: 'Démo 2 · ce qu’on retient', minutes: 1.5,
     body: () => (
       <div className="deck-split deck-split--chart">
-        <ResultsChart caseId="genetics" highlight={['NIRS alone', 'Intermediate · MB-PLS', 'Early · PLS 5', 'NIRS alone · PLS 5', 'Late · average']} />
+        <ResultsChart caseId="genetics" highlight={['NIRS seul', 'Early · MB-PLS', 'Early · PLS 5', 'NIRS seul · PLS 5', 'Late · moyenne']} />
         <div>
           <Points items={[
-            <><strong>Weak alone ≠ useless</strong>: markers {fmt(R.gen('Genetic markers alone'))}, but fusion {fmt(edit('genetics', 'Early · PLS 5').oofRmse)} vs NIRS {fmt(edit('genetics', 'NIRS alone · PLS 5').oofRmse)}</>,
-            <><strong>Variables level wins</strong>: MB-PLS {fmt(R.gen('Intermediate · MB-PLS'))}; average {fmt(R.gen('Late · average'))}</>,
-            <><strong>Network</strong> {fmt(R.gen('Intermediate · network'))}: not with 96 samples</>,
+            <><strong>Faible seule ≠ inutile</strong> : marqueurs {fmt(R.gen('Marqueurs seuls'))}, mais fusion {fmt(edit('genetics', 'Early · PLS 5').oofRmse)} contre NIRS {fmt(edit('genetics', 'NIRS seul · PLS 5').oofRmse)}</>,
+            <><strong>Le bas niveau gagne</strong> : MB-PLS {fmt(R.gen('Early · MB-PLS'))} ; moyenne {fmt(R.gen('Late · moyenne'))}</>,
+            <><strong>Réseau</strong> {fmt(R.gen('Conjoint · réseau'))} : pas avec 96 échantillons</>,
           ]} />
           <Provenance caseId="genetics" />
         </div>
       </div>
     ),
     notes: [
-      'Main message: judge a source by what it adds, not by its score alone. The markers alone are useless as a predictor, but combined with the spectrum they reduce the error by half.',
-      'Feature-level fusions see both blocks at the same time; late fusion sees each block separately, so it cannot exploit the complementarity as well, and the average is even worse than NIRS alone.',
-      'The compact network is clearly behind here. With 96 samples and fixed default settings it is not competitive: a more complex model is not automatically better.',
+      'Message principal : on juge une source sur ce qu’elle apporte, pas sur son score seule. Les marqueurs seuls sont inutiles comme prédicteur, mais combinés au spectre ils divisent l’erreur par deux.',
+      'Les fusions de bas niveau voient les deux blocs en même temps ; la fusion late voit chaque bloc séparément, elle exploite moins bien la complémentarité, et la moyenne fait même moins bien que le NIRS seul.',
+      'Le petit réseau est nettement derrière ici. Avec 96 échantillons et des réglages par défaut, il n’est pas compétitif : un modèle plus complexe n’est pas automatiquement meilleur.',
     ],
   },
   {
-    id: 'demo-images', section: 'Live demonstration', title: 'Demo 3 · NIRS + images', minutes: 3,
+    id: 'demo-images', section: 'Démonstration', title: 'Démo 3 · NIRS + images', minutes: 3,
     body: () => (
       <div className="deck-split deck-split--demo">
         <div>
-          <p className="deck-case">120 samples · NIRS 64 · 12 × 12 grey image per sample · 96 calibration / 24 test</p>
+          <p className="deck-case">120 échantillons · NIRS 64 · une image 12 × 12 en niveaux de gris par échantillon · 96 calibration / 24 test</p>
           <Steps items={[
-            <><a href={labLink('images', 'mid')}>Open the case</a>: spectrum + image</>,
-            <><LevelTag level="intermediate">Network</LevelTag>: 1-D and 2-D branches</>,
-            <><strong>Run all presets</strong></>,
-            <>Optional: <strong>100 epochs</strong></>,
+            <><a href={labLink('images', 'network')}>Ouvrir le cas</a> : spectre + image</>,
+            <><LevelTag level="joint">Réseau</LevelTag> : branches 1D et 2D</>,
+            <><strong>« Run all presets »</strong></>,
+            <>En option : <strong>100 epochs</strong></>,
           ]} />
         </div>
-        <Capture src="../captures/images-inspector.png" alt="Inspector ranking the image recipes" />
+        <Capture src="../captures/images-inspector.png" alt="L’Inspector classe les recettes du cas images" />
       </div>
     ),
     notes: [
-      'Last case: a spectrum and a small image for each sample. Early fusion and PLS treat the 144 pixels as 144 independent variables; the network keeps the 2-D layout with a convolution.',
-      'Show the network preset in the editor: the same source lanes, and the model step does the fusion. Run all presets.',
-      'If time allows, increase the epochs to 100 and run: the score barely moves. More training is not what is missing here; with 96 small synthetic images this compact network does not beat the linear models.',
+      'Dernier cas : un spectre et une petite image par échantillon. La fusion early et le PLS traitent les 144 pixels comme 144 variables indépendantes ; le réseau garde la disposition 2D avec une convolution.',
+      'Montrer le preset réseau dans l’éditeur : les mêmes voies par source, et c’est l’étape modèle qui fait la fusion. Lancer tous les presets.',
+      'S’il reste du temps, passer à 100 epochs et relancer : le score bouge à peine. Ce n’est pas l’entraînement qui manque ici ; avec 96 petites images synthétiques, ce réseau compact ne bat pas les modèles linéaires.',
     ],
   },
   {
-    id: 'concl-images', section: 'Live demonstration', title: 'Demo 3 · what we learned', minutes: 1.5,
+    id: 'concl-images', section: 'Démonstration', title: 'Démo 3 · ce qu’on retient', minutes: 1.5,
     body: () => (
       <div className="deck-split deck-split--chart">
-        <ResultsChart caseId="images" highlight={['Grayscale images alone', 'Early · concatenate', 'Embedding · PCA scores', 'Intermediate · network']} />
+        <ResultsChart caseId="images" highlight={['Image seule', 'Early · concaténation', 'Intermédiaire · scores ACP', 'Conjoint · réseau']} />
         <div>
           <Points items={[
-            <><strong>Image leads</strong> ({fmt(R.img('Grayscale images alone'))}), spectrum adds: early {fmt(R.img('Early · concatenate'))}</>,
-            <><strong>Embedding</strong> {fmt(R.img('Embedding · PCA scores'))} with 10 columns instead of 208</>,
-            <><strong>2-D network</strong> {fmt(R.img('Intermediate · network'))}: right idea, too few samples</>,
+            <><strong>L’image domine</strong> ({fmt(R.img('Image seule'))}), le spectre complète : early {fmt(R.img('Early · concaténation'))}</>,
+            <><strong>Niveau intermédiaire</strong> {fmt(R.img('Intermédiaire · scores ACP'))} avec 10 colonnes au lieu de 208</>,
+            <><strong>Réseau 2D</strong> {fmt(R.img('Conjoint · réseau'))} : bonne idée, trop peu d’échantillons</>,
           ]} />
           <Provenance caseId="images" />
         </div>
       </div>
     ),
     notes: [
-      'Here fusion clearly helps: both early and embedding beat the best single source.',
-      'Embedding fusion is interesting: five numbers per source are almost as good as all 208 variables. That is the idea behind using pre-trained image or spectral encoders on larger problems.',
-      'The network respects the image structure, which is the right idea for real images, but with 96 small synthetic images it does not beat PLS. With real images and more samples, the balance may change.',
+      'Ici la fusion aide clairement : early comme niveau intermédiaire battent la meilleure source seule.',
+      'Le niveau intermédiaire est intéressant : cinq scores par source font presque aussi bien que les 208 variables. C’est l’idée qu’on reprend avec des encodeurs pré-entraînés d’images ou de spectres sur de plus gros problèmes.',
+      'Le réseau respecte la structure de l’image, ce qui est la bonne idée pour de vraies images, mais avec 96 petites images synthétiques il ne bat pas le PLS. Avec de vraies images et plus d’échantillons, l’équilibre peut changer.',
     ],
   },
   {
-    id: 'take-home', section: 'Wrap-up', title: 'What to try first on your data', minutes: 1,
+    id: 'take-home', section: 'Synthèse', title: 'Par quoi commencer sur vos données', minutes: 1,
     body: () => (
       <div className="deck-guide">
-        <div><span className="deck-guide-key"><span className="deck-num">1</span>Baselines</span><p>each source alone</p></div>
-        <div><span className="deck-guide-key"><LevelTag level="early" /></span><p>block scaling, let the LVs grow</p></div>
-        <div><span className="deck-guide-key"><LevelTag level="embedding" /><LevelTag level="intermediate" /></span><p>unbalanced blocks · networks only with many samples</p></div>
-        <div><span className="deck-guide-key"><LevelTag level="late" /></span><p>instruments not always available: stacking</p></div>
-        <div><span className="deck-guide-key"><span className="deck-num">✓</span>Protocol</span><p>same folds · OOF · test once</p></div>
+        <div><span className="deck-guide-key"><span className="deck-num">1</span>Références</span><p>chaque source seule</p></div>
+        <div><span className="deck-guide-key"><LevelTag level="early" /></span><p>pondérer les blocs, laisser croître les VL · MB-PLS</p></div>
+        <div><span className="deck-guide-key"><LevelTag level="mid" /></span><p>blocs très déséquilibrés : scores par source</p></div>
+        <div><span className="deck-guide-key"><LevelTag level="late" /></span><p>instruments pas toujours disponibles : stacking</p></div>
+        <div><span className="deck-guide-key"><LevelTag level="joint" /></span><p>beaucoup d’échantillons, vraies images</p></div>
+        <div><span className="deck-guide-key"><span className="deck-num">✓</span>Protocole</span><p>mêmes folds · OOF · test une fois</p></div>
       </div>
     ),
     notes: [
-      'To take home: start with the single sources, then early fusion done properly. Move to embeddings or multiblock models when blocks are unbalanced, to late fusion when instruments are not always there. Networks when you have many samples or real images.',
-      'And always the same protocol. Thank you; questions are welcome — the laboratory stays open on the screen.',
+      'À retenir : commencer par les sources seules, puis une fusion de bas niveau bien faite. Passer au niveau intermédiaire quand les blocs sont déséquilibrés, au haut niveau quand les instruments ne sont pas toujours là. Le modèle conjoint quand on a beaucoup d’échantillons ou de vraies images.',
+      'Et toujours le même protocole. Merci ; place aux questions — le labo reste ouvert à l’écran.',
     ],
   },
   {
-    id: 'resources', section: 'Wrap-up', title: 'Questions · resources', minutes: 0,
+    id: 'resources', section: 'Synthèse', title: 'Questions · ressources', minutes: 0,
     body: () => (
       <div className="deck-split">
         <div>
-          <h3>Laboratory</h3>
+          <h3>Le labo</h3>
           <p className="deck-url"><a href={LAB}>web.nirs4all.org/nirs4all_multimodale</a></p>
-          <p>Import your own CSV / VCF / PNG files with the dataset builder; export any pipeline as JSON.</p>
-          <h3>The same pipelines in Python</h3>
+          <p>Importez vos propres fichiers CSV / VCF / PNG avec le Dataset Builder ; exportez n’importe quel pipeline en JSON.</p>
+          <h3>Les mêmes pipelines en Python</h3>
           <pre className="deck-code">{`pipeline = [
   {"source_branch": {"NIR": [SNV()], "markers": [StandardScaler()]}},
   {"merge_sources": "concat"},
@@ -448,7 +453,7 @@ export const SLIDES: Slide[] = [
 ]`}</pre>
         </div>
         <div>
-          <h3>Late fusion (stacking)</h3>
+          <h3>Fusion late (stacking)</h3>
           <pre className="deck-code">{`pipeline = [
   {"branch": {"by_source": True, "steps": {
       "NIR": [SNV(), PLSRegression(5)],
@@ -456,12 +461,12 @@ export const SLIDES: Slide[] = [
   {"merge": "predictions"},
   Ridge(alpha=1.0),
 ]`}</pre>
-          <p>Documentation: <a href="https://nirs4all.readthedocs.io">nirs4all.readthedocs.io</a> · user guide › multi-source pipelines</p>
+          <p>Documentation : <a href="https://nirs4all.readthedocs.io">nirs4all.readthedocs.io</a> · guide utilisateur › multi-source pipelines</p>
         </div>
       </div>
     ),
     notes: [
-      'This slide stays on during questions. The same structures exist in the Python library: source_branch and merge_sources for feature-level fusion, a by-source branch and a prediction merge for late fusion.',
+      'Cette slide reste affichée pendant les questions. Les mêmes structures existent dans la bibliothèque Python : source_branch et merge_sources pour la fusion de bas niveau, une branche par source et une fusion des prédictions pour le haut niveau.',
     ],
   },
 ]

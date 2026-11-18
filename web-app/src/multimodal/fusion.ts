@@ -20,14 +20,18 @@ export const PCA = 'preprocessing.feature_selection.flexible_pca'
 const STANDARD = 'preprocessing.scaling.standard_scale'
 
 /** Fusion level shown to learners. Presentation only: the document decides execution. */
-export type FusionLevel = 'single' | 'early' | 'embedding' | 'intermediate' | 'late'
+/**
+ * Chemometric data-fusion levels: low (variables), mid (features extracted per
+ * source), high (predictions); plus models that learn every source jointly.
+ */
+export type FusionLevel = 'single' | 'early' | 'mid' | 'joint' | 'late'
 
 export const FUSION_LEVEL_LABEL: Record<FusionLevel, string> = {
   single: 'Single source',
-  early: 'Early fusion',
-  embedding: 'Embedding fusion',
-  intermediate: 'Intermediate fusion',
-  late: 'Late fusion',
+  early: 'Early fusion (low level)',
+  mid: 'Mid-level fusion (features)',
+  joint: 'Joint model',
+  late: 'Late fusion (high level)',
 }
 
 const int = (name: string, label: string, value: number, min: number, max: number, step = 1, description?: string): PipelineOperatorParameter =>
@@ -62,9 +66,9 @@ export const LAB_OPERATORS: readonly PipelineOperatorDefinition[] = [
       { ...int('ddof', 'Degrees of freedom removed', 0, 0, 1), isAdvanced: true }]),
   op('preprocessing', 'Scaling', 'preprocessing.scaling.block_rms', 'Block RMS scaling',
     'Divides the whole source block by one training-fitted root-mean-square scale, so blocks of different width contribute comparably once combined.'),
-  op('preprocessing', 'Embedding', PCA, 'PCA embedding',
-    'Projects the source onto its first principal components, fitted on the training scope. The scores are a compact embedding of the source.',
-    [float('n_components', 'Components', 5, 1, 50, 'A whole number of components, or a fraction (0–1) of explained variance.')], ['embedding']),
+  op('preprocessing', 'Feature extraction', PCA, 'PCA scores',
+    'Projects the source onto its first principal components, fitted on the training scope. The scores are compact features of the source (mid-level fusion).',
+    [float('n_components', 'Components', 5, 1, 50, 'A whole number of components, or a fraction (0–1) of explained variance.')], ['features']),
   op('model', 'Linear models', PLS, 'PLS regression', 'Partial least squares regression on the incoming features.', [
     int('n_components', 'Components', 3, 1, 30),
     bool('center_x', 'Centre X', true), bool('scale_x', 'Scale X', false), bool('center_y', 'Centre y', true), bool('scale_y', 'Scale y', false),
@@ -74,14 +78,14 @@ export const LAB_OPERATORS: readonly PipelineOperatorDefinition[] = [
   ]),
   op('model', 'Multiblock models', MBPLS, 'Multiblock PLS',
     'MB-PLS (centred blocks, equal super weights): one latent structure shared by the source blocks, kept as separate blocks.',
-    [int('n_components', 'Components', 3, 1, 30)], ['intermediate']),
+    [int('n_components', 'Components', 3, 1, 30)], ['multiblock']),
   op('model', 'Neural networks', NEURAL, 'Multibranch network',
     'One learned branch per source (1-D convolution for spectra, dense for markers, 2-D convolution for images), concatenated embeddings and a joint regression head trained together.', [
       int('filters', 'Filters per branch', 4, 1, 32), int('kernel_size', 'Kernel size', 3, 1, 15, 2), int('pool_size', 'Pool size', 2, 1, 4),
       int('embedding_dim', 'Embedding size', 6, 1, 64), int('head_hidden', 'Head hidden units', 8, 1, 128),
       int('epochs', 'Epochs', 24, 1, 400), int('batch_size', 'Batch size', 16, 1, 256),
       float('learning_rate', 'Learning rate', 0.003, 0), float('weight_decay', 'Weight decay', 0.0001, 0),
-    ], ['intermediate']),
+    ], ['joint']),
 ]
 
 const OPERATOR = new Map(LAB_OPERATORS.map(definition => [definition.classPath!, definition]))
@@ -140,23 +144,23 @@ export function fusionPresets(dataset: LabDataset): FusionPreset[] {
       document: { name: `Early fusion · ${all} → PLS`, pipeline: [{ source_branch: lanes(sources, sourceChain) }, { merge_sources: 'concat' }, pls] },
     },
     {
-      id: 'embedding', label: 'Embedding · PCA scores', level: 'embedding',
+      id: 'mid-pca', label: 'Mid-level · PCA scores', level: 'mid',
       summary: 'Each source is summarised by a few PCA scores fitted on the training samples; the scores are concatenated and PLS learns from them.',
       document: {
-        name: `Embedding fusion · PCA scores of ${all} → PLS`,
+        name: `Mid-level fusion · PCA scores of ${all} → PLS`,
         pipeline: [{ source_branch: lanes(sources, () => [...sourceChain(), step(PCA, defaults(PCA))]) }, { merge_sources: 'concat' }, pls],
       },
     },
     {
-      id: 'mbpls', label: 'Intermediate · MB-PLS', level: 'intermediate',
-      summary: 'The sources stay separate blocks; multiblock PLS learns one latent structure shared by the blocks.',
-      document: { name: `Intermediate fusion · MB-PLS on ${all}`, pipeline: [{ source_branch: lanes(sources, sourceChain) }, model(MBPLS, defaults(MBPLS), 'MB-PLS')] },
+      id: 'mbpls', label: 'Early · MB-PLS', level: 'early',
+      summary: 'Low-level fusion with block structure: centred blocks, one score per block, a shared super-score. Close to PLS on the block-weighted concatenation.',
+      document: { name: `Early fusion · MB-PLS on ${all}`, pipeline: [{ source_branch: lanes(sources, sourceChain) }, model(MBPLS, defaults(MBPLS), 'MB-PLS')] },
     },
     {
-      id: 'mid', label: 'Intermediate · network', level: 'intermediate',
+      id: 'network', label: 'Joint · network', level: 'joint',
       summary: 'One learned branch per source produces an embedding; the embeddings are concatenated and a joint head predicts. Branches and head train together.',
       document: {
-        name: `Intermediate fusion · multibranch network on ${all}`,
+        name: `Joint model · multibranch network on ${all}`,
         pipeline: [{ source_branch: lanes(sources, sourceChain) }, model(NEURAL, defaults(NEURAL), 'Multibranch network')],
       },
     },
@@ -360,7 +364,7 @@ export function toLabDocument(dataset: LabDataset, document: PipelineChainDocume
   let lab: LabPipelineDocument
   if (record(first) && record(first.source_branch) && keysOf(first).length === 1) lab = featureLevel(dataset, steps, name)
   else if (record(first) && record(first.branch) && first.branch.by_source === true && keysOf(first).length === 1 && record(first.branch.steps)) lab = predictionLevel(dataset, steps, name)
-  else throw new FusionRecipeError('Start the pipeline with the sources: a source branch (early, embedding or intermediate fusion) or a by-source branch (late fusion).')
+  else throw new FusionRecipeError('Start the pipeline with the sources: a source branch (early, mid-level or joint fusion) or a by-source branch (late fusion).')
   return validatePipelineDocument(dataset, lab)
 }
 
@@ -368,9 +372,10 @@ export function toLabDocument(dataset: LabDataset, document: PipelineChainDocume
 export function fusionLevel(document: LabPipelineDocument): FusionLevel {
   if (document.merge.kind !== 'none') return 'late'
   const branch = document.branches[0]
-  if (BLOCK_HEADS.has(branch.head.methodId)) return 'intermediate'
+  if (branch.head.methodId === NEURAL) return 'joint'
+  if (branch.head.methodId === MBPLS) return 'early'
   if (branch.sourceIds.length === 1) return 'single'
-  return branch.sourceChains.some(chain => chain.steps.some(item => item.methodId === PCA)) ? 'embedding' : 'early'
+  return branch.sourceChains.some(chain => chain.steps.some(item => item.methodId === PCA)) ? 'mid' : 'early'
 }
 
 export function operatorName(methodId: string): string {

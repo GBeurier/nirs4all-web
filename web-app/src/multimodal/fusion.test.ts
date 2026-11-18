@@ -18,7 +18,7 @@ function dataset(caseId: LabCase): LabDataset {
 }
 
 const LEGACY: Record<string, 'single' | 'early' | 'mbpls' | 'mid' | 'late' | 'stacking'> = {
-  early: 'early', mbpls: 'mbpls', mid: 'mid', 'late-mean': 'late', 'late-stacking': 'stacking',
+  early: 'early', mbpls: 'mbpls', network: 'mid', 'late-mean': 'late', 'late-stacking': 'stacking',
 }
 
 for (const caseId of ['spectroscopy', 'genetics', 'images'] as const) {
@@ -29,7 +29,7 @@ for (const caseId of ['spectroscopy', 'genetics', 'images'] as const) {
         const document = toLabDocument(data, preset.document)
         expect(fusionLevel(document)).toBe(preset.level)
         const actual = describeRecipe(data, { ...config, pipeline: document })
-        if (preset.id === 'embedding') {
+        if (preset.id === 'mid-pca') {
           expect(Object.values(actual.operators)[0].sourceOps.every(source => source.steps.at(-1)!.methodId === 'preprocessing.feature_selection.flexible_pca')).toBe(true)
           return
         }

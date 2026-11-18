@@ -22,7 +22,7 @@ function startIndex(): number {
 
 function Frame({ slide, index }: { slide: Slide; index: number }) {
   return (
-    <article className="deck-slide n4-app-bg" data-slide={slide.id} aria-label={`Slide ${index + 1}: ${slide.title}`}>
+    <article className="deck-slide n4-app-bg" data-slide={slide.id} aria-label={`Diapositive ${index + 1} : ${slide.title}`}>
       <header className="deck-head">
         <img src={icon} alt="" width={34} height={34} />
         <span className="deck-brand">nirs4all</span>
@@ -31,7 +31,7 @@ function Frame({ slide, index }: { slide: Slide; index: number }) {
       {slide.id !== 'title' ? <h2 className="deck-h">{slide.title}</h2> : <div />}
       <div className="deck-body">{slide.body()}</div>
       <footer className="deck-foot">
-        <span>Multimodal data and fusion · nirs4all training</span>
+        <span>Données multimodales et fusion · formation nirs4all</span>
         <span>{index + 1} / {SLIDES.length}</span>
       </footer>
     </article>
@@ -113,12 +113,12 @@ function DeckView() {
   return (
     <div className="deck-root" data-notes={notes || undefined}>
       <Scaled index={index} />
-      {notes ? <aside className="deck-notes" aria-label="Speaker notes"><strong>{SLIDES[index].minutes} min</strong><Notes slide={SLIDES[index]} /></aside> : null}
-      <nav className="deck-nav" aria-label="Slides">
-        <button type="button" onClick={() => go(index - 1)} disabled={index === 0} aria-label="Previous slide">‹</button>
+      {notes ? <aside className="deck-notes" aria-label="Notes orales"><strong>{SLIDES[index].minutes} min</strong><Notes slide={SLIDES[index]} /></aside> : null}
+      <nav className="deck-nav" aria-label="Diapositives">
+        <button type="button" onClick={() => go(index - 1)} disabled={index === 0} aria-label="Diapositive précédente">‹</button>
         <span>{index + 1} / {SLIDES.length}</span>
-        <button type="button" onClick={() => go(index + 1)} disabled={index === SLIDES.length - 1} aria-label="Next slide">›</button>
-        <span className="deck-nav-hint">N notes · P presenter · F full screen</span>
+        <button type="button" onClick={() => go(index + 1)} disabled={index === SLIDES.length - 1} aria-label="Diapositive suivante">›</button>
+        <span className="deck-nav-hint">N notes · P présentateur · F plein écran</span>
       </nav>
     </div>
   )
@@ -143,15 +143,15 @@ function PresenterView() {
     <div className="deck-presenter">
       <div className="deck-presenter-main"><Scaled index={index} /></div>
       <div className="deck-presenter-side">
-        <div className="deck-presenter-next">{index + 1 < SLIDES.length ? <Scaled index={index + 1} /> : <p>End of deck</p>}</div>
+        <div className="deck-presenter-next">{index + 1 < SLIDES.length ? <Scaled index={index + 1} /> : <p>Fin de la présentation</p>}</div>
         <div className="deck-presenter-time">
-          <button type="button" onClick={() => setStarted(value => value === null ? Date.now() : null)}>{started === null ? 'Start timer (T)' : 'Reset (T)'}</button>
-          <span>elapsed <strong>{clock(elapsed)}</strong></span>
-          <span>plan at this slide <strong>{clock(planned)}</strong> / {TOTAL_MINUTES} min</span>
-          <span>this slide <strong>{slide.minutes} min</strong></span>
+          <button type="button" onClick={() => setStarted(value => value === null ? Date.now() : null)}>{started === null ? 'Lancer le chrono (T)' : 'Remettre à zéro (T)'}</button>
+          <span>écoulé <strong>{clock(elapsed)}</strong></span>
+          <span>prévu à cette slide <strong>{clock(planned)}</strong> / {TOTAL_MINUTES} min</span>
+          <span>cette slide <strong>{slide.minutes} min</strong></span>
         </div>
       </div>
-      <section className="deck-presenter-notes" aria-label="Speaker notes">
+      <section className="deck-presenter-notes" aria-label="Notes orales">
         <h2>{index + 1}. {slide.title}</h2>
         <Notes slide={slide} />
       </section>

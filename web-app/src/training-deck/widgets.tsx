@@ -5,7 +5,7 @@ import { LEVEL_COLORS, type LevelKind } from './diagrams'
 import { EVIDENCE, fmt, type CaseId, type EvidenceRun } from './evidence'
 
 const LEVEL_LABEL: Record<LevelKind, string> = {
-  single: 'Single source', early: 'Early', embedding: 'Embedding', intermediate: 'Intermediate', late: 'Late',
+  single: 'Source seule', early: 'Bas niveau · early', mid: 'Niveau intermédiaire', joint: 'Modèle conjoint', late: 'Haut niveau · late',
 }
 
 /** Display-only dataset stand-in: the presets read source IDs and labels only. */
@@ -26,8 +26,8 @@ export function PipelineView({ caseId = 'spectroscopy', preset, document, height
   return (
     <div className="deck-rack" style={{ height }}>
       <PipelineChainEditor value={value} onChange={() => undefined} catalog={LAB_CATALOG} readOnly variantCount={1}
-        inputLabel="Dataset" inputDetail={dataset.sources.map(source => source.label).join(' · ')}
-        outputLabel="Prediction" defaultWrap={false} defaultZoom={zoom} initialWidth={1200} />
+        inputLabel="Données" inputDetail={dataset.sources.map(source => source.label).join(' · ')}
+        outputLabel="Prédiction" defaultWrap={false} defaultZoom={zoom} initialWidth={1200} />
     </div>
   )
 }
@@ -50,13 +50,13 @@ export function ResultsChart({ caseId, include, highlight = [] }: { caseId: Case
   const x = (value: number) => left + (value / max) * width
   return (
     <svg className="deck-chart" viewBox={`0 0 960 ${height}`} preserveAspectRatio="xMinYMin meet" role="img"
-      aria-label={`Cross-validated RMSE of ${runs.length} recipes on ${data.dataset.name}; lower is better`}>
+      aria-label={`RMSE en validation croisée de ${runs.length} recettes sur ${data.dataset.name} ; plus bas = mieux`}>
       <defs>
         <pattern id={`hatch-${caseId}`} width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
           <rect width="7" height="7" fill="#fff" /><rect width="3" height="7" fill="currentColor" />
         </pattern>
       </defs>
-      <text x={left} y={18} fontFamily="var(--mono)" fontSize={16} fill="var(--text-3)">RMSE · cross-validation (OOF, {data.calibration} samples) — lower is better</text>
+      <text x={left} y={18} fontFamily="var(--mono)" fontSize={16} fill="var(--text-3)">RMSE en validation croisée (OOF) · plus bas = mieux</text>
       {runs.map((run, index) => {
         const y = top + index * row
         const color = LEVEL_COLORS[run.level]
@@ -73,7 +73,7 @@ export function ResultsChart({ caseId, include, highlight = [] }: { caseId: Case
         )
       })}
       <line x1={x(bestSingle)} y1={top} x2={x(bestSingle)} y2={top + runs.length * row} stroke="var(--text)" strokeDasharray="4 4" strokeWidth={1.4} />
-      <text x={x(bestSingle) + 6} y={top + runs.length * row + 22} fontFamily="var(--mono)" fontSize={16} fill="var(--text-2)">best single source ({fmt(bestSingle)})</text>
+      <text x={x(bestSingle) + 6} y={top + runs.length * row + 22} fontFamily="var(--mono)" fontSize={16} fill="var(--text-2)">meilleure source seule ({fmt(bestSingle)})</text>
     </svg>
   )
 }
@@ -82,7 +82,7 @@ export function Provenance({ caseId }: { caseId: CaseId }) {
   const data = EVIDENCE.cases[caseId]
   return (
     <p className="deck-provenance">
-      Native scores recorded {EVIDENCE.capturedAt} in the laboratory · DAG-ML {data.ownerVersions.dag} · Methods {data.ownerVersions.methods} · folds {data.foldsFingerprint.slice(0, 10)} · synthetic teaching data
+      Scores natifs enregistrés le {EVIDENCE.capturedAt} dans le labo · DAG-ML {data.ownerVersions.dag} · Methods {data.ownerVersions.methods} (identiques en DAG-ML 0.4.4 · Methods 1.3.19) · folds {data.foldsFingerprint.slice(0, 10)} · données pédagogiques synthétiques
     </p>
   )
 }
