@@ -110,18 +110,21 @@ export function inspectorChains(dataset: LabDataset, runs: readonly LabRunRecord
   })
 }
 
-/** OOF rows (validation, with their fold) followed by held-out rows (test), keyed by sample ID. */
+/**
+ * OOF rows only (validation, with their fold), keyed by sample ID. Recipes are
+ * compared on OOF predictions; held-out rows stay in the test scores and the
+ * results export, so sample views never pool the two scopes.
+ */
 export function inspectorPredictions(runs: readonly LabRunRecord[]): Record<string, ChainPredictions> {
   return Object.fromEntries(runs.map(run => {
     const oof = run.candidate.oof.rows
-    const test = run.candidate.holdout?.rows ?? []
     return [run.id, {
       chainId: run.id,
-      sampleKeys: [...oof.map(row => row.sampleId), ...test.map(row => row.sampleId)],
-      yTrue: [...oof.map(row => row.observed), ...test.map(row => row.observed)],
-      yPred: [...oof.map(row => row.predicted), ...test.map(row => row.predicted)],
-      partition: [...oof.map(() => 'validation'), ...test.map(() => 'test')],
-      fold: [...oof.map(row => row.foldId ?? null), ...test.map(() => null)],
+      sampleKeys: oof.map(row => row.sampleId),
+      yTrue: oof.map(row => row.observed),
+      yPred: oof.map(row => row.predicted),
+      partition: oof.map(() => 'validation'),
+      fold: oof.map(row => row.foldId ?? null),
     } satisfies ChainPredictions]
   }))
 }

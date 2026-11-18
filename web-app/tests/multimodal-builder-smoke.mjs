@@ -52,10 +52,7 @@ async function inputFiles(caseId, { manifest = true, renameVcf = false, missingS
 }
 async function openCase(caseId) {
   await page.locator(`input[name="n4mm-case"][value="${caseId}"]`).check()
-  await page.locator('#n4mm-pipeline').waitFor({ timeout: 30000 })
-  const comparison = page.getByText('Compare unedited presets', { exact: true })
-  if (!await page.getByRole('button', { name: 'Run comparison', exact: true }).isVisible()) await comparison.click()
-  await page.getByRole('button', { name: 'Run comparison', exact: true }).waitFor({ timeout: 30000 })
+  await page.locator('[data-fusion-lab]').waitFor({ timeout: 30000 })
   await page.getByRole('button', { name: 'Import your files', exact: true }).click()
   await builder.waitFor()
 }
@@ -179,17 +176,18 @@ try {
   reports.push({ caseId: 'spectroscopy', mode: 'declared-profile-before-suffix', files: renamed.length })
 
   // The imported declaration really trains, and a refused replacement preserves that valid run.
-  await page.getByRole('button', { name: 'Run comparison', exact: true }).click()
-  await page.getByText('Run complete. Results below belong to the configuration shown above.', { exact: true }).waitFor({ timeout: 120000 })
+  await page.getByRole('button', { name: /^Run all \d+ presets/ }).click()
+  await page.waitForFunction(() => /9 runs added to the comparison/.test(document.querySelector('.n4fl-status')?.textContent ?? ''), null, { timeout: 120000 })
   const [nativeDownload] = await Promise.all([page.waitForEvent('download'),
     page.getByRole('button', { name: 'Download results (JSON)', exact: true }).click()])
   const nativePath = join(output, 'imported-native-results.json')
   await nativeDownload.saveAs(nativePath)
-  const nativeRun = JSON.parse(await readFile(nativePath, 'utf8')).run
-  assert.equal(nativeRun.candidates.length, 10)
-  assert.deepEqual(nativeRun.refusals, [])
-  assert.equal(nativeRun.calibrationIds.length, 96)
-  assert.equal(nativeRun.holdoutIds.length, 24)
+  const nativeRuns = JSON.parse(await readFile(nativePath, 'utf8')).runs
+  assert.equal(nativeRuns.length, 9)
+  for (const { protocol } of nativeRuns) {
+    assert.equal(protocol.calibrationIds.length, 96)
+    assert.equal(protocol.holdoutIds.length, 24)
+  }
   const retainedResults = await page.locator('#n4mm-results').innerText()
   const incomplete = await inputFiles('spectroscopy')
   const missingCell = incomplete.files.map(file => file.name === 'raman.csv'

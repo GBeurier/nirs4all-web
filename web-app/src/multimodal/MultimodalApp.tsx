@@ -271,7 +271,13 @@ export default function MultimodalApp() {
     const { dataset, config } = workspaces[id]
     if (!dataset || !config || jobs.length === 0) return
     let documents
-    try { documents = jobs.map(job => ({ chain: job.chain, name: job.name, lab: toLabDocument(dataset, job.chain) })) }
+    // Native candidates carry the document label: keep labels unique within one execution.
+    try {
+      documents = jobs.map((job, index) => {
+        const lab = toLabDocument(dataset, job.chain)
+        return { chain: job.chain, name: job.name, document: lab, lab: jobs.length > 1 ? { ...lab, label: `${lab.label} [${index + 1}]` } : lab }
+      })
+    }
     catch (reason) { patch(id, current => ({ ...current, pipelineError: errorStatus(reason).message })); return }
     const sourceIds = dataset.sources.map(source => source.id)
     const configs = documents.map(({ lab }) => ({ ...toExecutionConfig(config), pipeline: lab, sourceIds, strategy: pipelineStrategy(lab) }))
@@ -295,7 +301,7 @@ export default function MultimodalApp() {
         // The native label is the document label; presets have distinct labels.
         const records: LabRunRecord[] = result.candidates.flatMap(candidate => {
           const match = documents.find(item => item.lab.label === candidate.label)
-          return match ? [{ id: `run-${++runCounter}`, index: runCounter, name: match.name, document: match.lab, canonical: toCanonicalPipeline(match.chain),
+          return match ? [{ id: `run-${++runCounter}`, index: runCounter, name: match.name, document: match.document, canonical: toCanonicalPipeline(match.chain),
             candidate, datasetFingerprint: dataset.fingerprint, finishedAt, protocol: { calibrationIds: result.calibrationIds,
             holdoutIds: result.holdoutIds, folds: result.folds, foldsFingerprint: result.foldsFingerprint, validation: result.validation,
             ownerVersions: result.ownerVersions } }] : []
@@ -435,6 +441,7 @@ export default function MultimodalApp() {
         />
         <nav className="n4mm-training-downloads" aria-label="Training materials">
           <a href="../multimodal-training/slides/">Open the training slides</a>
+          <a href="../multimodal-training/nirs4all_multimodal_slides.pdf" download>Download the slides (PDF)</a>
         </nav>
       </> : undefined}
       resultsView={workspace.dataset ? <FusionResults dataset={workspace.dataset} runs={workspace.runs} disabled={running}

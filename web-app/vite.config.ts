@@ -97,6 +97,7 @@ export default defineConfig(({ mode }) => {
           input: {
             workbench: path.resolve(__dirname, 'index.html'),
             multimodal: path.resolve(__dirname, 'nirs4all_multimodale/index.html'),
+            trainingSlides: path.resolve(__dirname, 'multimodal-training/slides/index.html'),
           },
         },
       } : {}),

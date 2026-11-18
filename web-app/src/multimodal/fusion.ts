@@ -273,7 +273,8 @@ function featureLevel(dataset: LabDataset, steps: unknown[], name: string): LabP
   const blockModel = BLOCK_HEADS.has(head.step.methodId)
   insist(!(blockModel && merged), `${OPERATOR.get(head.step.methodId)!.name} fuses the source blocks itself: remove the "Merge sources" step.`)
   insist(!blockModel || sourceIds.length >= 2 || head.step.methodId === NEURAL, 'Multiblock PLS needs at least two sources.')
-  insist(branch._merge_after_ !== false || blockModel, 'With _merge_after_ false the sources stay separate: use a multiblock model, or merge the sources.')
+  insist(branch._merge_after_ === undefined || typeof branch._merge_after_ === 'boolean', '_merge_after_ must be true or false.')
+  insist(branch._merge_after_ !== false || blockModel || merged !== null, 'With _merge_after_ false the sources stay separate: use a multiblock model, or merge the sources.')
   return {
     label: name,
     branches: [{ id: 'result', label: name, sourceIds, sourceChains: chains, head: head.step }],
@@ -342,7 +343,8 @@ function predictionLevel(dataset: LabDataset, steps: unknown[], name: string): L
   insist(steps.length === 3, steps.length === 2 ? 'Stacking needs a meta-model after the prediction merge.' : 'Put exactly one meta-model after the merge.')
   const meta = chainElement(steps[2], 'Meta-model')
   insist(meta.kind === 'model' && META_HEADS.has(meta.step.methodId), 'The meta-model must be PLS or Ridge.')
-  const original = hybrid ? dataset.sources.map(source => source.id) : []
+  // Hybrid stacking also gives the meta-model the (scaled) variables of the sources used by the branches.
+  const original = hybrid ? [...new Set(branches.flatMap(branch => branch.sourceIds))] : []
   return { label: name, branches, merge: { kind: 'model', head: meta.step, sourceIds: original,
     sourceChains: original.map(sourceId => ({ sourceId, steps: [{ methodId: STANDARD, params: defaults(STANDARD) as Record<string, boolean> }] })) } }
 }

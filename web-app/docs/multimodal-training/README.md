@@ -1,5 +1,11 @@
 # Practical multimodal workshop
 
+> **Superseded for teaching (18 November 2026).** The current support is the web
+> slide deck at `/multimodal-training/slides/` (source `src/training-deck/`,
+> PDFs `public/multimodal-training/nirs4all_multimodal_slides*.pdf`); see
+> `docs/MULTIMODAL_TRAINING.md`. Its captures and scores come from the canonical
+> fusion editor and Inspector. The files below are kept as the previous edition.
+
 The published support is in `public/multimodal-training/`: an editable 18-slide PowerPoint,
 its rendered PDF and the practical HTML guide. The session allocates 21 minutes to explanations,
 17 to live pipeline editing and 2 to discussion.

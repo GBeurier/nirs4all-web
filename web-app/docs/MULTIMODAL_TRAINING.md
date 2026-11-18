@@ -21,16 +21,35 @@ Each source retains its own axis, unit and representation. Selecting a sample
 links its spectrum, marker values, image and target by identity. Source files in
 the teaching collections intentionally use different row orders.
 
-| Recipe | What enters the final predictor | What is learned |
+## Fusion pipelines
+
+Section 5 edits one canonical nirs4all pipeline with the shared rack editor
+(`nirs4all-ui/pipelineEditor`). Each source has its own lane; the step after the
+lanes decides where the sources meet. Operators are native Methods method IDs.
+
+| Preset | Canonical structure | What is learned |
 | --- | --- | --- |
-| Single source | One transformed source | One PLS model; run every source baseline |
-| Early fusion | Concatenated transformed variables | One PLS model |
-| Multiblock PLS | Transformed variables with explicit block widths | Centered-block, equal-super-weight multiblock NIPALS |
-| Late mean | Source PLS predictions | Source PLS models; the mean has fixed equal weights |
-| Stacking | Nested OOF source PLS/Ridge predictions | Base models and a Ridge meta-learner |
-| Hybrid | Transformed source variables plus nested OOF predictions | Source preprocessing, base models and Ridge |
-| Intermediate fusion | Learned branch embeddings | Jointly trained convolution/dense branches and a common regression head |
-| Network stacking | Source PLS/Ridge and intermediate-network OOF predictions | Base models, network and Ridge meta-learner |
+| Single source | `source_branch` with one lane → PLS | One PLS model; run every source baseline |
+| Early | `source_branch` → `merge_sources: "concat"` → PLS | One PLS model on the concatenated variables |
+| Embedding | `source_branch` (scaling + training-fitted PCA scores per source) → `merge_sources` → PLS | Per-source PCA and one PLS model |
+| Intermediate · MB-PLS | `source_branch` → MB-PLS (no source merge) | Centered-block, equal-super-weight multiblock NIPALS |
+| Intermediate · network | `source_branch` → multibranch network | Jointly trained convolution/dense branches and a common regression head |
+| Late · average | `branch` with `by_source: true` (one model per lane) → `merge: {predictions: "all", aggregate: "mean"}` | Source PLS models; fixed equal weights |
+| Late · stacking | `by_source` branch → `merge: "predictions"` → Ridge | Source PLS models and a Ridge meta-learner on nested OOF predictions |
+
+A lane may end with a nested `branch` of several models (several base models per
+source). `merge: {predictions: "all", include_original: true}` gives the
+meta-model the scaled source variables as well (hybrid stacking). The host maps
+this subset onto the qualified native execution document and refuses anything
+else with an explanation (splitter steps, sweeps or tuning, spectral steps on
+marker or image lanes, a source merge before a multiblock model, …). The
+preset recipes compile to exactly the native recipes of the previous teaching
+strategies (`src/multimodal/fusion.test.ts`).
+
+**Run this pipeline** adds one run; **Run all presets** adds every preset of the
+dataset. Every completed run stays in the shared Inspector in section 6 until the
+data change or **Clear runs**; rank on the OOF scores and check that runs share
+the same fold set. Pipelines export and import as canonical JSON.
 
 The network uses 1-D convolutions for spectra, a dense branch for markers and
 2-D convolutions for images. It trains from scratch for a fixed number of epochs;
@@ -64,8 +83,9 @@ training-fitted scalar; the PLS head does not silently undo it with variable-wis
 scaling. The network's internal train-fitted normalization absorbs a uniform
 block scalar, as disclosed in its result diagnostics.
 
-Changing data, preprocessing, recipes or validation clears old results. Cancel
-terminates the owned compute worker. The JSON downloads document settings,
+Changing the data clears the comparison. Changing the validation protocol keeps
+earlier runs but the Inspector warns that they use another fold set. Cancel
+terminates the owned compute worker and keeps no partial run. The JSON downloads document settings,
 scopes, predictions, scores, versions and provenance; they are not executable
 `.n4a` models and omit portable states that could contain training rows.
 
@@ -136,12 +156,22 @@ native folds/OOF/scoring/replay to DAG-ML, and reusable presentation to UI.
 
 ## Forty-minute session
 
-Allow about 23 minutes for concepts and 17 minutes for live work and discussion:
-explain sample identity and complementarity; contrast early, intermediate and
-late fusion; unpack honest stacking; then demonstrate the three cases. Start with
-single-source baselines, change one preprocessing choice, run a common comparison
-and read one OOF prediction/residual view. For genetics, inspect the group policy;
-for images, contrast flattened pixels with the learned spatial branch.
+The training slides are a page of this site,
+`https://web.nirs4all.org/multimodal-training/slides/`, built from
+`src/training-deck/` with the same theme and the laboratory's own pipeline
+editor. Keys: arrows/space to move, **N** speaker notes, **P** a synchronised
+presenter window (current and next slide, notes, a timer against the 40-minute
+plan), **F** full screen. `?print` lays the deck out for PDF export and
+`?print&notes` adds the notes; the exported PDFs are in
+`public/multimodal-training/`.
+
+The plan is 21 minutes of concepts (multimodal data, alignment, the four fusion
+levels, honest stacking and comparison), 17 minutes for three live
+demonstrations with one conclusion slide each, and two minutes of wrap-up. The
+conclusion charts read `src/training-deck/evidence.json`: native scores recorded
+from this laboratory (presets and the live edits of the demonstrations) on one
+fold set per case. Regenerate it after any owner or recipe change by running the
+presets and the scripted edits, and check the fold fingerprints match.
 
 Useful primary conceptual references are Wolpert (1992),
 [Stacked generalization](https://doi.org/10.1016/S0893-6080%2805%2980023-1),

@@ -67,6 +67,11 @@ describe('canonical refusals', () => {
     refuse([{ source_branch: { nirs: [scale] } }, { model: { class: 'models.pls.pls_regression', params: { n_components: { _range_: [1, 5] } } } }], /fixed value/)
     refuse([{ class: 'sklearn.model_selection.KFold' }, { source_branch: { nirs: [scale] } }, pls], /section 4/)
   })
+  it('accepts explicit source options with a source merge', () => {
+    const document = toLabDocument(data, { pipeline: [{ source_branch: { nirs: [scale], markers: [scale], _merge_after_: false } }, { merge_sources: 'concat' }, pls] })
+    expect(document.branches[0].sourceIds).toEqual(['nirs', 'markers'])
+    refuse([{ source_branch: { nirs: [scale], markers: [scale], _merge_after_: 'no' } }, pls], /true or false/)
+  })
   it('accepts bare class strings, bypassed lanes and nested model branches', () => {
     const document = toLabDocument(data, { pipeline: [
       { branch: { by_source: true, steps: { nirs: [scale, { branch: { pls: [pls], ridge: [{ model: 'models.regularized.ridge' }] } }], markers: { _bypassed_: [scale, pls] } } } },
