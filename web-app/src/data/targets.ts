@@ -138,8 +138,7 @@ export function runSelectionEffect(ds: MaterializedDataset, selection: RunSelect
   const incomplete = incompleteOf(ds)
   const choice = incomplete.cells ? selection.missingSpectra ?? undefined : undefined
   const dropRows = choice?.action === 'remove_samples'
-  // the engine fits on the train partition, or on every non-predict row when there is none
-  const hasTrain = ds.partitions.includes('train')
+  // the engine fits on the train partition only: held-out test rows are never fitted on
   let missingTargets = 0
   let train = 0
   let test = 0
@@ -149,7 +148,7 @@ export function runSelectionEffect(ds: MaterializedDataset, selection: RunSelect
     if (ds.partitions[i] === 'predict') continue
     if (!labelled(ds, target, i)) { missingTargets++; continue }
     if (ds.partitions[i] === 'test') test++
-    if (ds.partitions[i] === 'train' || !hasTrain) train++
+    if (ds.partitions[i] === 'train') train++
   }
   return {
     target: selection.target, missingValues: selection.missingValues, ...(choice ? { missingSpectra: choice } : {}),
@@ -191,8 +190,9 @@ export function prepareRunDataset(ds: MaterializedDataset, selection: RunSelecti
     if (!replaced || replaced.length !== ds.X.length) throw new Error('The replaced spectra from nirs4all-io are required to run with replaced missing values.')
     const remaining = replaced.reduce((count, value) => count + (Number.isNaN(value) ? 1 : 0), 0)
     if (remaining) {
-      const edge = effect.missingSpectra.method === 'forward_fill' ? 'no earlier value in their spectrum' : 'no later value in their spectrum'
-      throw new Error(`${remaining} of the ${effect.missingCells} missing spectral values could not be replaced (${edge}). Choose another replacement method, or remove the affected samples.`)
+      const method = effect.missingSpectra.method
+      const edge = method === 'forward_fill' ? ' (no earlier value in their spectrum)' : method === 'backward_fill' ? ' (no later value in their spectrum)' : ''
+      throw new Error(`${remaining} of the ${effect.missingCells} missing spectral values could not be replaced by nirs4all-io${edge}. Choose another replacement method, or remove the affected samples.`)
     }
     view = { ...view, X: replaced }
   }

@@ -727,7 +727,7 @@ function PcaPanel({
         {previewCv ? `${previewCv.folds} folds; seed ${previewCv.seed}; strategy ${previewCv.strategy ?? 'auto'}. ` : 'No fold assignment requested. '}
         {cv && previewCv?.folds !== cv.folds ? 'The preview fold count differs from the pipeline. ' : ''}
         Preview matches a run only with the same CV configuration and training cohort/partitions.
-        {' '}With an explicit train partition, test, predict and missing-target rows are not in CV; without a train partition, the run uses labelled non-predict rows.
+        {' '}With an explicit train partition, test, predict and missing-target rows are not in CV; a run never fits on held-out test rows, so a dataset without a train partition runs only through a split step.
       </p>}
       {preview.result?.warnings?.map((warning) => <p key={warning} className="mt-2 text-xs text-muted-foreground">{warning}</p>)}
       <details className="mt-3 text-sm">

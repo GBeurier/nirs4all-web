@@ -143,11 +143,12 @@ Load-bearing concepts (require reading several files):
   missing-value option are launch choices** (`RunSettings`, `prepareRunDataset`): the run executes on
   its own view — the chosen target projected onto `y`, rows without it excluded natively by the engine
   (dag-ml-data `excluded`, dag-ml `target_missing_sample_ids`), unless the missing-target strategy
-  is to stop. **Missing spectral values are asked at launch, with no default** (`MissingSpectraChoice`;
+  is to stop; a view left with held-out test rows and no train row is refused, never fitted on the
+  test rows. **Missing spectral values are asked at launch, with no default** (`MissingSpectraChoice`;
   nothing extra is shown for complete spectra): *remove* the affected samples (row selection on the
   owner mask, pinned equal to io's `remove_sample` by `src/data/targets.test.ts`), *replace* them
   (`replaceMissingSpectra`: the retained inputs re-assembled by io under its `replace` policy on the
-  feature sources only — `forward_fill`, `backward_fill` or `value`; Web computes no value; io refuses
+  feature and mixed sources, which io fills on feature columns only — `forward_fill`, `backward_fill` or `value`; Web computes no value; io refuses
   `mean`/`median`), or *leave as is* (dag-ml-data refuses any non-finite `X` cell, so the run is refused
   and `keptMissingSpectraNotice` explains it). Previews compute on the samples with complete spectra and
   state "N samples left out: missing values". Rows that repeat a declared sample id are one physical sample (grouped CV by default)

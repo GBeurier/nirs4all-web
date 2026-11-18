@@ -213,9 +213,31 @@ describe('missing spectral values are an explicit launch choice', () => {
     const ds = await ingest(upload({ holes: [[44, 0], [2, 4]], only: 0 }))
     const choice = { action: 'replace', method: 'forward_fill' } as const
     const replaced = await replaceMissingSpectra(ds, choice)
-    expect(() => prepareRunDataset(ds, { ...selection, missingSpectra: choice }, replaced)).toThrow(/1 of the 2 missing spectral values could not be replaced \(no earlier value in their spectrum\)\. Choose another replacement method, or remove the affected samples\./)
+    expect(() => prepareRunDataset(ds, { ...selection, missingSpectra: choice }, replaced)).toThrow(/1 of the 2 missing spectral values could not be replaced by nirs4all-io \(no earlier value in their spectrum\)\. Choose another replacement method, or remove the affected samples\./)
     const backward = await replaceMissingSpectra(ds, { method: 'backward_fill' })
     expect(prepareRunDataset(ds, { ...selection, missingSpectra: { action: 'replace', method: 'backward_fill' } }, backward).effect.replacedCells).toBe(2)
+  })
+
+  it('replace: a single table holding spectra and targets (io `mixed` source) gets its values replaced too', async () => {
+    const rows = TRAIN.slice(0, 30)
+    const files = [csv('data.csv', [[...axis, 'dry_matter'].join(','), ...rows.map((i) => [...spectrum(i).map((v, j) => (i === 2 && j === 4 ? '' : v.toFixed(5))), value(i, 0).toFixed(4)].join(','))])]
+    const ds = await ingest(files)
+    expect(ioRetainedOf(ds)!.spec.sources!.map((source) => source.role)).toEqual(['mixed'])
+    expect(ds.missingFeatures).toEqual({ cells: 1, rows: 1, columns: 1 })
+    const choice = { action: 'replace', method: 'forward_fill' } as const
+    const { dataset: view, effect } = prepareRunDataset(ds, { ...selection, missingSpectra: choice }, await replaceMissingSpectra(ds, choice))
+    expect(effect.replacedCells).toBe(1)
+    const r2 = ds.sampleIds.findIndex((_, row) => Number.isNaN(ds.X[row * P + 4]))
+    expect(view.X[r2 * P + 4]).toBe(ds.X[r2 * P + 3])
+    expect(Array.from(view.y)).toEqual(Array.from(selectDatasetTarget(ds, 'dry_matter').y)) // the target column is not touched
+  })
+
+  it('remove: a run left with held-out test samples only is refused, never fitted on the test samples', async () => {
+    const ds = await ingest(upload({ holes: TRAIN.map((i) => [i, 4] as [number, number]), only: 0 }))
+    const { dataset: view, effect } = prepareRunDataset(ds, { ...selection, missingSpectra: { action: 'remove_samples' } })
+    expect(effect).toMatchObject({ train: 0, test: 12 })
+    expect(view.partitions.every((partition) => partition === 'test')).toBe(true)
+    await expect(run(view)).rejects.toThrow(/no train sample left, only held-out test samples/)
   })
 
   it('leave as is: the pipeline receives the missing values and the refusal says so', async () => {

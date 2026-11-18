@@ -32,6 +32,22 @@
 - The smoke runner resolves the cross-runtime prerequisites (ecosystem E2E
   artifacts, Python oracle) from the workspace, including from a Git worktree,
   instead of failing a plain local run on unset variables.
+- A run is never fitted on held-out test samples. A run view with test samples
+  and no train sample (for example after removing every train sample with
+  missing spectral values, or a test-only upload) used to fall back to fitting,
+  cross-validating and scoring on the test samples; it is now refused with an
+  explanation.
+- Replacing missing spectral values also works for a single table that holds
+  spectra and targets together (nirs4all-io `mixed` source); it used to replace
+  nothing there and report a wrong reason.
+
+### Changed
+
+- Consume nirs4all-io 0.3.6 (partial multi-target matrices with targets missing
+  on different rows; case-insensitive NA tokens), DAG-ML 0.4.3 and Core 0.5.1,
+  with exact published acquisition receipts. The io browser payload is the
+  owner's v0.3.6 release build; DMD 0.2.16, Formats 0.2.17, Datasets 0.3.18 and
+  Methods 1.3.18 are unchanged.
 
 ## 0.5.2 — 2026-11-16
 

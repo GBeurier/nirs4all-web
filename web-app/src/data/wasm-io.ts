@@ -565,8 +565,8 @@ export interface SpectraFill { method: 'forward_fill' | 'backward_fill' | 'value
 
 /**
  * The spectra of a loaded dataset with their missing values replaced BY nirs4all-io: the retained
- * inputs are assembled again under io's `replace` NA policy on the feature sources only (targets and
- * metadata keep their missing values). Web computes no replacement value; it checks that io returned
+ * inputs are assembled again under io's `replace` NA policy on the feature and mixed sources, which io
+ * applies to feature columns only (targets and metadata keep their missing values). Web computes no replacement value; it checks that io returned
  * the same rows and columns and hands the matrix to the run's own view (`prepareRunDataset`). A cell
  * io could not replace (nothing before/after it in its spectrum) stays NaN and is reported there.
  */
@@ -577,7 +577,9 @@ export async function replaceMissingSpectra(dataset: MaterializedDataset, fill: 
   const na = { policy: 'replace', fill: { method: fill.method, ...(fill.method === 'value' ? { fill_value: fill.value } : {}) } }
   const spec: DatasetSpec = {
     ...retained.spec,
-    sources: retained.spec.sources?.map((source) => (source.role === 'features' ? { ...source, params: { ...source.params, na } } : source)),
+    // a `mixed` source (spectra and targets in one table) gets the policy too: io applies it to its
+    // feature columns only and leaves target and metadata columns untouched
+    sources: retained.spec.sources?.map((source) => (source.role === 'features' || source.role === 'mixed' ? { ...source, params: { ...source.params, na } } : source)),
   }
   let replaced: MaterializedDataset
   try {
