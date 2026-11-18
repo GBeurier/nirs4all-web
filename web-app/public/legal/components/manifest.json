@@ -431,8 +431,8 @@
         },
         {
           "path": "PROVENANCE.json",
-          "size": 29224,
-          "sha256": "0cf50db9935442ac1fc9b31ba3a011a385a2c2f18a60d0ed07351168090c63d6"
+          "size": 10495,
+          "sha256": "e4e36ea290dee932aef33dd8102ac8b3ee8b8eca771b32ef2a1d772e7c5df743"
         },
         {
           "path": "THIRD_PARTY_LICENSES.md",
