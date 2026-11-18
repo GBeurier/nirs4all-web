@@ -32,6 +32,15 @@ function Callout({ children, tone = 'teal' }: { children: ReactNode; tone?: 'tea
   return <p className="deck-callout" data-tone={tone}>{children}</p>
 }
 
+function ProsCons({ pro, con }: { pro: ReactNode; con: ReactNode }) {
+  return (
+    <div className="deck-proscons">
+      <p data-kind="pro"><span>+</span>{pro}</p>
+      <p data-kind="con"><span>−</span>{con}</p>
+    </div>
+  )
+}
+
 function Capture({ src, alt }: { src: string; alt: string }) {
   return <figure className="deck-capture"><img src={src} alt={alt} loading="eager" /></figure>
 }
@@ -69,11 +78,8 @@ export const SLIDES: Slide[] = [
       <div className="deck-split deck-split--hero">
         <SampleViewsDiagram />
         <div>
-          <Points items={[
-            <>Each instrument sees <strong>part</strong> of the sample: chemistry, physics, genetics, shape.</>,
-            <>A second view can add information… or only add noise and cost.</>,
-          ]} />
-          <Callout>The question is never “can I fuse?” but <strong>“does the second source improve the prediction I can defend?”</strong></Callout>
+          <p className="deck-big">Each instrument sees <strong>part</strong> of the sample.</p>
+          <Callout>Does the second source <strong>really improve</strong> the prediction?</Callout>
         </div>
       </div>
     ),
@@ -90,9 +96,9 @@ export const SLIDES: Slide[] = [
       <>
         <DatasetShapeDiagram />
         <div className="deck-columns">
-          <div><h3>Source (block)</h3><p>One table of variables from one instrument or origin, for the same samples.</p></div>
-          <div><h3>Multisource</h3><p>Several blocks of the same kind: NIRS + Raman + MIR are all spectra.</p></div>
-          <div><h3>Multimodal</h3><p>Blocks of different nature: spectra, marker tables, images. Each keeps its own axis, unit and shape.</p></div>
+          <div><h3>Source = block</h3><p>one table per instrument, same samples</p></div>
+          <div><h3>Multisource</h3><p>same kind of data: NIRS + Raman + MIR</p></div>
+          <div><h3>Multimodal</h3><p>different kinds: spectra, markers, images</p></div>
         </div>
       </>
     ),
@@ -107,10 +113,7 @@ export const SLIDES: Slide[] = [
     body: () => (
       <>
         <AlignmentDiagram />
-        <Points items={[
-          <>Files rarely share the same row order. nirs4all joins sources by <strong>sample ID</strong>; a missing sample is reported, never repaired by position.</>,
-          <>Replicates of one plant or batch form a <strong>group</strong>: a group is never split between training and validation.</>,
-        ]} />
+        <Callout>Join by <strong>sample ID</strong>, never by row number · keep replicate <strong>groups</strong> together</Callout>
       </>
     ),
     notes: [
@@ -125,10 +128,10 @@ export const SLIDES: Slide[] = [
       <>
         <FusionPointsDiagram />
         <div className="deck-columns deck-columns--4">
-          <div><LevelTag level="early" /><p>merge the <strong>variables</strong></p></div>
-          <div><LevelTag level="embedding" /><p>merge <strong>compact summaries</strong> of each source</p></div>
-          <div><LevelTag level="intermediate" /><p>one model learns from the <strong>separate blocks</strong></p></div>
-          <div><LevelTag level="late" /><p>merge the <strong>predictions</strong></p></div>
+          <div><LevelTag level="early" /><p><strong>variables</strong></p></div>
+          <div><LevelTag level="embedding" /><p><strong>summaries</strong> of each source</p></div>
+          <div><LevelTag level="intermediate" /><p><strong>inside</strong> one model</p></div>
+          <div><LevelTag level="late" /><p><strong>predictions</strong></p></div>
         </div>
       </>
     ),
@@ -145,13 +148,8 @@ export const SLIDES: Slide[] = [
       <>
         <div className="deck-heading-tag"><LevelTag level="early" /></div>
         <EarlyDiagram />
-        <div className="deck-split deck-split--rack">
-          <PipelineView preset="early" />
-          <Points items={[
-            <><strong>+</strong> simplest, one model, easy to interpret with usual PLS tools</>,
-            <><strong>−</strong> scale each block; more variables need more latent variables</>,
-          ]} />
-        </div>
+        <PipelineView preset="early" />
+        <ProsCons pro="simple · one model · usual PLS tools" con="scale each block · more variables need more LVs" />
       </>
     ),
     notes: [
@@ -166,14 +164,8 @@ export const SLIDES: Slide[] = [
       <>
         <div className="deck-heading-tag"><LevelTag level="embedding" /></div>
         <EmbeddingDiagram />
-        <div className="deck-split deck-split--rack">
-          <PipelineView preset="embedding" />
-          <Points items={[
-            <>An <strong>embedding</strong> is a short vector that summarises a sample: here PCA scores, fitted on the training samples only.</>,
-            <>Every source contributes the same number of columns; noise is reduced.</>,
-            <>Risk: PCA is unsupervised and may drop a small signal that matters for y.</>,
-          ]} />
-        </div>
+        <PipelineView preset="embedding" />
+        <ProsCons pro="same weight per source · few columns · less noise" con="PCA ignores y: it may drop the useful signal" />
       </>
     ),
     notes: [
@@ -189,13 +181,8 @@ export const SLIDES: Slide[] = [
       <>
         <div className="deck-heading-tag"><LevelTag level="intermediate" /></div>
         <IntermediateDiagram />
-        <div className="deck-split deck-split--rack">
-          <PipelineView preset="mid" caseId="images" />
-          <Points items={[
-            <>Each source gets an adapted <strong>branch</strong>; the branches and the head are trained <strong>together</strong>.</>,
-            <>Learns the representation for y, but needs data: here 96 calibration samples.</>,
-          ]} />
-        </div>
+        <PipelineView preset="mid" caseId="images" />
+        <ProsCons pro="each source keeps its structure · learned for y" con="needs many samples and some tuning" />
       </>
     ),
     notes: [
@@ -212,13 +199,8 @@ export const SLIDES: Slide[] = [
       <>
         <div className="deck-heading-tag"><LevelTag level="late" /></div>
         <LateDiagram />
-        <div className="deck-split deck-split--rack">
-          <PipelineView preset="late-stacking" />
-          <Points items={[
-            <><strong>+</strong> modular: each source keeps its own preprocessing and model; easy to add or drop an instrument</>,
-            <><strong>−</strong> sources cannot interact: each model sees only its own block</>,
-          ]} />
-        </div>
+        <PipelineView preset="late-stacking" />
+        <ProsCons pro="modular · robust to a missing instrument" con="no interaction between sources" />
       </>
     ),
     notes: [
@@ -265,13 +247,13 @@ export const SLIDES: Slide[] = [
     body: () => (
       <div className="deck-split">
         <Steps items={[
-          <>Always run the <strong>single-source baselines</strong>: a fusion must beat the best one.</>,
-          <>Same samples, <strong>same folds</strong> for every recipe; replicate groups kept whole.</>,
-          <>Rank on <strong>cross-validation (OOF)</strong> scores only.</>,
-          <>Look at the <strong>held-out test</strong> once, for the recipe you finally choose.</>,
-          <>Every edit you try is a choice: many tries on the same folds also overfit, a little.</>,
+          <><strong>Baselines</strong>: each source alone</>,
+          <><strong>Same folds</strong> for every recipe</>,
+          <>Rank on <strong>cross-validation</strong> (OOF)</>,
+          <><strong>Test set</strong>: once, at the end</>,
+          <>Many edits = a little overfitting</>,
         ]} />
-        <Callout>The laboratory fixes one protocol per dataset (96 calibration samples, 3 outer folds, 24 test samples) and keeps every run in one Inspector.</Callout>
+        <Callout>A fusion is worth it only if it beats the <strong>best single source</strong>.</Callout>
       </div>
     ),
     notes: [
@@ -287,10 +269,10 @@ export const SLIDES: Slide[] = [
         <Capture src="../captures/lab-editor.png" alt="The fusion pipeline editor with presets and one lane per source" />
         <div>
           <Steps items={[
-            <>Choose a case and look at each source.</>,
-            <>Pick a <strong>fusion preset</strong>; edit lanes, steps and the model on the canvas.</>,
-            <><strong>Run this pipeline</strong>, or <strong>Run all presets</strong>.</>,
-            <>Compare every run in the <strong>Inspector</strong>.</>,
+            <>Choose a case</>,
+            <>Pick a <strong>fusion preset</strong>, edit it</>,
+            <><strong>Run</strong> one or all presets</>,
+            <>Compare in the <strong>Inspector</strong></>,
           ]} />
           <p className="deck-url"><a href={labLink('spectroscopy')}>web.nirs4all.org/nirs4all_multimodale</a></p>
         </div>
@@ -308,11 +290,10 @@ export const SLIDES: Slide[] = [
         <div>
           <p className="deck-case">120 samples · Raman 48 · NIRS 64 · MIR 56 variables · 96 calibration / 24 test</p>
           <Steps items={[
-            <>Open <a href={labLink('spectroscopy')}>the spectroscopy case</a>; follow one sample in the three spectra.</>,
-            <><strong>Run all 9 presets</strong>. In the Inspector: who wins? Compare with <em>Raman alone</em>.</>,
-            <>Load <LevelTag level="early">Early · concatenate</LevelTag>; click the PLS cell; components <strong>3 → 6</strong>; run.</>,
-            <>Select the <em>mir</em> lane, press <kbd>Delete</kbd>; run again.</>,
-            <>Inspector: <em>Predicted vs observed</em> for the best fusion vs Raman alone.</>,
+            <><a href={labLink('spectroscopy')}>Open the case</a>, follow one sample</>,
+            <><strong>Run all presets</strong>: who wins?</>,
+            <><LevelTag level="early">Early</LevelTag> PLS components <strong>3 → 6</strong></>,
+            <>Delete the <em>MIR</em> lane, run again</>,
           ]} />
         </div>
         <Capture src="../captures/spectroscopy-inspector.png" alt="Inspector ranking the spectroscopy recipes" />
@@ -334,9 +315,9 @@ export const SLIDES: Slide[] = [
         <ResultsChart caseId="spectroscopy" highlight={['Raman alone', 'Late · stacking', 'Early · PLS 6', 'Early · PLS 6 · without MIR']} />
         <div>
           <Points items={[
-            <>Fusion is not automatic: early PLS-3 ({fmt(R.spec('Early · concatenate'))}) is worse than Raman alone ({fmt(R.ramanAlone())}).</>,
-            <>Capacity must follow the variables: PLS-6 fusion reaches {fmt(edit('spectroscopy', 'Early · PLS 6').oofRmse)}; Raman alone with 6 components gets worse ({fmt(edit('spectroscopy', 'Raman alone · PLS 6').oofRmse)}).</>,
-            <>Averaging dilutes the best source ({fmt(R.spec('Late · average'))}); stacking learns to trust it ({fmt(R.spec('Late · stacking'))}).</>,
+            <><strong>Not automatic</strong>: early PLS‑3 {fmt(R.spec('Early · concatenate'))} vs Raman {fmt(R.ramanAlone())}</>,
+            <><strong>More LVs</strong>: PLS‑6 fusion {fmt(edit('spectroscopy', 'Early · PLS 6').oofRmse)} (Raman PLS‑6: {fmt(edit('spectroscopy', 'Raman alone · PLS 6').oofRmse)})</>,
+            <><strong>Average dilutes</strong> ({fmt(R.spec('Late · average'))}), <strong>stacking</strong> trusts Raman ({fmt(R.spec('Late · stacking'))})</>,
           ]} />
           <Provenance caseId="spectroscopy" />
         </div>
@@ -355,10 +336,10 @@ export const SLIDES: Slide[] = [
         <div>
           <p className="deck-case">60 plants × 2 measurements = 120 samples · NIRS 64 · 16 marker dosages (0/1/2) · groups kept whole</p>
           <Steps items={[
-            <>Open <a href={labLink('genetics')}>the genetics case</a>; select two samples of the same plant: same markers, different spectra.</>,
-            <><strong>Run all 8 presets</strong>; compare <em>Markers alone</em>, <em>NIRS alone</em> and the fusions.</>,
-            <>In <LevelTag level="early">Early · concatenate</LevelTag>, set PLS components <strong>3 → 5</strong>; run. Do the same on <em>NIRS alone</em> for a fair comparison.</>,
-            <>Compare <LevelTag level="late">Late · average</LevelTag> and <LevelTag level="intermediate">MB-PLS</LevelTag> in <em>Predicted vs observed</em>.</>,
+            <><a href={labLink('genetics')}>Open the case</a>: one plant, two samples</>,
+            <><strong>Run all presets</strong></>,
+            <><LevelTag level="early">Early</LevelTag> and <em>NIRS alone</em>: PLS <strong>3 → 5</strong></>,
+            <><LevelTag level="late">Average</LevelTag> vs <LevelTag level="intermediate">MB-PLS</LevelTag></>,
           ]} />
         </div>
         <Capture src="../captures/genetics-inspector.png" alt="Inspector ranking the genetics recipes" />
@@ -378,9 +359,9 @@ export const SLIDES: Slide[] = [
         <ResultsChart caseId="genetics" highlight={['NIRS alone', 'Intermediate · MB-PLS', 'Early · PLS 5', 'NIRS alone · PLS 5', 'Late · average']} />
         <div>
           <Points items={[
-            <>A weak source alone (markers: {fmt(R.gen('Genetic markers alone'))}) can still be <strong>complementary</strong>: early PLS-5 reaches {fmt(edit('genetics', 'Early · PLS 5').oofRmse)} vs {fmt(edit('genetics', 'NIRS alone · PLS 5').oofRmse)} for NIRS alone with 5 components.</>,
-            <>Feature-level fusion (early, MB-PLS {fmt(R.gen('Intermediate · MB-PLS'))}) exploits it; the average ({fmt(R.gen('Late · average'))}) does not.</>,
-            <>The small network ({fmt(R.gen('Intermediate · network'))}) is not competitive with 96 samples.</>,
+            <><strong>Weak alone ≠ useless</strong>: markers {fmt(R.gen('Genetic markers alone'))}, but fusion {fmt(edit('genetics', 'Early · PLS 5').oofRmse)} vs NIRS {fmt(edit('genetics', 'NIRS alone · PLS 5').oofRmse)}</>,
+            <><strong>Variables level wins</strong>: MB-PLS {fmt(R.gen('Intermediate · MB-PLS'))}; average {fmt(R.gen('Late · average'))}</>,
+            <><strong>Network</strong> {fmt(R.gen('Intermediate · network'))}: not with 96 samples</>,
           ]} />
           <Provenance caseId="genetics" />
         </div>
@@ -399,10 +380,10 @@ export const SLIDES: Slide[] = [
         <div>
           <p className="deck-case">120 samples · NIRS 64 · 12 × 12 grey image per sample · 96 calibration / 24 test</p>
           <Steps items={[
-            <>Open <a href={labLink('images', 'mid')}>the images case</a>; look at one spectrum and its image.</>,
-            <>Show the <LevelTag level="intermediate">network</LevelTag> preset: a 1-D branch for the spectrum, a 2-D branch for the image.</>,
-            <><strong>Run all 8 presets</strong>: images alone, NIRS alone, early, embedding, network.</>,
-            <>Optional: network epochs <strong>24 → 100</strong>; run.</>,
+            <><a href={labLink('images', 'mid')}>Open the case</a>: spectrum + image</>,
+            <><LevelTag level="intermediate">Network</LevelTag>: 1-D and 2-D branches</>,
+            <><strong>Run all presets</strong></>,
+            <>Optional: <strong>100 epochs</strong></>,
           ]} />
         </div>
         <Capture src="../captures/images-inspector.png" alt="Inspector ranking the image recipes" />
@@ -421,9 +402,9 @@ export const SLIDES: Slide[] = [
         <ResultsChart caseId="images" highlight={['Grayscale images alone', 'Early · concatenate', 'Embedding · PCA scores', 'Intermediate · network']} />
         <div>
           <Points items={[
-            <>The image carries most of the signal ({fmt(R.img('Grayscale images alone'))}), the spectrum adds to it: early {fmt(R.img('Early · concatenate'))}.</>,
-            <>Embedding with 5 scores per source ({fmt(R.img('Embedding · PCA scores'))}) is almost as good with 10 columns instead of 208.</>,
-            <>The 2-D network ({fmt(R.img('Intermediate · network'))}) preserves the image structure but needs more samples to pay off.</>,
+            <><strong>Image leads</strong> ({fmt(R.img('Grayscale images alone'))}), spectrum adds: early {fmt(R.img('Early · concatenate'))}</>,
+            <><strong>Embedding</strong> {fmt(R.img('Embedding · PCA scores'))} with 10 columns instead of 208</>,
+            <><strong>2-D network</strong> {fmt(R.img('Intermediate · network'))}: right idea, too few samples</>,
           ]} />
           <Provenance caseId="images" />
         </div>
@@ -439,11 +420,11 @@ export const SLIDES: Slide[] = [
     id: 'take-home', section: 'Wrap-up', title: 'What to try first on your data', minutes: 1,
     body: () => (
       <div className="deck-guide">
-        <div><span className="deck-guide-key"><span className="deck-num">1</span>Baselines</span><p>each source alone, with its own preprocessing.</p></div>
-        <div><span className="deck-guide-key"><LevelTag level="early" /></span><p>concatenate with block scaling; let the number of components grow.</p></div>
-        <div><span className="deck-guide-key"><LevelTag level="embedding" /><LevelTag level="intermediate" /></span><p>blocks very different in size or nature: compact summaries, MB-PLS; networks when samples are many.</p></div>
-        <div><span className="deck-guide-key"><LevelTag level="late" /></span><p>instruments not always available, or very different models per source: stacking.</p></div>
-        <div><span className="deck-guide-key"><span className="deck-num">✓</span>Protocol</span><p>same folds, rank on OOF, test once. Keep a fusion only if it beats the best single source.</p></div>
+        <div><span className="deck-guide-key"><span className="deck-num">1</span>Baselines</span><p>each source alone</p></div>
+        <div><span className="deck-guide-key"><LevelTag level="early" /></span><p>block scaling, let the LVs grow</p></div>
+        <div><span className="deck-guide-key"><LevelTag level="embedding" /><LevelTag level="intermediate" /></span><p>unbalanced blocks · networks only with many samples</p></div>
+        <div><span className="deck-guide-key"><LevelTag level="late" /></span><p>instruments not always available: stacking</p></div>
+        <div><span className="deck-guide-key"><span className="deck-num">✓</span>Protocol</span><p>same folds · OOF · test once</p></div>
       </div>
     ),
     notes: [
