@@ -56,7 +56,7 @@ try {
   await page.locator('[data-testid="explain-history"] button', { hasText: 'Model internals' }).first().click()
   await page.locator('[data-testid="explain-importance"]').waitFor()
   await page.getByRole('tab', { name: 'VIP' }).waitFor()
-  await page.getByText(/Every preprocessing step is affine/).waitFor()
+  await page.getByText(/Every preprocessing step and the model are affine/).waitFor()
 
   // Linear SHAP and the local gradient agree on an affine pipeline.
   const envelopeOf = async (label) => {
