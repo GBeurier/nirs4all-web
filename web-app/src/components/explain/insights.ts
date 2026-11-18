@@ -21,43 +21,43 @@ export const IMPORTANCE_INFO: Record<ImportanceKind, { label: string; short: str
     label: 'Regression coefficients (β)',
     short: 'β',
     help: 'The weight the model gives each variable: the prediction is Σ β·x + b. The sign says whether raising the variable raises the prediction; magnitudes depend on the scale of each variable.',
-    rule: 'mean_abs',
+    rule: 'sum_abs',
   },
   standardized_coefficients: {
     label: 'Standardized coefficients (β · sd)',
     short: 'β·sd',
     help: 'Coefficients multiplied by the standard deviation of each variable over the rows used: the typical change of the prediction caused by each variable, comparable across variables with different scales.',
-    rule: 'mean_abs',
+    rule: 'sum_abs',
   },
   vip: {
     label: 'VIP (variable importance in projection)',
     short: 'VIP',
     help: 'How much each variable contributes to the latent components, weighted by the share of Y variance each component explains. Unsigned; a common rule of thumb reads VIP > 1 as important.',
-    rule: 'mean',
+    rule: 'sum',
   },
   selectivity_ratio: {
     label: 'Selectivity ratio',
     short: 'SR',
     help: 'Explained over residual variance of each variable on the target-predictive component. High values mark variables that mostly carry target-related signal; less sensitive to interferents than VIP.',
-    rule: 'mean',
+    rule: 'sum',
   },
   x_weights: {
     label: 'Component weights (w)',
     short: 'w',
     help: 'The direction in variable space that defines one latent component\'s scores. A diagnostic of what a component looks at, not an importance by itself.',
-    rule: 'mean_abs',
+    rule: 'sum_abs',
   },
   x_loadings: {
     label: 'Component loadings (p)',
     short: 'p',
     help: 'How each variable is reconstructed from one latent component. Shows which spectral shape a component captures.',
-    rule: 'mean_abs',
+    rule: 'sum_abs',
   },
   mean_local_gradient: {
     label: 'Mean local gradient (raw spectrum)',
     short: '∂f/∂x',
     help: 'Mean over the explained spectra of the gradient of the complete pipeline with respect to each raw wavelength. For an affine pipeline it equals the raw-spectrum coefficients exactly; with SNV or MSC it is a local, first-order average.',
-    rule: 'mean_abs',
+    rule: 'sum_abs',
   },
 }
 
@@ -67,7 +67,9 @@ export function spaceExplanation(space: ImportanceSpace, profile: Pick<Importanc
   if (space === 'raw_input') {
     return profile.exactness === 'exact'
       ? `Raw-spectrum space: the affine preprocessing (${steps}) is folded into the coefficients, so the prediction is exactly β_raw · x + b on the raw spectrum. Directly comparable with SHAP, which also perturbs the raw spectrum.`
-      : `Raw-spectrum space, local: ${steps} is not affine, so the pipeline is linearized around each explained spectrum and the gradients are averaged. Comparable with SHAP, but valid near the explained spectra only.`
+      : profile.preprocessing.affine
+        ? `Raw-spectrum space, local estimate: the pipeline (${steps}) is affine, so the mean gradient equals its exact raw-spectrum coefficients up to finite-difference rounding. Comparable with SHAP.`
+        : `Raw-spectrum space, local: the pipeline (${steps}) is not affine, so it is linearized around each explained spectrum and the gradients are averaged. Comparable with SHAP, but valid near the explained spectra only.`
   }
   return profile.axis.kind === 'model_feature'
     ? `Model-input space: what the model sees after ${steps}. The preprocessing changes the number or position of the variables, so the profile is drawn on model feature indices, not wavelengths.`

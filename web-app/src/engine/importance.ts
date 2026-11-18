@@ -105,6 +105,31 @@ function withFiniteValues(p: ImportanceProfileV1, kind: ImportanceKind): Importa
   }
 }
 
+/** Preprocessing affinity of a native pipeline (steps and model), or null when it has no native parts. */
+export function describePipeline(model: FittedPipeline, featureNames?: string[]): ImportanceProfileV1['preprocessing'] | null {
+  const parts = nativePipelineParts(model)
+  if (!parts.ok) return null
+  const pipeline = rebuildRolePipeline(parts.steps, { type: parts.modelType, state: parts.modelState }, model.features?.names ?? featureNames) as IntrospectablePipeline
+  const est = loadEstimator(parts.modelState.n4me) as IntrospectableEstimator
+  try {
+    const info = pipeline.stepsInfo()
+    let modelAffine = true
+    try {
+      est.affineCoefficients()
+    } catch {
+      modelAffine = false
+    }
+    return {
+      steps: parts.steps.map((s) => s.type),
+      affine: modelAffine && parts.steps.every((_, i) => info[i]?.affine === true),
+      column_aligned: parts.steps.every((_, i) => info[i]?.columnAligned === true),
+    }
+  } finally {
+    est.dispose()
+    pipeline.dispose()
+  }
+}
+
 const column = (m: Matrix, j: number): number[] => Array.from({ length: m.rows }, (_, i) => m.data[i * m.cols + j])
 
 /** Compute every applicable model-intrinsic profile of a native pipeline. */
@@ -198,7 +223,7 @@ export function computeImportance(req: ImportanceRequest, binding: ImportanceBin
         profiles.push(base('x_loadings', 'model_input', column(latent.xLoadings, a), { component: a, model: latentModel }))
       }
     }
-    return { profiles, pipeline: { steps, affine, columnAligned, firstNonAffineStep }, refusals }
+    return { profiles, pipeline: { steps, affine, columnAligned, firstNonAffineStep, modelAffine: coefficients !== null }, refusals }
   } finally {
     est.dispose()
     pipeline.dispose()

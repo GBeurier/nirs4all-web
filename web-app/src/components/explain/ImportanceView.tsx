@@ -76,8 +76,14 @@ export function ImportanceView({ response, gradientProfile, spectrum, bands, exp
             </span>
           ))}
         </div>
-        {pipeline.affine ? (
-          <p className="flex items-start gap-1.5"><CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-brand-teal" />Every preprocessing step is affine, so the model coefficients map exactly onto the raw spectrum and Linear SHAP is exact.</p>
+        {!pipeline.modelAffine ? (
+          <p className="flex items-start gap-1.5">
+            <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-amber-600" />
+            The model itself is not affine (for example kernel or locally weighted): it has no coefficients to map onto the spectrum. Use the model-agnostic
+            explainers or the local gradient for a raw-spectrum view.
+          </p>
+        ) : pipeline.affine ? (
+          <p className="flex items-start gap-1.5"><CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-brand-teal" />Every preprocessing step and the model are affine, so the model coefficients map exactly onto the raw spectrum and Linear SHAP is exact.</p>
         ) : (
           <p className="flex items-start gap-1.5">
             <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-amber-600" />

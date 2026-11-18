@@ -572,6 +572,7 @@ export function ExplainPanel({ model, sourceName, targetName, targetNames: decla
           {view.tab === 'compare' ? (
             <CompareView
               engine={engine}
+              nGroups={nGroups}
               entries={history.entries}
               grouping={grouping()}
               groupingKey={groupingKey}

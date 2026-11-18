@@ -135,10 +135,17 @@ export function ExplainResults({ envelope: env, explainedX, bands, showBands, on
   const items = useMemo(() => importanceItems(env), [env])
   const swarm = useMemo(() => beeswarmView(env, explainedX), [env, explainedX])
   const summary = useMemo(() => summarySentence(env, bands), [env, bands])
-  const errorBand = useMemo(
-    () => (env.summary.mean_signed_std_error ? expandGroups(env.groups, env.summary.mean_signed_std_error, p) : undefined),
-    [env, p],
-  )
+  // Mean per-row Monte-Carlo standard error per group: an upper bound on the expected error of
+  // the mean |attribution| curve (|·| is 1-Lipschitz), so it is drawn around that curve.
+  const errorBand = useMemo(() => {
+    if (!env.std_error) return undefined
+    const out = env.output.index
+    const perGroup = env.groups.map((_, gi) => {
+      const se = env.std_error!.map((rowSe) => rowSe[gi][out]).filter(Number.isFinite)
+      return se.length > 0 ? se.reduce((a, b) => a + b, 0) / se.length : Number.NaN
+    })
+    return expandGroups(env.groups, perGroup, p)
+  }, [env, p])
   const out = env.output.index
   const rowInfos = useMemo<RowInfo[]>(() => env.rows.sample_indices.map((sample, r) => {
     const prediction = env.prediction[r][out]
@@ -194,7 +201,7 @@ export function ExplainResults({ envelope: env, explainedX, bands, showBands, on
         help={
           <>
             The curve is the mean |attribution| of each group over the explained rows; the shaded regions are the mean signed attribution (raises or lowers the
-            prediction).{errorBand ? ' The band around the curve is ± one Monte-Carlo standard error of the row mean.' : ''} Hover a region to highlight it in the
+            prediction).{errorBand ? ' The band around the curve is ± the mean per-row Monte-Carlo standard error, a conservative bound on the sampling error of the curve.' : ''} Hover a region to highlight it in the
             heatmap; click a group in the heatmap to highlight it here.
           </>
         }
@@ -216,6 +223,7 @@ export function ExplainResults({ envelope: env, explainedX, bands, showBands, on
           axis={spectral.axis}
           importance={spectral.importance}
           importanceError={errorBand}
+          importanceErrorLabel="± Monte-Carlo error (bound)"
           spectrum={spectral.spectrum}
           regions={spectral.regions}
           regionValueKind="signed"

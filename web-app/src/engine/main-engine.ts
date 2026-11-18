@@ -19,7 +19,7 @@ import { exportSingleHoldoutModel, isSingleHoldoutModel, openSingleHoldoutPredic
 import { withWasmRobustnessEvidencePublicationTrace } from './robustness-evidence'
 import { createRobustnessEvidencePublisherFromSidecar } from './robustness-evidence-sidecar'
 import { isRtErrorException, makeRtError, RtErrorException } from './rt'
-import { compareImportanceProfiles, computeImportance, previewBaseline, rawAffineCoefficients, type ImportanceBinding } from './importance'
+import { compareImportanceProfiles, computeImportance, describePipeline, previewBaseline, rawAffineCoefficients, type ImportanceBinding } from './importance'
 import type {
   BaselinePreviewRequest,
   BaselinePreviewResponse,
@@ -185,10 +185,14 @@ export class MainEngine implements Engine {
       )
     }
     const { model, featureNames } = request
-    return runExplain(request, methods, this.explainPredictor(model, featureNames), {
+    const response = await runExplain(request, methods, this.explainPredictor(model, featureNames), {
       ...opts,
       rawAffine: async () => rawAffineCoefficients(model, featureNames),
     })
+    if (!response.profile) return response
+    // The mean-gradient profile states whether the pipeline it linearizes is affine.
+    const preprocessing = describePipeline(model, featureNames)
+    return preprocessing ? { ...response, profile: { ...response.profile, preprocessing } } : response
   }
 
   async explainBatch(request: ExplainBatchRequest, opts: ExplainBatchOptions = {}): Promise<ExplainBatchResponse> {

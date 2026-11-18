@@ -122,7 +122,7 @@ describe('computeImportance', () => {
     expect(r.profiles[0].axis.kind).toBe('wavelength')
     expect(r.profiles[3].rows).toEqual({ count: 3, source: 'dataset_train_partition' })
     expect(r.profiles[5].values).toEqual([0, 2, 4, 6])
-    expect(r.pipeline).toMatchObject({ affine: true, columnAligned: true, firstNonAffineStep: null })
+    expect(r.pipeline).toMatchObject({ affine: true, columnAligned: true, firstNonAffineStep: null, modelAffine: true })
     expect(r.refusals).toEqual([])
     expect(fake.disposed.sort()).toEqual(['estimator', 'pipeline'])
   })

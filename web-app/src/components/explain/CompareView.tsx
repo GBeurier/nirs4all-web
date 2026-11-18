@@ -42,18 +42,23 @@ export function compareCandidates(entries: readonly HistoryEntry[], groupingKey:
       })
       const prof = e.response.profile
       if (prof && onRawAxis(prof, nFeatures)) {
-        out.push({ key: `${e.id}:gradient`, label: `${label} · mean gradient`, detail: `${IMPORTANCE_INFO[prof.kind].label}, |value| averaged per group`, input: { resolution: 'feature', values: prof.values, rule: IMPORTANCE_INFO[prof.kind].rule } })
+        out.push({ key: `${e.id}:gradient`, label: `${label} · mean gradient`, detail: `${IMPORTANCE_INFO[prof.kind].label}, |value| summed per group`, input: { resolution: 'feature', values: prof.values, rule: IMPORTANCE_INFO[prof.kind].rule } })
       }
     } else {
       for (const p of e.response.profiles) {
         if (p.component !== null) continue
-        const ok = onRawAxis(p, nFeatures)
+        const finite = p.values.every(Number.isFinite)
+        const ok = onRawAxis(p, nFeatures) && finite
         out.push({
           key: `${e.id}:${profileKey(p)}`,
           label: `${IMPORTANCE_INFO[p.kind].short} · ${p.space === 'raw_input' ? 'raw' : 'model input'}`,
-          detail: `${profileLabel(p)}, ${IMPORTANCE_INFO[p.kind].rule === 'mean' ? 'averaged' : '|value| averaged'} per group`,
+          detail: `${profileLabel(p)}, ${IMPORTANCE_INFO[p.kind].rule === 'sum' ? 'summed' : '|value| summed'} per group`,
           input: ok ? { resolution: 'feature', values: p.values, rule: IMPORTANCE_INFO[p.kind].rule } : null,
-          ...(ok ? {} : { disabledReason: 'drawn on model feature indices: the preprocessing changes the variables, so it has no wavelength groups' }),
+          ...(ok ? {} : {
+            disabledReason: finite
+              ? 'drawn on model feature indices: the preprocessing changes the variables, so it has no wavelength groups'
+              : 'contains infinite values (columns reproduced exactly by the model), which cannot be ranked',
+          }),
         })
       }
     }
@@ -63,6 +68,8 @@ export function compareCandidates(entries: readonly HistoryEntry[], groupingKey:
 
 export interface CompareViewProps {
   engine: Engine
+  /** groups of the current grouping (sizes the top-K overlap) */
+  nGroups: number | null
   entries: readonly HistoryEntry[]
   grouping: ExplainGrouping
   groupingKey: string
@@ -75,7 +82,7 @@ export interface CompareViewProps {
   exportName: string
 }
 
-export function CompareView({ engine, entries, grouping, groupingKey, groupingLabel, nFeatures, axis, axisLabel, spectrum, bands, exportName }: CompareViewProps) {
+export function CompareView({ engine, nGroups, entries, grouping, groupingKey, groupingLabel, nFeatures, axis, axisLabel, spectrum, bands, exportName }: CompareViewProps) {
   const candidates = useMemo(() => compareCandidates(entries, groupingKey, nFeatures), [entries, groupingKey, nFeatures])
   const enabled = candidates.filter((c) => c.input)
   const [chosen, setChosen] = useState<Set<string>>(() => new Set(enabled.slice(0, 6).map((c) => c.key)))
@@ -99,6 +106,7 @@ export function CompareView({ engine, entries, grouping, groupingKey, groupingLa
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const requestKey = selected.map((c) => c.key).join('|') + '#' + groupingKey
+  const groupCountHint = Math.max(...selected.map((c) => (c.input?.resolution === 'group' ? c.input.values.length : 0)), nGroups ?? 0)
 
   useEffect(() => {
     if (selected.length < 2) {
@@ -112,7 +120,8 @@ export function CompareView({ engine, entries, grouping, groupingKey, groupingLa
       nFeatures,
       grouping,
       axis,
-      topK: 10,
+      // A top K covering most groups would make every pair agree trivially.
+      topK: Math.max(1, Math.min(10, Math.floor(groupCountHint / 3))),
       profiles: selected.map((c) => ({ id: c.key, label: c.label, ...(c.input as Omit<CompareProfileInput, 'id' | 'label'>) })),
     }).then((r) => {
       if (live) setResult(r)
@@ -149,7 +158,8 @@ export function CompareView({ engine, entries, grouping, groupingKey, groupingLa
       <div className="rounded-xl border border-border bg-background/60 p-3">
         <p className="mb-2 text-xs text-muted-foreground">
           Every profile is brought onto the current grouping (<span className="font-medium text-foreground">{groupingLabel}</span>) by Methods: explanations use their mean |attribution| per
-          group, wavelength profiles the rule shown. Only shapes and ranks are compared, never units.
+          group, which adds up the contributions of the group's wavelengths, so wavelength profiles are summed per group the same way (a wider group carries more in
+          both). Only shapes and ranks are compared, never units.
         </p>
         <ul className="grid gap-1.5 sm:grid-cols-2">
           {candidates.map((c) => (

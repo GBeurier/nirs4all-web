@@ -83,5 +83,7 @@ describe('spaceExplanation', () => {
   it('separates exact and local raw-spectrum views', () => {
     expect(spaceExplanation('raw_input', { ...base, exactness: 'exact' })).toContain('exactly β_raw · x + b')
     expect(spaceExplanation('raw_input', { ...base, exactness: 'local_mean' })).toContain('linearized around each explained spectrum')
+    const affine = { ...base, preprocessing: { ...base.preprocessing, affine: true } }
+    expect(spaceExplanation('raw_input', { ...affine, exactness: 'local_mean' })).toContain('equals its exact raw-spectrum coefficients')
   })
 })

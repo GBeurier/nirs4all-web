@@ -460,7 +460,8 @@ function meanGradientProfile(meanGradient: Float64Array, result: AttributionResu
     values: Array.from({ length: result.nFeatures }, (_, j) => meanGradient[j * q + out]),
     rows: { count: nRows, source: req.rows.source },
     model: { method_id: req.model.dsl.model?.type ?? 'pipeline', n_components: null },
-    preprocessing: { steps: req.model.dsl.steps?.map((st) => st.type) ?? [], affine: false, column_aligned: false },
+    // Filled by the engine from the native pipeline when it has one; unknown otherwise.
+    preprocessing: { steps: req.model.dsl.steps.map((st) => st.type), affine: false, column_aligned: false },
     engine: { ...result.engine },
     settings: { ...result.settings, reference: 'background_mean' },
   }

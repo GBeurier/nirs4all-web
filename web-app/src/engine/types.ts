@@ -828,6 +828,8 @@ export interface ImportanceResponse {
     /** every transform keeps column j at spectral position j: model-space profiles share the raw axis */
     columnAligned: boolean;
     firstNonAffineStep: string | null;
+    /** the fitted model itself is affine (predict = X·B + b) */
+    modelAffine: boolean;
   };
   /** what could not be computed, and why (shown to the user) */
   refusals: ImportanceRefusal[];
