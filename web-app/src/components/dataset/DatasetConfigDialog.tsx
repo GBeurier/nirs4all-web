@@ -24,6 +24,8 @@ import {
 } from '@/app/components/ui/select'
 import { hasTestPartition } from './_helpers'
 import { repetitionCandidates } from '@/engine/relations'
+import { inferTargetTask } from '@/data/targets'
+import { TargetSelect } from './TargetSelect'
 
 const NO_REPETITION = '__none__'
 
@@ -34,14 +36,22 @@ const TASK_OPTIONS: { value: TaskType; label: string }[] = [
 ]
 
 /**
- * Controlled dataset config dialog. Edits target name, task type, and (only
+ * Controlled dataset config dialog. Edits the target (its display name for a single-target
+ * dataset, the projected target when nirs4all-io assembled several), the task type, and (only
  * when there is no test split) the train/test fraction. Emits a patch on Apply;
  * the host applies it to the dataset — this component never mutates ds.
  */
 export function DatasetConfigDialog({ open, ds, analysis, onOpenChange, onApply }: DatasetConfigDialogProps) {
   const needsSplit = !hasTestPartition(ds) && !ds.groupIds
+  const severalTargets = (ds.targets?.length ?? 0) > 1
   const [targetName, setTargetName] = useState(ds.targetName)
   const [taskType, setTaskType] = useState<TaskType>(ds.taskType)
+  // Another target comes with its own task type (the user's earlier choice for it, else inferred).
+  const chooseTarget = (name: string) => {
+    setTargetName(name)
+    const target = ds.targets?.find((candidate) => candidate.name === name)
+    if (target) setTaskType(name === ds.targetName ? ds.taskType : target.taskType ?? inferTargetTask(target))
+  }
   const [testFraction, setTestFraction] = useState(0.2)
   const [repetition, setRepetition] = useState(ds.repetition ?? NO_REPETITION)
   const candidates = repetitionCandidates(ds)
@@ -74,7 +84,7 @@ export function DatasetConfigDialog({ open, ds, analysis, onOpenChange, onApply 
 
   const apply = () => {
     onApply({
-      targetName: targetName.trim() || ds.targetName,
+      ...(severalTargets ? { target: targetName } : { targetName: targetName.trim() || ds.targetName }),
       taskType,
       ...(needsSplit ? { testFraction } : {}),
       ...(repetition !== (ds.repetition ?? NO_REPETITION) ? { repetition: repetition === NO_REPETITION ? null : repetition } : {}),
@@ -100,15 +110,21 @@ export function DatasetConfigDialog({ open, ds, analysis, onOpenChange, onApply 
 
         <div className="space-y-5 py-1">
           <div className="space-y-2">
-            <Label htmlFor="config-target">Target name</Label>
-            <Input
-              id="config-target"
-              value={targetName}
-              onChange={(e) => setTargetName(e.target.value)}
-              placeholder="e.g. protein"
-            />
+            <Label htmlFor="config-target">{severalTargets ? 'Target' : 'Target name'}</Label>
+            {severalTargets ? (
+              <div><TargetSelect id="config-target" ds={ds} value={targetName} onChange={chooseTarget} className="w-full" /></div>
+            ) : (
+              <Input
+                id="config-target"
+                value={targetName}
+                onChange={(e) => setTargetName(e.target.value)}
+                placeholder="e.g. protein"
+              />
+            )}
             <p className="text-xs text-muted-foreground">
-              The reference property being modelled.
+              {severalTargets
+                ? `The dataset keeps its ${ds.targets!.length} targets. This one is shown in the views and proposed in the run settings; the task type below applies to it.`
+                : 'The reference property being modelled.'}
             </p>
           </div>
 

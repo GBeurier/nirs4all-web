@@ -81,8 +81,9 @@ export async function loadSampleDataset(id: SampleId = 'corn'): Promise<Material
   const files = (await meta.load()).map((f) => ({ name: f.name, bytes: encoder.encode(f.text) }))
   const { ingestFiles } = await import('./wasm-io')
   const { dataset } = await ingestFiles(files, meta.name)
-  dataset.targetName = meta.targetName
-  return dataset
+  // the bundled target files have no header: the sample's display name names its (single) target
+  const { renameTarget } = await import('./targets')
+  return renameTarget(dataset, meta.targetName)
 }
 
 /** TEST ORACLE ONLY: the former local CSV builder output of a bundled sample, kept for the

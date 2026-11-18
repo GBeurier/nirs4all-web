@@ -18,9 +18,10 @@ import { BrandMark } from '@/app/components/BrandMark'
 import { DatasetConfigDialog } from '@/components/dataset/DatasetConfigDialog'
 import { DatasetUpload } from '@/components/dataset/DatasetUpload'
 import { DatasetView } from '@/components/dataset/DatasetView'
-import { playgroundDatasetKey } from '@/components/dataset/playgroundAdapter'
+import { inheritPlaygroundDatasetKey, playgroundDatasetKey } from '@/components/dataset/playgroundAdapter'
 import { PlaygroundPanel } from '@/components/dataset/PlaygroundPanel'
 import { ExecutionLog, PipelineBuilder } from '@/components/pipeline'
+import { RunSettings } from '@/components/pipeline/RunSettings'
 import { migrateLegacyBranch } from '@/components/pipeline/_helpers'
 import { PredictionPanel } from '@/components/results/PredictionPanel'
 import { ExplainPanel } from '@/components/explain/ExplainPanel'
@@ -36,6 +37,7 @@ import { defaultPipeline } from '@/catalog/build'
 import { engine } from '@/engine/client'
 import { rtResultEnvelopeToDisplayRunResult, type RtResultWire } from '@/engine/rt-result'
 import { type DatasetSummary, reencodeTarget, summarize } from '@/data/dataset'
+import { keptMissingSpectraNotice, prepareRunDataset, renameTarget, selectDatasetTarget, setTargetTask } from '@/data/targets'
 import { loadSampleDataset, SAMPLES, type SampleId } from '@/data/samples'
 import { type LoadedModel, parseN4aFile } from '@/lib/n4a'
 import { applyTheme, clearServerSessionModel, loadSession, loadTheme, saveSession, type Theme } from '@/lib/persist'
@@ -45,10 +47,10 @@ import { Progress } from '@/app/components/ui/progress'
 import { cn } from '@/app/components/ui/utils'
 import { formatRuntimeErrorForUi } from '@/app/runtimeErrors'
 import { RuntimeEngineBadge } from 'nirs4all-ui/components'
-import { ioRetainedOf, type Analysis } from '@/data/wasm-io'
+import { ioRetainedOf, replaceMissingSpectra, type Analysis } from '@/data/wasm-io'
 import type { DatasetConfigPatch, PredictedRows } from '@/components/contracts'
 import type { DagMlLineage } from '@/engine/dagml'
-import type { MaterializedDataset, PipelineDSL, Partition, RunLogEntry, RunProgress, RunResult, ScoreNode, TaskType } from '@/engine/types'
+import type { MaterializedDataset, MissingSpectraChoice, MissingValuePolicy, PipelineDSL, Partition, RunLogEntry, RunProgress, RunResult, ScoreNode, TaskType } from '@/engine/types'
 
 type DatasetSourceKind = 'upload' | 'sample' | 'server'
 type E2EDatasetPayload = Omit<MaterializedDataset, 'X' | 'y'> & { X: number[]; y: number[] }
@@ -90,6 +92,16 @@ export default function App() {
     return restored ? migrateLegacyBranch(restored) : defaultPipeline('regression')
   })
   const [sampleId, setSampleId] = useState<SampleId | null>(null)
+  // Launch choices of the next run (the target is the dataset's projected target, shown and changeable
+  // in the run settings): what it does with samples without a target value, and — asked only when the
+  // spectra hold missing values, with no default — what it does with those. Never applied to the dataset.
+  const [missingValues, setMissingValues] = useState<MissingValuePolicy>('exclude_samples')
+  const [missingSpectra, setMissingSpectra] = useState<MissingSpectraChoice | null>(null)
+  // The exact view of the data each run executed on (its target, its left-out rows/columns).
+  const runDatasets = useRef(new WeakMap<RunResult, MaterializedDataset>())
+  // The pipeline edited for the other task family (regression / classification) of this dataset's
+  // targets: switching between a numeric and a class target swaps pipelines instead of losing one.
+  const pipelineByFamily = useRef<Partial<Record<'regression' | 'classification', PipelineDSL>>>({})
   const [runs, setRuns] = useState<RunResult[]>([])
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null)
   const [selectedScore, setSelectedScore] = useState<ScoreNode | null>(null)
@@ -117,6 +129,8 @@ export default function App() {
   const sessionActivity = useRef({ runCalls: 0, datasetLoads: 0 })
   const liveDataset = useRef(dataset)
   liveDataset.current = dataset
+  const livePipeline = useRef(pipeline)
+  livePipeline.current = pipeline
 
   // apply the persisted light/dark choice to <html> (and on every toggle)
   useEffect(() => {
@@ -131,6 +145,9 @@ export default function App() {
     setOpenedWorkbenches({ playground: false, inspector: false })
     setConfigOpen(false)
     sessionActivity.current.datasetLoads++
+    setMissingValues('exclude_samples')
+    setMissingSpectra(null)
+    pipelineByFamily.current = {}
     setDataset(ds)
     setSummary(summarize(ds))
     setDatasetInfo({
@@ -247,12 +264,33 @@ export default function App() {
       : desired === 'results' || desired === 'predict' && !restored.loadedModel ? 'pipeline' : desired)
   }, [adoptDataset])
 
+  // Change the projected target (Explore, the run settings): the other targets, the rows and the
+  // runs already computed stay as they are. Between a numeric and a class target the pipeline of
+  // the other task family is put aside and brought back, never discarded.
+  const onSelectTarget = useCallback((name: string) => {
+    const prev = liveDataset.current
+    if (!prev || prev.targetName === name) return
+    try {
+      const next = inheritPlaygroundDatasetKey(prev, selectDatasetTarget(prev, name))
+      setDataset(next)
+      setSummary(summarize(next))
+      const family = (task: TaskType) => (task === 'regression' ? 'regression' : 'classification')
+      if (family(next.taskType) !== family(prev.taskType)) {
+        pipelineByFamily.current[family(prev.taskType)] = livePipeline.current
+        setPipeline(pipelineByFamily.current[family(next.taskType)] ?? defaultPipeline(next.taskType))
+      }
+      setError(null)
+    } catch (e) {
+      setError(formatRuntimeErrorForUi(e))
+    }
+  }, [])
+
   const applyConfigPatch = useCallback(
     (patch: DatasetConfigPatch) => {
       setWorkbench(null)
       // a target/task/partition change invalidates any prior run — abort, drop
       // stale results & their fitted models, and send the user back to the pipeline
-      if (patch.taskType !== undefined || patch.testFraction != null || patch.repetition !== undefined) {
+      if (patch.target !== undefined || patch.taskType !== undefined || patch.testFraction != null || patch.repetition !== undefined) {
         abortRef.current?.abort()
         abortRef.current = null
         runTokenRef.current++
@@ -266,15 +304,19 @@ export default function App() {
       }
       setDataset((prev) => {
         if (!prev) return prev
-        const next: MaterializedDataset = { ...prev }
-        if (patch.targetName) next.targetName = patch.targetName
-        if (patch.taskType && patch.taskType !== prev.taskType) {
-          next.taskType = patch.taskType
-          const enc = reencodeTarget(prev, patch.taskType)
-          next.y = enc.y
-          next.classes = enc.classes
-          setPipeline(defaultPipeline(patch.taskType))
+        // the chosen target first, then its display name and task type
+        let next: MaterializedDataset = patch.target && patch.target !== prev.targetName ? selectDatasetTarget(prev, patch.target) : { ...prev }
+        if (patch.targetName) next = renameTarget(next, patch.targetName)
+        if (patch.taskType && patch.taskType !== next.taskType) {
+          if (next.targets) next = setTargetTask(next, patch.taskType)
+          else {
+            next.taskType = patch.taskType
+            const enc = reencodeTarget(prev, patch.taskType)
+            next.y = enc.y
+            next.classes = enc.classes
+          }
         }
+        if (next.taskType !== prev.taskType) setPipeline(defaultPipeline(next.taskType))
         if (patch.testFraction != null && !prev.partitions.includes('test')) {
           const cut = Math.floor(prev.nSamples * (1 - patch.testFraction))
           next.partitions = prev.partitions.map((_, i) => (i < cut ? 'train' : 'test') as Partition)
@@ -292,6 +334,20 @@ export default function App() {
     if (!dataset) return
     if (!pipeline.model) {
       setError('Add a model to run / score — this pipeline is preprocessing-only.')
+      return
+    }
+    // The run's own view of the data: the launch target, and — when values are missing — what the
+    // user chose for them (replacement values come from nirs4all-io). A missing choice or a `refuse`
+    // strategy stops here, before anything runs.
+    let prepared: ReturnType<typeof prepareRunDataset>
+    try {
+      const selection = { target: dataset.targetName, missingValues, missingSpectra }
+      prepareRunDataset(dataset, { ...selection, missingSpectra: missingSpectra?.action === 'replace' ? { action: 'keep' } : missingSpectra }) // choices are checked before io is asked
+      const replaced = dataset.missingFeatures && missingSpectra?.action === 'replace' ? await replaceMissingSpectra(dataset, missingSpectra) : undefined
+      prepared = prepareRunDataset(dataset, selection, replaced)
+    } catch (e) {
+      setError(formatRuntimeErrorForUi(e))
+      setStep('pipeline')
       return
     }
     abortRef.current?.abort()
@@ -315,8 +371,10 @@ export default function App() {
     }
     try {
       sessionActivity.current.runCalls++
-      const result = await engine.run(dataset, pipeline, { signal: ctrl.signal, onProgress: handleProgress })
+      const result = await engine.run(prepared.dataset, pipeline, { signal: ctrl.signal, onProgress: handleProgress })
       if (token !== runTokenRef.current) return
+      result.dataSelection = prepared.effect
+      runDatasets.current.set(result, prepared.dataset)
       // Test-only introspection hook (read by tests/generators-smoke.mjs to prove
       // OOF is assembled once per variant, not duplicated ×variantCount).
       ;(window as unknown as { __n4aLastRun?: RunResult }).__n4aLastRun = result
@@ -325,7 +383,10 @@ export default function App() {
       setSelectedScore(defaultEvaluationScore(result))
       setStep('results')
     } catch (e) {
-      if (token === runTokenRef.current && !(e instanceof DOMException && e.name === 'AbortError')) setError(formatRuntimeErrorForUi(e))
+      if (token === runTokenRef.current && !(e instanceof DOMException && e.name === 'AbortError')) {
+        // a refusal after “leave as is” is explained in the user's terms, followed by the owner's own message
+        setError([keptMissingSpectraNotice(prepared.effect), formatRuntimeErrorForUi(e)].filter(Boolean).join('\n'))
+      }
     } finally {
       // only the latest run owns the run-scoped UI state
       if (token === runTokenRef.current) {
@@ -334,7 +395,7 @@ export default function App() {
       }
       if (abortRef.current === ctrl) abortRef.current = null
     }
-  }, [dataset, pipeline])
+  }, [dataset, pipeline, missingValues, missingSpectra])
 
   const onCancel = useCallback(() => abortRef.current?.abort(), [])
 
@@ -657,6 +718,12 @@ export default function App() {
                 pipeline={pipeline}
                 runs={runs}
                 selectedRun={selectedRun}
+                runDataset={selectedRun ? runDatasets.current.get(selectedRun) ?? dataset : null}
+                missingValues={missingValues}
+                onMissingValues={setMissingValues}
+                missingSpectra={missingSpectra}
+                onMissingSpectra={setMissingSpectra}
+                onSelectTarget={onSelectTarget}
                 selectedScore={selectedScore}
                 loadedModel={loadedModel}
                 running={running}
@@ -897,6 +964,13 @@ interface StepPanelProps {
   pipeline: PipelineDSL
   runs: RunResult[]
   selectedRun: RunResult | null
+  /** the view of the data the selected run executed on (its target, its left-out rows/columns) */
+  runDataset: MaterializedDataset | null
+  missingValues: MissingValuePolicy
+  onMissingValues: (policy: MissingValuePolicy) => void
+  missingSpectra: MissingSpectraChoice | null
+  onMissingSpectra: (choice: MissingSpectraChoice) => void
+  onSelectTarget: (name: string) => void
   selectedScore: ScoreNode | null
   loadedModel: LoadedModel | null
   running: boolean
@@ -975,7 +1049,7 @@ function StepPanel(props: StepPanelProps) {
           onCancel={props.onCancel}
         />
         <button type="button" onClick={props.onOpenPlayground} className="mb-4 self-start rounded-full border border-border px-4 py-2 text-sm font-semibold">Open Playground</button>
-        <DatasetView key={playgroundDatasetKey(dataset)} ds={dataset} summary={summary} cv={props.pipeline.cv} onOpenConfig={props.onOpenConfig} />
+        <DatasetView key={playgroundDatasetKey(dataset)} ds={dataset} summary={summary} cv={props.pipeline.cv} onOpenConfig={props.onOpenConfig} onSelectTarget={props.onSelectTarget} />
       </Panel>
     )
   }
@@ -996,6 +1070,7 @@ function StepPanel(props: StepPanelProps) {
             onCancel={props.onCancel}
           />
         ) : null}
+        <RunSettings ds={dataset} missingValues={props.missingValues} missingSpectra={props.missingSpectra} disabled={props.running} onTarget={props.onSelectTarget} onMissingValues={props.onMissingValues} onMissingSpectra={props.onMissingSpectra} />
         <PipelineBuilder
           pipeline={props.pipeline}
           taskType={dataset.taskType}
@@ -1067,8 +1142,8 @@ function StepPanel(props: StepPanelProps) {
   )
   if (step === 'explain') {
     if (!predictModel || !predictName) return <LockedNote>Run a pipeline first, or load a saved .n4a model — then explain its predictions.</LockedNote>
-    // Only the dataset the selected run was fitted on supplies partitions, background and axis.
-    const runDataset = selectedRun ? dataset : null
+    // Only the view of the data the selected run was fitted on supplies partitions, background and axis.
+    const runDataset = props.runDataset
     return (
       <Panel title="Explain" subtitle="Which spectral regions drive the model's predictions — model-agnostic SHAP-family attributions computed in your browser." icon={Microscope}>
         {modelPicker}

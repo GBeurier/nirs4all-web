@@ -32,7 +32,7 @@ import { cn } from '@/app/components/ui/utils'
 import { downloadN4a, downloadPipeline, downloadRunCsv, downloadRunJson } from '@/lib/download'
 
 import { formatDate, variantChains } from './_helpers'
-import { defaultEvaluationScore, refitIsTest, scoreEvaluationLabel, selectionValidation } from './inspectorAdapter'
+import { defaultEvaluationScore, scoreEvaluationLabel, trainingRefit as isTrainingRefit } from './inspectorAdapter'
 
 function StatusIcon({ status }: { status: ScoreNode['status'] }) {
   if (status === 'running') return <Loader2 className="size-4 animate-spin text-brand-teal" />
@@ -256,7 +256,7 @@ function RunCard({
   const modelExport = useModelExport(run, engine)
   const pm = primaryMetric(run.taskType)
   const [showTraining, setShowTraining] = useState(false)
-  const trainingRefit = !selectionValidation(run) && !refitIsTest(run)
+  const trainingRefit = isTrainingRefit(run)
   const selectedTraining = trainingRefit && selectedRunId === run.id && selectedScoreId === run.refit.id
   const trainingVisible = showTraining || selectedTraining
   const headlineNode = defaultEvaluationScore(run) ?? (trainingVisible ? run.refit : null)
@@ -280,9 +280,27 @@ function RunCard({
                 {run.variantCount} variants
               </Badge>
             ) : null}
+            <Badge variant="outline" className="border-border font-mono text-muted-foreground" data-run-target>
+              target: {run.targetName}
+            </Badge>
             {run.missingTargets ? (
               <Badge variant="outline" className="border-brand-amber/40 text-brand-amber" data-missing-targets>
                 {run.missingTargets} without target excluded
+              </Badge>
+            ) : null}
+            {run.dataSelection?.excludedSamples ? (
+              <Badge variant="outline" className="border-brand-amber/40 text-brand-amber" data-excluded-samples>
+                {run.dataSelection.excludedSamples} with missing spectral values removed
+              </Badge>
+            ) : null}
+            {run.dataSelection?.replacedCells ? (
+              <Badge variant="outline" className="border-brand-amber/40 text-brand-amber" data-replaced-cells>
+                {run.dataSelection.replacedCells} missing spectral values replaced
+              </Badge>
+            ) : null}
+            {run.dataSelection?.missingSpectra?.action === 'keep' ? (
+              <Badge variant="outline" className="border-brand-amber/40 text-brand-amber" data-kept-missing-cells>
+                {run.dataSelection.missingCells} missing spectral values left as is
               </Badge>
             ) : null}
             <span>{formatDate(run.createdAt)}</span>

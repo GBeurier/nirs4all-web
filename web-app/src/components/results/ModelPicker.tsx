@@ -15,14 +15,14 @@ export interface ModelPickerProps {
   disabled?: boolean
 }
 
-/** One-line description of a run's model: pipeline, headline validation score and date. */
+/** One-line description of a run's model: pipeline, modelled target, headline validation score and date. */
 export function runModelLabel(run: RunResult): string {
   const pm = primaryMetric(run.taskType)
   const score = defaultEvaluationScore(run)
   const value = score?.metrics[pm.key]
   const scored = score && value != null ? ` · ${scoreEvaluationLabel(run, score)} ${pm.label} ${fmt(value)}` : ''
   const variants = run.variantCount && run.variantCount > 1 ? ` · best of ${run.variantCount} variants` : ''
-  return `${run.pipelineName}${scored}${variants} · ${formatDate(run.createdAt)}`
+  return `${run.pipelineName} · target ${run.targetName}${scored}${variants} · ${formatDate(run.createdAt)}`
 }
 
 /**

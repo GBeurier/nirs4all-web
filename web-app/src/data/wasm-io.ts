@@ -6,12 +6,12 @@ import { isRelationColumn, metadataRelations } from '@/engine/relations'
 // when a dataset is ingested, keeping the initial bundle and the offline
 // single-file build lean. Delimited text (CSV/TSV/TXT) is read by nirs4all-io
 // itself: Web keeps no local assembler or parser for it.
-import { IO_RECORD, type MaterializedDataset, type Partition } from '@/engine/types'
+import { IO_RECORD, type DatasetTarget, type MaterializedDataset, type Partition } from '@/engine/types'
 import { loadDataIoWasm } from '@/engine/nirs4all-core'
 import { columnName } from '@/engine/feature-identity'
 import { numericCoordinates } from '@/engine/wasm/io/numeric-wire'
 import type { AssembledAxis } from '@/engine/wasm/io/types/nirs4all-io'
-import { encodeTarget, inferTaskType } from './dataset'
+import { selectDatasetTarget } from './targets'
 
 export interface DecodedFile {
   ok: boolean
@@ -210,18 +210,11 @@ function retain(dataset: MaterializedDataset, retained: IoRetained): Materialize
   return dataset
 }
 
-/** The user's resolution of what io leaves ambiguous. */
+/** How the owner record is projected for the views. */
 export interface IoProjectionChoice {
-  /** target column to model when io assembled several */
+  /** target column projected onto `y` (default: the first owner target). Every target stays in
+   *  `MaterializedDataset.targets`; the target to model is chosen when a run is launched. */
   target?: string
-}
-
-/** A decision Web cannot take for the user: it names the options and keeps the owner record. */
-export class IoTargetChoiceRequired extends Error {
-  constructor(message: string, readonly options: string[]) {
-    super(message)
-    this.name = 'IoTargetChoiceRequired'
-  }
 }
 
 /**
@@ -268,16 +261,18 @@ function featureAxis(block: IoBlock, nFeatures: number): { axis: number[]; axisU
 
 /**
  * Map io's `AssembledDataset` (per-partition feature/target blocks) onto the engine's
- * `MaterializedDataset`. X and y come from the owner's logical `data` with its `validity`
- * mask (missing cells become NaN, never 0); the target is the chosen column of the row-major
- * target table. Refuses several feature sources, several targets without `choice.target`,
- * unknown partition names and more than one held-out partition (no pooled score).
+ * `MaterializedDataset`. X and the targets come from the owner's logical `data` with its
+ * `validity` mask (missing cells become NaN, never 0, and are counted). EVERY column of the
+ * row-major target table is kept (`targets`, with its owner kind and missing count); `y` is the
+ * projection of one of them — `choice.target`, else the first owner target — and the target to
+ * model is chosen when a run is launched. Refuses several feature sources, unknown partition
+ * names and more than one held-out partition (no pooled score).
  *
  * Identity is io's declared `sample_index`: a declared sample key must be aligned in every
  * partition (else refusal, never a downgrade to positions); rows that repeat a sample id within
  * a partition need declared, unique observation ids (else refusal, nothing is synthesised);
- * with no declared key each row is its own sample, labelled positional. Task-type + class
- * encoding stay on the shared `inferTaskType`/`encodeTarget`. The caller keeps the original
+ * with no declared key each row is its own sample, labelled positional. Task type and class
+ * encoding follow the owner column kind (`data/targets.ts`). The caller keeps the original
  * record; this function only reads it.
  */
 export function mapAssembledToMaterialized(full: AssembledFull, choice: IoProjectionChoice = {}): MaterializedDataset {
@@ -322,20 +317,27 @@ export function mapAssembledToMaterialized(full: AssembledFull, choice: IoProjec
     throw new Error(`nirs4all-io assembled ${heldOut.length} held-out partitions (${heldOut.map((p) => `"${p}"`).join(', ')}); Web would pool them into one score, so it refuses. Keep a single held-out partition in the dataset spec.`)
   }
 
-  // target: one column of the owner target table
+  // targets: every column of the owner target table, the same columns in every partition that has one
   const targetBlocks = used.filter((p) => full.blocks[p].y)
-  const names = targetBlocks.length ? full.blocks[targetBlocks[0]].y!.columns.map((c) => c.name) : []
-  const signature = (b: IoBlock) => b.y!.columns.map((c) => `${c.name}\u0000${c.kind}`).join('\u0001')
-  if (targetBlocks.some((p) => signature(full.blocks[p]) !== signature(full.blocks[targetBlocks[0]]))) {
-    throw new Error('nirs4all-io assembled different target columns in different partitions.')
+  const columns = targetBlocks.length ? full.blocks[targetBlocks[0]].y!.columns : []
+  const names = columns.map((c) => c.name)
+  const signature = (b: IoBlock) => b.y!.columns.map((c) => c.name).join('\u0001')
+  const differing = targetBlocks.find((p) => signature(full.blocks[p]) !== signature(full.blocks[targetBlocks[0]]))
+  if (differing !== undefined) {
+    throw new Error(`nirs4all-io assembled different target columns in partitions "${targetBlocks[0]}" (${names.join(', ')}) and "${differing}" (${full.blocks[differing].y!.columns.map((c) => c.name).join(', ')}); the target files must carry the same columns in the same order`)
   }
-  let targetIndex = -1
-  if (names.length === 1) targetIndex = 0
-  else if (names.length > 1) {
-    targetIndex = choice.target === undefined ? -1 : names.indexOf(choice.target)
-    if (targetIndex < 0) throw new IoTargetChoiceRequired(`nirs4all-io assembled ${names.length} targets (${names.join(', ')}); choose the one to model${choice.target === undefined ? '' : ` ("${choice.target}" is not among them)`} — Web does not take the first.`, names)
+  // A column io read as numbers in one partition and as text labels in another (a stray text cell)
+  // is one inconsistent target, not a reason to refuse the dataset: it is kept, flagged, without values.
+  const kindLabel = (kind: IoTargetColumn['kind']) => (kind === 'classification_string' ? 'text labels' : 'numbers')
+  const issues = columns.map((c, t) => {
+    const other = targetBlocks.find((p) => kindLabel(full.blocks[p].y!.columns[t].kind) !== kindLabel(c.kind))
+    return other === undefined ? undefined
+      : `nirs4all-io read it as ${kindLabel(c.kind)} in partition "${targetBlocks[0]}" and as ${kindLabel(full.blocks[other].y!.columns[t].kind)} in "${other}"`
+  })
+  if (new Set(names).size !== names.length) throw new Error(`nirs4all-io assembled target columns with a repeated name (${names.join(', ')}); Web cannot tell them apart.`)
+  if (choice.target !== undefined && !names.includes(choice.target)) {
+    throw new Error(`"${choice.target}" is not a target nirs4all-io assembled (${names.join(', ') || 'no target'}).`)
   }
-  const targetName = targetIndex >= 0 ? names[targetIndex] : 'target'
 
   // identity: io's declared sample_index columns; a declared key must be aligned everywhere
   const provenance = full.identity?.provenance
@@ -354,8 +356,16 @@ export function mapAssembledToMaterialized(full: AssembledFull, choice: IoProjec
   let nSamples = 0
   for (const p of used) nSamples += full.blocks[p].x[0].n_rows
   const X = new Float64Array(nSamples * nFeatures)
-  const yRaw = new Float64Array(nSamples)
-  const labelsRaw: string[] = []
+  const targets: DatasetTarget[] = columns.map((c, t) => ({
+    // numbers everywhere but classes in one partition only: plain numbers (the task type is inferred from the values)
+    name: c.name, kind: issues[t] || targetBlocks.some((p) => full.blocks[p].y!.columns[t].kind !== c.kind) ? 'numeric' : c.kind,
+    values: new Float64Array(nSamples).fill(NaN), missing: 0,
+    ...(c.kind === 'classification_string' && !issues[t] ? { labels: new Array<string>(nSamples).fill('') } : {}),
+    ...(issues[t] ? { issue: issues[t] } : {}),
+  }))
+  const missingRows = new Array<boolean>(nSamples).fill(false)
+  const missingColumns = new Array<boolean>(nFeatures).fill(false)
+  let missingCells = 0
   const partitions: Partition[] = []
   const partitionNames: string[] = []
   const sampleIds: string[] = []
@@ -369,14 +379,35 @@ export function mapAssembledToMaterialized(full: AssembledFull, choice: IoProjec
     if (xm.data.length !== cells || xm.validity?.length !== cells) {
       throw new Error(`nirs4all-io partition "${p}" returned a feature matrix without its logical data and validity mask (${xm.data.length} values, ${xm.validity?.length ?? 'no'} mask entries for ${cells} cells).`)
     }
-    for (let i = 0; i < cells; i++) X[off * nFeatures + i] = xm.validity[i] ? xm.data[i] : NaN
-
-    const column = targetIndex >= 0 && b.y ? b.y.columns[targetIndex] : null
-    const width = b.y?.columns.length ?? 0
-    if (column && (b.y!.data.length !== rows * width || column.block.validity.length !== rows)) {
-      throw new Error(`nirs4all-io partition "${p}" returned a target table that does not match its ${rows} rows.`)
+    for (let i = 0; i < cells; i++) {
+      // a cell the owner masks is a missing value: kept as NaN (never 0) and counted
+      if (xm.validity[i]) X[off * nFeatures + i] = xm.data[i]
+      else {
+        X[off * nFeatures + i] = NaN
+        missingCells++
+        missingRows[off + Math.floor(i / nFeatures)] = true
+        missingColumns[i % nFeatures] = true
+      }
     }
-    const categories = column?.kind === 'classification_string' ? b.y_categorical?.[column.name]?.categories : undefined
+
+    // every owner target column, under its own validity mask; a partition without targets stays missing
+    const width = b.y?.columns.length ?? 0
+    b.y?.columns.forEach((column, t) => {
+      if (b.y!.data.length !== rows * width || column.block.validity.length !== rows) {
+        throw new Error(`nirs4all-io partition "${p}" returned a target table that does not match its ${rows} rows.`)
+      }
+      if (issues[t]) return // inconsistent across partitions: no value is read from either reading
+      const categories = column.kind === 'classification_string' ? b.y_categorical?.[column.name]?.categories : undefined
+      for (let r = 0; r < rows; r++) {
+        if (!column.block.validity[r]) continue
+        const v = b.y!.data[r * width + t]
+        if (column.kind === 'classification_string') {
+          const label = categories?.[Math.round(v)]
+          if (label === undefined) throw new Error(`nirs4all-io returned class code ${v} for target "${column.name}" without its label.`)
+          targets[t].labels![off + r] = label
+        } else targets[t].values[off + r] = v
+      }
+    })
     const ids = declaredSample ? valuesOf(b, sampleColumn!)! : undefined
     const observations = declaredObservation ? valuesOf(b, observationColumn!)! : undefined
     for (let r = 0; r < rows; r++) {
@@ -388,20 +419,11 @@ export function mapAssembledToMaterialized(full: AssembledFull, choice: IoProjec
         sampleIds.push(id)
       } else sampleIds.push(`${p}#${r}`)
       if (observations) observationIds.push(cellId(observations[r]))
-      if (column && column.block.validity[r]) {
-        const v = b.y!.data[r * width + targetIndex]
-        yRaw[off + r] = v
-        if (column.kind === 'classification_string') {
-          const label = categories?.[Math.round(v)]
-          if (label === undefined) throw new Error(`nirs4all-io returned class code ${v} for target "${column.name}" without its label.`)
-          labelsRaw.push(label)
-        } else labelsRaw.push(String(v))
-      } else {
-        yRaw[off + r] = NaN // missing or absent target: excluded and counted by the engine
-        labelsRaw.push('')
-      }
     }
     off += rows
+  }
+  for (const target of targets) {
+    target.missing = target.labels ? target.labels.filter((label) => label === '').length : Array.from(target.values).filter((v) => !Number.isFinite(v)).length
   }
 
   // A physical sample scanned several times is one sample id in one partition: the scans are
@@ -455,10 +477,12 @@ export function mapAssembledToMaterialized(full: AssembledFull, choice: IoProjec
 
   // targetless spectra are allowed (explore / predict-only); the engine refuses
   // to train without targets, so an all-NaN y never silently produces a model.
-  const taskType = inferTaskType(Array.from(yRaw), labelsRaw)
-  const { y, classes } = encodeTarget(yRaw, labelsRaw, taskType)
-  return {
-    X, nSamples, nFeatures, axis, axisUnit, ...(featureNames ? { featureNames } : {}), y, yRaw, labelsRaw, targetName, taskType, classes,
+  const dataset: MaterializedDataset = {
+    X, nSamples, nFeatures, axis, axisUnit, ...(featureNames ? { featureNames } : {}),
+    y: new Float64Array(nSamples).fill(NaN), yRaw: new Float64Array(nSamples).fill(NaN), labelsRaw: new Array<string>(nSamples).fill(''),
+    targetName: 'target', taskType: 'regression', classes: undefined,
+    ...(targets.length ? { targets } : {}),
+    ...(missingCells ? { missingFeatures: { cells: missingCells, rows: missingRows.filter(Boolean).length, columns: missingColumns.filter(Boolean).length } } : {}),
     sampleIds, ...(declaredSample ? { sampleIdColumn: sampleColumn } : {}), partitions, partitionNames,
     ...(heldOut.length ? { heldOutName: heldOut[0] } : {}),
     ...(declaredObservation ? { observationIds } : {}),
@@ -470,6 +494,8 @@ export function mapAssembledToMaterialized(full: AssembledFull, choice: IoProjec
     },
     metadata, ...relations, ...(declaredGroups ? { groupIds: declaredGroups } : {}),
   }
+  // the view target: the requested column, else the first usable owner target (visible and changeable in every view)
+  return targets.length ? selectDatasetTarget(dataset, choice.target ?? (targets.find((target) => !target.issue) ?? targets[0]).name) : dataset
 }
 
 /** The spec io assembles: its inferred per-scan repetition never reaches assembly. Repetition is
@@ -482,7 +508,19 @@ function assemblySpecOf(spec: DatasetSpec): DatasetSpec {
     const { repetition_id: _scan, ...sampleIndex } = assemblySpec.sample_index as Record<string, unknown>
     assemblySpec.sample_index = sampleIndex
   }
+  if (assemblySpec.params !== undefined) assemblySpec.params = keepMissingValues(assemblySpec.params as Record<string, unknown>)
+  if (assemblySpec.sources) assemblySpec.sources = assemblySpec.sources.map((source) => (source.params ? { ...source, params: keepMissingValues(source.params) } : source))
   return assemblySpec
+}
+
+/** Loading is lossless: io's undecided NA policy (`auto`, which aborts on a missing feature value) is
+ *  asked as io's `ignore`, so missing cells are kept under the owner validity mask and counted, and no
+ *  row or column is dropped at load. A policy the spec declares explicitly is left as declared. What a
+ *  run does with missing values is the user's launch choice (`data/targets.ts`). */
+function keepMissingValues(params: Record<string, unknown>): Record<string, unknown> {
+  const na = params.na
+  if (!na || typeof na !== 'object' || (na as { policy?: unknown }).policy !== 'auto') return params
+  return { ...params, na: { ...na, policy: 'ignore' } }
 }
 
 /** Run io's `assembleDataset` for a spec over the decoded records and the table bytes io reads itself. */
@@ -521,22 +559,57 @@ export async function assembleDataset(
   return retain(mapAssembledToMaterialized(record, choice), { inputs: files, analysis, spec, record })
 }
 
-/** io could not assemble these inputs, or Web cannot represent its record without a user decision.
+/** A replacement of missing spectral values nirs4all-io supports: within each spectrum (the previous
+ *  or next wavelength) or a constant. io refuses statistics across samples (`mean`, `median`). */
+export interface SpectraFill { method: 'forward_fill' | 'backward_fill' | 'value'; value?: number }
+
+/**
+ * The spectra of a loaded dataset with their missing values replaced BY nirs4all-io: the retained
+ * inputs are assembled again under io's `replace` NA policy on the feature and mixed sources, which io
+ * applies to feature columns only (targets and metadata keep their missing values). Web computes no replacement value; it checks that io returned
+ * the same rows and columns and hands the matrix to the run's own view (`prepareRunDataset`). A cell
+ * io could not replace (nothing before/after it in its spectrum) stays NaN and is reported there.
+ */
+export async function replaceMissingSpectra(dataset: MaterializedDataset, fill: SpectraFill): Promise<Float64Array> {
+  const retained = ioRetainedOf(dataset)
+  if (!retained) throw new Error('Missing spectral values can be replaced only in a dataset nirs4all-io assembled in this session; reload the files, or remove the affected samples.')
+  if (fill.method === 'value' && !Number.isFinite(fill.value)) throw new Error('Enter the number that replaces the missing spectral values.')
+  const na = { policy: 'replace', fill: { method: fill.method, ...(fill.method === 'value' ? { fill_value: fill.value } : {}) } }
+  const spec: DatasetSpec = {
+    ...retained.spec,
+    // a `mixed` source (spectra and targets in one table) gets the policy too: io applies it to its
+    // feature columns only and leaves target and metadata columns untouched
+    sources: retained.spec.sources?.map((source) => (source.role === 'features' || source.role === 'mixed' ? { ...source, params: { ...source.params, na } } : source)),
+  }
+  let replaced: MaterializedDataset
+  try {
+    replaced = mapAssembledToMaterialized(await assembleSpec(spec, retained.analysis.decoded, retained.inputs))
+  } catch (e) {
+    throw new Error(`nirs4all-io could not replace the missing spectral values: ${cause(e)}.`)
+  }
+  if (replaced.nSamples !== dataset.nSamples || replaced.nFeatures !== dataset.nFeatures || replaced.sampleIds.some((id, row) => id !== dataset.sampleIds[row])) {
+    throw new Error('nirs4all-io returned different rows or columns when replacing the missing spectral values; the run was not started.')
+  }
+  return replaced.X
+}
+
+/** io could not assemble these inputs, or Web cannot represent the record io assembled.
  *  The complete input bytes, the io analysis and — when io did assemble — the original record and
- *  spec are kept here unchanged for the host; Web never assembles delimited text locally instead.
- *  `decision` names the options of a pending user choice (see `resumeIngestion`). */
+ *  spec are kept here unchanged for the host; Web never assembles delimited text locally instead. */
 export class IoIngestionRefusal extends Error {
   constructor(
     message: string,
     readonly inputs: { name: string; bytes: Uint8Array }[],
     readonly analysis: Analysis | null,
     readonly retained?: IoRetained,
-    readonly decision?: { target: string[] },
   ) {
     super(message)
     this.name = 'IoIngestionRefusal'
   }
 }
+
+/** The cause of a refusal as one clause: no trailing period (the sentence around it supplies one). */
+const cause = (e: unknown): string => (e instanceof Error ? e.message : String(e)).trim().replace(/\.+$/, '')
 
 /** Ingest uploaded or bundled files through Formats + IO: the one active dataset entry. */
 export async function ingestFiles(
@@ -546,12 +619,15 @@ export async function ingestFiles(
 ): Promise<{ dataset: MaterializedDataset; name: string; analysis: Analysis; retained: IoRetained }> {
   const analysis = await analyzeFiles(files)
   const failed = analysis.decoded.filter((d) => !d.ok).map((d) => `${d.file}: ${d.error}`)
+  const unchanged = `The ${files.length} input file${files.length === 1 ? ' is' : 's are'} kept unchanged`
+  // two different refusals: io could not assemble the inputs, or io did and Web cannot represent its record
   const notAssembled = (e: unknown, retained?: IoRetained) => new IoIngestionRefusal(
-    `nirs4all-io did not assemble this dataset: ${e instanceof Error ? e.message : String(e)}${failed.length ? ` (not decoded: ${failed.join('; ')})` : ''}. The ${files.length} input file(s) are kept unchanged; Web does not assemble them locally.`,
+    retained
+      ? `Web cannot load the dataset nirs4all-io assembled: ${cause(e)}. ${unchanged}.`
+      : `nirs4all-io could not assemble this dataset: ${cause(e)}${failed.length ? ` (not decoded: ${failed.join('; ')})` : ''}. ${unchanged}; Web does not assemble them locally.`,
     files,
     analysis,
     retained,
-    e instanceof IoTargetChoiceRequired ? { target: e.options } : undefined,
   )
   let spec: DatasetSpec
   let record: AssembledFull
@@ -567,12 +643,6 @@ export async function ingestFiles(
   } catch (e) {
     throw notAssembled(e, retained)
   }
-}
-
-/** Resume a refused ingestion with the user's decision, from the retained owner record (no re-assembly). */
-export function resumeIngestion(refusal: IoIngestionRefusal, choice: IoProjectionChoice): { dataset: MaterializedDataset; analysis: Analysis; retained: IoRetained } {
-  if (!refusal.retained) throw new Error('This refusal holds no assembled io record to resume from.')
-  return { dataset: retain(mapAssembledToMaterialized(refusal.retained.record, choice), refusal.retained), analysis: refusal.retained.analysis, retained: refusal.retained }
 }
 
 // --- prediction matrices ----------------------------------------------------
@@ -628,7 +698,9 @@ export async function readPredictionMatrix(file: { name: string; bytes: Uint8Arr
   const loadingParams = hasHeader === undefined ? {} : { has_header: hasHeader }
   const analysis = await analyzeFiles(inputs, hasHeader === undefined ? {} : { file_params: { [file.name]: { has_header: hasHeader } } })
   const refuse = (e: unknown, retained?: IoRetained) => new IoIngestionRefusal(
-    `nirs4all-io did not read the prediction file: ${e instanceof Error ? e.message : String(e)}. The input file is kept unchanged; Web does not parse it locally.`, inputs, analysis, retained)
+    retained
+      ? `Web cannot use the prediction file nirs4all-io read: ${cause(e)}. The input file is kept unchanged.`
+      : `nirs4all-io could not read the prediction file: ${cause(e)}. The input file is kept unchanged; Web does not parse it locally.`, inputs, analysis, retained)
   let spec: DatasetSpec
   let record: AssembledFull
   let block: IoBlock
@@ -705,7 +777,7 @@ export async function readReferenceColumn(matrix: PredictionMatrix, file: { name
   try {
     record = await assembleSpec(joined, retained.analysis.decoded, [...retained.inputs, file])
   } catch (e) {
-    throw new IoIngestionRefusal(`nirs4all-io could not join the reference file to the ${matrix.nSamples} prediction rows: ${e instanceof Error ? e.message : String(e)}. Both files are kept unchanged.`, [...retained.inputs, file], retained.analysis, { ...retained, spec: joined })
+    throw new IoIngestionRefusal(`nirs4all-io could not join the reference file to the ${matrix.nSamples} prediction rows: ${cause(e)}. Both files are kept unchanged.`, [...retained.inputs, file], retained.analysis, { ...retained, spec: joined })
   }
   const labels = referenceLabels(predictionBlock(record), matrix.nSamples)
   if (!labels) throw new Error('nirs4all-io found no reference values in the file.')

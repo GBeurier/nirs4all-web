@@ -94,7 +94,7 @@ describe('DatasetView native owner preview contracts (conditions 2–5)', () => 
   it('refuses preprocessing when the shared training cohort has no usable targets', async () => {
     const ds = mscDataset(false)
     ds.classes = ds.sampleIds.map(() => '')
-    await expect(runPreview(request(ds, { operator: 'n4m:preprocessing.scatter.msc' }))).rejects.toThrow(/requires labelled rows/)
+    await expect(runPreview(request(ds, { operator: 'n4m:preprocessing.scatter.msc' }))).rejects.toThrow(/needs rows of the training cohort with a value for “Concentration” and complete spectra/)
   })
 
   // These witnesses require the actual RowL2Normalize owner artifact and its
@@ -121,7 +121,7 @@ describe('DatasetView native owner preview contracts (conditions 2–5)', () => 
     expect(ds.X).toEqual(original)
   })
 
-  it.each([NaN, Infinity, -Infinity])('refuses nonfinite row L2 preview input (%s) without a raw fallback', async (value) => {
+  it.each([Infinity, -Infinity])('refuses infinite row L2 preview input (%s) without a raw fallback', async (value) => {
     const ds = dataset()
     // A held-out transform row must be checked even though fit only sees train.
     ds.X[12 * ds.nFeatures] = value
@@ -216,5 +216,36 @@ describe('DatasetView native owner preview contracts (conditions 2–5)', () => 
     const result = await runPreview(request(ds, { cv: { folds: 3, seed: 17, strategy: 'sample' } }))
     expect(result.folds?.folds).toHaveLength(3)
     expect(result.warnings?.join(' ')).toContain('Dataset-declared folds are not used by Web CV')
+  })
+
+  it('leaves rows with missing spectral values out of the preview, flagged and mapped back to dataset rows', async () => {
+    const ds = dataset()
+    const complete = dataset()
+    const missing = [3, 13]
+    for (const row of missing) ds.X[row * ds.nFeatures + 1] = NaN
+    const kept = Array.from({ length: ds.nSamples }, (_, row) => row).filter((row) => !missing.includes(row))
+    const methods = await loadMethodsWasm()
+    const cv: Cv = { folds: 3, seed: 17, strategy: 'sample' }
+    const result = await runPreview(request(ds, { operator: 'n4m:preprocessing.scatter.snv', projection: true, cv }))
+    expect(result.rows).toEqual(kept) // dataset rows of the output rows; nothing is filled
+    expect(outputRows(result)).toHaveLength(kept.length)
+    expect(outputRows(result).flat().every(Number.isFinite)).toBe(true)
+    // the owner PCA of exactly the complete raw rows
+    const raw = Float64Array.from(kept.flatMap((row) => Array.from(complete.X.subarray(row * ds.nFeatures, (row + 1) * ds.nFeatures))))
+    const expected = methods.preflightPca({ data: raw, rows: kept.length, cols: ds.nFeatures }, 4)
+    expect(result.projection?.coordinates.map((row) => Array.from(row)).flat()).toEqual(Array.from(expected.scores.data))
+    // fold rows are output rows, all within the kept rows, and the incomplete train row 3 is in none
+    const foldRows = result.folds!.folds.flatMap((fold) => [...fold.train, ...fold.test])
+    expect(foldRows.every((row) => row >= 0 && row < kept.length)).toBe(true)
+    expect(foldRows.map((row) => kept[row])).not.toContain(3)
+    expect(result.warnings?.join(' ')).toContain('2 samples left out: missing values. This preview (preprocessing, PCA and folds) is computed on the 12 of 14 samples with complete spectra')
+    expect(result.warnings?.join(' ')).not.toMatch(/preflight/i)
+    expect(Number.isNaN(ds.X[3 * ds.nFeatures + 1])).toBe(true) // the dataset is not altered
+  })
+
+  it('states that no complete spectrum exists instead of failing inside Methods', async () => {
+    const ds = dataset()
+    for (let row = 0; row < ds.nSamples; row++) ds.X[row * ds.nFeatures] = NaN
+    await expect(runPreview(request(ds, { projection: true }))).rejects.toThrow(/Every sample has a missing spectral value/)
   })
 })

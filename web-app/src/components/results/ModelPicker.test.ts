@@ -20,7 +20,7 @@ function run(id: string, name: string, cvRmse: number, variantCount?: number): R
 describe('ModelPicker', () => {
   it('labels each run with its refit pipeline, validation score and variant count', () => {
     const label = runModelLabel(run('a', 'SNV + PLS', 0.4321, 6))
-    expect(label).toContain('SNV + PLS')
+    expect(label).toContain('SNV + PLS · target protein')
     expect(label).toContain('0.432')
     expect(label).toContain('best of 6 variants')
   })

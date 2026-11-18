@@ -294,6 +294,11 @@ export class DagMlEngine implements Omit<Engine, 'explain'> {
     }
 
     validatePartitionGroups(ds)
+    // A run fits on the train partition only. A view left with held-out test rows and no train row
+    // (e.g. every train sample removed for missing spectral values) is refused: test rows are never fitted on.
+    if (ds.partitions.includes('test') && !ds.partitions.includes('train')) {
+      throw new Error('This run has no train sample left, only held-out test samples, and test samples are never used for fitting. Check the run settings: choose another target, or replace the missing spectral values instead of removing the samples.')
+    }
     // Rows whose target is missing never enter FIT, CV or scoring (trainRowsOf /
     // testRowsOf); the run states how many were left out.
     const missingTargets = missingTargetCount(ds)

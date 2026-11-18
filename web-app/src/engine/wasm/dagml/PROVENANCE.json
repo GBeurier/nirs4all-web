@@ -1,20 +1,20 @@
 {
   "schema": "nirs4all-web.public-npm-acquisition.v1",
   "package": "dag-ml-wasm",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "source": {
     "repository": "https://github.com/GBeurier/dag-ml",
-    "commit": "cacd24f4d5025664ca404b47ecff45ca0491d3b3",
-    "tree": "f96880b09e4f3f08ccb43061b0a938415ee2cb41",
-    "tag": "v0.4.2"
+    "commit": "d796152c148db3bb3f4398f818e1083f5e3aa816",
+    "tree": "e3833c58a27ae7c72f0099afebead8de1dc7c1cf",
+    "tag": "v0.4.3"
   },
   "acquisition": {
-    "metadata_url": "https://registry.npmjs.org/dag%2Dml%2Dwasm/0.4.2",
-    "tarball_url": "https://registry.npmjs.org/dag-ml-wasm/-/dag-ml-wasm-0.4.2.tgz",
-    "size": 3652578,
-    "sha256": "829a9fc4557bd258f2371406272215df0838e6f6d0980c485ffe321d827fb8e5",
-    "sha1": "62593fd755333d5f8693df7455521f4a78476131",
-    "integrity": "sha512-6+JcmiNjtC/np15blE12NWk9+zAh/TGEC7m/bLr4ApXtl5tsGYyzEN2MTIl69MJrkFp6X4k4AuEJyw0bskjpYQ=="
+    "metadata_url": "https://registry.npmjs.org/dag%2Dml%2Dwasm/0.4.3",
+    "tarball_url": "https://registry.npmjs.org/dag-ml-wasm/-/dag-ml-wasm-0.4.3.tgz",
+    "size": 3650325,
+    "sha256": "2d5db432c865d3f08574977646c4cc3df6d658ac9226be700ce79d468c6385cb",
+    "sha1": "736ffa82e0ee7261841de76baea9dd5152a86dba",
+    "integrity": "sha512-nFAYn8vDzjg6JaaEzHkd9E6QuTYUvuqqXGUFG1cV4lNH7QGXasrgM1sni8Rtpv6lNXUIbnGKypfgXaEL0GgHTg=="
   },
   "reproducibility": {
     "performed_by_web": false,
@@ -31,7 +31,7 @@
     },
     "package.json": {
       "size": 1929,
-      "sha256": "3f0549f1978ebac507961a2ab4678d78888b5b25309860f8e04c7a10d4878a94"
+      "sha256": "b31f91d3cc6247a46cb6639393b24fecfca7756454861ba2c32c8962b0f07dd4"
     },
     "README.md": {
       "size": 9899,
@@ -86,8 +86,8 @@
       "sha256": "9e538766d243cc5bf2766caf0308575c9d2fa410f6b1a7f06cc2393dad181c36"
     },
     "dag_ml_wasm_bg.wasm": {
-      "size": 10748976,
-      "sha256": "bb0b18a7fc0918a83e457226c6b9e9903483519ea44a21dbf1a9b307321077f1"
+      "size": 10734621,
+      "sha256": "8c5061d28190378e818da2da18532aef33868e18a764b909773f702f581d6d2c"
     },
     "LICENSES/AGPL-3.0-or-later.txt": {
       "size": 34020,

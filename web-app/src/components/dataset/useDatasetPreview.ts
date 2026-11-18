@@ -41,8 +41,9 @@ export function useDatasetPreview(ds: MaterializedDataset, kind: 'preprocess' | 
     if (!current || kind !== 'preprocess') return null
     const input = current.spectra
     if ('data' in input) return Float64Array.from(input.data)
-    const data = new Float64Array(ds.nSamples * ds.nFeatures)
-    input.forEach((row, index) => data.set(Array.from(row), index * ds.nFeatures))
+    // Output rows map back to dataset rows; a row the preview left out (missing spectral values) stays a gap.
+    const data = new Float64Array(ds.nSamples * ds.nFeatures).fill(NaN)
+    input.forEach((row, index) => data.set(Array.from(row), (current.rows?.[index] ?? index) * ds.nFeatures))
     return data
   }, [current, kind, ds.nSamples, ds.nFeatures])
   return { result: current, processed, status, error }

@@ -58,7 +58,9 @@ header-less file stated as positional), the broad model pack (`new-pack` engine-
 Ridge blender / AOM operator-PLS stack and the SPlit twinning / SystematicCircular splits), the
 Explore playground (`explore` — preprocessing preview + client PCA), the `palette`, `replicates` (a
 Xcal/Xval upload with repeated Sample_IDs and NA targets: val held out, missing targets excluded and
-counted, repetition column), and `persistence`
+counted, repetition column), `multi-target-missing` (a six-file upload with 12 sparse targets and
+incomplete spectra loads with every row and target, opens the Playground, runs the target and the
+missing-value option chosen in the run settings, and leaves the dataset unchanged), and `persistence`
 + `n4a-roundtrip` (session and `.n4a` round-trips; the `.n4a` is a Core V1 container declared by owner `nirs4all.web-host`, read back through Core, with member SHA-256 = declared fingerprint, the Methods-only route refusing it, and delta 0 after re-import; the host payload v3 checks it carries
 N4ME states and the re-imported model predicts identically). `tests/aom-cassava-timing.mjs` is a one-off
 `fitAom` wall-time probe, **not** part of the gate (and is excluded by the `*smoke.mjs` glob). Each
@@ -127,16 +129,36 @@ Load-bearing concepts (require reading several files):
   reads the owner's logical `x[].data` + `validity`, the `y.columns` table (row-major `y.data`),
   io's declared sample/observation/group columns and a closed partition mapping (train/cal →
   train, test/holdout/val/validation → the single held-out set, predict/pred/infer/unknown →
-  predict); it refuses several feature sources, several targets without a user choice, unknown
-  partition names and more than one held-out partition, and labels an undeclared sample key as
-  positional. Rows that repeat a declared sample id are one physical sample (grouped CV by default)
+  predict); it refuses several feature sources, unknown partition names and more than one held-out
+  partition, and labels an undeclared sample key as positional. **Loading is lossless for targets and
+  missing values**: every column of the owner target table is kept in `MaterializedDataset.targets`
+  (owner kind, values under the owner mask, missing count) and `y`/`targetName`/`taskType`/`classes`
+  are the projection of ONE of them (default: the first owner target, changeable in Explore, the
+  Playground and the run settings — `src/data/targets.ts`); io's undecided NA policy (`auto`, which
+  aborts on a missing feature value) is asked as io's `ignore`, so missing spectral cells stay NaN
+  under the owner mask and are counted (`missingFeatures`). No row or column is dropped at load,
+  preview or analysis. A target io reads as numbers in one partition and as text labels in another is
+  kept, flagged (`issue`) and without values, instead of refusing the dataset; a text-label column is a
+  classification target (never a regression on its class codes). **The target to model and the
+  missing-value option are launch choices** (`RunSettings`, `prepareRunDataset`): the run executes on
+  its own view — the chosen target projected onto `y`, rows without it excluded natively by the engine
+  (dag-ml-data `excluded`, dag-ml `target_missing_sample_ids`), unless the missing-target strategy
+  is to stop; a view left with held-out test rows and no train row is refused, never fitted on the
+  test rows. **Missing spectral values are asked at launch, with no default** (`MissingSpectraChoice`;
+  nothing extra is shown for complete spectra): *remove* the affected samples (row selection on the
+  owner mask, pinned equal to io's `remove_sample` by `src/data/targets.test.ts`), *replace* them
+  (`replaceMissingSpectra`: the retained inputs re-assembled by io under its `replace` policy on the
+  feature and mixed sources, which io fills on feature columns only — `forward_fill`, `backward_fill` or `value`; Web computes no value; io refuses
+  `mean`/`median`), or *leave as is* (dag-ml-data refuses any non-finite `X` cell, so the run is refused
+  and `keptMissingSpectraNotice` explains it). Previews compute on the samples with complete spectra and
+  state "N samples left out: missing values". Rows that repeat a declared sample id are one physical sample (grouped CV by default)
   and need io's declared, unique observation ids, otherwise they are refused (nothing is
   synthesised; `s{i}` stays an internal row handle). A declared sample key that a partition does not
   carry is refused, not downgraded to positions. The feature axis is the owner's `feature_axes`
   numeric packet decoded with the owner `numericCoordinates` (`wasm/io/numeric-wire`), an unset unit
   shows as `unspecified`, text headers are logical labels. The complete io record, spec, analysis and
   input bytes stay attached to the dataset by reference (`ioRetainedOf`, symbol `IO_RECORD`) and to
-  every `IoIngestionRefusal`, which also carries the pending target decision. Predict reads its
+  every `IoIngestionRefusal`. Predict reads its
   new-spectra file (and a separate reference file) through io too (`readPredictionFile`,
   `readReferenceFile`): io decides delimiter, header row and column roles, Web checks the owner output
   against the model's feature count and reports header vs positional from io's header unit.

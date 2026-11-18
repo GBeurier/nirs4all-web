@@ -59,6 +59,8 @@ jobs:
       - run: npm run build
       - name: Built UI starts in the browser
         run: npm run smoke -- --out-dir dist --profile strict-wasm ui-startup-smoke.mjs
+      - name: Multi-target dataset with missing values loads, explores and runs the chosen target
+        run: npm run smoke -- --out-dir dist --profile strict-wasm multi-target-missing-smoke.mjs
       - name: Multimodal laboratory executes all three native comparisons
         run: npm run smoke -- --out-dir dist --profile strict-wasm multimodal-smoke.mjs
       - name: Multimodal Dataset Builder imports and validates local files

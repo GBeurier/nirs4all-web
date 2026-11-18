@@ -194,4 +194,24 @@ describe('restored Results and Inspector score synchronization', () => {
     expect(shown.sampleLinking).toBe(false)
     expect(shown.warnings[0]).toMatch(/no canonical row identity/)
   })
+
+  it('treats an owner result with only CV fold blocks as validation evidence, never as a hidden training score', () => {
+    // rt_result of a converted legacy workspace: one validation fold, no aggregate block, no refit block.
+    // engine/rt-result.ts then uses the last block as the run's final node.
+    const fold = { ...node('fold', [prediction('a'), prediction('b')], 'Fold 0'), id: 'fold-0' }
+    const run: RunResult = { ...fixture(), cv: undefined, refit: fold, folds: [fold], variants: undefined }
+    expect(defaultEvaluationScore(run)).toBe(fold)
+    expect(scoreEvaluationLabel(run, fold)).toBe('CV fold validation')
+    const data = inspectorResults([run], null, 'Dataset')
+    expect(data.scoreRefs.map((ref) => ref.protocol)).not.toContain('refit-resubstitution')
+    expect(data.defaultScoreRef).toBe('rmse:cv')
+    const ref = inspectorScoreRef(run, fold, data.scoreRefs)
+    expect(ref).toBe('rmse:cv')
+    // no aggregate is invented: the chain score stays missing, the fold score is the owner's
+    expect(data.chains[0].scores['rmse:cv']).toBeNull()
+    expect(data.chains[0].foldScores?.['rmse:cv']).toEqual([1])
+    expect(data.predictions[data.chains[0].id]).toMatchObject({ sampleKeys: ['a', 'b'], partition: ['validation', 'validation'], fold: ['fold-0', 'fold-0'] })
+    const shown = inspectorPredictionsForScore(data, ref!, run, fold)
+    expect(shown.predictions[data.chains[0].id].sampleKeys).toEqual(['a', 'b'])
+  })
 })

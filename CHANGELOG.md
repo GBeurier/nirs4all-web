@@ -1,5 +1,54 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Datasets with several target columns load again. Since 0.5.1 an upload whose
+  target table held more than one column was refused at load ("choose the one to
+  model — Web does not take the first"). Every target nirs4all-io assembles is now
+  kept with its value and missing counts; Explore and the Playground show a target
+  of the user's choice, and the target to model is chosen in the run settings.
+- Missing values no longer block a dataset. Missing spectral values are loaded
+  under nirs4all-io's `ignore` NA policy (kept, counted, shown as gaps) instead of
+  aborting; previews and the Playground compute on the complete spectra and say
+  how many samples they left out. When the spectra hold missing values, a run
+  asks what to do with them, with their counts and no default: remove the
+  affected samples, replace the values (by nirs4all-io: previous or next
+  wavelength of the same spectrum, or a constant), or leave them as they are
+  (the execution path then refuses non-finite spectra, and the refusal says so).
+  Samples without a target value are left out of fitting and scoring, or stop
+  the run, as chosen. No row is dropped from the loaded dataset.
+- A target that nirs4all-io reads as text labels (a stray text cell among numbers)
+  is a classification target with a visible hint, never a regression on its class
+  codes; a target read differently across partitions is flagged instead of
+  refusing the whole dataset.
+- Reworded load refusals (no doubled period, no "did not assemble … assembled")
+  and removed an owner function name from the PCA notice.
+- An imported owner result that carries only CV fold validation blocks (no
+  aggregate, no refit; e.g. converted legacy predictions) is shown as validation
+  evidence. Since 0.5.1 its fold was presented as a hidden training
+  resubstitution score and the Results Inspector offered no evaluation score.
+- The smoke runner resolves the cross-runtime prerequisites (ecosystem E2E
+  artifacts, Python oracle) from the workspace, including from a Git worktree,
+  instead of failing a plain local run on unset variables.
+- A run is never fitted on held-out test samples. A run view with test samples
+  and no train sample (for example after removing every train sample with
+  missing spectral values, or a test-only upload) used to fall back to fitting,
+  cross-validating and scoring on the test samples; it is now refused with an
+  explanation.
+- Replacing missing spectral values also works for a single table that holds
+  spectra and targets together (nirs4all-io `mixed` source); it used to replace
+  nothing there and report a wrong reason.
+
+### Changed
+
+- Consume nirs4all-io 0.3.6 (partial multi-target matrices with targets missing
+  on different rows; case-insensitive NA tokens), DAG-ML 0.4.3 and Core 0.5.1,
+  with exact published acquisition receipts. The io browser payload is the
+  owner's v0.3.6 release build; DMD 0.2.16, Formats 0.2.17, Datasets 0.3.18 and
+  Methods 1.3.18 are unchanged.
+
 ## 0.5.2 — 2026-11-16
 
 ### Fixed

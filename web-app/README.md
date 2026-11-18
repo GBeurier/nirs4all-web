@@ -54,6 +54,18 @@ artifacts, `repository-best-pipeline` consumes a Python handoff/oracle, and the
 SPC/amylose dataset checks use optional external fixture directories. Their
 status is separate from the autonomous strict/transitional WEB-001 gates.
 
+`scripts/run-smokes.mjs` resolves these prerequisites from the workspace when they
+are not passed explicitly: the generated artifacts from the sibling
+`nirs4all-ecosystem/.n4a-e2e-artifacts/` (`N4A_E2E_ARTIFACTS_DIR` overrides it; the
+ecosystem E2E scenarios produce them) and the Python oracle from the sibling SDK
+environment `nirs4all/.venv` (`N4A_WEB_PYTHON` overrides it). This also works from
+a Git worktree nested below the workspace root (`N4A_WORKSPACE_ROOT` overrides the
+lookup). Explicit `ARTIFACTS_DIR`, `RT_RESULT`, `PIPELINE_FAMILY`,
+`PIPELINE_CANDIDATE`, `WEB_DATASET` and `N4A_REPOSITORY_EVIDENCE` always win;
+evidence written by a plain local run goes to a temporary directory. A missing
+input is reported with the scenario that produces it and the smoke fails; it is
+never skipped.
+
 ## Explain step
 
 The **Explain** step (after Predict, unlocked with the same model) shows which spectral regions
@@ -271,6 +283,16 @@ without the local vendors.
   evidence + reader catalog + schema-validated `DatasetSpec` in the config dialog, and materializes
   X/y. Three bundled demos (Fruit purée regression, NIR protein regression & 7-class). Targetless
   uploads are allowed for explore/predict; the engine refuses to *train* without targets.
+  A dataset with several target columns and missing values loads as nirs4all-io reports it: every
+  target is kept with its value count, missing spectral values stay masked and counted, and no row
+  is dropped. Explore and the Playground show a target of your choice and compute on the samples with
+  complete spectra, stating how many they left out. The run settings of the Pipeline step hold the
+  launch choices, which apply to that run only: the target to model, what to do with samples that
+  have no value for it (leave them out, or stop), and — asked only when the spectra hold missing
+  values, with their counts and no default — whether to remove the affected samples, replace the
+  missing values (nirs4all-io: previous or next wavelength of the same spectrum, or a constant; no
+  mean/median across samples), or leave them as they are (the WASM execution path accepts only
+  finite spectra, so such a run is refused with that explanation).
 
 ## Roadmap
 

@@ -22,6 +22,8 @@ export interface DatasetViewProps {
   /** Current run CV configuration supplies preview defaults and grouping policy. */
   cv?: PipelineDSL['cv']
   onOpenConfig: () => void
+  /** change the projected target of a dataset with several targets (absent: the view cannot change it) */
+  onSelectTarget?: (name: string) => void
 }
 export interface DatasetConfigDialogProps {
   open: boolean
@@ -32,8 +34,9 @@ export interface DatasetConfigDialogProps {
   onApply: (patch: DatasetConfigPatch) => void
 }
 
-/** `repetition`: the nirs4all repetition column; null clears it. */
-export interface DatasetConfigPatch { targetName?: string; taskType?: TaskType; testFraction?: number; repetition?: string | null }
+/** `target`: another target of the dataset becomes the projected one; `targetName`: the display name of
+ *  the projected target; `repetition`: the nirs4all repetition column, null clears it. */
+export interface DatasetConfigPatch { target?: string; targetName?: string; taskType?: TaskType; testFraction?: number; repetition?: string | null }
 
 export type { Analysis }
 

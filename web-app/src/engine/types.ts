@@ -28,9 +28,80 @@ export interface DatasetIdentity {
  *  structured clone sent to the engine worker carries none of it (no copy, no leak). */
 export const IO_RECORD: unique symbol = Symbol.for('nirs4all.web.io-record');
 
+/** One target column of the owner target table (nirs4all-io `y.columns`), carried for every
+ *  target of the dataset. `values` and `labels` are the owner's logical values under its
+ *  validity mask; nothing is imputed, dropped or re-read here. */
+export interface DatasetTarget {
+  name: string;
+  /** nirs4all-io column kind */
+  kind: 'numeric' | 'classification_integer' | 'classification_string';
+  /** owner numeric value per row (length nSamples). NaN where the owner mask reports a missing
+   *  value, where the row's partition carries no target, and for every row of a text-label column */
+  values: Float64Array;
+  /** owner text label per row of a `classification_string` column ('' where missing) */
+  labels?: string[];
+  /** rows the owner reports without a value for this target (all partitions) */
+  missing: number;
+  /** why the target cannot be used as it is (e.g. the owner read it as numbers in one partition and
+   *  as text labels in another). The dataset still loads; this target then carries no value. */
+  issue?: string;
+  /** the user's task-type choice for this target (absent: inferred) */
+  taskType?: TaskType;
+}
+
+/** Feature cells nirs4all-io reports missing (owner validity mask; NaN in `X`). */
+export interface MissingFeatures {
+  cells: number;
+  /** rows with at least one missing cell */
+  rows: number;
+  /** feature columns with at least one missing cell */
+  columns: number;
+}
+
+/** What a run does with train/test samples that have no value for its target: left out of fitting
+ *  and scoring (natively, by the engine), or the run stops. A launch choice with a visible default. */
+export type MissingValuePolicy = 'exclude_samples' | 'refuse';
+
+/** What a run does with missing spectral values (NA in X). Asked explicitly when the dataset has
+ *  some — there is no default — and applied to the run's own view, never to the loaded dataset:
+ *  remove the affected samples, replace the values with a method nirs4all-io supports (within each
+ *  spectrum; io refuses statistics across samples), or leave them as they are for the pipeline. */
+export type MissingSpectraChoice =
+  | { action: 'remove_samples' }
+  | { action: 'replace'; method: 'forward_fill' | 'backward_fill' | 'value'; value?: number }
+  | { action: 'keep' };
+
+/** The launch choices of a run and what they left out of it (counted before the run). */
+export interface RunDataSelection {
+  /** the target the run models */
+  target: string;
+  missingValues: MissingValuePolicy;
+  /** train/test rows without a value for the target: never fitted or scored */
+  missingTargets: number;
+  /** the choice made for missing spectral values (absent: the spectra are complete) */
+  missingSpectra?: MissingSpectraChoice;
+  /** missing spectral cells of the dataset, and the rows that hold them */
+  missingCells: number;
+  incompleteSamples: number;
+  /** rows left out of the run's view because of a missing spectral value */
+  excludedSamples: number;
+  /** missing spectral cells replaced by nirs4all-io in the run's view */
+  replacedCells: number;
+  /** labelled rows the run fits on, and scores as the held-out test set */
+  train: number;
+  test: number;
+}
+
 export interface MaterializedDataset {
   /** the retained original io record (see IO_RECORD); opaque here, typed in data/wasm-io.ts */
   [IO_RECORD]?: unknown;
+  /** every target column nirs4all-io assembled, in owner order. `y`, `targetName`, `taskType`,
+   *  `classes`, `yRaw` and `labelsRaw` are the projection of ONE of them (`targetName`): the
+   *  view target before a run, the launch target for a run (`data/targets.ts`). Absent for a
+   *  dataset that did not come from io. */
+  targets?: DatasetTarget[];
+  /** missing feature cells reported by the owner (absent: X is complete) */
+  missingFeatures?: MissingFeatures;
   /** row-major, length nSamples * nFeatures */
   X: Float64Array;
   nSamples: number;
@@ -376,6 +447,8 @@ export interface RunResult {
   /** Train/Test rows left out of FIT, CV and scoring because their target is
    *  missing (omitted when every row has a target). They remain predictable. */
   missingTargets?: number;
+  /** the launch choices (target, missing-value option) and what they left out, recorded by the host */
+  dataSelection?: RunDataSelection;
   /** repeated scans of one physical sample: the selected pipeline's raw per-scan predictions
    *  (FIT_CV folds + REFIT scoring replay) with their original-id mapping; scores are
    *  sample-level DAG-ML scores, and no metric is computed on these rows */

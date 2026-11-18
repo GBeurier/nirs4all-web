@@ -23,7 +23,8 @@ export function PlaygroundPanel({ ds, summary, onOpenConfig }: DatasetViewProps)
       </p>
       <Playground
         className="flex-1"
-        key={dataset.id}
+        // restart on the dataset's shown target when it changes outside the Playground (the chain is kept)
+        key={`${dataset.id}:${ds.targetName}`}
         dataset={dataset}
         operators={PLAYGROUND_OPERATORS}
         pipeline={pipeline}

@@ -9,7 +9,6 @@ import {
   IoIngestionRefusal,
   ioRetainedOf,
   mapAssembledToMaterialized,
-  resumeIngestion,
 } from './wasm-io'
 
 // nirs4all-io assembles X/y (roles, joins, partitions, identity) in Rust → WASM; Web only
@@ -216,16 +215,51 @@ describe('owner logical fields: values, masks and targets', () => {
     expect(ds.classes).toEqual(['apple', '', 'pear', 'apple'])
   })
 
-  it('refuses several targets without a user choice, then reads the chosen column of the row-major table', () => {
+  it('loads several targets: every owner column is kept with its mask, the first is shown, any can be projected', () => {
     const two = () => full({ train: part(3, { y: targets([{ name: 'a', values: [1, 2, 3] }, { name: 'b', values: [10, 20, 30], valid: [true, false, true] }]), y_headers: ['a', 'b'] }) })
-    expect(() => mapAssembledToMaterialized(two())).toThrow(/2 targets \(a, b\).*choose/)
-    expect(() => mapAssembledToMaterialized(two(), { target: 'zzz' })).toThrow(/not among them/)
-    const ds = mapAssembledToMaterialized(two(), { target: 'b' })
-    expect(ds.targetName).toBe('b')
-    expect(ds.yRaw![0]).toBe(10)
-    expect(Number.isNaN(ds.yRaw![1])).toBe(true)
-    expect(ds.yRaw![2]).toBe(30)
-    expect(Array.from(mapAssembledToMaterialized(two(), { target: 'a' }).yRaw!)).toEqual([1, 2, 3])
+    const ds = mapAssembledToMaterialized(two())
+    expect(ds.targets!.map((t) => [t.name, t.kind, t.missing])).toEqual([['a', 'numeric', 0], ['b', 'numeric', 1]])
+    expect(ds.targetName).toBe('a') // the first owner target is the visible default, not a refusal
+    expect(Array.from(ds.y)).toEqual([1, 2, 3])
+    expect(Array.from(ds.targets![1].values)).toEqual([10, NaN, 30]) // masked placeholder 20 never read
+    expect(() => mapAssembledToMaterialized(two(), { target: 'zzz' })).toThrow(/"zzz" is not a target nirs4all-io assembled \(a, b\)/)
+    const b = mapAssembledToMaterialized(two(), { target: 'b' })
+    expect(b.targetName).toBe('b')
+    expect(Array.from(b.yRaw!)).toEqual([10, NaN, 30])
+    expect(b.targets!.map((t) => t.name)).toEqual(['a', 'b']) // both stay, in owner order
+  })
+
+  it('keeps a target that a partition does not carry as missing there, and counts it', () => {
+    const ds = mapAssembledToMaterialized(full({ train: part(2), test: part(2, { y: null, y_headers: [] }) }))
+    expect(Array.from(ds.targets![0].values)).toEqual([1.5, 3, NaN, NaN])
+    expect(ds.targets![0].missing).toBe(2)
+  })
+
+  it('refuses target columns with a repeated name rather than merging them', () => {
+    expect(() => mapAssembledToMaterialized(full({ train: part(1, { y: targets([{ name: 'a', values: [1] }, { name: 'a', values: [2] }]) }) }))).toThrow(/repeated name/)
+  })
+
+  it('counts the missing feature cells the owner masks, keeping every row and column', () => {
+    const ds = mapAssembledToMaterialized(full({ train: part(3, { x: [mat([1, 0, 3, 4, 0, 0], 3, 2, [true, false, true, true, false, false])] }) }))
+    expect(ds.nSamples).toBe(3)
+    expect(ds.nFeatures).toBe(2)
+    expect(ds.missingFeatures).toEqual({ cells: 3, rows: 2, columns: 2 })
+    expect(Array.from(ds.X)).toEqual([1, NaN, 3, 4, NaN, NaN])
+    expect(mapAssembledToMaterialized(full({ train: part(2) })).missingFeatures).toBeUndefined()
+  })
+
+  it('never regresses on the class codes of a text-label target, even when its labels look numeric', () => {
+    // io read the column as text because of "na" (not one of its NA tokens): the codes 0..3 are not values
+    const ds = mapAssembledToMaterialized(full({ train: part(5, {
+      x: [mat(Array.from({ length: 10 }, (_, i) => i), 5, 2)],
+      y: targets([{ name: 'protein', kind: 'classification_string', values: [0, 1, 3, 2, 0], valid: [true, true, true, true, false] }]),
+      y_categorical: { protein: { categories: ['10.5', '11.25', '9.75', 'na'] } },
+    }) }))
+    expect(ds.taskType).toBe('multiclass')
+    expect(ds.classes).toEqual(['10.5', '11.25', 'na', '9.75', ''])
+    expect(Array.from(ds.yRaw!).every(Number.isNaN)).toBe(true) // no numeric value exists for a text label
+    expect(ds.targets![0].labels).toEqual(['10.5', '11.25', 'na', '9.75', ''])
+    expect(ds.targets![0].missing).toBe(1)
   })
 
   it('refuses a target table that does not match the partition rows', () => {
@@ -282,11 +316,29 @@ describe('owner logical fields: values, masks and targets', () => {
     }, { n_sources: 2 }))).toThrow(/incompatible ordered feature/)
   })
 
-  it.each<Column>([
-    { name: 'other', values: [1.5] },
-    { name: 'y', kind: 'classification_integer', values: [1] },
-  ])('refuses incompatible target name/kind %j', (column) => {
-    expect(() => mapAssembledToMaterialized(full({ train: part(1), test: part(1, { y: targets([column]) }) }))).toThrow(/different target columns/)
+  it('refuses partitions whose target tables carry different columns, naming them', () => {
+    expect(() => mapAssembledToMaterialized(full({ train: part(1), test: part(1, { y: targets([{ name: 'other', values: [1.5] }]) }) })))
+      .toThrow(/different target columns in partitions "train" \(y\) and "test" \(other\)/)
+  })
+
+  it('loads a target read as numbers in one partition and text labels in another: flagged, without values, never refused', () => {
+    const ds = mapAssembledToMaterialized(full({
+      train: part(2, { y: targets([{ name: 'y', values: [1.5, 3] }, { name: 'z', values: [7, 8] }]) }),
+      test: part(1, { y: targets([{ name: 'y', kind: 'classification_string', values: [0] }, { name: 'z', values: [9] }]), y_categorical: { y: { categories: ['nd'] } } }),
+    }))
+    expect(ds.targets![0]).toMatchObject({ name: 'y', kind: 'numeric', missing: 3, issue: 'nirs4all-io read it as numbers in partition "train" and as text labels in "test"' })
+    expect(ds.targets![0].labels).toBeUndefined()
+    expect(Array.from(ds.targets![0].values).every(Number.isNaN)).toBe(true)
+    expect(ds.targets![1]).toMatchObject({ name: 'z', missing: 0 })
+    expect(Array.from(ds.targets![1].values)).toEqual([7, 8, 9])
+    expect(ds.targets![1].issue).toBeUndefined()
+  })
+
+  it('reads a target that is numeric in one partition and integer classes in another as plain numbers', () => {
+    const ds = mapAssembledToMaterialized(full({ train: part(2), test: part(1, { y: targets([{ name: 'y', kind: 'classification_integer', values: [4] }]) }) }))
+    expect(ds.targets![0]).toMatchObject({ kind: 'numeric', missing: 0 })
+    expect(ds.targets![0].issue).toBeUndefined()
+    expect(Array.from(ds.targets![0].values)).toEqual([1.5, 3, 4])
   })
 })
 
@@ -440,27 +492,40 @@ describe('assembleDataset and the retained owner record', () => {
     expect(refusal).toBeInstanceOf(IoIngestionRefusal)
     expect((refusal as IoIngestionRefusal).inputs).toBe(inputs)
     expect((refusal as IoIngestionRefusal).retained).toBeUndefined() // io produced no record
-    expect((refusal as IoIngestionRefusal).message).toMatch(/io says no.*kept unchanged.*not assemble them locally/)
+    expect((refusal as IoIngestionRefusal).message).toMatch(/^nirs4all-io could not assemble this dataset: .*io says no.*The 1 input file is kept unchanged; Web does not assemble them locally\.$/)
+    expect((refusal as IoIngestionRefusal).message).not.toMatch(/\.\./) // one period per sentence
   })
 
-  it('keeps the owner record and input bytes in a refusal that needs a user decision, and resumes from them', async () => {
+  it('asks io to keep missing values at load (auto becomes ignore) and leaves an explicit NA policy as declared', async () => {
+    io.record = full({ train: part(2) })
+    await assembleDataset([], { resolved_spec: {
+      params: { na: { policy: 'auto', fill: { per_column: true } } },
+      sources: [
+        { id: 'x', role: 'features', input: 'X.csv', params: { delimiter: ',', na: { policy: 'auto', fill: { per_column: true } } } },
+        { id: 'y', role: 'targets', input: 'Y.csv', params: { na: { policy: 'remove_sample' } } },
+        { id: 'm', role: 'metadata', input: 'M.csv' },
+      ],
+    } }, [])
+    const spec = JSON.parse(io.specs[io.specs.length - 1])
+    expect(spec.params.na).toEqual({ policy: 'ignore', fill: { per_column: true } })
+    expect(spec.sources[0].params).toEqual({ delimiter: ',', na: { policy: 'ignore', fill: { per_column: true } } })
+    expect(spec.sources[1].params.na).toEqual({ policy: 'remove_sample' })
+    expect(spec.sources[2].params).toBeUndefined()
+  })
+
+  it('loads a multi-target upload with its complete owner record: no refusal, no pending decision', async () => {
     const record = full({ train: part(3, { y: targets([{ name: 'a', values: [1.5, 2.5, 3.5] }, { name: 'b', values: [10, 20, 30] }]), y_headers: ['a', 'b'] }) })
     io.plan = resolvedPlan
     io.record = record
     const inputs = [{ name: 'Xtrain.csv', bytes: Uint8Array.from([1, 2, 3]) }, { name: 'Ytrain.csv', bytes: Uint8Array.from([4]) }]
-    const refusal = await ingestFiles(inputs, 'Xtrain.csv').catch((e: unknown) => e) as IoIngestionRefusal
-    expect(refusal).toBeInstanceOf(IoIngestionRefusal)
-    expect(refusal.inputs).toBe(inputs)
-    expect(refusal.retained!.record).toBe(record) // both targets stay in the owner record
-    expect(refusal.decision).toEqual({ target: ['a', 'b'] })
-    expect(refusal.message).toMatch(/2 targets \(a, b\)/)
-
-    const calls = io.specs.length
-    const resumed = resumeIngestion(refusal, { target: 'b' })
-    expect(io.specs.length).toBe(calls) // resumed from the retained record: no second assembly
-    expect(resumed.dataset.targetName).toBe('b')
-    expect(Array.from(resumed.dataset.yRaw!)).toEqual([10, 20, 30])
-    expect(ioRetainedOf(resumed.dataset)!.record).toBe(record)
+    const { dataset, retained } = await ingestFiles(inputs, 'Xtrain.csv')
+    expect(dataset.targets!.map((t) => t.name)).toEqual(['a', 'b'])
+    expect(dataset.targetName).toBe('a')
+    expect(retained.record).toBe(record)
+    expect(ioRetainedOf(dataset)!.inputs).toBe(inputs)
+    const chosen = await ingestFiles(inputs, 'Xtrain.csv', { target: 'b' })
+    expect(chosen.dataset.targetName).toBe('b')
+    expect(Array.from(chosen.dataset.yRaw!)).toEqual([10, 20, 30])
   })
 
   it('refuses a multi-source record while still handing the host its complete evidence', async () => {
@@ -468,8 +533,8 @@ describe('assembleDataset and the retained owner record', () => {
     io.plan = resolvedPlan
     io.record = record
     const refusal = await ingestFiles([{ name: 'X.csv', bytes: Uint8Array.from([1]) }], 'X.csv').catch((e: unknown) => e) as IoIngestionRefusal
-    expect(refusal.message).toMatch(/2 feature sources/)
+    expect(refusal.message).toMatch(/^Web cannot load the dataset nirs4all-io assembled: nirs4all-io assembled 2 feature sources.*\. The 1 input file is kept unchanged\.$/)
+    expect(refusal.message).not.toMatch(/\.\./)
     expect(refusal.retained!.record).toBe(record)
-    expect(refusal.decision).toBeUndefined()
   })
 })

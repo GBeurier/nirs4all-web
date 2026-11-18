@@ -55,6 +55,23 @@ describe('Web Playground projection', () => {
     expect(target.values).toEqual(['z', null, 'a'])
   })
 
+  it('offers every owner target, the projected one first, with missing values as null', () => {
+    const ds: MaterializedDataset = {
+      ...fixture(), targetName: 'b', y: new Float64Array([10, NaN, 30]),
+      targets: [
+        { name: 'a', kind: 'numeric', values: new Float64Array([1.5, 2.25, NaN]), missing: 1 },
+        { name: 'b', kind: 'numeric', values: new Float64Array([10, NaN, 30]), missing: 1 },
+        { name: 'grade', kind: 'classification_string', values: new Float64Array(3).fill(NaN), labels: ['z', '', 'a'], missing: 1 },
+      ],
+    }
+    const targets = playgroundDataset(ds, 'Targets').targets!
+    expect(targets.map((target) => [target.name, target.kind])).toEqual([['b', 'regression'], ['a', 'regression'], ['grade', 'classification']])
+    expect(targets[0].values).toEqual([10, null, 30])
+    expect(targets[1].values).toEqual([1.5, 2.25, null])
+    expect(targets[2].values).toEqual(['z', null, 'a'])
+    expect(targets[2].classes).toEqual(['a', 'z'])
+  })
+
   it('retains categorical metadata and declared group/origin/repetition roles', () => {
     const ds = fixture()
     const result = playgroundDataset(ds, 'Roles')
