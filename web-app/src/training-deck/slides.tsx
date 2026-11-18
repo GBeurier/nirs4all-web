@@ -219,6 +219,25 @@ export const SLIDES: Slide[] = [
     ],
   },
   {
+    id: 'browser-models', section: 'Concepts', title: 'Trois moteurs de plus, dans le navigateur', minutes: 1,
+    body: () => (
+      <>
+        <div className="deck-engines">
+          <div><h3>Random forest</h3><p className="deck-engine-tech">ml.js · JavaScript</p><p>forêt d’arbres de décision, sur les variables concaténées</p></div>
+          <div><h3>CNN</h3><p className="deck-engine-tech">TensorFlow.js · GPU (WebGL) si disponible</p><p>convolution 1-D le long des marqueurs ou des spectres</p></div>
+          <div><h3>NICON</h3><p className="deck-engine-tech">Burn · Rust → WebAssembly</p><p>le CNN de nirs4all, une branche par spectre, mid fusion</p></div>
+        </div>
+        <Callout>Même protocole que les modèles natifs : mêmes folds, prédictions OOF, test jamais vu. Mais ces modèles n’existent que dans le navigateur.</Callout>
+      </>
+    ),
+    notes: [
+      'En plus des modèles natifs de nirs4all, le labo propose trois moteurs qui tournent dans le navigateur.',
+      'Une random forest, écrite en JavaScript (ml.js) : utile pour comparer une méthode non linéaire classique à la PLS. Un CNN avec TensorFlow.js, la bibliothèque de Google, qui utilise le GPU via WebGL quand il y en a un : on s’en sert notamment pour une convolution le long des marqueurs génétiques. Et NICON, le CNN de nirs4all, entraîné avec Burn, une bibliothèque Rust compilée en WebAssembly.',
+      'Point important : DAG-ML garde le même protocole pour tous — mêmes folds, prédictions out-of-fold, jeu de test jamais vu — la comparaison reste honnête. En revanche, ces trois modèles n’existent que dans le navigateur : pas d’équivalent Python ou R, pas d’export portable.',
+      'Les spectres longs sont rééchantillonnés avant ces modèles pour rester rapides : quelques secondes à environ deux minutes par modèle.',
+    ],
+  },
+  {
     id: 'late', section: 'Concepts', title: 'Late fusion : un modèle par source, puis on combine', minutes: 2,
     body: () => (
       <>
@@ -250,7 +269,7 @@ export const SLIDES: Slide[] = [
     ],
   },
   {
-    id: 'summary', section: 'Concepts', title: 'Récapitulatif, deux vocabulaires', minutes: 1,
+    id: 'summary', section: 'Concepts', title: 'Récapitulatif, deux vocabulaires', minutes: 0.5,
     body: () => (
       <table className="deck-table">
         <thead><tr><th>Chimiométrie</th><th>Machine learning</th><th>Ce qui est fusionné</th><th>Modèles du labo</th><th>Attention</th></tr></thead>
@@ -311,7 +330,7 @@ export const SLIDES: Slide[] = [
     ],
   },
   {
-    id: 'demo-spectro', section: 'Démonstration', title: 'Démo 1 · Raman + NIRS + MIR', minutes: 5,
+    id: 'demo-spectro', section: 'Démonstration', title: 'Démo 1 · Raman + NIRS + MIR', minutes: 4.5,
     body: () => (
       <div className="deck-split deck-split--demo">
         <div>

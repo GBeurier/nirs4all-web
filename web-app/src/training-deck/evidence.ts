@@ -15,7 +15,7 @@ export interface EvidenceRun {
   pipeline: unknown[]
 }
 export interface EvidenceCase {
-  dataset: { name: string; samples: number; target: { name: string; unit: string }; sources: Array<{ id: string; label: string; shape: number[] }> }
+  dataset: { name: string; samples: number; target: { name: string; unit: string }; sources: Array<{ id: string; label: string; modality: string; representation: string; shape: number[] }> }
   ownerVersions: Record<string, string>
   calibration: number
   holdout: number

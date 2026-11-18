@@ -2,6 +2,7 @@ import type { PipelineCatalog, PipelineChainDocument, PipelineOperatorDefinition
 import { toCanonicalPipeline } from 'nirs4all-ui/pipelineEditor'
 import type { LabDataset, LabPipelineBranch, LabPipelineDocument, LabPipelineStep, LabSource, LabSourceChain } from './types'
 import { NEURAL, validatePipelineDocument } from './recipes'
+import { BURN_CNN, RANDOM_FOREST, TFJS_CNN } from './hostModelIds'
 
 /**
  * Canonical multisource pipelines for the laboratory.
@@ -18,6 +19,9 @@ export const RIDGE = 'models.regularized.ridge'
 export const MBPLS = 'models.multiblock.mb_pls'
 export const PCA = 'preprocessing.feature_selection.flexible_pca'
 const STANDARD = 'preprocessing.scaling.standard_scale'
+const RESAMPLE = 'preprocessing.resampling.resample_transformer'
+/** Spectra longer than this are resampled before a CNN branch. */
+const CNN_MAX_POINTS = 128
 
 /** Fusion level shown to learners. Presentation only: the document decides execution. */
 /**
@@ -60,6 +64,9 @@ export const LAB_OPERATORS: readonly PipelineOperatorDefinition[] = [
     ], ['spectra']),
   op('preprocessing', 'Baseline', 'preprocessing.baselines.detrend', 'Detrend',
     'Removes a polynomial trend from each spectrum. Spectra only.', [int('polyorder', 'Polynomial order', 1, 0, 3)], ['spectra']),
+  op('preprocessing', 'Resampling', RESAMPLE, 'Resample',
+    'Resamples each spectrum to a fixed number of points (native). Keeps convolution networks small and stable on long spectra. Spectra only.',
+    [int('num_samples', 'Points', 128, 8, 4096)], ['spectra']),
   op('preprocessing', 'Scaling', STANDARD, 'Standard scaling',
     'Per-variable centring and unit-variance scaling, fitted on the training scope only.',
     [bool('with_mean', 'Centre', true), bool('with_std', 'Scale to unit variance', true),
@@ -86,11 +93,34 @@ export const LAB_OPERATORS: readonly PipelineOperatorDefinition[] = [
       int('epochs', 'Epochs', 150, 1, 400), int('batch_size', 'Batch size', 16, 1, 256),
       float('learning_rate', 'Learning rate', 0.01, 0), float('weight_decay', 'Weight decay', 0.0001, 0),
     ], ['mid']),
+  op('model', 'Browser models (JavaScript)', RANDOM_FOREST, 'Random forest (ml.js)',
+    'Random forest regression trained in the browser with ml.js (host model behind the native controller: DAG-ML keeps folds, OOF and refit).', [
+      int('n_estimators', 'Trees', 50, 10, 500), float('max_features', 'Features per split (fraction)', 0.33, 0.05, 1),
+      int('max_depth', 'Max depth', 10, 2, 40), int('min_samples_leaf', 'Min samples per leaf', 3, 1, 20),
+    ], ['browser']),
+  op('model', 'Browser models (JavaScript)', TFJS_CNN, 'CNN (TensorFlow.js)',
+    'CNN trained in the browser with TensorFlow.js (WebGL when available): 1-D convolution per spectrum or ordered marker table, 2-D convolution per image, embeddings concatenated mid-network, common head.', [
+      int('filters', 'Filters per branch', 8, 1, 64), int('kernel_size', 'Kernel size', 5, 1, 15, 2),
+      int('embedding_dim', 'Embedding size', 16, 1, 128), int('head_hidden', 'Head hidden units', 16, 1, 256),
+      int('epochs', 'Epochs', 60, 1, 500), int('batch_size', 'Batch size', 64, 1, 256),
+      float('learning_rate', 'Learning rate', 0.005, 0),
+      { name: 'architecture', label: 'Architecture', type: 'select', default: 'compact', options: [
+        { value: 'compact', label: 'Compact CNN' }, { value: 'nicon', label: 'NICON (nirs4all, ≥ 175 points per spectrum)' }] },
+    ], ['browser', 'mid']),
+  op('model', 'Browser models (JavaScript)', BURN_CNN, 'CNN (Burn)',
+    'CNN trained in the browser with Burn (Rust compiled to WebAssembly, CPU): NICON (the nirs4all 1-D CNN) or a compact CNN per source, embeddings concatenated mid-network. Browser-only model.', [
+      { name: 'architecture', label: 'Architecture', type: 'select', default: 'nicon', options: [
+        { value: 'nicon', label: 'NICON (nirs4all, ≥ 175 points per spectrum)' }, { value: 'compact', label: 'Compact CNN' }] },
+      int('filters', 'Filters per branch (compact)', 8, 1, 64), int('kernel_size', 'Kernel size (compact)', 5, 1, 15, 2),
+      int('embedding_dim', 'Embedding size (compact)', 16, 1, 128), int('head_hidden', 'Head hidden units (compact)', 16, 1, 256),
+      int('epochs', 'Epochs', 30, 1, 500), int('batch_size', 'Batch size', 64, 2, 256),
+      float('learning_rate', 'Learning rate', 0.002, 0),
+    ], ['browser', 'mid']),
 ]
 
 const OPERATOR = new Map(LAB_OPERATORS.map(definition => [definition.classPath!, definition]))
-const HEADS = new Set([PLS, RIDGE, MBPLS, NEURAL])
-const BLOCK_HEADS = new Set([MBPLS, NEURAL])
+const HEADS = new Set([PLS, RIDGE, MBPLS, NEURAL, RANDOM_FOREST, TFJS_CNN, BURN_CNN])
+const BLOCK_HEADS = new Set([MBPLS, NEURAL, TFJS_CNN, BURN_CNN])
 const META_HEADS = new Set([PLS, RIDGE])
 
 export const LAB_CATALOG: PipelineCatalog = {
@@ -122,6 +152,15 @@ const defaults = (methodId: string): Json =>
 
 /** Teaching default chain: train-fitted standard scaling for every source. */
 const sourceChain = (): Json[] => [step(STANDARD, defaults(STANDARD))]
+/** CNN lanes: long spectra are resampled first, so the convolution branch stays small and stable. */
+const cnnChain = (source: LabSource): Json[] => source.modality === 'spectroscopy' && source.shape[0] > CNN_MAX_POINTS
+  ? [step(RESAMPLE, { num_samples: CNN_MAX_POINTS }), ...sourceChain()] : sourceChain()
+/** NICON keeps more of the spectrum (it needs at least 175 points) but stays browser-sized. */
+const NICON_POINTS = 256
+const niconChain = (source: LabSource): Json[] => source.modality === 'spectroscopy'
+  ? [...(source.shape[0] > NICON_POINTS ? [step(RESAMPLE, { num_samples: NICON_POINTS })] : []), step('preprocessing.scatter.snv'),
+    step('preprocessing.derivatives.savitzky_golay', { window_length: 15, polyorder: 2, deriv: 1 }), ...sourceChain()]
+  : sourceChain()
 const lanes = (sources: readonly LabSource[], chain: (source: LabSource) => Json[]) =>
   Object.fromEntries(sources.map(source => [source.id, chain(source)]))
 
@@ -135,6 +174,12 @@ export function fusionPresets(dataset: LabDataset): FusionPreset[] {
     summary: `Baseline: ${source.label} only, standard scaling and PLS. Every fusion must beat the best single source.`,
     document: { name: `${source.label} alone · PLS`, pipeline: [{ source_branch: lanes([source], sourceChain) }, pls] },
   }))
+  // Ordered marker tables: a 1-D CNN trained with TensorFlow.js on the markers alone.
+  for (const source of sources.filter(item => item.modality === 'genetics')) presets.push({
+    id: `cnn-tfjs:${source.id}`, label: `${source.label} · CNN (TF.js)`, level: 'single',
+    summary: `${source.label} only, read by a 1-D convolution along the marker order, trained in the browser with TensorFlow.js.`,
+    document: { name: `${source.label} alone · TF.js CNN`, pipeline: [{ source_branch: lanes([source], sourceChain) }, model(TFJS_CNN, defaults(TFJS_CNN), 'CNN (TF.js)')] },
+  })
   if (sources.length < 2) return presets
   const all = sources.map(source => source.label).join(' + ')
   presets.push(
@@ -161,9 +206,29 @@ export function fusionPresets(dataset: LabDataset): FusionPreset[] {
       summary: 'A small CNN: one learned branch per source (1-D convolution for spectra, dense for markers, 2-D convolution for images); the branch embeddings are concatenated in the middle of the network and a common head predicts. Everything trains together.',
       document: {
         name: `Mid fusion · CNN on ${all}`,
-        pipeline: [{ source_branch: lanes(sources, sourceChain) }, model(NEURAL, defaults(NEURAL), 'Multibranch network')],
+        pipeline: [{ source_branch: lanes(sources, cnnChain) }, model(NEURAL, defaults(NEURAL), 'Multibranch network')],
       },
     },
+    {
+      id: 'early-rf', label: 'Early · random forest', level: 'early',
+      summary: 'The scaled sources (long spectra resampled to 128 points) are concatenated and a random forest (ml.js, trained in the browser) learns from them.',
+      document: { name: `Early fusion · ${all} → random forest`, pipeline: [{ source_branch: lanes(sources, cnnChain) }, { merge_sources: 'concat' },
+        model(RANDOM_FOREST, defaults(RANDOM_FOREST), 'Random forest')] },
+    },
+    // TensorFlow.js CNN: offered where it is justified, a 1-D CNN that also reads ordered marker tables.
+    ...(sources.some(source => source.modality === 'genetics') ? [{
+      id: 'cnn-tfjs', label: 'Mid · CNN (TF.js)', level: 'mid' as const,
+      summary: 'The same mid-fusion CNN idea, trained with TensorFlow.js: one convolution branch per source, embeddings concatenated mid-network.',
+      document: { name: `Mid fusion · TF.js CNN on ${all}`, pipeline: [{ source_branch: lanes(sources, cnnChain) }, model(TFJS_CNN, defaults(TFJS_CNN), 'CNN (TF.js)')] },
+    }] : []),
+    ...(sources.every(source => source.modality === 'image' || source.shape[0] >= 175) && sources.some(source => source.modality === 'spectroscopy') ? [{
+      id: 'nicon', label: 'Mid · NICON (Burn)', level: 'mid' as const,
+      summary: 'nirs4all’s NICON CNN, trained in the browser with Burn (Rust/WebAssembly): each spectrum is resampled to 256 points, SNV-corrected and differentiated (Savitzky–Golay), then read by its own NICON branch; the branches are concatenated mid-network.',
+      document: { name: `Mid fusion · NICON on ${all}`, pipeline: [
+        { source_branch: lanes(sources, niconChain) },
+        model(BURN_CNN, defaults(BURN_CNN), 'NICON (Burn)'),
+      ] },
+    }] : []),
     {
       id: 'late-mean', label: 'Late · average', level: 'late',
       summary: 'One PLS model per source; their predictions are averaged with equal weights. Nothing is learned after the source models.',
@@ -276,7 +341,7 @@ function featureLevel(dataset: LabDataset, steps: unknown[], name: string): LabP
   insist(head.kind === 'model', 'The last step must be a model.')
   const blockModel = BLOCK_HEADS.has(head.step.methodId)
   insist(!(blockModel && merged), `${OPERATOR.get(head.step.methodId)!.name} fuses the source blocks itself: remove the "Merge sources" step.`)
-  insist(!blockModel || sourceIds.length >= 2 || head.step.methodId === NEURAL, 'Multiblock PLS needs at least two sources.')
+  insist(!blockModel || sourceIds.length >= 2 || head.step.methodId !== MBPLS, 'Multiblock PLS needs at least two sources.')
   insist(branch._merge_after_ === undefined || typeof branch._merge_after_ === 'boolean', '_merge_after_ must be true or false.')
   insist(branch._merge_after_ !== false || blockModel || merged !== null, 'With _merge_after_ false the sources stay separate: use a multiblock model, or merge the sources.')
   return {
@@ -372,7 +437,8 @@ export function toLabDocument(dataset: LabDataset, document: PipelineChainDocume
 export function fusionLevel(document: LabPipelineDocument): FusionLevel {
   if (document.merge.kind !== 'none') return 'late'
   const branch = document.branches[0]
-  if (branch.head.methodId === NEURAL) return 'mid'
+  if (branch.sourceIds.length === 1) return 'single'
+  if (branch.head.methodId === NEURAL || branch.head.methodId === TFJS_CNN || branch.head.methodId === BURN_CNN) return 'mid'
   if (branch.head.methodId === MBPLS) return 'early'
   if (branch.sourceIds.length === 1) return 'single'
   return branch.sourceChains.some(chain => chain.steps.some(item => item.methodId === PCA)) ? 'mid' : 'early'

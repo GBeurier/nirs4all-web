@@ -10,7 +10,7 @@ const LEVEL_LABEL: Record<LevelKind, string> = {
 
 /** Display-only dataset stand-in: the presets read source IDs and labels only. */
 function sourcesOf(caseId: CaseId): LabDataset {
-  return { sources: EVIDENCE.cases[caseId].dataset.sources.map(source => ({ id: source.id, label: source.label })) } as unknown as LabDataset
+  return { sources: EVIDENCE.cases[caseId].dataset.sources.map(source => ({ ...source, shape: [...source.shape] })) } as unknown as LabDataset
 }
 
 export function presetDocument(caseId: CaseId, id: string): PipelineChainDocument {

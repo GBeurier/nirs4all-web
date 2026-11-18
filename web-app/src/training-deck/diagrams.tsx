@@ -454,9 +454,9 @@ export function OofDiagram() {
       ))}
       <rect x={610} y={36} width={150} height={184} rx={10} fill="rgba(217,119,6,.08)" stroke="var(--amber)" strokeWidth={1.6} />
       <Caption x={685} y={120} color="var(--amber)" weight={800} size={16}>OOF ŷ</Caption>
-      <Caption x={685} y={142} color="var(--text-3)" size={12.5}>chaque échantillon prédit</Caption>
-      <Caption x={685} y={160} color="var(--text-3)" size={12.5}>par un modèle qui</Caption>
-      <Caption x={685} y={178} color="var(--text-3)" size={12.5}>ne l’a jamais vu</Caption>
+      <Caption x={685} y={142} color="var(--text-3)" size={12.5}>chaque échantillon,</Caption>
+      <Caption x={685} y={160} color="var(--text-3)" size={12.5}>prédit par un modèle</Caption>
+      <Caption x={685} y={178} color="var(--text-3)" size={12.5}>qui ne l’a pas vu</Caption>
       <Arrow x1={765} y1={128} x2={815} y2={128} />
       <StepBox x={820} y={100} w={160} h={56} title="méta-modèle" detail="apprend les poids" accent={LEVEL_COLORS.late} />
       <Caption x={500} y={270} color="var(--text-2)" size={14}>Prédites sur le train, les prédictions sont trop belles : le méta-modèle sur-fait confiance à la source la plus flexible.</Caption>
