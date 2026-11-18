@@ -10,7 +10,7 @@ export const SOURCE_COLORS = {
   raman: '#be123c', nirs: '#4f46e5', mir: '#a16207', markers: '#15803d', image: '#475569', y: '#0f172a',
 } as const
 export const LEVEL_COLORS = {
-  single: '#64748b', early: '#0891b2', embedding: '#7c3aed', intermediate: '#0d9488', late: '#d97706',
+  single: '#64748b', early: '#0891b2', mid: '#7c3aed', joint: '#0d9488', late: '#d97706',
 } as const
 export type SourceKind = keyof typeof SOURCE_COLORS
 export type LevelKind = keyof typeof LEVEL_COLORS
@@ -171,17 +171,17 @@ export function Caption({ x, y, children, color = 'var(--text-2)', size = 14, an
 /** One sample, several instruments, one property. */
 export function SampleViewsDiagram() {
   const rows: Array<{ kind: SourceKind; label: string; motif: BlockProps['motif']; sub: string }> = [
-    { kind: 'nirs', label: 'NIRS', motif: 'spectrum', sub: 'absorbance × wavelength' },
-    { kind: 'raman', label: 'Raman', motif: 'spectrum', sub: 'intensity × Raman shift' },
-    { kind: 'markers', label: 'Genetic markers', motif: 'table', sub: '0 / 1 / 2 dosages' },
-    { kind: 'image', label: 'Image', motif: 'image', sub: 'pixels (height × width)' },
+    { kind: 'nirs', label: 'NIRS', motif: 'spectrum', sub: 'absorbance × longueur d’onde' },
+    { kind: 'raman', label: 'Raman', motif: 'spectrum', sub: 'intensité × déplacement Raman' },
+    { kind: 'markers', label: 'Marqueurs génétiques', motif: 'table', sub: 'dosages 0 / 1 / 2' },
+    { kind: 'image', label: 'Image', motif: 'image', sub: 'pixels (hauteur × largeur)' },
   ]
   return (
-    <svg viewBox="0 0 1000 430" role="img" aria-label="One sample measured by four instruments, used to predict one property">
+    <svg viewBox="0 0 1000 430" role="img" aria-label="Un échantillon mesuré par quatre instruments pour prédire une propriété">
       <g>
         <GrainMotif x={52} y={150} w={136} h={130} seed={2} />
         <rect x={52} y={150} width={136} height={130} rx={8} fill="none" stroke="var(--border-warm)" strokeWidth={2} />
-        <Caption x={120} y={308} weight={800} color="var(--text)" size={16}>One sample</Caption>
+        <Caption x={120} y={308} weight={800} color="var(--text)" size={16}>Un échantillon</Caption>
       </g>
       {rows.map((row, index) => {
         const y = 22 + index * 102
@@ -197,7 +197,7 @@ export function SampleViewsDiagram() {
       })}
       <rect x={858} y={175} width={130} height={80} rx={14} fill="var(--teal)" />
       <Caption x={923} y={209} color="#fff" weight={800} size={20}>y</Caption>
-      <Caption x={923} y={233} color="#fff" size={13}>property</Caption>
+      <Caption x={923} y={233} color="#fff" size={13}>propriété</Caption>
     </svg>
   )
 }
@@ -205,14 +205,14 @@ export function SampleViewsDiagram() {
 /** Samples × blocks: the shape of a multisource dataset. */
 export function DatasetShapeDiagram() {
   const blocks: Array<{ kind: SourceKind; label: string; w: number; motif: BlockProps['motif']; sub: string }> = [
-    { kind: 'nirs', label: 'NIRS', w: 200, motif: 'spectrum', sub: '64 wavelengths (nm)' },
-    { kind: 'raman', label: 'Raman', w: 150, motif: 'spectrum', sub: '48 shifts (cm⁻¹)' },
-    { kind: 'markers', label: 'Markers', w: 110, motif: 'table', sub: '16 dosages' },
+    { kind: 'nirs', label: 'NIRS', w: 200, motif: 'spectrum', sub: '64 longueurs d’onde (nm)' },
+    { kind: 'raman', label: 'Raman', w: 150, motif: 'spectrum', sub: '48 déplacements (cm⁻¹)' },
+    { kind: 'markers', label: 'Marqueurs', w: 110, motif: 'table', sub: '16 dosages' },
     { kind: 'image', label: 'Image', w: 150, motif: 'image', sub: '12 × 12 pixels' },
   ]
   let x = 170
   return (
-    <svg viewBox="0 0 1000 400" role="img" aria-label="A multisource dataset: the same samples in rows, one block of variables per source, and the target">
+    <svg viewBox="0 0 1000 400" role="img" aria-label="Un jeu multisource : les mêmes échantillons en lignes, un bloc de variables par source, et la cible">
       {['sample-001', 'sample-002', 'sample-003', '…', 'sample-120'].map((id, index) => (
         <text key={id} x={150} y={92 + index * 50} textAnchor="end" fontFamily={MONO} fontSize={14} fill="var(--text-2)">{id}</text>
       ))}
@@ -224,11 +224,11 @@ export function DatasetShapeDiagram() {
       <g>
         <rect x={x + 10} y={62} width={56} height={250} rx={8} fill="var(--paper-2)" stroke="var(--text)" strokeWidth={2} />
         <Caption x={x + 38} y={50} weight={800} color="var(--text)" size={17}>y</Caption>
-        <Caption x={x + 38} y={332} size={12.5} color="var(--text-3)">target</Caption>
+        <Caption x={x + 38} y={332} size={12.5} color="var(--text-3)">cible</Caption>
       </g>
       <path d={`M170 ${352} H${x - 22}`} stroke="var(--teal)" strokeWidth={2} />
       <path d={`M170 346 v12 M${x - 22} 346 v12`} stroke="var(--teal)" strokeWidth={2} />
-      <Caption x={(170 + x - 22) / 2} y={382} color="var(--teal-d)" weight={700} size={15}>X: one block per source · same rows (samples), different columns, axes and units</Caption>
+      <Caption x={(170 + x - 22) / 2} y={382} color="var(--teal-d)" weight={700} size={15}>X : un bloc par source · mêmes lignes (échantillons), colonnes, axes et unités différents</Caption>
     </svg>
   )
 }
@@ -239,9 +239,9 @@ export function AlignmentDiagram() {
   const right = ['s-004', 's-002', 's-005', 's-003']
   const row = (id: string) => left.indexOf(id)
   return (
-    <svg viewBox="0 0 1000 340" role="img" aria-label="Two tables in different row orders joined by sample identity">
-      <Caption x={190} y={30} weight={700} color={SOURCE_COLORS.nirs} size={17}>NIRS file</Caption>
-      <Caption x={720} y={30} weight={700} color={SOURCE_COLORS.markers} size={17}>Marker file</Caption>
+    <svg viewBox="0 0 1000 340" role="img" aria-label="Deux tables dans un ordre différent, jointes par identifiant d’échantillon">
+      <Caption x={190} y={30} weight={700} color={SOURCE_COLORS.nirs} size={17}>Fichier NIRS</Caption>
+      <Caption x={720} y={30} weight={700} color={SOURCE_COLORS.markers} size={17}>Fichier marqueurs</Caption>
       {left.map((id, index) => (
         <g key={id}>
           <rect x={90} y={50 + index * 62} width={200} height={48} rx={8} fill="#fff" stroke={SOURCE_COLORS.nirs} strokeWidth={1.6} />
@@ -258,9 +258,9 @@ export function AlignmentDiagram() {
         </g>
       ))}
       <rect x={850} y={50} width={14} height={110} rx={4} fill="var(--amber)" opacity={0.25} />
-      <Caption x={872} y={100} anchor="start" size={13} color="var(--amber)" weight={700}>group: plant 1</Caption>
+      <Caption x={872} y={100} anchor="start" size={13} color="var(--amber)" weight={700}>groupe : plante 1</Caption>
       <Caption x={872} y={118} anchor="start" size={12} color="var(--text-3)">s-004 + s-002</Caption>
-      <Caption x={455} y={325} color="var(--teal-d)" weight={700} size={15}>Matched by sample ID — never by row number</Caption>
+      <Caption x={455} y={325} color="var(--teal-d)" weight={700} size={15}>Jointure par identifiant — jamais par numéro de ligne</Caption>
     </svg>
   )
 }
@@ -271,8 +271,8 @@ export function FusionPointsDiagram() {
   const yOf = (index: number) => 70 + index * 95
   const col = { src: 40, pre: 200, rep: 400, model: 600, pred: 800 }
   return (
-    <svg viewBox="0 0 1000 400" role="img" aria-label="Four fusion points: early after preprocessing, embedding after compression, intermediate inside the model, late after predictions">
-      {['Sources', 'Preprocess', 'Represent', 'Model', 'Predict'].map((label, index) => (
+    <svg viewBox="0 0 1000 400" role="img" aria-label="Quatre points de fusion : bas niveau après prétraitement, niveau intermédiaire après extraction de caractéristiques, modèle conjoint, haut niveau après les prédictions">
+      {['Sources', 'Prétraiter', 'Résumer', 'Modéliser', 'Prédire'].map((label, index) => (
         <Caption key={label} x={[95, 270, 470, 670, 870][index]} y={26} color="var(--text-3)" size={13} weight={700}>{label.toUpperCase()}</Caption>
       ))}
       {lanes.map((kind, index) => {
@@ -281,11 +281,11 @@ export function FusionPointsDiagram() {
           <g key={kind}>
             <Block x={col.src} y={y - 26} w={110} h={52} kind={kind} motif={kind === 'image' ? 'image' : 'spectrum'} seed={index + 1} />
             <Arrow x1={150} y1={y} x2={col.pre} y2={y} />
-            <StepBox x={col.pre} y={y - 24} w={140} h={48} title="preprocess" accent="var(--cyan)" />
+            <StepBox x={col.pre} y={y - 24} w={140} h={48} title="prétraiter" accent="var(--cyan)" />
             <Arrow x1={340} y1={y} x2={col.rep} y2={y} />
             <Block x={col.rep} y={y - 22} w={140} h={44} kind={kind} motif="scores" seed={index} />
             <Arrow x1={540} y1={y} x2={col.model} y2={y} />
-            <StepBox x={col.model} y={y - 24} w={140} h={48} title="model" accent="var(--teal)" />
+            <StepBox x={col.model} y={y - 24} w={140} h={48} title="modèle" accent="var(--teal)" />
             <Arrow x1={740} y1={y} x2={col.pred} y2={y} />
             <rect x={col.pred} y={y - 20} width={60} height={40} rx={8} fill="var(--paper-2)" stroke="var(--border-warm)" />
             <Caption x={col.pred + 30} y={y + 6} weight={700} color="var(--text)">ŷ</Caption>
@@ -293,13 +293,13 @@ export function FusionPointsDiagram() {
         )
       })}
       <Junction x={370} y={350} level="early" label="1" />
-      <Caption x={370} y={392} color={LEVEL_COLORS.early} weight={800}>Early</Caption>
-      <Junction x={570} y={350} level="embedding" label="2" />
-      <Caption x={570} y={392} color={LEVEL_COLORS.embedding} weight={800}>Embedding</Caption>
-      <Junction x={670} y={350} level="intermediate" label="3" />
-      <Caption x={690} y={392} color={LEVEL_COLORS.intermediate} weight={800}>Intermediate</Caption>
+      <Caption x={370} y={392} color={LEVEL_COLORS.early} weight={800}>Bas niveau</Caption>
+      <Junction x={570} y={350} level="mid" label="2" />
+      <Caption x={570} y={392} color={LEVEL_COLORS.mid} weight={800}>Intermédiaire</Caption>
+      <Junction x={670} y={350} level="joint" label="3" />
+      <Caption x={690} y={392} color={LEVEL_COLORS.joint} weight={800}>Conjoint</Caption>
       <Junction x={900} y={350} level="late" label="4" />
-      <Caption x={900} y={392} color={LEVEL_COLORS.late} weight={800}>Late</Caption>
+      <Caption x={900} y={392} color={LEVEL_COLORS.late} weight={800}>Haut niveau</Caption>
       {[370, 570, 670, 900].map((x, index) => (
         <line key={x} x1={x} y1={42} x2={x} y2={328} stroke={Object.values(LEVEL_COLORS)[index + 1]} strokeWidth={2} strokeDasharray="4 6" opacity={0.7} />
       ))}
@@ -310,13 +310,13 @@ export function FusionPointsDiagram() {
 /** Early fusion: blocks placed side by side, one model. */
 export function EarlyDiagram() {
   return (
-    <svg viewBox="0 0 1000 330" role="img" aria-label="Early fusion: each block is preprocessed, the columns are concatenated into one matrix and one PLS model is fitted">
+    <svg viewBox="0 0 1000 330" role="img" aria-label="Fusion de bas niveau : chaque bloc est prétraité, les colonnes sont concaténées et un seul PLS est ajusté">
       {(['nirs', 'raman', 'mir'] as const).map((kind, index) => (
         <g key={kind}>
           <Block x={20} y={30 + index * 95} w={120} h={60} kind={kind} label={undefined} seed={index + 1} />
           <Caption x={80} y={24 + index * 95} color={SOURCE_COLORS[kind]} weight={700}>{kind === 'mir' ? 'MIR' : kind === 'nirs' ? 'NIRS' : 'Raman'}</Caption>
           <Arrow x1={145} y1={60 + index * 95} x2={185} y2={60 + index * 95} />
-          <StepBox x={190} y={36 + index * 95} w={130} h={48} title="scale" accent="var(--cyan)" />
+          <StepBox x={190} y={36 + index * 95} w={130} h={48} title="standardiser" accent="var(--cyan)" />
           <path d={`M322 ${60 + index * 95} C 370 ${60 + index * 95}, 370 165, 410 165`} fill="none" stroke="var(--text-3)" strokeWidth={2} />
         </g>
       ))}
@@ -324,13 +324,12 @@ export function EarlyDiagram() {
       <Block x={470} y={100} w={88} h={130} kind="nirs" seed={1} />
       <Block x={558} y={100} w={66} h={130} kind="raman" seed={2} />
       <Block x={624} y={100} w={76} h={130} kind="mir" seed={3} />
-      <Caption x={585} y={88} color="var(--text)" weight={700}>one matrix: n × (p₁ + p₂ + p₃)</Caption>
+      <Caption x={585} y={88} color="var(--text)" weight={700}>une matrice : n × (p₁ + p₂ + p₃)</Caption>
       <Arrow x1={708} y1={165} x2={760} y2={165} />
-      <StepBox x={765} y={138} w={130} h={54} title="PLS" detail="one model" accent="var(--teal)" />
+      <StepBox x={765} y={138} w={130} h={54} title="PLS" detail="un seul modèle" accent="var(--teal)" />
       <Arrow x1={897} y1={165} x2={935} y2={165} />
       <Caption x={960} y={171} weight={800} color="var(--text)" size={18}>ŷ</Caption>
-      <Caption x={720} y={268} color="var(--text-3)" size={14}>the widest or most variable block can dominate</Caption>
-      <Caption x={720} y={290} color="var(--text-3)" size={14}>more variables need more latent variables</Caption>
+      <StepBox x={470} y={252} w={430} h={58} title="variante multibloc : MB-PLS" detail="score par bloc → super-score · ≈ PLS sur blocs pondérés" accent={LEVEL_COLORS.early} />
     </svg>
   )
 }
@@ -338,7 +337,7 @@ export function EarlyDiagram() {
 /** Embedding fusion: each block compressed to a few scores, scores concatenated. */
 export function EmbeddingDiagram() {
   return (
-    <svg viewBox="0 0 1000 330" role="img" aria-label="Embedding fusion: each source is compressed into a few PCA scores fitted on training samples, the scores are concatenated and modelled">
+    <svg viewBox="0 0 1000 330" role="img" aria-label="Fusion de niveau intermédiaire : chaque source est résumée par quelques scores ACP ajustés sur le train, puis les scores sont concaténés et modélisés">
       {(['nirs', 'raman', 'image'] as const).map((kind, index) => {
         const y = 30 + index * 95
         return (
@@ -346,15 +345,15 @@ export function EmbeddingDiagram() {
             <Block x={20} y={y} w={kind === 'image' ? 80 : 130} h={60} kind={kind} motif={kind === 'image' ? 'image' : 'spectrum'} seed={index + 1} />
             <Caption x={kind === 'image' ? 60 : 85} y={y - 6} color={SOURCE_COLORS[kind]} weight={700}>{kind === 'nirs' ? 'NIRS · 64 var.' : kind === 'raman' ? 'Raman · 48 var.' : 'Image · 144 px'}</Caption>
             <Arrow x1={155} y1={y + 30} x2={205} y2={y + 30} />
-            <StepBox x={210} y={y + 6} w={150} h={48} title="PCA (k = 5)" detail="fit on train" accent={LEVEL_COLORS.embedding} />
+            <StepBox x={210} y={y + 6} w={150} h={48} title="ACP (k = 5)" detail="ajustée sur le train" accent={LEVEL_COLORS.mid} />
             <Arrow x1={362} y1={y + 30} x2={402} y2={y + 30} />
             <Block x={407} y={y + 10} w={48} h={40} kind={kind} motif="scores" seed={index} />
             <path d={`M457 ${y + 30} C 500 ${y + 30}, 500 165, 540 165`} fill="none" stroke="var(--text-3)" strokeWidth={2} />
           </g>
         )
       })}
-      <Caption x={431} y={322} color="var(--text-3)" size={12.5}>embeddings</Caption>
-      <Junction x={555} y={165} level="embedding" />
+      <Caption x={431} y={322} color="var(--text-3)" size={12.5}>caractéristiques</Caption>
+      <Junction x={555} y={165} level="mid" />
       <Block x={595} y={120} w={36} h={90} kind="nirs" motif="scores" />
       <Block x={631} y={120} w={36} h={90} kind="raman" motif="scores" />
       <Block x={667} y={120} w={36} h={90} kind="image" motif="scores" />
@@ -373,31 +372,31 @@ export function IntermediateDiagram() {
     <g key={kind}>
       <Block x={20} y={y} w={kind === 'image' ? 70 : 120} h={56} kind={kind} motif={kind === 'image' ? 'image' : kind === 'markers' ? 'table' : 'spectrum'} />
       <Arrow x1={145} y1={y + 28} x2={190} y2={y + 28} />
-      <StepBox x={195} y={y + 4} w={170} h={48} title={layer} detail="learned branch" accent={LEVEL_COLORS.intermediate} />
+      <StepBox x={195} y={y + 4} w={170} h={48} title={layer} detail="branche apprise" accent={LEVEL_COLORS.joint} />
       <Arrow x1={367} y1={y + 28} x2={402} y2={y + 28} />
       <Block x={407} y={y + 8} w={40} h={40} kind={kind} motif="scores" />
       <path d={`M449 ${y + 28} C 490 ${y + 28}, 490 140, 530 140`} fill="none" stroke="var(--text-3)" strokeWidth={2} />
     </g>
   )
   return (
-    <svg viewBox="0 0 1000 300" role="img" aria-label="Intermediate fusion: one learned branch per source, embeddings concatenated, a joint head; branches and head are trained together">
-      <rect x={180} y={6} width={600} height={268} rx={16} fill={LEVEL_COLORS.intermediate} opacity={0.06} stroke={LEVEL_COLORS.intermediate} strokeDasharray="6 6" />
-      <Caption x={480} y={292} color={LEVEL_COLORS.intermediate} weight={700} size={13.5}>one model, trained as a whole: the branches learn what to keep for y</Caption>
-      {branch('nirs', 26, '1-D convolution')}
-      {branch('markers', 112, 'dense layer')}
-      {branch('image', 198, '2-D convolution')}
-      <Junction x={545} y={140} level="intermediate" />
-      <StepBox x={590} y={113} w={170} h={54} title="joint head" detail="dense → ŷ" accent="var(--teal)" />
+    <svg viewBox="0 0 1000 300" role="img" aria-label="Modèle conjoint : une branche apprise par source, embeddings concaténés, une tête commune ; tout est entraîné ensemble">
+      <rect x={180} y={6} width={600} height={268} rx={16} fill={LEVEL_COLORS.joint} opacity={0.06} stroke={LEVEL_COLORS.joint} strokeDasharray="6 6" />
+      <Caption x={480} y={292} color={LEVEL_COLORS.joint} weight={700} size={13.5}>un seul modèle, entraîné d’un bloc : chaque branche apprend ce qui compte pour y</Caption>
+      {branch('nirs', 26, 'convolution 1D')}
+      {branch('markers', 112, 'couche dense')}
+      {branch('image', 198, 'convolution 2D')}
+      <Junction x={545} y={140} level="joint" />
+      <StepBox x={590} y={113} w={170} h={54} title="tête commune" detail="dense → ŷ" accent="var(--teal)" />
       <Arrow x1={762} y1={140} x2={800} y2={140} />
       <Caption x={822} y={146} weight={800} color="var(--text)" size={18}>ŷ</Caption>
       <g>
         <rect x={845} y={40} width={145} height={200} rx={12} fill="var(--paper-2)" stroke="var(--border-warm)" />
-        <Caption x={917} y={70} weight={800} color="var(--text)" size={15}>Chemometric</Caption>
-        <Caption x={917} y={90} weight={800} color="var(--text)" size={15}>cousin: MB-PLS</Caption>
-        <Caption x={917} y={122} size={12.5}>blocks kept apart</Caption>
-        <Caption x={917} y={142} size={12.5}>shared latent</Caption>
-        <Caption x={917} y={162} size={12.5}>variables, one</Caption>
-        <Caption x={917} y={182} size={12.5}>weight per block</Caption>
+        <Caption x={917} y={70} weight={800} color="var(--text)" size={15}>Dans le navigateur</Caption>
+        <Caption x={917} y={102} size={12.5}>C++ (Methods)</Caption>
+        <Caption x={917} y={122} size={12.5}>compilé en WASM</Caption>
+        <Caption x={917} y={142} size={12.5}>rétropropagation</Caption>
+        <Caption x={917} y={162} size={12.5}>Adam · MSE</Caption>
+        <Caption x={917} y={182} size={12.5}>pas de GPU</Caption>
       </g>
     </svg>
   )
@@ -406,15 +405,15 @@ export function IntermediateDiagram() {
 /** Late fusion: one model per source, predictions combined. */
 export function LateDiagram() {
   return (
-    <svg viewBox="0 0 1000 320" role="img" aria-label="Late fusion: one model per source, the predictions are averaged or given to a meta-model trained on out-of-fold predictions">
+    <svg viewBox="0 0 1000 320" role="img" aria-label="Fusion de haut niveau : un modèle par source, prédictions moyennées ou données à un méta-modèle entraîné sur des prédictions OOF">
       {(['nirs', 'raman', 'mir'] as const).map((kind, index) => {
         const y = 30 + index * 95
         return (
           <g key={kind}>
             <Block x={20} y={y} w={120} h={58} kind={kind} seed={index + 1} />
             <Arrow x1={145} y1={y + 29} x2={185} y2={y + 29} />
-            <StepBox x={190} y={y + 5} w={120} h={48} title="scale" accent="var(--cyan)" />
-            <Arrow x1={312} y1={y + 29} x2={345} y2={y + 29} />
+            <StepBox x={190} y={y + 5} w={138} h={48} title="standardiser" accent="var(--cyan)" />
+            <Arrow x1={330} y1={y + 29} x2={345} y2={y + 29} />
             <StepBox x={350} y={y + 5} w={120} h={48} title="PLS" accent="var(--teal)" />
             <Arrow x1={472} y1={y + 29} x2={505} y2={y + 29} />
             <rect x={510} y={y + 9} width={64} height={40} rx={8} fill="var(--paper-2)" stroke={SOURCE_COLORS[kind]} />
@@ -424,9 +423,9 @@ export function LateDiagram() {
         )
       })}
       <Junction x={665} y={155} level="late" />
-      <StepBox x={705} y={70} w={250} h={58} title="Average" detail="(ŷ₁ + ŷ₂ + ŷ₃) / 3 · nothing learned" accent={LEVEL_COLORS.late} />
-      <Caption x={830} y={160} color="var(--text-3)" weight={700}>or</Caption>
-      <StepBox x={705} y={180} w={250} h={58} title="Stacking" detail="meta-model on OOF ŷ · learns weights" accent={LEVEL_COLORS.late} />
+      <StepBox x={705} y={70} w={250} h={58} title="Moyenne" detail="(ŷ₁ + ŷ₂ + ŷ₃) / 3 · rien n’est appris" accent={LEVEL_COLORS.late} />
+      <Caption x={830} y={160} color="var(--text-3)" weight={700}>ou</Caption>
+      <StepBox x={705} y={180} w={250} h={58} title="Stacking" detail="méta-modèle sur ŷ OOF · apprend les poids" accent={LEVEL_COLORS.late} />
       <path d="M680 150 L700 100 M680 160 L700 208" stroke="var(--text-3)" strokeWidth={2} fill="none" />
     </svg>
   )
@@ -436,7 +435,7 @@ export function LateDiagram() {
 export function OofDiagram() {
   const folds = 3
   return (
-    <svg viewBox="0 0 1000 300" role="img" aria-label="Out-of-fold predictions: each sample is predicted by a model that did not see it during training">
+    <svg viewBox="0 0 1000 300" role="img" aria-label="Prédictions out-of-fold : chaque échantillon est prédit par un modèle qui ne l’a pas vu à l’entraînement">
       {Array.from({ length: folds }, (_, fold) => (
         <g key={fold}>
           <Caption x={70} y={62 + fold * 70} anchor="end" weight={700} color="var(--text)">fold {fold + 1}</Caption>
@@ -445,7 +444,7 @@ export function OofDiagram() {
             return (
               <g key={part}>
                 <rect x={90 + part * 150} y={36 + fold * 70} width={140} height={44} rx={8} fill={val ? 'rgba(217,119,6,.12)' : '#fff'} stroke={val ? 'var(--amber)' : 'var(--border)'} strokeWidth={1.6} />
-                <Caption x={160 + part * 150} y={64 + fold * 70} color={val ? 'var(--amber)' : 'var(--text-3)'} weight={val ? 800 : 500}>{val ? 'predict' : 'fit'}</Caption>
+                <Caption x={160 + part * 150} y={64 + fold * 70} color={val ? 'var(--amber)' : 'var(--text-3)'} weight={val ? 800 : 500}>{val ? 'prédire' : 'ajuster'}</Caption>
               </g>
             )
           })}
@@ -454,12 +453,12 @@ export function OofDiagram() {
       ))}
       <rect x={610} y={36} width={150} height={184} rx={10} fill="rgba(217,119,6,.08)" stroke="var(--amber)" strokeWidth={1.6} />
       <Caption x={685} y={120} color="var(--amber)" weight={800} size={16}>OOF ŷ</Caption>
-      <Caption x={685} y={142} color="var(--text-3)" size={12.5}>every sample, predicted</Caption>
-      <Caption x={685} y={160} color="var(--text-3)" size={12.5}>by a model that</Caption>
-      <Caption x={685} y={178} color="var(--text-3)" size={12.5}>never saw it</Caption>
+      <Caption x={685} y={142} color="var(--text-3)" size={12.5}>chaque échantillon prédit</Caption>
+      <Caption x={685} y={160} color="var(--text-3)" size={12.5}>par un modèle qui</Caption>
+      <Caption x={685} y={178} color="var(--text-3)" size={12.5}>ne l’a jamais vu</Caption>
       <Arrow x1={765} y1={128} x2={815} y2={128} />
-      <StepBox x={820} y={100} w={160} h={56} title="meta-model" detail="learns the weights" accent={LEVEL_COLORS.late} />
-      <Caption x={500} y={270} color="var(--text-2)" size={14}>In-sample predictions look too good: a meta-model trained on them over-trusts the most flexible source.</Caption>
+      <StepBox x={820} y={100} w={160} h={56} title="méta-modèle" detail="apprend les poids" accent={LEVEL_COLORS.late} />
+      <Caption x={500} y={270} color="var(--text-2)" size={14}>Prédites sur le train, les prédictions sont trop belles : le méta-modèle sur-fait confiance à la source la plus flexible.</Caption>
     </svg>
   )
 }

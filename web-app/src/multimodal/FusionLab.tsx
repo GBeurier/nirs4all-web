@@ -5,7 +5,7 @@ import { FUSION_LEVEL_LABEL, LAB_CATALOG, type FusionLevel, type FusionPreset } 
 import { LAB_SCORE_REFS, inspectorChains, inspectorPredictions, type LabRunRecord } from './inspector'
 import type { LabDataset } from './types'
 
-const LEVELS: readonly FusionLevel[] = ['single', 'early', 'embedding', 'intermediate', 'late']
+const LEVELS: readonly FusionLevel[] = ['single', 'early', 'mid', 'joint', 'late']
 
 export interface FusionEditorProps {
   dataset: LabDataset

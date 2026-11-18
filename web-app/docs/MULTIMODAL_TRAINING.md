@@ -23,6 +23,11 @@ the teaching collections intentionally use different row orders.
 
 ## Fusion pipelines
 
+Fusion levels follow the chemometric terms: low level (early: variables, including
+multiblock PLS, which fuses block-structured variables), mid level (features
+extracted per source, here PCA scores), high level (late: predictions), plus a
+joint model (the multibranch network learns all branches together).
+
 Section 5 edits one canonical nirs4all pipeline with the shared rack editor
 (`nirs4all-ui/pipelineEditor`). Each source has its own lane; the step after the
 lanes decides where the sources meet. Operators are native Methods method IDs.
@@ -31,9 +36,9 @@ lanes decides where the sources meet. Operators are native Methods method IDs.
 | --- | --- | --- |
 | Single source | `source_branch` with one lane → PLS | One PLS model; run every source baseline |
 | Early | `source_branch` → `merge_sources: "concat"` → PLS | One PLS model on the concatenated variables |
-| Embedding | `source_branch` (scaling + training-fitted PCA scores per source) → `merge_sources` → PLS | Per-source PCA and one PLS model |
-| Intermediate · MB-PLS | `source_branch` → MB-PLS (no source merge) | Centered-block, equal-super-weight multiblock NIPALS |
-| Intermediate · network | `source_branch` → multibranch network | Jointly trained convolution/dense branches and a common regression head |
+| Early · MB-PLS | `source_branch` → MB-PLS (no source merge) | Centered-block, equal-super-weight multiblock NIPALS (low-level fusion with block structure) |
+| Mid-level · PCA scores | `source_branch` (scaling + training-fitted PCA scores per source) → `merge_sources` → PLS | Per-source PCA and one PLS model |
+| Joint · network | `source_branch` → multibranch network | Jointly trained convolution/dense branches and a common regression head |
 | Late · average | `branch` with `by_source: true` (one model per lane) → `merge: {predictions: "all", aggregate: "mean"}` | Source PLS models; fixed equal weights |
 | Late · stacking | `by_source` branch → `merge: "predictions"` → Ridge | Source PLS models and a Ridge meta-learner on nested OOF predictions |
 
@@ -156,7 +161,7 @@ native folds/OOF/scoring/replay to DAG-ML, and reusable presentation to UI.
 
 ## Forty-minute session
 
-The training slides are a page of this site,
+The training slides (in French, at the maintainer's request) are a page of this site,
 `https://web.nirs4all.org/multimodal-training/slides/`, built from
 `src/training-deck/` with the same theme and the laboratory's own pipeline
 editor. Keys: arrows/space to move, **N** speaker notes, **P** a synchronised

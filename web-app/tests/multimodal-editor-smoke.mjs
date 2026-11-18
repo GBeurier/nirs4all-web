@@ -78,7 +78,7 @@ try {
   assert.ok(stacking.candidate.diagnostics.length > 0)
 
   // An inadmissible edit is explained and cannot run.
-  await preset('Intermediate · MB-PLS')
+  await preset('Early · MB-PLS')
   await lab.getByRole('button', { name: /^Model: MB-PLS\./ }).click()
   await page.keyboard.press('Shift+A')
   await lab.getByRole('searchbox').fill('Merge sources')
