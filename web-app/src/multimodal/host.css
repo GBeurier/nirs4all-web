@@ -54,3 +54,101 @@
 .n4fl-results-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; }
 .n4fl-results-head p { margin: 0; max-width: 60rem; }
 .n4fl-results .n4wb-inspector, .n4fl-results > div:last-child { min-height: 42rem; }
+
+/* Web application frame (LabShell): the shell carries the header and the step rail,
+   so the workbench's own header and anchor bar are hidden and its type follows Web. */
+.n4mm-embedded { min-height: 0; font-size: 15px; }
+.n4mm-embedded > .n4mm-header, .n4mm-embedded > .n4mm-workflow { display: none; }
+.n4mm-embedded .n4mm-main { max-width: 104rem; padding: 1.5rem clamp(.75rem, 3vw, 2rem) 2.5rem; gap: 1rem; }
+.n4mm-embedded .n4mm-section { scroll-margin-top: 4.5rem; border-radius: 14px; border-color: var(--n4mm-border-warm);
+  box-shadow: 0 1px 2px rgba(17, 24, 39, .04); padding: 1.1rem clamp(.9rem, 2vw, 1.5rem) 1.25rem; }
+.n4mm-embedded .n4mm-section__title { font: 700 1.2rem/1.25 var(--n4mm-display); letter-spacing: -.01em; gap: .75rem; }
+.n4mm-embedded .n4mm-section__step { width: 2rem; height: 2rem; border: 0; border-radius: 9px;
+  background: var(--n4mm-master); color: #fff; font: 600 .8rem/1 var(--n4mm-mono); }
+.n4mm-embedded .n4mm-section__lead { font-size: .875rem; margin: .3rem 0 .9rem; }
+.n4mm-embedded .n4mm-subtitle { font-size: .95rem; }
+
+/* LabShell: the nirs4all Web frame in plain scoped CSS (no global Tailwind base,
+   whose universal rules are too costly on the multi-million-node marker views). */
+.n4lab {
+  --n4lab-teal: #0d9488; --n4lab-teal-d: #0f766e; --n4lab-teal-l: #2dd4bf; --n4lab-amber: #d97706;
+  --n4lab-text: #0f172a; --n4lab-muted: #64748b; --n4lab-border: #e2e8f0; --n4lab-border-warm: #e8e2d3;
+  --n4lab-card: #ffffff; --n4lab-sidebar: #f5f7fa; --n4lab-paper: #faf7f0;
+  display: flex; flex-direction: column; min-height: 100vh; background: var(--n4lab-paper); color: var(--n4lab-text);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; font-size: 14px;
+}
+.n4lab a { color: inherit; text-decoration: none; }
+.n4lab-strip { height: 6px; flex-shrink: 0; background: linear-gradient(90deg, var(--n4lab-teal-d), var(--n4lab-teal) 45%, var(--n4lab-teal-l)); }
+.n4lab-bar {
+  position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: .75rem; height: 3.5rem; padding: 0 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--n4lab-border) 70%, transparent);
+  background: color-mix(in srgb, var(--n4lab-card) 72%, transparent); backdrop-filter: blur(8px);
+}
+.n4lab-brand { display: flex; align-items: center; gap: .625rem; }
+.n4lab-logo { width: 2rem; height: 2rem; border-radius: 9px; box-shadow: 0 1px 2px color-mix(in srgb, var(--n4lab-teal) 30%, transparent); }
+.n4lab-wordmark { display: flex; align-items: baseline; gap: .375rem; }
+.n4lab-name {
+  font: 700 1.125rem/1 "IBM Plex Sans", Inter, system-ui, sans-serif; letter-spacing: -.02em;
+  background: linear-gradient(135deg, var(--n4lab-teal), var(--n4lab-teal-d)); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.n4lab-badge {
+  border: 1px solid color-mix(in srgb, var(--n4lab-teal) 30%, transparent); background: color-mix(in srgb, var(--n4lab-teal) 10%, transparent);
+  border-radius: 999px; padding: .125rem .375rem; color: var(--n4lab-teal-d);
+  font: 700 10px/1 "JetBrains Mono", Consolas, monospace; letter-spacing: .05em; text-transform: uppercase;
+}
+.n4lab-title { margin: 0 0 0 .5rem; font-size: .875rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.n4lab-actions { margin-left: auto; display: flex; align-items: center; gap: .5rem; }
+.n4lab-pill {
+  display: inline-flex; align-items: center; gap: .375rem; padding: .25rem .75rem; border-radius: 999px; white-space: nowrap;
+  border: 1px solid var(--n4lab-border); background: color-mix(in srgb, var(--n4lab-sidebar) 60%, transparent);
+  color: var(--n4lab-muted); font-size: .75rem; font-weight: 500; transition: border-color .15s, color .15s, background .15s;
+}
+.n4lab-pill[data-tone="teal"] { border-color: color-mix(in srgb, var(--n4lab-teal) 30%, transparent); background: color-mix(in srgb, var(--n4lab-teal) 5%, transparent); color: var(--n4lab-teal-d); }
+.n4lab-pill[data-tone="amber"] { border-color: color-mix(in srgb, var(--n4lab-amber) 40%, transparent); color: var(--n4lab-amber); }
+.n4lab-pill[data-link]:hover { border-color: color-mix(in srgb, var(--n4lab-teal) 40%, transparent); color: var(--n4lab-text); }
+.n4lab-pill[data-tone="teal"][data-link]:hover { background: color-mix(in srgb, var(--n4lab-teal) 10%, transparent); color: var(--n4lab-teal-d); }
+.n4lab-icon { width: 1rem; height: 1rem; flex-shrink: 0; }
+.n4lab-icon-sm, .n4lab-spin, .n4lab-teal { width: .875rem; height: .875rem; flex-shrink: 0; }
+.n4lab-teal { color: var(--n4lab-teal); }
+.n4lab-spin { animation: n4lab-spin 1s linear infinite; }
+@keyframes n4lab-spin { to { transform: rotate(360deg); } }
+.n4lab-body { display: flex; flex: 1; min-width: 0; }
+.n4lab-rail {
+  position: sticky; top: 3.5rem; box-sizing: border-box; height: calc(100vh - 3.5rem); width: 15rem; flex-shrink: 0; display: flex; flex-direction: column;
+  padding: .75rem; border-right: 1px solid color-mix(in srgb, var(--n4lab-border) 70%, transparent); background: color-mix(in srgb, var(--n4lab-sidebar) 60%, transparent);
+}
+.n4lab-steps { display: grid; gap: .25rem; }
+.n4lab-step {
+  display: flex; box-sizing: border-box; align-items: center; gap: .75rem; width: 100%; padding: .625rem .75rem; border: 0; border-radius: .75rem;
+  background: none; color: color-mix(in srgb, var(--n4lab-text) 80%, transparent); font: inherit; text-align: left; cursor: pointer; transition: background .15s;
+}
+.n4lab-step:hover:not(:disabled) { background: color-mix(in srgb, var(--n4lab-card) 60%, transparent); }
+.n4lab-step:disabled { cursor: not-allowed; color: color-mix(in srgb, var(--n4lab-muted) 50%, transparent); }
+.n4lab-step[data-state="active"] { background: var(--n4lab-card); color: var(--n4lab-text); box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 0 0 1px color-mix(in srgb, var(--n4lab-teal) 30%, transparent); }
+.n4lab-step:focus-visible { outline: 2px solid var(--n4lab-teal); outline-offset: 2px; }
+.n4lab-step-icon { display: flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; flex-shrink: 0; border-radius: .5rem; background: var(--n4lab-sidebar); color: var(--n4lab-muted); }
+.n4lab-step[data-state="done"] .n4lab-step-icon { background: color-mix(in srgb, var(--n4lab-teal) 15%, transparent); color: var(--n4lab-teal); }
+.n4lab-step[data-state="active"] .n4lab-step-icon { background: var(--n4lab-teal); color: #fff; }
+.n4lab-step-text { min-width: 0; flex: 1; }
+.n4lab-step-line { display: flex; align-items: center; gap: .375rem; }
+.n4lab-step-num { font: 10px "JetBrains Mono", Consolas, monospace; color: var(--n4lab-muted); }
+.n4lab-step-label { font-size: .875rem; font-weight: 600; }
+.n4lab-step-hint { display: block; font-size: 11px; color: var(--n4lab-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.n4lab-stack-wrap { margin-top: auto; padding: 1rem .25rem 0; }
+.n4lab-stack { border: 1px solid var(--n4lab-border); border-radius: .75rem; background: color-mix(in srgb, var(--n4lab-paper) 50%, transparent); padding: .75rem; }
+.n4lab-stack-title { display: flex; align-items: center; gap: .375rem; font-size: 11px; font-weight: 600; }
+.n4lab-stack-mono { margin: .25rem 0 0; font: 10px/1.6 "JetBrains Mono", Consolas, monospace; color: var(--n4lab-muted); }
+.n4lab-stack-note { margin: .375rem 0 0; font-size: 10px; color: var(--n4lab-muted); }
+.n4lab-main { flex: 1; min-width: 0; }
+.n4lab-footer { flex-shrink: 0; border-top: 1px solid var(--n4lab-border-warm); background: color-mix(in srgb, var(--n4lab-paper) 80%, transparent); }
+.n4lab-footer-inner { max-width: 72rem; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; padding: .875rem 1rem; }
+.n4lab-logo-sm { width: 1.5rem; height: 1.5rem; border-radius: 7px; }
+.n4lab-footer-text { font-size: .75rem; color: var(--n4lab-muted); }
+.n4lab-footer-name { font-family: "IBM Plex Sans", Inter, system-ui, sans-serif; font-weight: 600; color: var(--n4lab-text); }
+.n4lab-footer-links { display: flex; align-items: center; gap: 1rem; font-size: .75rem; font-weight: 500; color: var(--n4lab-muted); }
+.n4lab-footer-links a:hover { color: var(--n4lab-teal-d); }
+.n4lab-footer .n4lab-brand { gap: .625rem; }
+@media (max-width: 1023px) { .n4lab-pill[data-hide="lg"] { display: none; } }
+@media (max-width: 767px) { .n4lab-rail, .n4lab-title { display: none; } }
+@media (max-width: 639px) { .n4lab-pill[data-hide="sm"], .n4lab-hide-sm { display: none; } }
+@media (prefers-reduced-motion: reduce) { .n4lab-spin { animation: none; } }

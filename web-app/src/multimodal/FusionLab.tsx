@@ -1,6 +1,6 @@
 import { PipelineChainEditor, type PipelineChainDocument } from 'nirs4all-ui/pipelineEditor'
 import { Inspector, type InspectorViewId } from 'nirs4all-ui/inspector'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { FUSION_LEVEL_LABEL, LAB_CATALOG, type FusionLevel, type FusionPreset } from './fusion'
 import { LAB_SCORE_REFS, inspectorChains, inspectorPredictions, type LabRunRecord } from './inspector'
 import type { LabDataset } from './types'
@@ -127,11 +127,29 @@ export function FusionResults({ dataset, runs, onClear, onRestore, disabled }: F
   const [compare, setCompare] = useState<readonly string[]>([])
   const folds = new Set(runs.map(run => run.candidate.foldsFingerprint))
   const byId = new Map(runs.map(run => [run.id, run]))
+  // Until the user picks runs, compare the four best on the active score so fold
+  // stability, parity and agreement show several recipes at once.
+  const ref = LAB_SCORE_REFS.find(item => item.key === scoreRef) ?? LAB_SCORE_REFS[0]
+  const best = useMemo(() => chains
+    .filter(chain => typeof chain.scores[ref.key] === 'number')
+    .sort((a, b) => ((a.scores[ref.key] as number) - (b.scores[ref.key] as number)) * (ref.lowerIsBetter ? 1 : -1))
+    .slice(0, 4).map(chain => chain.id), [chains, ref])
+  const shown = compare.filter(id => byId.has(id))
+  // Open with both side panels closed: the views get the width, and "Top chains" already lists the runs.
+  const host = useRef<HTMLDivElement>(null)
+  const collapsed = useRef(false)
+  useEffect(() => {
+    if (collapsed.current || !host.current) return
+    const toggles = [...host.current.querySelectorAll<HTMLButtonElement>('button[aria-label$="⇄"][aria-pressed="true"]')]
+    if (!toggles.length) return
+    collapsed.current = true
+    toggles.forEach(button => button.click())
+  })
   if (!runs.length) {
     return <p className="n4mm-status" role="status">No completed run yet. Run a pipeline, or run all presets, to compare fusion strategies here.</p>
   }
   return (
-    <div className="n4fl-results" data-fusion-results>
+    <div className="n4fl-results" data-fusion-results ref={host}>
       <div className="n4fl-results-head">
         <p>
           {runs.length} completed run{runs.length === 1 ? '' : 's'} on <strong>{dataset.name}</strong>. Rank them on cross-validation (OOF)
@@ -149,12 +167,12 @@ export function FusionResults({ dataset, runs, onClear, onRestore, disabled }: F
         scoreRef={scoreRef}
         onScoreRefChange={setScoreRef}
         predictions={predictions}
-        compare={compare}
+        compare={shown.length ? shown : best}
         onCompareChange={setCompare}
         maxCompare={4}
         availableViews={VIEWS}
-        localStatistics={false}
-        defaultLayout={{ preset: 'grid', views: ['top', 'parity', 'folds', 'table'], maximized: null }}
+        localStatistics
+        defaultLayout={{ preset: 'grid', views: ['top', 'folds', 'parity', 'effects'], maximized: null }}
         onOpenChain={chain => { const run = byId.get(chain.id); if (run && !disabled) onRestore(run) }}
       />
     </div>

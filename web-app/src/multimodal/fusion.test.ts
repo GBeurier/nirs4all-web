@@ -29,12 +29,12 @@ for (const caseId of ['spectroscopy', 'genetics', 'images'] as const) {
         const document = toLabDocument(data, preset.document)
         expect(fusionLevel(document)).toBe(preset.level)
         const actual = describeRecipe(data, { ...config, pipeline: document })
-        if (preset.id === 'early-rf' || preset.id.startsWith('cnn-tfjs')) {
+        if (preset.id === 'early-rf' || preset.id.startsWith('cnn-burn')) {
           // Host models: the head carries the task seed (and the CNN its branch geometry); sources stay native.
           const operator = Object.values(actual.operators)[0]
           const head = operator.steps[0]
           expect(head.params.seed).toBe(config.validation.seed)
-          if (preset.id.startsWith('cnn-tfjs')) {
+          if (preset.id.startsWith('cnn-burn')) {
             const sources = operator.sourceOps.map(op => data.sources.find(source => source.id === op.source_id)!)
             expect(head.params.branch_kinds).toEqual(sources.map(source => source.modality === 'image' ? 2 : 1))
             expect((head.params.branch_shapes as number[]).length).toBe(sources.length * 3)
