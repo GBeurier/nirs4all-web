@@ -52,7 +52,91 @@ export const METHOD_INFO: Record<ExplainMethod, { label: string; status: MethodS
     additive: false,
     help: 'Prediction change when one group at a time is replaced by the baseline. Not additive; interactions are ignored.',
   },
+  linear_shap: {
+    label: 'Linear SHAP',
+    status: 'implemented',
+    additive: true,
+    help: 'Exact Shapley values of an affine pipeline from its raw-spectrum coefficients: β_raw · (x − background mean). Instant, no model evaluation; refused when a preprocessing step (e.g. SNV, MSC) is not affine.',
+  },
+  gradient: {
+    label: 'Local gradient',
+    status: 'experimental',
+    additive: false,
+    help: 'Finite-difference gradient of the complete pipeline at each spectrum times its deviation from the background mean (first order). Equals linear SHAP for an affine pipeline; a local linearization with SNV or MSC. Also gives the mean local raw-spectrum coefficients.',
+  },
 }
+
+/** Method families, in picker order. */
+export const METHOD_FAMILIES: ReadonlyArray<{ id: string; label: string; help: string; methods: readonly ExplainMethod[] }> = [
+  {
+    id: 'agnostic',
+    label: 'Model-agnostic (complete pipeline)',
+    help: 'Perturb the raw spectrum and re-run preprocessing + model: valid for any model, cost grows with groups and rows.',
+    methods: ['permutation_shap', 'kernel_shap', 'exact_shap', 'occlusion', 'lime'],
+  },
+  {
+    id: 'local_linear',
+    label: 'Local linear (raw spectrum)',
+    help: 'First-order views of the pipeline on the raw spectrum: exact for affine preprocessing, local otherwise.',
+    methods: ['linear_shap', 'gradient'],
+  },
+]
+
+export type PresetId = 'quick' | 'recommended' | 'thorough'
+export interface ExplainPreset {
+  id: PresetId
+  label: string
+  help: string
+  methods: ExplainMethod[]
+  intrinsic: boolean
+  baseline: ExplainBaseline
+  grouping: 'fixed_width' | 'bands'
+  width: number
+  maxRows: number
+  maxBackground: number
+  nPermutations: number
+}
+export const PRESETS: readonly ExplainPreset[] = [
+  {
+    id: 'quick',
+    label: 'Quick look',
+    help: 'Occlusion, local gradient and the model internals on 10 rows: seconds.',
+    methods: ['occlusion', 'gradient'],
+    intrinsic: true,
+    baseline: 'interpolate',
+    grouping: 'fixed_width',
+    width: 20,
+    maxRows: 10,
+    maxBackground: 20,
+    nPermutations: 5,
+  },
+  {
+    id: 'recommended',
+    label: 'Recommended for spectra',
+    help: 'Permutation SHAP with the spectral-bridge baseline on chemical bands (fixed width without a unit), local gradient and the model internals.',
+    methods: ['permutation_shap', 'gradient'],
+    intrinsic: true,
+    baseline: 'interpolate',
+    grouping: 'bands',
+    width: 20,
+    maxRows: 20,
+    maxBackground: 20,
+    nPermutations: 10,
+  },
+  {
+    id: 'thorough',
+    label: 'Thorough comparison',
+    help: 'Permutation and Kernel SHAP against the training background, occlusion, local gradient and the model internals on 50 rows: minutes.',
+    methods: ['permutation_shap', 'kernel_shap', 'occlusion', 'gradient'],
+    intrinsic: true,
+    baseline: 'background',
+    grouping: 'fixed_width',
+    width: 20,
+    maxRows: 50,
+    maxBackground: 50,
+    nPermutations: 20,
+  },
+]
 
 export const BASELINE_INFO: Record<ExplainBaseline, { label: string; help: string }> = {
   background: {
@@ -193,12 +277,14 @@ export function groupCount(kind: 'fixed_width' | 'bands' | 'per_feature', nFeatu
  * E0 = B shared empty-coalition rows for "background"/"mean", and C coalitions per row.
  * A planning estimate for the UI only; the session reports the exact plan while running.
  */
-export function estimateEvaluations(p: { method: ExplainMethod; baseline: ExplainBaseline; nRows: number; nBackground: number; nGroups: number; nPermutations: number }): number {
+export function estimateEvaluations(p: { method: ExplainMethod; baseline: ExplainBaseline; nRows: number; nBackground: number; nGroups: number; nPermutations: number; nFeatures?: number }): number {
   const interpolate = p.baseline === 'interpolate' ? 1 : 0
   const B = p.baseline === 'background' ? Math.max(1, p.nBackground) : 1
   const E0 = interpolate ? 0 : B
   const G = Math.max(1, p.nGroups)
   const all = G <= 52 ? 2 ** G - 2 : Number.POSITIVE_INFINITY
+  if (p.method === 'linear_shap') return 0
+  if (p.method === 'gradient') return p.nRows * (1 + 2 * Math.max(1, p.nFeatures ?? G))
   const C = p.method === 'exact_shap' ? all + interpolate
     : p.method === 'permutation_shap' ? 2 * p.nPermutations * (G - 1) + interpolate
       : p.method === 'kernel_shap' ? Math.min(all, 2 * G + 2048) + interpolate
@@ -216,6 +302,15 @@ export function axisTitle(env: ExplanationV1): string {
 
 const att = (env: ExplanationV1, row: number, g: number, out: number): number => env.attributions[row][g][out]
 
+/** Reference mean spectrum of row-major rows, drawn under importance curves (display only). */
+export function meanSpectrum(X: Float64Array, n: number, p: number): number[] {
+  return Array.from({ length: p }, (_, j) => {
+    let s = 0
+    for (let r = 0; r < n; r++) s += X[r * p + j]
+    return n > 0 ? s / n : Number.NaN
+  })
+}
+
 /** Spectral importance view at feature resolution: each feature carries its group's value. */
 export function spectralView(env: ExplanationV1, explainedX: Float64Array) {
   const p = env.axis.values.length
@@ -223,12 +318,7 @@ export function spectralView(env: ExplanationV1, explainedX: Float64Array) {
   env.groups.forEach((g, gi) => {
     for (let j = g.feature_start; j < g.feature_end; j++) importance[j] = env.summary.mean_abs[gi]
   })
-  const n = env.rows.count
-  const spectrum = Array.from({ length: p }, (_, j) => {
-    let s = 0
-    for (let r = 0; r < n; r++) s += explainedX[r * p + j]
-    return n > 0 ? s / n : Number.NaN
-  })
+  const spectrum = meanSpectrum(explainedX, env.rows.count, p)
   const regions = env.groups.map((g, gi) => ({ start: g.axis_start, end: g.axis_end, value: env.summary.mean_signed[gi], label: g.label }))
   return { axis: env.axis.values, importance, spectrum, regions }
 }
@@ -297,7 +387,8 @@ export function rowStdError(env: ExplanationV1, row: number): number | null {
   return env.std_error[row].reduce((m, g) => Math.max(m, g[out]), 0)
 }
 
+export const fileSlug = (name: string): string => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'model'
+
 export function envelopeFileName(sourceName: string, env: ExplanationV1): string {
-  const slug = sourceName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'model'
-  return `${slug}.${env.kind}.explanation.v1.json`
+  return `${fileSlug(sourceName)}.${env.kind}.explanation.v1.json`
 }

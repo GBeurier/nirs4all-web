@@ -1,6 +1,7 @@
-// Explain computes a grouped, model-agnostic explanation in the browser worker with the
-// Methods WASM explain session, renders the shared charts and exports an additive
-// nirs4all.explanation.v1 envelope whose explained rows map to source sample indices.
+// Explain runs several methods in one browser-worker job with the Methods WASM explain
+// session (permutation SHAP, linear SHAP, local gradient) plus the model internals,
+// compares them, renders the shared charts and exports additive nirs4all.explanation.v1
+// envelopes whose explained rows map to source sample indices.
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { chromium } from 'playwright-core'
@@ -35,15 +36,54 @@ try {
   // The model picker lists the run's refit model and keeps it selected.
   const picked = await page.getByLabel('Model', { exact: true }).evaluate((select) => select.options[select.selectedIndex]?.textContent ?? '')
   assert.match(picked, /RMSE|best of|·/, `model picker shows the selected run (${picked})`)
-  await page.getByLabel('Explain method').selectOption('permutation_shap')
+  // Several methods in one job: permutation SHAP, the two local linear views and the model internals.
+  for (const m of ['Permutation SHAP', 'Linear SHAP', 'Local gradient']) await page.getByLabel(`Method ${m}`).check()
+  await page.getByLabel('Include model internals').check()
   await page.getByLabel('Explain baseline').selectOption('background')
   await page.getByLabel('Explain grouping').selectOption('fixed_width')
   const started = Date.now()
-  await page.getByRole('button', { name: /Run explanation/ }).click()
-  await page.getByRole('button', { name: /Download explanation/ }).waitFor({ timeout: 180000 })
+  await page.getByRole('button', { name: /Run \d+ analyses/ }).click()
+  await page.locator('[data-testid="explain-compare"]').waitFor({ timeout: 180000 })
   const seconds = (Date.now() - started) / 1000
+  // Default regression pipeline (no preprocessing, PLS) is affine: every item succeeds.
+  assert.equal(await page.locator('[data-explain-progress] .text-destructive').count(), 0, 'no analysis failed')
+  await page.getByText('Agreement between methods', { exact: true }).waitFor()
+  await page.getByText('Consensus regions', { exact: true }).waitFor()
+  const history = await page.locator('[data-testid="explain-history"] > div').count()
+  assert.ok(history >= 4, `history lists every result (${history})`)
+
+  // Model internals: coefficients in both spaces, VIP for PLS.
+  await page.locator('[data-testid="explain-history"] button', { hasText: 'Model internals' }).first().click()
+  await page.locator('[data-testid="explain-importance"]').waitFor()
+  await page.getByRole('tab', { name: 'VIP' }).waitFor()
+  await page.getByText(/Every preprocessing step and the model are affine/).waitFor()
+
+  // Linear SHAP and the local gradient agree on an affine pipeline.
+  const envelopeOf = async (label) => {
+    await page.locator('[data-testid="explain-history"] button', { hasText: label }).first().click()
+    await page.getByRole('button', { name: /Download explanation/ }).waitFor()
+    const ev = page.waitForEvent('download')
+    await page.getByRole('button', { name: /Download explanation/ }).click()
+    return JSON.parse(await readFile(await (await ev).path(), 'utf8'))
+  }
+  const linear = await envelopeOf('Linear SHAP')
+  const gradient = await envelopeOf('Local gradient')
+  assert.equal(linear.kind, 'linear_shap')
+  assert.equal(gradient.kind, 'gradient')
+  let maxDiff = 0
+  let scale = 0
+  for (let r = 0; r < linear.rows.count; r += 1) {
+    for (let g = 0; g < linear.groups.length; g += 1) {
+      maxDiff = Math.max(maxDiff, Math.abs(linear.attributions[r][g][0] - gradient.attributions[r][g][0]))
+      scale = Math.max(scale, Math.abs(linear.attributions[r][g][0]))
+    }
+  }
+  assert.ok(maxDiff <= 1e-6 * Math.max(1, scale), `gradient equals linear SHAP on an affine pipeline (max diff ${maxDiff})`)
+  await page.locator('[data-testid="explain-history"] button', { hasText: 'Permutation SHAP' }).first().click()
+  await page.getByRole('button', { name: /Download explanation/ }).waitFor()
   await page.getByText('Spectral importance', { exact: true }).waitFor()
-  assert.ok(await page.locator('text=Waterfall').count() > 0, 'additive methods show a waterfall')
+  await page.locator('[data-testid="explain-summary"]').waitFor()
+  assert.ok(await page.locator('text=Waterfall of one row').count() > 0, 'additive methods show a waterfall')
 
   const event = page.waitForEvent('download')
   await page.getByRole('button', { name: /Download explanation/ }).click()
@@ -63,11 +103,16 @@ try {
   }
   assert.equal(envelope.groups.length, envelope.attributions[0].length)
   assert.ok(envelope.axis.unit === null ? envelope.axis.kind === 'feature_index' : envelope.axis.values.length > 0)
-  console.log(`✓ permutation SHAP explained ${envelope.rows.count} rows x ${envelope.groups.length} groups in ${seconds.toFixed(1)}s (axis ${envelope.axis.kind}${envelope.axis.unit ? ` ${envelope.axis.unit}` : ''}); additive to ${envelope.additivity_max_abs_error.toExponential(1)}`)
+  console.log(`✓ linear SHAP = local gradient to ${maxDiff.toExponential(1)}; 4 analyses in ${seconds.toFixed(1)}s`)
+  console.log(`✓ permutation SHAP explained ${envelope.rows.count} rows x ${envelope.groups.length} groups (axis ${envelope.axis.kind}${envelope.axis.unit ? ` ${envelope.axis.unit}` : ''}); additive to ${envelope.additivity_max_abs_error.toExponential(1)}`)
   await page.screenshot({ path: process.env.EXPLAIN_SCREENSHOT || '/tmp/explain-smoke.png', fullPage: true })
 
   // Full-resolution option: every wavelength, every dataset row (test + train), single-reference baseline.
+  await page.getByRole('button', { name: /Edit settings/ }).click()
+  for (const m of ['Linear SHAP', 'Local gradient']) await page.getByLabel(`Method ${m}`).uncheck()
+  await page.getByLabel('Include model internals').uncheck()
   await page.getByLabel('Explained rows source').selectOption('dataset_rows')
+  await page.getByText(/Advanced settings/).click()
   await page.getByLabel('Explain all rows').check()
   await page.getByLabel('Explain grouping').selectOption('per_feature')
   await page.getByLabel('Explain baseline').selectOption('mean')
@@ -75,6 +120,8 @@ try {
   const fullStart = Date.now()
   const fullDownload = page.waitForEvent('download')
   await page.getByRole('button', { name: /Run explanation/ }).click()
+  await page.locator('[data-testid="explain-setup-summary"]').waitFor()
+  await page.getByRole('button', { name: /Run again/ }).waitFor({ timeout: 600000 })
   await page.getByRole('button', { name: /Download explanation/ }).waitFor({ timeout: 600000 })
   const fullSeconds = (Date.now() - fullStart) / 1000
   await page.getByRole('button', { name: /Download explanation/ }).click()

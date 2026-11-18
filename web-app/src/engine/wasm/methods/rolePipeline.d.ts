@@ -1,4 +1,4 @@
-import { type FitInputs, type ParamValue } from "./estimatorRoles.js";
+import { type AffineCoefficients, type FitInputs, type ParamValue } from "./estimatorRoles.js";
 import type { Matrix } from "./types.js";
 /**
  * A recipe step: a method id ("models.pls.cppls" or "n4m:models.pls.cppls"),
@@ -23,6 +23,10 @@ export interface RolePipelineStepInfo {
     containsTrainingRows: boolean;
     nFeaturesIn: number;
     nFeaturesOut: number;
+    /** ABI 2.24: exact-affine at predict time (affine transform, affine terminal model, sample filter). */
+    affine: boolean;
+    /** ABI 2.24: output column j is the spectral position of input column j (transformers; same fitted width). */
+    columnAligned: boolean;
 }
 export interface RolePipelineState {
     methodId: string;
@@ -84,8 +88,19 @@ export declare class RolePipeline {
     classes(): ClassLabel[];
     /** Native class ids of the final classifier (n4m_role_pipeline_classes). */
     private static classIds;
-    /** Per step: method, role played, state index, fitted widths, training rows. */
+    /** Per step: method, role played, state index, fitted widths, training rows, affine / column-aligned traits. */
     stepsInfo(): RolePipelineStepInfo[];
+    /** One step of stepsInfo(). */
+    stepInfo(step: number): RolePipelineStepInfo;
+    /**
+     * Exact raw-input affine map predict(X) = X B_raw + b_raw of a fitted
+     * pipeline whose transformers / selectors are all affine and whose final
+     * model is affine (B_raw = A' B composed natively). The native refusal
+     * names the first non-affine step ("step <i> (<method id>): ...").
+     */
+    inputAffineCoefficients(): AffineCoefficients & {
+        nFeaturesIn: number;
+    };
     /**
      * One N4ME state per stateful step. A state that embeds training rows is
      * refused unless allowTrainingRows is set.

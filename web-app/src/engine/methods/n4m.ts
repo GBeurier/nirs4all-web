@@ -31,6 +31,7 @@ import type {
   NativeMethod,
   ParamValue,
   Regressor,
+  RolePipeline,
   SampleFilter,
   Splitter,
   TargetMixingAugmenter,
@@ -193,17 +194,26 @@ export function predictNamedPipeline(
   featureNames: string[],
   inputNames: string[] | undefined,
 ): Mat {
-  const recipe = [...steps, { type: model.type, params: model.state.fitParams }].map((s) => {
-    const def = nativeNode(s.type)
-    return { methodId: def.native.methodId, params: nativeParams(def, s.params) }
-  })
-  const pipeline = methodsWasm().RolePipeline.fromStates(recipe, [...steps.map((s) => s.n4me), model.state.n4me], { featureNames })
+  const pipeline = rebuildRolePipeline(steps, model, featureNames)
   try {
     if (model.state.nClasses === undefined) return pipeline.predict(matrix(X), inputNames)
     return oneHot(pipeline.predictLabels(matrix(X), inputNames) as number[], model.state.nClasses)
   } finally {
     pipeline.dispose()
   }
+}
+
+/** One native RolePipeline rebuilt from the fitted step states and the model state. */
+export function rebuildRolePipeline(
+  steps: { type: string; params: Record<string, unknown>; n4me: Uint8Array }[],
+  model: { type: string; state: NativeModelState & { fitParams: Record<string, unknown> } },
+  featureNames?: string[],
+): RolePipeline {
+  const recipe = [...steps, { type: model.type, params: model.state.fitParams }].map((s) => {
+    const def = nativeNode(s.type)
+    return { methodId: def.native.methodId, params: nativeParams(def, s.params) }
+  })
+  return methodsWasm().RolePipeline.fromStates(recipe, [...steps.map((s) => s.n4me), model.state.n4me], featureNames ? { featureNames } : undefined)
 }
 
 export function isNativeModelState(model: unknown): model is NativeModelState {

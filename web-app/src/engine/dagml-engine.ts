@@ -180,8 +180,8 @@ function expandSweepVariants(dsl: PipelineDSL): VariantPlan[] {
   })
 }
 
-// The explain verb is hosted by MainEngine over every predict dispatch, not by this sub-engine.
-export class DagMlEngine implements Omit<Engine, 'explain'> {
+// The explain verbs are hosted by MainEngine over every predict dispatch, not by this sub-engine.
+export class DagMlEngine implements Omit<Engine, 'explain' | 'explainBatch' | 'importance' | 'compareProfiles' | 'baselinePreview'> {
   readonly name = 'dag-ml-wasm'
   private readonly policy: WebRuntimePolicy
 

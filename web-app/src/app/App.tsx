@@ -1145,7 +1145,7 @@ function StepPanel(props: StepPanelProps) {
     // Only the view of the data the selected run was fitted on supplies partitions, background and axis.
     const runDataset = props.runDataset
     return (
-      <Panel title="Explain" subtitle="Which spectral regions drive the model's predictions — model-agnostic SHAP-family attributions computed in your browser." icon={Microscope}>
+      <Panel title="Explain" subtitle="Which spectral regions drive the model's predictions — SHAP-family attributions, local linear views and model internals (coefficients, VIP), computed in your browser and compared side by side." icon={Microscope}>
         {modelPicker}
         <ExplainPanel
           key={modelKey}

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: CECILL-2.1 OR AGPL-3.0-or-later
-// Generic native estimator roles (ABI 2.13).
+// Generic native estimator roles (ABI 2.13; model-intrinsic structure ABI 2.24).
 //
 // The helpers exported below (contexts, allocations, typed parameters, fit
 // inputs) are shared with rolePipeline.ts; the package index does not
@@ -424,6 +424,108 @@ export class NativeEstimator extends NativeMethod {
             m._free(out);
         }
     }
+    /**
+     * Affine map predict(X) = X B + b of a fitted estimator declaring the
+     * native N4M_CAP_AFFINE capability (PLS family, Ridge, ...), also after
+     * fromN4me(). Throws the native UNSUPPORTED refusal otherwise.
+     */
+    affineCoefficients() {
+        const m = getModule();
+        const handle = this.handle();
+        const p = this.dim("n4m_estimator_n_features_in", handle);
+        const q = this.dim("n4m_estimator_n_outputs", handle);
+        const coef = m._malloc(Math.max(1, p * q) * 8);
+        const icpt = m._malloc(Math.max(1, q) * 8);
+        try {
+            withContext((ctx) => checkStatus(m.ccall("n4m_estimator_affine_coefficients_v1", "number", ["number", "number", "number", "i64", "number", "i64"], [ctx, handle, coef, BigInt(p * q), icpt, BigInt(q)]), ctx));
+            return {
+                coefficients: { data: m.HEAPF64.slice(coef / 8, coef / 8 + p * q), rows: p, cols: q },
+                intercept: m.HEAPF64.slice(icpt / 8, icpt / 8 + q),
+            };
+        }
+        finally {
+            m._free(coef);
+            m._free(icpt);
+        }
+    }
+    /** W, R, P, Q, x mean / scale of a fitted latent-variable model; native refusal otherwise. */
+    latentStructure() {
+        const m = getModule();
+        const handle = this.handle();
+        const p = this.dim("n4m_estimator_n_features_in", handle);
+        const q = this.dim("n4m_estimator_n_outputs", handle);
+        const aPtr = m._malloc(8);
+        const allocs = [aPtr];
+        try {
+            return withContext((ctx) => {
+                const call = (bufs, pa, qa) => checkStatus(m.ccall("n4m_estimator_latent_structure_v1", "number", ["number", "number", "number", "number", "number", "number", "i64", "number", "i64",
+                    "number", "number", "i64"], [ctx, handle, aPtr, bufs[0], bufs[1], bufs[2], BigInt(pa), bufs[3], BigInt(qa),
+                    bufs[4], bufs[5], BigInt(p)]), ctx);
+                call([0, 0, 0, 0, 0, 0], 0, 0);
+                const a = readI64(aPtr);
+                const sizes = [p * a, p * a, p * a, q * a, p, p];
+                const bufs = sizes.map((n) => {
+                    const ptr = m._malloc(Math.max(1, n) * 8);
+                    allocs.push(ptr);
+                    return ptr;
+                });
+                call(bufs, p * a, q * a);
+                const read = (i) => m.HEAPF64.slice(bufs[i] / 8, bufs[i] / 8 + sizes[i]);
+                return {
+                    nComponents: a,
+                    xWeights: { data: read(0), rows: p, cols: a },
+                    xRotations: { data: read(1), rows: p, cols: a },
+                    xLoadings: { data: read(2), rows: p, cols: a },
+                    yLoadings: { data: read(3), rows: q, cols: a },
+                    xMean: read(4),
+                    xScale: read(5),
+                };
+            });
+        }
+        finally {
+            allocs.forEach((ptr) => m._free(ptr));
+        }
+    }
+    /**
+     * Importance profile (nFeaturesIn values) on rows X given in this
+     * estimator's input space (normally the preprocessed training rows):
+     * VIP, target-projection selectivity ratio or standardized coefficients
+     * (ddof = 1), computed natively.
+     */
+    modelImportance(X, options) {
+        const kind = IMPORTANCE_KINDS[options?.kind];
+        if (kind === undefined)
+            throw new Error(`unknown importance kind ${String(options?.kind)}`);
+        const outputIndex = options.outputIndex ?? 0;
+        if (!Number.isSafeInteger(outputIndex) || outputIndex < 0) {
+            throw new Error("outputIndex must be a nonnegative integer");
+        }
+        checkMatrix("X", X);
+        const m = getModule();
+        const handle = this.handle();
+        const p = this.dim("n4m_estimator_n_features_in", handle);
+        const xv = makeMatrixView(X.data, X.rows, X.cols);
+        const out = m._malloc(Math.max(1, p) * 8);
+        try {
+            withContext((ctx) => checkStatus(m.ccall("n4m_estimator_importance_v1", "number", ["number", "number", "number", "number", "i64", "number", "i64"], [ctx, handle, xv.viewPtr, kind, BigInt(outputIndex), out, BigInt(p)]), ctx));
+            return m.HEAPF64.slice(out / 8, out / 8 + p);
+        }
+        finally {
+            xv.free();
+            m._free(out);
+        }
+    }
+    dim(symbol, handle) {
+        const m = getModule();
+        const ptr = m._malloc(8);
+        try {
+            checkStatus(m.ccall(symbol, "number", ["number", "number"], [handle, ptr]));
+            return readI64(ptr);
+        }
+        finally {
+            m._free(ptr);
+        }
+    }
     /** Releases the native estimator. */
     dispose() {
         if (this.ptr !== 0) {
@@ -550,6 +652,9 @@ export class NativeEstimator extends NativeMethod {
         }
     }
 }
+const IMPORTANCE_KINDS = {
+    vip: 0, selectivity_ratio: 1, standardized_coefficients: 2,
+};
 /** Base of the generated procedures: one native run, no fitted state. */
 export class NativeProcedure extends NativeMethod {
     runRaw(X, y, inputs, read) {

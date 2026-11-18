@@ -23,6 +23,10 @@ const unsupportedEngine: Engine = {
   predict: () => unsupported('predict'),
   exportModel: () => unsupported('export'),
   explain: () => unsupported('explain'),
+  explainBatch: () => unsupported('explain'),
+  importance: () => unsupported('explain'),
+  compareProfiles: () => unsupported('explain'),
+  baselinePreview: () => unsupported('explain'),
 }
 
 export const engine: Engine = typeof Worker !== 'undefined'

@@ -118,6 +118,22 @@ export declare abstract class NativeEstimator extends NativeMethod {
     }): Uint8Array;
     /** Rebuilds a fitted estimator of the class registered for its method. */
     static fromN4me(payload: Uint8Array): NativeEstimator;
+    /**
+     * Affine map predict(X) = X B + b of a fitted estimator declaring the
+     * native N4M_CAP_AFFINE capability (PLS family, Ridge, ...), also after
+     * fromN4me(). Throws the native UNSUPPORTED refusal otherwise.
+     */
+    affineCoefficients(): AffineCoefficients;
+    /** W, R, P, Q, x mean / scale of a fitted latent-variable model; native refusal otherwise. */
+    latentStructure(): LatentStructure;
+    /**
+     * Importance profile (nFeaturesIn values) on rows X given in this
+     * estimator's input space (normally the preprocessed training rows):
+     * VIP, target-projection selectivity ratio or standardized coefficients
+     * (ddof = 1), computed natively.
+     */
+    modelImportance(X: Matrix, options: ModelImportanceOptions): Float64Array;
+    private dim;
     /** Releases the native estimator. */
     dispose(): void;
     protected predictMatrix(X: Matrix): Matrix;
@@ -133,6 +149,36 @@ export declare abstract class NativeEstimator extends NativeMethod {
     private matrixOp;
     private handle;
     private static methodIdOf;
+}
+/** predict(X) = X . coefficients + intercept (ABI 2.24). */
+export interface AffineCoefficients {
+    /** nFeaturesIn x nOutputs, row-major. */
+    coefficients: Matrix;
+    /** nOutputs. */
+    intercept: Float64Array;
+}
+/** Latent structure of a fitted PLS-family model (ABI 2.24), row-major. */
+export interface LatentStructure {
+    nComponents: number;
+    /** p x A (W). */
+    xWeights: Matrix;
+    /** p x A (R = W (P'W)^-1; scores T = ((X - xMean) / xScale) R). */
+    xRotations: Matrix;
+    /** p x A (P). */
+    xLoadings: Matrix;
+    /** q x A (Q, in the fitted Y units). */
+    yLoadings: Matrix;
+    /** p, centring used at fit (0 when uncentred). */
+    xMean: Float64Array;
+    /** p, scaling used at fit (1 when unscaled). */
+    xScale: Float64Array;
+}
+/** Native n4m_importance_kind_t codes. */
+export type ModelImportanceKind = "vip" | "selectivity_ratio" | "standardized_coefficients";
+export interface ModelImportanceOptions {
+    kind: ModelImportanceKind;
+    /** Output column (selectivity ratio, standardized coefficients); default 0. VIP uses every output. */
+    outputIndex?: number;
 }
 /** Splitter role: Data[n, p] (+ Target, groups) -> folds of 0-based row indices. */
 export interface Splitter {
