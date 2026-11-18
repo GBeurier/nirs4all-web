@@ -11,8 +11,9 @@ const ROLES = {
     1: "transformer", 2: "regressor", 4: "classifier", 8: "selector", 16: "sample_filter",
 };
 const EXPORT_ALLOW_TRAINING_ROWS = 1;
-// n4m_role_pipeline_step_info_v1_t on wasm32 (pointers 4 bytes, int64 8-aligned).
-const STEP_INFO_SIZE = 40;
+// n4m_role_pipeline_step_info_v1_t on wasm32 (pointers 4 bytes, int64 8-aligned),
+// with the ABI 2.24 affine / column_aligned fields at 40 / 44.
+const STEP_INFO_SIZE = 48;
 function parseStep(step) {
     const id = (s) => (s.startsWith("n4m:") ? s.slice(4) : s);
     if (typeof step === "string")
@@ -287,10 +288,50 @@ export class RolePipeline {
             m._free(countPtr);
         }
     }
-    /** Per step: method, role played, state index, fitted widths, training rows. */
+    /** Per step: method, role played, state index, fitted widths, training rows, affine / column-aligned traits. */
     stepsInfo() {
         const handle = this.handle();
         return this.steps.map((_, i) => RolePipeline.stepInfo(handle, i));
+    }
+    /** One step of stepsInfo(). */
+    stepInfo(step) {
+        if (!Number.isSafeInteger(step) || step < 0 || step >= this.steps.length) {
+            throw new RangeError(`step ${step} is outside [0, ${this.steps.length})`);
+        }
+        return RolePipeline.stepInfo(this.handle(), step);
+    }
+    /**
+     * Exact raw-input affine map predict(X) = X B_raw + b_raw of a fitted
+     * pipeline whose transformers / selectors are all affine and whose final
+     * model is affine (B_raw = A' B composed natively). The native refusal
+     * names the first non-affine step ("step <i> (<method id>): ...").
+     */
+    inputAffineCoefficients() {
+        const m = getModule();
+        const handle = this.handle();
+        const dims = m._malloc(16);
+        try {
+            checkStatus(m.ccall("n4m_role_pipeline_n_features_in", "number", ["number", "number"], [handle, dims]));
+            checkStatus(m.ccall("n4m_role_pipeline_n_outputs", "number", ["number", "number"], [handle, dims + 8]));
+            const p = readI64(dims), q = readI64(dims + 8);
+            const coef = m._malloc(Math.max(1, p * q) * 8);
+            const icpt = m._malloc(Math.max(1, q) * 8);
+            try {
+                withContext((ctx) => checkStatus(m.ccall("n4m_role_pipeline_input_affine_coefficients_v1", "number", ["number", "number", "number", "i64", "number", "i64"], [ctx, handle, coef, BigInt(p * q), icpt, BigInt(q)]), ctx));
+                return {
+                    coefficients: { data: m.HEAPF64.slice(coef / 8, coef / 8 + p * q), rows: p, cols: q },
+                    intercept: m.HEAPF64.slice(icpt / 8, icpt / 8 + q),
+                    nFeaturesIn: p,
+                };
+            }
+            finally {
+                m._free(coef);
+                m._free(icpt);
+            }
+        }
+        finally {
+            m._free(dims);
+        }
     }
     /**
      * One N4ME state per stateful step. A state that embeds training rows is
@@ -408,6 +449,8 @@ export class RolePipeline {
                 containsTrainingRows: m.getValue(info + 20, "i32") !== 0,
                 nFeaturesIn: readI64(info + 24),
                 nFeaturesOut: readI64(info + 32),
+                affine: m.getValue(info + 40, "i32") !== 0,
+                columnAligned: m.getValue(info + 44, "i32") !== 0,
             };
         }
         finally {

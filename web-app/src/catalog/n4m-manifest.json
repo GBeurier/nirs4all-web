@@ -1,5 +1,5 @@
 {
-  "abi": "2.23.0",
+  "abi": "2.24.0",
   "methods": [
     {
       "method_id": "aom_pop.aom_chain_fixed_fit",
@@ -6052,7 +6052,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -6273,7 +6274,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -7578,7 +7580,8 @@
         "transform",
         "predict",
         "serializable",
-        "affine"
+        "affine",
+        "affine_transform"
       ],
       "state_format": "n4mm",
       "inputs": {
@@ -7661,7 +7664,8 @@
         "transform",
         "predict",
         "serializable",
-        "affine"
+        "affine",
+        "affine_transform"
       ],
       "state_format": "n4mm",
       "inputs": {
@@ -7744,7 +7748,8 @@
         "transform",
         "predict",
         "serializable",
-        "affine"
+        "affine",
+        "affine_transform"
       ],
       "state_format": "n4mm",
       "inputs": {
@@ -7787,7 +7792,8 @@
         "transform",
         "predict",
         "serializable",
-        "affine"
+        "affine",
+        "affine_transform"
       ],
       "state_format": "n4mm",
       "inputs": {
@@ -8638,7 +8644,8 @@
         "transform",
         "predict",
         "serializable",
-        "affine"
+        "affine",
+        "affine_transform"
       ],
       "state_format": "n4mm",
       "inputs": {
@@ -8797,7 +8804,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "coef",
       "inputs": {
@@ -8825,7 +8833,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "coef",
       "inputs": {
@@ -9070,7 +9079,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -9129,7 +9139,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -9188,7 +9199,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -9257,7 +9269,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -9336,7 +9349,9 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -9375,7 +9390,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -9474,7 +9490,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -9533,7 +9550,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -9592,7 +9610,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -9710,7 +9729,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -9749,7 +9769,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "width",
       "inputs": {
@@ -9798,7 +9819,9 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -9847,7 +9870,9 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -9916,7 +9941,9 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -10011,7 +10038,9 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -10060,7 +10089,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "components",
       "inputs": {
@@ -10099,7 +10129,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "components",
       "inputs": {
@@ -10138,7 +10169,9 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform",
+        "column_aligned"
       ],
       "state_format": "epo",
       "inputs": {
@@ -10177,7 +10210,9 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform",
+        "column_aligned"
       ],
       "state_format": "orthogonal_components",
       "inputs": {
@@ -10226,7 +10261,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "width",
       "inputs": {
@@ -10366,7 +10402,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "width",
       "inputs": {
@@ -10405,7 +10442,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "source_axis",
       "inputs": {
@@ -10548,7 +10586,9 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform",
+        "column_aligned"
       ],
       "state_format": "column_mean",
       "inputs": {
@@ -10576,7 +10616,9 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform",
+        "column_aligned"
       ],
       "state_format": "block_rms",
       "inputs": {
@@ -10604,7 +10646,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "offset",
       "inputs": {
@@ -10673,7 +10716,9 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform",
+        "column_aligned"
       ],
       "state_format": "column_stats",
       "inputs": {
@@ -10722,7 +10767,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -10750,7 +10796,9 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform",
+        "column_aligned"
       ],
       "state_format": "column_stats",
       "inputs": {
@@ -10778,7 +10826,9 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform",
+        "column_aligned"
       ],
       "state_format": "components",
       "inputs": {
@@ -10837,7 +10887,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -10880,7 +10931,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "reference",
       "inputs": {
@@ -10947,7 +10999,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -11010,7 +11063,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "reference",
       "inputs": {
@@ -11069,7 +11123,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "reference",
       "inputs": {
@@ -11097,7 +11152,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "reference",
       "inputs": {
@@ -11156,7 +11212,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -11215,7 +11272,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -11274,7 +11332,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -11333,7 +11392,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "weights",
       "inputs": {
@@ -11372,7 +11432,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -11431,7 +11492,9 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -11459,7 +11522,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -11498,7 +11562,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -11547,7 +11612,9 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -11575,7 +11642,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -11634,7 +11702,9 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -11719,7 +11789,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "width",
       "inputs": {
@@ -11778,7 +11849,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "coef",
       "inputs": {
@@ -11827,7 +11899,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "window_coefs",
       "inputs": {
@@ -11886,7 +11959,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "coef",
       "inputs": {
@@ -11955,7 +12029,9 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform",
+        "column_aligned"
       ],
       "state_format": "coef",
       "inputs": {
@@ -11983,7 +12059,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "width",
       "inputs": {
@@ -12011,7 +12088,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "width",
       "inputs": {
@@ -12069,7 +12147,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "column_aligned"
       ],
       "state_format": "width",
       "inputs": {
@@ -12244,7 +12323,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "components",
       "inputs": {
@@ -12322,7 +12402,8 @@
       ],
       "capabilities": [
         "transform",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "components",
       "inputs": {
@@ -12401,7 +12482,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -12471,7 +12553,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -12541,7 +12624,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -12611,7 +12695,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -12701,7 +12786,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -12860,7 +12946,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -12950,7 +13037,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -13050,7 +13138,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -13120,7 +13209,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -13240,7 +13330,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -13350,7 +13441,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -13420,7 +13512,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -13500,7 +13593,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -13590,7 +13684,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -13670,7 +13765,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -13740,7 +13836,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -13790,7 +13887,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -13860,7 +13958,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -13920,7 +14019,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -13990,7 +14090,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -14070,7 +14171,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -14134,7 +14236,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -14194,7 +14297,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -14304,7 +14408,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {
@@ -14364,7 +14469,8 @@
       "capabilities": [
         "transform",
         "selected_indices",
-        "serializable"
+        "serializable",
+        "affine_transform"
       ],
       "state_format": "selection",
       "inputs": {

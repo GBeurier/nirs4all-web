@@ -11,12 +11,14 @@ const here = dirname(fileURLToPath(import.meta.url))
 const root = resolve(here, '..')
 const packageName = 'nirs4all-ui'
 const version = '0.2.7'
-const filename = `${packageName}-${version}.tgz`
+// Local unpublished build of 0.2.7 + the importance-comparison charts: the label is in the file name only.
+const label = '0.2.7-importance.2'
+const filename = `${packageName}-${label}.tgz`
 const tarballPath = resolve(root, 'vendor', 'npm', filename)
-const receiptPath = resolve(root, 'vendor', 'npm', `${packageName}-${version}.provenance.json`)
+const receiptPath = resolve(root, 'vendor', 'npm', `${packageName}-${label}.provenance.json`)
 const legacyShimPath = resolve(root, 'vendor', packageName)
-const expectedSha256 = '182727377ef0412544461e2a3527c6288a2f0a390d095b056f673a26d4a8f682'
-const expectedIntegrity = 'sha512-biDWJFPwuYCDX5S7jcZyOFlPB6eep4+EmGMuaNU6IUouJmUfjJ2jy+O60rh6eornT5fLjaQTpLi4GeiYnMrtEA=='
+const expectedSha256 = '29b5a33ac09d51393542221b4d328e95459900491a5bf0e4fd04589d9322cd1e'
+const expectedIntegrity = 'sha512-kft+lox9aeLNvdHUPEtSv35pW6SAWTgs3wtCPNvCsVD+KDo2Eszxnn1lHF7b0xVQSbp8/+ud2zdv8oOKWd3l5A=='
 
 function fail(message) {
   throw new Error(`[check-ui-package] ${message}`)
@@ -65,7 +67,7 @@ if (integrity !== expectedIntegrity) fail(`npm integrity mismatch: ${integrity}`
 const receipt = JSON.parse(readFileSync(receiptPath, 'utf8'))
 if (receipt.package?.name !== packageName || receipt.package?.version !== version) fail('receipt package identity mismatch')
 if (receipt.schema_version !== 'nirs4all.ui-release-artifact/v1' || receipt.source?.dirty !== false) fail('receipt is not a clean owner release artifact')
-if (receipt.source?.commit_sha !== 'ee68f473cf01ee7550d132ad13e6b961346eafdb') fail('receipt source commit mismatch')
+if (receipt.source?.commit_sha !== '7d28784909114058e7560ec306fb60b65836fa85') fail('receipt source commit mismatch')
 if (receipt.artifact?.filename !== filename || receipt.artifact?.size !== bytes.length) fail('receipt artifact identity mismatch')
 if (receipt.artifact?.sha256 !== sha256 || receipt.artifact?.npm_integrity !== integrity) fail('receipt digest mismatch')
 
@@ -99,7 +101,7 @@ if (locked?.version !== version || locked?.integrity !== integrity || !locked?.r
   fail('package-lock does not pin the vendored UI version, path, and integrity')
 }
 
-console.log(`[check-ui-package] ${packageName}@${version} verified (${sha256})`)
+console.log(`[check-ui-package] ${packageName}@${version} (${label}) verified (${sha256})`)
 
 
 const exampleRoot = resolve(root, 'examples/custom-app-host')

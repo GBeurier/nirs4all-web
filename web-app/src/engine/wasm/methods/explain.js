@@ -10,13 +10,13 @@ import { checkStatus, getModule, makeMatrixView } from "./ffi.js";
 import { N4mError, Status } from "./types.js";
 // ---- enum codes (explain.h) ------------------------------------------------
 const METHOD_CODES = {
-    exact_shap: 0, permutation_shap: 1, kernel_shap: 2, lime: 3, occlusion: 4,
+    exact_shap: 0, permutation_shap: 1, kernel_shap: 2, lime: 3, occlusion: 4, gradient: 5,
 };
 const BASELINE_CODES = {
     background: 0, mean: 1, interpolate: 2,
 };
 const OPTION_KEYS = new Set(["method", "baseline", "nPermutations", "nCoalitions",
-    "limeKernelWidth", "limeRidge", "maxBatchRows", "seed"]);
+    "limeKernelWidth", "limeRidge", "maxBatchRows", "seed", "gradientStep"]);
 // ---- n4m_explain_options_v1_t layout (identical on wasm32 and LP64) ---------
 //   uint64 struct_size @0, int32 method @8, int32 baseline @12,
 //   int64 n_outputs @16, n_permutations @24, n_coalitions @32,
@@ -145,6 +145,7 @@ function sessionExactness(method, nCoalitions, nGroups) {
         case "permutation_shap": return "sampled";
         case "lime": return "surrogate";
         case "occlusion": return "perturbation";
+        case "gradient": return "perturbation"; // central finite differences
     }
 }
 // ---- ask/tell session --------------------------------------------------------
@@ -181,6 +182,10 @@ export async function explainModel(input) {
     if (!Number.isSafeInteger(seed) || seed < 0) {
         throw new Error("seed must be a nonnegative integer below 2^53");
     }
+    if (options.gradientStep !== undefined &&
+        (!Number.isFinite(options.gradientStep) || options.gradientStep <= 0)) {
+        throw new Error("gradientStep must be finite and > 0");
+    }
     for (const key of ["limeKernelWidth", "limeRidge"]) {
         if (options[key] !== undefined && !Number.isFinite(options[key])) {
             throw new Error(`${key} must be finite`);
@@ -197,6 +202,9 @@ export async function explainModel(input) {
     }
     else if (baseline !== "interpolate") {
         throw new Error(`the ${baseline} baseline requires a background matrix`);
+    }
+    if (method === "gradient" && baseline === "interpolate") {
+        throw new Error("the gradient method uses the background mean reference (background or mean baseline)");
     }
     const nGroupsIn = checkGrouping(grouping, nFeatures);
     if (signal?.aborted)
@@ -251,6 +259,9 @@ export async function explainModel(input) {
         checkStatus(m.ccall("n4m_explain_session_create_v1", "number", ["number", "number", "number", "number", "i64", "number", "number"], [ctx.handle, xView.viewPtr, bgView.viewPtr, groupPtr,
             BigInt(nGroupsIn), opt, outSession]), ctx.handle);
         session = m.getValue(outSession, "i32");
+        if (method === "gradient" && options.gradientStep !== undefined) {
+            checkStatus(m.ccall("n4m_explain_session_set_gradient_step_v1", "number", ["number", "number", "number"], [ctx.handle, session, options.gradientStep]), ctx.handle);
+        }
         const info = arena.alloc(5 * 8);
         checkStatus(m.ccall("n4m_explain_session_info_v1", "number", Array(6).fill("number"), [session, info, info + 8, info + 16, info + 24, info + 32]));
         const nRows = readI64(info), nGroups = readI64(info + 16);
@@ -292,17 +303,33 @@ export async function explainModel(input) {
         const attributions = readF64(attrPtr, attrSize);
         const expected = readF64(expPtr, outSize);
         const predictions = readF64(predOutPtr, outSize);
-        const additive = method !== "lime" && method !== "occlusion";
+        const gradient = method === "gradient";
+        let gradientOut = {};
+        if (gradient) {
+            const gradSize = nRows * nFeatures * nOutputs, meanSize = nFeatures * nOutputs;
+            const gradPtr = arena.alloc(gradSize * 8), meanPtr = arena.alloc(meanSize * 8);
+            const stepPtr = arena.alloc(nFeatures * 8);
+            checkStatus(m.ccall("n4m_explain_session_gradients_v1", "number", ["number", "number", "number", "i64", "number", "i64", "number", "i64"], [ctx.handle, session, gradPtr, BigInt(gradSize), meanPtr, BigInt(meanSize), stepPtr,
+                BigInt(nFeatures)]), ctx.handle);
+            gradientOut = {
+                gradients: readF64(gradPtr, gradSize),
+                meanGradient: readF64(meanPtr, meanSize),
+                gradientSteps: readF64(stepPtr, nFeatures),
+            };
+        }
+        const additive = method !== "lime" && method !== "occlusion" && !gradient;
         return {
             kind: method,
             baseline,
             exactness: sessionExactness(method, nCoalitions, nGroups),
             additive,
-            groupAggregation: "group_game",
+            // Gradient groups are sums of per-feature first-order terms.
+            groupAggregation: gradient ? "sum_of_feature_values" : "group_game",
             nRows, nGroups, nOutputs, nFeatures,
             attributions, expected, predictions,
             stdError: hasStdError ? readF64(stdPtr, attrSize) : null,
-            additivityMaxAbsError: additive
+            // Reported diagnostic; the gradient method is not additive in general.
+            additivityMaxAbsError: additive || gradient
                 ? additivityError(attributions, expected, predictions, nRows, nGroups, nOutputs)
                 : null,
             evaluations,
@@ -318,8 +345,11 @@ export async function explainModel(input) {
                 seed,
                 n_outputs_inferred: input.nOutputs === undefined,
                 total_evaluations: total,
+                gradient_step: gradient ? (options.gradientStep ?? 1e-3) : null,
+                reference: gradient ? "background_mean" : null,
             },
             engine: engineInfo(),
+            ...gradientOut,
         };
     }
     finally {
@@ -530,9 +560,14 @@ export function groupsFromRanges(nFeatures, ranges) {
         arena.free();
     }
 }
-/** Per-group mean |attribution| and mean signed attribution over rows. */
+/** Per-group mean |attribution| and mean signed attribution over rows; with
+ *  a stdError (permutation SHAP), the Monte-Carlo standard error of the mean
+ *  signed attribution sqrt(sum_r se_rg^2) / nRows, else null. */
 export function summarizeAttributions(result, outputIndex = 0) {
-    const { nRows, nGroups, nOutputs, attributions } = result;
+    const { nRows, nGroups, nOutputs, attributions, stdError } = result;
+    if (stdError != null && (!(stdError instanceof Float64Array) || stdError.length !== attributions.length)) {
+        throw new Error("result.stdError must match result.attributions");
+    }
     if (!(attributions instanceof Float64Array) || attributions.length !== nRows * nGroups * nOutputs) {
         throw new Error("result.attributions must hold nRows * nGroups * nOutputs values");
     }
@@ -546,9 +581,139 @@ export function summarizeAttributions(result, outputIndex = 0) {
         const absPtr = arena.alloc(nGroups * 8), signedPtr = arena.alloc(nGroups * 8);
         checkStatus(m.ccall("n4m_explain_summarize_v1", "number", ["number", "i64", "i64", "i64", "i64", "number", "number", "i64"], [attrPtr, BigInt(nRows), BigInt(nGroups), BigInt(nOutputs), BigInt(outputIndex),
             absPtr, signedPtr, BigInt(nGroups)]));
-        return { meanAbs: readF64(absPtr, nGroups), meanSigned: readF64(signedPtr, nGroups) };
+        let meanSignedStdError = null;
+        if (stdError != null) {
+            const sePtr = arena.f64(stdError), outPtr = arena.alloc(nGroups * 8);
+            checkStatus(m.ccall("n4m_explain_summarize_std_error_v1", "number", ["number", "i64", "i64", "i64", "i64", "number", "i64"], [sePtr, BigInt(nRows), BigInt(nGroups), BigInt(nOutputs), BigInt(outputIndex),
+                outPtr, BigInt(nGroups)]));
+            meanSignedStdError = readF64(outPtr, nGroups);
+        }
+        return { meanAbs: readF64(absPtr, nGroups), meanSigned: readF64(signedPtr, nGroups),
+            meanSignedStdError };
     }
     finally {
         arena.free();
+    }
+}
+// ---- coalition rows (baseline preview) ---------------------------------------
+/**
+ * The rows an explanation session sends to the model for one coalition:
+ * every row of X with the features of `absentGroups` filled by the baseline
+ * (the session's own native filling code). "background" returns
+ * X.rows * background.rows rows (row i, background row b at i * nBackground + b);
+ * "mean" and "interpolate" one row per row of X.
+ */
+export function perturbRows(input) {
+    const { X, background, grouping, absentGroups, baseline } = input;
+    checkMatrix("X", X);
+    if (!Object.prototype.hasOwnProperty.call(BASELINE_CODES, baseline)) {
+        throw new Error(`unknown explain baseline ${baseline}`);
+    }
+    if (background !== undefined) {
+        checkMatrix("background", background, true);
+        if (background.cols !== X.cols)
+            throw new Error("background must have X.cols columns");
+    }
+    else if (baseline !== "interpolate") {
+        throw new Error(`the ${baseline} baseline requires a background matrix`);
+    }
+    const nGroups = checkGrouping(grouping, X.cols);
+    if (!Array.isArray(absentGroups))
+        throw new Error("absentGroups must be an array of group indices");
+    checkIntegers("absentGroups", absentGroups, absentGroups.length);
+    const m = getModule();
+    const arena = new Arena();
+    let ctx = null;
+    let xView = null;
+    let bgView = null;
+    try {
+        ctx = Context.create();
+        xView = makeMatrixView(X.data, X.rows, X.cols);
+        bgView = background !== undefined
+            ? makeMatrixView(background.data, background.rows, background.cols) : null;
+        const groupPtr = arena.int64(grouping.featureGroup);
+        const absentPtr = arena.int64(absentGroups);
+        const countPtr = arena.alloc(8);
+        const call = (outPtr, capacity) => checkStatus(m.ccall("n4m_explain_perturb_rows_v1", "number", ["number", "number", "number", "number", "i64", "number", "number", "i64", "number", "i64",
+            "number"], [ctx.handle, xView.viewPtr, bgView ? bgView.viewPtr : 0, groupPtr, BigInt(nGroups),
+            BASELINE_CODES[baseline], absentPtr, BigInt(absentGroups.length), outPtr, BigInt(capacity),
+            countPtr]), ctx.handle);
+        call(0, 0);
+        const rows = readI64(countPtr);
+        const outPtr = arena.alloc(rows * X.cols * 8);
+        call(outPtr, rows);
+        return { data: readF64(outPtr, rows * X.cols), rows, cols: X.cols };
+    }
+    finally {
+        bgView?.free();
+        xView?.free();
+        arena.free();
+        ctx?.destroy();
+    }
+}
+const AGGREGATION_CODES = {
+    sum: 0, mean: 1, sum_abs: 2, mean_abs: 3, max_abs: 4,
+};
+/** Native importance profile of a fitted estimator on rows of its input space
+ *  (VIP, target-projection selectivity ratio, standardized coefficients). */
+export function modelImportance(est, X, options) {
+    return est.modelImportance(X, options);
+}
+/** Aggregates a per-feature profile (no NaN; +-inf kept) over a feature grouping. */
+export function aggregateProfile(values, grouping, rule) {
+    if (!(values instanceof Float64Array) || values.length < 1) {
+        throw new Error("values must be a non-empty Float64Array");
+    }
+    const code = AGGREGATION_CODES[rule];
+    if (code === undefined)
+        throw new Error(`unknown profile aggregation ${String(rule)}`);
+    const nGroups = checkGrouping(grouping, values.length);
+    const m = getModule();
+    const arena = new Arena();
+    let ctx = null;
+    try {
+        ctx = Context.create();
+        const valuesPtr = arena.f64(values);
+        const groupPtr = arena.int64(grouping.featureGroup);
+        const outPtr = arena.alloc(nGroups * 8);
+        checkStatus(m.ccall("n4m_explain_aggregate_profile_v1", "number", ["number", "number", "i64", "number", "i64", "number", "number", "i64"], [ctx.handle, valuesPtr, BigInt(values.length), groupPtr, BigInt(nGroups), code, outPtr,
+            BigInt(nGroups)]), ctx.handle);
+        return readF64(outPtr, nGroups);
+    }
+    finally {
+        arena.free();
+        ctx?.destroy();
+    }
+}
+/**
+ * Pairwise agreement of m profiles (rows of an m x G matrix, G >= 2, no NaN):
+ * Spearman correlation of average ranks (equals scipy.stats.spearmanr; NaN for
+ * a constant profile) and the Jaccard overlap of the top-K entries by |value|
+ * (lowest index on ties; default K = 10).
+ */
+export function compareProfiles(profiles, options = {}) {
+    checkMatrix("profiles", profiles);
+    const topK = options.topK ?? 10;
+    if (!Number.isSafeInteger(topK) || topK < 1)
+        throw new Error("topK must be a positive integer");
+    const n = profiles.rows;
+    const m = getModule();
+    const arena = new Arena();
+    let ctx = null;
+    let view = null;
+    try {
+        ctx = Context.create();
+        view = makeMatrixView(profiles.data, profiles.rows, profiles.cols);
+        const rhoPtr = arena.alloc(n * n * 8), jacPtr = arena.alloc(n * n * 8);
+        checkStatus(m.ccall("n4m_explain_compare_profiles_v1", "number", ["number", "number", "i64", "number", "i64", "number", "i64"], [ctx.handle, view.viewPtr, BigInt(topK), rhoPtr, BigInt(n * n), jacPtr, BigInt(n * n)]), ctx.handle);
+        return {
+            spearman: { data: readF64(rhoPtr, n * n), rows: n, cols: n },
+            topKJaccard: { data: readF64(jacPtr, n * n), rows: n, cols: n },
+        };
+    }
+    finally {
+        view?.free();
+        arena.free();
+        ctx?.destroy();
     }
 }

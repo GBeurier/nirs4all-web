@@ -8,7 +8,7 @@ export { Model, fitPls, predictPls, fitModel, predictModel, fitAom, fitAomChain,
 export { ppCreate, ppFit, ppTransform, ppGetState, ppSetState, ppDestroy, type PpOperator, } from "./preprocessing.js";
 export { MethodResult } from "./methodResult.js";
 export { NativeModel, type ComponentResolution } from "./nativeModel.js";
-export { NativeEstimator, NativeMethod, NativeProcedure, manifest, methodClass, type Augmenter, type Classifier, type FitInputs, type Fold, type ParamType, type ParamValue, type ProbabilisticClassifier, type Procedure, type ProcedureOutput, type Regressor, type SampleFilter, type Selector, type Splitter, type TargetMixingAugmenter, type Transformer } from "./estimatorRoles.js";
+export { NativeEstimator, NativeMethod, NativeProcedure, manifest, methodClass, type AffineCoefficients, type LatentStructure, type ModelImportanceKind, type ModelImportanceOptions, type Augmenter, type Classifier, type FitInputs, type Fold, type ParamType, type ParamValue, type ProbabilisticClassifier, type Procedure, type ProcedureOutput, type Regressor, type SampleFilter, type Selector, type Splitter, type TargetMixingAugmenter, type Transformer } from "./estimatorRoles.js";
 export * from "./estimatorRolesGenerated.js";
 export { RolePipeline, type ClassLabel, type PipelineRole, type RolePipelineState, type RolePipelineStepInfo, type RoleStep } from "./rolePipeline.js";
 export { MultimodalPipeline, MultimodalClassifierPipeline, type MultimodalClassLabel, type MultimodalRecipe, type MultimodalSourceSchema, type MultimodalSourceSchemas, type MultimodalBlocks, type RawTensor } from "./multimodalPipeline.js";
@@ -24,4 +24,4 @@ export declare function version(): string;
 export declare function abiVersion(): readonly [number, number, number];
 export { rank, type RankingMethod, type RankingOptions, type RankingCandidate, type RankingResult } from "./ranking.js";
 export { mixedEffects, fanova, normalizeLoss, type MixedEffectsOptions, type MixedEffectsResult, type FanovaOptions, type FanovaResult } from "./componentAnalysis.js";
-export { explainModel, linearShap, treeShap, groupsFixedWidth, groupsFromRanges, summarizeAttributions, type ExplainMethod, type ExplainBaseline, type AttributionKind, type ExplainOptions, type PredictBatch, type FeatureGrouping, type ExplainModelInput, type AttributionResult, type FlatTreeEnsemble } from "./explain.js";
+export { explainModel, linearShap, treeShap, groupsFixedWidth, groupsFromRanges, summarizeAttributions, perturbRows, modelImportance, aggregateProfile, compareProfiles, type ProfileAggregation, type ExplainMethod, type ExplainBaseline, type AttributionKind, type ExplainOptions, type PredictBatch, type FeatureGrouping, type ExplainModelInput, type AttributionResult, type FlatTreeEnsemble } from "./explain.js";

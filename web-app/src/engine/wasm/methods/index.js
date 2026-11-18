@@ -47,4 +47,4 @@ export function abiVersion() {
 }
 export { rank } from "./ranking.js";
 export { mixedEffects, fanova, normalizeLoss } from "./componentAnalysis.js";
-export { explainModel, linearShap, treeShap, groupsFixedWidth, groupsFromRanges, summarizeAttributions } from "./explain.js";
+export { explainModel, linearShap, treeShap, groupsFixedWidth, groupsFromRanges, summarizeAttributions, perturbRows, modelImportance, aggregateProfile, compareProfiles } from "./explain.js";

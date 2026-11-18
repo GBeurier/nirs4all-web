@@ -1,5 +1,6 @@
 import { type Matrix } from "./types.js";
-export type ExplainMethod = "exact_shap" | "permutation_shap" | "kernel_shap" | "lime" | "occlusion";
+import type { ModelImportanceOptions, NativeEstimator } from "./estimatorRoles.js";
+export type ExplainMethod = "exact_shap" | "permutation_shap" | "kernel_shap" | "lime" | "occlusion" | "gradient";
 export type ExplainBaseline = "background" | "mean" | "interpolate";
 export type AttributionKind = ExplainMethod | "linear_shap" | "tree_shap";
 export interface ExplainOptions {
@@ -19,6 +20,8 @@ export interface ExplainOptions {
     maxBatchRows?: number;
     /** Sampling seed: a nonnegative integer < 2^53 (default 0). */
     seed?: number;
+    /** "gradient" only: relative central-difference step, h_j = gradientStep * s_j (default 1e-3). */
+    gradientStep?: number;
 }
 /** rows: row-major nRows x nFeatures in the explained feature space.
  *  Returns nRows x nOutputs row-major predictions. */
@@ -74,6 +77,12 @@ export interface AttributionResult {
         version: string;
         abi: string;
     };
+    /** "gradient" only: per-row gradients [row][feature][output]. */
+    gradients?: Float64Array;
+    /** "gradient" only: mean over the explained rows of the gradients, [feature][output]. */
+    meanGradient?: Float64Array;
+    /** "gradient" only: absolute finite-difference step of each feature. */
+    gradientSteps?: Float64Array;
 }
 export interface FlatTreeEnsemble {
     /** nTrees + 1 offsets; tree t owns nodes [treeOffsets[t], treeOffsets[t+1]). */
@@ -117,8 +126,43 @@ export declare function groupsFixedWidth(nFeatures: number, width: number): Feat
 /** Partition from half-open [start, end) feature-index ranges. Range r becomes
  *  group r; every maximal uncovered run becomes one further group. */
 export declare function groupsFromRanges(nFeatures: number, ranges: ReadonlyArray<readonly [number, number]>): FeatureGrouping;
-/** Per-group mean |attribution| and mean signed attribution over rows. */
+/** Per-group mean |attribution| and mean signed attribution over rows; with
+ *  a stdError (permutation SHAP), the Monte-Carlo standard error of the mean
+ *  signed attribution sqrt(sum_r se_rg^2) / nRows, else null. */
 export declare function summarizeAttributions(result: AttributionResult, outputIndex?: number): {
     meanAbs: Float64Array;
     meanSigned: Float64Array;
+    meanSignedStdError: Float64Array | null;
+};
+/**
+ * The rows an explanation session sends to the model for one coalition:
+ * every row of X with the features of `absentGroups` filled by the baseline
+ * (the session's own native filling code). "background" returns
+ * X.rows * background.rows rows (row i, background row b at i * nBackground + b);
+ * "mean" and "interpolate" one row per row of X.
+ */
+export declare function perturbRows(input: {
+    X: Matrix;
+    background?: Matrix;
+    grouping: FeatureGrouping;
+    absentGroups: number[];
+    baseline: ExplainBaseline;
+}): Matrix;
+export type ProfileAggregation = "sum" | "mean" | "sum_abs" | "mean_abs" | "max_abs";
+/** Native importance profile of a fitted estimator on rows of its input space
+ *  (VIP, target-projection selectivity ratio, standardized coefficients). */
+export declare function modelImportance(est: NativeEstimator, X: Matrix, options: ModelImportanceOptions): Float64Array;
+/** Aggregates a per-feature profile (no NaN; +-inf kept) over a feature grouping. */
+export declare function aggregateProfile(values: Float64Array, grouping: FeatureGrouping, rule: ProfileAggregation): Float64Array;
+/**
+ * Pairwise agreement of m profiles (rows of an m x G matrix, G >= 2, no NaN):
+ * Spearman correlation of average ranks (equals scipy.stats.spearmanr; NaN for
+ * a constant profile) and the Jaccard overlap of the top-K entries by |value|
+ * (lowest index on ties; default K = 10).
+ */
+export declare function compareProfiles(profiles: Matrix, options?: {
+    topK?: number;
+}): {
+    spearman: Matrix;
+    topKJaccard: Matrix;
 };
