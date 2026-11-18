@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react'
+import { useId, type ReactNode } from 'react'
+import spectra from './spectra.json'
 
 /**
  * Conceptual SVG diagrams for the training slides, drawn in the nirs4all
@@ -17,16 +18,90 @@ export type LevelKind = keyof typeof LEVEL_COLORS
 const FONT = 'var(--font)'
 const MONO = 'var(--mono)'
 
-/** Deterministic pseudo-spectrum path inside a box (purely decorative motif). */
-function spectrumPath(x: number, y: number, w: number, h: number, seed: number): string {
-  const points: string[] = []
-  for (let i = 0; i <= 40; i++) {
-    const t = i / 40
-    const v = 0.55 * Math.exp(-((t - 0.25 - seed * 0.07) ** 2) / 0.006) + 0.8 * Math.exp(-((t - 0.62 + seed * 0.05) ** 2) / 0.012)
-      + 0.25 * Math.sin(t * 9 + seed) * 0.3 + 0.12
-    points.push(`${(x + t * w).toFixed(1)},${(y + h - v * h * 0.85).toFixed(1)}`)
+/** Spectra shown in the motifs: real NIR spectra and band-based Raman/MIR profiles (see spectra.json). */
+const SPECTRA = spectra as unknown as Record<'nirs' | 'raman' | 'mir', { axis: [number, number]; unit: string; spectra: number[][] }>
+
+/** Path of one display spectrum scaled into a box. */
+export function spectrumPath(kind: SourceKind, x: number, y: number, w: number, h: number, index = 0): string {
+  const set = SPECTRA[kind === 'raman' || kind === 'mir' ? kind : 'nirs']
+  const values = set.spectra[index % set.spectra.length]
+  return `M${values.map((v, i) => `${(x + (i / (values.length - 1)) * w).toFixed(1)},${(y + h - v * h).toFixed(1)}`).join('L')}`
+}
+
+/** A few overlaid spectra of one source, like an instrument overview plot. */
+function SpectraMotif({ kind, x, y, w, h, count = 4 }: { kind: SourceKind; x: number; y: number; w: number; h: number; count?: number }) {
+  const color = SOURCE_COLORS[kind]
+  return (
+    <g>
+      {Array.from({ length: count }, (_, i) => (
+        <path key={i} d={spectrumPath(kind, x, y, w, h, i)} fill="none" stroke={color} strokeWidth={1.5} strokeLinejoin="round" opacity={0.95 - i * 0.16} />
+      ))}
+    </g>
+  )
+}
+
+/** Genotype dosage table (0 / 1 / 2) as a small heat map with the digits. */
+function MarkerMotif({ x, y, w, h, seed = 1 }: { x: number; y: number; w: number; h: number; seed?: number }) {
+  const cols = Math.max(3, Math.round(w / 22)), rows = Math.max(3, Math.round(h / 20))
+  const cw = w / cols, ch = h / rows
+  const shades = ['#dcfce7', '#4ade80', '#15803d']
+  const cells: ReactNode[] = []
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const hash = Math.imul(r + 1, 73856093) ^ Math.imul(c + 1, 19349663) ^ Math.imul(seed, 83492791)
+    const v = ((hash >>> 7) % 7) < 3 ? 0 : ((hash >>> 7) % 7) < 6 ? 1 : 2
+    cells.push(<g key={`${r}-${c}`}>
+      <rect x={x + c * cw + 0.8} y={y + r * ch + 0.8} width={cw - 1.6} height={ch - 1.6} rx={2} fill={shades[v]} />
+      {ch > 13 ? <text x={x + c * cw + cw / 2} y={y + r * ch + ch / 2 + 4} textAnchor="middle" fontFamily={MONO} fontSize={Math.min(12, ch * 0.6)} fontWeight={700} fill={v === 2 ? '#fff' : '#14532d'}>{v}</text> : null}
+    </g>)
   }
-  return `M${points.join('L')}`
+  return <g>{cells}</g>
+}
+
+/** A seed photographed on a dark tray: gradient body, crease and fine texture. */
+function GrainMotif({ x, y, w, h, seed = 1 }: { x: number; y: number; w: number; h: number; seed?: number }) {
+  const id = `grain-${useId().replace(/:/g, '')}`
+  // Keep a natural kernel shape whatever the box proportions.
+  const size = Math.min(w, h), cx = x + w / 2, cy = y + h / 2, rx = size * 0.3, ry = size * 0.43
+  const tilt = (seed % 3 - 1) * 14
+  return (
+    <g>
+      <defs>
+        <radialGradient id={`${id}-body`} cx="38%" cy="32%" r="75%">
+          <stop offset="0%" stopColor="#f3d9a4" /><stop offset="45%" stopColor="#d9a55b" /><stop offset="85%" stopColor="#9a6326" /><stop offset="100%" stopColor="#5c3a14" />
+        </radialGradient>
+        <filter id={`${id}-tex`} x="-10%" y="-10%" width="120%" height="120%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves={2} seed={seed} />
+          <feColorMatrix values="0 0 0 0 0.35  0 0 0 0 0.22  0 0 0 0 0.08  0 0 0 0.35 0" />
+          <feComposite in2="SourceGraphic" operator="in" />
+        </filter>
+        <clipPath id={`${id}-clip`}><rect x={x} y={y} width={w} height={h} rx={6} /></clipPath>
+      </defs>
+      <g clipPath={`url(#${id}-clip)`}>
+        <rect x={x} y={y} width={w} height={h} fill="#1f2937" />
+        <g transform={`rotate(${tilt} ${cx} ${cy})`}>
+          <ellipse cx={cx + 2} cy={cy + 3} rx={rx} ry={ry} fill="#000" opacity={0.35} />
+          <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill={`url(#${id}-body)`} />
+          <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="#fff" filter={`url(#${id}-tex)`} />
+          <path d={`M${cx} ${cy - ry * 0.85} C ${cx - rx * 0.18} ${cy - ry * 0.3}, ${cx + rx * 0.15} ${cy + ry * 0.3}, ${cx} ${cy + ry * 0.85}`} fill="none" stroke="#6b4218" strokeWidth={1.6} opacity={0.75} />
+          <ellipse cx={cx - rx * 0.35} cy={cy - ry * 0.45} rx={rx * 0.22} ry={ry * 0.12} fill="#fff" opacity={0.35} />
+        </g>
+      </g>
+    </g>
+  )
+}
+
+/** Compact embedding vector: a few signed values as a diverging colour strip. */
+function ScoresMotif({ x, y, w, h, kind, seed = 1 }: { x: number; y: number; w: number; h: number; kind: SourceKind; seed?: number }) {
+  const n = Math.max(3, Math.round(h / 12))
+  const color = SOURCE_COLORS[kind]
+  return (
+    <g>
+      {Array.from({ length: n }, (_, i) => {
+        const v = Math.sin(i * 1.7 + seed * 2.3)
+        return <rect key={i} x={x + 3} y={y + 3 + i * (h - 6) / n} width={(w - 6) * (0.25 + 0.75 * Math.abs(v))} height={(h - 6) / n - 2} rx={2} fill={color} opacity={0.35 + 0.6 * Math.abs(v)} />
+      })}
+    </g>
+  )
 }
 
 interface BlockProps { x: number; y: number; w: number; h: number; kind: SourceKind; label?: string; sub?: string; motif?: 'spectrum' | 'table' | 'image' | 'scores' | 'none'; seed?: number; faded?: boolean }
@@ -34,28 +109,17 @@ interface BlockProps { x: number; y: number; w: number; h: number; kind: SourceK
 /** One source block: a matrix of samples × variables, with a motif telling what it holds. */
 export function Block({ x, y, w, h, kind, label, sub, motif = 'spectrum', seed = 1, faded }: BlockProps) {
   const color = SOURCE_COLORS[kind]
-  const inner: ReactNode[] = []
-  if (motif === 'spectrum') {
-    for (let r = 0; r < 3; r++) inner.push(<path key={r} d={spectrumPath(x + 6, y + 8 + r * (h - 16) / 3, w - 12, (h - 16) / 3, seed + r * 0.6)} fill="none" stroke={color} strokeWidth={1.6} opacity={0.85 - r * 0.2} />)
-  } else if (motif === 'table' || motif === 'scores') {
-    const cols = motif === 'scores' ? 3 : 6, rows = 5
-    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-      inner.push(<rect key={`${r}-${c}`} x={x + 6 + c * (w - 12) / cols + 1} y={y + 6 + r * (h - 12) / rows + 1} width={(w - 12) / cols - 3} height={(h - 12) / rows - 3}
-        rx={2} fill={color} opacity={0.12 + ((r * 7 + c * 3 + seed) % 5) * 0.12} />)
-    }
-  } else if (motif === 'image') {
-    const n = 6, size = Math.min(w, h) - 14
-    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
-      const d = Math.hypot(r - 2.3, c - 3) / 4
-      inner.push(<rect key={`${r}-${c}`} x={x + (w - size) / 2 + c * size / n} y={y + (h - size) / 2 + r * size / n} width={size / n} height={size / n} fill={color} opacity={Math.max(0.08, 0.85 - d)} />)
-    }
-  }
+  const pad = 6
+  const inner = motif === 'spectrum' ? <SpectraMotif kind={kind} x={x + pad} y={y + pad + 2} w={w - 2 * pad} h={h - 2 * pad - 4} count={h > 90 ? 5 : 3} />
+    : motif === 'table' ? <MarkerMotif x={x + pad} y={y + pad} w={w - 2 * pad} h={h - 2 * pad} seed={seed} />
+    : motif === 'image' ? <GrainMotif x={x + 3} y={y + 3} w={w - 6} h={h - 6} seed={seed} />
+    : motif === 'scores' ? <ScoresMotif x={x} y={y} w={w} h={h} kind={kind} seed={seed} /> : null
   return (
     <g opacity={faded ? 0.35 : 1}>
-      <rect x={x} y={y} width={w} height={h} rx={8} fill="#fff" stroke={color} strokeWidth={2} />
+      <rect x={x} y={y} width={w} height={h} rx={8} fill={motif === 'image' ? '#1f2937' : `color-mix(in srgb, ${color} 5%, white)`} stroke={color} strokeWidth={2.2} />
       {inner}
-      {label ? <text x={x + w / 2} y={y - 10} textAnchor="middle" fontFamily={FONT} fontWeight={700} fontSize={17} fill={color}>{label}</text> : null}
-      {sub ? <text x={x + w / 2} y={y + h + 20} textAnchor="middle" fontFamily={MONO} fontSize={12.5} fill="var(--text-3)">{sub}</text> : null}
+      {label ? <text x={x + w / 2} y={y - 10} textAnchor="middle" fontFamily={FONT} fontWeight={800} fontSize={18} fill={color}>{label}</text> : null}
+      {sub ? <text x={x + w / 2} y={y + h + 20} textAnchor="middle" fontFamily={MONO} fontSize={13} fill="var(--text-2)">{sub}</text> : null}
     </g>
   )
 }
@@ -115,10 +179,9 @@ export function SampleViewsDiagram() {
   return (
     <svg viewBox="0 0 1000 430" role="img" aria-label="One sample measured by four instruments, used to predict one property">
       <g>
-        <ellipse cx={120} cy={215} rx={72} ry={72} fill="var(--paper-2)" stroke="var(--border-warm)" strokeWidth={2} />
-        <path d="M86 240 q34 -70 68 0 z" fill="#d6b77a" opacity={0.8} />
-        <circle cx={104} cy={196} r={9} fill="#b08a4a" opacity={0.75} /><circle cx={134} cy={190} r={7} fill="#b08a4a" opacity={0.65} />
-        <Caption x={120} y={312} weight={700} color="var(--text)">One sample</Caption>
+        <GrainMotif x={52} y={150} w={136} h={130} seed={2} />
+        <rect x={52} y={150} width={136} height={130} rx={8} fill="none" stroke="var(--border-warm)" strokeWidth={2} />
+        <Caption x={120} y={308} weight={800} color="var(--text)" size={16}>One sample</Caption>
       </g>
       {rows.map((row, index) => {
         const y = 22 + index * 102
@@ -183,7 +246,7 @@ export function AlignmentDiagram() {
         <g key={id}>
           <rect x={90} y={50 + index * 62} width={200} height={48} rx={8} fill="#fff" stroke={SOURCE_COLORS.nirs} strokeWidth={1.6} />
           <text x={108} y={80 + index * 62} fontFamily={MONO} fontSize={15} fill="var(--text)">{id}</text>
-          <path d={spectrumPath(185, 58 + index * 62, 95, 32, index)} fill="none" stroke={SOURCE_COLORS.nirs} strokeWidth={1.5} />
+          <path d={spectrumPath('nirs', 185, 58 + index * 62, 95, 32, index)} fill="none" stroke={SOURCE_COLORS.nirs} strokeWidth={1.5} />
         </g>
       ))}
       {right.map((id, index) => (

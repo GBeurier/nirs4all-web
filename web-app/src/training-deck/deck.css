@@ -24,7 +24,7 @@ html, body { background: #e9e4d8; color: var(--text); font-family: var(--font); 
 .deck-body { min-height: 0; display: flex; flex-direction: column; gap: 14px; font-size: 25px; line-height: 1.38; }
 .deck-body svg { width: 100%; height: auto; display: block; }
 .deck-body > svg { max-height: 400px; }
-.deck-body > svg:has(+ .deck-split--rack) { max-height: 330px; }
+.deck-body > svg:has(+ .deck-rack) { max-height: 340px; flex: 0 0 auto; }
 .deck-foot { display: flex; justify-content: space-between; font: 500 14px var(--mono); color: var(--text-3); padding-top: 8px; }
 
 .deck-title { margin: auto 0; display: grid; gap: 22px; }
@@ -127,3 +127,22 @@ kbd { font: 700 .8em var(--mono); padding: 1px 8px; border-radius: 6px; border: 
 @page { size: 1600px 900px; margin: 0; }
 .deck-print[data-notes] .deck-print-page { break-after: page; }
 @media print { .deck-nav { display: none; } html, body { background: #fff; } }
+
+/* Concept slides: diagram, full-width pipeline, one pro/con line. */
+.deck-body > .deck-rack { flex: 0 0 250px; height: 250px !important; }
+.deck-proscons { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.deck-proscons p { margin: 0; display: flex; align-items: center; gap: 14px; padding: 12px 18px; border-radius: var(--radius-sm); font: 650 22px var(--font); }
+.deck-proscons span { flex: 0 0 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: #fff; font: 800 22px var(--font); }
+.deck-proscons [data-kind="pro"] { background: #ecfdf5; color: #065f46; border: 1.5px solid #6ee7b7; }
+.deck-proscons [data-kind="pro"] span { background: #059669; }
+.deck-proscons [data-kind="con"] { background: #fff7ed; color: #9a3412; border: 1.5px solid #fdba74; }
+.deck-proscons [data-kind="con"] span { background: #ea580c; }
+.deck-big { font: 700 34px/1.25 var(--display); margin: 0 0 24px; }
+/* Stronger contrast. */
+.deck-section { color: var(--teal-d); }
+.deck-heading-tag .deck-tag { background: var(--tag); color: #fff; border-color: var(--tag); }
+.deck-heading-tag .deck-tag::before { background: #fff; }
+.deck-columns h3 { color: var(--text); border-left: 5px solid var(--teal); padding-left: 12px; }
+.deck-columns p { color: var(--text-2); }
+.deck-steps { font-size: 27px; gap: 16px; }
+.deck-split--chart .deck-points { gap: 22px; }
