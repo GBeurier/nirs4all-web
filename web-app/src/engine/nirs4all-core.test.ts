@@ -271,9 +271,9 @@ describe('nirs4all-core aggregate loaders', () => {
     })
     expect(provenance.source.repository).toBe('https://github.com/GBeurier/dag-ml')
     expect(pin).not.toHaveProperty('local')
-    expect(pin.version).toBe('0.4.3')
-    expect(provenance.source.commit).toBe('d796152c148db3bb3f4398f818e1083f5e3aa816')
-    expect(provenance.acquisition.tarball_url).toBe('https://registry.npmjs.org/dag-ml-wasm/-/dag-ml-wasm-0.4.3.tgz')
+    expect(pin.version).toBe('0.4.4')
+    expect(provenance.source.commit).toBe('a87d0f0b1d8d0b62f853c28fbd06f718c6885089')
+    expect(provenance.acquisition.tarball_url).toBe('https://registry.npmjs.org/dag-ml-wasm/-/dag-ml-wasm-0.4.4.tgz')
     for (const [name, fact] of Object.entries(pin.files) as Array<[string, { size: number; sha256: string }]>) {
       const bytes = readFileSync(new URL(`./wasm/dagml/${name}`, import.meta.url))
       expect(bytes.length, name).toBe(fact.size)
