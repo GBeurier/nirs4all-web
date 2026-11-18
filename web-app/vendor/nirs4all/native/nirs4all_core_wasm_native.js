@@ -105,25 +105,6 @@ export class N4aContainerHandle {
         return v1;
     }
     /**
-     * The exact bytes of one inventoried member, or `undefined`.
-     * @param {string} path
-     * @returns {Uint8Array | undefined}
-     */
-    member(path) {
-        const ptr0 = passStringToWasm0(path, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-        const len0 = WASM_VECTOR_LEN;
-        const ret = wasm.n4acontainerhandle_member(this.__wbg_ptr, ptr0, len0);
-        if (ret[3]) {
-            throw takeFromExternrefTable0(ret[2]);
-        }
-        let v2;
-        if (ret[0] !== 0) {
-            v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
-            wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
-        }
-        return v2;
-    }
-    /**
      * `length` bytes of a member from `offset`, or `undefined` for an unknown
      * member. The bytes were validated when the container was opened.
      * @param {string} path
@@ -135,6 +116,25 @@ export class N4aContainerHandle {
         const ptr0 = passStringToWasm0(path, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len0 = WASM_VECTOR_LEN;
         const ret = wasm.n4acontainerhandle_member_chunk(this.__wbg_ptr, ptr0, len0, offset, length);
+        if (ret[3]) {
+            throw takeFromExternrefTable0(ret[2]);
+        }
+        let v2;
+        if (ret[0] !== 0) {
+            v2 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
+            wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+        }
+        return v2;
+    }
+    /**
+     * The exact bytes of one inventoried member, or `undefined`.
+     * @param {string} path
+     * @returns {Uint8Array | undefined}
+     */
+    member(path) {
+        const ptr0 = passStringToWasm0(path, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.n4acontainerhandle_member(this.__wbg_ptr, ptr0, len0);
         if (ret[3]) {
             throw takeFromExternrefTable0(ret[2]);
         }
