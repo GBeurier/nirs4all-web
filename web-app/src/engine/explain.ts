@@ -7,10 +7,12 @@ import type {
   AttributionResult,
   ExplainModelInput,
   FeatureGrouping,
+  Matrix,
 } from './wasm/methods/index.js'
 import { makeRtError, RtErrorException } from './rt'
 import type {
   ExplainAxis,
+  ExplainBaseline,
   ExplainGrouping,
   ExplainMethod,
   ExplainOptions,
@@ -20,9 +22,10 @@ import type {
   ExplanationGroup,
   ExplanationGroupSource,
   ExplanationV1,
+  ImportanceProfileV1,
 } from './types'
 
-export const EXPLAIN_METHODS: readonly ExplainMethod[] = ['permutation_shap', 'kernel_shap', 'exact_shap', 'lime', 'occlusion']
+export const EXPLAIN_METHODS: readonly ExplainMethod[] = ['permutation_shap', 'kernel_shap', 'exact_shap', 'lime', 'occlusion', 'gradient', 'linear_shap']
 export const EXPLAIN_DEFAULTS = {
   method: 'permutation_shap' as ExplainMethod,
   baseline: 'background' as const,
@@ -36,14 +39,23 @@ export const EXPLAIN_DEFAULTS = {
 }
 /** Exact group SHAP enumerates 2^G coalitions (native limit). */
 export const EXACT_SHAP_MAX_GROUPS = 16
-/** One group per feature is offered only for narrow inputs. */
 
 /** The Methods binding surface this adapter uses (CONTRACTS §1). */
 export interface ExplainBinding {
   explainModel(input: ExplainModelInput): Promise<AttributionResult>
   groupsFixedWidth(nFeatures: number, width: number): FeatureGrouping
   groupsFromRanges(nFeatures: number, ranges: ReadonlyArray<readonly [number, number]>): FeatureGrouping
-  summarizeAttributions(result: AttributionResult, outputIndex?: number): { meanAbs: Float64Array; meanSigned: Float64Array }
+  summarizeAttributions(result: AttributionResult, outputIndex?: number): { meanAbs: Float64Array; meanSigned: Float64Array; meanSignedStdError?: Float64Array | null }
+  /** Exact interventional SHAP of an affine model (raw-space coefficients). */
+  linearShap(input: { X: Matrix; coefficients: Matrix; intercept?: Float64Array; reference: Float64Array; grouping?: FeatureGrouping }): AttributionResult
+  /** The rows the session sends to the model for one coalition (baseline preview, references). */
+  perturbRows(input: { X: Matrix; background?: Matrix; grouping: FeatureGrouping; absentGroups: number[]; baseline: ExplainBaseline }): Matrix
+}
+
+/** Raw-input affine map of the complete pipeline (Methods `RolePipeline.inputAffineCoefficients`). */
+export interface RawAffineMap {
+  coefficients: Matrix
+  intercept: Float64Array
 }
 
 /** Row-major prediction matrix of the complete pipeline (rows x outputs). */
@@ -114,6 +126,9 @@ export function validateExplainRequest(req: ExplainRequest): ResolvedExplainSett
   if (!EXPLAIN_METHODS.includes(method)) invalid(`Unknown explain method "${String(method)}".`)
   const baseline = req.baseline ?? EXPLAIN_DEFAULTS.baseline
   if (!['background', 'interpolate', 'mean'].includes(baseline)) invalid(`Unknown baseline "${String(baseline)}".`)
+  if ((method === 'gradient' || method === 'linear_shap') && req.background.nRows < 1) {
+    invalid(`${method === 'gradient' ? 'Local gradient' : 'Linear SHAP'} attributions are measured from the background mean and need background rows.`, 'Load the training dataset or a prediction file.')
+  }
   if (baseline !== 'interpolate' && req.background.nRows < 1) {
     invalid(`The "${baseline}" baseline needs background rows.`, 'Load the training dataset or a prediction file, or use the "interpolate" baseline.')
   }
@@ -281,7 +296,7 @@ export interface EnvelopeContext {
   rowSource: ExplainRows['source']
   outputIndex: number
   outputLabel: string | null
-  summary: { meanAbs: Float64Array; meanSigned: Float64Array }
+  summary: { meanAbs: Float64Array; meanSigned: Float64Array; meanSignedStdError?: Float64Array | null }
   settings: Record<string, number | string | boolean | null>
 }
 
@@ -309,7 +324,12 @@ export function buildExplanationEnvelope(result: AttributionResult, ctx: Envelop
     prediction: nest2(result.predictions, nRows, nOutputs),
     additivity_max_abs_error: result.additivityMaxAbsError,
     settings: { ...result.settings, ...ctx.settings },
-    summary: { output_index: ctx.outputIndex, mean_abs: Array.from(ctx.summary.meanAbs), mean_signed: Array.from(ctx.summary.meanSigned) },
+    summary: {
+      output_index: ctx.outputIndex,
+      mean_abs: Array.from(ctx.summary.meanAbs),
+      mean_signed: Array.from(ctx.summary.meanSigned),
+      mean_signed_std_error: ctx.summary.meanSignedStdError ? Array.from(ctx.summary.meanSignedStdError) : null,
+    },
   }
 }
 
@@ -322,8 +342,9 @@ export async function runExplain(
   req: ExplainRequest,
   binding: ExplainBinding,
   predictMatrix: PredictMatrixFn,
-  opts: ExplainOptions = {},
+  opts: ExplainOptions & { rawAffine?: () => Promise<RawAffineMap> } = {},
 ): Promise<ExplainResponse> {
+  const started = Date.now()
   const s = validateExplainRequest(req)
   const p = req.nFeatures
   const axis = resolveExplainAxis(req.axis, p)
@@ -349,12 +370,17 @@ export async function runExplain(
   }
   const nExplained = explained.sourceIndices.length
   const nBackground = background.sourceIndices.length
-  const result = await binding.explainModel({
+  // Both reference-based local methods measure from the background mean (Methods `mean` fill).
+  const usesMeanReference = s.method === 'gradient' || s.method === 'linear_shap'
+  const baseline = usesMeanReference ? 'mean' : s.baseline
+  const result = s.method === 'linear_shap'
+    ? await linearShapOf(binding, opts.rawAffine, explained.X, nExplained, background.X, nBackground, p, grouping)
+    : await binding.explainModel({
     X: { data: explained.X, rows: nExplained, cols: p },
-    ...(nBackground > 0 && s.baseline !== 'interpolate' ? { background: { data: background.X, rows: nBackground, cols: p } } : {}),
+    ...(nBackground > 0 && baseline !== 'interpolate' ? { background: { data: background.X, rows: nBackground, cols: p } } : {}),
     grouping,
     predictBatch,
-    options: { method: s.method, baseline: s.baseline, nPermutations: s.nPermutations, seed: s.seed },
+    options: { method: s.method as Exclude<ExplainMethod, 'linear_shap'>, baseline, nPermutations: s.nPermutations, seed: s.seed },
     onProgress: opts.onProgress ? (done, total) => opts.onProgress?.({ done, total }) : undefined,
     signal: opts.signal,
   })
@@ -370,8 +396,8 @@ export async function runExplain(
     outputLabel: req.outputLabel ?? null,
     summary,
     settings: {
-      baseline: s.baseline,
-      n_background: s.baseline === 'interpolate' ? 0 : nBackground,
+      baseline,
+      n_background: baseline === 'interpolate' ? 0 : nBackground,
       background_source: req.background.source,
       n_permutations: s.nPermutations,
       seed: s.seed,
@@ -383,5 +409,59 @@ export async function runExplain(
       evaluations: result.evaluations,
     },
   })
-  return { envelope, explainedX: explained.X, evaluations: result.evaluations }
+  const gradient = (result as AttributionResult & { meanGradient?: Float64Array }).meanGradient
+  const profile = s.method === 'gradient' && gradient
+    ? meanGradientProfile(gradient, result, envelope, req, nExplained)
+    : undefined
+  return { envelope, explainedX: explained.X, evaluations: result.evaluations, ...(profile ? { profile } : {}), elapsedMs: Date.now() - started }
+}
+
+async function linearShapOf(
+  binding: ExplainBinding,
+  rawAffine: (() => Promise<RawAffineMap>) | undefined,
+  X: Float64Array, nRows: number, B: Float64Array, nBackground: number, p: number,
+  grouping: FeatureGrouping,
+): Promise<AttributionResult> {
+  if (!rawAffine) {
+    throw explainRefusal('Linear SHAP needs the raw-space coefficients of an affine native pipeline.', 'Use permutation SHAP or the local gradient explainer.', 'raw_affine_coefficients')
+  }
+  const affine = await rawAffine()
+  // The reference is the background column mean exactly as the session's `mean` fill builds it.
+  const ref = binding.perturbRows({
+    X: { data: X.subarray(0, p), rows: 1, cols: p },
+    background: { data: B, rows: nBackground, cols: p },
+    grouping,
+    absentGroups: Array.from({ length: grouping.nGroups }, (_, g) => g),
+    baseline: 'mean',
+  })
+  return binding.linearShap({
+    X: { data: X, rows: nRows, cols: p },
+    coefficients: affine.coefficients,
+    intercept: affine.intercept,
+    reference: Float64Array.from(ref.data.subarray(0, p)),
+    grouping,
+  })
+}
+
+/** Wrap the session's mean per-row gradient (raw space) as a global importance profile. */
+function meanGradientProfile(meanGradient: Float64Array, result: AttributionResult, env: ExplanationV1, req: ExplainRequest, nRows: number): ImportanceProfileV1 {
+  const q = result.nOutputs
+  const out = env.output.index
+  return {
+    schema: 'nirs4all.importance_profile.v1',
+    kind: 'mean_local_gradient',
+    scope: 'global',
+    space: 'raw_input',
+    exactness: 'local_mean',
+    signed: true,
+    component: null,
+    output: { index: out, label: env.output.label, space: 'target' },
+    axis: { ...env.axis },
+    values: Array.from({ length: result.nFeatures }, (_, j) => meanGradient[j * q + out]),
+    rows: { count: nRows, source: req.rows.source },
+    model: { method_id: req.model.dsl.model?.type ?? 'pipeline', n_components: null },
+    preprocessing: { steps: req.model.dsl.steps?.map((st) => st.type) ?? [], affine: false, column_aligned: false },
+    engine: { ...result.engine },
+    settings: { ...result.settings, reference: 'background_mean' },
+  }
 }

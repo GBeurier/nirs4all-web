@@ -53,6 +53,12 @@ function fakeBinding(): ExplainBinding & { inputs: ExplainModelInput[] } {
     inputs,
     groupsFixedWidth,
     groupsFromRanges,
+    linearShap: () => {
+      throw new Error('not used by these tests')
+    },
+    perturbRows: () => {
+      throw new Error('not used by these tests')
+    },
     summarizeAttributions: (r: AttributionResult, o = 0) => {
       const meanAbs = new Float64Array(r.nGroups)
       const meanSigned = new Float64Array(r.nGroups)

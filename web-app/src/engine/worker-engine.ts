@@ -7,6 +7,15 @@
 import { type RtError, RtErrorException } from './rt'
 import type { RtResultWire } from './rt-result'
 import type {
+  BaselinePreviewRequest,
+  BaselinePreviewResponse,
+  CompareProfilesRequest,
+  CompareProfilesResponse,
+  ExplainBatchOptions,
+  ExplainBatchRequest,
+  ExplainBatchResponse,
+  ImportanceRequest,
+  ImportanceResponse,
   Engine,
   ExplainOptions,
   ExplainProgress,
@@ -147,5 +156,22 @@ export class WorkerEngine implements Engine {
   /** Runs in the worker; Cancel terminates the worker like a cancelled run. */
   explain(request: ExplainRequest, opts: ExplainOptions = {}): Promise<ExplainResponse> {
     return this.call<ExplainResponse>({ type: 'explain', request }, opts)
+  }
+
+  /** One worker job for every selected method; Cancel terminates it like a run. */
+  explainBatch(request: ExplainBatchRequest, opts: ExplainBatchOptions = {}): Promise<ExplainBatchResponse> {
+    return this.call<ExplainBatchResponse>({ type: 'explain-batch', request }, opts)
+  }
+
+  importance(request: ImportanceRequest): Promise<ImportanceResponse> {
+    return this.call<ImportanceResponse>({ type: 'importance', request })
+  }
+
+  compareProfiles(request: CompareProfilesRequest): Promise<CompareProfilesResponse> {
+    return this.call<CompareProfilesResponse>({ type: 'compare-profiles', request })
+  }
+
+  baselinePreview(request: BaselinePreviewRequest): Promise<BaselinePreviewResponse> {
+    return this.call<BaselinePreviewResponse>({ type: 'baseline-preview', request })
   }
 }

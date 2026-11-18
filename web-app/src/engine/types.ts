@@ -607,6 +607,17 @@ export interface Engine {
    *  Refuses (typed RtError, verb `explain`) models whose predict path cannot score an
    *  arbitrary matrix in a continuous output space (e.g. hard class labels). */
   explain(request: ExplainRequest, opts?: ExplainOptions): Promise<ExplainResponse>;
+  /** Several explanations (and optionally the model-intrinsic profiles) in one engine
+   *  job: items run in order, each failure is reported per item, never aborting the
+   *  others. Progress carries the running item. */
+  explainBatch(request: ExplainBatchRequest, opts?: ExplainBatchOptions): Promise<ExplainBatchResponse>;
+  /** Model-intrinsic importance profiles (coefficients, VIP, selectivity ratio, latent
+   *  weights) in model-input and raw-input space, computed by Methods. */
+  importance(request: ImportanceRequest): Promise<ImportanceResponse>;
+  /** Aggregate profiles onto one grouping and compare them (Spearman, top-K overlap). */
+  compareProfiles(request: CompareProfilesRequest): Promise<CompareProfilesResponse>;
+  /** The perturbed rows the explainer sends to the model for one coalition (baseline preview). */
+  baselinePreview(request: BaselinePreviewRequest): Promise<BaselinePreviewResponse>;
 }
 
 // ---------------------------------------------------------------------------
@@ -615,7 +626,9 @@ export interface Engine {
 // Numerics are owned by the Methods explain session (`explainModel`); the web
 // engine only feeds it the existing predict dispatch and wraps its result in the
 // `nirs4all.explanation.v1` envelope.
-export type ExplainMethod = 'permutation_shap' | 'kernel_shap' | 'exact_shap' | 'lime' | 'occlusion';
+/** `linear_shap` is exact for an affine pipeline (raw-space coefficients from Methods);
+ *  `gradient` is a first-order local attribution (central finite differences). */
+export type ExplainMethod = 'permutation_shap' | 'kernel_shap' | 'exact_shap' | 'lime' | 'occlusion' | 'gradient' | 'linear_shap';
 export type ExplainBaseline = 'background' | 'interpolate' | 'mean';
 /** An axis-unit range to explain as one group (e.g. a reference absorption band). */
 export interface ExplainAxisRange {
@@ -715,8 +728,9 @@ export interface ExplanationV1 {
   prediction: number[][];
   additivity_max_abs_error: number | null;
   settings: Record<string, number | string | boolean | null>;
-  /** per-group over explained rows, for `output_index` (Methods summarizeAttributions) */
-  summary: { output_index: number; mean_abs: number[]; mean_signed: number[] };
+  /** per-group over explained rows, for `output_index` (Methods summarizeAttributions);
+   *  `mean_signed_std_error` is the Monte-Carlo standard error of `mean_signed` (sampled methods) */
+  summary: { output_index: number; mean_abs: number[]; mean_signed: number[]; mean_signed_std_error?: number[] | null };
 }
 export interface ExplainResponse {
   envelope: ExplanationV1;
@@ -724,4 +738,140 @@ export interface ExplainResponse {
   explainedX: Float64Array;
   /** model rows evaluated by the explainer */
   evaluations: number;
+  /** `gradient` only: the mean local raw-space coefficient profile */
+  profile?: ImportanceProfileV1;
+  /** wall-clock milliseconds of the explanation (UI time estimates) */
+  elapsedMs?: number;
+}
+
+export interface ExplainBatchRequest {
+  /** explanations sharing rows/background/grouping, run in order */
+  explanations: ExplainRequest[];
+  /** model-intrinsic profiles, computed first when present */
+  importance?: ImportanceRequest | null;
+}
+export interface ExplainBatchProgress extends ExplainProgress {
+  /** index into `explanations` of the running item; -1 for the intrinsic profiles */
+  item: number;
+}
+export interface ExplainBatchOptions {
+  onProgress?: (p: ExplainBatchProgress) => void;
+  signal?: AbortSignal;
+}
+export type BatchItemResult<T> = { ok: true; result: T } | { ok: false; error: string; capability?: string };
+export interface ExplainBatchResponse {
+  importance: BatchItemResult<ImportanceResponse> | null;
+  explanations: BatchItemResult<ExplainResponse>[];
+}
+
+// ---------------------------------------------------------------------------
+// Model-intrinsic importances (`nirs4all.importance_profile.v1`)
+// ---------------------------------------------------------------------------
+export type ImportanceKind =
+  | 'regression_coefficients'
+  | 'standardized_coefficients'
+  | 'vip'
+  | 'selectivity_ratio'
+  | 'x_weights'
+  | 'x_loadings'
+  | 'mean_local_gradient';
+export type ImportanceSpace = 'model_input' | 'raw_input';
+/** A global importance profile (Methods docs/explain/importance_profile_v1.schema.json). */
+export interface ImportanceProfileV1 {
+  schema: 'nirs4all.importance_profile.v1';
+  kind: ImportanceKind;
+  scope: 'global';
+  space: ImportanceSpace;
+  /** `exact`: a property of the fitted model; `local_mean`: mean of per-row local gradients */
+  exactness: 'exact' | 'local_mean';
+  signed: boolean;
+  /** latent component (0-based) for x_weights / x_loadings */
+  component: number | null;
+  output: { index: number; label: string | null; space: 'target' };
+  axis: { values: number[]; unit: string | null; kind: 'wavelength' | 'wavenumber' | 'feature_index' | 'model_feature' };
+  values: number[];
+  /** rows the profile was computed on (VIP, SR, standardization, gradient) */
+  rows: { count: number; source: string } | null;
+  model: { method_id: string; n_components: number | null };
+  preprocessing: { steps: string[]; affine: boolean; column_aligned: boolean };
+  engine: { name: string; version: string; abi?: string };
+  settings: Record<string, number | string | boolean | null>;
+}
+export interface ImportanceRequest {
+  model: FittedPipeline;
+  nFeatures: number;
+  featureNames?: string[];
+  /** rows (raw input space) the model-space statistics use: normally the training partition */
+  statRows: ExplainRows;
+  outputIndex?: number;
+  outputLabel?: string;
+  axis?: ExplainAxis | null;
+  /** latent components to report weights/loadings for (default: all, at most 10) */
+  maxComponents?: number;
+}
+export interface ImportancePipelineStep {
+  type: string;
+  affine: boolean;
+  columnAligned: boolean;
+}
+export interface ImportanceRefusal {
+  kind: ImportanceKind | 'linear_shap';
+  space: ImportanceSpace;
+  reason: string;
+}
+export interface ImportanceResponse {
+  profiles: ImportanceProfileV1[];
+  pipeline: {
+    steps: ImportancePipelineStep[];
+    /** every transform is affine: raw-space coefficients are exact */
+    affine: boolean;
+    /** every transform keeps column j at spectral position j: model-space profiles share the raw axis */
+    columnAligned: boolean;
+    firstNonAffineStep: string | null;
+  };
+  /** what could not be computed, and why (shown to the user) */
+  refusals: ImportanceRefusal[];
+}
+
+/** One profile to compare: group values (an explanation summary on the shared grouping)
+ *  or feature values aggregated onto it by Methods with `rule`. */
+export interface CompareProfileInput {
+  id: string;
+  label: string;
+  resolution: 'group' | 'feature';
+  values: number[];
+  rule?: 'sum' | 'mean' | 'sum_abs' | 'mean_abs' | 'max_abs';
+}
+export interface CompareProfilesRequest {
+  nFeatures: number;
+  grouping: ExplainGrouping;
+  axis?: ExplainAxis | null;
+  profiles: CompareProfileInput[];
+  topK?: number;
+}
+export interface CompareProfilesResponse {
+  groups: ExplanationGroup[];
+  /** [profile][group], in request order */
+  aggregated: number[][];
+  spearman: (number | null)[][];
+  topKJaccard: (number | null)[][];
+  topK: number;
+}
+export interface BaselinePreviewRequest {
+  /** one raw row (nFeatures) */
+  row: Float64Array;
+  nFeatures: number;
+  background: ExplainRows;
+  maxBackground?: number;
+  seed?: number;
+  grouping: ExplainGrouping;
+  axis?: ExplainAxis | null;
+  absentGroups: number[];
+  baseline: ExplainBaseline;
+}
+export interface BaselinePreviewResponse {
+  groups: ExplanationGroup[];
+  /** row-major perturbed rows (one, or one per background row for `background`) */
+  rows: Float64Array;
+  nRows: number;
 }

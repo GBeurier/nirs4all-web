@@ -15,6 +15,9 @@ vi.mock('nirs4all-ui/viz', () => {
     WaterfallChart: stub('waterfall'),
     ShapBeeswarm: stub('beeswarm'),
     FeatureImportanceBar: stub('bar'),
+    AttributionHeatmap: stub('heatmap'),
+    ImportanceComparisonChart: stub('comparison'),
+    AgreementMatrix: stub('agreement'),
     referenceBandsForAxis: () => [],
   }
 })

@@ -18,7 +18,19 @@ import { isPortableCoreModel, portableCoreRefusal } from './portable-core'
 import { exportSingleHoldoutModel, isSingleHoldoutModel, openSingleHoldoutPredictor, predictSingleHoldout, tryRunSingleHoldout } from './single-holdout'
 import { withWasmRobustnessEvidencePublicationTrace } from './robustness-evidence'
 import { createRobustnessEvidencePublisherFromSidecar } from './robustness-evidence-sidecar'
-import { makeRtError, RtErrorException } from './rt'
+import { isRtErrorException, makeRtError, RtErrorException } from './rt'
+import { compareImportanceProfiles, computeImportance, previewBaseline, rawAffineCoefficients, type ImportanceBinding } from './importance'
+import type {
+  BaselinePreviewRequest,
+  BaselinePreviewResponse,
+  CompareProfilesRequest,
+  CompareProfilesResponse,
+  ExplainBatchOptions,
+  ExplainBatchRequest,
+  ExplainBatchResponse,
+  ImportanceRequest,
+  ImportanceResponse,
+} from './types'
 import type { Engine, ExplainOptions, ExplainRequest, ExplainResponse, ExportOptions, FittedPipeline, MaterializedDataset, PipelineDSL, PredictResult, RunOptions, RunResult } from './types'
 import { buildWebRuntimeProfile, type WebRuntimePolicy, type WebRuntimeProfile, webRuntimePolicy } from './web-profile'
 
@@ -173,7 +185,61 @@ export class MainEngine implements Engine {
       )
     }
     const { model, featureNames } = request
-    return runExplain(request, methods, this.explainPredictor(model, featureNames), opts)
+    return runExplain(request, methods, this.explainPredictor(model, featureNames), {
+      ...opts,
+      rawAffine: async () => rawAffineCoefficients(model, featureNames),
+    })
+  }
+
+  async explainBatch(request: ExplainBatchRequest, opts: ExplainBatchOptions = {}): Promise<ExplainBatchResponse> {
+    const fail = (e: unknown): { ok: false; error: string; capability?: string } => {
+      if (e instanceof DOMException && e.name === 'AbortError') throw e
+      const capability = isRtErrorException(e) ? e.rtError.unsupported_capability ?? undefined : undefined
+      return { ok: false, error: isRtErrorException(e) ? [e.rtError.message, e.rtError.mitigation].filter(Boolean).join(' ') : e instanceof Error ? e.message : String(e), ...(capability ? { capability } : {}) }
+    }
+    let importance: ExplainBatchResponse['importance'] = null
+    if (request.importance) {
+      opts.onProgress?.({ item: -1, done: 0, total: 1 })
+      try {
+        importance = { ok: true, result: await this.importance(request.importance) }
+      } catch (e) {
+        importance = fail(e)
+      }
+      opts.onProgress?.({ item: -1, done: 1, total: 1 })
+    }
+    const explanations: ExplainBatchResponse['explanations'] = []
+    for (const [item, req] of request.explanations.entries()) {
+      if (opts.signal?.aborted) throw new DOMException('Operation canceled.', 'AbortError')
+      try {
+        const result = await this.explain(req, { signal: opts.signal, onProgress: (p) => opts.onProgress?.({ ...p, item }) })
+        explanations.push({ ok: true, result })
+      } catch (e) {
+        explanations.push(fail(e))
+      }
+    }
+    return { importance, explanations }
+  }
+
+  async importance(request: ImportanceRequest): Promise<ImportanceResponse> {
+    return computeImportance(request, await this.importanceBinding())
+  }
+
+  async compareProfiles(request: CompareProfilesRequest): Promise<CompareProfilesResponse> {
+    return compareImportanceProfiles(request, await this.importanceBinding())
+  }
+
+  async baselinePreview(request: BaselinePreviewRequest): Promise<BaselinePreviewResponse> {
+    return previewBaseline(request, await this.importanceBinding())
+  }
+
+  private async importanceBinding(): Promise<ImportanceBinding> {
+    const methods = await loadMethodsWasm() as unknown as Partial<ImportanceBinding>
+    for (const key of ['modelImportance', 'aggregateProfile', 'compareProfiles', 'perturbRows', 'version'] as const) {
+      if (typeof methods[key] !== 'function') {
+        throw explainRefusal(`The staged Methods WASM does not expose ${key}.`, 'Restage a Methods build with the model-importance API (ABI 2.24).', 'methods_importance_api')
+      }
+    }
+    return methods as ImportanceBinding
   }
 
   /**

@@ -1,7 +1,7 @@
 // Engine Web Worker: hosts MainEngine off the main thread so heavy libn4m /
 // dag-ml WASM compute (notably the AOM operator screen on a large dataset) never
 // blocks the UI. The main thread talks to it through WorkerEngine (worker-engine.ts)
-// with a tiny request/response protocol: {run|predict|export|explain|cancel} in, {progress|
+// with a tiny request/response protocol: {run|predict|export|explain|explain-batch|importance|compare-profiles|baseline-preview|cancel} in, {progress|
 // result|error} out, correlated by job id. onProgress is relayed as messages and
 // AbortSignal is bridged to a per-job AbortController.
 /// <reference lib="webworker" />
@@ -34,8 +34,12 @@ interface RunMsg {
 interface PredictMsg { type: 'predict'; id: string; model: Parameters<MainEngine['predict']>[0]; Xnew: Float64Array; nSamples: number; nFeatures: number; featureNames?: string[] }
 interface ExportMsg { type: 'export'; id: string; model: Parameters<MainEngine['exportModel']>[0]; allowTrainingRows: boolean }
 interface ExplainMsg { type: 'explain'; id: string; request: Parameters<MainEngine['explain']>[0] }
+interface ExplainBatchMsg { type: 'explain-batch'; id: string; request: Parameters<MainEngine['explainBatch']>[0] }
+interface ImportanceMsg { type: 'importance'; id: string; request: Parameters<MainEngine['importance']>[0] }
+interface CompareMsg { type: 'compare-profiles'; id: string; request: Parameters<MainEngine['compareProfiles']>[0] }
+interface BaselinePreviewMsg { type: 'baseline-preview'; id: string; request: Parameters<MainEngine['baselinePreview']>[0] }
 interface CancelMsg { type: 'cancel'; id: string }
-type InMsg = RunMsg | PredictMsg | ExportMsg | ExplainMsg | CancelMsg | PreviewMsg
+type InMsg = RunMsg | PredictMsg | ExportMsg | ExplainMsg | ExplainBatchMsg | ImportanceMsg | CompareMsg | BaselinePreviewMsg | CancelMsg | PreviewMsg
 
 ctx.onmessage = (ev: MessageEvent<InMsg>) => {
   void handle(ev.data)
@@ -75,6 +79,18 @@ async function handle(msg: InMsg): Promise<void> {
         onProgress: (progress) => ctx.postMessage({ type: 'progress', id: msg.id, progress }),
       })
       ctx.postMessage({ type: 'result', id: msg.id, result })
+    } else if (msg.type === 'explain-batch') {
+      const result = await engine.explainBatch(msg.request, {
+        signal: ctrl.signal,
+        onProgress: (progress) => ctx.postMessage({ type: 'progress', id: msg.id, progress }),
+      })
+      ctx.postMessage({ type: 'result', id: msg.id, result })
+    } else if (msg.type === 'importance') {
+      ctx.postMessage({ type: 'result', id: msg.id, result: await engine.importance(msg.request) })
+    } else if (msg.type === 'compare-profiles') {
+      ctx.postMessage({ type: 'result', id: msg.id, result: await engine.compareProfiles(msg.request) })
+    } else if (msg.type === 'baseline-preview') {
+      ctx.postMessage({ type: 'result', id: msg.id, result: await engine.baselinePreview(msg.request) })
     } else if (msg.type === 'export') {
       const result = await engine.exportModel(msg.model, { allowTrainingRows: msg.allowTrainingRows })
       ctx.postMessage({ type: 'result', id: msg.id, result })
