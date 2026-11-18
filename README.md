@@ -27,23 +27,21 @@ artifacts.
 
 Open the [multimodal laboratory](https://web.nirs4all.org/nirs4all_multimodale/), or choose
 **Multimodal lab** in the Web toolbar. The three examples pair Raman/NIRS/MIR, NIRS/genetic
-markers, and NIRS/images. Each fusion preset loads an editable pipeline: connect source inputs,
-add or duplicate model branches, reorder source preprocessing, change each model and its
-parameters, and choose a fixed prediction mean or learned meta-model with optional source features.
-Early and intermediate fusion use several source inputs inside one model branch; late fusion
-combines independently trained model branches.
+markers, and NIRS/images. Fusion presets (single-source baselines, early, embedding,
+intermediate with MB-PLS or a multibranch network, late average and stacking) load canonical
+nirs4all pipelines into the shared rack editor: one lane per source, then a source merge, a
+multiblock model or a prediction merge. Edit lanes, steps and parameters on the canvas.
 
-**Run edited pipeline** executes that exact draft through the native owners in a worker. Completed
-drafts stay in the run history with their scores and fold fingerprints, and can be restored.
-Export/import JSON preserves the editable composition. The controlled Source → Role → Columns →
-Validation Dataset Builder accepts local files; all data and computation stay in the browser.
+**Run this pipeline** or **Run all presets** executes through the native owners in a worker.
+Every completed run of a dataset stays in the shared Inspector, ranked on cross-validated (OOF)
+scores with a common fold set. Pipelines export and import as canonical JSON. The controlled
+Source → Role → Columns → Validation Dataset Builder accepts local files; all data and
+computation stay in the browser.
 
-The practical workshop includes [PowerPoint](https://web.nirs4all.org/multimodal-training/nirs4all_multimodal_training.pptx),
-[PDF](https://web.nirs4all.org/multimodal-training/nirs4all_multimodal_training.pdf), and a
-[demo guide](https://web.nirs4all.org/multimodal-training/demo-guide.html). It explains the actual
-inputs and operations of early, intermediate and late fusion, then demonstrates concrete edits
-on the synthetic teaching datasets. The fixed 28-recipe comparison remains available under
-**Compare unedited presets**.
+The [training slides](https://web.nirs4all.org/multimodal-training/slides/) (also as
+[PDF](https://web.nirs4all.org/multimodal-training/nirs4all_multimodal_slides.pdf)) explain
+multimodal data and the four fusion levels, then follow three live demonstrations in the
+laboratory; see `web-app/docs/MULTIMODAL_TRAINING.md`.
 
 ## What Lives Here
 

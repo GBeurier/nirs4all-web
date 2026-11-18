@@ -35,7 +35,7 @@ export default defineConfig(({ mode }) => {
             source: `${JSON.stringify({
               version: packageJson.version,
               upstreams: Object.fromEntries(Object.entries(publicPackages).map(([key, pin]) => [key, pin.version])),
-              ui: '0.2.6',
+              ui: '0.2.7',
             }, null, 2)}\n`,
           })
           this.emitFile({
@@ -97,6 +97,7 @@ export default defineConfig(({ mode }) => {
           input: {
             workbench: path.resolve(__dirname, 'index.html'),
             multimodal: path.resolve(__dirname, 'nirs4all_multimodale/index.html'),
+            trainingSlides: path.resolve(__dirname, 'multimodal-training/slides/index.html'),
           },
         },
       } : {}),

@@ -1,0 +1,2033 @@
+{
+ "schema": "nirs4all.multimodal-training.evidence.v1",
+ "capturedAt": "2026-11-18",
+ "source": {
+  "web": "078908c9a91ded535782936ea676650e9e320ecf",
+  "ui": "787699446281d2a4a5a45cf73847b2cc3d90828e",
+  "build": "local served build of the multimodal laboratory (tests/multimodal-smoke.mjs and recorded browser edits)"
+ },
+ "note": "Native owner outputs (IO import, DAG-ML folds/merges, Methods models) from the browser worker. OOF = outer 3-fold cross-validation on the 96 calibration samples; test = the 24 declared held-out samples. No value is computed by the slides.",
+ "cases": {
+  "spectroscopy": {
+   "dataset": {
+    "name": "spectroscopy-complementary",
+    "fingerprint": "71af1786d816f7c8b84cfb5807dea4f4f0d70e9b89c995d369a96df8cb43ef97",
+    "samples": 120,
+    "target": {
+     "name": "target",
+     "unit": "a.u."
+    },
+    "sources": [
+     {
+      "id": "raman",
+      "label": "Raman",
+      "modality": "spectroscopy",
+      "representation": "signal_1d",
+      "shape": [
+       48
+      ],
+      "axis": {
+       "unit": "cm-1",
+       "kind": "raman_shift",
+       "first": 200,
+       "last": 1800,
+       "points": 48
+      }
+     },
+     {
+      "id": "nirs",
+      "label": "NIRS",
+      "modality": "spectroscopy",
+      "representation": "signal_1d",
+      "shape": [
+       64
+      ],
+      "axis": {
+       "unit": "nm",
+       "kind": "wavelength",
+       "first": 1000,
+       "last": 2300,
+       "points": 64
+      }
+     },
+     {
+      "id": "mir",
+      "label": "MIR",
+      "modality": "spectroscopy",
+      "representation": "signal_1d",
+      "shape": [
+       56
+      ],
+      "axis": {
+       "unit": "cm-1",
+       "kind": "wavenumber",
+       "first": 4000,
+       "last": 600,
+       "points": 56
+      }
+     }
+    ]
+   },
+   "ownerVersions": {
+    "dag": "0.4.3",
+    "methods": "1.3.18+abi.2.23.0",
+    "methodsAbi": "2.23.0",
+    "sourceProfile": "source_composition.v1"
+   },
+   "calibration": 96,
+   "holdout": 24,
+   "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+   "presets": [
+    {
+     "name": "Raman alone",
+     "level": "single",
+     "oofRmse": 0.12105514710675831,
+     "oofR2": 0.9715543487608989,
+     "testRmse": 0.15316358501294527,
+     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+     "recipeFingerprint": "b4c1833976b7748ec5c68691e5e275025be0fc2f90dd0f98a5ba5a31710e55d0",
+     "pipeline": [
+      {
+       "source_branch": {
+        "raman": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "model": {
+        "class": "models.pls.pls_regression",
+        "params": {
+         "n_components": 3,
+         "center_x": true,
+         "scale_x": false,
+         "center_y": true,
+         "scale_y": false
+        }
+       },
+       "name": "PLS"
+      }
+     ]
+    },
+    {
+     "name": "NIRS alone",
+     "level": "single",
+     "oofRmse": 0.5419376175161883,
+     "oofR2": 0.4299040485050367,
+     "testRmse": 0.5652345864186454,
+     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+     "recipeFingerprint": "01de9c661d30ab58f90b9f583deab0160712fdb70638b18f1c36d539d95ad167",
+     "pipeline": [
+      {
+       "source_branch": {
+        "nirs": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "model": {
+        "class": "models.pls.pls_regression",
+        "params": {
+         "n_components": 3,
+         "center_x": true,
+         "scale_x": false,
+         "center_y": true,
+         "scale_y": false
+        }
+       },
+       "name": "PLS"
+      }
+     ]
+    },
+    {
+     "name": "MIR alone",
+     "level": "single",
+     "oofRmse": 0.5686265600876481,
+     "oofR2": 0.3723700723082459,
+     "testRmse": 0.6382441730604834,
+     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+     "recipeFingerprint": "0db6284d2c8db75bc755ddaaabfc4f867ba89e0e9adb2ca3fa7e923649a9fac0",
+     "pipeline": [
+      {
+       "source_branch": {
+        "mir": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "model": {
+        "class": "models.pls.pls_regression",
+        "params": {
+         "n_components": 3,
+         "center_x": true,
+         "scale_x": false,
+         "center_y": true,
+         "scale_y": false
+        }
+       },
+       "name": "PLS"
+      }
+     ]
+    },
+    {
+     "name": "Early \u00b7 concatenate",
+     "level": "early",
+     "oofRmse": 0.25294434131417365,
+     "oofR2": 0.87580637668738,
+     "testRmse": 0.25605361529953957,
+     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+     "recipeFingerprint": "1db373b1f4e3dc301297880db4b9cfb6a13fa6d5bfa79c12a1505183d9a72f26",
+     "pipeline": [
+      {
+       "source_branch": {
+        "raman": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ],
+        "nirs": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ],
+        "mir": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "merge_sources": "concat"
+      },
+      {
+       "model": {
+        "class": "models.pls.pls_regression",
+        "params": {
+         "n_components": 3,
+         "center_x": true,
+         "scale_x": false,
+         "center_y": true,
+         "scale_y": false
+        }
+       },
+       "name": "PLS"
+      }
+     ]
+    },
+    {
+     "name": "Embedding \u00b7 PCA scores",
+     "level": "embedding",
+     "oofRmse": 0.2557185800562559,
+     "oofR2": 0.8730671796395335,
+     "testRmse": 0.2621444564871366,
+     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+     "recipeFingerprint": "df844c082665a80c321dfdd2a97e159bf2110a89f780e3ca2b2c6650551794e5",
+     "pipeline": [
+      {
+       "source_branch": {
+        "raman": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         },
+         {
+          "class": "preprocessing.feature_selection.flexible_pca",
+          "params": {
+           "n_components": 5
+          }
+         }
+        ],
+        "nirs": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         },
+         {
+          "class": "preprocessing.feature_selection.flexible_pca",
+          "params": {
+           "n_components": 5
+          }
+         }
+        ],
+        "mir": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         },
+         {
+          "class": "preprocessing.feature_selection.flexible_pca",
+          "params": {
+           "n_components": 5
+          }
+         }
+        ]
+       }
+      },
+      {
+       "merge_sources": "concat"
+      },
+      {
+       "model": {
+        "class": "models.pls.pls_regression",
+        "params": {
+         "n_components": 3,
+         "center_x": true,
+         "scale_x": false,
+         "center_y": true,
+         "scale_y": false
+        }
+       },
+       "name": "PLS"
+      }
+     ]
+    },
+    {
+     "name": "Intermediate \u00b7 MB-PLS",
+     "level": "intermediate",
+     "oofRmse": 0.2638862117323863,
+     "oofR2": 0.8648292390864414,
+     "testRmse": 0.27494091854387126,
+     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+     "recipeFingerprint": "074e0a5bd507c18deae75916df28807838df98b958b5fd661b15218aba0c52e6",
+     "pipeline": [
+      {
+       "source_branch": {
+        "raman": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ],
+        "nirs": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ],
+        "mir": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "model": {
+        "class": "models.multiblock.mb_pls",
+        "params": {
+         "n_components": 3
+        }
+       },
+       "name": "MB-PLS"
+      }
+     ]
+    },
+    {
+     "name": "Intermediate \u00b7 network",
+     "level": "intermediate",
+     "oofRmse": 0.33558656647771573,
+     "oofR2": 0.7813958024576962,
+     "testRmse": 0.24621717523443476,
+     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+     "recipeFingerprint": "5eca45829e3bbbbc2969dfd15b0f8da77c9354110b823ea5ef4c05d63e374e69",
+     "pipeline": [
+      {
+       "source_branch": {
+        "raman": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ],
+        "nirs": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ],
+        "mir": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "model": {
+        "class": "models.neural.multibranch_regressor",
+        "params": {
+         "filters": 4,
+         "kernel_size": 3,
+         "pool_size": 2,
+         "embedding_dim": 6,
+         "head_hidden": 8,
+         "epochs": 24,
+         "batch_size": 16,
+         "learning_rate": 0.003,
+         "weight_decay": 0.0001
+        }
+       },
+       "name": "Multibranch network"
+      }
+     ]
+    },
+    {
+     "name": "Late \u00b7 average",
+     "level": "late",
+     "oofRmse": 0.36492136886065435,
+     "oofR2": 0.7415074969350103,
+     "testRmse": 0.42145899756430555,
+     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+     "recipeFingerprint": "dbdab8dd9394e87c6e30585791ad5088afac66363e657667b2ebac68806721ce",
+     "pipeline": [
+      {
+       "branch": {
+        "by_source": true,
+        "steps": {
+         "raman": [
+          {
+           "class": "preprocessing.scaling.standard_scale",
+           "params": {
+            "with_mean": true,
+            "with_std": true
+           }
+          },
+          {
+           "model": {
+            "class": "models.pls.pls_regression",
+            "params": {
+             "n_components": 3,
+             "center_x": true,
+             "scale_x": false,
+             "center_y": true,
+             "scale_y": false
+            }
+           },
+           "name": "PLS"
+          }
+         ],
+         "nirs": [
+          {
+           "class": "preprocessing.scaling.standard_scale",
+           "params": {
+            "with_mean": true,
+            "with_std": true
+           }
+          },
+          {
+           "model": {
+            "class": "models.pls.pls_regression",
+            "params": {
+             "n_components": 3,
+             "center_x": true,
+             "scale_x": false,
+             "center_y": true,
+             "scale_y": false
+            }
+           },
+           "name": "PLS"
+          }
+         ],
+         "mir": [
+          {
+           "class": "preprocessing.scaling.standard_scale",
+           "params": {
+            "with_mean": true,
+            "with_std": true
+           }
+          },
+          {
+           "model": {
+            "class": "models.pls.pls_regression",
+            "params": {
+             "n_components": 3,
+             "center_x": true,
+             "scale_x": false,
+             "center_y": true,
+             "scale_y": false
+            }
+           },
+           "name": "PLS"
+          }
+         ]
+        }
+       }
+      },
+      {
+       "merge": {
+        "predictions": "all",
+        "aggregate": "mean"
+       }
+      }
+     ]
+    },
+    {
+     "name": "Late \u00b7 stacking",
+     "level": "late",
+     "oofRmse": 0.12110742422082371,
+     "oofR2": 0.9715297752061292,
+     "testRmse": 0.17574971087891045,
+     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+     "recipeFingerprint": "ed5c91e1ec00e724bcebfc83eaed4d116b4aefd815acbf35a69fddc50d89873d",
+     "pipeline": [
+      {
+       "branch": {
+        "by_source": true,
+        "steps": {
+         "raman": [
+          {
+           "class": "preprocessing.scaling.standard_scale",
+           "params": {
+            "with_mean": true,
+            "with_std": true
+           }
+          },
+          {
+           "model": {
+            "class": "models.pls.pls_regression",
+            "params": {
+             "n_components": 3,
+             "center_x": true,
+             "scale_x": false,
+             "center_y": true,
+             "scale_y": false
+            }
+           },
+           "name": "PLS"
+          }
+         ],
+         "nirs": [
+          {
+           "class": "preprocessing.scaling.standard_scale",
+           "params": {
+            "with_mean": true,
+            "with_std": true
+           }
+          },
+          {
+           "model": {
+            "class": "models.pls.pls_regression",
+            "params": {
+             "n_components": 3,
+             "center_x": true,
+             "scale_x": false,
+             "center_y": true,
+             "scale_y": false
+            }
+           },
+           "name": "PLS"
+          }
+         ],
+         "mir": [
+          {
+           "class": "preprocessing.scaling.standard_scale",
+           "params": {
+            "with_mean": true,
+            "with_std": true
+           }
+          },
+          {
+           "model": {
+            "class": "models.pls.pls_regression",
+            "params": {
+             "n_components": 3,
+             "center_x": true,
+             "scale_x": false,
+             "center_y": true,
+             "scale_y": false
+            }
+           },
+           "name": "PLS"
+          }
+         ]
+        }
+       }
+      },
+      {
+       "merge": "predictions"
+      },
+      {
+       "model": {
+        "class": "models.regularized.ridge",
+        "params": {
+         "alpha": 1,
+         "center_x": true,
+         "center_y": true,
+         "scale_x": false
+        }
+       },
+       "name": "Meta-model (Ridge)"
+      }
+     ]
+    }
+   ],
+   "edits": [
+    {
+     "name": "Edited Early \u00b7 concatenate",
+     "level": "early",
+     "oofRmse": 0.08168572409919417,
+     "oofR2": 0.9870478552966176,
+     "testRmse": 0.09355723187405812,
+     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+     "recipeFingerprint": "0040ce1c2e0381395f53973122a529261bd62cc2f131049248372d3f1062743d",
+     "pipeline": [
+      {
+       "source_branch": {
+        "raman": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ],
+        "nirs": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ],
+        "mir": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "merge_sources": "concat"
+      },
+      {
+       "model": {
+        "class": "models.pls.pls_regression",
+        "params": {
+         "n_components": 6,
+         "center_x": true,
+         "scale_x": false,
+         "center_y": true,
+         "scale_y": false
+        }
+       },
+       "name": "PLS"
+      }
+     ],
+     "edit": "Early \u00b7 PLS 6"
+    },
+    {
+     "name": "Edited Early \u00b7 concatenate",
+     "level": "early",
+     "oofRmse": 0.06881542789505403,
+     "oofR2": 0.9908077677057553,
+     "testRmse": 0.08327252526329817,
+     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+     "recipeFingerprint": "1381236a14c42fa3757eb8a3dca4dcada79f8a1028600172dd2a0a52aedf5e78",
+     "pipeline": [
+      {
+       "source_branch": {
+        "raman": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ],
+        "nirs": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "merge_sources": "concat"
+      },
+      {
+       "model": {
+        "class": "models.pls.pls_regression",
+        "params": {
+         "n_components": 6,
+         "center_x": true,
+         "scale_x": false,
+         "center_y": true,
+         "scale_y": false
+        }
+       },
+       "name": "PLS"
+      }
+     ],
+     "edit": "Early \u00b7 PLS 6 \u00b7 without MIR"
+    },
+    {
+     "name": "Edited Raman alone",
+     "level": "single",
+     "oofRmse": 0.16118828487981512,
+     "oofR2": 0.9495668250015994,
+     "testRmse": 0.20080117647299908,
+     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+     "recipeFingerprint": "3c4b320e59e41f4f3d407e3c376939abb2de1c8a74d649b4eb36289a77271287",
+     "pipeline": [
+      {
+       "source_branch": {
+        "raman": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "model": {
+        "class": "models.pls.pls_regression",
+        "params": {
+         "n_components": 6,
+         "center_x": true,
+         "scale_x": false,
+         "center_y": true,
+         "scale_y": false
+        }
+       },
+       "name": "PLS"
+      }
+     ],
+     "edit": "Raman alone \u00b7 PLS 6"
+    }
+   ]
+  },
+  "genetics": {
+   "dataset": {
+    "name": "genetics-replicates",
+    "fingerprint": "972d20477402c3b7f15aa50708dd5cafdd9d33da64225fb344fd92991dd4e55c",
+    "samples": 120,
+    "target": {
+     "name": "target",
+     "unit": "a.u."
+    },
+    "sources": [
+     {
+      "id": "nirs",
+      "label": "NIRS",
+      "modality": "spectroscopy",
+      "representation": "signal_1d",
+      "shape": [
+       64
+      ],
+      "axis": {
+       "unit": "nm",
+       "kind": "wavelength",
+       "first": 1000,
+       "last": 2300,
+       "points": 64
+      }
+     },
+     {
+      "id": "genetics",
+      "label": "Genetic markers",
+      "modality": "genetics",
+      "representation": "tabular_numeric",
+      "shape": [
+       16
+      ],
+      "axis": null
+     }
+    ]
+   },
+   "ownerVersions": {
+    "dag": "0.4.3",
+    "methods": "1.3.18+abi.2.23.0",
+    "methodsAbi": "2.23.0",
+    "sourceProfile": "source_composition.v1"
+   },
+   "calibration": 96,
+   "holdout": 24,
+   "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
+   "presets": [
+    {
+     "name": "NIRS alone",
+     "level": "single",
+     "oofRmse": 0.4016080112665702,
+     "oofR2": 0.4922194214812673,
+     "testRmse": 0.36510201942051895,
+     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
+     "recipeFingerprint": "ec77a5476b595aee3274e5e58bb1200cd2e9bb44f58f03bc0399a1fc7e03433c",
+     "pipeline": [
+      {
+       "source_branch": {
+        "nirs": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "model": {
+        "class": "models.pls.pls_regression",
+        "params": {
+         "n_components": 3,
+         "center_x": true,
+         "scale_x": false,
+         "center_y": true,
+         "scale_y": false
+        }
+       },
+       "name": "PLS"
+      }
+     ]
+    },
+    {
+     "name": "Genetic markers alone",
+     "level": "single",
+     "oofRmse": 0.7752915078820829,
+     "oofR2": -0.8923497404652063,
+     "testRmse": 0.28911857796974966,
+     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
+     "recipeFingerprint": "07cbc6967440ccb6895d34bc5baeb6c6c68fdbc62dbfeca894f1c0aae607af6a",
+     "pipeline": [
+      {
+       "source_branch": {
+        "genetics": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "model": {
+        "class": "models.pls.pls_regression",
+        "params": {
+         "n_components": 3,
+         "center_x": true,
+         "scale_x": false,
+         "center_y": true,
+         "scale_y": false
+        }
+       },
+       "name": "PLS"
+      }
+     ]
+    },
+    {
+     "name": "Early \u00b7 concatenate",
+     "level": "early",
+     "oofRmse": 0.2678951946441552,
+     "oofR2": 0.7740557996580866,
+     "testRmse": 0.27174790337411886,
+     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
+     "recipeFingerprint": "d7b165c146e775d56447c53ab414e95d57caf8d5b5b659a95ec35a0fb97d304e",
+     "pipeline": [
+      {
+       "source_branch": {
+        "nirs": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ],
+        "genetics": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "merge_sources": "concat"
+      },
+      {
+       "model": {
+        "class": "models.pls.pls_regression",
+        "params": {
+         "n_components": 3,
+         "center_x": true,
+         "scale_x": false,
+         "center_y": true,
+         "scale_y": false
+        }
+       },
+       "name": "PLS"
+      }
+     ]
+    },
+    {
+     "name": "Embedding \u00b7 PCA scores",
+     "level": "embedding",
+     "oofRmse": 0.38757467876830964,
+     "oofR2": 0.5270860309323337,
+     "testRmse": 0.3448699847784177,
+     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
+     "recipeFingerprint": "eb5e430a596c0545f85ec8835ae3c47bfebd30cc43eb840178c4237e8166ebbb",
+     "pipeline": [
+      {
+       "source_branch": {
+        "nirs": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         },
+         {
+          "class": "preprocessing.feature_selection.flexible_pca",
+          "params": {
+           "n_components": 5
+          }
+         }
+        ],
+        "genetics": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         },
+         {
+          "class": "preprocessing.feature_selection.flexible_pca",
+          "params": {
+           "n_components": 5
+          }
+         }
+        ]
+       }
+      },
+      {
+       "merge_sources": "concat"
+      },
+      {
+       "model": {
+        "class": "models.pls.pls_regression",
+        "params": {
+         "n_components": 3,
+         "center_x": true,
+         "scale_x": false,
+         "center_y": true,
+         "scale_y": false
+        }
+       },
+       "name": "PLS"
+      }
+     ]
+    },
+    {
+     "name": "Intermediate \u00b7 MB-PLS",
+     "level": "intermediate",
+     "oofRmse": 0.23948185570390484,
+     "oofR2": 0.8194420644319805,
+     "testRmse": 0.2028431608627851,
+     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
+     "recipeFingerprint": "1008eb2b5e5fd69603af3c769e0e004b45ebec37a0599e4e4d419fea15124d57",
+     "pipeline": [
+      {
+       "source_branch": {
+        "nirs": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ],
+        "genetics": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "model": {
+        "class": "models.multiblock.mb_pls",
+        "params": {
+         "n_components": 3
+        }
+       },
+       "name": "MB-PLS"
+      }
+     ]
+    },
+    {
+     "name": "Intermediate \u00b7 network",
+     "level": "intermediate",
+     "oofRmse": 0.6021201538941915,
+     "oofR2": -0.14139950254679756,
+     "testRmse": 0.4798592872579778,
+     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
+     "recipeFingerprint": "aa47ff2a9b99f5c9bb6a01227e0f9c5237866d36bd4252791a78149c755c4747",
+     "pipeline": [
+      {
+       "source_branch": {
+        "nirs": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ],
+        "genetics": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "model": {
+        "class": "models.neural.multibranch_regressor",
+        "params": {
+         "filters": 4,
+         "kernel_size": 3,
+         "pool_size": 2,
+         "embedding_dim": 6,
+         "head_hidden": 8,
+         "epochs": 24,
+         "batch_size": 16,
+         "learning_rate": 0.003,
+         "weight_decay": 0.0001
+        }
+       },
+       "name": "Multibranch network"
+      }
+     ]
+    },
+    {
+     "name": "Late \u00b7 average",
+     "level": "late",
+     "oofRmse": 0.4216875656165104,
+     "oofR2": 0.4401741590247673,
+     "testRmse": 0.22731132837967793,
+     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
+     "recipeFingerprint": "886e7263f2914f786e8db902580324b193f84b001fe3036e221357341e307388",
+     "pipeline": [
+      {
+       "branch": {
+        "by_source": true,
+        "steps": {
+         "nirs": [
+          {
+           "class": "preprocessing.scaling.standard_scale",
+           "params": {
+            "with_mean": true,
+            "with_std": true
+           }
+          },
+          {
+           "model": {
+            "class": "models.pls.pls_regression",
+            "params": {
+             "n_components": 3,
+             "center_x": true,
+             "scale_x": false,
+             "center_y": true,
+             "scale_y": false
+            }
+           },
+           "name": "PLS"
+          }
+         ],
+         "genetics": [
+          {
+           "class": "preprocessing.scaling.standard_scale",
+           "params": {
+            "with_mean": true,
+            "with_std": true
+           }
+          },
+          {
+           "model": {
+            "class": "models.pls.pls_regression",
+            "params": {
+             "n_components": 3,
+             "center_x": true,
+             "scale_x": false,
+             "center_y": true,
+             "scale_y": false
+            }
+           },
+           "name": "PLS"
+          }
+         ]
+        }
+       }
+      },
+      {
+       "merge": {
+        "predictions": "all",
+        "aggregate": "mean"
+       }
+      }
+     ]
+    },
+    {
+     "name": "Late \u00b7 stacking",
+     "level": "late",
+     "oofRmse": 0.3506803553880651,
+     "oofR2": 0.6128366606817521,
+     "testRmse": 0.26019092415810224,
+     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
+     "recipeFingerprint": "612ce7a5bc9820aa8ade3aba3411947f0927620b721bcd865862c337d7524319",
+     "pipeline": [
+      {
+       "branch": {
+        "by_source": true,
+        "steps": {
+         "nirs": [
+          {
+           "class": "preprocessing.scaling.standard_scale",
+           "params": {
+            "with_mean": true,
+            "with_std": true
+           }
+          },
+          {
+           "model": {
+            "class": "models.pls.pls_regression",
+            "params": {
+             "n_components": 3,
+             "center_x": true,
+             "scale_x": false,
+             "center_y": true,
+             "scale_y": false
+            }
+           },
+           "name": "PLS"
+          }
+         ],
+         "genetics": [
+          {
+           "class": "preprocessing.scaling.standard_scale",
+           "params": {
+            "with_mean": true,
+            "with_std": true
+           }
+          },
+          {
+           "model": {
+            "class": "models.pls.pls_regression",
+            "params": {
+             "n_components": 3,
+             "center_x": true,
+             "scale_x": false,
+             "center_y": true,
+             "scale_y": false
+            }
+           },
+           "name": "PLS"
+          }
+         ]
+        }
+       }
+      },
+      {
+       "merge": "predictions"
+      },
+      {
+       "model": {
+        "class": "models.regularized.ridge",
+        "params": {
+         "alpha": 1,
+         "center_x": true,
+         "center_y": true,
+         "scale_x": false
+        }
+       },
+       "name": "Meta-model (Ridge)"
+      }
+     ]
+    }
+   ],
+   "edits": [
+    {
+     "name": "Edited Early \u00b7 concatenate",
+     "level": "early",
+     "oofRmse": 0.18300391223740584,
+     "oofR2": 0.8945632284937614,
+     "testRmse": 0.16352864367310918,
+     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
+     "recipeFingerprint": "11c970d85516e3f8637c696a1f9327cc2e75061f5f2e96897c3e1255d6191e62",
+     "pipeline": [
+      {
+       "source_branch": {
+        "nirs": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ],
+        "genetics": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "merge_sources": "concat"
+      },
+      {
+       "model": {
+        "class": "models.pls.pls_regression",
+        "params": {
+         "n_components": 5,
+         "center_x": true,
+         "scale_x": false,
+         "center_y": true,
+         "scale_y": false
+        }
+       },
+       "name": "PLS"
+      }
+     ],
+     "edit": "Early \u00b7 PLS 5"
+    },
+    {
+     "name": "Edited NIRS alone",
+     "level": "single",
+     "oofRmse": 0.3849556703511783,
+     "oofR2": 0.5334558015770394,
+     "testRmse": 0.32950553510653274,
+     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
+     "recipeFingerprint": "e800ad8d8ffa22aa980e11a40f36a68229bf7e6f9559bf246f28c63e2888915a",
+     "pipeline": [
+      {
+       "source_branch": {
+        "nirs": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "model": {
+        "class": "models.pls.pls_regression",
+        "params": {
+         "n_components": 5,
+         "center_x": true,
+         "scale_x": false,
+         "center_y": true,
+         "scale_y": false
+        }
+       },
+       "name": "PLS"
+      }
+     ],
+     "edit": "NIRS alone \u00b7 PLS 5"
+    },
+    {
+     "name": "Edited Genetic markers alone",
+     "level": "single",
+     "oofRmse": 0.8331146788903698,
+     "oofR2": -1.1851483369101024,
+     "testRmse": 0.3470697611691893,
+     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
+     "recipeFingerprint": "7b87aa3159da48a7007491932050ab1731187fa253bc5a5091d641acbdc690f8",
+     "pipeline": [
+      {
+       "source_branch": {
+        "genetics": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "model": {
+        "class": "models.pls.pls_regression",
+        "params": {
+         "n_components": 5,
+         "center_x": true,
+         "scale_x": false,
+         "center_y": true,
+         "scale_y": false
+        }
+       },
+       "name": "PLS"
+      }
+     ],
+     "edit": "Markers alone \u00b7 PLS 5"
+    },
+    {
+     "name": "Edited Intermediate \u00b7 MB-PLS",
+     "level": "intermediate",
+     "oofRmse": 0.19086709467090385,
+     "oofR2": 0.8853079073956666,
+     "testRmse": 0.16189350360636934,
+     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
+     "recipeFingerprint": "cd973d38f938fd52e98de303a8b233c86dfaa37a57684170dd6d90738e22ad62",
+     "pipeline": [
+      {
+       "source_branch": {
+        "nirs": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ],
+        "genetics": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "model": {
+        "class": "models.multiblock.mb_pls",
+        "params": {
+         "n_components": 5
+        }
+       },
+       "name": "MB-PLS"
+      }
+     ],
+     "edit": "MB-PLS \u00b7 5 components"
+    }
+   ]
+  },
+  "images": {
+   "dataset": {
+    "name": "images-spatial",
+    "fingerprint": "cb88582c4e008cacf37a2849154c5da3be36e197d351c3150eed97733a33d287",
+    "samples": 120,
+    "target": {
+     "name": "target",
+     "unit": "a.u."
+    },
+    "sources": [
+     {
+      "id": "nirs",
+      "label": "NIRS",
+      "modality": "spectroscopy",
+      "representation": "signal_1d",
+      "shape": [
+       64
+      ],
+      "axis": {
+       "unit": "nm",
+       "kind": "wavelength",
+       "first": 1000,
+       "last": 2300,
+       "points": 64
+      }
+     },
+     {
+      "id": "image",
+      "label": "Grayscale images",
+      "modality": "image",
+      "representation": "gray_image",
+      "shape": [
+       12,
+       12,
+       1
+      ],
+      "axis": null
+     }
+    ]
+   },
+   "ownerVersions": {
+    "dag": "0.4.3",
+    "methods": "1.3.18+abi.2.23.0",
+    "methodsAbi": "2.23.0",
+    "sourceProfile": "source_composition.v1"
+   },
+   "calibration": 96,
+   "holdout": 24,
+   "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+   "presets": [
+    {
+     "name": "NIRS alone",
+     "level": "single",
+     "oofRmse": 0.35809031605279523,
+     "oofR2": 0.4697602074102032,
+     "testRmse": 0.4076473391687005,
+     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+     "recipeFingerprint": "08be0232a4a7c64a5d8250d9c7265d6c4c66e6e93d39ad90a99f40960abf9c8d",
+     "pipeline": [
+      {
+       "source_branch": {
+        "nirs": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "model": {
+        "class": "models.pls.pls_regression",
+        "params": {
+         "n_components": 3,
+         "center_x": true,
+         "scale_x": false,
+         "center_y": true,
+         "scale_y": false
+        }
+       },
+       "name": "PLS"
+      }
+     ]
+    },
+    {
+     "name": "Grayscale images alone",
+     "level": "single",
+     "oofRmse": 0.16788208849721653,
+     "oofR2": 0.8834543976885896,
+     "testRmse": 0.17022930836054034,
+     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+     "recipeFingerprint": "7affe7cc75d32b71a93e7ad8823b27b1d8d55febcaa949899309ee7df54abdb4",
+     "pipeline": [
+      {
+       "source_branch": {
+        "image": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "model": {
+        "class": "models.pls.pls_regression",
+        "params": {
+         "n_components": 3,
+         "center_x": true,
+         "scale_x": false,
+         "center_y": true,
+         "scale_y": false
+        }
+       },
+       "name": "PLS"
+      }
+     ]
+    },
+    {
+     "name": "Early \u00b7 concatenate",
+     "level": "early",
+     "oofRmse": 0.10054730016672742,
+     "oofR2": 0.9581950227519475,
+     "testRmse": 0.1305451610459616,
+     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+     "recipeFingerprint": "e0e3f9d4a2279c09b6abce4e38e24f3887382830bb7211e88b1f6e17970765c6",
+     "pipeline": [
+      {
+       "source_branch": {
+        "nirs": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ],
+        "image": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "merge_sources": "concat"
+      },
+      {
+       "model": {
+        "class": "models.pls.pls_regression",
+        "params": {
+         "n_components": 3,
+         "center_x": true,
+         "scale_x": false,
+         "center_y": true,
+         "scale_y": false
+        }
+       },
+       "name": "PLS"
+      }
+     ]
+    },
+    {
+     "name": "Embedding \u00b7 PCA scores",
+     "level": "embedding",
+     "oofRmse": 0.10265453934471513,
+     "oofR2": 0.9564243894370702,
+     "testRmse": 0.13639279906629884,
+     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+     "recipeFingerprint": "d1a0c5ae7fb34c0e6f5dd3300b290dd049f9183eac941fc3964983a5fd082915",
+     "pipeline": [
+      {
+       "source_branch": {
+        "nirs": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         },
+         {
+          "class": "preprocessing.feature_selection.flexible_pca",
+          "params": {
+           "n_components": 5
+          }
+         }
+        ],
+        "image": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         },
+         {
+          "class": "preprocessing.feature_selection.flexible_pca",
+          "params": {
+           "n_components": 5
+          }
+         }
+        ]
+       }
+      },
+      {
+       "merge_sources": "concat"
+      },
+      {
+       "model": {
+        "class": "models.pls.pls_regression",
+        "params": {
+         "n_components": 3,
+         "center_x": true,
+         "scale_x": false,
+         "center_y": true,
+         "scale_y": false
+        }
+       },
+       "name": "PLS"
+      }
+     ]
+    },
+    {
+     "name": "Intermediate \u00b7 MB-PLS",
+     "level": "intermediate",
+     "oofRmse": 0.11731526266311992,
+     "oofR2": 0.9430890023766446,
+     "testRmse": 0.13121068202392858,
+     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+     "recipeFingerprint": "f87e6aafcd53a5628869a1899a6363d5f78a1cda141abba5f5ac29fc883c9ca7",
+     "pipeline": [
+      {
+       "source_branch": {
+        "nirs": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ],
+        "image": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "model": {
+        "class": "models.multiblock.mb_pls",
+        "params": {
+         "n_components": 3
+        }
+       },
+       "name": "MB-PLS"
+      }
+     ]
+    },
+    {
+     "name": "Intermediate \u00b7 network",
+     "level": "intermediate",
+     "oofRmse": 0.2056874437919952,
+     "oofR2": 0.825054520123115,
+     "testRmse": 0.16861074130400397,
+     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+     "recipeFingerprint": "02571ba926cafe3c6c170040e990f9a71a1d7d8f51c93c5b3210975073f68c09",
+     "pipeline": [
+      {
+       "source_branch": {
+        "nirs": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ],
+        "image": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "model": {
+        "class": "models.neural.multibranch_regressor",
+        "params": {
+         "filters": 4,
+         "kernel_size": 3,
+         "pool_size": 2,
+         "embedding_dim": 6,
+         "head_hidden": 8,
+         "epochs": 24,
+         "batch_size": 16,
+         "learning_rate": 0.003,
+         "weight_decay": 0.0001
+        }
+       },
+       "name": "Multibranch network"
+      }
+     ]
+    },
+    {
+     "name": "Late \u00b7 average",
+     "level": "late",
+     "oofRmse": 0.2191012945640582,
+     "oofR2": 0.8014924399633957,
+     "testRmse": 0.2521963076818305,
+     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+     "recipeFingerprint": "20336324278bc759a0566276e69e1df0e8eb09f6b3884c9ee789650f9255e277",
+     "pipeline": [
+      {
+       "branch": {
+        "by_source": true,
+        "steps": {
+         "nirs": [
+          {
+           "class": "preprocessing.scaling.standard_scale",
+           "params": {
+            "with_mean": true,
+            "with_std": true
+           }
+          },
+          {
+           "model": {
+            "class": "models.pls.pls_regression",
+            "params": {
+             "n_components": 3,
+             "center_x": true,
+             "scale_x": false,
+             "center_y": true,
+             "scale_y": false
+            }
+           },
+           "name": "PLS"
+          }
+         ],
+         "image": [
+          {
+           "class": "preprocessing.scaling.standard_scale",
+           "params": {
+            "with_mean": true,
+            "with_std": true
+           }
+          },
+          {
+           "model": {
+            "class": "models.pls.pls_regression",
+            "params": {
+             "n_components": 3,
+             "center_x": true,
+             "scale_x": false,
+             "center_y": true,
+             "scale_y": false
+            }
+           },
+           "name": "PLS"
+          }
+         ]
+        }
+       }
+      },
+      {
+       "merge": {
+        "predictions": "all",
+        "aggregate": "mean"
+       }
+      }
+     ]
+    },
+    {
+     "name": "Late \u00b7 stacking",
+     "level": "late",
+     "oofRmse": 0.16985853070061863,
+     "oofR2": 0.8806941085393784,
+     "testRmse": 0.1807367771585381,
+     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+     "recipeFingerprint": "3d1481c758ce1cac50ff2104df0962483befd2eb3927ef94fcc9f40f42cfabe0",
+     "pipeline": [
+      {
+       "branch": {
+        "by_source": true,
+        "steps": {
+         "nirs": [
+          {
+           "class": "preprocessing.scaling.standard_scale",
+           "params": {
+            "with_mean": true,
+            "with_std": true
+           }
+          },
+          {
+           "model": {
+            "class": "models.pls.pls_regression",
+            "params": {
+             "n_components": 3,
+             "center_x": true,
+             "scale_x": false,
+             "center_y": true,
+             "scale_y": false
+            }
+           },
+           "name": "PLS"
+          }
+         ],
+         "image": [
+          {
+           "class": "preprocessing.scaling.standard_scale",
+           "params": {
+            "with_mean": true,
+            "with_std": true
+           }
+          },
+          {
+           "model": {
+            "class": "models.pls.pls_regression",
+            "params": {
+             "n_components": 3,
+             "center_x": true,
+             "scale_x": false,
+             "center_y": true,
+             "scale_y": false
+            }
+           },
+           "name": "PLS"
+          }
+         ]
+        }
+       }
+      },
+      {
+       "merge": "predictions"
+      },
+      {
+       "model": {
+        "class": "models.regularized.ridge",
+        "params": {
+         "alpha": 1,
+         "center_x": true,
+         "center_y": true,
+         "scale_x": false
+        }
+       },
+       "name": "Meta-model (Ridge)"
+      }
+     ]
+    }
+   ],
+   "edits": [
+    {
+     "name": "Edited Early \u00b7 concatenate",
+     "level": "early",
+     "oofRmse": 0.0909094000915994,
+     "oofR2": 0.9658252970917217,
+     "testRmse": 0.1058303319274934,
+     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+     "recipeFingerprint": "97c7905fee92623851919269519b31b5975dcfc442f8c1dfb0fb77bba6d2df5a",
+     "pipeline": [
+      {
+       "source_branch": {
+        "nirs": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ],
+        "image": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "merge_sources": "concat"
+      },
+      {
+       "model": {
+        "class": "models.pls.pls_regression",
+        "params": {
+         "n_components": 6,
+         "center_x": true,
+         "scale_x": false,
+         "center_y": true,
+         "scale_y": false
+        }
+       },
+       "name": "PLS"
+      }
+     ],
+     "edit": "Early \u00b7 PLS 6"
+    },
+    {
+     "name": "Edited Grayscale images alone",
+     "level": "single",
+     "oofRmse": 0.18729928538412693,
+     "oofR2": 0.8549360814129427,
+     "testRmse": 0.21682115386972275,
+     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+     "recipeFingerprint": "92f2919e72da96e7f5cdb5f69fd7bf68d2faec91fa6bd74adb53aa2dbfd36feb",
+     "pipeline": [
+      {
+       "source_branch": {
+        "image": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "model": {
+        "class": "models.pls.pls_regression",
+        "params": {
+         "n_components": 6,
+         "center_x": true,
+         "scale_x": false,
+         "center_y": true,
+         "scale_y": false
+        }
+       },
+       "name": "PLS"
+      }
+     ],
+     "edit": "Image alone \u00b7 PLS 6"
+    },
+    {
+     "name": "Edited Intermediate \u00b7 network",
+     "level": "intermediate",
+     "oofRmse": 0.20556301723239914,
+     "oofR2": 0.8252661157339785,
+     "testRmse": 0.16297893957469592,
+     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+     "recipeFingerprint": "f3b2e893ca6fb1d93eee44ab257d5ad26d03eba66ce6f4c67eec3a1e7fb14174",
+     "pipeline": [
+      {
+       "source_branch": {
+        "nirs": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ],
+        "image": [
+         {
+          "class": "preprocessing.scaling.standard_scale",
+          "params": {
+           "with_mean": true,
+           "with_std": true
+          }
+         }
+        ]
+       }
+      },
+      {
+       "model": {
+        "class": "models.neural.multibranch_regressor",
+        "params": {
+         "filters": 4,
+         "kernel_size": 3,
+         "pool_size": 2,
+         "embedding_dim": 6,
+         "head_hidden": 8,
+         "epochs": 100,
+         "batch_size": 16,
+         "learning_rate": 0.003,
+         "weight_decay": 0.0001
+        }
+       },
+       "name": "Multibranch network"
+      }
+     ],
+     "edit": "Network \u00b7 100 epochs"
+    }
+   ]
+  }
+ }
+}

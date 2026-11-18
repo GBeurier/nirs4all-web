@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   MultimodalWorkbench,
-  MultimodalPipelineEditor,
-  pipelineIssues as pipelineEditingIssues,
   defaultCandidates,
   type MultimodalCandidate,
   type MultimodalCaseId,
@@ -15,15 +13,32 @@ import {
   type MultimodalRunResult,
   type MultimodalRunState,
   type MultimodalRuntimeStatus,
-  type MultimodalPipelineDocument,
 } from 'nirs4all-ui/multimodal'
+import type { PipelineChainDocument } from 'nirs4all-ui/pipelineEditor'
+import { fromCanonicalPipeline, toCanonicalPipeline } from 'nirs4all-ui/pipelineEditor'
 import { downloadJson } from '@/lib/download'
 import { createLabClient, defaultLabConfig, type LabClient } from './client'
 import { IMPORT_PROFILES, TEACHING_PRESETS, importLabFiles, loadTeachingDataset } from './data'
 import { toExecutionConfig, toWorkbenchProgress, toWorkbenchResult } from './presentation'
 import type { LabCase, LabConfig, LabDataset, LabRunResult } from './types'
 import { DatasetBuilderHost } from './DatasetBuilderHost'
-import { createPipelinePresets, pipelineSourceIds, pipelineStrategy, validatePipelineDocument } from './recipes'
+import { pipelineStrategy } from './recipes'
+import { fusionPresets, toLabDocument, type FusionPreset } from './fusion'
+import type { LabRunRecord } from './inspector'
+import { FusionEditor, FusionResults } from './FusionLab'
+
+const DEFAULT_PRESET = 'early'
+const HISTORY_LIMIT = 50
+const PIPELINE_SCHEMA = 'nirs4all.multimodal-lab.pipeline.v2'
+
+/** `?case=genetics&preset=late-stacking` opens a case on a preset (links from the training slides). */
+function linkTarget(): { caseId: MultimodalCaseId | null; presetId: string | null } {
+  if (typeof window === 'undefined') return { caseId: null, presetId: null }
+  const params = new URLSearchParams(window.location.search)
+  const value = params.get('case')
+  return { caseId: value === 'spectroscopy' || value === 'genetics' || value === 'images' ? value : null, presetId: params.get('preset') }
+}
+const LINK = linkTarget()
 
 /**
  * Host assembly for the multimodal laboratory. Owns React state only and
@@ -61,18 +76,23 @@ interface CaseWorkspace {
   results: MultimodalRunResult | null
   /** Raw execution result kept for the results export (same run as `results`). */
   rawResult: LabRunResult | null
-  runOrigin: 'edited' | 'batch' | null
-  pipeline: MultimodalPipelineDocument | null
+  presets: FusionPreset[]
+  presetId: string | null
+  /** Last preset loaded; edits of it are named after it. */
+  basePresetId: string | null
+  chain: PipelineChainDocument | null
+  past: PipelineChainDocument[]
+  future: PipelineChainDocument[]
   pipelineError: string | null
   pipelineNotice: string | null
-  history: Array<{ label: string; recipeFingerprint: string; foldsFingerprint: string;
-    rmse: number; holdoutRmse: number | null; document: MultimodalPipelineDocument }>
+  /** Every completed run on the current dataset, for the Inspector. */
+  runs: LabRunRecord[]
 }
 
 const EMPTY_WORKSPACE: CaseWorkspace = {
   dataset: null, origin: null, status: { kind: 'empty' }, config: null, candidates: [],
   selectedSampleId: null, run: { kind: 'idle' }, results: null, rawResult: null,
-  pipeline: null, pipelineError: null, pipelineNotice: null, runOrigin: null, history: [],
+  presets: [], presetId: null, basePresetId: null, chain: null, past: [], future: [], pipelineError: null, pipelineNotice: null, runs: [],
 }
 
 type Workspaces = Record<MultimodalCaseId, CaseWorkspace>
@@ -96,12 +116,15 @@ function toWorkbenchConfig(config: LabConfig): MultimodalConfig {
   }
 }
 
-function teachingSetup(dataset: LabDataset): Pick<CaseWorkspace, 'config' | 'candidates' | 'pipeline'> {
+function teachingSetup(dataset: LabDataset, wanted: string | null = null): Pick<CaseWorkspace, 'config' | 'candidates' | 'presets' | 'presetId' | 'basePresetId' | 'chain' | 'past' | 'future'> {
   const config = toWorkbenchConfig(defaultLabConfig(dataset))
-  const presets = createPipelinePresets(dataset, toExecutionConfig(config))
-  return { config, candidates: defaultCandidates(dataset, config.sourceIds),
-    pipeline: presets.find(preset => preset.id === 'early')?.document ?? presets[0]?.document ?? null }
+  const presets = fusionPresets(dataset)
+  const preset = presets.find(item => item.id === wanted) ?? presets.find(item => item.id === DEFAULT_PRESET) ?? presets[0]
+  return { config, candidates: defaultCandidates(dataset, config.sourceIds), presets,
+    presetId: preset?.id ?? null, basePresetId: preset?.id ?? null, chain: preset ? structuredClone(preset.document) : null, past: [], future: [] }
 }
+
+let runCounter = 0
 
 function browserRuntime(): MultimodalRuntimeStatus {
   const capable = typeof Worker !== 'undefined' && typeof WebAssembly !== 'undefined'
@@ -119,9 +142,12 @@ function slug(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'multimodal-lab'
 }
 
-/** Every edit to data, configuration or candidates clears the previous results. */
+/**
+ * Edits return the run state to idle. Completed runs stay in the comparison (and
+ * its export) until the data change or the user clears them.
+ */
 function invalidate(current: CaseWorkspace): CaseWorkspace {
-  return { ...current, results: null, rawResult: null, runOrigin: null, run: { kind: 'idle' } }
+  return { ...current, run: { kind: 'idle' } }
 }
 
 function datasetMeta(dataset: LabDataset, origin: MultimodalDataOrigin | null) {
@@ -139,25 +165,20 @@ function datasetMeta(dataset: LabDataset, origin: MultimodalDataOrigin | null) {
 }
 
 export default function MultimodalApp() {
-  const [caseId, setCaseId] = useState<MultimodalCaseId>('spectroscopy')
+  const [caseId, setCaseId] = useState<MultimodalCaseId>(LINK.caseId ?? 'spectroscopy')
   const [workspaces, setWorkspaces] = useState<Workspaces>(INITIAL_WORKSPACES)
   const [runtime, setRuntime] = useState<MultimodalRuntimeStatus>(browserRuntime)
   const clientRef = useRef<LabClient | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const loadToken = useRef<Record<MultimodalCaseId, number>>({ spectroscopy: 0, genetics: 0, images: 0 })
   const runToken = useRef(0)
+  const linkPreset = useRef<string | null>(LINK.presetId)
   const workspace = workspaces[caseId]
-  const pipelinePresets = useMemo(() => workspace.dataset && workspace.config
-    ? createPipelinePresets(workspace.dataset, toExecutionConfig(workspace.config)) : [],
-  [workspace.dataset, workspace.config])
   const pipelineProblem = useMemo(() => {
-    if (!workspace.dataset || !workspace.pipeline) return 'Load data and a pipeline preset first.'
-    try {
-      validatePipelineDocument(workspace.dataset, workspace.pipeline)
-      return pipelineEditingIssues(workspace.pipeline, workspace.dataset.sources).find(issue => issue.severity === 'error')?.message ?? null
-    }
+    if (!workspace.dataset || !workspace.chain) return 'Load data and a pipeline preset first.'
+    try { toLabDocument(workspace.dataset, workspace.chain); return null }
     catch (reason) { return errorStatus(reason).message }
-  }, [workspace.dataset, workspace.pipeline])
+  }, [workspace.dataset, workspace.chain])
 
   const patch = useCallback((id: MultimodalCaseId, update: (current: CaseWorkspace) => CaseWorkspace) => {
     setWorkspaces(previous => ({ ...previous, [id]: update(previous[id]) }))
@@ -174,7 +195,9 @@ export default function MultimodalApp() {
         message: `The files describe the "${dataset.caseId}" case, not "${id}". Select that case or import matching files.` } }))
       return
     }
-    patch(id, () => ({ ...EMPTY_WORKSPACE, dataset, origin, status: { kind: 'ready' }, ...teachingSetup(dataset),
+    const wanted = linkPreset.current
+    linkPreset.current = null
+    patch(id, () => ({ ...EMPTY_WORKSPACE, dataset, origin, status: { kind: 'ready' }, ...teachingSetup(dataset, wanted),
       selectedSampleId: dataset.sampleIds[0] ?? null }))
   }, [patch])
 
@@ -209,7 +232,7 @@ export default function MultimodalApp() {
     if (preset) loadPreset(caseId, preset.id)
   }, [caseId, workspace.dataset, workspace.status.kind, loadPreset])
 
-  // ---- configuration (every edit invalidates results) ----------------------
+  // ---- configuration (every edit invalidates the current result) -----------
 
   const onConfigChange = useCallback((next: MultimodalConfig) => {
     patch(caseId, current => ({ ...invalidate(current), config: next }))
@@ -223,30 +246,50 @@ export default function MultimodalApp() {
     patch(caseId, current => current.dataset ? { ...invalidate(current), ...teachingSetup(current.dataset) } : current)
   }, [caseId, patch])
 
+  const changePipeline = useCallback((chain: PipelineChainDocument, presetId: string | null = null) => {
+    patch(caseId, current => ({ ...invalidate(current), chain, presetId, basePresetId: presetId ?? current.basePresetId,
+      past: current.chain ? [...current.past, current.chain].slice(-HISTORY_LIMIT) : current.past, future: [],
+      pipelineError: null, pipelineNotice: null }))
+  }, [caseId, patch])
+
+  const undo = useCallback(() => patch(caseId, current => {
+    const previous = current.past[current.past.length - 1]
+    return previous && current.chain ? { ...invalidate(current), chain: previous, presetId: null, past: current.past.slice(0, -1),
+      future: [current.chain, ...current.future] } : current
+  }), [caseId, patch])
+
+  const redo = useCallback(() => patch(caseId, current => {
+    const next = current.future[0]
+    return next && current.chain ? { ...invalidate(current), chain: next, presetId: null, past: [...current.past, current.chain],
+      future: current.future.slice(1) } : current
+  }), [caseId, patch])
+
   // ---- execution ----------------------------------------------------------
 
-  const onRun = useCallback((edited = false) => {
+  const execute = useCallback((jobs: Array<{ chain: PipelineChainDocument; name: string }>, batch: boolean) => {
     const id = caseId
-    const { dataset, config, candidates } = workspaces[id]
-    if (!dataset || !config || candidates.length === 0) return
-    const configs = edited && workspaces[id].pipeline ? [{ ...toExecutionConfig(config),
-      pipeline: validatePipelineDocument(dataset, workspaces[id].pipeline),
-      sourceIds: pipelineSourceIds(workspaces[id].pipeline!),
-      strategy: pipelineStrategy(workspaces[id].pipeline!),
-    }] : candidates.map(candidate => toExecutionConfig({
-      ...config, strategy: candidate.strategy, singleSourceId: candidate.singleSourceId ?? config.singleSourceId,
-    }))
+    const { dataset, config } = workspaces[id]
+    if (!dataset || !config || jobs.length === 0) return
+    let documents
+    // Native candidates carry the document label: keep labels unique within one execution.
+    try {
+      documents = jobs.map((job, index) => {
+        const lab = toLabDocument(dataset, job.chain)
+        return { chain: job.chain, name: job.name, document: lab, lab: jobs.length > 1 ? { ...lab, label: `${lab.label} [${index + 1}]` } : lab }
+      })
+    }
+    catch (reason) { patch(id, current => ({ ...current, pipelineError: errorStatus(reason).message })); return }
+    const sourceIds = dataset.sources.map(source => source.id)
+    const configs = documents.map(({ lab }) => ({ ...toExecutionConfig(config), pipeline: lab, sourceIds, strategy: pipelineStrategy(lab) }))
     const token = ++runToken.current
     const controller = new AbortController()
     abortRef.current = controller
     const client = clientRef.current ??= createLabClient()
-    patch(id, current => ({ ...invalidate(current), runOrigin: edited ? 'edited' : 'batch', run: { kind: 'running', progress: null } }))
+    patch(id, current => ({ ...invalidate(current), pipelineError: null, pipelineNotice: null, run: { kind: 'running', progress: null } }))
     client.run(dataset, configs, progress => {
       if (runToken.current !== token) return
-      const candidateId = edited ? undefined : candidates[progress.candidateIndex]?.id
       patch(id, current => current.run.kind === 'running'
-        ? { ...current, run: { kind: 'running', progress: { ...toWorkbenchProgress(progress), ...(candidateId ? { candidateId } : {}) } } }
-        : current)
+        ? { ...current, run: { kind: 'running', progress: toWorkbenchProgress(progress) } } : current)
     }, controller.signal)
       .then(result => {
         if (runToken.current !== token) return
@@ -254,82 +297,89 @@ export default function MultimodalApp() {
           .filter((entry): entry is [string, string] => typeof entry[1] === 'string')
           .map(([name, version]) => ({ name, version }))
         setRuntime({ state: 'ready', label: 'Local WASM runtime ready', detail: versions.map(v => `${v.name} ${v.version}`).join(' · '), versions })
-        patch(id, current => ({ ...current, run: result.candidates.length > 0 ? { kind: 'done' }
-          : { kind: 'error', name: 'NativeExecutionRefusal',
-            message: result.refusals.map(refusal => refusal.reason).join('; ') || 'No pipeline completed.' },
+        const finishedAt = new Date().toISOString()
+        // The native label is the document label; presets have distinct labels.
+        const records: LabRunRecord[] = result.candidates.flatMap(candidate => {
+          const match = documents.find(item => item.lab.label === candidate.label)
+          return match ? [{ id: `run-${++runCounter}`, index: runCounter, name: match.name, document: match.document, canonical: toCanonicalPipeline(match.chain),
+            candidate, datasetFingerprint: dataset.fingerprint, finishedAt, protocol: { calibrationIds: result.calibrationIds,
+            holdoutIds: result.holdoutIds, folds: result.folds, foldsFingerprint: result.foldsFingerprint, validation: result.validation,
+            ownerVersions: result.ownerVersions } }] : []
+        })
+        const refused = result.refusals.map(refusal => refusal.reason)
+        patch(id, current => ({ ...current,
+          run: result.candidates.length > 0 ? { kind: 'done' }
+            : { kind: 'error', name: 'NativeExecutionRefusal', message: refused.join('; ') || 'No pipeline completed.' },
           results: toWorkbenchResult(result), rawResult: result,
-          history: edited && configs[0].pipeline ? [...current.history, ...result.candidates.map(candidate => ({
-            label: candidate.label, recipeFingerprint: candidate.recipeFingerprint, foldsFingerprint: candidate.foldsFingerprint,
-            rmse: candidate.oof.rmse, holdoutRmse: candidate.holdout?.rmse ?? null,
-            document: structuredClone(configs[0].pipeline!),
-          }))] : current.history }))
+          runs: current.dataset === dataset ? [...current.runs, ...records] : current.runs,
+          pipelineNotice: `${records.length} run${records.length === 1 ? '' : 's'} added to the comparison${batch ? ' (unedited presets)' : ''}.`
+            + (refused.length ? ` ${refused.length} refused: ${refused.join('; ')}` : ''),
+        }))
       })
       .catch(reason => {
         if (runToken.current !== token) return
         const { name, message } = errorStatus(reason)
-        patch(id, current => ({ ...current, results: null, rawResult: null,
+        patch(id, current => ({ ...current,
           run: name === 'AbortError' ? { kind: 'cancelled', message } : { kind: 'error', name, message } }))
       })
       .finally(() => { if (abortRef.current === controller) abortRef.current = null })
   }, [caseId, patch, workspaces])
 
-  const onCancel = useCallback(() => { abortRef.current?.abort() }, [])
+  const onRunEdited = useCallback(() => {
+    const { chain, presetId, basePresetId, presets } = workspaces[caseId]
+    const base = presets.find(preset => preset.id === (presetId ?? basePresetId))?.label
+    if (chain) execute([{ chain, name: presetId && base ? base : base ? `Edited ${base}` : 'Edited pipeline' }], false)
+  }, [caseId, execute, workspaces])
 
-  const changePipeline = useCallback((pipeline: MultimodalPipelineDocument) => {
-    patch(caseId, current => ({ ...invalidate(current), pipeline, pipelineError: null, pipelineNotice: null }))
-  }, [caseId, patch])
+  const onRunPresets = useCallback(() => {
+    execute(workspaces[caseId].presets.map(preset => ({ chain: preset.document, name: preset.label })), true)
+  }, [caseId, execute, workspaces])
+
+  const onCancel = useCallback(() => { abortRef.current?.abort() }, [])
 
   const importPipeline = useCallback(async (file: File) => {
     const dataset = workspaces[caseId].dataset
     if (!dataset) return
     try {
       const imported = JSON.parse(await file.text())
-      if (imported === null || typeof imported !== 'object' || Array.isArray(imported)
-        || Object.keys(imported).some(key => !['schema', 'pipeline', 'sources'].includes(key))) {
-        throw new Error('The pipeline file contains unsupported top-level fields.')
-      }
-      if (imported.schema !== 'nirs4all.multimodal-pipeline.v1') throw new Error('Unsupported pipeline document schema.')
-      const pipeline = validatePipelineDocument(dataset, imported.pipeline)
-      const expected = datasetMeta(dataset, null).sources
-      const matches = Array.isArray(imported.sources) && imported.sources.length === expected.length
-        && expected.every(source => imported.sources.some((other: Record<string, unknown>) => other !== null && typeof other === 'object'
-          && other.id === source.id && other.modality === source.modality && other.representation === source.representation
-          && JSON.stringify(other.shape) === JSON.stringify(source.shape)
-          && JSON.stringify(other.axis) === JSON.stringify(source.axis)))
-      const pipelineNotice = matches ? null : 'Recipe imported for the current dataset. Its source metadata differs from the exported dataset; inspect the source connections and shapes before running.'
-      // Do not attach a file read to a different dataset selected while it was pending.
-      patch(caseId, current => current.dataset === dataset
-        ? { ...invalidate(current), pipeline, pipelineError: null, pipelineNotice } : current)
+      const chain = fromCanonicalPipeline(imported && typeof imported === 'object' && 'schema' in imported ? imported.pipeline : imported)
+      toLabDocument(dataset, chain)
+      patch(caseId, current => current.dataset === dataset ? { ...invalidate(current), chain, presetId: null,
+        past: current.chain ? [...current.past, current.chain].slice(-HISTORY_LIMIT) : current.past, future: [],
+        pipelineError: null, pipelineNotice: `Imported ${file.name}.` } : current)
     } catch (reason) {
-      patch(caseId, current => current.dataset === dataset
-        ? { ...current, pipelineError: errorStatus(reason).message } : current)
+      patch(caseId, current => current.dataset === dataset ? { ...current, pipelineError: `${file.name}: ${errorStatus(reason).message}` } : current)
     }
   }, [caseId, patch, workspaces])
 
   // ---- exports ------------------------------------------------------------
 
+  const onExportPipeline = useCallback(() => {
+    const { dataset, origin, chain } = workspaces[caseId]
+    if (!dataset || !chain) return
+    downloadJson(`${slug(chain.name ?? 'pipeline')}.pipeline.json`, {
+      schema: PIPELINE_SCHEMA, pipeline: toCanonicalPipeline(chain), sources: datasetMeta(dataset, origin).sources,
+    })
+  }, [caseId, workspaces])
+
   const onExportConfig = useCallback(() => {
-    const { dataset, origin, config, candidates } = workspaces[caseId]
+    const { dataset, origin, config, chain } = workspaces[caseId]
     if (!dataset || !config) return
     downloadJson(`${slug(dataset.name)}.lab-config.json`, {
-      schema: 'nirs4all.multimodal-lab.config.v1', exportedAt: new Date().toISOString(),
-      dataset: datasetMeta(dataset, origin), config, candidates,
-      note: 'Fixed a priori teaching settings. This file documents an experiment; it is not an executable .n4a model.',
+      schema: 'nirs4all.multimodal-lab.config.v2', exportedAt: new Date().toISOString(),
+      dataset: datasetMeta(dataset, origin), validation: config.validation, pipeline: chain ? toCanonicalPipeline(chain) : null,
+      note: 'Fixed a priori settings. This file documents an experiment; it is not an executable .n4a model.',
     })
   }, [caseId, workspaces])
 
   const onExportResults = useCallback(() => {
-    const { dataset, origin, config, candidates, rawResult } = workspaces[caseId]
-    if (!dataset || !rawResult) return
+    const { dataset, origin, runs } = workspaces[caseId]
+    if (!dataset || runs.length === 0) return
     // Portable predictor packages are omitted: they may embed training rows and need explicit consent elsewhere.
-    const { candidates: rawCandidates, ...run } = rawResult
     downloadJson(`${slug(dataset.name)}.lab-results.json`, {
-      schema: 'nirs4all.multimodal-lab.results.v1', exportedAt: new Date().toISOString(),
+      schema: 'nirs4all.multimodal-lab.results.v2', exportedAt: new Date().toISOString(),
       dataset: datasetMeta(dataset, origin),
-      config: rawResult.configs.length === 1 && rawResult.configs[0].pipeline ? rawResult.configs[0] : config,
-      candidates: rawResult.configs.some(item => item.pipeline)
-        ? rawCandidates.map(candidate => ({ id: candidate.id, strategy: candidate.strategy, label: candidate.label })) : candidates,
-      run: { ...run, candidates: rawCandidates.map(({ portablePackageJson: _omitted, ...candidate }) => candidate) },
+      runs: runs.map(({ candidate: { portablePackageJson: _omitted, ...candidate }, ...run }) => ({ ...run, candidate })),
       note: 'Scores computed by the native owners. OOF and held-out scopes are separate; portable predictor packages omitted.',
     })
   }, [caseId, workspaces])
@@ -337,6 +387,10 @@ export default function MultimodalApp() {
   // ---- render -------------------------------------------------------------
 
   const brand = useMemo(() => <img src={BRAND_SRC} alt="nirs4all" width={40} height={40} draggable={false} />, [])
+  const running = workspace.run.kind === 'running'
+  const progress = workspace.run.kind === 'running' && workspace.run.progress
+    ? `${(workspace.run.progress.total ?? 1) > 1 ? `Pipeline ${(workspace.run.progress.completed ?? 0) + 1} of ${workspace.run.progress.total} · ` : ''}${workspace.run.progress.phase} · ${workspace.run.progress.message}`
+    : null
 
   return (
     <MultimodalWorkbench
@@ -353,57 +407,46 @@ export default function MultimodalApp() {
       dataset={workspace.dataset}
       onLoadPreset={presetId => loadPreset(caseId, presetId)}
       onImportFiles={(profileId, files) => importFiles(caseId, profileId, files)}
-      datasetBuilder={<DatasetBuilderHost key={caseId} caseId={caseId} disabled={workspace.run.kind === 'running'}
+      datasetBuilder={<DatasetBuilderHost key={caseId} caseId={caseId} disabled={running}
         onCreate={(dataset, fileNames) => acceptDataset(caseId, ++loadToken.current[caseId], dataset,
           { kind: 'import', profileId: `manifest-${caseId}`, fileNames })} />}
-      pipelineEditor={workspace.dataset && workspace.pipeline ? <>
-        <MultimodalPipelineEditor sources={workspace.dataset.sources} value={workspace.pipeline}
-          onChange={changePipeline} presets={pipelinePresets}
-          onLoadPreset={id => { const preset = pipelinePresets.find(item => item.id === id); if (preset) changePipeline(structuredClone(preset.document)) }}
-          actions={workspace.run.kind === 'running'
-            ? <button type="button" className="n4mm-button" data-variant="danger" onClick={onCancel}>Cancel pipeline</button>
-            : <button type="button" className="n4mm-button" data-variant="primary"
-              disabled={pipelineProblem !== null || runtime.state !== 'ready'} onClick={() => onRun(true)}>Run edited pipeline</button>}
-          disabled={workspace.run.kind === 'running'} onImport={file => { void importPipeline(file) }}
-          onExport={() => downloadJson(`${slug(workspace.pipeline!.label)}.pipeline.json`, {
-            schema: 'nirs4all.multimodal-pipeline.v1', pipeline: workspace.pipeline,
-            sources: datasetMeta(workspace.dataset!, workspace.origin).sources,
-          })} />
-        <div className="n4mm-pipeline-run" data-edited-pipeline-run>
-          <p>Executes the branches, source chains, models and fusion shown above, using the validation protocol selected for this dataset.</p>
-          <div role="status" aria-live="polite">
-            {workspace.run.kind === 'running' ? <>
-              <progress aria-label="Pipeline execution" />
-              <span>{workspace.run.progress?.phase ?? 'Preparing'} · {workspace.run.progress?.message ?? 'Starting the local worker…'}</span>
-            </> : workspace.run.kind === 'done' ? workspace.runOrigin === 'edited'
-              ? 'Pipeline run complete. Native scores are available below.' : 'Preset comparison complete. Native scores are available below.'
-              : workspace.run.kind === 'cancelled' ? 'Pipeline cancelled. No partial result is shown.' : null}
-          </div>
-          {workspace.run.kind === 'error' ? <p role="alert" className="n4mm-alert">{workspace.run.message}</p> : null}
-          {pipelineProblem ? <p role="status">{pipelineProblem}</p> : null}
-          {workspace.pipelineError ? <p className="n4mm-alert" role="alert">{workspace.pipelineError}</p> : null}
-          {workspace.pipelineNotice ? <p className="n4mm-note" role="status">{workspace.pipelineNotice}</p> : null}
-        </div>
-        {workspace.history.length ? <details className="n4mm-run-history" open>
-          <summary>Edited pipeline runs · {workspace.history.length}</summary>
-          <p>Each row retains its executed recipe. Compare rows with the same fold fingerprint; editing clears the current result below.</p>
-          <div className="n4mm-scroll n4mm-scroll--table" tabIndex={0} role="region" aria-label="Completed pipeline runs"><table className="n4mm-table">
-            <caption>Native owner scores for completed edited pipelines</caption>
-            <thead><tr><th scope="col">Pipeline</th><th scope="col">OOF RMSE</th><th scope="col">Test RMSE</th><th scope="col">Folds</th><th scope="col">Recipe</th></tr></thead>
-            <tbody>{workspace.history.map((item, index) => <tr key={`${index}-${item.recipeFingerprint}`}>
-              <th scope="row">{item.label}</th><td>{item.rmse.toPrecision(5)}</td>
-              <td>{item.holdoutRmse?.toPrecision(5) ?? 'No test set'}</td><td><code title={item.foldsFingerprint}>{item.foldsFingerprint.slice(0, 12)}</code></td>
-              <td><button type="button" className="n4mm-button" disabled={workspace.run.kind === 'running'}
-                onClick={() => changePipeline(structuredClone(item.document))}>Restore run {index + 1}</button></td>
-            </tr>)}</tbody>
-          </table></div>
-        </details> : null}
+      pipelineLead="Pick a fusion preset, then edit it: each source has its own lane; the step after the lanes decides where the sources are fused. Runs accumulate in the comparison below."
+      presetComparison={false}
+      pipelineEditor={workspace.dataset && workspace.chain ? <>
+        <FusionEditor
+          dataset={workspace.dataset}
+          presets={workspace.presets}
+          presetId={workspace.presetId}
+          document={workspace.chain}
+          onDocumentChange={next => changePipeline(next)}
+          onLoadPreset={presetId => {
+            const preset = workspace.presets.find(item => item.id === presetId)
+            if (preset) changePipeline(structuredClone(preset.document), preset.id)
+          }}
+          onUndo={undo}
+          onRedo={redo}
+          canUndo={workspace.past.length > 0}
+          canRedo={workspace.future.length > 0}
+          problem={pipelineProblem}
+          running={running}
+          progress={progress}
+          error={workspace.pipelineError ?? (workspace.run.kind === 'error' ? workspace.run.message : null)}
+          notice={workspace.run.kind === 'cancelled' ? 'Run cancelled. No partial result is kept.' : workspace.pipelineNotice}
+          runtimeReady={runtime.state === 'ready'}
+          onRun={onRunEdited}
+          onRunPresets={onRunPresets}
+          onCancel={onCancel}
+          onExport={onExportPipeline}
+          onImport={file => { void importPipeline(file) }}
+        />
         <nav className="n4mm-training-downloads" aria-label="Training materials">
-          <a href="../multimodal-training/nirs4all_multimodal_training.pptx" download>Download the PowerPoint</a>
-          <a href="../multimodal-training/nirs4all_multimodal_training.pdf" download>Download the PDF</a>
-          <a href="../multimodal-training/demo-guide.html">Open the practical demo guide</a>
+          <a href="../multimodal-training/slides/">Open the training slides</a>
+          <a href="../multimodal-training/nirs4all_multimodal_slides.pdf" download>Download the slides (PDF)</a>
         </nav>
       </> : undefined}
+      resultsView={workspace.dataset ? <FusionResults dataset={workspace.dataset} runs={workspace.runs} disabled={running}
+        onClear={() => patch(caseId, current => ({ ...current, runs: [], results: null, rawResult: null }))}
+        onRestore={run => changePipeline(fromCanonicalPipeline(run.canonical))} /> : undefined}
       selectedSampleId={workspace.selectedSampleId}
       onSelectSample={sampleId => patch(caseId, current => ({ ...current, selectedSampleId: sampleId }))}
       config={workspace.config}
@@ -412,7 +455,7 @@ export default function MultimodalApp() {
       candidates={workspace.candidates}
       onCandidatesChange={onCandidatesChange}
       run={workspace.run}
-      onRun={() => onRun()}
+      onRun={onRunPresets}
       onCancel={onCancel}
       results={workspace.results}
       onExportConfig={onExportConfig}
