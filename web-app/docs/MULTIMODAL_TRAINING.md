@@ -44,6 +44,7 @@ lanes decides where the sources meet. Operators are native Methods method IDs.
 | Mid · CNN | `source_branch` → multibranch network (8 filters, embeddings of 16, 150 epochs) | Jointly trained convolution/dense branches whose embeddings are concatenated mid-network, and a common regression head |
 | Late · average | `branch` with `by_source: true` (one model per lane) → `merge: {predictions: "all", aggregate: "mean"}` | Source PLS models; fixed equal weights |
 | Late · stacking | `by_source` branch → `merge: "predictions"` → Ridge | Source PLS models and a Ridge meta-learner on nested OOF predictions |
+| Late · AOM stacking | `by_source` branch: AOM-PLS (`aom_pop.calibration`) per spectrum, PLS elsewhere → `merge: "predictions"` → Ridge | Operator-adaptive PLS per spectrum (raw/SNV/MSC branches and preprocessing chains selected by internal CV inside the training fold), Ridge meta-learner |
 
 A lane may end with a nested `branch` of several models (several base models per
 source). `merge: {predictions: "all", include_original: true}` gives the

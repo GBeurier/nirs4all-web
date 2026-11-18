@@ -19,7 +19,7 @@ page.on('console', message => { if (message.type() === 'error') errors.push(mess
 page.on('response', response => { if (response.status() >= 400) failedRequests.push(`${response.status()} ${response.url()}`) })
 page.on('request', request => { if (!['GET', 'HEAD'].includes(request.method())) mutations.push(request.url()) })
 const sameIds = (a, b) => assert.deepEqual([...a].sort(), [...b].sort())
-const LEVELS = { spectroscopy: 10, genetics: 11, images: 9 }
+const LEVELS = { spectroscopy: 11, genetics: 12, images: 10 }
 
 async function downloadResult(caseId) {
   const [download] = await Promise.all([page.waitForEvent('download'),
