@@ -122,7 +122,7 @@ function describeLegacyRecipe(dataset: LabDataset, config: LabConfig): RecipeDes
     label: strategyLabel[name] + (config.blockScaling ? '; Train-fitted block RMS scaling' : '') }
 }
 
-const HEADS = new Set([PLS, RIDGE, 'models.multiblock.mb_pls', NEURAL, RANDOM_FOREST, TFJS_CNN, BURN_CNN])
+const HEADS = new Set([PLS, RIDGE, 'models.multiblock.mb_pls', NEURAL, RANDOM_FOREST, TFJS_CNN, BURN_CNN, 'aom_pop.calibration'])
 const META_HEADS = new Set([PLS, RIDGE])
 const object = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value)

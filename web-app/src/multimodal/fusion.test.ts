@@ -41,6 +41,15 @@ for (const caseId of ['spectroscopy', 'genetics', 'images'] as const) {
           }
           return
         }
+        if (preset.id === 'late-aom') {
+          // AOM-PLS per spectrum (native Methods calibration), PLS for other sources, Ridge meta-model.
+          for (const operator of Object.values(actual.operators)) {
+            const source = data.sources.find(item => item.id === operator.sourceOps[0]?.source_id)
+            if (source) expect(operator.steps[0].methodId).toBe(source.modality === 'spectroscopy' ? 'aom_pop.calibration' : 'models.pls.pls_regression')
+          }
+          expect(actual.steps.at(-1)).toMatchObject({ kind: 'merge_model' })
+          return
+        }
         if (preset.id === 'mid-pca') {
           expect(Object.values(actual.operators)[0].sourceOps.every(source => source.steps.at(-1)!.methodId === 'preprocessing.feature_selection.flexible_pca')).toBe(true)
           return

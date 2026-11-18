@@ -18,6 +18,8 @@ export const PLS = 'models.pls.pls_regression'
 export const RIDGE = 'models.regularized.ridge'
 export const MBPLS = 'models.multiblock.mb_pls'
 export const PCA = 'preprocessing.feature_selection.flexible_pca'
+/** AOM calibration (Methods): operator-adaptive PLS or Ridge over raw/SNV/MSC branches, selected by internal CV. */
+export const AOM = 'aom_pop.calibration'
 const STANDARD = 'preprocessing.scaling.standard_scale'
 const RESAMPLE = 'preprocessing.resampling.resample_transformer'
 /** Spectra longer than this are resampled before a CNN branch. */
@@ -93,6 +95,12 @@ export const LAB_OPERATORS: readonly PipelineOperatorDefinition[] = [
       int('epochs', 'Epochs', 150, 1, 400), int('batch_size', 'Batch size', 16, 1, 256),
       float('learning_rate', 'Learning rate', 0.01, 0), float('weight_decay', 'Weight decay', 0.0001, 0),
     ], ['mid']),
+  op('model', 'AOM (operator-adaptive)', AOM, 'AOM (PLS or Ridge)',
+    'Operator-adaptive calibration (Methods): tries preprocessing chains (detrend, Savitzky–Golay smoothing and derivatives, Norris–Williams, finite differences) on raw, SNV and MSC branches and keeps the best by an internal cross-validation inside the training fold. Spectra only; give it the raw spectrum.', [
+      { name: 'head', label: 'Model', type: 'select', default: 'pls', options: [{ value: 'pls', label: 'AOM-PLS' }, { value: 'ridge', label: 'AOM-Ridge' }] },
+      int('max_components', 'Max components (PLS)', 15, 1, 40), int('cv', 'Internal CV folds', 3, 2, 10),
+      bool('fast', 'Fast screening', true),
+    ], ['spectra']),
   op('model', 'Browser models (JavaScript)', RANDOM_FOREST, 'Random forest (ml.js)',
     'Random forest regression trained in the browser with ml.js (host model behind the native controller: DAG-ML keeps folds, OOF and refit).', [
       int('n_estimators', 'Trees', 50, 10, 500), float('max_features', 'Features per split (fraction)', 0.33, 0.05, 1),
@@ -119,7 +127,7 @@ export const LAB_OPERATORS: readonly PipelineOperatorDefinition[] = [
 ]
 
 const OPERATOR = new Map(LAB_OPERATORS.map(definition => [definition.classPath!, definition]))
-const HEADS = new Set([PLS, RIDGE, MBPLS, NEURAL, RANDOM_FOREST, TFJS_CNN, BURN_CNN])
+const HEADS = new Set([PLS, RIDGE, MBPLS, NEURAL, RANDOM_FOREST, TFJS_CNN, BURN_CNN, AOM])
 const BLOCK_HEADS = new Set([MBPLS, NEURAL, TFJS_CNN, BURN_CNN])
 const META_HEADS = new Set([PLS, RIDGE])
 
@@ -157,6 +165,8 @@ const cnnChain = (source: LabSource): Json[] => source.modality === 'spectroscop
   ? [step(RESAMPLE, { num_samples: CNN_MAX_POINTS }), ...sourceChain()] : sourceChain()
 /** NICON keeps more of the spectrum (it needs at least 175 points) but stays browser-sized. */
 const NICON_POINTS = 256
+/** AOM screens many chains per component: long spectra are resampled first in the browser. */
+const AOM_POINTS = 256
 const niconChain = (source: LabSource): Json[] => source.modality === 'spectroscopy'
   ? [...(source.shape[0] > NICON_POINTS ? [step(RESAMPLE, { num_samples: NICON_POINTS })] : []), step('preprocessing.scatter.snv'),
     step('preprocessing.derivatives.savitzky_golay', { window_length: 15, polyorder: 2, deriv: 1 }), ...sourceChain()]
@@ -229,6 +239,17 @@ export function fusionPresets(dataset: LabDataset): FusionPreset[] {
         model(BURN_CNN, defaults(BURN_CNN), 'NICON (Burn)'),
       ] },
     }] : []),
+    ...(sources.some(source => source.modality === 'spectroscopy') ? [{
+      id: 'late-aom', label: 'Late · AOM stacking', level: 'late' as const,
+      summary: 'One AOM-PLS per spectrum (it selects its own preprocessing among raw, SNV and MSC branches and derivative chains, inside the training fold), PLS for the other sources; a Ridge meta-model learns from their out-of-fold predictions.',
+      document: {
+        name: `Late fusion · AOM-PLS per spectrum (${all}) → Ridge`,
+        pipeline: [{ branch: { by_source: true, steps: lanes(sources, source => source.modality === 'spectroscopy'
+          ? [...(source.shape[0] > AOM_POINTS ? [step(RESAMPLE, { num_samples: AOM_POINTS })] : []), model(AOM, defaults(AOM), 'AOM-PLS')]
+          : [...sourceChain(), pls]) } },
+        { merge: 'predictions' }, model(RIDGE, defaults(RIDGE), 'Meta-model (Ridge)')],
+      },
+    }] : []),
     {
       id: 'late-mean', label: 'Late · average', level: 'late',
       summary: 'One PLS model per source; their predictions are averaged with equal weights. Nothing is learned after the source models.',
@@ -300,6 +321,11 @@ function sourceOf(dataset: LabDataset, id: string, where: string): LabSource {
   return source
 }
 
+function checkHead(sources: readonly LabSource[], head: LabPipelineStep, where: string): void {
+  insist(head.methodId !== AOM || sources.every(source => source.modality === 'spectroscopy'),
+    `${where}: AOM works on spectra; use PLS or Ridge for marker tables and images.`)
+}
+
 function checkTransforms(source: LabSource, steps: readonly LabPipelineStep[], where: string): void {
   for (const transform of steps) {
     insist(source.modality === 'spectroscopy' || !OPERATOR.get(transform.methodId)?.tags?.includes('spectra'),
@@ -339,6 +365,8 @@ function featureLevel(dataset: LabDataset, steps: unknown[], name: string): LabP
   insist(rest.length === 1, rest.length === 0 ? 'Add a model after the sources.' : 'Put exactly one model after the source branch (extra steps after the merge are not supported here).')
   const head = chainElement(rest[0], 'Model')
   insist(head.kind === 'model', 'The last step must be a model.')
+  checkHead(sourceIds.map(id => sourceOf(dataset, id, 'Model')), head.step, 'Model')
+  insist(head.step.methodId !== AOM || sourceIds.length === 1, 'AOM works on one spectrum at a time: use it per source in a late-fusion branch.')
   const blockModel = BLOCK_HEADS.has(head.step.methodId)
   insist(!(blockModel && merged), `${OPERATOR.get(head.step.methodId)!.name} fuses the source blocks itself: remove the "Merge sources" step.`)
   insist(!blockModel || sourceIds.length >= 2 || head.step.methodId !== MBPLS, 'Multiblock PLS needs at least two sources.')
@@ -392,6 +420,7 @@ function predictionLevel(dataset: LabDataset, steps: unknown[], name: string): L
       insist(!BLOCK_HEADS.has(head.methodId) || head.methodId === NEURAL, `${where}: Multiblock PLS needs several sources; use it after a source_branch.`)
       const chain = [...prefix, ...suffix]
       checkTransforms(source, chain, where)
+      checkHead([source], head, where)
       const id = `${sourceId}${tag ? `-${tag}` : ''}`
       branches.push({ id, label: `${source.label}${tag ? ` · ${tag}` : ''} → ${OPERATOR.get(head.methodId)!.name}`,
         sourceIds: [sourceId], sourceChains: [{ sourceId, steps: chain }], head })
