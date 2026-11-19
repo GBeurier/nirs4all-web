@@ -38,14 +38,14 @@ export class N4aContainerHandle {
      */
     manifest_bytes(): Uint8Array;
     /**
-     * The exact bytes of one inventoried member, or `undefined`.
-     */
-    member(path: string): Uint8Array | undefined;
-    /**
      * `length` bytes of a member from `offset`, or `undefined` for an unknown
      * member. The bytes were validated when the container was opened.
      */
     member_chunk(path: string, offset: bigint, length: bigint): Uint8Array | undefined;
+    /**
+     * The exact bytes of one inventoried member, or `undefined`.
+     */
+    member(path: string): Uint8Array | undefined;
     /**
      * Byte length of one inventoried member, or `undefined`.
      */

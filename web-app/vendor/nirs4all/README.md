@@ -277,7 +277,7 @@ numbers labelling every fitted class id (index = id). `recipe` is a copy of
 the recipe the states attest, which is also the one exported. A state that
 embeds training rows (kernel PLS, LW-PLS, ...) is exported only with
 `toJSON({ allowTrainingRows: true })`. This path requires `@nirs4all/methods`
-1.3.18 or later; the role-pipeline native format remains ABI 2.14.
+1.5.x (`~1.5.0`); the role-pipeline native format remains ABI 2.14.
 
 Custom app hosts can inspect `executionProfiles()` (also embedded in
 `capabilityManifest()` with `runtimeSurfaces`) before selecting a runtime. The

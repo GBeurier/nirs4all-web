@@ -362,6 +362,7 @@ export {
 export { robustness } from './robustness.js';
 
 export { N4aContainer, inspectN4aBytes, openN4aContainer, predictN4aNative, produceN4aNative, retrainN4aNative, writeN4aContainer, writeN4aStream } from './n4a.js';
+export { inspectN4aContainer, N4aInspectionSession } from './n4a-inspection.js';
 
 export { predictMultimodalArchive } from './multimodal-archive.js';
 

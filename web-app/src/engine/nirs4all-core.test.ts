@@ -60,23 +60,23 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(existsSync(new URL('../../scripts/sync-core-shim.mjs', import.meta.url))).toBe(true)
     expect(existsSync(new URL('../../scripts/sync-lite-shim.mjs', import.meta.url))).toBe(false)
     expect(syncScript).not.toMatch(/NIRS4ALL_LITE|nirs4all-lite|sync-lite/)
-    expect(vendorPkg).toMatchObject({ name: 'nirs4all', version: '0.5.2' })
+    expect(vendorPkg).toMatchObject({ name: 'nirs4all', version: '0.6.0' })
     expect(provenance).toMatchObject({
       package: 'nirs4all',
-      version: '0.5.2',
+      version: '0.6.0',
       source: {
         repository: 'https://github.com/GBeurier/nirs4all-core',
-        commit: '01648790a1d822da9b384cd9a7467d4a5ffc4392',
-        tree: 'd1fee1e1862dead22b090f39f5f4addbaac83672',
+        commit: 'ef74d999b48e8eb4b8cce46355598673c0fc08b8',
+        tree: '18112da2c33172eefdf5716b21f551e58b479415',
       },
       acquisition: {
-        tarball_url: 'https://registry.npmjs.org/nirs4all/-/nirs4all-0.5.2.tgz',
-        sha256: 'ac41b2452b8c6827ca12f6eb565576ae82bcfc546e4d1e3570cc4f255f7dca2d',
+        tarball_url: 'https://registry.npmjs.org/nirs4all/-/nirs4all-0.6.0.tgz',
+        sha256: '4101c30f8e922f9e476db8cede9602ca45ea371d5165ea0d6c09158b28fd8b15',
       },
       reproducibility: { performed_by_web: false, independent_rebuild_claimed: false },
       files: {
-        'native/nirs4all_core_wasm_native.js': { sha256: '39f8505794cc05e81c121654403cbac1d83d57b8a3a5d100e1191af1b9598f40' },
-        'native/nirs4all_core_wasm_native_bg.wasm': { sha256: '7ca437075ec8a60536383138365984d6acd4278fa14dd66f0f0ec39cdb64c89a' },
+        'native/nirs4all_core_wasm_native.js': { sha256: '1e7dafbbd2c0f1f9f6e7b685c0843572fd8f3018e53297def572752888be89a4' },
+        'native/nirs4all_core_wasm_native_bg.wasm': { sha256: '3f7a8688a33bdf05147cb0fbf39a9f33d6dc845e5ed77494dedaa6e122cb14ae' },
       },
     })
   })
@@ -85,7 +85,7 @@ describe('nirs4all-core aggregate loaders', () => {
     const script = fileURLToPath(new URL('../../scripts/sync-core-shim.mjs', import.meta.url))
     const verified = spawnSync(process.execPath, [script, '--check'], { encoding: 'utf8' })
     expect(verified.status).toBe(0)
-    expect(verified.stdout).toContain('nirs4all@0.5.2 published inventory and acquisition verified')
+    expect(verified.stdout).toContain('nirs4all@0.6.0 published inventory and acquisition verified')
   })
 
   it('keeps the datasets upstream candidate aligned with the vendored WASM package', () => {
@@ -108,7 +108,7 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(methods?.candidates).toEqual(['@nirs4all/methods'])
     expect(viteConfig).toContain("'@nirs4all/methods':")
     expect(vitestConfig).toContain("'@nirs4all/methods':")
-    expect(vendorPkg.peerDependencies['@nirs4all/methods']).toBe('^1.3.0')
+    expect(vendorPkg.peerDependencies['@nirs4all/methods']).toBe('~1.5.0')
     expect(vendorPkg.peerDependenciesMeta['@nirs4all/methods']).toBeTruthy()
     expect(viteConfig + vitestConfig + JSON.stringify(methods) + JSON.stringify(vendorPkg)).not.toContain('@nirs4all/methods' + '-wasm')
   })
@@ -271,9 +271,9 @@ describe('nirs4all-core aggregate loaders', () => {
     })
     expect(provenance.source.repository).toBe('https://github.com/GBeurier/dag-ml')
     expect(pin).not.toHaveProperty('local')
-    expect(pin.version).toBe('0.4.5')
-    expect(provenance.source.commit).toBe('2ef08b3e72685e325fce7e730d32b0bd69b0eb62')
-    expect(provenance.acquisition.tarball_url).toBe('https://registry.npmjs.org/dag-ml-wasm/-/dag-ml-wasm-0.4.5.tgz')
+    expect(pin.version).toBe('0.5.0')
+    expect(provenance.source.commit).toBe('d3608565a5fe27875d4b64e54035eb8b4c05b204')
+    expect(provenance.acquisition.tarball_url).toBe('https://registry.npmjs.org/dag-ml-wasm/-/dag-ml-wasm-0.5.0.tgz')
     for (const [name, fact] of Object.entries(pin.files) as Array<[string, { size: number; sha256: string }]>) {
       const bytes = readFileSync(new URL(`./wasm/dagml/${name}`, import.meta.url))
       expect(bytes.length, name).toBe(fact.size)

@@ -1,20 +1,21 @@
 {
   "core": {
     "package": "nirs4all",
-    "version": "0.5.2",
+    "version": "0.6.0",
     "destination": "vendor/nirs4all",
     "source": {
       "repository": "https://github.com/GBeurier/nirs4all-core",
-      "commit": "01648790a1d822da9b384cd9a7467d4a5ffc4392",
-      "tree": "d1fee1e1862dead22b090f39f5f4addbaac83672"
+      "commit": "ef74d999b48e8eb4b8cce46355598673c0fc08b8",
+      "tree": "18112da2c33172eefdf5716b21f551e58b479415",
+      "tag": "v0.6.0"
     },
     "registry": {
-      "metadata_url": "https://registry.npmjs.org/nirs4all/0.5.2",
-      "tarball_url": "https://registry.npmjs.org/nirs4all/-/nirs4all-0.5.2.tgz",
-      "size": 4518954,
-      "sha256": "ac41b2452b8c6827ca12f6eb565576ae82bcfc546e4d1e3570cc4f255f7dca2d",
-      "sha1": "5ae1b26df269e1cce1b1bc66ef16b27b2503e04c",
-      "integrity": "sha512-VceEIKDMiifOqqm/5P8/9SuGxsqAVE4CzaQAiEvU+Y4AbXCbIZYbYvl1XX6DdqOwX6ptkWjYH76N2S2abnfcoQ=="
+      "metadata_url": "https://registry.npmjs.org/nirs4all/0.6.0",
+      "tarball_url": "https://registry.npmjs.org/nirs4all/-/nirs4all-0.6.0.tgz",
+      "size": 4534923,
+      "sha256": "4101c30f8e922f9e476db8cede9602ca45ea371d5165ea0d6c09158b28fd8b15",
+      "sha1": "f872479a931c155e53cd4011008f1e7c5cb44bf5",
+      "integrity": "sha512-d3vMEQ9IHV3pVEzDU4LgZ+ppEF8f9d++ngjU3rnF2VC7cSGg3yIbKhtTttDuQUTp+7cOKK7QxXgD44gHIjg7mQ=="
     },
     "projection": {
       "LICENSE": "LICENSE",
@@ -51,6 +52,8 @@
       "src/multimodal-archive.js": "src/multimodal-archive.js",
       "src/multimodal.d.ts": "src/multimodal.d.ts",
       "src/multimodal.js": "src/multimodal.js",
+      "src/n4a-inspection.d.ts": "src/n4a-inspection.d.ts",
+      "src/n4a-inspection.js": "src/n4a-inspection.js",
       "src/n4a.d.ts": "src/n4a.d.ts",
       "src/n4a.js": "src/n4a.js",
       "src/n4m-roles.js": "src/n4m-roles.js",
@@ -110,8 +113,8 @@
         "sha256": "46c57e67ed1e40c98a714f32a968b343650b02df3627744c28e9ceba011b7447"
       },
       "README.md": {
-        "size": 23430,
-        "sha256": "c9c0f00f8d486948fbc46001e2c56d86b78d77a99633473ebbdc1305a079db6a"
+        "size": 23431,
+        "sha256": "930e49ded460cc0e29bfe204ccb8c894ec7f16a8500dadb9c0e28da951acdfc7"
       },
       "THIRD_PARTY_NOTICES.md": {
         "size": 1582,
@@ -119,15 +122,15 @@
       },
       "native/nirs4all_core_wasm_native.d.ts": {
         "size": 35143,
-        "sha256": "65a5b66cfdf1e32afc6cef7ad2c25d7e8e690722d0f02c1b89ea6cc832a472f6"
+        "sha256": "92e26ef62b9c48f4f1b9a9d58449c86b077981fb2f9611d6b57622d074744ae6"
       },
       "native/nirs4all_core_wasm_native.js": {
         "size": 97851,
-        "sha256": "39f8505794cc05e81c121654403cbac1d83d57b8a3a5d100e1191af1b9598f40"
+        "sha256": "1e7dafbbd2c0f1f9f6e7b685c0843572fd8f3018e53297def572752888be89a4"
       },
       "native/nirs4all_core_wasm_native_bg.wasm": {
-        "size": 15137059,
-        "sha256": "7ca437075ec8a60536383138365984d6acd4278fa14dd66f0f0ec39cdb64c89a"
+        "size": 15114785,
+        "sha256": "3f7a8688a33bdf05147cb0fbf39a9f33d6dc845e5ed77494dedaa6e122cb14ae"
       },
       "native/nirs4all_core_wasm_native_bg.wasm.d.ts": {
         "size": 14614,
@@ -135,11 +138,11 @@
       },
       "native/package.json": {
         "size": 570,
-        "sha256": "d95a2caf7a21a27aab544689e506e0864a6ab60ba1aeb0c64aa14559af37c5d9"
+        "sha256": "4a03d12b57b0bfa09de697ab25fd78f93fa078e7727aaf25973d8f345de76692"
       },
       "package.json": {
         "size": 2827,
-        "sha256": "142aa402b09631603b1b28c4a24d1ad102c11fce7545dfbaa07b6c906b6f9acb"
+        "sha256": "5ad7dd3488a0ba99fa9bb280b74cc6a5626252330b140a8399042314eeb9e270"
       },
       "src/archive-v2.js": {
         "size": 20637,
@@ -178,12 +181,12 @@
         "sha256": "1f587895ff94b4757476f9efb51c8864886c13c87e7e90a6d57d8a8f4692ad75"
       },
       "src/index.d.ts": {
-        "size": 19973,
-        "sha256": "0e8badc20cd23d86e8fa38f61f5731c8f2dbfc13b9e44c0d68fc01227b42c4cb"
+        "size": 20179,
+        "sha256": "e3f380a4975cd0371410e95bd5654a54e0dcf1db324f801cdce63b4f80efc7ba"
       },
       "src/index.js": {
-        "size": 12372,
-        "sha256": "dcb15058d4175cda4ed777610b7cac5c21b2e39a9662be68a1580c2a6627499c"
+        "size": 12453,
+        "sha256": "761111c145bc8083af9c1a0c1745ad043c518ed293f244b9b9f3c665be4a7b79"
       },
       "src/js-estimator-controller.js": {
         "size": 24069,
@@ -208,6 +211,14 @@
       "src/multimodal.js": {
         "size": 3702,
         "sha256": "27aa40f2deae14bd982572dca41e7db5e6f5381f463b5a6e92986ef5cf611204"
+      },
+      "src/n4a-inspection.d.ts": {
+        "size": 1820,
+        "sha256": "ba3907a4ad8854ce82dcd380346642b3f18934a34403bb5815c25f08d13d9c7b"
+      },
+      "src/n4a-inspection.js": {
+        "size": 4713,
+        "sha256": "d7d7b0f2568477a4b60477944ad7d700d3e91d19ac7020bbadf1a78b1cc5f906"
       },
       "src/n4a.d.ts": {
         "size": 11528,
@@ -289,13 +300,13 @@
   },
   "dagml": {
     "package": "dag-ml-wasm",
-    "version": "0.4.5",
+    "version": "0.5.0",
     "destination": "src/engine/wasm/dagml",
     "source": {
       "repository": "https://github.com/GBeurier/dag-ml",
-      "commit": "2ef08b3e72685e325fce7e730d32b0bd69b0eb62",
-      "tree": "a3332b13f58f9d58063592f824776c066e145de5",
-      "tag": "v0.4.5"
+      "commit": "d3608565a5fe27875d4b64e54035eb8b4c05b204",
+      "tree": "1511ffd0bb61366faa82c57f4e74159a7073a71a",
+      "tag": "v0.5.0"
     },
     "projection": {
       "LICENSE": "LICENSE",
@@ -369,7 +380,7 @@
       },
       "package.json": {
         "size": 1929,
-        "sha256": "097645abf670c76dbbcb7f56fe9501a5bd47290c8766b3d2051babd9f55fbad1"
+        "sha256": "07a9bdba12d9363d03ef59c6b8de9db3d57de59472588459e69bd819713e9e58"
       },
       "README.md": {
         "size": 9899,
@@ -424,8 +435,8 @@
         "sha256": "46dd52eebd778df690f5b1183115a2ae98d19118e1a61c90381d6476f538ad52"
       },
       "dag_ml_wasm_bg.wasm": {
-        "size": 10814670,
-        "sha256": "e88e552304972ffabd8528bab0fa4da008f1615f22c9fe2114a371f0a2c1559f"
+        "size": 10814460,
+        "sha256": "944cde9d9250e8ba2ec427cd7e857ab16b8e8841ac702ac4ffa7f0613be474c0"
       },
       "LICENSES/AGPL-3.0-or-later.txt": {
         "size": 34020,
@@ -461,12 +472,12 @@
       }
     },
     "registry": {
-      "metadata_url": "https://registry.npmjs.org/dag%2Dml%2Dwasm/0.4.5",
-      "tarball_url": "https://registry.npmjs.org/dag-ml-wasm/-/dag-ml-wasm-0.4.5.tgz",
-      "size": 3646848,
-      "sha256": "86c92ec023cf0a19b52bb07c91a5dafa4c3feadb974656a16f5a6a490f1898db",
-      "sha1": "2e4afe547dcbffcc751d2e904d992b63034be8e0",
-      "integrity": "sha512-RAEtg+lsMChYmOAbNjg+51oeZqw70tmEm+CgJmTbtpuKBfFriTNaZ4or2lkkPzK3wopj5eoY9g+6Agdo2Lx5Ug=="
+      "metadata_url": "https://registry.npmjs.org/dag-ml-wasm/0.5.0",
+      "tarball_url": "https://registry.npmjs.org/dag-ml-wasm/-/dag-ml-wasm-0.5.0.tgz",
+      "size": 3647154,
+      "sha256": "4e4849be90fae7c33694529adfba99f4095115f4340c3b9ac9062c4b3b5392e9",
+      "sha1": "ff64bb6996c2cd087f657764bb34b92226cbc825",
+      "integrity": "sha512-Ri7f+v5ZYyglVRObn7AU5ECRWB1z8WCaONxxRHYio9h3I6EGI18hkIhVvMVj0se7AjP28jJkMILayhLu8qzYvA=="
     },
     "browser_deployment": {
       "payload": "Published npm web-target WASM and exact owner host adapters; no Web rebuild.",
@@ -1421,14 +1432,14 @@
   },
   "methods": {
     "package": "@nirs4all/methods",
-    "version": "1.4.0",
+    "version": "1.5.1",
     "abi": "2.24.0",
     "destination": "src/engine/wasm/methods",
     "source": {
       "repository": "https://github.com/GBeurier/nirs4all-methods",
-      "commit": "7d78e6a30340458ee4d0ec3adfc2ad62db4cf045",
-      "tree": "b1faf7f2ebd34b0c219fa36df491b368cbc302d6",
-      "tag": "v1.4.0"
+      "commit": "25041f88bebb21a19748799c1681e138a3d55dfb",
+      "tree": "78ef29128ed21c2c38655235d8de7dcbc8c5e1c3",
+      "tag": "v1.5.1"
     },
     "source_files": {},
     "projection": {
@@ -1502,12 +1513,12 @@
       "types.js": "dist/types.js"
     },
     "registry": {
-      "metadata_url": "https://registry.npmjs.org/@nirs4all/methods/1.4.0",
-      "tarball_url": "https://registry.npmjs.org/@nirs4all/methods/-/methods-1.4.0.tgz",
-      "size": 2005957,
-      "sha256": "fc505275d899fabe8e7efffa08d9ef4305ebbff1be2808eb9c548ab9940f550b",
-      "sha1": "5eecff072b64a4c918809702a980ed12baa19ff3",
-      "integrity": "sha512-C4a6FQaQXxaxW2LJWPo6eU2MsfSCaOAFnmR4ylZ7tQ/rEGWo3ETbjfnb1e6KkKdOWx+9hXCURRT6XuCFOgAbiQ=="
+      "metadata_url": "https://registry.npmjs.org/@nirs4all/methods/1.5.1",
+      "tarball_url": "https://registry.npmjs.org/@nirs4all/methods/-/methods-1.5.1.tgz",
+      "size": 2010945,
+      "sha256": "2fc930feba7f27f793573242f31ba6fd77207a03692b03786b78f9ea4b0b129d",
+      "sha1": "25d0e36eee796ccdd724c57681cd6e5d631e52c8",
+      "integrity": "sha512-/qox7z8t8cKHaXl6Dtq6M/wuJ7l9uyjQTZGIx0xNabtTdlZ62Ty851gbzdp+BV3laNLdYWWFTCDYW7JGkfRcPA=="
     },
     "files": {
       "LICENSE": {
@@ -1572,7 +1583,7 @@
       },
       "README.md": {
         "size": 25247,
-        "sha256": "e1c48765754c175ff7b1403675e6e597e287be05e78c12ae47790a47496d95c6"
+        "sha256": "330fa06b36f77602c429d8fd02743a54f255f599790d682ce5a0bcaa273fadbf"
       },
       "THIRD_PARTY_LICENSES.md": {
         "size": 7437,
@@ -1611,12 +1622,12 @@
         "sha256": "8b7166bfcb9e04c2b71cb7ae232db271d280bd8726ba9ff9345b67c0897c3c3a"
       },
       "estimatorRolesGenerated.d.ts": {
-        "size": 176026,
-        "sha256": "71d6191fd64d53fb2c554f086b725a53310c89c9a79003818c033fb90a66f47a"
+        "size": 177095,
+        "sha256": "be2b4ef33bd83d01ac90bc88eddf9ce75c4a01e604775d17c780e8b04482c9b6"
       },
       "estimatorRolesGenerated.js": {
-        "size": 119184,
-        "sha256": "38d7d8848838415f02ed86f0d774dc2b27d1ebd8faef62386ad8393507f980fe"
+        "size": 119838,
+        "sha256": "5162b7ece0f286699424e75dfc24e1ed4d21f8f0c8931a706bbaa66796258637"
       },
       "explain.d.ts": {
         "size": 7707,
@@ -1671,8 +1682,8 @@
         "sha256": "3b59ac1085f4ad5801f23ad1de8472e87f71c85c64b6872584feffc1964c955d"
       },
       "n4m.wasm": {
-        "size": 5120995,
-        "sha256": "06df4ec9d5d8e561ca5a34c5a57b838cd55c71bd88269d2fa063fd6aa379bfe5"
+        "size": 5134990,
+        "sha256": "66d57fa3e43a8d15985f9131321de06f44e5bd94d69f7f5d0b9106c2c4bc9687"
       },
       "nativeAugmentation.d.ts": {
         "size": 1340,
@@ -1715,8 +1726,8 @@
         "sha256": "1b61274b88e8680758e779c58995fbb035fce8f1330c6d8c482cebb3f2ce0128"
       },
       "package.json": {
-        "size": 3326,
-        "sha256": "14865277e07528fb835ad6efd6a4275b592313aead9e10fc8bb3ff5da0ad86ad"
+        "size": 3409,
+        "sha256": "3cd55e2985949a27a3ca38faade9f11dca4815f57837bc919bfa91ea166b2230"
       },
       "preflightDiagnostics.d.ts": {
         "size": 20381,

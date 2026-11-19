@@ -1,20 +1,20 @@
 {
   "schema": "nirs4all-web.public-npm-acquisition.v1",
   "package": "@nirs4all/methods",
-  "version": "1.4.0",
+  "version": "1.5.1",
   "source": {
     "repository": "https://github.com/GBeurier/nirs4all-methods",
-    "commit": "7d78e6a30340458ee4d0ec3adfc2ad62db4cf045",
-    "tree": "b1faf7f2ebd34b0c219fa36df491b368cbc302d6",
-    "tag": "v1.4.0"
+    "commit": "25041f88bebb21a19748799c1681e138a3d55dfb",
+    "tree": "78ef29128ed21c2c38655235d8de7dcbc8c5e1c3",
+    "tag": "v1.5.1"
   },
   "acquisition": {
-    "metadata_url": "https://registry.npmjs.org/@nirs4all/methods/1.4.0",
-    "tarball_url": "https://registry.npmjs.org/@nirs4all/methods/-/methods-1.4.0.tgz",
-    "size": 2005957,
-    "sha256": "fc505275d899fabe8e7efffa08d9ef4305ebbff1be2808eb9c548ab9940f550b",
-    "sha1": "5eecff072b64a4c918809702a980ed12baa19ff3",
-    "integrity": "sha512-C4a6FQaQXxaxW2LJWPo6eU2MsfSCaOAFnmR4ylZ7tQ/rEGWo3ETbjfnb1e6KkKdOWx+9hXCURRT6XuCFOgAbiQ=="
+    "metadata_url": "https://registry.npmjs.org/@nirs4all/methods/1.5.1",
+    "tarball_url": "https://registry.npmjs.org/@nirs4all/methods/-/methods-1.5.1.tgz",
+    "size": 2010945,
+    "sha256": "2fc930feba7f27f793573242f31ba6fd77207a03692b03786b78f9ea4b0b129d",
+    "sha1": "25d0e36eee796ccdd724c57681cd6e5d631e52c8",
+    "integrity": "sha512-/qox7z8t8cKHaXl6Dtq6M/wuJ7l9uyjQTZGIx0xNabtTdlZ62Ty851gbzdp+BV3laNLdYWWFTCDYW7JGkfRcPA=="
   },
   "reproducibility": {
     "performed_by_web": false,
@@ -83,7 +83,7 @@
     },
     "README.md": {
       "size": 25247,
-      "sha256": "e1c48765754c175ff7b1403675e6e597e287be05e78c12ae47790a47496d95c6"
+      "sha256": "330fa06b36f77602c429d8fd02743a54f255f599790d682ce5a0bcaa273fadbf"
     },
     "THIRD_PARTY_LICENSES.md": {
       "size": 7437,
@@ -122,12 +122,12 @@
       "sha256": "8b7166bfcb9e04c2b71cb7ae232db271d280bd8726ba9ff9345b67c0897c3c3a"
     },
     "estimatorRolesGenerated.d.ts": {
-      "size": 176026,
-      "sha256": "71d6191fd64d53fb2c554f086b725a53310c89c9a79003818c033fb90a66f47a"
+      "size": 177095,
+      "sha256": "be2b4ef33bd83d01ac90bc88eddf9ce75c4a01e604775d17c780e8b04482c9b6"
     },
     "estimatorRolesGenerated.js": {
-      "size": 119184,
-      "sha256": "38d7d8848838415f02ed86f0d774dc2b27d1ebd8faef62386ad8393507f980fe"
+      "size": 119838,
+      "sha256": "5162b7ece0f286699424e75dfc24e1ed4d21f8f0c8931a706bbaa66796258637"
     },
     "explain.d.ts": {
       "size": 7707,
@@ -182,8 +182,8 @@
       "sha256": "3b59ac1085f4ad5801f23ad1de8472e87f71c85c64b6872584feffc1964c955d"
     },
     "n4m.wasm": {
-      "size": 5120995,
-      "sha256": "06df4ec9d5d8e561ca5a34c5a57b838cd55c71bd88269d2fa063fd6aa379bfe5"
+      "size": 5134990,
+      "sha256": "66d57fa3e43a8d15985f9131321de06f44e5bd94d69f7f5d0b9106c2c4bc9687"
     },
     "nativeAugmentation.d.ts": {
       "size": 1340,
@@ -226,8 +226,8 @@
       "sha256": "1b61274b88e8680758e779c58995fbb035fce8f1330c6d8c482cebb3f2ce0128"
     },
     "package.json": {
-      "size": 3326,
-      "sha256": "14865277e07528fb835ad6efd6a4275b592313aead9e10fc8bb3ff5da0ad86ad"
+      "size": 3409,
+      "sha256": "3cd55e2985949a27a3ca38faade9f11dca4815f57837bc919bfa91ea166b2230"
     },
     "preflightDiagnostics.d.ts": {
       "size": 20381,
