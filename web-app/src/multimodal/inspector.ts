@@ -1,6 +1,7 @@
 import type { ChainPredictions, InspectorChain, ScoreRef } from 'nirs4all-ui/inspector'
 import type { LabCandidateResult, LabDataset, LabPipelineDocument, LabRunResult } from './types'
 import { FUSION_LEVEL_LABEL, fusionLevel, operatorName } from './fusion'
+import { AOM_CRITERION_LABEL, formatRanking } from '../engine/aomSelection'
 
 /**
  * Projection of completed laboratory runs onto the shared Inspector contract.
@@ -98,18 +99,33 @@ function modelLabel(document: LabPipelineDocument): string {
 const AOM_BRANCH = ['raw', 'SNV', 'MSC']
 
 /**
- * What the refit model selected internally (AOM: preprocessing branch, chain and
- * components or ridge alpha), from the Methods fit result of the last fit per source.
+ * What the refit model selected internally (AOM: preprocessing branch and chain,
+ * components or ridge alpha, the best internal candidates and how often the
+ * outer folds chose the same chain), from the Methods fit results per source.
+ * The internal scores come from AOM's own CV inside the training data, never
+ * from the outer OOF or test partitions.
  */
 function selectedParams(dataset: LabDataset, run: LabRunRecord): Record<string, string | number> {
-  const last = new Map<string, NonNullable<LabRunRecord['candidate']['modelSelections']>[number]>()
-  for (const selection of run.candidate.modelSelections ?? []) last.set(selection.sourceIds.join('+'), selection)
+  const bySource = new Map<string, NonNullable<LabRunRecord['candidate']['modelSelections']>>()
+  for (const selection of run.candidate.modelSelections ?? []) {
+    const key = selection.sourceIds.join('+')
+    bySource.set(key, [...(bySource.get(key) ?? []), selection])
+  }
   const params: Record<string, string | number> = {}
-  for (const [key, selection] of last) {
+  for (const [key, fits] of bySource) {
+    const refit = fits[fits.length - 1], folds = fits.slice(0, -1)
     const where = `${key.split('+').map(id => sourceLabel(dataset, id)).join(' + ')} · AOM`
-    const { selected_branch: branch, selected_chain_index: chain, selected_n_components: components, selected_alpha: alpha } = selection.values
-    if (branch !== undefined) params[`${where} branch`] = AOM_BRANCH[branch] ?? `branch ${branch}`
-    if (chain !== undefined) params[`${where} chain`] = `#${chain + 1}`
+    const { selected_branch: branch, selected_chain_index: chain, selected_n_components: components, selected_alpha: alpha } = refit.values
+    const aom = refit.aom
+    if (aom) {
+      params[`${where} chain`] = aom.selected
+      if (aom.ranking.length > 1) params[`${where} top chains (${AOM_CRITERION_LABEL[aom.criterion]})`] = formatRanking(aom)
+      const agreeing = folds.filter(fit => fit.aom?.selected === aom.selected).length
+      if (folds.length > 0) params[`${where} chain stability`] = `${agreeing}/${folds.length} fold fits`
+    } else {
+      if (branch !== undefined) params[`${where} branch`] = AOM_BRANCH[branch] ?? `branch ${branch}`
+      if (chain !== undefined) params[`${where} chain`] = `#${chain + 1}`
+    }
     if (components !== undefined) params[`${where} n_components`] = components
     if (alpha !== undefined) params[`${where} alpha`] = Number(alpha.toPrecision(4))
   }
@@ -124,6 +140,8 @@ export function inspectorChains(dataset: LabDataset, runs: readonly LabRunRecord
     const level = fusionLevel(document)
     const sources = [...new Set(document.branches.flatMap(branch => branch.sourceIds))]
     const params = document.merge.kind === 'none' ? document.branches[0].head.params : document.merge.kind === 'model' ? document.merge.head.params : {}
+    const selected = selectedParams(dataset, run)
+    const aomChains = Object.fromEntries(Object.entries(selected).filter(([key]) => key.endsWith(' · AOM chain')))
     return {
       id: run.id,
       label: `#${run.index} ${document.label}`,
@@ -137,7 +155,7 @@ export function inspectorChains(dataset: LabDataset, runs: readonly LabRunRecord
       model: run.name,
       modelFamily: FUSION_LEVEL_LABEL[level],
       steps: chainSteps(dataset, document),
-      params: { ...Object.fromEntries(Object.entries(params).filter(([key]) => !['branch_kinds', 'branch_shapes', 'seed'].includes(key))), ...run.choices, ...selectedParams(dataset, run) },
+      params: { ...Object.fromEntries(Object.entries(params).filter(([key]) => !['branch_kinds', 'branch_shapes', 'seed'].includes(key))), ...run.choices, ...selected },
       scores: (dataset.target.kind === 'categorical' ? {
         oof_bacc: finite(candidate.oof.balancedAccuracy), oof_acc: finite(candidate.oof.accuracy), oof_f1: finite(candidate.oof.f1),
         test_bacc: finite(candidate.holdout?.balancedAccuracy), test_acc: finite(candidate.holdout?.accuracy),
@@ -160,6 +178,8 @@ export function inspectorChains(dataset: LabDataset, runs: readonly LabRunRecord
         sources: sources.map(id => sourceLabel(dataset, id)).join(' + '),
         n_sources: sources.length,
         folds: candidate.foldsFingerprint.slice(0, 12),
+        // the selected AOM chain per source, for grouping and coloring
+        ...aomChains,
       },
     } satisfies InspectorChain
   })

@@ -1,6 +1,7 @@
 import type { ChainPredictions, InspectorChain, ScoreRef } from 'nirs4all-ui/inspector'
 import type { MaterializedDataset, Metrics, PredRow, RunResult, ScoreNode } from '@/engine/types'
 import { variantChains } from './_helpers'
+import { AOM_CRITERION_LABEL, formatRanking, type AomSelection } from '@/engine/aomSelection'
 
 const DIRECTIONS = { rmse: true, mae: true, r2: false, accuracy: false, f1: false } as const
 type Metric = keyof typeof DIRECTIONS
@@ -18,6 +19,22 @@ export const refitIsTest = (run: RunResult): boolean => !selectionValidation(run
  *  held-out test nor a selection validation. An owner result that carries only CV fold blocks has no
  *  refit; its last fold stands in as the final node and stays a validation score, never a training one. */
 export const trainingRefit = (run: RunResult): boolean => run.refit.kind === 'refit' && !selectionValidation(run) && !refitIsTest(run)
+
+/** The internal AOM selection of the run's refit model (absent for other models). */
+function refitAomSelection(run: RunResult): AomSelection | undefined {
+  const model = (run.model.state as { model?: { aomSelection?: AomSelection } } | null)?.model
+  return typeof model === 'object' && model !== null ? model.aomSelection : undefined
+}
+
+/** Inspector params of an AOM selection. Its scores are AOM's internal CV (or
+ *  Fast screening) inside the refit training data, labelled as such. */
+function aomParams(aom: AomSelection): Record<string, string | number> {
+  const params: Record<string, string | number> = { 'AOM chain': aom.selected, 'AOM candidates': aom.candidates }
+  if (aom.ranking.length > 1) params[`AOM top chains (${AOM_CRITERION_LABEL[aom.criterion]})`] = formatRanking(aom)
+  if (aom.nComponents !== undefined) params['AOM n_components'] = aom.nComponents
+  if (aom.alpha !== undefined) params['AOM alpha'] = Number(aom.alpha.toPrecision(4))
+  return params
+}
 
 /** Training resubstitution is available only through an explicit UI opt-in. */
 export const defaultEvaluationScore = (run: RunResult): ScoreNode | null =>
@@ -104,16 +121,18 @@ export function inspectorResults(runs: readonly RunResult[], dataset: Materializ
           if (values.every((value): value is number => value !== null)) foldScores[ref.key] = values
         }
       }
+      // The refit model's internal AOM selection belongs to the selected variant only.
+      const aom = variant.selected ? refitAomSelection(run) : undefined
       const nodes = variant.selected ? [run.cv, run.refit] : [run.cv ?? run.refit]
       const status: InspectorChain['status'] = nodes.some((node) => node?.status === 'failed') ? 'failed'
         : nodes.some((node) => node?.status === 'running') ? 'partial' : 'ok'
       chains.push({ ...base, id, runId: run.id, runLabel: run.pipelineName,
         dataset: datasetName, target: run.targetName, scores, foldScores,
-        params: variant.pipeline?.model ? Object.fromEntries(Object.entries(variant.pipeline.model.params)
+        params: variant.pipeline?.model || aom ? { ...Object.fromEntries(Object.entries(variant.pipeline?.model?.params ?? {})
           .map(([name, value]) => [name, typeof value === 'number' || typeof value === 'string' || typeof value === 'boolean'
-            ? value : value == null ? null : JSON.stringify(value) ?? null])) : undefined,
+            ? value : value == null ? null : JSON.stringify(value) ?? null])), ...(aom ? aomParams(aom) : {}) } : undefined,
         status,
-        attributes: { selection: variant.selected ? 'dag-ml selected' : 'evaluated variant' },
+        attributes: { selection: variant.selected ? 'dag-ml selected' : 'evaluated variant', ...(aom ? { 'AOM chain': aom.selected } : {}) },
       })
       chainRuns.set(id, run)
       if (!variant.selected) {

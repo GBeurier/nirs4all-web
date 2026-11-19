@@ -73,6 +73,16 @@ function verifyRuns(document, count) {
       if (fold) assert.ok(fold.validation_sample_ids.every(id => !ids.has(id)), 'fit included outer validation')
     }
   }
+  // AOM heads report the chain they selected, by name, with ranked candidates.
+  const aomRun = document.runs.find(run => run.name === 'Late · AOM stacking')
+  if (aomRun) {
+    const aomFits = (aomRun.candidate.modelSelections || []).filter(selection => selection.methodId === 'aom_pop.calibration')
+    assert.ok(aomFits.length > 0, 'AOM stacking recorded no internal selection')
+    for (const fit of aomFits) {
+      assert.match(fit.aom?.selected ?? '', /^(raw|SNV|MSC) › /, 'AOM selection has no chain name')
+      assert.ok(fit.aom.ranking.length > 0 && fit.aom.candidates > 0, 'AOM selection has no ranked candidates')
+    }
+  }
   // Native fixed-mean output must equal the separately executed source baselines
   // under the same sources, transforms, folds and fixed PLS hyperparameters
   // (late presets use 10 components, one value of the single-source sweep).

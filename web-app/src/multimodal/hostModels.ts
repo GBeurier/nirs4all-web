@@ -9,6 +9,7 @@
  * equivalent, no portable Methods state); the maintainer accepted this
  * exception for the training laboratory.
  */
+import { summarizeAomFit, type AomSelection } from '../engine/aomSelection'
 import { createMlJsEstimator, loadMlJs } from 'nirs4all/classic-ml'
 
 import { BURN_CNN, BURN_CNN_CLASSIFIER, HOST_CLASSIFIERS, HOST_MODELS, RANDOM_FOREST, RANDOM_FOREST_CLASSIFIER, TFJS_CNN } from './hostModelIds'
@@ -342,7 +343,7 @@ class HostPipeline {
 const isHost = (steps: Step[]) => steps.some(step => HOST_MODELS.has(step.methodId))
 
 /** Internal selection a native head reports after a fit (Methods `fitResult`), in fit order. */
-export interface ModelSelection { methodId: string; sourceIds: string[]; values: Record<string, number> }
+export interface ModelSelection { methodId: string; sourceIds: string[]; values: Record<string, number>; aom?: AomSelection }
 let selections: ModelSelection[] = []
 /** Selections recorded since the last call (the last one per source is the refit's). */
 export function takeModelSelections(): ModelSelection[] { const taken = selections; selections = []; return taken }
@@ -371,7 +372,8 @@ class SelectingHead {
     const result = (estimator.fitResult() ?? {}) as Record<string, unknown>
     const values = Object.fromEntries(SELECTION_KEYS.filter(key => typeof result[key] === 'number').map(key => [key, result[key] as number]))
     const sourceIds = [...new Set((this.names ?? []).map(name => /^source:([^/]+)\//.exec(name)?.[1]).filter((id): id is string => Boolean(id)))]
-    selections.push({ methodId: this.step.methodId, sourceIds, values })
+    const aom = summarizeAomFit(this.step.methodId, result)
+    selections.push({ methodId: this.step.methodId, sourceIds, values, ...(aom ? { aom } : {}) })
     return this
   }
   predict(X: Matrix, featureNames?: string[]) {
