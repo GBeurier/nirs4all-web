@@ -62,6 +62,9 @@ const FORBIDDEN: { pattern: RegExp; why: string }[] = [
   { pattern: /(?:from\s+|import\s*\()\s*['"][^'"]*frozen-core-0\.5\//, why: 'the frozen Core oracle is test-only' },
 ]
 
+// Public bank catalog and selected asset: credential-less downloads only.
+const FETCH_ALLOWED = new Set([join('data', 'public-datasets.ts')])
+
 function getAttribute(tag: string, name: string): string | null {
   const match = new RegExp(`\\b${name}=["']([^"']+)["']`, 'i').exec(tag)
   return match?.[1] ?? null
@@ -81,6 +84,7 @@ describe('client-side-only contract', () => {
       for (const { pattern, why } of FORBIDDEN) {
         if (pattern.source === /\bfetch\s*\(/.source &&
           relative(SRC_ROOT, file).split(sep).join('/') === 'multimodal/bundled-file.ts') continue
+        if (pattern === FORBIDDEN[0].pattern && FETCH_ALLOWED.has(relative(SRC_ROOT, file))) continue
         const match = pattern.exec(text)
         if (!match) continue
         const line = text.slice(0, match.index).split('\n').length
