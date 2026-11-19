@@ -1,10 +1,15 @@
-import { BURN_CNN, RANDOM_FOREST, TFJS_CNN } from './hostModelIds'
+import { BURN_CNN, BURN_CNN_CLASSIFIER, RANDOM_FOREST, RANDOM_FOREST_CLASSIFIER, TFJS_CNN } from './hostModelIds'
 import type { LabConfig, LabDataset, LabPipelineBranch, LabPipelineDocument, LabPipelinePreset, LabSource, LabStep, LabStrategy } from './types'
 
 export const SOURCE_RECIPE_PARAM = 'source_composition_v1'
 const PLS = 'models.pls.pls_regression'
 const RIDGE = 'models.regularized.ridge'
 export const NEURAL = 'models.neural.multibranch_regressor'
+export const PLS_LOGISTIC = 'models.classification.pls_logistic'
+export const PLS_LDA = 'models.classification.pls_lda'
+/** Classifier heads that emit class probabilities (required for late fusion and stacking). */
+export const PROBABILITY_HEADS: ReadonlySet<string> = new Set([PLS_LOGISTIC, RANDOM_FOREST_CLASSIFIER, BURN_CNN_CLASSIFIER])
+export const CLASSIFIER_HEADS: ReadonlySet<string> = new Set([...PROBABILITY_HEADS, PLS_LDA])
 export const BLOCK_RMS = 'preprocessing.scaling.block_rms'
 export interface SourceOperator {
   type: 'N4mSourcePipeline'
@@ -122,8 +127,8 @@ function describeLegacyRecipe(dataset: LabDataset, config: LabConfig): RecipeDes
     label: strategyLabel[name] + (config.blockScaling ? '; Train-fitted block RMS scaling' : '') }
 }
 
-const HEADS = new Set([PLS, RIDGE, 'models.multiblock.mb_pls', NEURAL, RANDOM_FOREST, TFJS_CNN, BURN_CNN, 'aom_pop.calibration'])
-const META_HEADS = new Set([PLS, RIDGE])
+const HEADS = new Set([PLS, RIDGE, 'models.multiblock.mb_pls', NEURAL, RANDOM_FOREST, TFJS_CNN, BURN_CNN, 'aom_pop.calibration', ...CLASSIFIER_HEADS])
+const META_HEADS = new Set([PLS, RIDGE, PLS_LOGISTIC])
 const object = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value)
 function insist(condition: unknown, message: string): asserts condition {
@@ -141,8 +146,10 @@ function validateStep(value: unknown, heads?: Set<string>): asserts value is Lab
     typeof param === 'number' && Number.isFinite(param)),
   'Operation parameters must be finite primitive values; native network geometry is derived from the selected sources')
   const params = value.params
-  if (value.methodId === NEURAL || value.methodId === TFJS_CNN || value.methodId === BURN_CNN || value.methodId === RANDOM_FOREST) insist(!['branch_kinds', 'branch_shapes', 'seed'].some(key => Object.hasOwn(params, key)),
+  if ([NEURAL, TFJS_CNN, BURN_CNN, RANDOM_FOREST, BURN_CNN_CLASSIFIER, RANDOM_FOREST_CLASSIFIER].includes(value.methodId)) insist(!['branch_kinds', 'branch_shapes', 'seed'].some(key => Object.hasOwn(params, key)),
     'Network branch geometry and task seeds are derived by the host/native controller; remove these low-level parameters')
+  if ([BURN_CNN_CLASSIFIER, RANDOM_FOREST_CLASSIFIER, BURN_CNN, RANDOM_FOREST, TFJS_CNN].includes(value.methodId)) insist(!Object.hasOwn(params, 'n_classes'),
+    'The number of classes is the dataset\'s declared vocabulary; remove n_classes')
 }
 
 /** Import boundary only. Native manifests and Methods remain authoritative for roles and parameters. */
@@ -250,6 +257,16 @@ export function createPipelinePresets(dataset: LabDataset, config: LabConfig): L
 function describeDocument(dataset: LabDataset, config: LabConfig): RecipeDescription {
   const document = validatePipelineDocument(dataset, config.pipeline)
   const operators: Record<string, SourceOperator> = {}, nodes: RecipeDescription['nodes'] = []
+  // Classification: the dataset declares its class vocabulary; heads must be classifiers, and
+  // late fusion/stacking combine out-of-fold class probabilities, never class ids.
+  const classes = dataset.target.kind === 'categorical' ? dataset.target.classes ?? [] : null
+  const heads = [...document.branches.map(branch => branch.head.methodId), ...(document.merge.kind === 'model' ? [document.merge.head.methodId] : [])]
+  insist(classes === null || heads.every(id => CLASSIFIER_HEADS.has(id)),
+    'This dataset has a class target: use classifier heads (PLS-DA, random forest classifier, CNN classifier)')
+  insist(classes !== null || heads.every(id => !CLASSIFIER_HEADS.has(id)),
+    'This dataset has a numeric target: classifier heads need a categorical target')
+  insist(classes === null || document.merge.kind === 'none' || document.branches.every(branch => PROBABILITY_HEADS.has(branch.head.methodId)),
+    'Late fusion and stacking combine class probabilities: every branch needs a probabilistic classifier (PLS-DA logistic, random forest, CNN)')
   const model = (id: string, input: Pick<LabPipelineBranch, 'sourceIds' | 'sourceChains' | 'head'>, hybrid = false) => {
     const sources = input.sourceIds.map(sourceId => dataset.sources.find(source => source.id === sourceId)!)
     const head: LabStep = structuredClone(input.head)
@@ -264,8 +281,9 @@ function describeDocument(dataset: LabDataset, config: LabConfig): RecipeDescrip
     }, source.shape[0])
     const lineShape = (source: LabSource) => source.modality === 'image' ? source.shape : [widthAfter(source), 1, 1]
     // Host models take the task seed as a decimal string; the TF.js CNN reads ordered markers with a 1-D convolution.
-    if (head.methodId === RANDOM_FOREST) head.params = { ...head.params, seed: config.validation.seed }
-    if (head.methodId === TFJS_CNN || head.methodId === BURN_CNN) head.params = { ...head.params,
+    if (head.methodId === RANDOM_FOREST || head.methodId === RANDOM_FOREST_CLASSIFIER) head.params = { ...head.params, seed: config.validation.seed }
+    if (classes && (head.methodId === RANDOM_FOREST_CLASSIFIER || head.methodId === BURN_CNN_CLASSIFIER)) head.params = { ...head.params, n_classes: classes.length }
+    if (head.methodId === TFJS_CNN || head.methodId === BURN_CNN || head.methodId === BURN_CNN_CLASSIFIER) head.params = { ...head.params,
       branch_kinds: sources.map(source => source.modality === 'image' ? 2 : 1),
       branch_shapes: sources.flatMap(lineShape),
       seed: config.validation.seed }
@@ -278,7 +296,9 @@ function describeDocument(dataset: LabDataset, config: LabConfig): RecipeDescrip
     const operator = sourceOperator(sources, localConfig, head, hybrid)
     operators[id] = operator
     if (sources.length) nodes.push({ id, sourceIds: sources.map(source => source.id), inputName: hybrid ? 'x_original' : 'x' })
-    return { kind: 'model', id, operator, params: { [SOURCE_RECIPE_PARAM]: operator } }
+    // A probabilistic classifier always publishes its class probabilities (auxiliary, unscored port).
+    return { kind: 'model', id, operator, params: { [SOURCE_RECIPE_PARAM]: operator },
+      ...(classes && PROBABILITY_HEADS.has(head.methodId) ? { prediction_output_ports: ['probabilities'] } : {}) }
   }
   let steps: unknown[], targetNode = 'model:result'
   if (document.merge.kind === 'none') steps = [model(targetNode, document.branches[0])]
@@ -287,13 +307,14 @@ function describeDocument(dataset: LabDataset, config: LabConfig): RecipeDescrip
     // injectively when an edited branch is named result or already uses branch:.
     const nodeId = (id: string) => `model:${id === 'result' || id.startsWith('branch:') ? 'branch:' : ''}${id}`
     const branch = { kind: 'branch', branches: document.branches.map(input => ({ id: input.id, steps: [model(nodeId(input.id), input)] })) }
+    const sourcePorts = classes ? { source_ports: Object.fromEntries(document.branches.map(input => [nodeId(input.id), 'probabilities'])) } : {}
     if (document.merge.kind === 'mean') {
       targetNode = 'merge:mean'
-      steps = [branch, { kind: 'merge', id: targetNode, merge_mode: 'fusion', output_as: 'predictions', include_original_data: false,
-        metadata: { refit_prediction_partition: 'final' } }]
+      steps = [branch, { kind: 'merge', id: targetNode, merge_mode: classes ? 'fusion_proba_mean_label' : 'fusion', output_as: 'predictions',
+        include_original_data: false, ...sourcePorts, metadata: { refit_prediction_partition: 'final' } }]
     } else {
       const hybrid = document.merge.sourceIds.length > 0
-      steps = [branch, { ...model(targetNode, document.merge, hybrid), kind: 'merge_model', include_original_data: hybrid,
+      steps = [branch, { ...model(targetNode, document.merge, hybrid), kind: 'merge_model', include_original_data: hybrid, ...sourcePorts,
         metadata: { stacking_oof_execution: 'nested_oof_v1', stacking_refit_oof: 'partitioned_inner_v1' } }]
     }
   }

@@ -15,9 +15,14 @@ export class CnnRegressor {
     static from_state(bytes: Uint8Array | number[]): CnnRegressor;
     constructor(config_json: string);
     /**
-     * Predictions in target units.
+     * Regression: predictions in target units. Classification: the most probable class index per row
+     * (ties go to the lowest index).
      */
     predict(x: Float64Array | number[], rows: number, cols: number): Float64Array;
+    /**
+     * Classification only: softmax class probabilities, row-major `rows × n_classes` (rows sum to 1).
+     */
+    predict_proba(x: Float64Array | number[], rows: number, cols: number): Float64Array;
 }
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
@@ -30,6 +35,7 @@ export interface InitOutput {
     readonly cnnregressor_from_state: (a: number, b: number) => [number, number, number];
     readonly cnnregressor_new: (a: number, b: number) => [number, number, number];
     readonly cnnregressor_predict: (a: number, b: number, c: number, d: number, e: number) => [number, number, number, number];
+    readonly cnnregressor_predict_proba: (a: number, b: number, c: number, d: number, e: number) => [number, number, number, number];
     readonly __wbindgen_exn_store: (a: number) => void;
     readonly __externref_table_alloc: () => number;
     readonly __wbindgen_externrefs: WebAssembly.Table;

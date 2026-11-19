@@ -16,13 +16,13 @@
 use burn::backend::{Autodiff, NdArray};
 use burn::module::{AutodiffModule, Module};
 use burn::nn::conv::{Conv1d, Conv1dConfig, Conv2d, Conv2dConfig};
-use burn::nn::loss::{MseLoss, Reduction};
+use burn::nn::loss::{CrossEntropyLossConfig, MseLoss, Reduction};
 use burn::nn::pool::{AvgPool1d, AvgPool1dConfig, AvgPool2d, AvgPool2dConfig};
 use burn::nn::{BatchNorm, BatchNormConfig, Linear, LinearConfig};
 use burn::optim::{AdamConfig, GradientsParams, Optimizer};
 use burn::record::{BinBytesRecorder, FullPrecisionSettings, Recorder};
 use burn::tensor::backend::{AutodiffBackend, Backend};
-use burn::tensor::{activation, Distribution, Tensor, TensorData};
+use burn::tensor::{activation, Distribution, Int, Tensor, TensorData};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
@@ -53,6 +53,9 @@ pub struct Config {
     pub learning_rate: f64,
     #[serde(default)]
     pub seed: u64,
+    /// 0 = regression (one output); k >= 2 = classification into k classes (softmax, cross-entropy).
+    #[serde(default)]
+    pub n_classes: usize,
 }
 fn default_arch() -> String { "compact".into() }
 fn d5() -> usize { 5 }
@@ -180,12 +183,13 @@ impl<B: Backend> Net<B> {
         Ok(Net {
             seq, img,
             hidden: LinearConfig::new(concat, hidden).init(device),
-            output: LinearConfig::new(hidden, 1).init(device),
+            output: LinearConfig::new(hidden, if config.n_classes >= 2 { config.n_classes } else { 1 }).init(device),
         })
     }
 
     /// `inputs` are standardized blocks in branch order: [n, 1, length] or [n, channels, height, width].
-    fn forward(&self, sequences: Vec<Tensor<B, 3>>, images: Vec<Tensor<B, 4>>, order: &[u32], nicon: bool, training: bool) -> Tensor<B, 2> {
+    /// Regression: one (scaled) output. Classification (`logits`): one raw logit per class.
+    fn forward(&self, sequences: Vec<Tensor<B, 3>>, images: Vec<Tensor<B, 4>>, order: &[u32], nicon: bool, training: bool, logits: bool) -> Tensor<B, 2> {
         let mut seqs = sequences.into_iter();
         let mut imgs = images.into_iter();
         let (mut si, mut ii) = (0usize, 0usize);
@@ -230,6 +234,10 @@ impl<B: Backend> Net<B> {
             }
         }
         let joined = Tensor::cat(parts, 1);
+        if logits {
+            let hidden = self.hidden.forward(joined);
+            return self.output.forward(if nicon { activation::sigmoid(hidden) } else { activation::relu(hidden) });
+        }
         if nicon {
             activation::sigmoid(self.output.forward(activation::sigmoid(self.hidden.forward(joined))))
         } else {
@@ -322,21 +330,48 @@ impl CnnRegressor {
         self.fit_inner(x, rows, cols, y).map_err(|e| JsError::new(&e))
     }
 
-    /// Predictions in target units.
+    /// Regression: predictions in target units. Classification: the most probable class index per row
+    /// (ties go to the lowest index).
     pub fn predict(&self, x: &[f64], rows: usize, cols: usize) -> Result<Vec<f64>, JsError> {
-        let (model, scaling) = match (&self.model, &self.scaling) {
-            (Some(model), Some(scaling)) => (model, scaling),
-            _ => return Err(JsError::new("Fit or restore the CNN first")),
-        };
-        if cols != scaling.mean.len() || x.len() != rows * cols { return Err(JsError::new("Prediction matrix shape differs from the fitted model")) }
+        let k = self.config.n_classes;
+        if k >= 2 {
+            let proba = self.predict_proba(x, rows, cols)?;
+            return Ok(proba.chunks(k).map(|row| {
+                let mut best = 0;
+                for (index, value) in row.iter().enumerate() { if *value > row[best] { best = index } }
+                best as f64
+            }).collect());
+        }
+        let (model, scaling) = self.fitted(cols, rows, x)?;
         let device = Default::default();
         let mut out = Vec::with_capacity(rows);
         let all: Vec<usize> = (0..rows).collect();
         for chunk in all.chunks(256) {
             let (seqs, imgs) = blocks::<Inner>(x, cols, chunk, &self.geometry, scaling, &device);
-            let pred = model.forward(seqs, imgs, &self.config.branch_kinds, self.config.architecture == "nicon", false);
+            let pred = model.forward(seqs, imgs, &self.config.branch_kinds, self.config.architecture == "nicon", false, false);
             let values = pred.into_data().to_vec::<f32>().map_err(|e| JsError::new(&format!("{e:?}")))?;
             out.extend(values.into_iter().map(|v| v as f64 * scaling.y_scale + scaling.y_offset));
+        }
+        Ok(out)
+    }
+
+    /// Classification only: softmax class probabilities, row-major `rows × n_classes` (rows sum to 1).
+    pub fn predict_proba(&self, x: &[f64], rows: usize, cols: usize) -> Result<Vec<f64>, JsError> {
+        let k = self.config.n_classes;
+        if k < 2 { return Err(JsError::new("predict_proba needs a classification CNN (n_classes >= 2)")) }
+        let (model, scaling) = self.fitted(cols, rows, x)?;
+        let device = Default::default();
+        let mut out = Vec::with_capacity(rows * k);
+        let all: Vec<usize> = (0..rows).collect();
+        for chunk in all.chunks(256) {
+            let (seqs, imgs) = blocks::<Inner>(x, cols, chunk, &self.geometry, scaling, &device);
+            let logits = model.forward(seqs, imgs, &self.config.branch_kinds, self.config.architecture == "nicon", false, true);
+            let values = activation::softmax(logits, 1).into_data().to_vec::<f32>().map_err(|e| JsError::new(&format!("{e:?}")))?;
+            // Renormalise in f64 so every row is an exact distribution for the OOF checks.
+            for row in values.chunks(k) {
+                let total: f64 = row.iter().map(|v| *v as f64).sum();
+                out.extend(row.iter().map(|v| *v as f64 / total));
+            }
         }
         Ok(out)
     }
@@ -364,6 +399,15 @@ impl CnnRegressor {
 }
 
 impl CnnRegressor {
+    fn fitted(&self, cols: usize, rows: usize, x: &[f64]) -> Result<(&Net<Inner>, &Scaling), JsError> {
+        let (model, scaling) = match (&self.model, &self.scaling) {
+            (Some(model), Some(scaling)) => (model, scaling),
+            _ => return Err(JsError::new("Fit or restore the CNN first")),
+        };
+        if cols != scaling.mean.len() || x.len() != rows * cols { return Err(JsError::new("Prediction matrix shape differs from the fitted model")) }
+        Ok((model, scaling))
+    }
+
     fn fit_inner(&mut self, x: &[f64], rows: usize, cols: usize, y: &[f64]) -> Result<(), String> {
         let width: usize = self.geometry.iter().map(Geometry::width).sum();
         if width != cols || x.len() != rows * cols || y.len() != rows || rows == 0 {
@@ -375,7 +419,11 @@ impl CnnRegressor {
             let s = ((0..rows).map(|r| (x[r * cols + j] - mean[j]).powi(2)).sum::<f64>() / rows as f64).sqrt();
             if s > 0.0 { s } else { 1.0 }
         }).collect();
-        let (y_offset, y_scale) = if nicon {
+        let k = self.config.n_classes;
+        if k >= 2 && y.iter().any(|v| v.fract() != 0.0 || *v < 0.0 || *v >= k as f64) {
+            return Err(format!("classification targets must be class indices 0..{}", k - 1));
+        }
+        let (y_offset, y_scale) = if k >= 2 { (0.0, 1.0) } else if nicon {
             let lo = y.iter().cloned().fold(f64::INFINITY, f64::min);
             let hi = y.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
             (lo, if hi > lo { hi - lo } else { 1.0 })
@@ -400,10 +448,17 @@ impl CnnRegressor {
                 // Batch norm needs more than one sample per batch.
                 if chunk.len() < 2 { continue }
                 let (seqs, imgs) = blocks::<Train>(x, cols, chunk, &self.geometry, &scaling, &device);
-                let yt: Vec<f32> = chunk.iter().map(|&r| target[r]).collect();
-                let ys = Tensor::<Train, 2>::from_data(TensorData::new(yt, [chunk.len(), 1]), &device);
-                let pred = model.forward(seqs, imgs, &self.config.branch_kinds, nicon, true);
-                let loss = MseLoss::new().forward(pred, ys, Reduction::Mean);
+                let loss = if k >= 2 {
+                    let labels: Vec<i64> = chunk.iter().map(|&r| y[r] as i64).collect();
+                    let targets = Tensor::<Train, 1, Int>::from_data(TensorData::new(labels, [chunk.len()]), &device);
+                    let logits = model.forward(seqs, imgs, &self.config.branch_kinds, nicon, true, true);
+                    CrossEntropyLossConfig::new().init(&device).forward(logits, targets)
+                } else {
+                    let yt: Vec<f32> = chunk.iter().map(|&r| target[r]).collect();
+                    let ys = Tensor::<Train, 2>::from_data(TensorData::new(yt, [chunk.len(), 1]), &device);
+                    let pred = model.forward(seqs, imgs, &self.config.branch_kinds, nicon, true, false);
+                    MseLoss::new().forward(pred, ys, Reduction::Mean)
+                };
                 let grads = GradientsParams::from_grads(loss.backward(), &model);
                 model = optim.step(self.config.learning_rate, model, grads);
             }

@@ -2,7 +2,7 @@ import { PipelineChainEditor, type PipelineChainDocument } from 'nirs4all-ui/pip
 import { Inspector, type InspectorViewId } from 'nirs4all-ui/inspector'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FUSION_LEVEL_LABEL, LAB_CATALOG, type FusionLevel, type FusionPreset } from './fusion'
-import { LAB_SCORE_REFS, inspectorChains, inspectorPredictions, type LabRunRecord } from './inspector'
+import { inspectorChains, inspectorPredictions, scoreRefsFor, type LabRunRecord } from './inspector'
 import type { LabDataset } from './types'
 
 const LEVELS: readonly FusionLevel[] = ['single', 'early', 'mid', 'late']
@@ -112,6 +112,7 @@ export function FusionEditor(props: FusionEditorProps) {
 }
 
 const VIEWS: readonly InspectorViewId[] = ['overview', 'top', 'compare', 'parity', 'residuals', 'folds', 'agreement', 'samples', 'effects', 'landscape', 'table']
+const CLASSIFICATION_VIEWS: readonly InspectorViewId[] = ['overview', 'top', 'compare', 'confusion', 'folds', 'agreement', 'samples', 'effects', 'landscape', 'table']
 
 export interface FusionResultsProps {
   dataset: LabDataset
@@ -124,14 +125,19 @@ export interface FusionResultsProps {
 /** Every completed run of the current dataset in the shared Inspector. */
 export function FusionResults({ dataset, runs, onClear, onRestore, disabled }: FusionResultsProps) {
   const chains = useMemo(() => inspectorChains(dataset, runs), [dataset, runs])
-  const predictions = useMemo(() => inspectorPredictions(runs), [runs])
-  const [scoreRef, setScoreRef] = useState('oof_rmse')
+  const classification = dataset.target.kind === 'categorical'
+  // A declared limitation of the data (for example a confounded acquisition) is read with the scores.
+  const declaration = (dataset.provenance as { declaration?: { limitation?: unknown } } | undefined)?.declaration
+  const limitation = typeof declaration?.limitation === 'string' ? declaration.limitation : null
+  const refs = scoreRefsFor(dataset)
+  const predictions = useMemo(() => inspectorPredictions(runs, classification ? dataset.target.classes : undefined), [runs, classification, dataset])
+  const [scoreRef, setScoreRef] = useState(refs[0].key)
   const [compare, setCompare] = useState<readonly string[]>([])
   const folds = new Set(runs.map(run => run.candidate.foldsFingerprint))
   const byId = new Map(runs.map(run => [run.id, run]))
   // Until the user picks runs, compare the four best on the active score so fold
   // stability, parity and agreement show several recipes at once.
-  const ref = LAB_SCORE_REFS.find(item => item.key === scoreRef) ?? LAB_SCORE_REFS[0]
+  const ref = refs.find(item => item.key === scoreRef) ?? refs[0]
   const best = useMemo(() => chains
     .filter(chain => typeof chain.scores[ref.key] === 'number')
     .sort((a, b) => ((a.scores[ref.key] as number) - (b.scores[ref.key] as number)) * (ref.lowerIsBetter ? 1 : -1))
@@ -159,22 +165,23 @@ export function FusionResults({ dataset, runs, onClear, onRestore, disabled }: F
         </p>
         <button type="button" className="n4mm-button" data-variant="quiet" disabled={disabled} onClick={onClear}>Clear runs</button>
       </div>
+      {limitation ? <p className="n4mm-alert" role="note"><strong>Dataset limitation.</strong> {limitation}</p> : null}
       {folds.size > 1 ? (
         <p className="n4mm-alert" role="alert">These runs used {folds.size} different fold sets (the validation protocol changed). Compare only runs with the same “folds” attribute.</p>
       ) : null}
       <Inspector
         title="Fusion runs"
         chains={chains}
-        scoreRefs={LAB_SCORE_REFS}
-        scoreRef={scoreRef}
+        scoreRefs={refs}
+        scoreRef={ref.key}
         onScoreRefChange={setScoreRef}
         predictions={predictions}
         compare={shown.length ? shown : best}
         onCompareChange={setCompare}
         maxCompare={4}
-        availableViews={VIEWS}
+        availableViews={classification ? CLASSIFICATION_VIEWS : VIEWS}
         localStatistics
-        defaultLayout={{ preset: 'grid', views: ['top', 'folds', 'parity', 'effects'], maximized: null }}
+        defaultLayout={{ preset: 'grid', views: ['top', 'folds', classification ? 'confusion' : 'parity', 'effects'], maximized: null }}
         onOpenChain={chain => { const run = byId.get(chain.id); if (run && !disabled) onRestore(run) }}
       />
     </div>

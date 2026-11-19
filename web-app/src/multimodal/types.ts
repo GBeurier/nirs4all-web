@@ -20,7 +20,7 @@ export interface LabDataset {
   fingerprint: string
   sampleIds: string[]
   sources: LabSource[]
-  target: { name: string; unit: string; values: Float64Array }
+  target: { name: string; unit: string; values: Float64Array; kind?: 'categorical'; classes?: string[] }
   groupIds?: string[]
   partitions?: Array<'train' | 'test'>
   alignment: Array<{ sourceId: string; matched: number; missing: number; refused: number }>
@@ -73,8 +73,10 @@ export interface LabPredictionRow {
 export interface LabMetricScope {
   scope: 'oof' | 'holdout'
   n: number; rmse: number; mae: number; r2: number | null
+  /** Classification only (owner metrics on class ids; f1 is support-weighted); rmse/mae are NaN then. */
+  accuracy?: number; balancedAccuracy?: number; f1?: number
   rows: LabPredictionRow[]
-  perFold: Array<{ foldId: string; n: number; rmse: number; mae: number; r2: number | null }>
+  perFold: Array<{ foldId: string; n: number; rmse: number; mae: number; r2: number | null; accuracy?: number; balancedAccuracy?: number; f1?: number }>
   undefinedReasons: Record<string, string>
 }
 export interface LabCandidateResult {

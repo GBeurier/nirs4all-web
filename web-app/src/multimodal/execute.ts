@@ -60,8 +60,14 @@ function validate(dataset: LabDataset, configs: LabConfig[]): void {
 function cohorts(runtime: Awaited<ReturnType<typeof loadLabRuntime>>, dataset: LabDataset, config: LabConfig) {
   const { dag, fingerprint } = runtime, seed = config.validation.seed
   const groupMap = dataset.groupIds ? Object.fromEntries(dataset.sampleIds.map((id, index) => [id, dataset.groupIds![index]])) : {}
+  const classOf = new Map(dataset.sampleIds.map((id, index) => [id, String(dataset.target.values[index])]))
+  const categorical = dataset.target.kind === 'categorical'
+  assertLab(!(categorical && dataset.groupIds), 'Grouped classification needs stratified group folds, which this laboratory does not schedule yet')
   const split = (samples: string[], count: number, id: string): FoldSet => {
     const groups = Object.fromEntries(samples.map(sample => [sample, groupMap[sample]]))
+    // Classification folds are stratified by class (native), so every fit scope sees every class.
+    if (categorical) return JSON.parse(dag.stratified_kfold_split_json(nativeJson({ n_splits: count, shuffle: true, seed: SEED_TOKEN }, seed),
+      JSON.stringify(samples), JSON.stringify(Object.fromEntries(samples.map(sample => [sample, classOf.get(sample)]))), id))
     return JSON.parse(dataset.groupIds ? dag.group_kfold_split_json(JSON.stringify({ n_splits: count }), JSON.stringify(samples), JSON.stringify(groups), id) :
       dag.kfold_split_json(nativeJson({ n_splits: count, shuffle: true, seed: SEED_TOKEN }, seed), JSON.stringify(samples), id))
   }
@@ -133,9 +139,16 @@ function metricScope(runtime: Awaited<ReturnType<typeof loadLabRuntime>>, datase
     sample_ids: sampleIds, values: prediction.values, target_names: [dataset.target.name] }
   const target = { level: 'sample', unit_ids: sampleIds.map(id => ({ level: 'sample', id })),
     values: sampleIds.map(id => { assertLab(byId.has(id), 'Prediction references unknown sample'); return [byId.get(id)!] }), target_names: [dataset.target.name] }
+  const categorical = dataset.target.kind === 'categorical'
   const score = (selected: number[]) => {
     const p = { ...block, sample_ids: selected.map(index => sampleIds[index]), values: selected.map(index => prediction.values[index]) }
     const t = { ...target, unit_ids: selected.map(index => target.unit_ids[index]), values: selected.map(index => target.values[index]) }
+    if (categorical) {
+      // Owner classification metrics on class ids; no residual or variance-based metric applies.
+      const report = JSON.parse(runtime.dag.score_regression_prediction_block_json(JSON.stringify(p), JSON.stringify(t), '["accuracy","balanced_accuracy","f1"]'))
+      return { n: report.row_count as number, rmse: NaN, mae: NaN, r2: null, accuracy: report.metrics.accuracy as number,
+        balancedAccuracy: report.metrics.balanced_accuracy as number, f1: report.metrics.f1 as number, undefinedReasons: {} as Record<string, string> }
+    }
     const report = JSON.parse(runtime.dag.score_regression_prediction_block_json(JSON.stringify(p), JSON.stringify(t), '["rmse","mae"]'))
     const profile = JSON.parse(runtime.dag.score_regression_prediction_block_with_profile_json(JSON.stringify(p), JSON.stringify(t),
       '"regression_report.population_rmse_ratios.v1"'))
@@ -145,7 +158,7 @@ function metricScope(runtime: Awaited<ReturnType<typeof loadLabRuntime>>, datase
   const all = sampleIds.map((_, index) => index), metrics = score(all)
   const foldById = new Map(folds?.folds.flatMap(fold => fold.validation_sample_ids.map(id => [id, fold.fold_id] as const)))
   return { scope, ...metrics, rows: sampleIds.map((id, index) => ({ sampleId: id, observed: byId.get(id)!,
-    predicted: prediction.values[index][0], residual: byId.get(id)! - prediction.values[index][0],
+    predicted: prediction.values[index][0], residual: categorical ? 0 : byId.get(id)! - prediction.values[index][0],
     ...(foldById.has(id) ? { foldId: foldById.get(id)! } : {}) })),
     perFold: folds?.folds.map(fold => { const members = new Set(fold.validation_sample_ids)
       return { foldId: fold.fold_id, ...score(all.filter(index => members.has(sampleIds[index]))) } }) ?? [] }
@@ -178,6 +191,7 @@ export async function executeLab(dataset: LabDataset, configs: LabConfig[], onPr
       const description = describeRecipe(dataset, config)
       controller = new N4mWasmSourceController({ methods, operators: description.operators, digest: hash,
         targetNames: [dataset.target.name],
+        ...(dataset.target.kind === 'categorical' ? { task: 'classification' as const, classLabels: dataset.target.classes ?? [] } : {}),
         resolveSource: ({ sourceId, sampleIds }) => {
           const source = dataset.sources.find(source => source.id === sourceId)!
           const lookup = sourceRows.get(sourceId)!, width = widthOf(source), data = new Float64Array(sampleIds.length * width)
@@ -198,9 +212,13 @@ export async function executeLab(dataset: LabDataset, configs: LabConfig[], onPr
       const policy = { split_unit: dataset.groupIds ? 'group' : 'sample', forbid_origin_cross_fold: true,
         allow_observation_split_with_shared_target: false, require_group_ids: Boolean(dataset.groupIds), unsafe_flags: [] }
       const bindings = description.nodes.map(node => binding(node.id, node.inputName, node.sourceIds, trainingEnvelope))
+      const categorical = dataset.target.kind === 'categorical'
+      // Inner (stacking) folds are stratified by the calibration labels only; held-out labels never enter.
+      const strata = categorical ? Object.fromEntries(protocol.calibrationIds.map(id => [id, String(dataset.target.values[targetRows.get(id)!])])) : null
       const dsl = { id: `dsl:lab.${candidateIndex}`, campaign_id: `campaign:lab.${candidateIndex}`,
         input: { name: 'x', representation: 'tabular_numeric' }, root_seed: SEED_TOKEN, leakage_policy: policy,
-        inner_cv: dataset.groupIds ? { kind: 'group_kfold', n_splits: config.validation.innerFolds } :
+        inner_cv: strata ? { kind: 'stratified_kfold', n_splits: config.validation.innerFolds, shuffle: true, seed: SEED_TOKEN, strata } :
+          dataset.groupIds ? { kind: 'group_kfold', n_splits: config.validation.innerFolds } :
           { kind: 'kfold', n_splits: config.validation.innerFolds, shuffle: true, seed: SEED_TOKEN },
         split_invocation: { id: 'split:lab.outer', controller_id: null, leakage_policy: policy, params: {}, fold_set: protocol.folds },
         data_bindings: bindings, steps: description.steps }
@@ -208,17 +226,20 @@ export async function executeLab(dataset: LabDataset, configs: LabConfig[], onPr
       // Parsed u64 numbers are replaced from the independently retained decimal
       // seed before being sent back to the owner; no rounded Number is reused.
       compiled.campaign_template.root_seed = SEED_TOKEN
-      if (compiled.campaign_template.inner_cv?.kind === 'kfold') compiled.campaign_template.inner_cv.seed = SEED_TOKEN
+      if (['kfold', 'stratified_kfold'].includes(compiled.campaign_template.inner_cv?.kind)) compiled.campaign_template.inner_cv.seed = SEED_TOKEN
       const request = { schema_version: 1, request_id: `training:lab.${candidateIndex}`, plan_id: `plan:lab.${candidateIndex}`,
         graph: compiled.graph, campaign: compiled.campaign_template, controller_manifests: manifests,
         data_identities: bindings.map(value => JSON.parse(dag.training_data_identity_json(JSON.stringify(value), JSON.stringify(trainingEnvelope))))
           .sort((a, b) => a.requirement_key.localeCompare(b.requirement_key)),
         parameter_patches: [], patch_policies: [], influence_requirements: [], request_fingerprint: '0'.repeat(64),
         options: { refit: true, refit_strategy: 'refit_one', seed: SEED_TOKEN,
-          selection: { id: 'selection:fixed', metric: { name: 'rmse', objective: 'minimize' }, require_finite: true, evaluation_scope: 'oof' },
+          selection: { id: 'selection:fixed', metric: categorical ? { name: 'balanced_accuracy', objective: 'maximize' } : { name: 'rmse', objective: 'minimize' },
+            require_finite: true, evaluation_scope: 'oof' },
           selection_output_id: 'output:prediction', outputs: [{ output_id: 'output:prediction', node_id: description.targetNode,
-            prediction_level: 'sample', unit_level: 'physical_sample', prediction_kind: 'regression_point', target_names: [dataset.target.name],
-            target_units: [dataset.target.unit || null], class_labels: [[]], output_order: 'target_order', target_space: 'raw' }],
+            ...(categorical ? { port_name: description.targetNode === 'merge:mean' ? 'prediction' : 'oof' } : {}),
+            prediction_level: 'sample', unit_level: 'physical_sample', prediction_kind: categorical ? 'class_label' : 'regression_point',
+            target_names: [dataset.target.name], target_units: [categorical ? null : dataset.target.unit || null],
+            class_labels: [categorical ? dataset.target.classes ?? [] : []], output_order: 'target_order', target_space: 'raw' }],
           scheduler: { kind: 'sequential', backend: null, workers: 1 }, resources: { cpu_threads: 1, memory_bytes: null, gpu_devices: [], wall_time_ms: null },
           artifacts: { cv_artifacts: 'discard', prediction_caches: 'retain', fitted_artifacts: 'portable_required' } } }
       const signed = dag.sign_training_request_json(nativeJson(request, seed))
@@ -231,7 +252,10 @@ export async function executeLab(dataset: LabDataset, configs: LabConfig[], onPr
       const capture = JSON.parse(dag.execute_training_json(signed, JSON.stringify(envelopes), JSON.stringify(trainingEnvelope.coordinator_relations),
         `package:lab.${candidateIndex}`, `outcome:lab.${candidateIndex}`, `run:lab.${candidateIndex}`, `bundle:lab.${candidateIndex}`, invoke))
       const outcome = JSON.parse(capture.training_outcome_json)
-      const averaged = outcome.oof_averages.find((block: Json) => block.predictions.producer_node === description.targetNode)
+      // The report-grade OOF label block of the output node (never its auxiliary probability port).
+      const labelBlocks = outcome.oof_averages.filter((block: Json) => block.predictions.producer_node === description.targetNode &&
+        (block.predictions.producer_port ?? 'oof') !== 'probabilities')
+      const averaged = labelBlocks.find((block: Json) => block.predictions.fold_id === 'avg') ?? labelBlocks[0]
       assertLab(averaged, 'Native training produced no report-grade OOF predictions for this output')
       const oof = metricScope(runtime, dataset, averaged.predictions, 'oof', protocol.folds)
       assertLab(oof.n === protocol.calibrationIds.length && protocol.calibrationIds.every(id => oof.rows.some(row => row.sampleId === id)), 'Native OOF output does not cover calibration identities exactly')

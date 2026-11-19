@@ -20,6 +20,11 @@ export const TEACHING_PRESETS: readonly MultimodalDataPreset[] = [
     description: 'NIRS plus 12 × 12 grayscale PNG images. Local spots and stripes carry a complementary latent relationship.',
     facts: [{ label: 'Recorded seed', value: '20261118' }, { label: 'Size', value: '120 samples; 64 wavelengths; 12 × 12 × 1 images' },
       { label: 'Pixel range', value: 'Fixed 8-bit [0,255]; no data-wide learned normalization or resizing' }] },
+  { id: 'rice-varieties', caseId: 'images', label: 'Rice varieties (real data, classification)',
+    description: 'Public rice kernels of 10 varieties: an RGB image and three hyperspectral pixel spectra (383–1006 nm) per kernel. Vu et al. (2020), doi:10.5281/zenodo.3241923, CC BY 4.0; derived subset. Each variety comes from one imaging bundle, so variety is confounded with acquisition.',
+    facts: [{ label: 'Size', value: '240 kernels (24 per variety); 3 × 256 bands; 32 × 32 RGB' },
+      { label: 'Target', value: 'Variety, 10 classes (declared vocabulary)' },
+      { label: 'Partition', value: 'Declared: 19 calibration / 5 test kernels per variety' }] },
 ]
 interface NamedFile { name: string; bytes: Uint8Array }
 interface ImportIo { assembleMultimodalFiles(manifest: string, files: NamedFile[], decode: (profile: string, bytes: Uint8Array, budget: number) => unknown, budget: number): LabDataset }
@@ -39,7 +44,7 @@ async function assemble(files: NamedFile[], caseId: LabCase): Promise<LabDataset
 }
 
 export async function loadTeachingDataset(caseId: LabCase, presetId: string = PRESETS[caseId]): Promise<LabDataset> {
-  if (presetId !== PRESETS[caseId]) throw new Error('The selected preset does not belong to this case')
+  if (TEACHING_PRESETS.find(preset => preset.id === presetId)?.caseId !== caseId) throw new Error('The selected preset does not belong to this case')
   const inventoryResponse = await loadBundledTeachingFile(presetId, 'files.json')
   if (!inventoryResponse.ok) throw new Error(`Teaching file inventory could not be loaded (${inventoryResponse.status})`)
   const inventory = await inventoryResponse.json() as { schema: string; files: string[] }
