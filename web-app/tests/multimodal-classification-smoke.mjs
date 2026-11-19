@@ -69,10 +69,30 @@ try {
   await page.locator('#n4mm-results').scrollIntoViewIfNeeded()
   await page.locator('[data-fusion-results]').getByText('Confusion matrix', { exact: false }).first().waitFor()
   await page.locator('#n4mm-results').screenshot({ path: join(output, 'rice-inspector.png') })
+  // Dropping the rice folder (manifest included) keeps its declared class vocabulary through the Dataset Builder.
+  const builder = page.locator('.dsb-mm')
+  await page.locator('#n4mm-data').scrollIntoViewIfNeeded()
+  await page.getByRole('button', { name: 'Import your files', exact: true }).click()
+  const base = new URL('../public/multimodal-data/rice-varieties/', import.meta.url)
+  const inventory = JSON.parse(await readFile(new URL('files.json', base), 'utf8')).files
+  await builder.locator('input[type="file"]').setInputFiles(await Promise.all(inventory.map(async name => ({
+    name, mimeType: 'application/octet-stream', buffer: await readFile(new URL(name, base)) }))))
+  await builder.locator('.dsb-mm-busy').waitFor({ state: 'hidden', timeout: 60000 })
+  await builder.locator('.dsb-stepper__button').filter({ hasText: 'Validation' }).click()
+  await builder.getByRole('button', { name: /^Validate (alignment|again)$/ }).click()
+  const create = builder.getByRole('button', { name: 'Create dataset', exact: true })
+  await page.waitForFunction(element => !element.disabled, await create.elementHandle(), { timeout: 60000 })
+  await create.click()
+  await page.getByText(new RegExp(`^Imported ${inventory.length} files:`)).waitFor()
+  assert.equal(await page.locator('input[name="n4mm-case"][value="images"]').isChecked(), true)
+  await lab.locator('.n4fl-chip', { hasText: 'HSI pixel centre alone' }).first().waitFor({ timeout: 120000 })
+  await run('HSI pixel centre alone', 3) // the imported data trains classifiers (PLS-DA) on the declared vocabulary
+  await lab.getByText('PLS-DA (logistic)', { exact: false }).first().waitFor({ timeout: 10000 })
+
   assert.deepEqual(errors, [])
   assert.deepEqual(mutations, [])
   console.log(JSON.stringify(results.runs.map(run => ({ name: run.name, oof: run.candidate.oof.balancedAccuracy, test: run.candidate.holdout.balancedAccuracy }))))
-  console.log('MULTIMODAL CLASSIFICATION SMOKE PASSED: rice varieties, declared vocabulary, stratified folds, PLS-DA sweep, probability mean fusion, confusion matrix')
+  console.log('MULTIMODAL CLASSIFICATION SMOKE PASSED: rice varieties (example and Dataset Builder import), declared vocabulary, stratified folds, PLS-DA sweep, probability mean fusion, confusion matrix')
 } finally {
   await browser.close()
 }

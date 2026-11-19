@@ -27,12 +27,15 @@ interface ManifestSource {
 }
 export interface BuilderManifest {
   schema: 'nirs4all.multimodal-import.v1'; caseId: LabCase; name: string
-  metadata: { file: string; sampleId: string; target: string; targetUnit: string; group?: string; partition?: string }
+  metadata: { file: string; sampleId: string; target: string; targetUnit: string; group?: string; partition?: string
+    targetKind?: 'categorical'; classes?: string[] }
   sources: ManifestSource[]; provenance: Record<string, unknown>
 }
+/** A categorical target (ordered class vocabulary) declared by the optional manifest for one metadata column. */
+export interface DeclaredTarget { file: string; target: string; targetKind: 'categorical'; classes: string[] }
 export interface InspectedBuilderFiles {
   inputs: BuilderInput[]; inventory: MultimodalBuilderFile[]; draft: MultimodalBuilderDraft
-  provenance: Record<string, unknown>
+  provenance: Record<string, unknown>; declaredTarget?: DeclaredTarget
 }
 const BUDGET = 64 * 1024 * 1024
 
@@ -146,16 +149,21 @@ export async function inspectBuilderFiles(files: readonly File[], previous?: Mul
     sourceIds.add(source.id)
   }
   return { inputs, inventory: files.map(file => ({ name: file.name, size: file.size, kind: inputKind(file.name) })),
-    draft: { name: previous?.name ?? manifest?.name ?? 'my-dataset', sources }, provenance: manifest?.provenance ?? {} }
+    draft: { name: previous?.name ?? manifest?.name ?? 'my-dataset', sources }, provenance: manifest?.provenance ?? {},
+    ...(manifest?.metadata.targetKind ? { declaredTarget: { file: manifest.metadata.file, target: manifest.metadata.target,
+      targetKind: manifest.metadata.targetKind, classes: manifest.metadata.classes ?? [] } } : {}) }
 }
 
 /** Serialize explicit user choices into the owner's existing import contract. */
-export function buildBuilderManifest(draft: MultimodalBuilderDraft, caseId: LabCase, provenance: Record<string, unknown> = {}): BuilderManifest {
+export function buildBuilderManifest(draft: MultimodalBuilderDraft, caseId: LabCase, provenance: Record<string, unknown> = {},
+  declaredTarget?: DeclaredTarget): BuilderManifest {
   const metadata = draft.sources.filter(source => source.role === 'metadata' || source.role === 'combined')
   if (metadata.length !== 1) throw new Error('Choose exactly one table for the target and sample metadata')
   const meta = metadata[0]
   if (meta.refusal) throw new Error(`${meta.file}: ${meta.refusal}`)
-  if (!meta.sampleId || !meta.target) throw new Error('Choose the metadata sample ID and numeric target columns')
+  if (!meta.sampleId || !meta.target) throw new Error('Choose the metadata sample ID and target columns')
+  // The manifest's class vocabulary applies only while its declared column stays the target; IO validates every label.
+  const categorical = declaredTarget && declaredTarget.file === meta.file && declaredTarget.target === meta.target ? declaredTarget : undefined
   const sources = draft.sources.filter(source => source.role === 'source' || source.role === 'combined').map(source => {
     if (source.refusal) throw new Error(`${source.file}: ${source.refusal}`)
     const declaration: ManifestSource = { id: source.id, label: source.label, modality: source.modality, profile: source.profile, file: source.file }
@@ -180,7 +188,8 @@ export function buildBuilderManifest(draft: MultimodalBuilderDraft, caseId: LabC
   if (sources.length === 0) throw new Error('Choose at least one measurement source')
   return { schema: 'nirs4all.multimodal-import.v1', caseId, name: draft.name,
     metadata: { file: meta.file, sampleId: meta.sampleId, target: meta.target, targetUnit: meta.targetUnit,
-      ...(meta.group ? { group: meta.group } : {}), ...(meta.partition ? { partition: meta.partition } : {}) },
+      ...(meta.group ? { group: meta.group } : {}), ...(meta.partition ? { partition: meta.partition } : {}),
+      ...(categorical ? { targetKind: categorical.targetKind, classes: [...categorical.classes] } : {}) },
     sources, provenance }
 }
 
@@ -193,8 +202,9 @@ export function inferBuilderCase(draft: MultimodalBuilderDraft): LabCase {
   return modalities.has('image') ? 'images' : modalities.has('genetics') ? 'genetics' : 'spectroscopy'
 }
 
-export async function validateBuilderDraft(draft: MultimodalBuilderDraft, inputs: readonly BuilderInput[], provenance: Record<string, unknown>) {
-  const manifest = buildBuilderManifest(draft, inferBuilderCase(draft), provenance)
+export async function validateBuilderDraft(draft: MultimodalBuilderDraft, inputs: readonly BuilderInput[], provenance: Record<string, unknown>,
+  declaredTarget?: DeclaredTarget) {
+  const manifest = buildBuilderManifest(draft, inferBuilderCase(draft), provenance, declaredTarget)
   const { io, formats } = await loadDataIoWasm()
   const ownerIo = io as unknown as OwnerIo, ownerFormats = formats as unknown as OwnerFormats
   const dataset = ownerIo.assembleMultimodalFiles(JSON.stringify(manifest), inputs,

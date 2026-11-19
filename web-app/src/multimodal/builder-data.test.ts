@@ -25,6 +25,14 @@ describe('explicit Dataset Builder declaration transport', () => {
     expect(() => buildBuilderManifest({ ...draft, sources: [{ ...source, role: 'source' }] }, 'spectroscopy')).toThrow('exactly one')
     expect(() => buildBuilderManifest({ ...draft, sources: [source, { ...source, id: 'other' }] }, 'spectroscopy')).toThrow('exactly one')
   })
+  it('keeps a manifest class vocabulary only while its declared column stays the target', () => {
+    const declared = { file: 'measurements.csv', target: 'concentration', targetKind: 'categorical' as const, classes: ['low', 'high'] }
+    const kept = buildBuilderManifest(draft, 'spectroscopy', {}, declared)
+    expect(kept.metadata).toMatchObject({ target: 'concentration', targetKind: 'categorical', classes: ['low', 'high'] })
+    const changed = buildBuilderManifest({ ...draft, sources: [{ ...source, target: 'material', group: '' }] }, 'spectroscopy', {}, declared)
+    expect(changed.metadata).not.toHaveProperty('targetKind')
+    expect(changed.metadata).not.toHaveProperty('classes')
+  })
   it('refuses missing declared coordinates instead of inventing an index axis', () => {
     expect(() => buildBuilderManifest({ ...draft, sources: [{ ...source, features: ['new-column'] }] }, 'spectroscopy')).toThrow('finite explicit')
   })
