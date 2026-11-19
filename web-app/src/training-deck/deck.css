@@ -156,3 +156,31 @@ kbd { font: 700 .8em var(--mono); padding: 1px 8px; border-radius: 6px; border: 
 .deck-engines h3 { margin: 0 0 6px; font: 800 32px var(--display); color: var(--text); }
 .deck-engine-tech { font: 700 17px var(--mono); color: var(--teal-d); margin: 0 0 14px !important; }
 .deck-engines p { font-size: 23px; }
+
+/* Method families: compact cards with pros (✓) and cons (✗). */
+.deck-methods { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin: 18px 0 22px; }
+.deck-methods--two { grid-template-columns: repeat(2, 1fr); margin-top: 26px; }
+.deck-method { padding: 20px 22px; border-radius: var(--radius); background: #fff; border: 1.5px solid var(--border-warm); border-top: 6px solid var(--teal); box-shadow: var(--shadow-warm); }
+.deck-method h3 { margin: 0; font: 800 28px var(--display); color: var(--text); display: flex; flex-direction: column; gap: 2px; }
+.deck-method h3 small { font: 600 15px var(--mono); color: var(--text-3); }
+.deck-method__idea { margin: 10px 0 12px; font-size: 20px; color: var(--teal-d); font-weight: 600; }
+.deck-method ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font-size: 19px; color: var(--text-2); }
+.deck-method li { padding-left: 28px; position: relative; }
+.deck-method li::before { position: absolute; left: 0; top: -1px; font-weight: 800; }
+.deck-method__pro::before { content: '✓'; color: #059669; }
+.deck-method__con::before { content: '✗'; color: #dc2626; }
+.deck-methods--two .deck-method ul { font-size: 22px; }
+
+/* Kernel fusion schematic: one n × n similarity per source, a weighted sum, a kernel model. */
+.deck-kernel { display: grid; grid-template-columns: auto auto auto; align-items: center; gap: 28px; justify-content: center; }
+.deck-kernel__flow { display: grid; grid-template-columns: auto auto auto; gap: 12px 14px; align-items: center; }
+.deck-kernel__src { font: 700 22px var(--display); padding: 8px 16px; border-radius: 10px; background: var(--paper-2); border: 1.5px solid var(--border-warm); text-align: center; }
+.deck-kernel__arrow { color: var(--text-3); font-size: 24px; }
+.deck-kernel__k { font: 700 20px var(--mono); padding: 8px 14px; border-radius: 10px; background: #fff; border: 2px solid var(--violet, #7c3aed); color: #5b21b6; }
+.deck-kernel__sum { font: 800 26px var(--mono); padding: 18px 22px; border-radius: 14px; background: rgba(124,58,237,.08); border: 2px solid #7c3aed; color: #4c1d95; display: flex; flex-direction: column; gap: 6px; text-align: center; }
+.deck-kernel__sum small { font: 600 16px var(--font); color: var(--text-2); }
+.deck-kernel__model { font: 800 24px var(--display); padding: 18px 22px; border-radius: 14px; background: var(--teal); color: #fff; }
+
+.deck-table--compare td { padding: 12px 12px; font-size: 20px; }
+.deck-table--compare td:first-child { font-size: 21px; font-weight: 700; white-space: nowrap; }
+.deck-table--compare + .deck-callout { margin-top: 16px; }

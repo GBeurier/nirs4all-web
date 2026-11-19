@@ -28,6 +28,20 @@ function Steps({ items }: { items: ReactNode[] }) {
   return <ol className="deck-steps">{items.map((item, index) => <li key={index}><span>{item}</span></li>)}</ol>
 }
 
+/** A method card: name, origin, one-line idea and its pros / cons. */
+function Method({ name, origin, idea, pros = [], cons = [] }: { name: string; origin?: string; idea?: string; pros?: string[]; cons?: string[] }) {
+  return (
+    <div className="deck-method">
+      <h3>{name}{origin ? <small>{origin}</small> : null}</h3>
+      {idea ? <p className="deck-method__idea">{idea}</p> : null}
+      <ul>
+        {pros.map(item => <li key={item} className="deck-method__pro">{item}</li>)}
+        {cons.map(item => <li key={item} className="deck-method__con">{item}</li>)}
+      </ul>
+    </div>
+  )
+}
+
 function Callout({ children, tone = 'teal' }: { children: ReactNode; tone?: 'teal' | 'amber' }) {
   return <p className="deck-callout" data-tone={tone}>{children}</p>
 }
@@ -73,7 +87,7 @@ export const SLIDES: Slide[] = [
     ],
   },
   {
-    id: 'why', section: 'Concepts', title: 'Pourquoi combiner des mesures ?', minutes: 1.5,
+    id: 'why', section: 'Concepts', title: 'Pourquoi combiner des mesures ?', minutes: 1,
     body: () => (
       <div className="deck-split deck-split--hero">
         <SampleViewsDiagram />
@@ -144,7 +158,7 @@ export const SLIDES: Slide[] = [
     ],
   },
   {
-    id: 'early', section: 'Concepts', title: 'Early fusion : les variables côte à côte', minutes: 2.5,
+    id: 'early', section: 'Concepts', title: 'Early fusion : les variables côte à côte', minutes: 2,
     body: () => (
       <>
         <div className="deck-heading-tag"><LevelTag level="early" /></div>
@@ -178,7 +192,7 @@ export const SLIDES: Slide[] = [
     ],
   },
   {
-    id: 'mid-cnn', section: 'Concepts', title: 'Mid fusion ② : concaténer au milieu d’un CNN', minutes: 2.5,
+    id: 'mid-cnn', section: 'Concepts', title: 'Mid fusion ② : concaténer au milieu d’un CNN', minutes: 2,
     body: () => (
       <>
         <div className="deck-heading-tag"><LevelTag level="mid" /></div>
@@ -195,7 +209,7 @@ export const SLIDES: Slide[] = [
     ],
   },
   {
-    id: 'ml-names', section: 'Concepts', title: 'Mid fusion : comment le ML l’appelle', minutes: 1.5,
+    id: 'ml-names', section: 'Concepts', title: 'Mid fusion : comment le ML l’appelle', minutes: 1,
     body: () => (
       <>
         <table className="deck-table deck-table--terms">
@@ -288,6 +302,81 @@ export const SLIDES: Slide[] = [
     ],
   },
   {
+    id: 'multiblock', section: 'Concepts', title: 'Le multibloc chimiométrique', minutes: 1.5,
+    body: () => (
+      <>
+        <div className="deck-methods">
+          <Method name="MB-PLS" origin="Westerhuis 1998" idea="un super-score commun, un poids par bloc"
+            pros={['lecture par bloc (poids, scores)', 'standard, rapide']} cons={['linéaire', 'sensible à la pondération des blocs']} />
+          <Method name="SO-PLS" origin="Næs 2011" idea="les blocs entrent l’un après l’autre, orthogonalisés"
+            pros={['ce que chaque bloc ajoute', 'invariant à l’échelle des blocs']} cons={['l’ordre des blocs compte', 'composantes par bloc à régler']} />
+          <Method name="ROSA" origin="Liland 2016" idea="à chaque composante, le bloc le plus utile gagne"
+            pros={['sélection de blocs', 'rapide']} cons={['un seul bloc par composante']} />
+          <Method name="ComDim · O2PLS" origin="Qannari · Trygg" idea="parts communes et spécifiques des blocs"
+            pros={['exploration, saliences par bloc']} cons={['souvent non supervisé (ComDim)']} />
+        </div>
+        <Callout>Tous restent du <strong>bas niveau</strong> (ou intermédiaire) <strong>linéaire</strong>. Dans nirs4all-methods : MB-PLS, SO-PLS, ROSA, O2PLS, ON-PLS ; le labo expose MB-PLS.</Callout>
+      </>
+    ),
+    notes: [
+      'Beaucoup d’entre vous connaissent déjà le multibloc : c’est la réponse chimiométrique à la fusion. Je situe les grandes familles.',
+      'MB-PLS : un super-score commun et un poids par bloc. Westerhuis a montré que c’est équivalent à une PLS sur la concaténation pondérée : c’est donc du bas niveau, avec une lecture par bloc. Son point faible : le résultat dépend de la pondération des blocs.',
+      'SO-PLS : les blocs entrent l’un après l’autre, chacun orthogonalisé par rapport aux précédents. On lit directement ce qu’un bloc ajoute aux autres, et c’est invariant à l’échelle relative des blocs. Mais l’ordre compte, et il faut choisir un nombre de composantes par bloc.',
+      'ROSA : à chaque composante, le bloc qui explique le mieux y gagne. C’est rapide et ça fait de la sélection de blocs. ComDim et O2PLS séparent ce qui est commun et ce qui est spécifique à chaque bloc ; ComDim est surtout exploratoire.',
+      'Point commun : ce sont des méthodes linéaires, de bas niveau ou intermédiaire. Plusieurs sont déjà dans nirs4all-methods ; dans ce labo, j’expose MB-PLS.',
+    ],
+  },
+  {
+    id: 'kernels', section: 'Concepts', title: 'Les approches à noyaux', minutes: 1.5,
+    body: () => (
+      <>
+        <div className="deck-kernel">
+          <div className="deck-kernel__flow">
+            <span className="deck-kernel__src">NIRS</span><span className="deck-kernel__arrow">→</span><span className="deck-kernel__k">K₁ (n × n)</span>
+            <span className="deck-kernel__src">Marqueurs</span><span className="deck-kernel__arrow">→</span><span className="deck-kernel__k">K₂ = GRM</span>
+            <span className="deck-kernel__src">Images</span><span className="deck-kernel__arrow">→</span><span className="deck-kernel__k">K₃</span>
+          </div>
+          <div className="deck-kernel__sum">K = w₁K₁ + w₂K₂ + w₃K₃<small>MKL : les poids w sont appris</small></div>
+          <div className="deck-kernel__model">KRR · SVR · kernel PLS · GP</div>
+        </div>
+        <div className="deck-methods deck-methods--two">
+          <Method name="Pour" pros={['non linéaire, peu de paramètres', 'tout type de source (un noyau adapté)', 'p ≫ n sans problème', 'poids par source lisibles (MKL)']} />
+          <Method name="Contre" cons={['mémoire et temps en n² à n³', 'choix du noyau et de sa largeur', 'le modèle garde les échantillons d’entraînement', 'plus de lecture par variable']} />
+        </div>
+      </>
+    ),
+    notes: [
+      'D’autres parmi vous viennent des noyaux. L’idée : chaque source devient une matrice de similarité entre échantillons, n par n. On combine ces matrices, puis un modèle à noyau apprend : kernel ridge, SVR, kernel PLS ou processus gaussien.',
+      'Pont utile avec la génétique : le GBLUP de la sélection génomique, c’est un noyau linéaire sur les marqueurs, la matrice de parenté génomique. Le multiple kernel learning apprend en plus le poids de chaque noyau, donc de chaque source.',
+      'Les avantages : non linéaire avec peu de paramètres, n’importe quelle source dès qu’on a une similarité adaptée, et aucun problème quand il y a beaucoup plus de variables que d’échantillons.',
+      'Les limites : le coût grandit avec le nombre d’échantillons au carré ou au cube ; il faut choisir le noyau et sa largeur, c’est un hyperparamètre à valider ; le modèle garde les échantillons d’entraînement, ce qui compte pour le partage et la confidentialité ; et on perd la lecture variable par variable.',
+      'Où on se situe : la combinaison de noyaux est une fusion intermédiaire, sur l’espace des similarités. Dans nirs4all-methods il y a une kernel PLS et une GPR-PLS ; elles ne sont pas encore dans ce labo.',
+    ],
+  },
+  {
+    id: 'compare-families', section: 'Concepts', title: 'Quelle famille pour quel besoin ?', minutes: 1,
+    body: () => (
+      <>
+        <table className="deck-table deck-table--compare">
+          <thead><tr><th>Famille</th><th>Niveau</th><th>Non linéaire</th><th>Peu d’échantillons</th><th>Interprétation</th><th>À essayer quand…</th></tr></thead>
+          <tbody>
+            <tr><td>Concaténation + PLS</td><td><LevelTag level="early">bas</LevelTag></td><td>✗</td><td>✓</td><td>✓ variables</td><td>toujours, comme référence</td></tr>
+            <tr><td>Multibloc (MB/SO-PLS)</td><td><LevelTag level="early">bas · interm.</LevelTag></td><td>✗</td><td>✓</td><td>✓ blocs</td><td>on veut le rôle de chaque bloc</td></tr>
+            <tr><td>Noyaux (MKL)</td><td><LevelTag level="mid">intermédiaire</LevelTag></td><td>✓</td><td>✓</td><td>~ poids des sources</td><td>non-linéarité, n modéré</td></tr>
+            <tr><td>Réseaux (CNN)</td><td><LevelTag level="mid">mid · joint</LevelTag></td><td>✓</td><td>✗</td><td>✗</td><td>beaucoup d’échantillons, images</td></tr>
+            <tr><td>Moyenne · stacking</td><td><LevelTag level="late">haut</LevelTag></td><td>selon les modèles</td><td>✓</td><td>✓ poids des sources</td><td>sources très différentes, robustesse</td></tr>
+          </tbody>
+        </table>
+        <Callout>Ce que nirs4all apporte : <strong>toutes ces familles sous le même protocole</strong>. Mêmes folds, prédictions OOF, test jamais vu, prétraitement par source appris dans le fold, sweeps de paramètres et comparaison côte à côte. Les recettes sont les mêmes en Python, en R et dans le navigateur.</Callout>
+      </>
+    ),
+    notes: [
+      'Pour résumer les familles. La concaténation avec une PLS est toujours la référence à battre, avec les sources seules. Le multibloc ajoute la lecture par bloc. Les noyaux apportent la non-linéarité avec peu de paramètres. Les réseaux demandent des données mais savent lire des images. Le late fusion est robuste quand les sources sont très différentes.',
+      'Ce que nirs4all apporte, ce n’est pas une méthode de plus : c’est de les mettre toutes sous le même protocole. Les mêmes folds pour tout le monde, des prédictions out-of-fold pour le stacking, un test qu’on ne regarde qu’à la fin, un prétraitement par source appris uniquement sur les échantillons d’entraînement, des sweeps de paramètres, et une comparaison côte à côte dans l’Inspector.',
+      'Et la recette est un fichier JSON : la même, exécutable en Python, en R ou dans le navigateur, avec les modèles natifs. C’est ce qui rend la comparaison honnête et reproductible.',
+    ],
+  },
+  {
     id: 'honest', section: 'Concepts', title: 'Comparer les fusions honnêtement', minutes: 1.5,
     body: () => (
       <div className="deck-split">
@@ -330,7 +419,7 @@ export const SLIDES: Slide[] = [
     ],
   },
   {
-    id: 'demo-spectro', section: 'Démonstration', title: 'Démo 1 · Raman + NIRS + MIR', minutes: 4.5,
+    id: 'demo-spectro', section: 'Démonstration', title: 'Démo 1 · Raman + NIRS + MIR', minutes: 3.5,
     body: () => (
       <div className="deck-split deck-split--demo">
         <div>
@@ -338,7 +427,7 @@ export const SLIDES: Slide[] = [
           <Steps items={[
             <><a href={labLink('spectroscopy')}>Ouvrir le cas</a>, suivre un échantillon</>,
             <><strong>« Run all presets »</strong> : qui gagne ?</>,
-            <><LevelTag level="early">Early</LevelTag> composantes PLS <strong>3 → 6</strong></>,
+            <><LevelTag level="early">Early</LevelTag> sweep des composantes PLS <strong>5 · 10 · 15</strong> (vue <em>Tuning</em>)</>,
             <>Supprimer la voie <em>MIR</em>, relancer</>,
           ]} />
         </div>
@@ -349,7 +438,7 @@ export const SLIDES: Slide[] = [
       'Trois spectroscopies mesurées sur les mêmes échantillons. Chaque technique a son axe et son bruit ; la cible dépend d’une chimie que chaque fenêtre voit en partie.',
       'Lancer tous les presets. Cela prend quelques secondes. Dans l’Inspector, trier par RMSE de validation croisée.',
       'Surprise : avec les réglages par défaut, le Raman seul vaut tout le reste, et la fusion early est moins bonne que le Raman seul. Demander à la salle pourquoi.',
-      'Réponse : la fusion early a 168 variables et seulement 3 composantes PLS ; elle est sous-ajustée. Cliquer sur la cellule PLS et mettre 6 composantes ; relancer. La fusion early bat alors nettement le Raman seul.',
+      'Réponse : avec 168 variables, 3 composantes PLS sous-ajustent la fusion early. Les presets PLS font maintenant un sweep des composantes (5, 10, 15) : chaque valeur est un run complet. Dans l’Inspector, la vue Tuning trace le score en fonction du nombre de composantes ; avec plus de composantes, la fusion early bat nettement le Raman seul. Le graphique de conclusion montre la même chose avec l’édition 3 → 6 enregistrée.',
       'Puis sélectionner la voie MIR et la supprimer : deux sources, relancer. Montrer qu’enlever une source peut aider.',
       'Noter que le stacking a trouvé tout seul la bonne réponse : il a appris à faire confiance au Raman.',
     ],
@@ -377,7 +466,7 @@ export const SLIDES: Slide[] = [
     ],
   },
   {
-    id: 'demo-genetics', section: 'Démonstration', title: 'Démo 2 · NIRS + marqueurs génétiques', minutes: 4,
+    id: 'demo-genetics', section: 'Démonstration', title: 'Démo 2 · NIRS + marqueurs génétiques', minutes: 3,
     body: () => (
       <div className="deck-split deck-split--demo">
         <div>
@@ -395,7 +484,7 @@ export const SLIDES: Slide[] = [
     notes: [
       'Deuxième cas : deux modalités vraiment différentes, un spectre continu et un petit tableau de dosages génotypiques. Chaque plante a été mesurée deux fois : les deux lignes ont les mêmes marqueurs mais pas le même spectre. Elles forment un groupe, et les folds gardent les groupes entiers.',
       'Lancer tous les presets. Les marqueurs seuls prédisent mal, moins bien que la moyenne. Faut-il les jeter ? Regardez les fusions : early et MB-PLS font bien mieux que le NIRS seul. Les marqueurs apportent une information qui n’apparaît qu’avec le spectre.',
-      'Puis la comparaison loyale : augmenter les composantes PLS pour la fusion early et pour le NIRS seul. L’écart reste.',
+      'Puis la comparaison loyale : le sweep a déjà essayé 5, 10 et 15 composantes pour la fusion early comme pour le NIRS seul. À capacité égale, l’écart reste.',
       'Enfin comparer la moyenne late et le MB-PLS : moyenner avec une source faible fait pire que le NIRS seul.',
     ],
   },
