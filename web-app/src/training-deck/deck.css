@@ -179,3 +179,12 @@ kbd { font: 700 .8em var(--mono); padding: 1px 8px; border-radius: 6px; border: 
 .deck-table--compare td { padding: 12px 12px; font-size: 20px; }
 .deck-table--compare td:first-child { font-size: 21px; font-weight: 700; white-space: nowrap; }
 .deck-table--compare + .deck-callout { margin-top: 16px; }
+
+/* Stacking variants: what the meta-model sees, with the nirs4all merge step. */
+.deck-variants { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin: 16px 0 22px; }
+.deck-variant { padding: 20px 22px; border-radius: var(--radius); background: #fff; border: 1.5px solid var(--border-warm); border-top: 6px solid var(--amber); box-shadow: var(--shadow-warm); display: flex; flex-direction: column; gap: 10px; }
+.deck-variant h3 { margin: 0; font: 800 28px var(--display); color: var(--text); }
+.deck-variant p { margin: 0; font-size: 20px; color: var(--text-2); }
+.deck-variant pre { margin: 0; padding: 14px 16px; border-radius: 10px; background: #0f172a; color: #e2e8f0; font: 600 16px/1.45 var(--mono); white-space: pre; overflow: hidden; }
+.deck-variant__alt { font-size: 16px !important; }
+.deck-variant__alt code { font: 600 14px var(--mono); color: var(--teal-d); }

@@ -28,6 +28,18 @@ function Steps({ items }: { items: ReactNode[] }) {
   return <ol className="deck-steps">{items.map((item, index) => <li key={index}><span>{item}</span></li>)}</ol>
 }
 
+/** A stacking variant: what the meta-model sees and its nirs4all merge step. */
+function Variant({ tag, what, code, alt }: { tag: string; what: string; code: string; alt?: string }) {
+  return (
+    <div className="deck-variant">
+      <h3>{tag}</h3>
+      <p>{what}</p>
+      <pre><code>{code}</code></pre>
+      {alt ? <p className="deck-variant__alt">ou <code>{alt}</code></p> : null}
+    </div>
+  )
+}
+
 /** A method card: name, origin, one-line idea and its pros / cons. */
 function Method({ name, origin, idea, pros = [], cons = [] }: { name: string; origin?: string; idea?: string; pros?: string[]; cons?: string[] }) {
   return (
@@ -250,7 +262,7 @@ export const SLIDES: Slide[] = [
     ],
   },
   {
-    id: 'oof', section: 'Concepts', title: 'Le stacking demande des prédictions out-of-fold', minutes: 1.5,
+    id: 'oof', section: 'Concepts', title: 'Le stacking demande des prédictions out-of-fold', minutes: 1,
     body: () => (
       <>
         <OofDiagram />
@@ -261,6 +273,29 @@ export const SLIDES: Slide[] = [
       'Un point technique, parce que c’est le piège classique du stacking.',
       'Si le méta-modèle apprend sur des prédictions faites sur les échantillons mêmes qui ont entraîné les modèles par source, ces prédictions sont trop bonnes. Le méta-modèle fait alors trop confiance à la source la plus flexible.',
       'Chaque échantillon doit donc être prédit par un modèle qui ne l’a pas vu : une validation croisée à l’intérieur du train, les prédictions out-of-fold. nirs4all le fait pour vous, imbriqué dans la validation externe. Vous n’avez pas à le coder, mais il faut savoir pourquoi le résultat du stacking est honnête.',
+    ],
+  },
+  {
+    id: 'stacking-plus', section: 'Concepts', title: 'Stacking enrichi : prédictions + données, ou résidus', minutes: 1.5,
+    body: () => (
+      <>
+        <div className="deck-variants">
+          <Variant tag="Stacking" what="le méta-modèle apprend sur les ŷ OOF des sources"
+            code={'{"merge": "predictions"},\n{"model": Ridge(alpha=1.0)}'} />
+          <Variant tag="+ données" what="ŷ OOF + variables d’avant le branchement (ou des branches)"
+            code={'{"merge": {"predictions": "all",\n           "include_original": true}},\n{"model": Ridge(alpha=1.0)}'}
+            alt={'{"merge": {"predictions": "all", "features": "all"}}'} />
+          <Variant tag="Résidus" what="un 2ᵉ modèle apprend y − ŷ (OOF) : ŷ = ŷ_base + λ · correction"
+            code={'{"residual": ResidualModel(\n    base=PLSRegression(n_components=10),\n    learner=RandomForestRegressor(),\n    lam=0.5)}'} />
+        </div>
+        <Callout tone="amber">Plus de colonnes = plus de capacité : à valider sous les <strong>mêmes folds</strong>, contre le stacking simple. Syntaxe du SDK nirs4all (Python) ; le labo du navigateur montre le stacking simple.</Callout>
+      </>
+    ),
+    notes: [
+      'Le stacking ne se limite pas aux prédictions. On peut redonner au méta-modèle des informations en plus.',
+      'Première option : les prédictions out-of-fold plus les variables d’origine. Dans nirs4all, c’est le merge avec predictions: all et include_original: true ; le méta-modèle voit les ŷ de chaque source et les données d’avant le branchement. Avec features: all, ce sont les caractéristiques produites dans les branches.',
+      'Deuxième option : les résidus. Un premier modèle, par exemple une PLS, explique l’essentiel ; un second modèle apprend ce qu’il reste, y moins ŷ, calculé en out-of-fold. La prédiction finale est la base plus lambda fois la correction ; lambda égal à zéro redonne la base.',
+      'Attention : chaque ajout donne plus de capacité au méta-modèle. Il faut le comparer au stacking simple sous les mêmes folds, et ne regarder le test qu’à la fin.',
     ],
   },
   {
@@ -400,7 +435,7 @@ export const SLIDES: Slide[] = [
     ],
   },
   {
-    id: 'demo-spectro', section: 'Démonstration', title: 'Démo 1 · Raman + NIRS + MIR', minutes: 4.5,
+    id: 'demo-spectro', section: 'Démonstration', title: 'Démo 1 · Raman + NIRS + MIR', minutes: 3.5,
     body: () => (
       <div className="deck-split deck-split--demo">
         <div>
