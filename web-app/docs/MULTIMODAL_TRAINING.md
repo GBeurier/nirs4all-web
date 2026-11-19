@@ -67,11 +67,11 @@ laboratory.
 | --- | --- | --- | --- |
 | `host.mljs.random_forest_regressor` | ml.js (Core `classic-ml` adapter) | Early · random forest | 50 trees; long spectra resampled to 128 points first |
 | `host.tfjs.cnn_regressor` | TensorFlow.js 3.21 (WebGL on a hardware GPU, otherwise CPU) | none (editor catalogue only) | compact or NICON CNN; slower than Burn on CPU |
-| `host.burn.cnn_regressor` | Burn 0.16.1 compiled to WebAssembly (`lab-burn/`) | Mid · NICON (Burn); Mid · CNN (Burn) and markers · CNN (Burn) when a marker table is present | NICON per spectrum (≥ 175 points; resampled to 256, SNV and Savitzky–Golay first); compact CNN (4 filters, 30 epochs) along the marker order |
+| `host.burn.cnn_regressor` | Burn 0.16.1 compiled to WebAssembly (`lab-burn/`) | Mid · NICON (Burn); Mid · CNN (Burn) and markers · CNN (Burn) when a marker table is present | NICON per spectrum (≥ 175 points; resampled to 256, SNV and Savitzky–Golay first; 20 epochs in the preset to keep the demonstration short); compact CNN (4 filters, 30 epochs) along the marker order |
 
 On the 294-sample cocaine collection (three spectra of 778–3,734 points), running
-every preset takes about three minutes in a desktop browser; NICON is the longest
-step (about two minutes).
+every preset (22 runs with the PLS sweeps) takes under five minutes in a desktop
+browser; NICON is the longest step (about 90 seconds).
 
 Page order: **Dataset** (the Dataset Builder on your files, or an example dataset)
 → **Explore** → **Analysis** (spectra, spectra and markers, or spectra and images:

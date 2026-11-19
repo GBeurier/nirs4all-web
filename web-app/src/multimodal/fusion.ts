@@ -247,7 +247,7 @@ export function fusionPresets(dataset: LabDataset): FusionPreset[] {
       summary: 'nirs4all’s NICON CNN, trained in the browser with Burn (Rust/WebAssembly): each spectrum is resampled to 256 points, SNV-corrected and differentiated (Savitzky–Golay), then read by its own NICON branch; the branches are concatenated mid-network.',
       document: { name: `Mid fusion · NICON on ${all}`, pipeline: [
         { source_branch: lanes(sources, niconChain) },
-        model(BURN_CNN, defaults(BURN_CNN), 'NICON (Burn)'),
+        model(BURN_CNN, { ...defaults(BURN_CNN), epochs: 20 }, 'NICON (Burn)'),
       ] },
     }] : []),
     ...(sources.some(source => source.modality === 'spectroscopy') ? [{
