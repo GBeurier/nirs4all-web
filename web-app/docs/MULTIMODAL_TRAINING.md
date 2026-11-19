@@ -79,6 +79,21 @@ selected from the imported sources; it sets the fusion presets) → **Validation
 protocol** → **Pipeline** → **Results**. Each analysis keeps its own dataset; an
 analysis without data opens on its example.
 
+**Classification.** A dataset whose manifest declares `"targetKind": "categorical"`
+and its ordered `"classes"` (IO multimodal import) is a classification analysis.
+Outer and held-out folds are stratified by class (DAG-ML `stratified_kfold_split_json`),
+inner stacking folds by the calibration labels only. Heads are classifiers: PLS-DA
+(`models.classification.pls_logistic`, with class probabilities) or PLS-LDA (labels
+only), and the browser random forest and Burn CNN classifiers (softmax). Late fusion
+never combines class ids: the mean averages the branches' out-of-fold class
+probabilities and keeps the most probable class (`fusion_proba_mean_label`), and
+stacking feeds those probabilities to a PLS-DA meta-model. Scores are the owner's
+balanced accuracy, accuracy and support-weighted F1; selection maximises balanced accuracy, and the
+Inspector shows a confusion matrix. The bundled real example is a public rice subset
+(Vu et al. 2020, doi:10.5281/zenodo.3241923, CC BY 4.0): 10 varieties × 24 kernels,
+an RGB image and three hyperspectral pixel spectra per kernel; each variety comes from
+one imaging bundle, so variety is confounded with acquisition.
+
 **Parameter sweeps.** The editor's sweep control (list, range or log range) turns a
 parameter into variants. Each variant is a complete run with the same folds, OOF
 predictions, refit and held-out replay; combinations are enumerated by Core

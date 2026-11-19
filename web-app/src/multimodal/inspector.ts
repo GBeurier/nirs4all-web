@@ -35,6 +35,19 @@ export const LAB_SCORE_REFS: readonly ScoreRef[] = [
   { key: 'test_r2', label: 'R² · held-out test', metric: 'r2', partition: 'test', protocol: 'final', lowerIsBetter: false },
 ]
 
+/** Class targets: owner classification metrics on class ids (higher is better). */
+export const LAB_CLASSIFICATION_SCORE_REFS: readonly ScoreRef[] = [
+  { key: 'oof_bacc', label: 'Balanced accuracy · cross-validation (OOF)', metric: 'balanced_accuracy', partition: 'validation', protocol: 'cv', lowerIsBetter: false },
+  { key: 'oof_acc', label: 'Accuracy · cross-validation (OOF)', metric: 'accuracy', partition: 'validation', protocol: 'cv', lowerIsBetter: false },
+  { key: 'oof_f1', label: 'Weighted F1 · cross-validation (OOF)', metric: 'f1', partition: 'validation', protocol: 'cv', lowerIsBetter: false },
+  { key: 'test_bacc', label: 'Balanced accuracy · held-out test', metric: 'balanced_accuracy', partition: 'test', protocol: 'final', lowerIsBetter: false },
+  { key: 'test_acc', label: 'Accuracy · held-out test', metric: 'accuracy', partition: 'test', protocol: 'final', lowerIsBetter: false },
+]
+
+export function scoreRefsFor(dataset: LabDataset): readonly ScoreRef[] {
+  return dataset.target.kind === 'categorical' ? LAB_CLASSIFICATION_SCORE_REFS : LAB_SCORE_REFS
+}
+
 const TOKENS: Record<string, string> = {
   'preprocessing.scatter.snv': 'snv', 'preprocessing.scatter.msc': 'msc', 'preprocessing.derivatives.savitzky_golay': 'savgol',
   'preprocessing.baselines.detrend': 'detrend', 'preprocessing.scaling.standard_scale': 'scale', 'preprocessing.scaling.block_rms': 'block_rms',
@@ -119,20 +132,26 @@ export function inspectorChains(dataset: LabDataset, runs: readonly LabRunRecord
       pipelineId: candidate.recipeFingerprint,
       pipelineLabel: document.label,
       dataset: dataset.name,
-      task: 'regression',
+      task: dataset.target.kind === 'categorical' ? 'classification' : 'regression',
       target: dataset.target.name,
       model: run.name,
       modelFamily: FUSION_LEVEL_LABEL[level],
       steps: chainSteps(dataset, document),
       params: { ...Object.fromEntries(Object.entries(params).filter(([key]) => !['branch_kinds', 'branch_shapes', 'seed'].includes(key))), ...run.choices, ...selectedParams(dataset, run) },
-      scores: {
+      scores: (dataset.target.kind === 'categorical' ? {
+        oof_bacc: finite(candidate.oof.balancedAccuracy), oof_acc: finite(candidate.oof.accuracy), oof_f1: finite(candidate.oof.f1),
+        test_bacc: finite(candidate.holdout?.balancedAccuracy), test_acc: finite(candidate.holdout?.accuracy),
+      } : {
         oof_rmse: finite(candidate.oof.rmse), oof_r2: finite(candidate.oof.r2), oof_mae: finite(candidate.oof.mae),
         test_rmse: finite(candidate.holdout?.rmse), test_r2: finite(candidate.holdout?.r2),
-      },
-      foldScores: {
+      }) as Record<string, number | null>,
+      foldScores: (dataset.target.kind === 'categorical' ? {
+        oof_bacc: candidate.oof.perFold.map(fold => fold.balancedAccuracy ?? NaN),
+        oof_acc: candidate.oof.perFold.map(fold => fold.accuracy ?? NaN),
+      } : {
         oof_rmse: candidate.oof.perFold.map(fold => fold.rmse),
         oof_mae: candidate.oof.perFold.map(fold => fold.mae),
-      },
+      }) as Record<string, number[]>,
       fitTimeMs: candidate.elapsedMs,
       status: 'ok',
       attributes: {
@@ -151,14 +170,17 @@ export function inspectorChains(dataset: LabDataset, runs: readonly LabRunRecord
  * compared on OOF predictions; held-out rows stay in the test scores and the
  * results export, so sample views never pool the two scopes.
  */
-export function inspectorPredictions(runs: readonly LabRunRecord[]): Record<string, ChainPredictions> {
+export function inspectorPredictions(runs: readonly LabRunRecord[], classes?: readonly string[]): Record<string, ChainPredictions> {
+  // Class targets show the declared class labels (class id i is classes[i]).
+  const label = (value: number) => classes ? classes[value] ?? String(value) : value
   return Object.fromEntries(runs.map(run => {
     const oof = run.candidate.oof.rows
     return [run.id, {
       chainId: run.id,
       sampleKeys: oof.map(row => row.sampleId),
-      yTrue: oof.map(row => row.observed),
-      yPred: oof.map(row => row.predicted),
+      yTrue: oof.map(row => label(row.observed)),
+      yPred: oof.map(row => label(row.predicted)),
+      ...(classes ? { classes: [...classes] } : {}),
       partition: oof.map(() => 'validation'),
       fold: oof.map(row => row.foldId ?? null),
     } satisfies ChainPredictions]

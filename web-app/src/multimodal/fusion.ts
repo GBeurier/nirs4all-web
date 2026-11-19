@@ -1,8 +1,8 @@
 import type { PipelineCatalog, PipelineChainDocument, PipelineOperatorDefinition, PipelineOperatorParameter } from 'nirs4all-ui/pipelineEditor'
 import { toCanonicalPipeline } from 'nirs4all-ui/pipelineEditor'
 import type { LabDataset, LabPipelineBranch, LabPipelineDocument, LabPipelineStep, LabSource, LabSourceChain } from './types'
-import { NEURAL, validatePipelineDocument } from './recipes'
-import { BURN_CNN, RANDOM_FOREST, TFJS_CNN } from './hostModelIds'
+import { NEURAL, PLS_LDA, PLS_LOGISTIC, validatePipelineDocument } from './recipes'
+import { BURN_CNN, BURN_CNN_CLASSIFIER, RANDOM_FOREST, RANDOM_FOREST_CLASSIFIER, TFJS_CNN } from './hostModelIds'
 
 /**
  * Canonical multisource pipelines for the laboratory.
@@ -125,12 +125,35 @@ export const LAB_OPERATORS: readonly PipelineOperatorDefinition[] = [
       int('epochs', 'Epochs', 30, 1, 500), int('batch_size', 'Batch size', 64, 2, 256),
       float('learning_rate', 'Learning rate', 0.002, 0),
     ], ['browser', 'mid']),
+  // Classification heads: the dataset declares its class vocabulary (categorical target).
+  op('model', 'Classification', PLS_LOGISTIC, 'PLS-DA (logistic)',
+    'PLS-DA: PLS components of the incoming features, then a multinomial logistic model; gives class probabilities (needed for late fusion and stacking).', [
+      int('n_components', 'Components', 5, 1, 30), { ...int('max_iter', 'Logistic iterations', 500, 10, 5000), isAdvanced: true },
+    ], ['classification']),
+  op('model', 'Classification', PLS_LDA, 'PLS-LDA',
+    'PLS components, then linear discriminant analysis; class labels only (no probabilities), so it cannot feed late fusion or stacking.', [
+      int('n_components', 'Components', 5, 1, 30),
+    ], ['classification']),
+  op('model', 'Classification', RANDOM_FOREST_CLASSIFIER, 'Random forest classifier (ml.js)',
+    'Random forest classifier trained in the browser with ml.js; class probabilities are the share of trees voting for each class.', [
+      int('n_estimators', 'Trees', 50, 10, 500), float('max_features', 'Features per split (fraction)', 0.33, 0.05, 1),
+      int('max_depth', 'Max depth', 10, 2, 40), int('min_samples_leaf', 'Min samples per leaf', 3, 1, 20),
+    ], ['browser', 'classification']),
+  op('model', 'Classification', BURN_CNN_CLASSIFIER, 'CNN classifier (Burn)',
+    'CNN classifier trained in the browser with Burn (softmax output, cross-entropy): NICON or a compact CNN per source, embeddings concatenated mid-network.', [
+      { name: 'architecture', label: 'Architecture', type: 'select', default: 'compact', options: [
+        { value: 'compact', label: 'Compact CNN' }, { value: 'nicon', label: 'NICON (nirs4all, ≥ 175 points per spectrum)' }] },
+      int('filters', 'Filters per branch (compact)', 8, 1, 64), int('kernel_size', 'Kernel size (compact)', 5, 1, 15, 2),
+      int('embedding_dim', 'Embedding size (compact)', 16, 1, 128), int('head_hidden', 'Head hidden units (compact)', 16, 1, 256),
+      int('epochs', 'Epochs', 30, 1, 500), int('batch_size', 'Batch size', 64, 2, 256),
+      float('learning_rate', 'Learning rate', 0.005, 0),
+    ], ['browser', 'mid', 'classification']),
 ]
 
 const OPERATOR = new Map(LAB_OPERATORS.map(definition => [definition.classPath!, definition]))
-const HEADS = new Set([PLS, RIDGE, MBPLS, NEURAL, RANDOM_FOREST, TFJS_CNN, BURN_CNN, AOM])
-const BLOCK_HEADS = new Set([MBPLS, NEURAL, TFJS_CNN, BURN_CNN])
-const META_HEADS = new Set([PLS, RIDGE])
+const HEADS = new Set([PLS, RIDGE, MBPLS, NEURAL, RANDOM_FOREST, TFJS_CNN, BURN_CNN, AOM, PLS_LOGISTIC, PLS_LDA, RANDOM_FOREST_CLASSIFIER, BURN_CNN_CLASSIFIER])
+const BLOCK_HEADS = new Set([MBPLS, NEURAL, TFJS_CNN, BURN_CNN, BURN_CNN_CLASSIFIER])
+const META_HEADS = new Set([PLS, RIDGE, PLS_LOGISTIC])
 
 export const LAB_CATALOG: PipelineCatalog = {
   operators: LAB_OPERATORS,
@@ -178,6 +201,7 @@ const lanes = (sources: readonly LabSource[], chain: (source: LabSource) => Json
   Object.fromEntries(sources.map(source => [source.id, chain(source)]))
 
 export function fusionPresets(dataset: LabDataset): FusionPreset[] {
+  if (dataset.target.kind === 'categorical') return classificationPresets(dataset)
   const sources = dataset.sources
   const pls = model(PLS, defaults(PLS), 'PLS')
   const width = (source: LabSource) => source.shape.reduce((n, size) => n * size, 1)
@@ -277,6 +301,74 @@ export function fusionPresets(dataset: LabDataset): FusionPreset[] {
         pipeline: [{ branch: { by_source: true, steps: lanes(sources, source => [...sourceChain(), plsLate(source)]) } }, { merge: 'predictions' },
           model(RIDGE, defaults(RIDGE), 'Meta-model (Ridge)')],
       },
+    },
+  )
+  return presets
+}
+
+/**
+ * Presets of a class target (declared vocabulary): PLS-DA, random forest and CNN classifiers;
+ * late fusion averages or stacks out-of-fold class probabilities, never class ids.
+ */
+function classificationPresets(dataset: LabDataset): FusionPreset[] {
+  const sources = dataset.sources
+  const width = (source: LabSource) => source.shape.reduce((n, size) => n * size, 1)
+  // PLS-DA sweeps its components (5, 10, 15, bounded by the variables), as the regression presets do.
+  const components = (variables: number) => variables >= 10 ? { _range_: [5, Math.min(15, variables), 5] } : Math.max(1, Math.min(5, variables))
+  const plsda = (variables: number, name = 'PLS-DA') => model(PLS_LOGISTIC, { ...defaults(PLS_LOGISTIC), n_components: components(variables) }, name)
+  const plsdaFixed = (variables: number, name = 'PLS-DA') => model(PLS_LOGISTIC, { ...defaults(PLS_LOGISTIC), n_components: Math.max(1, Math.min(5, variables)) }, name)
+  const presets: FusionPreset[] = sources.map(source => ({
+    id: `single:${source.id}`, label: `${source.label} alone`, level: 'single',
+    summary: `Baseline: ${source.label} only, standard scaling and PLS-DA (number of components swept). Every fusion must beat the best single source.`,
+    document: { name: `${source.label} alone · PLS-DA`, pipeline: [{ source_branch: lanes([source], sourceChain) }, plsda(width(source))] },
+  }))
+  if (sources.length < 2) return presets
+  const all = sources.map(source => source.label).join(' + ')
+  presets.push(
+    {
+      id: 'early', label: 'Early · concatenate', level: 'early',
+      summary: 'Each source is scaled, the variables are placed side by side and one PLS-DA classifies the samples (number of components swept).',
+      document: { name: `Early fusion · ${all} → PLS-DA`, pipeline: [{ source_branch: lanes(sources, sourceChain) }, { merge_sources: 'concat' },
+        plsda(sources.reduce((n, source) => n + width(source), 0))] },
+    },
+    {
+      id: 'early-rf', label: 'Early · random forest', level: 'early',
+      summary: 'The concatenated (and, for long spectra, resampled) variables feed a random forest classifier trained in the browser.',
+      document: { name: `Early fusion · ${all} → random forest`, pipeline: [{ source_branch: lanes(sources, cnnChain) }, { merge_sources: 'concat' },
+        // About sqrt(p) candidate variables per split, the usual classification forest setting (and fast on images).
+        model(RANDOM_FOREST_CLASSIFIER, { ...defaults(RANDOM_FOREST_CLASSIFIER), max_features: 0.05 }, 'Random forest')] },
+    },
+    {
+      id: 'mid-pca', label: 'Mid · PCA scores', level: 'mid',
+      summary: 'Each source is summarised by a few PCA scores fitted on the training samples; PLS-DA classifies the concatenated scores.',
+      document: { name: `Mid fusion · PCA scores of ${all} → PLS-DA`,
+        pipeline: [{ source_branch: lanes(sources, () => [...sourceChain(), step(PCA, defaults(PCA))]) }, { merge_sources: 'concat' }, plsdaFixed(5 * sources.length)] },
+    },
+    {
+      id: 'cnn-burn', label: 'Mid · CNN (Burn)', level: 'mid',
+      summary: 'A compact CNN classifier trained with Burn: one convolution branch per source (2-D for images), embeddings concatenated mid-network, softmax output.',
+      document: { name: `Mid fusion · Burn CNN classifier on ${all}`, pipeline: [{ source_branch: lanes(sources, cnnChain) },
+        model(BURN_CNN_CLASSIFIER, { ...defaults(BURN_CNN_CLASSIFIER), ...COMPACT_CNN }, 'CNN (Burn)')] },
+    },
+    ...(sources.every(source => source.modality === 'image' || source.shape[0] >= 175) && sources.some(source => source.modality === 'spectroscopy') ? [{
+      id: 'nicon', label: 'Mid · NICON (Burn)', level: 'mid' as const,
+      summary: 'NICON, the nirs4all 1-D CNN, per spectrum (a compact 2-D branch per image), with a softmax classification head, trained with Burn.',
+      document: { name: `Mid fusion · NICON classifier on ${all}`, pipeline: [{ source_branch: lanes(sources, niconChain) },
+        model(BURN_CNN_CLASSIFIER, { ...defaults(BURN_CNN_CLASSIFIER), architecture: 'nicon', epochs: 20, learning_rate: 0.002 }, 'NICON (Burn)')] },
+    }] : []),
+    {
+      id: 'late-mean', label: 'Late · average', level: 'late',
+      summary: 'One PLS-DA per source; their class probabilities are averaged and the most probable class is kept. Nothing is learned after the source models.',
+      document: { name: `Late fusion · mean of per-source PLS-DA probabilities (${all})`,
+        pipeline: [{ branch: { by_source: true, steps: lanes(sources, source => [...sourceChain(), plsdaFixed(width(source))]) } },
+          { merge: { predictions: 'all', aggregate: 'mean' } }] },
+    },
+    {
+      id: 'late-stacking', label: 'Late · stacking', level: 'late',
+      summary: 'One PLS-DA per source; their out-of-fold class probabilities become the inputs of a PLS-DA meta-model that learns which source to trust for which class.',
+      document: { name: `Late fusion · stacking of per-source PLS-DA (${all}) → PLS-DA`,
+        pipeline: [{ branch: { by_source: true, steps: lanes(sources, source => [...sourceChain(), plsdaFixed(width(source))]) } }, { merge: 'predictions' },
+          model(PLS_LOGISTIC, { ...defaults(PLS_LOGISTIC), n_components: 5 }, 'Meta-model (PLS-DA)')] },
     },
   )
   return presets
@@ -451,7 +543,7 @@ function predictionLevel(dataset: LabDataset, steps: unknown[], name: string): L
   }
   insist(steps.length === 3, steps.length === 2 ? 'Stacking needs a meta-model after the prediction merge.' : 'Put exactly one meta-model after the merge.')
   const meta = chainElement(steps[2], 'Meta-model')
-  insist(meta.kind === 'model' && META_HEADS.has(meta.step.methodId), 'The meta-model must be PLS or Ridge.')
+  insist(meta.kind === 'model' && META_HEADS.has(meta.step.methodId), 'The meta-model must be PLS, Ridge or PLS-DA (logistic).')
   // Hybrid stacking also gives the meta-model the (scaled) variables of the sources used by the branches.
   const original = hybrid ? [...new Set(branches.flatMap(branch => branch.sourceIds))] : []
   return { label: name, branches, merge: { kind: 'model', head: meta.step, sourceIds: original,
@@ -478,7 +570,7 @@ export function fusionLevel(document: LabPipelineDocument): FusionLevel {
   if (document.merge.kind !== 'none') return 'late'
   const branch = document.branches[0]
   if (branch.sourceIds.length === 1) return 'single'
-  if (branch.head.methodId === NEURAL || branch.head.methodId === TFJS_CNN || branch.head.methodId === BURN_CNN) return 'mid'
+  if ([NEURAL, TFJS_CNN, BURN_CNN, BURN_CNN_CLASSIFIER].includes(branch.head.methodId)) return 'mid'
   if (branch.head.methodId === MBPLS) return 'early'
   if (branch.sourceIds.length === 1) return 'single'
   return branch.sourceChains.some(chain => chain.steps.some(item => item.methodId === PCA)) ? 'mid' : 'early'

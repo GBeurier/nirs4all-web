@@ -119,3 +119,43 @@ describe('canonical refusals', () => {
     expect(document.merge.kind).toBe('model')
   })
 })
+
+describe('classification presets (declared class vocabulary)', () => {
+  const base = dataset('images')
+  const data: LabDataset = { ...base, target: { name: 'variety', unit: 'variety', kind: 'categorical', classes: ['a', 'b', 'c'],
+    values: Float64Array.from(base.sampleIds.map((_, index) => index % 3)) } }
+  const config = defaultLabConfig(data)
+  const presets = fusionPresets(data)
+
+  it('offers classifier heads only and late fusion over class probabilities', () => {
+    expect(presets.map(preset => preset.id)).toEqual(['single:nirs', 'single:image', 'early', 'early-rf', 'mid-pca', 'cnn-burn', 'late-mean', 'late-stacking'])
+    for (const preset of presets) {
+      const plan = sweepPlan(preset.document)
+      const recipe = describeRecipe(data, { ...config, pipeline: toLabDocument(data, plan.variant(plan.sizes.map(() => 0)).chain) })
+      for (const operator of Object.values(recipe.operators)) {
+        expect(['models.classification.pls_logistic', 'host.mljs.random_forest_classifier', 'host.burn.cnn_classifier']).toContain(operator.steps[0].methodId)
+      }
+    }
+  })
+
+  it('routes out-of-fold probabilities into the mean and the stacking meta-model', () => {
+    const recipe = (id: string) => describeRecipe(data, { ...config, pipeline: toLabDocument(data, presets.find(preset => preset.id === id)!.document) })
+    const mean = recipe('late-mean')
+    const [branch, merge] = mean.steps as Array<Record<string, any>>
+    expect(branch.branches.every((item: any) => item.steps[0].prediction_output_ports?.[0] === 'probabilities')).toBe(true)
+    expect(merge).toMatchObject({ kind: 'merge', merge_mode: 'fusion_proba_mean_label', source_ports: { 'model:nirs': 'probabilities', 'model:image': 'probabilities' } })
+    const stacking = recipe('late-stacking').steps[1] as Record<string, any>
+    expect(stacking).toMatchObject({ kind: 'merge_model', source_ports: { 'model:nirs': 'probabilities', 'model:image': 'probabilities' } })
+    expect(stacking.operator.steps[0].methodId).toBe('models.classification.pls_logistic')
+    // Host classifiers receive the declared number of classes, never chosen by the user.
+    const forest = Object.values(recipe('early-rf').operators)[0]
+    expect(forest.steps[0].params).toMatchObject({ n_classes: 3, seed: config.validation.seed })
+  })
+
+  it('refuses regression heads for a class target and classifier heads for a numeric target', () => {
+    const regression = fusionPresets(base).find(preset => preset.id === 'mid-pca')!.document
+    expect(() => describeRecipe(data, { ...config, pipeline: toLabDocument(data, regression) })).toThrow(/classifier heads/)
+    const classifier = presets.find(preset => preset.id === 'mid-pca')!.document
+    expect(() => describeRecipe(base, { ...defaultLabConfig(base), pipeline: toLabDocument(base, classifier) })).toThrow(/numeric target/)
+  })
+})

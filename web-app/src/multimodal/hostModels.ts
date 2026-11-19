@@ -11,7 +11,7 @@
  */
 import { createMlJsEstimator, loadMlJs } from 'nirs4all/classic-ml'
 
-import { BURN_CNN, HOST_MODELS, RANDOM_FOREST, TFJS_CNN } from './hostModelIds'
+import { BURN_CNN, BURN_CNN_CLASSIFIER, HOST_CLASSIFIERS, HOST_MODELS, RANDOM_FOREST, RANDOM_FOREST_CLASSIFIER, TFJS_CNN } from './hostModelIds'
 import initBurn, { CnnRegressor } from '../engine/wasm/lab-burn/lab_burn_cnn.js'
 
 interface Matrix { data: Float64Array; rows: number; cols: number }
@@ -27,11 +27,11 @@ let burnReady = false
 export async function loadHostModels(methodIds: Iterable<string>): Promise<Record<string, string>> {
   const ids = new Set(methodIds)
   const versions: Record<string, string> = {}
-  if (ids.has(RANDOM_FOREST)) {
+  if (ids.has(RANDOM_FOREST) || ids.has(RANDOM_FOREST_CLASSIFIER)) {
     mlModule ??= await loadMlJs()
     versions.mljs = 'ml 8.0.0'
   }
-  if (ids.has(BURN_CNN)) {
+  if (ids.has(BURN_CNN) || ids.has(BURN_CNN_CLASSIFIER)) {
     if (!burnReady) { await initBurn(); burnReady = true }
     versions.burn = 'burn 0.16.1 (ndarray, wasm)'
   }
@@ -68,7 +68,8 @@ function hardwareGpu(): boolean {
 }
 
 const rowsOf = (X: Matrix): number[][] => Array.from({ length: X.rows }, (_, r) => Array.from(X.data.subarray(r * X.cols, (r + 1) * X.cols)))
-const column = (y: Matrix | Float64Array): number[] => Array.from(y instanceof Float64Array ? y : y.data)
+// Targets arrive as a one-column matrix (regression) or a plain list of class ids (classification).
+const column = (y: Matrix | ArrayLike<number>): number[] => Array.from('data' in y && (y as Matrix).data ? (y as Matrix).data : y as ArrayLike<number>)
 const asMatrix = (values: ArrayLike<number>): Matrix => ({ data: Float64Array.from(values), rows: values.length, cols: 1 })
 const encode = (value: unknown) => new TextEncoder().encode(JSON.stringify(value))
 const decode = (bytes: Uint8Array) => JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes))
@@ -87,13 +88,23 @@ function mulberry32(seed: number) {
 const seed32 = (value: unknown) => Number(BigInt.asUintN(32, BigInt(String(value ?? 0))))
 
 interface HostModel {
-  fit(X: Matrix, y: Matrix | Float64Array, blocks?: number[]): void
+  fit(X: Matrix, y: Matrix | ArrayLike<number>, blocks?: number[]): void
   predict(X: Matrix): Matrix
+  /** Classifiers: class probabilities, column j = class id j (rows sum to 1). */
+  predictProba?(X: Matrix): Matrix
   state(): unknown
   dispose(): void
 }
 
-function randomForest(params: Record<string, unknown>, saved?: unknown): HostModel {
+/** The class ids a classifier saw at fit: the controller refuses a fit scope that lacks a class. */
+const seenClasses = (y: Matrix | ArrayLike<number>): number[] => [...new Set(column(y))].sort((a, b) => a - b)
+const nClasses = (params: Record<string, unknown>): number => {
+  const k = Number(params.n_classes)
+  if (!Number.isInteger(k) || k < 2) throw new Error('A host classifier needs the declared number of classes (n_classes >= 2)')
+  return k
+}
+
+function randomForest(params: Record<string, unknown>, classifier: boolean, saved?: unknown): HostModel {
   if (!mlModule) throw new Error('Random forest requested before ml.js was loaded')
   const options = {
     nEstimators: Number(params.n_estimators ?? 100),
@@ -103,11 +114,17 @@ function randomForest(params: Record<string, unknown>, saved?: unknown): HostMod
     seed: seed32(params.seed),
     treeOptions: { maxDepth: Number(params.max_depth ?? 12), minNumSamples: Number(params.min_samples_leaf ?? 3) },
   }
-  const estimator = createMlJsEstimator({ ml: mlModule, estimatorName: 'RandomForestRegressor', params: options })
+  const estimator = createMlJsEstimator({ ml: mlModule, estimatorName: classifier ? 'RandomForestClassifier' : 'RandomForestRegressor', params: options })
   if (saved !== undefined) estimator.load(saved)
+  // Class ids 0..k-1 of the declared vocabulary; probabilities are tree-vote shares (Core adapter).
+  const ids = classifier ? Array.from({ length: nClasses(params) }, (_, id) => id) : []
   return {
     fit(X, y) { estimator.fit(rowsOf(X), column(y)) },
     predict(X) { return asMatrix((estimator.predict(rowsOf(X)) as number[]).map(Number)) },
+    ...(classifier ? { predictProba(X: Matrix): Matrix {
+      const rows = (estimator as unknown as { predictProba(X: number[][], classes: number[]): number[][] }).predictProba(rowsOf(X), ids)
+      return { data: Float64Array.from(rows.flat()), rows: rows.length, cols: ids.length }
+    } } : {}),
     state() { return estimator.toJSON() },
     dispose() { /* plain JS */ },
   }
@@ -231,7 +248,7 @@ function tfjsCnn(params: Record<string, unknown>, saved?: CnnState): HostModel {
 }
 
 /** CNN trained with Burn (Rust, NdArray CPU backend compiled to WebAssembly). */
-function burnCnn(params: Record<string, unknown>, saved?: string): HostModel {
+function burnCnn(params: Record<string, unknown>, classifier: boolean, saved?: string): HostModel {
   if (!burnReady) throw new Error('Burn CNN requested before its WebAssembly module was loaded')
   const config = JSON.stringify({ ...params, seed: Number(BigInt.asUintN(53, BigInt(String(params.seed ?? 0)))) })
   let model: CnnRegressor | null = saved ? CnnRegressor.from_state(Uint8Array.from(atob(saved), c => c.charCodeAt(0))) : null
@@ -245,6 +262,11 @@ function burnCnn(params: Record<string, unknown>, saved?: string): HostModel {
       if (!model) throw new Error('Fit the Burn CNN first')
       return asMatrix(model.predict(X.data, X.rows, X.cols))
     },
+    ...(classifier ? { predictProba(X: Matrix): Matrix {
+      if (!model) throw new Error('Fit the Burn CNN first')
+      const k = nClasses(params)
+      return { data: Float64Array.from(model.predict_proba(X.data, X.rows, X.cols)), rows: X.rows, cols: k }
+    } } : {}),
     state() {
       if (!model) throw new Error('Fit the Burn CNN first')
       const bytes = model.export_state()
@@ -257,8 +279,17 @@ function burnCnn(params: Record<string, unknown>, saved?: string): HostModel {
 }
 
 function build(step: Step, saved?: unknown): HostModel {
-  if (step.methodId === BURN_CNN) return burnCnn(step.params, saved as string | undefined)
-  if (step.methodId === RANDOM_FOREST) return randomForest(step.params, saved)
+  // The method id alone decides regression or classification (never a parameter).
+  if (step.methodId === BURN_CNN || step.methodId === BURN_CNN_CLASSIFIER) {
+    const classifier = step.methodId === BURN_CNN_CLASSIFIER
+    if (classifier) nClasses(step.params)
+    else if (step.params.n_classes !== undefined) throw new Error('A regression CNN takes no n_classes')
+    return burnCnn(step.params, classifier, saved as string | undefined)
+  }
+  if (step.methodId === RANDOM_FOREST || step.methodId === RANDOM_FOREST_CLASSIFIER) {
+    if (step.methodId === RANDOM_FOREST && step.params.n_classes !== undefined) throw new Error('A regression forest takes no n_classes')
+    return randomForest(step.params, step.methodId === RANDOM_FOREST_CLASSIFIER, saved)
+  }
   if (step.methodId === TFJS_CNN) return tfjsCnn(step.params, saved as CnnState | undefined)
   throw new Error(`Unknown host model ${step.methodId}`)
 }
@@ -266,18 +297,44 @@ function build(step: Step, saved?: unknown): HostModel {
 /** RolePipeline-compatible wrapper around one host model. */
 class HostPipeline {
   private names: string[] | undefined
-  constructor(private readonly steps: Step[], private model: HostModel) {}
-  fit(X: Matrix, y: Matrix | Float64Array, inputs: { featureNames?: string[]; blocks?: number[] } = {}) {
+  /** Classifiers: class ids seen at fit (restored models report the full declared vocabulary). */
+  private fitted: number[] = []
+  constructor(private readonly steps: Step[], private model: HostModel) {
+    if (HOST_CLASSIFIERS.has(steps[0].methodId) && model.predictProba) this.fitted = Array.from({ length: nClasses(steps[0].params) }, (_, id) => id)
+  }
+  fit(X: Matrix, y: Matrix | ArrayLike<number>, inputs: { featureNames?: string[]; blocks?: number[] } = {}) {
     this.names = inputs.featureNames ? [...inputs.featureNames] : undefined
     this.model.fit(X, y, inputs.blocks)
+    if (HOST_CLASSIFIERS.has(this.steps[0].methodId)) this.fitted = seenClasses(y)
     return this
   }
-  predict(X: Matrix, featureNames?: string[]) {
+  private checkNames(featureNames?: string[]) {
     if (this.names && featureNames && (featureNames.length !== this.names.length || featureNames.some((name, i) => name !== this.names![i]))) {
       throw new Error('Prediction features differ from the fitted host model features')
     }
+  }
+  predict(X: Matrix, featureNames?: string[]) {
+    this.checkNames(featureNames)
     return this.model.predict(X)
   }
+  /** Classifier API used by the native source controller in classification mode. */
+  predictLabels(X: Matrix, featureNames?: string[]) {
+    this.checkNames(featureNames)
+    if (!this.model.predictProba) return Array.from(this.model.predict(X).data, Math.round)
+    // The most probable class, lowest class id on ties: labels always agree with the probabilities.
+    const proba = this.model.predictProba(X)
+    return Array.from({ length: proba.rows }, (_, row) => {
+      let best = 0
+      for (let column = 1; column < proba.cols; column++) if (proba.data[row * proba.cols + column] > proba.data[row * proba.cols + best]) best = column
+      return best
+    })
+  }
+  predictProba(X: Matrix, featureNames?: string[]) {
+    this.checkNames(featureNames)
+    if (!this.model.predictProba) throw new Error('This host model has no class probabilities')
+    return this.model.predictProba(X)
+  }
+  classes() { return [...this.fitted] }
   exportStates() { return [{ n4me: encode({ schema: 'nirs4all.lab-host-model.v1', methodId: this.steps[0].methodId, state: this.model.state() }) }] }
   dispose() { this.model.dispose() }
 }
@@ -340,6 +397,10 @@ export function withHostModels<M extends { manifest(): { methods: any[] }; RoleP
     { method_id: RANDOM_FOREST, role: 'regressor', inputs: { X: 'required', y: 'required' } },
     { method_id: TFJS_CNN, role: 'regressor', inputs: { X: 'required', y: 'required', blocks: 'required' } },
     { method_id: BURN_CNN, role: 'regressor', inputs: { X: 'required', y: 'required', blocks: 'required' } },
+    { method_id: RANDOM_FOREST_CLASSIFIER, role: 'classifier', roles: ['classifier'], capabilities: ['predict_proba', 'predict_labels'],
+      inputs: { X: 'required', labels: 'required' } },
+    { method_id: BURN_CNN_CLASSIFIER, role: 'classifier', roles: ['classifier'], capabilities: ['predict_proba', 'predict_labels'],
+      inputs: { X: 'required', labels: 'required', blocks: 'required' } },
   ]
   const RolePipeline = {
     fromSteps(steps: Step[]) {

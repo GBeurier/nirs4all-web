@@ -306,14 +306,17 @@ export default function MultimodalApp() {
             ownerVersions: result.ownerVersions } }] : []
         })
         const refused = result.refusals.map(refusal => refusal.reason)
-        patch(id, current => ({ ...current,
-          run: result.candidates.length > 0 ? { kind: 'done' }
-            : { kind: 'error', name: 'NativeExecutionRefusal', message: refused.join('; ') || 'No pipeline completed.' },
-          results: toWorkbenchResult(result), rawResult: result,
-          runs: current.dataset === dataset ? [...current.runs, ...records] : current.runs,
-          pipelineNotice: `${records.length} run${records.length === 1 ? '' : 's'} added to the comparison${batch ? ' (unedited presets)' : ''}.`
-            + (refused.length ? ` ${refused.length} refused: ${refused.join('; ')}` : ''),
-        }))
+        patch(id, current => current.dataset !== dataset
+          // Another dataset replaced this one during the run: its results never join the new comparison.
+          ? { ...current, pipelineNotice: `The dataset changed during the run; its ${records.length} result${records.length === 1 ? ' was' : 's were'} discarded.` }
+          : { ...current,
+            run: result.candidates.length > 0 ? { kind: 'done' }
+              : { kind: 'error', name: 'NativeExecutionRefusal', message: refused.join('; ') || 'No pipeline completed.' },
+            results: toWorkbenchResult(result), rawResult: result,
+            runs: [...current.runs, ...records],
+            pipelineNotice: `${records.length} run${records.length === 1 ? '' : 's'} added to the comparison${batch ? ' (unedited presets)' : ''}.`
+              + (refused.length ? ` ${refused.length} refused: ${refused.join('; ')}` : ''),
+          })
       })
       .catch(reason => {
         if (runToken.current !== token) return

@@ -50,6 +50,16 @@ License-family texts are bundled under [`LICENSES/`](LICENSES/): CeCILL-2.1,
 AGPL-3.0-or-later, MIT, Apache-2.0, and BSD-3-Clause. The commercial-license documents in that
 directory apply only to nirs4all-web itself; they do not replace or alter third-party licenses.
 
+## Data
+
+The multimodal laboratory bundles a derived teaching subset of the rice seed dataset of
+Vu et al. (2020), *RGB and VIS/NIR Hyperspectral Imaging Data for 90 Rice Seed Varieties*,
+https://doi.org/10.5281/zenodo.3241923 (paper https://doi.org/10.1109/ACCESS.2020.2969847),
+licensed CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), under
+`web-app/public/multimodal-data/rice-varieties/`. Changes: 10 varieties × 24 kernels, RGB kernel
+crops resized to 32 × 32, three calibrated pixel spectra per kernel, a stratified train/test
+partition. The synthetic teaching collections beside it are original to nirs4all-web.
+
 The optional server workspace transport is also distributed with this application.
 Its source archive identity and original license texts are available in
 [server-client/NOTICE.md](server-client/NOTICE.md).

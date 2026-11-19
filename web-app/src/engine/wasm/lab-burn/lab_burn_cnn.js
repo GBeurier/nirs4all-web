@@ -84,7 +84,8 @@ export class CnnRegressor {
         return this;
     }
     /**
-     * Predictions in target units.
+     * Regression: predictions in target units. Classification: the most probable class index per row
+     * (ties go to the lowest index).
      * @param {Float64Array | number[]} x
      * @param {number} rows
      * @param {number} cols
@@ -96,6 +97,26 @@ export class CnnRegressor {
         const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
         const len0 = WASM_VECTOR_LEN;
         const ret = wasm.cnnregressor_predict(this.__wbg_ptr, ptr0, len0, val2, val3);
+        if (ret[3]) {
+            throw takeFromExternrefTable0(ret[2]);
+        }
+        var v4 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+        return v4;
+    }
+    /**
+     * Classification only: softmax class probabilities, row-major `rows × n_classes` (rows sum to 1).
+     * @param {Float64Array | number[]} x
+     * @param {number} rows
+     * @param {number} cols
+     * @returns {Float64Array}
+     */
+    predict_proba(x, rows, cols) {
+        const val2 = +rows;
+        const val3 = +cols;
+        const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.cnnregressor_predict_proba(this.__wbg_ptr, ptr0, len0, val2, val3);
         if (ret[3]) {
             throw takeFromExternrefTable0(ret[2]);
         }

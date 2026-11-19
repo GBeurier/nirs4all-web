@@ -1,5 +1,5 @@
-/** Restricted same-origin transport for the three bundled teaching collections. */
-const PRESET_IDS = new Set(['spectroscopy-complementary', 'genetics-replicates', 'images-spatial'])
+/** Restricted same-origin transport for the bundled teaching collections. */
+const PRESET_IDS = new Set(['spectroscopy-complementary', 'genetics-replicates', 'images-spatial', 'rice-varieties'])
 
 export async function loadBundledTeachingFile(presetId: string, name: string): Promise<Response> {
   if (!PRESET_IDS.has(presetId) || !/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(name)) {

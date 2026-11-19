@@ -1,20 +1,20 @@
 {
   "schema": "nirs4all-web.public-npm-acquisition.v1",
   "package": "dag-ml-wasm",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "source": {
     "repository": "https://github.com/GBeurier/dag-ml",
-    "commit": "a87d0f0b1d8d0b62f853c28fbd06f718c6885089",
-    "tree": "519eb9b7be503713aa581711092241e043ca32d9",
-    "tag": "v0.4.4"
+    "commit": "2ef08b3e72685e325fce7e730d32b0bd69b0eb62",
+    "tree": "a3332b13f58f9d58063592f824776c066e145de5",
+    "tag": "v0.4.5"
   },
   "acquisition": {
-    "metadata_url": "https://registry.npmjs.org/dag%2Dml%2Dwasm/0.4.4",
-    "tarball_url": "https://registry.npmjs.org/dag-ml-wasm/-/dag-ml-wasm-0.4.4.tgz",
-    "size": 3650333,
-    "sha256": "2a9ac05905b54441e31ab030a2ed85059aa75350ee983b1c287fdfbc9ba41a38",
-    "sha1": "c0c9d1bbd6c23dd27859821b74d6fd6b13b4dd92",
-    "integrity": "sha512-CdIH+yRXTOkLKeQwl+qkvBhaoCNLjPVrSk8fYKwmFyUOeET+EQ868NXST88EC/xk2PN8+STVOmr2tg7iaO19Qw=="
+    "metadata_url": "https://registry.npmjs.org/dag%2Dml%2Dwasm/0.4.5",
+    "tarball_url": "https://registry.npmjs.org/dag-ml-wasm/-/dag-ml-wasm-0.4.5.tgz",
+    "size": 3646848,
+    "sha256": "86c92ec023cf0a19b52bb07c91a5dafa4c3feadb974656a16f5a6a490f1898db",
+    "sha1": "2e4afe547dcbffcc751d2e904d992b63034be8e0",
+    "integrity": "sha512-RAEtg+lsMChYmOAbNjg+51oeZqw70tmEm+CgJmTbtpuKBfFriTNaZ4or2lkkPzK3wopj5eoY9g+6Agdo2Lx5Ug=="
   },
   "reproducibility": {
     "performed_by_web": false,
@@ -31,7 +31,7 @@
     },
     "package.json": {
       "size": 1929,
-      "sha256": "641c1837701a8d41287339aafb787ff8db4cd20e1dc326a01bf483b548310cf7"
+      "sha256": "097645abf670c76dbbcb7f56fe9501a5bd47290c8766b3d2051babd9f55fbad1"
     },
     "README.md": {
       "size": 9899,
@@ -62,8 +62,8 @@
       "sha256": "9c5354d3dc0e6ff4f63be6f88640445c4ea3736c9759ef505672fa21d4ee2a63"
     },
     "n4m_source_controller.mjs": {
-      "size": 24979,
-      "sha256": "71106fdc916c29ceef230d6e3a9d1556028f802879e71f13badba67772c99c9e"
+      "size": 33725,
+      "sha256": "c3a85ea24f5f06a37bf1719c439072348928b2c92b5d842d05ff17dd6fe16767"
     },
     "dag_ml_wasm.d.ts": {
       "size": 26920,
@@ -82,12 +82,12 @@
       "sha256": "b02ef2d5df584f5f972c1544e0dfc324c931123cfb4ccb4ed9ebc4420570119b"
     },
     "n4m_source_controller.d.ts": {
-      "size": 2073,
-      "sha256": "9e538766d243cc5bf2766caf0308575c9d2fa410f6b1a7f06cc2393dad181c36"
+      "size": 2412,
+      "sha256": "46dd52eebd778df690f5b1183115a2ae98d19118e1a61c90381d6476f538ad52"
     },
     "dag_ml_wasm_bg.wasm": {
-      "size": 10734736,
-      "sha256": "751b3e53292dd7b4f1a915a78f6b9ead1715e189080a99a5259e5892e0f21550"
+      "size": 10814670,
+      "sha256": "e88e552304972ffabd8528bab0fa4da008f1615f22c9fe2114a371f0a2c1559f"
     },
     "LICENSES/AGPL-3.0-or-later.txt": {
       "size": 34020,
