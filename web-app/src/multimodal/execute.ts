@@ -1,7 +1,7 @@
 import type { LabCandidateResult, LabConfig, LabDataset, LabMetricScope, LabProgress, LabRunResult, LabSource } from './types'
 import { describeRecipe, pipelineSourceIds, pipelineStrategy, validatePipelineDocument } from './recipes'
 import { loadLabRuntime, nativeJson, N4mWasmSourceController, SEED_TOKEN, stableJson } from './runtime'
-import { loadHostModels, takeModelSelections, withHostModels } from './hostModels'
+import { loadHostModels, noteModelTask, takeModelSelections, withHostModels } from './hostModels'
 
 type Json = Record<string, any>
 interface FoldSet {
@@ -202,7 +202,7 @@ export async function executeLab(dataset: LabDataset, configs: LabConfig[], onPr
         resolveTargets: ({ sampleIds }) => ({ sampleIds: [...sampleIds], matrix: {
           data: Float64Array.from(sampleIds, id => { assertLab(targetRows.has(id), `Unknown target identity ${id}`); return dataset.target.values[targetRows.get(id)!] }),
           rows: sampleIds.length, cols: 1 } }),
-        onTask: task => reportProgress(task.phase, 'Native DAG task executing', task.nodeId, task.foldId),
+        onTask: task => { noteModelTask(task); reportProgress(task.phase, 'Native DAG task executing', task.nodeId, task.foldId) },
       })
       const manifests: Json[] = [controller.manifest(dag)]
       if (description.targetNode === 'merge:mean') manifests.push(JSON.parse(dag.derive_controller_manifest_json(JSON.stringify({

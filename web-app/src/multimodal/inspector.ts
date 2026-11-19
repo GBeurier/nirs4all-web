@@ -98,10 +98,16 @@ function modelLabel(document: LabPipelineDocument): string {
 
 const AOM_BRANCH = ['raw', 'SNV', 'MSC']
 
+/** The fold ids of the native outer fold set (`{ folds: [{ fold_id }] }`). */
+function outerFoldIds(folds: unknown): Set<string> {
+  const list = (folds as { folds?: Array<{ fold_id?: unknown }> } | null)?.folds ?? []
+  return new Set(list.map(fold => fold.fold_id).filter((id): id is string => typeof id === 'string'))
+}
+
 /**
  * What the refit model selected internally (AOM: preprocessing branch and chain,
- * components or ridge alpha, the best internal candidates and how often the
- * outer folds chose the same chain), from the Methods fit results per source.
+ * components or ridge alpha, the best internal candidates and how many outer
+ * folds chose the same chain), from the Methods fit results per source.
  * The internal scores come from AOM's own CV inside the training data, never
  * from the outer OOF or test partitions.
  */
@@ -113,7 +119,12 @@ function selectedParams(dataset: LabDataset, run: LabRunRecord): Record<string, 
   }
   const params: Record<string, string | number> = {}
   for (const [key, fits] of bySource) {
-    const refit = fits[fits.length - 1], folds = fits.slice(0, -1)
+    const refit = fits[fits.length - 1]
+    // One fit per outer fold: the last FIT_CV fit of each outer fold (a stacking
+    // base model is also fitted on inner folds before its outer-train fit).
+    const outer = outerFoldIds(run.protocol.folds)
+    const folds = [...new Map(fits.filter(fit => fit.phase === 'FIT_CV' && fit.foldId != null && outer.has(fit.foldId))
+      .map(fit => [fit.foldId, fit])).values()]
     const where = `${key.split('+').map(id => sourceLabel(dataset, id)).join(' + ')} · AOM`
     const { selected_branch: branch, selected_chain_index: chain, selected_n_components: components, selected_alpha: alpha } = refit.values
     const aom = refit.aom
@@ -121,7 +132,7 @@ function selectedParams(dataset: LabDataset, run: LabRunRecord): Record<string, 
       params[`${where} chain`] = aom.selected
       if (aom.ranking.length > 1) params[`${where} top chains (${AOM_CRITERION_LABEL[aom.criterion]})`] = formatRanking(aom)
       const agreeing = folds.filter(fit => fit.aom?.selected === aom.selected).length
-      if (folds.length > 0) params[`${where} chain stability`] = `${agreeing}/${folds.length} fold fits`
+      if (folds.length > 0) params[`${where} chain stability`] = `${agreeing}/${folds.length} outer folds`
     } else {
       if (branch !== undefined) params[`${where} branch`] = AOM_BRANCH[branch] ?? `branch ${branch}`
       if (chain !== undefined) params[`${where} chain`] = `#${chain + 1}`

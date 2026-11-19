@@ -82,6 +82,14 @@ function verifyRuns(document, count) {
       assert.match(fit.aom?.selected ?? '', /^(raw|SNV|MSC) › /, 'AOM selection has no chain name')
       assert.ok(fit.aom.ranking.length > 0 && fit.aom.candidates > 0, 'AOM selection has no ranked candidates')
     }
+    // Each selection carries its native task, so the Inspector counts outer folds only.
+    const outer = new Set(aomRun.protocol.folds.folds.map(fold => fold.fold_id))
+    for (const source of new Set(aomFits.map(fit => fit.sourceIds.join('+')))) {
+      const fits = aomFits.filter(fit => fit.sourceIds.join('+') === source)
+      assert.equal(fits.at(-1).phase, 'REFIT', 'the last AOM selection per source is not the refit')
+      assert.equal(new Set(fits.filter(fit => fit.phase === 'FIT_CV' && outer.has(fit.foldId)).map(fit => fit.foldId)).size, outer.size,
+        'an outer fold has no AOM selection')
+    }
   }
   // Native fixed-mean output must equal the separately executed source baselines
   // under the same sources, transforms, folds and fixed PLS hyperparameters

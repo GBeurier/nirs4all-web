@@ -105,7 +105,7 @@ values as hyper-parameters (the Tuning views plot the score against them), and A
 heads show what the refit selected inside the training fold, from the Methods fit
 result: the named preprocessing chain (branch › operators), the best screened chains
 with their internal score (internal CV RMSE, or the Fast screening criterion where
-higher is better), how many outer fold fits chose the same chain, and the components
+higher is better), how many outer folds chose the same chain, and the components
 or alpha. The selected chain is also an Inspector attribute for grouping and coloring.
 These internal scores never replace the OOF or held-out scores. Chain names are
 formatted in Web from Methods' numeric operator descriptors until Methods exposes
