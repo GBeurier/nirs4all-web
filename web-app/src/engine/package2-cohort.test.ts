@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { parseN4aFile } from '@/lib/n4a'
 import { isArchiveV2Model, predictArchiveV2 } from './archive-v2'
@@ -10,17 +11,18 @@ import type { FittedPipeline } from './types'
 // The accepted genuine Core V1 Package2 scenario (SNV + Savitzky-Golay + PLS, width 7) opened
 // through the Core container route and replayed by the one staged Methods build. Nothing is fitted
 // or generated here: the recorded owner predictions are the reference, within the existing
-// CPU-to-WASM tolerance. Root points NIRS4ALL_WEB_OWNER_FIXTURES at the directory holding
+// CPU-to-WASM tolerance. NIRS4ALL_WEB_OWNER_FIXTURES may override the checked-in directory holding
 // shared-model.n4a, independent.json (.x 12x7, .sample_ids) and shared-prediction.json
-// (.point_prediction.values / .target_names); without it the cohort is not run (explicit skip).
+// (.point_prediction.values / .target_names). Missing inputs fail the gate.
 const dir = process.env.NIRS4ALL_WEB_OWNER_FIXTURES
+  ?? fileURLToPath(new URL('../../tests/fixtures/core-v1-package2/', import.meta.url))
 const TOLERANCE = 1e-10 // Core conformal-native.test.js CPU-to-WASM tolerance
 const WIDTH = 7
 
-describe.skipIf(!dir)('genuine Core V1 Package2 cohort (Web host route)', () => {
-  const read = (name: string) => readFileSync(join(dir!, name))
-  const rows: number[][] = dir ? JSON.parse(read('independent.json').toString()).x : []
-  const expected: number[] = dir ? JSON.parse(read('shared-prediction.json').toString()).point_prediction.values.map((row: number[]) => row[0]) : []
+describe('genuine Core V1 Package2 cohort (Web host route)', () => {
+  const read = (name: string) => readFileSync(join(dir, name))
+  const rows: number[][] = JSON.parse(read('independent.json').toString()).x
+  const expected: number[] = JSON.parse(read('shared-prediction.json').toString()).point_prediction.values.map((row: number[]) => row[0])
   const flatten = (order: number[]) => Float64Array.from(order.flatMap((i) => rows[i]))
   const open = async () => {
     const loaded = await parseN4aFile(new File([new Uint8Array(read('shared-model.n4a'))], 'shared-model.n4a'))

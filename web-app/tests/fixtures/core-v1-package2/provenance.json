@@ -1,0 +1,19 @@
+{
+  "profile": "Core V1 Package2 / N4MM v3 / SNV + Savitzky-Golay + PLS",
+  "source": "_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-fixtures",
+  "qualification": "_implementation/2026-11-03-ecosystem-consolidation/phase5-ui-rollout-20261107/web-owner-gates/CORE_QUALIFICATION.md",
+  "files": {
+    "shared-model.n4a": {
+      "bytes": 101189,
+      "sha256": "631584d0ec1eb332099f8013120de947f06ca5e9b6e89e5ef9f63c343373dc7b"
+    },
+    "independent.json": {
+      "bytes": 2085,
+      "sha256": "0795e1f3081acbe679b1584fa3550073412962e40fa4ea08f21899bc6c0fc246"
+    },
+    "shared-prediction.json": {
+      "bytes": 4458,
+      "sha256": "0df1ad17bc0ffd3035bc693851914d8ca528f63f39b3d02a3601a55fb03c858d"
+    }
+  }
+}

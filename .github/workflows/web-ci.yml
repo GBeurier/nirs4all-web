@@ -50,6 +50,8 @@ jobs:
 
       - run: npm ci
       - run: npm run typecheck
+      - name: Frozen native Package2 import and prediction
+        run: npx vitest run src/lib/n4a-native.test.ts src/engine/package2-cohort.test.ts
       - run: NIRS4ALL_METHODS_ABI_REQUIRED=1 NIRS4ALL_STUDIO_REGISTRY_REQUIRED=1 npm run validate:catalog
       - name: Vendored nirs4all-ui tarball is exact
         run: npm run check:ui-package
