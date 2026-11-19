@@ -19,7 +19,8 @@ page.on('console', message => { if (message.type() === 'error') errors.push(mess
 page.on('response', response => { if (response.status() >= 400) failedRequests.push(`${response.status()} ${response.url()}`) })
 page.on('request', request => { if (!['GET', 'HEAD'].includes(request.method())) mutations.push(request.url()) })
 const sameIds = (a, b) => assert.deepEqual([...a].sort(), [...b].sort())
-const LEVELS = { spectroscopy: 11, genetics: 12, images: 10 }
+// Single-head PLS presets sweep n_components (3 variants each); every variant is one run.
+const LEVELS = { spectroscopy: 21, genetics: 20, images: 18 }
 
 async function downloadResult(caseId) {
   const [download] = await Promise.all([page.waitForEvent('download'),
@@ -73,9 +74,10 @@ function verifyRuns(document, count) {
     }
   }
   // Native fixed-mean output must equal the separately executed source baselines
-  // under the same sources, transforms, folds and fixed PLS hyperparameters.
+  // under the same sources, transforms, folds and fixed PLS hyperparameters
+  // (late presets use 10 components, one value of the single-source sweep).
   const late = document.runs.find(run => run.name === 'Late · average').candidate
-  const baselines = document.runs.filter(run => run.name.endsWith(' alone')).map(run => run.candidate)
+  const baselines = document.runs.filter(run => run.name.endsWith(' alone · PLS regression · n_components = 10')).map(run => run.candidate)
   assert.equal(baselines.length, document.dataset.sources.length)
   for (const scope of ['oof', 'holdout']) {
     const lookups = baselines.map(candidate => new Map(candidate[scope].rows.map(row => [row.sampleId, row.predicted])))

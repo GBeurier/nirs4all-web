@@ -91,6 +91,8 @@ export interface LabCandidateResult {
   oof: LabMetricScope
   holdout: LabMetricScope | null
   diagnostics: Array<Record<string, unknown>>
+  /** Internal selections reported by native heads (AOM), in fit order; the last per source is the refit's. */
+  modelSelections?: Array<{ methodId: string; sourceIds: string[]; values: Record<string, number> }>
   warnings: string[]
   /** Native portable package bytes, retained locally for explicit later replay. */
   portablePackageJson: string

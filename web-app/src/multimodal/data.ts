@@ -1,10 +1,9 @@
 /** File transport only. IO and Formats parse, decode, validate and align. */
 import { loadDataIoWasm } from '../engine/nirs4all-core'
-import type { MultimodalDataPreset, MultimodalImportProfile } from 'nirs4all-ui/multimodal'
+import type { MultimodalDataPreset } from 'nirs4all-ui/multimodal'
 import type { LabCase, LabDataset } from './types'
 import { loadBundledTeachingFile } from './bundled-file'
 
-const ROOT = '../multimodal-data/'
 const PRESETS = {
   spectroscopy: 'spectroscopy-complementary', genetics: 'genetics-replicates', images: 'images-spatial',
 } as const
@@ -22,17 +21,6 @@ export const TEACHING_PRESETS: readonly MultimodalDataPreset[] = [
     facts: [{ label: 'Recorded seed', value: '20261118' }, { label: 'Size', value: '120 samples; 64 wavelengths; 12 × 12 × 1 images' },
       { label: 'Pixel range', value: 'Fixed 8-bit [0,255]; no data-wide learned normalization or resizing' }] },
 ]
-export const IMPORT_PROFILES: readonly MultimodalImportProfile[] = (Object.keys(PRESETS) as LabCase[]).map(caseId => ({
-  id: `manifest-${caseId}`, caseId, label: 'Declared multimodal file collection',
-  description: 'Select manifest.json and every referenced CSV, VCF or PNG file. Unzip the matching example first. IO joins exact sample IDs; unresolved identities or unsupported records refuse.',
-  accept: '.json,.csv,.vcf,.png',
-  files: [{ role: 'manifest.json', description: 'nirs4all.multimodal-import.v1 declaration with explicit profiles, source order, columns and axes', required: true },
-    { role: 'metadata CSV', description: 'Sample IDs, target, optional group and train/test partition columns', required: true },
-    { role: 'Source files', description: 'Every declared source CSV, genotype VCF or image mapping CSV plus 8-bit gray/RGB PNG files', required: true }],
-  examples: [{ label: 'Complete matching example (ZIP; unzip before import)', href: `${ROOT}${PRESETS[caseId]}.zip`, fileName: `${PRESETS[caseId]}.zip` },
-    { label: 'Manifest and profile documentation', href: `${ROOT}${PRESETS[caseId]}/manifest.json`, fileName: 'manifest.json' }],
-}))
-
 interface NamedFile { name: string; bytes: Uint8Array }
 interface ImportIo { assembleMultimodalFiles(manifest: string, files: NamedFile[], decode: (profile: string, bytes: Uint8Array, budget: number) => unknown, budget: number): LabDataset }
 interface ImportFormats { decodeMultimodalBytes(profile: string, bytes: Uint8Array, budget: number): unknown }
@@ -48,14 +36,6 @@ async function assemble(files: NamedFile[], caseId: LabCase): Promise<LabDataset
     (profile, bytes, budget) => ownerFormats.decodeMultimodalBytes(profile, bytes, budget), 64 * 1024 * 1024)
   if (result.caseId !== caseId) throw new Error('The declared dataset case differs from the selected laboratory case')
   return result
-}
-
-export async function importLabFiles(files: readonly File[], caseId: LabCase): Promise<LabDataset> {
-  // The manifest uses exact collection-relative names. Flat example files also
-  // work with an ordinary multiple-file picker; no filename IDs are inferred.
-  const names = files.map(file => file.name)
-  if (new Set(names).size !== names.length) throw new Error('Input file names are ambiguous; use distinct declared collection names')
-  return assemble(await Promise.all(files.map(async file => ({ name: file.name, bytes: new Uint8Array(await file.arrayBuffer()) }))), caseId)
 }
 
 export async function loadTeachingDataset(caseId: LabCase, presetId: string = PRESETS[caseId]): Promise<LabDataset> {

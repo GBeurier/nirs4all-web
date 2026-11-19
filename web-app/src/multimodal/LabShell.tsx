@@ -6,9 +6,9 @@ const BRAND_SRC = '../brand/icon.svg'
 
 /** Workbench sections, in page order, mirrored by the Web step rail. */
 const STEPS = [
-  { id: 'n4mm-case', label: 'Case', hint: 'Choose the sources', icon: Layers },
-  { id: 'n4mm-data', label: 'Dataset', hint: 'Load or build', icon: Database },
+  { id: 'n4mm-data', label: 'Dataset', hint: 'Build from your files', icon: Database },
   { id: 'n4mm-explore', label: 'Explore', hint: 'Inspect each source', icon: ScanSearch },
+  { id: 'n4mm-case', label: 'Analysis', hint: 'Kind & pipelines', icon: Layers },
   { id: 'n4mm-protocol', label: 'Validation', hint: 'Folds & held-out', icon: ShieldCheck },
   { id: 'n4mm-pipeline', label: 'Pipeline', hint: 'Fusion & run', icon: GitBranch },
   { id: 'n4mm-results', label: 'Results', hint: 'Compare runs', icon: BarChart3 },
@@ -26,7 +26,7 @@ export function LabShell({ runtime, running, revision, children }: {
   children: ReactNode
 }) {
   const [present, setPresent] = useState<ReadonlySet<string>>(new Set(['n4mm-case', 'n4mm-data']))
-  const [active, setActive] = useState<string>('n4mm-case')
+  const [active, setActive] = useState<string>('n4mm-data')
 
   useEffect(() => {
     const sections = STEPS.map(step => document.getElementById(step.id)).filter((el): el is HTMLElement => el !== null)

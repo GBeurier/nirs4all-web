@@ -20,6 +20,8 @@ export interface FusionEditorProps {
   canRedo: boolean
   /** Why the current document cannot run, or `null`. */
   problem: string | null
+  /** Variants the parameter sweeps of the document make (1 without sweeps). */
+  variants: number
   running: boolean
   progress: string | null
   error: string | null
@@ -68,7 +70,7 @@ export function FusionEditor(props: FusionEditorProps) {
         onRedo={props.onRedo}
         canUndo={props.canUndo}
         canRedo={props.canRedo}
-        variantCount={1}
+        variantCount={props.variants}
         inputLabel={dataset.name}
         inputDetail={`${dataset.sampleIds.length} samples · ${dataset.sources.map(source => source.label).join(' · ')}`}
         outputLabel="Prediction"
