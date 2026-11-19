@@ -60,14 +60,14 @@ function declaredDraft(source: MultimodalBuilderSource, manifest?: BuilderManife
   }
 }
 
-export async function inspectBuilderFiles(files: readonly File[], caseId: LabCase, previous?: MultimodalBuilderDraft): Promise<InspectedBuilderFiles> {
+export async function inspectBuilderFiles(files: readonly File[], previous?: MultimodalBuilderDraft): Promise<InspectedBuilderFiles> {
   const names = files.map(file => file.name)
   if (new Set(names).size !== names.length) throw new Error('File names must be distinct. Rename ambiguous files before adding them.')
   const inputs = await Promise.all(files.map(async file => ({ name: file.name, bytes: new Uint8Array(await file.arrayBuffer()) })))
   const manifestInput = inputs.find(input => input.name === 'manifest.json')
   const manifest = manifestInput ? JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(manifestInput.bytes)) as BuilderManifest : undefined
-  if (manifest && (manifest.schema !== 'nirs4all.multimodal-import.v1' || manifest.caseId !== caseId || !manifest.metadata || !Array.isArray(manifest.sources))) {
-    throw new Error('The optional manifest must declare this teaching case using nirs4all.multimodal-import.v1. Files can also be added without a manifest.')
+  if (manifest && (manifest.schema !== 'nirs4all.multimodal-import.v1' || !manifest.metadata || !Array.isArray(manifest.sources))) {
+    throw new Error('The optional manifest must use nirs4all.multimodal-import.v1. Files can also be added without a manifest.')
   }
   if (manifest && new Set(manifest.sources.map(source => source.file)).size !== manifest.sources.length) {
     throw new Error('This wizard maps one measurement block per file. Separate blocks into distinct files before importing this manifest.')
@@ -125,7 +125,7 @@ export async function inspectBuilderFiles(files: readonly File[], caseId: LabCas
       base.features = description.columns.filter(column => column.dtype === 'numeric' && !reserved.includes(column.name)).map(column => column.name)
       if (base.target) base.role = base.features.length ? 'combined' : 'metadata'
       // This profile's fixed mapping columns are declared here, never inferred into sample identities.
-      if (caseId === 'images' && base.columns.some(column => column.name === 'file') && base.columns.some(column => column.name === 'sample_id')) {
+      if (base.columns.some(column => column.name === 'file') && base.columns.some(column => column.name === 'sample_id')) {
         base.profile = 'png_manifest'; base.modality = 'image'; base.sampleId = 'sample_id'
         // Formats' native usize values cross wasm-bindgen as bigint. PNG dimensions
         // are bounded by the format's u32 fields, so this UI count conversion is exact.
@@ -146,7 +146,7 @@ export async function inspectBuilderFiles(files: readonly File[], caseId: LabCas
     sourceIds.add(source.id)
   }
   return { inputs, inventory: files.map(file => ({ name: file.name, size: file.size, kind: inputKind(file.name) })),
-    draft: { name: previous?.name ?? manifest?.name ?? `${caseId}-dataset`, sources }, provenance: manifest?.provenance ?? {} }
+    draft: { name: previous?.name ?? manifest?.name ?? 'my-dataset', sources }, provenance: manifest?.provenance ?? {} }
 }
 
 /** Serialize explicit user choices into the owner's existing import contract. */
@@ -184,8 +184,17 @@ export function buildBuilderManifest(draft: MultimodalBuilderDraft, caseId: LabC
     sources, provenance }
 }
 
-export async function validateBuilderDraft(draft: MultimodalBuilderDraft, inputs: readonly BuilderInput[], caseId: LabCase, provenance: Record<string, unknown>) {
-  const manifest = buildBuilderManifest(draft, caseId, provenance)
+/**
+ * The analysis kind follows the declared source modalities: any image source makes
+ * a spectra-and-images dataset, any marker table a spectra-and-markers one.
+ */
+export function inferBuilderCase(draft: MultimodalBuilderDraft): LabCase {
+  const modalities = new Set(draft.sources.filter(source => source.role === 'source' || source.role === 'combined').map(source => source.modality))
+  return modalities.has('image') ? 'images' : modalities.has('genetics') ? 'genetics' : 'spectroscopy'
+}
+
+export async function validateBuilderDraft(draft: MultimodalBuilderDraft, inputs: readonly BuilderInput[], provenance: Record<string, unknown>) {
+  const manifest = buildBuilderManifest(draft, inferBuilderCase(draft), provenance)
   const { io, formats } = await loadDataIoWasm()
   const ownerIo = io as unknown as OwnerIo, ownerFormats = formats as unknown as OwnerFormats
   const dataset = ownerIo.assembleMultimodalFiles(JSON.stringify(manifest), inputs,

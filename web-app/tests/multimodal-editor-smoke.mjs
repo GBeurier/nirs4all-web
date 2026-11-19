@@ -22,13 +22,14 @@ async function preset(label) {
   await lab.getByRole('button', { name: label, exact: true }).click()
   assert.equal(await lab.getByRole('button', { name: label, exact: true }).getAttribute('aria-pressed'), 'true')
 }
-async function run() {
+async function run(count = 1) {
   const before = await page.locator('[data-fusion-results]').count() ? await results() : { runs: [] }
   await page.getByRole('button', { name: 'Run this pipeline', exact: true }).click()
-  await page.waitForFunction(() => /1 run added to the comparison/.test(document.querySelector('.n4fl-status')?.textContent ?? ''), null, { timeout: 300000 })
+  await page.waitForFunction(expected => new RegExp(`${expected} runs? added to the comparison`).test(document.querySelector('.n4fl-status')?.textContent ?? ''),
+    count, { timeout: 300000 })
   const after = await results()
-  assert.equal(after.runs.length, before.runs.length + 1)
-  return after.runs.at(-1)
+  assert.equal(after.runs.length, before.runs.length + count)
+  return count === 1 ? after.runs.at(-1) : after.runs.slice(-count)
 }
 async function results() {
   const [download] = await Promise.all([page.waitForEvent('download'),
@@ -47,17 +48,24 @@ async function setParam(cell, label, value) {
 try {
   await page.goto(new URL('nirs4all_multimodale/?case=spectroscopy&preset=early', root).href, { waitUntil: 'load' })
   await lab.waitFor({ timeout: 60000 })
+  // The early preset sweeps the PLS components: one complete run per value, same folds.
   await preset('Early · concatenate')
-  const early = await run()
-  assert.equal(early.name, 'Early · concatenate')
-  assert.deepEqual(early.document.branches[0].sourceIds, ['raman', 'nirs', 'mir'])
-  assert.equal(early.document.branches[0].head.params.n_components, 3)
+  const sweep = await run(3)
+  assert.deepEqual(sweep.map(item => item.document.branches[0].head.params.n_components), [5, 10, 15])
+  assert.deepEqual(sweep.map(item => item.name), [5, 10, 15].map(value => `Early · concatenate · PLS regression · n_components = ${value}`))
+  assert.deepEqual(sweep[1].choices, { 'PLS regression · n_components': 10 })
+  assert.equal(new Set(sweep.map(item => item.candidate.foldsFingerprint)).size, 1)
+  assert.deepEqual(sweep[0].document.branches[0].sourceIds, ['raman', 'nirs', 'mir'])
 
-  // Edit the model capacity on the canvas.
+  // Edit a fixed model capacity on the canvas.
+  await preset('Mid · PCA scores')
+  const early = await run()
+  assert.equal(early.name, 'Mid · PCA scores')
+  assert.equal(early.document.branches[0].head.params.n_components, 3)
   await setParam(/^Model: PLS\./, 'Components', 6)
   await page.waitForFunction(() => document.querySelector('.n4fl-chip[aria-pressed="true"]') === null)
   const six = await run()
-  assert.equal(six.name, 'Edited Early · concatenate')
+  assert.equal(six.name, 'Edited Mid · PCA scores')
   assert.equal(six.document.branches[0].head.params.n_components, 6)
   assert.equal(six.candidate.foldsFingerprint, early.candidate.foldsFingerprint)
   assert.notEqual(six.candidate.oof.rmse, early.candidate.oof.rmse)
@@ -99,11 +107,11 @@ try {
 
   // Inspector compares every completed run of the case.
   await page.locator('input[name="n4mm-case"][value="spectroscopy"]').check()
-  await page.locator('[data-fusion-results]').getByText('4 completed runs', { exact: false }).waitFor()
+  await page.locator('[data-fusion-results]').getByText('7 completed runs', { exact: false }).waitFor()
   await page.locator('#n4mm-results').screenshot({ path: join(output, 'inspector.png') })
   assert.deepEqual(errors, [])
   assert.deepEqual(mutations, [])
-  console.log(JSON.stringify({ early: early.candidate.oof.rmse, pls6: six.candidate.oof.rmse, ramanNirs: two.candidate.oof.rmse,
+  console.log(JSON.stringify({ sweep: sweep.map(item => item.candidate.oof.rmse), pca: early.candidate.oof.rmse, pls6: six.candidate.oof.rmse, ramanNirs: two.candidate.oof.rmse,
     stacking: stacking.candidate.oof.rmse }))
   console.log('MULTIMODAL EDITOR SMOKE PASSED: canvas edits, lane removal, late stacking, refusals and Inspector history')
 } finally {

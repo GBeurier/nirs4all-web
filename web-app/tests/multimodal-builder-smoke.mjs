@@ -177,13 +177,13 @@ try {
 
   // The imported declaration really trains, and a refused replacement preserves that valid run.
   await page.getByRole('button', { name: /^Run all \d+ presets/ }).click()
-  await page.waitForFunction(() => /11 runs added to the comparison/.test(document.querySelector('.n4fl-status')?.textContent ?? ''), null, { timeout: 900000 })
+  await page.waitForFunction(() => /21 runs added to the comparison/.test(document.querySelector('.n4fl-status')?.textContent ?? ''), null, { timeout: 900000 })
   const [nativeDownload] = await Promise.all([page.waitForEvent('download'),
     page.getByRole('button', { name: 'Download results (JSON)', exact: true }).click()])
   const nativePath = join(output, 'imported-native-results.json')
   await nativeDownload.saveAs(nativePath)
   const nativeRuns = JSON.parse(await readFile(nativePath, 'utf8')).runs
-  assert.equal(nativeRuns.length, 11)
+  assert.equal(nativeRuns.length, 21)
   for (const { protocol } of nativeRuns) {
     assert.equal(protocol.calibrationIds.length, 96)
     assert.equal(protocol.holdoutIds.length, 24)

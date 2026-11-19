@@ -180,12 +180,20 @@ const lanes = (sources: readonly LabSource[], chain: (source: LabSource) => Json
 export function fusionPresets(dataset: LabDataset): FusionPreset[] {
   const sources = dataset.sources
   const pls = model(PLS, defaults(PLS), 'PLS')
+  const width = (source: LabSource) => source.shape.reduce((n, size) => n * size, 1)
+  // Single-head PLS presets sweep the number of components (5, 10, 15, bounded by the
+  // variables): every value is a full cross-validated run, compared in the Inspector.
+  const components = (variables: number) => variables >= 10 ? { _range_: [5, Math.min(15, variables), 5] } : defaults(PLS).n_components
+  const plsSweep = (variables: number) => model(PLS, { ...defaults(PLS), n_components: components(variables) }, 'PLS')
+  // Late presets keep one fixed PLS per source (a sweep per branch would multiply the variants):
+  // 10 components, the middle of the single-source sweep, so the sources alone compare like with like.
+  const plsLate = (source: LabSource) => model(PLS, { ...defaults(PLS), ...(width(source) >= 10 ? { n_components: 10 } : {}) }, 'PLS')
   const presets: FusionPreset[] = sources.map(source => ({
     id: `single:${source.id}`,
     label: `${source.label} alone`,
     level: 'single',
-    summary: `Baseline: ${source.label} only, standard scaling and PLS. Every fusion must beat the best single source.`,
-    document: { name: `${source.label} alone · PLS`, pipeline: [{ source_branch: lanes([source], sourceChain) }, pls] },
+    summary: `Baseline: ${source.label} only, standard scaling and PLS (number of components swept). Every fusion must beat the best single source.`,
+    document: { name: `${source.label} alone · PLS`, pipeline: [{ source_branch: lanes([source], sourceChain) }, plsSweep(width(source))] },
   }))
   // Ordered marker tables: a compact 1-D CNN (Burn, WebAssembly) on the markers alone.
   for (const source of sources.filter(item => item.modality === 'genetics')) presets.push({
@@ -198,8 +206,8 @@ export function fusionPresets(dataset: LabDataset): FusionPreset[] {
   presets.push(
     {
       id: 'early', label: 'Early · concatenate', level: 'early',
-      summary: 'Each source is scaled, the variables are placed side by side in one matrix and a single PLS model learns from it.',
-      document: { name: `Early fusion · ${all} → PLS`, pipeline: [{ source_branch: lanes(sources, sourceChain) }, { merge_sources: 'concat' }, pls] },
+      summary: 'Each source is scaled, the variables are placed side by side in one matrix and a single PLS model learns from it (number of components swept).',
+      document: { name: `Early fusion · ${all} → PLS`, pipeline: [{ source_branch: lanes(sources, sourceChain) }, { merge_sources: 'concat' }, plsSweep(sources.reduce((n, source) => n + width(source), 0))] },
     },
     {
       id: 'mid-pca', label: 'Mid · PCA scores', level: 'mid',
@@ -212,7 +220,7 @@ export function fusionPresets(dataset: LabDataset): FusionPreset[] {
     {
       id: 'mbpls', label: 'Early · MB-PLS', level: 'early',
       summary: 'Low-level fusion with block structure: centred blocks, one score per block, a shared super-score. Close to PLS on the block-weighted concatenation.',
-      document: { name: `Early fusion · MB-PLS on ${all}`, pipeline: [{ source_branch: lanes(sources, sourceChain) }, model(MBPLS, defaults(MBPLS), 'MB-PLS')] },
+      document: { name: `Early fusion · MB-PLS on ${all}`, pipeline: [{ source_branch: lanes(sources, sourceChain) }, model(MBPLS, { ...defaults(MBPLS), n_components: components(Math.min(...sources.map(width))) }, 'MB-PLS')] },
     },
     {
       id: 'cnn', label: 'Mid · CNN', level: 'mid',
@@ -249,7 +257,7 @@ export function fusionPresets(dataset: LabDataset): FusionPreset[] {
         name: `Late fusion · AOM-PLS per spectrum (${all}) → Ridge`,
         pipeline: [{ branch: { by_source: true, steps: lanes(sources, source => source.modality === 'spectroscopy'
           ? [...(source.shape[0] > AOM_POINTS ? [step(RESAMPLE, { num_samples: AOM_POINTS })] : []), model(AOM, defaults(AOM), 'AOM-PLS')]
-          : [...sourceChain(), pls]) } },
+          : [...sourceChain(), plsLate(source)]) } },
         { merge: 'predictions' }, model(RIDGE, defaults(RIDGE), 'Meta-model (Ridge)')],
       },
     }] : []),
@@ -258,7 +266,7 @@ export function fusionPresets(dataset: LabDataset): FusionPreset[] {
       summary: 'One PLS model per source; their predictions are averaged with equal weights. Nothing is learned after the source models.',
       document: {
         name: `Late fusion · mean of per-source PLS (${all})`,
-        pipeline: [{ branch: { by_source: true, steps: lanes(sources, () => [...sourceChain(), pls]) } }, { merge: { predictions: 'all', aggregate: 'mean' } }],
+        pipeline: [{ branch: { by_source: true, steps: lanes(sources, source => [...sourceChain(), plsLate(source)]) } }, { merge: { predictions: 'all', aggregate: 'mean' } }],
       },
     },
     {
@@ -266,7 +274,7 @@ export function fusionPresets(dataset: LabDataset): FusionPreset[] {
       summary: 'One PLS model per source; their out-of-fold predictions become the inputs of a Ridge meta-model that learns how much to trust each source.',
       document: {
         name: `Late fusion · stacking of per-source PLS (${all}) → Ridge`,
-        pipeline: [{ branch: { by_source: true, steps: lanes(sources, () => [...sourceChain(), pls]) } }, { merge: 'predictions' },
+        pipeline: [{ branch: { by_source: true, steps: lanes(sources, source => [...sourceChain(), plsLate(source)]) } }, { merge: 'predictions' },
           model(RIDGE, defaults(RIDGE), 'Meta-model (Ridge)')],
       },
     },

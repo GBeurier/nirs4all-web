@@ -1,7 +1,7 @@
 import type { LabCandidateResult, LabConfig, LabDataset, LabMetricScope, LabProgress, LabRunResult, LabSource } from './types'
 import { describeRecipe, pipelineSourceIds, pipelineStrategy, validatePipelineDocument } from './recipes'
 import { loadLabRuntime, nativeJson, N4mWasmSourceController, SEED_TOKEN, stableJson } from './runtime'
-import { loadHostModels, withHostModels } from './hostModels'
+import { loadHostModels, takeModelSelections, withHostModels } from './hostModels'
 
 type Json = Record<string, any>
 interface FoldSet {
@@ -172,6 +172,7 @@ export async function executeLab(dataset: LabDataset, configs: LabConfig[], onPr
       onProgress?.({ candidateIndex, candidateCount: configs.length, strategy, phase, message, nodeId, foldId })
     reportProgress('COMPILE', 'Compiling the current native pipeline')
     const begun = performance.now()
+    takeModelSelections()
     let controller: N4mWasmSourceController | undefined
     try {
       const description = describeRecipe(dataset, config)
@@ -257,7 +258,7 @@ export async function executeLab(dataset: LabDataset, configs: LabConfig[], onPr
       candidates.push({ id: candidateId, strategy, label: description.label, dataFingerprint: dataset.fingerprint,
         recipe: { config, dsl }, recipeFingerprint: fingerprint({ config, operators: description.operators }), foldsFingerprint: protocol.foldsFingerprint,
         hyperparameters: 'fixed', ownerVersions: runtime.ownerVersions, elapsedMs: performance.now() - begun, oof, holdout,
-        diagnostics: controller.audit, warnings: outcome.warnings ?? [], portablePackageJson: capture.portable_predictor_package_json })
+        diagnostics: controller.audit, modelSelections: takeModelSelections(), warnings: outcome.warnings ?? [], portablePackageJson: capture.portable_predictor_package_json })
       reportProgress('COMPLETE', 'Candidate completed with native OOF and refit provenance')
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : String(reason)

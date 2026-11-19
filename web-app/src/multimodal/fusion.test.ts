@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { defaultLabConfig, describeRecipe } from './recipes'
 import { fusionLevel, fusionPresets, toLabDocument } from './fusion'
 import type { LabCase, LabDataset, LabSource } from './types'
+import { sweepPlan } from './sweeps'
 
 function dataset(caseId: LabCase): LabDataset {
   const sampleIds = ['a', 'b', 'c', 'd', 'e', 'f']
@@ -26,9 +27,22 @@ for (const caseId of ['spectroscopy', 'genetics', 'images'] as const) {
   describe(`${caseId} canonical fusion presets`, () => {
     for (const preset of fusionPresets(data)) {
       it(`${preset.id} compiles to the qualified native recipe`, () => {
-        const document = toLabDocument(data, preset.document)
+        // Swept presets (PLS components) compile variant by variant; the structure is the qualified one.
+        const plan = sweepPlan(preset.document)
+        const variants = Array.from({ length: plan.count }, (_, index) => toLabDocument(data, plan.variant([index]).chain))
+        const sweepable = preset.id.startsWith('single:') || preset.id === 'early' || preset.id === 'mbpls'
+        const swept = plan.count > 1
+        if (!sweepable) expect(plan.count).toBe(1)
+        if (sweepable && preset.id === 'early') expect(swept).toBe(true)
+        if (swept) {
+          const values = variants.map(item => (item.merge.kind === 'none' ? item.branches[0].head : item.merge.head).params.n_components)
+          expect(values).toEqual(values.map((_, index) => 5 + 5 * index))
+          expect(Math.max(...(values as number[]))).toBeLessThanOrEqual(15)
+        }
+        const document = variants[0]
         expect(fusionLevel(document)).toBe(preset.level)
-        const actual = describeRecipe(data, { ...config, pipeline: document })
+        const strip = (value: unknown): unknown => JSON.parse(JSON.stringify(value, (key, item) => (swept || preset.level === 'late') && key === 'n_components' ? undefined : item))
+        const actual = strip(describeRecipe(data, { ...config, pipeline: document })) as ReturnType<typeof describeRecipe>
         if (preset.id === 'early-rf' || preset.id.startsWith('cnn-burn')) {
           // Host models: the head carries the task seed (and the CNN its branch geometry); sources stay native.
           const operator = Object.values(actual.operators)[0]
@@ -57,8 +71,8 @@ for (const caseId of ['spectroscopy', 'genetics', 'images'] as const) {
         const single = preset.id.startsWith('single:') ? preset.id.slice('single:'.length) : null
         // The CNN preset is the qualified multibranch recipe with the lab's CNN settings.
         const cnn = { filters: 8, kernel_size: 3, embedding_dim: 16, head_hidden: 16, epochs: 150, batch_size: 16, learning_rate: 0.01, weight_decay: 0.0001 }
-        const expected = describeRecipe(data, { ...config, strategy: single ? 'single' : preset.id === 'cnn' ? 'mid' : LEGACY[preset.id], baseModels: ['pls'],
-          ...(single ? { singleSourceId: single } : {}), ...(preset.id === 'cnn' ? { cnn } : {}) })
+        const expected = strip(describeRecipe(data, { ...config, strategy: single ? 'single' : preset.id === 'cnn' ? 'mid' : LEGACY[preset.id], baseModels: ['pls'],
+          ...(single ? { singleSourceId: single } : {}), ...(preset.id === 'cnn' ? { cnn } : {}) })) as ReturnType<typeof describeRecipe>
         if (preset.level === 'late') {
           // Per-source node IDs follow the source names; the operators and merge are the qualified ones.
           const operators = (recipe: typeof actual) => Object.values(recipe.operators).map(operator => JSON.stringify(operator)).sort()

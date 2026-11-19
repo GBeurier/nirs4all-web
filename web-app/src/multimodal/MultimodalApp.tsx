@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  MultimodalWorkbench,
+  AlignmentTable,
+  CaseSelector,
+  ExportPanel,
+  InstructorGuide,
+  MULTIMODAL_CASES,
+  SampleNavigator,
+  Section,
+  SourceViews,
+  ValidationPanel,
   defaultCandidates,
   type MultimodalCandidate,
   type MultimodalCaseId,
@@ -8,7 +16,6 @@ import {
   type MultimodalDataOrigin,
   type MultimodalDataPreset,
   type MultimodalDataStatus,
-  type MultimodalImportProfile,
   type MultimodalParamValue,
   type MultimodalRunResult,
   type MultimodalRunState,
@@ -18,7 +25,7 @@ import type { PipelineChainDocument } from 'nirs4all-ui/pipelineEditor'
 import { fromCanonicalPipeline, toCanonicalPipeline } from 'nirs4all-ui/pipelineEditor'
 import { downloadJson } from '@/lib/download'
 import { createLabClient, defaultLabConfig, type LabClient } from './client'
-import { IMPORT_PROFILES, TEACHING_PRESETS, importLabFiles, loadTeachingDataset } from './data'
+import { TEACHING_PRESETS, loadTeachingDataset } from './data'
 import { toExecutionConfig, toWorkbenchProgress, toWorkbenchResult } from './presentation'
 import type { LabCase, LabConfig, LabDataset, LabRunResult } from './types'
 import { DatasetBuilderHost } from './DatasetBuilderHost'
@@ -27,6 +34,8 @@ import { fusionPresets, toLabDocument, type FusionPreset } from './fusion'
 import type { LabRunRecord } from './inspector'
 import { FusionEditor, FusionResults } from './FusionLab'
 import { LabShell } from './LabShell'
+import { DatasetStep } from './DatasetStep'
+import { MAX_VARIANTS, expandSweeps, sweepPlan } from './sweeps'
 
 const DEFAULT_PRESET = 'early'
 const HISTORY_LIMIT = 50
@@ -51,20 +60,14 @@ const LINK = linkTarget()
 /** Type-only seam for the data lane (DATA_CONTRACT.md); a mismatch fails here, precisely. */
 interface LabDataHost {
   presets: readonly MultimodalDataPreset[]
-  importProfiles: readonly MultimodalImportProfile[]
   loadTeachingDataset(caseId: LabCase, presetId?: string): Promise<LabDataset>
-  importLabFiles(files: File[], caseId: LabCase): Promise<LabDataset>
 }
 
 const dataHost: LabDataHost = {
   presets: TEACHING_PRESETS,
-  importProfiles: IMPORT_PROFILES,
   loadTeachingDataset,
-  importLabFiles,
 }
 
-const BACK_HREF = '../'
-const BRAND_SRC = '../brand/icon.svg'
 
 interface CaseWorkspace {
   dataset: LabDataset | null
@@ -175,11 +178,19 @@ export default function MultimodalApp() {
   const runToken = useRef(0)
   const linkPreset = useRef<string | null>(LINK.presetId)
   const workspace = workspaces[caseId]
-  const pipelineProblem = useMemo(() => {
-    if (!workspace.dataset || !workspace.chain) return 'Load data and a pipeline preset first.'
-    try { toLabDocument(workspace.dataset, workspace.chain); return null }
-    catch (reason) { return errorStatus(reason).message }
-  }, [workspace.dataset, workspace.chain])
+  const laneLabel = useCallback((id: string) => workspace.dataset?.sources.find(source => source.id === id)?.label ?? id, [workspace.dataset])
+  // Sweeps run as variants: the first variant validates the structure, the count bounds the run.
+  const pipelineCheck = useMemo((): { problem: string | null; variants: number } => {
+    if (!workspace.dataset || !workspace.chain) return { problem: 'Load data and a pipeline preset first.', variants: 1 }
+    try {
+      const plan = sweepPlan(workspace.chain, laneLabel)
+      toLabDocument(workspace.dataset, plan.variant(plan.sizes.map(() => 0)).chain)
+      return { problem: plan.count > MAX_VARIANTS
+        ? `These sweeps make ${plan.count} variants; the laboratory runs at most ${MAX_VARIANTS} per click. Narrow a range or remove a sweep.` : null,
+      variants: plan.count }
+    } catch (reason) { return { problem: errorStatus(reason).message, variants: 1 } }
+  }, [workspace.dataset, workspace.chain, laneLabel])
+  const pipelineProblem = pipelineCheck.problem
 
   const patch = useCallback((id: MultimodalCaseId, update: (current: CaseWorkspace) => CaseWorkspace) => {
     setWorkspaces(previous => ({ ...previous, [id]: update(previous[id]) }))
@@ -218,13 +229,6 @@ export default function MultimodalApp() {
       .catch(reason => failLoad(id, token, reason))
   }, [acceptDataset, failLoad, patch])
 
-  const importFiles = useCallback((id: MultimodalCaseId, profileId: string, files: readonly File[]) => {
-    const token = ++loadToken.current[id]
-    patch(id, current => ({ ...current, status: { kind: 'loading', label: `Importing ${files.length} file${files.length === 1 ? '' : 's'} with the IO owner…` } }))
-    dataHost.importLabFiles([...files], id)
-      .then(dataset => acceptDataset(id, token, dataset, { kind: 'import', profileId, fileNames: files.map(file => file.name) }))
-      .catch(reason => failLoad(id, token, reason))
-  }, [acceptDataset, failLoad, patch])
 
   // Open each case once with its first bundled preset; never replaces loaded or imported data.
   useEffect(() => {
@@ -239,13 +243,7 @@ export default function MultimodalApp() {
     patch(caseId, current => ({ ...invalidate(current), config: next }))
   }, [caseId, patch])
 
-  const onCandidatesChange = useCallback((next: readonly MultimodalCandidate[]) => {
-    patch(caseId, current => ({ ...invalidate(current), candidates: next }))
-  }, [caseId, patch])
 
-  const onRestoreTeachingConfig = useCallback(() => {
-    patch(caseId, current => current.dataset ? { ...invalidate(current), ...teachingSetup(current.dataset) } : current)
-  }, [caseId, patch])
 
   const changePipeline = useCallback((chain: PipelineChainDocument, presetId: string | null = null) => {
     patch(caseId, current => ({ ...invalidate(current), chain, presetId, basePresetId: presetId ?? current.basePresetId,
@@ -267,7 +265,7 @@ export default function MultimodalApp() {
 
   // ---- execution ----------------------------------------------------------
 
-  const execute = useCallback((jobs: Array<{ chain: PipelineChainDocument; name: string }>, batch: boolean) => {
+  const execute = useCallback((jobs: Array<{ chain: PipelineChainDocument; name: string; choices?: Record<string, number | string | boolean> }>, batch: boolean) => {
     const id = caseId
     const { dataset, config } = workspaces[id]
     if (!dataset || !config || jobs.length === 0) return
@@ -276,7 +274,7 @@ export default function MultimodalApp() {
     try {
       documents = jobs.map((job, index) => {
         const lab = toLabDocument(dataset, job.chain)
-        return { chain: job.chain, name: job.name, document: lab, lab: jobs.length > 1 ? { ...lab, label: `${lab.label} [${index + 1}]` } : lab }
+        return { chain: job.chain, name: job.name, choices: job.choices ?? {}, document: lab, lab: jobs.length > 1 ? { ...lab, label: `${lab.label} [${index + 1}]` } : lab }
       })
     }
     catch (reason) { patch(id, current => ({ ...current, pipelineError: errorStatus(reason).message })); return }
@@ -302,7 +300,7 @@ export default function MultimodalApp() {
         // The native label is the document label; presets have distinct labels.
         const records: LabRunRecord[] = result.candidates.flatMap(candidate => {
           const match = documents.find(item => item.lab.label === candidate.label)
-          return match ? [{ id: `run-${++runCounter}`, index: runCounter, name: match.name, document: match.document, canonical: toCanonicalPipeline(match.chain),
+          return match ? [{ id: `run-${++runCounter}`, index: runCounter, name: match.name, choices: match.choices, document: match.document, canonical: toCanonicalPipeline(match.chain),
             candidate, datasetFingerprint: dataset.fingerprint, finishedAt, protocol: { calibrationIds: result.calibrationIds,
             holdoutIds: result.holdoutIds, folds: result.folds, foldsFingerprint: result.foldsFingerprint, validation: result.validation,
             ownerVersions: result.ownerVersions } }] : []
@@ -326,15 +324,27 @@ export default function MultimodalApp() {
       .finally(() => { if (abortRef.current === controller) abortRef.current = null })
   }, [caseId, patch, workspaces])
 
+  // Each sweep variant is one full run, named after its swept values.
+  const variantJobs = useCallback(async (chain: PipelineChainDocument, name: string) =>
+    (await expandSweeps(chain, laneLabel)).map(variant => ({ chain: variant.chain, choices: variant.choices,
+      name: variant.label ? `${name} · ${variant.label}` : name })), [laneLabel])
+
   const onRunEdited = useCallback(() => {
-    const { chain, presetId, basePresetId, presets } = workspaces[caseId]
+    const id = caseId
+    const { chain, presetId, basePresetId, presets } = workspaces[id]
     const base = presets.find(preset => preset.id === (presetId ?? basePresetId))?.label
-    if (chain) execute([{ chain, name: presetId && base ? base : base ? `Edited ${base}` : 'Edited pipeline' }], false)
-  }, [caseId, execute, workspaces])
+    if (!chain) return
+    variantJobs(chain, presetId && base ? base : base ? `Edited ${base}` : 'Edited pipeline')
+      .then(jobs => execute(jobs, false))
+      .catch(reason => patch(id, current => ({ ...current, pipelineError: errorStatus(reason).message })))
+  }, [caseId, execute, patch, variantJobs, workspaces])
 
   const onRunPresets = useCallback(() => {
-    execute(workspaces[caseId].presets.map(preset => ({ chain: preset.document, name: preset.label })), true)
-  }, [caseId, execute, workspaces])
+    const id = caseId
+    Promise.all(workspaces[id].presets.map(preset => variantJobs(preset.document, preset.label)))
+      .then(jobs => execute(jobs.flat(), true))
+      .catch(reason => patch(id, current => ({ ...current, pipelineError: errorStatus(reason).message })))
+  }, [caseId, execute, patch, variantJobs, workspaces])
 
   const onCancel = useCallback(() => { abortRef.current?.abort() }, [])
 
@@ -387,37 +397,64 @@ export default function MultimodalApp() {
 
   // ---- render -------------------------------------------------------------
 
-  const brand = useMemo(() => <img src={BRAND_SRC} alt="nirs4all" width={40} height={40} draggable={false} />, [])
   const running = workspace.run.kind === 'running'
   const progress = workspace.run.kind === 'running' && workspace.run.progress
     ? `${(workspace.run.progress.total ?? 1) > 1 ? `Pipeline ${(workspace.run.progress.completed ?? 0) + 1} of ${workspace.run.progress.total} · ` : ''}${workspace.run.progress.phase} · ${workspace.run.progress.message}`
     : null
 
+  const selectSample = (sampleId: string | null) => patch(caseId, current => ({ ...current, selectedSampleId: sampleId }))
+  const dataset = workspace.dataset
+  const ready = Boolean(dataset && workspace.config && dataset.caseId === caseId)
+  const caseInfo = MULTIMODAL_CASES.find(info => info.id === caseId)
+  const createFromBuilder = (created: LabDataset, fileNames: string[]) => {
+    const id = created.caseId
+    setCaseId(id)
+    acceptDataset(id, ++loadToken.current[id], created, { kind: 'import', profileId: `manifest-${id}`, fileNames })
+  }
+
   return (
-    <LabShell runtime={runtime} running={running} revision={`${caseId}:${workspace.dataset?.fingerprint ?? workspace.dataset?.name ?? ''}:${Boolean(workspace.dataset && workspace.config)}:${workspace.runs.length}`}>
-    <MultimodalWorkbench
-      className="n4mm-embedded"
-      brand={brand}
-      backHref={BACK_HREF}
-      backLabel="nirs4all Web workbench"
-      runtime={runtime}
-      caseId={caseId}
-      onCaseChange={setCaseId}
-      presets={dataHost.presets}
-      importProfiles={dataHost.importProfiles}
-      dataOrigin={workspace.origin}
-      dataStatus={workspace.status}
-      dataset={workspace.dataset}
-      onLoadPreset={presetId => loadPreset(caseId, presetId)}
-      onImportFiles={(profileId, files) => importFiles(caseId, profileId, files)}
-      datasetBuilder={<DatasetBuilderHost key={caseId} caseId={caseId} disabled={running}
-        onCreate={(dataset, fileNames) => acceptDataset(caseId, ++loadToken.current[caseId], dataset,
-          { kind: 'import', profileId: `manifest-${caseId}`, fileNames })} />}
-      pipelineLead="Pick a fusion preset, then edit it: each source has its own lane; the step after the lanes decides where the sources are fused. Runs accumulate in the comparison below."
-      presetComparison={false}
-      pipelineEditor={workspace.dataset && workspace.chain ? <>
+    <LabShell runtime={runtime} running={running} revision={`${caseId}:${dataset?.fingerprint ?? ''}:${ready}:${workspace.runs.length}`}>
+      <div className="n4mm n4-app n4mm-embedded">
+        <main className="n4mm-main">
+          <Section id="n4mm-data" step={1} title="Dataset"
+            lead="Build the dataset from your files, or load an example. Every source is matched by sample identifier before anything is learned.">
+            <DatasetStep
+              builder={<DatasetBuilderHost key={caseId} disabled={running} onCreate={createFromBuilder} />}
+              examples={dataHost.presets}
+              origin={workspace.origin}
+              status={workspace.status}
+              disabled={running}
+              onLoadExample={preset => { setCaseId(preset.caseId); loadPreset(preset.caseId, preset.id) }}
+            />
+            {ready && dataset ? <AlignmentTable dataset={dataset} /> : null}
+          </Section>
+          {ready && dataset ? (
+            <Section id="n4mm-explore" step={2} title="Explore each source"
+              lead="Each source keeps its own axis, unit and representation. Select one sample to follow it everywhere.">
+              <SampleNavigator dataset={dataset} selectedSampleId={workspace.selectedSampleId} onSelectSample={selectSample} />
+              <SourceViews dataset={dataset} selectedSampleId={workspace.selectedSampleId} onSelectSample={selectSample} />
+            </Section>
+          ) : null}
+          <Section id="n4mm-case" step={ready ? 3 : 2} title="Analysis"
+            lead="The kind of analysis sets the fusion pipelines offered below. Importing files selects the matching kind; each kind keeps its own dataset.">
+            <CaseSelector caseId={caseId} onCaseChange={setCaseId} disabled={running} />
+            <p className="n4mm-note" role="status">
+              {dataset && dataset.caseId === caseId
+                ? <>Dataset of this analysis: <strong>{dataset.name}</strong> ({workspace.origin?.kind === 'import' ? 'your files' : 'example'}, {dataset.sampleIds.length} samples, target {dataset.target.name}).</>
+                : `No ${caseInfo?.title.toLowerCase() ?? ''} dataset yet: its example dataset is being loaded.`}
+            </p>
+          </Section>
+          {ready && dataset && workspace.config ? (
+            <>
+              <Section id="n4mm-protocol" step={4} title="Validation protocol"
+                lead="One protocol for every run: the same held-out samples, the same outer folds and the same inner folds.">
+                <ValidationPanel dataset={dataset} config={workspace.config} onConfigChange={onConfigChange} disabled={running} />
+              </Section>
+              <Section id="n4mm-pipeline" step={5} title="Build and run the pipeline"
+                lead="Pick a fusion preset, then edit it: each source has its own lane; the step after the lanes decides where the sources are fused. Runs accumulate in the comparison below.">
+                {workspace.chain ? <>
         <FusionEditor
-          dataset={workspace.dataset}
+          dataset={dataset}
           presets={workspace.presets}
           presetId={workspace.presetId}
           document={workspace.chain}
@@ -431,6 +468,7 @@ export default function MultimodalApp() {
           canUndo={workspace.past.length > 0}
           canRedo={workspace.future.length > 0}
           problem={pipelineProblem}
+          variants={pipelineCheck.variants}
           running={running}
           progress={progress}
           error={workspace.pipelineError ?? (workspace.run.kind === 'error' ? workspace.run.message : null)}
@@ -446,24 +484,24 @@ export default function MultimodalApp() {
           <a href="../multimodal-training/slides/">Open the training slides</a>
           <a href="../multimodal-training/nirs4all_multimodal_slides.pdf" download>Download the slides (PDF)</a>
         </nav>
-      </> : undefined}
-      resultsView={workspace.dataset ? <FusionResults dataset={workspace.dataset} runs={workspace.runs} disabled={running}
+                </> : null}
+              </Section>
+              <Section id="n4mm-results" step={6} title="Compare results">
+                <FusionResults dataset={dataset} runs={workspace.runs} disabled={running}
         onClear={() => patch(caseId, current => ({ ...current, runs: [], results: null, rawResult: null }))}
-        onRestore={run => changePipeline(fromCanonicalPipeline(run.canonical))} /> : undefined}
-      selectedSampleId={workspace.selectedSampleId}
-      onSelectSample={sampleId => patch(caseId, current => ({ ...current, selectedSampleId: sampleId }))}
-      config={workspace.config}
-      onConfigChange={onConfigChange}
-      onRestoreTeachingConfig={onRestoreTeachingConfig}
-      candidates={workspace.candidates}
-      onCandidatesChange={onCandidatesChange}
-      run={workspace.run}
-      onRun={onRunPresets}
-      onCancel={onCancel}
-      results={workspace.results}
-      onExportConfig={onExportConfig}
-      onExportResults={onExportResults}
-    />
+        onRestore={run => changePipeline(fromCanonicalPipeline(run.canonical))} />
+                <ExportPanel hasConfig hasResults={workspace.runs.length > 0} onExportConfig={onExportConfig} onExportResults={onExportResults} />
+              </Section>
+            </>
+          ) : null}
+          <Section id="n4mm-guide" step={ready ? 7 : 3} title="Instructor guide">
+            <InstructorGuide caseId={caseId} />
+          </Section>
+        </main>
+        <footer className="n4mm-footer">
+          <p>Computation runs locally in a background worker with the nirs4all WebAssembly owners (IO, Methods, DAG-ML). This page displays their outputs; it does not compute scores itself.</p>
+        </footer>
+      </div>
     </LabShell>
   )
 }

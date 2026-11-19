@@ -15,6 +15,8 @@ export interface LabRunRecord {
   index: number
   /** Short recipe name (the preset label, or "Edited pipeline"). */
   name: string
+  /** Swept parameter values of this variant (empty without sweeps). */
+  choices?: Record<string, number | string | boolean>
   document: LabPipelineDocument
   /** Canonical pipeline as edited (bypass wrappers removed). */
   canonical: unknown
@@ -80,6 +82,27 @@ function modelLabel(document: LabPipelineDocument): string {
   return operatorName(document.branches[0].head.methodId)
 }
 
+const AOM_BRANCH = ['raw', 'SNV', 'MSC']
+
+/**
+ * What the refit model selected internally (AOM: preprocessing branch, chain and
+ * components or ridge alpha), from the Methods fit result of the last fit per source.
+ */
+function selectedParams(dataset: LabDataset, run: LabRunRecord): Record<string, string | number> {
+  const last = new Map<string, NonNullable<LabRunRecord['candidate']['modelSelections']>[number]>()
+  for (const selection of run.candidate.modelSelections ?? []) last.set(selection.sourceIds.join('+'), selection)
+  const params: Record<string, string | number> = {}
+  for (const [key, selection] of last) {
+    const where = `${key.split('+').map(id => sourceLabel(dataset, id)).join(' + ')} · AOM`
+    const { selected_branch: branch, selected_chain_index: chain, selected_n_components: components, selected_alpha: alpha } = selection.values
+    if (branch !== undefined) params[`${where} branch`] = AOM_BRANCH[branch] ?? `branch ${branch}`
+    if (chain !== undefined) params[`${where} chain`] = `#${chain + 1}`
+    if (components !== undefined) params[`${where} n_components`] = components
+    if (alpha !== undefined) params[`${where} alpha`] = Number(alpha.toPrecision(4))
+  }
+  return params
+}
+
 const finite = (value: number | null | undefined): number | null => typeof value === 'number' && Number.isFinite(value) ? value : null
 
 export function inspectorChains(dataset: LabDataset, runs: readonly LabRunRecord[]): InspectorChain[] {
@@ -101,7 +124,7 @@ export function inspectorChains(dataset: LabDataset, runs: readonly LabRunRecord
       model: run.name,
       modelFamily: FUSION_LEVEL_LABEL[level],
       steps: chainSteps(dataset, document),
-      params: Object.fromEntries(Object.entries(params).filter(([key]) => !['branch_kinds', 'branch_shapes', 'seed'].includes(key))),
+      params: { ...Object.fromEntries(Object.entries(params).filter(([key]) => !['branch_kinds', 'branch_shapes', 'seed'].includes(key))), ...run.choices, ...selectedParams(dataset, run) },
       scores: {
         oof_rmse: finite(candidate.oof.rmse), oof_r2: finite(candidate.oof.r2), oof_mae: finite(candidate.oof.mae),
         test_rmse: finite(candidate.holdout?.rmse), test_r2: finite(candidate.holdout?.r2),

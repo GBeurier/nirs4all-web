@@ -284,6 +284,51 @@ class HostPipeline {
 
 const isHost = (steps: Step[]) => steps.some(step => HOST_MODELS.has(step.methodId))
 
+/** Internal selection a native head reports after a fit (Methods `fitResult`), in fit order. */
+export interface ModelSelection { methodId: string; sourceIds: string[]; values: Record<string, number> }
+let selections: ModelSelection[] = []
+/** Selections recorded since the last call (the last one per source is the refit's). */
+export function takeModelSelections(): ModelSelection[] { const taken = selections; selections = []; return taken }
+const SELECTING_HEADS = new Set(['aom_pop.calibration'])
+const SELECTION_KEYS = ['selected_branch', 'selected_chain_index', 'selected_n_components', 'selected_alpha']
+
+/**
+ * A native head fitted as the Methods estimator itself so that its fit result
+ * (the preprocessing branch, chain and components AOM selected inside the
+ * training fold) can be shown. Same estimator, parameters and N4ME state as the
+ * native pipeline; replay and held-out prediction use the native pipeline.
+ */
+class SelectingHead {
+  private names: string[] | undefined
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private estimator: any = null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  constructor(private readonly methods: any, private readonly step: Step) {}
+  fit(X: Matrix, y: Matrix | Float64Array, inputs: { featureNames?: string[] } = {}) {
+    this.names = inputs.featureNames ? [...inputs.featureNames] : undefined
+    const Estimator = this.methods.methodClass(this.step.methodId)
+    const estimator = new Estimator(this.step.params)
+    estimator.fit(X, y)
+    this.estimator?.dispose()
+    this.estimator = estimator
+    const result = (estimator.fitResult() ?? {}) as Record<string, unknown>
+    const values = Object.fromEntries(SELECTION_KEYS.filter(key => typeof result[key] === 'number').map(key => [key, result[key] as number]))
+    const sourceIds = [...new Set((this.names ?? []).map(name => /^source:([^/]+)\//.exec(name)?.[1]).filter((id): id is string => Boolean(id)))]
+    selections.push({ methodId: this.step.methodId, sourceIds, values })
+    return this
+  }
+  predict(X: Matrix, featureNames?: string[]) {
+    if (this.names && featureNames && (featureNames.length !== this.names.length || featureNames.some((name, i) => name !== this.names![i]))) {
+      throw new Error('Prediction features differ from the fitted features')
+    }
+    return this.estimator.predict(X)
+  }
+  exportStates() {
+    return [{ methodId: this.step.methodId, n4me: this.estimator.toN4me(), containsTrainingRows: this.estimator.containsTrainingRows() }]
+  }
+  dispose() { this.estimator?.dispose(); this.estimator = null }
+}
+
 /**
  * The Methods facade handed to the native source controller: unchanged for
  * native steps, host pipelines for a host model head.
@@ -298,6 +343,7 @@ export function withHostModels<M extends { manifest(): { methods: any[] }; RoleP
   ]
   const RolePipeline = {
     fromSteps(steps: Step[]) {
+      if (steps.length === 1 && SELECTING_HEADS.has(steps[0].methodId)) return new SelectingHead(methods, steps[0])
       if (!isHost(steps)) return methods.RolePipeline.fromSteps(steps)
       if (steps.length !== 1) throw new Error('A host model must be the only head step')
       return new HostPipeline(steps, build(steps[0]))

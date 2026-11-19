@@ -73,7 +73,25 @@ On the 294-sample cocaine collection (three spectra of 778–3,734 points), runn
 every preset takes about three minutes in a desktop browser; NICON is the longest
 step (about two minutes).
 
-**Run this pipeline** adds one run; **Run all presets** adds every preset of the
+Page order: **Dataset** (the Dataset Builder on your files, or an example dataset)
+→ **Explore** → **Analysis** (spectra, spectra and markers, or spectra and images:
+selected from the imported sources; it sets the fusion presets) → **Validation
+protocol** → **Pipeline** → **Results**. Each analysis keeps its own dataset; an
+analysis without data opens on its example.
+
+**Parameter sweeps.** The editor's sweep control (list, range or log range) turns a
+parameter into variants. Each variant is a complete run with the same folds, OOF
+predictions, refit and held-out replay; combinations are enumerated by Core
+(`generate`, cartesian), at most 30 per click. Single-head PLS presets (single
+sources, early concatenation, MB-PLS) sweep `n_components` over 5, 10 and 15
+(bounded by the number of variables). Late presets keep fixed values: a sweep per
+branch would multiply the variants. In the Inspector each variant shows its swept
+values as hyper-parameters (the Tuning views plot the score against them), and AOM
+heads show what the refit selected inside the training fold (preprocessing branch,
+chain index and components, from the Methods fit result). Ranking variants on OOF
+scores is a selection: read the held-out test score of the chosen variant.
+
+**Run this pipeline** adds one run per variant; **Run all presets** adds every preset of the
 dataset. Every completed run stays in the shared Inspector in section 6 until the
 data change or **Clear runs**; rank on the OOF scores and check that runs share
 the same fold set. Pipelines export and import as canonical JSON.
