@@ -1,20 +1,20 @@
 {
   "schema": "nirs4all-web.public-npm-acquisition.v1",
   "package": "nirs4all",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "source": {
     "repository": "https://github.com/GBeurier/nirs4all-core",
-    "commit": "ef74d999b48e8eb4b8cce46355598673c0fc08b8",
-    "tree": "18112da2c33172eefdf5716b21f551e58b479415",
-    "tag": "v0.6.0"
+    "commit": "d82bea70cbe5d66ac8ff46c5b66cc64c3b90498b",
+    "tree": "46d6e6387c2e9c4ea215bfe4c9abc2aa231b6746",
+    "tag": "v0.6.1"
   },
   "acquisition": {
-    "metadata_url": "https://registry.npmjs.org/nirs4all/0.6.0",
-    "tarball_url": "https://registry.npmjs.org/nirs4all/-/nirs4all-0.6.0.tgz",
-    "size": 4534923,
-    "sha256": "4101c30f8e922f9e476db8cede9602ca45ea371d5165ea0d6c09158b28fd8b15",
-    "sha1": "f872479a931c155e53cd4011008f1e7c5cb44bf5",
-    "integrity": "sha512-d3vMEQ9IHV3pVEzDU4LgZ+ppEF8f9d++ngjU3rnF2VC7cSGg3yIbKhtTttDuQUTp+7cOKK7QxXgD44gHIjg7mQ=="
+    "metadata_url": "https://registry.npmjs.org/nirs4all/0.6.1",
+    "tarball_url": "https://registry.npmjs.org/nirs4all/-/nirs4all-0.6.1.tgz",
+    "size": 4535276,
+    "sha256": "137369ff8792ca5de362dc0d658dd5a1c15d39562f17add27a517827bb0052f3",
+    "sha1": "0c097f4fce8374832aa9da8e95faf4ac18baefed",
+    "integrity": "sha512-y/PeBk0ibClbGZDmlaR4igIXzxP46JdshpuQmkP6WY/lxCAuJBBG6oN5mbZSjPpyIYAOHayQRHitpJ0ubQw/Dw=="
   },
   "reproducibility": {
     "performed_by_web": false,
@@ -58,8 +58,8 @@
       "sha256": "46c57e67ed1e40c98a714f32a968b343650b02df3627744c28e9ceba011b7447"
     },
     "README.md": {
-      "size": 23431,
-      "sha256": "930e49ded460cc0e29bfe204ccb8c894ec7f16a8500dadb9c0e28da951acdfc7"
+      "size": 24279,
+      "sha256": "3d9fca940ce6464e7f99c045c08e39fa58748a27b9111df3d0c8ecdf8f65017c"
     },
     "THIRD_PARTY_NOTICES.md": {
       "size": 1582,
@@ -83,11 +83,11 @@
     },
     "native/package.json": {
       "size": 570,
-      "sha256": "4a03d12b57b0bfa09de697ab25fd78f93fa078e7727aaf25973d8f345de76692"
+      "sha256": "bc12dffb86ca73d648efcd7e1de8600eeddef728bb39a6c7ab8e1366d957b422"
     },
     "package.json": {
       "size": 2827,
-      "sha256": "5ad7dd3488a0ba99fa9bb280b74cc6a5626252330b140a8399042314eeb9e270"
+      "sha256": "7a3a45cbb56af1a172ace1e2683cd0b42af4de01414cdd345b3ed1686caeed5a"
     },
     "src/archive-v2.js": {
       "size": 20637,
@@ -126,12 +126,12 @@
       "sha256": "1f587895ff94b4757476f9efb51c8864886c13c87e7e90a6d57d8a8f4692ad75"
     },
     "src/index.d.ts": {
-      "size": 20179,
-      "sha256": "e3f380a4975cd0371410e95bd5654a54e0dcf1db324f801cdce63b4f80efc7ba"
+      "size": 20359,
+      "sha256": "f7bc9ee31d3693c25280e68b47d646b962a8d10d37898cfda0b3b95087dd0aa9"
     },
     "src/index.js": {
-      "size": 12453,
-      "sha256": "761111c145bc8083af9c1a0c1745ad043c518ed293f244b9b9f3c665be4a7b79"
+      "size": 12622,
+      "sha256": "8cd1362cab07eae28583ca4a1b4c88574bd7f3199af5466de65006c4c64af991"
     },
     "src/js-estimator-controller.js": {
       "size": 24069,

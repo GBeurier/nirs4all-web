@@ -60,18 +60,18 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(existsSync(new URL('../../scripts/sync-core-shim.mjs', import.meta.url))).toBe(true)
     expect(existsSync(new URL('../../scripts/sync-lite-shim.mjs', import.meta.url))).toBe(false)
     expect(syncScript).not.toMatch(/NIRS4ALL_LITE|nirs4all-lite|sync-lite/)
-    expect(vendorPkg).toMatchObject({ name: 'nirs4all', version: '0.6.0' })
+    expect(vendorPkg).toMatchObject({ name: 'nirs4all', version: '0.6.1' })
     expect(provenance).toMatchObject({
       package: 'nirs4all',
-      version: '0.6.0',
+      version: '0.6.1',
       source: {
         repository: 'https://github.com/GBeurier/nirs4all-core',
-        commit: 'ef74d999b48e8eb4b8cce46355598673c0fc08b8',
-        tree: '18112da2c33172eefdf5716b21f551e58b479415',
+        commit: 'd82bea70cbe5d66ac8ff46c5b66cc64c3b90498b',
+        tree: '46d6e6387c2e9c4ea215bfe4c9abc2aa231b6746',
       },
       acquisition: {
-        tarball_url: 'https://registry.npmjs.org/nirs4all/-/nirs4all-0.6.0.tgz',
-        sha256: '4101c30f8e922f9e476db8cede9602ca45ea371d5165ea0d6c09158b28fd8b15',
+        tarball_url: 'https://registry.npmjs.org/nirs4all/-/nirs4all-0.6.1.tgz',
+        sha256: '137369ff8792ca5de362dc0d658dd5a1c15d39562f17add27a517827bb0052f3',
       },
       reproducibility: { performed_by_web: false, independent_rebuild_claimed: false },
       files: {
@@ -85,7 +85,7 @@ describe('nirs4all-core aggregate loaders', () => {
     const script = fileURLToPath(new URL('../../scripts/sync-core-shim.mjs', import.meta.url))
     const verified = spawnSync(process.execPath, [script, '--check'], { encoding: 'utf8' })
     expect(verified.status).toBe(0)
-    expect(verified.stdout).toContain('nirs4all@0.6.0 published inventory and acquisition verified')
+    expect(verified.stdout).toContain('nirs4all@0.6.1 published inventory and acquisition verified')
   })
 
   it('keeps the datasets upstream candidate aligned with the vendored WASM package', () => {
