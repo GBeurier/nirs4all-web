@@ -73,6 +73,24 @@ function verifyRuns(document, count) {
       if (fold) assert.ok(fold.validation_sample_ids.every(id => !ids.has(id)), 'fit included outer validation')
     }
   }
+  // AOM heads report the chain they selected, by name, with ranked candidates.
+  const aomRun = document.runs.find(run => run.name === 'Late · AOM stacking')
+  if (aomRun) {
+    const aomFits = (aomRun.candidate.modelSelections || []).filter(selection => selection.methodId === 'aom_pop.calibration')
+    assert.ok(aomFits.length > 0, 'AOM stacking recorded no internal selection')
+    for (const fit of aomFits) {
+      assert.match(fit.aom?.selected ?? '', /^(raw|SNV|MSC) › /, 'AOM selection has no chain name')
+      assert.ok(fit.aom.ranking.length > 0 && fit.aom.candidates > 0, 'AOM selection has no ranked candidates')
+    }
+    // Each selection carries its native task, so the Inspector counts outer folds only.
+    const outer = new Set(aomRun.protocol.folds.folds.map(fold => fold.fold_id))
+    for (const source of new Set(aomFits.map(fit => fit.sourceIds.join('+')))) {
+      const fits = aomFits.filter(fit => fit.sourceIds.join('+') === source)
+      assert.equal(fits.at(-1).phase, 'REFIT', 'the last AOM selection per source is not the refit')
+      assert.equal(new Set(fits.filter(fit => fit.phase === 'FIT_CV' && outer.has(fit.foldId)).map(fit => fit.foldId)).size, outer.size,
+        'an outer fold has no AOM selection')
+    }
+  }
   // Native fixed-mean output must equal the separately executed source baselines
   // under the same sources, transforms, folds and fixed PLS hyperparameters
   // (late presets use 10 components, one value of the single-source sweep).

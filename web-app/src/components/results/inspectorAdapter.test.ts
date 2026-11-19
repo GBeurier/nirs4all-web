@@ -68,6 +68,22 @@ describe('Web Inspector projection', () => {
     expect(training.unavailablePredictions[training.chains[0].id]).toMatch(/resubstitution is excluded/)
   })
 
+  it('adds the refit model\'s internal AOM selection to the selected chain only', () => {
+    const run = fixture()
+    run.model.state = { chain: [], model: { n4me: new Uint8Array(), containsTrainingRows: false, aomSelection: {
+      methodId: 'aom_pop.calibration', criterion: 'cv_rmse', selected: 'SNV › SG d1 w11 p2', candidates: 30, nComponents: 4,
+      ranking: [{ label: 'SNV › SG d1 w11 p2', score: 0.31 }, { label: 'raw › detrend d1', score: 0.42 }],
+    } }, backendId: 'libn4m-wasm' }
+    const data = inspectorResults([run], null, 'Dataset')
+    expect(data.chains[0].params).toMatchObject({
+      'AOM chain': 'SNV › SG d1 w11 p2', 'AOM candidates': 30, 'AOM n_components': 4,
+      'AOM top chains (internal CV RMSE)': 'SNV › SG d1 w11 p2 (0.31); raw › detrend d1 (0.42)',
+    })
+    expect(data.chains[0].attributes?.['AOM chain']).toBe('SNV › SG d1 w11 p2')
+    expect(data.chains[1].params).toBeUndefined()
+    expect(data.chains[1].attributes?.['AOM chain']).toBeUndefined()
+  })
+
   it('keeps duplicate observations distinct without assigning folds or cross-chain identities', () => {
     const run = fixture()
     run.cv!.predictions = [prediction('repeat'), prediction('repeat')]
