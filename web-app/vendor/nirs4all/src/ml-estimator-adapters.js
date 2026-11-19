@@ -118,6 +118,33 @@ export function createMlJsEstimator({ ml, estimatorName, params = {} }) {
       if (!model) throw new Error('Fit or restore this ml.js estimator first.');
       return normalizeOutput(model.predict(X), 'predict');
     },
+    /**
+     * Class probabilities of a random-forest classifier: the share of trees voting
+     * for each class, in the order of the caller's declared class labels (each row
+     * sums to 1). ml.js predictProbability() is not used: its vote reduction has no
+     * initial value, so it drops the first tree's vote.
+     */
+    predictProba(X, classes) {
+      if (estimatorName !== 'RandomForestClassifier') {
+        throw new Error(`predictProba is available for RandomForestClassifier, not ${estimatorName}.`);
+      }
+      if (!model) throw new Error('Fit or restore this ml.js estimator first.');
+      if (!Array.isArray(classes) || classes.length < 2 || new Set(classes).size !== classes.length) {
+        throw new TypeError('predictProba needs at least two distinct declared class labels.');
+      }
+      const index = new Map(classes.map((label, position) => [label, position]));
+      const votes = model.predictionValues(X);
+      const rows = votes.rows, trees = votes.columns;
+      return Array.from({ length: rows }, (_, row) => {
+        const shares = new Array(classes.length).fill(0);
+        for (const vote of votes.getRow(row)) {
+          const position = index.get(vote);
+          if (position === undefined) throw new Error(`A tree voted for undeclared class ${vote}.`);
+          shares[position] += 1;
+        }
+        return shares.map((count) => count / trees);
+      });
+    },
     toJSON() {
       if (!model) throw new Error('Fit this ml.js estimator before export.');
       const payload = model.toJSON();

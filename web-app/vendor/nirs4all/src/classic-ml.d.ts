@@ -9,6 +9,8 @@ export interface HostEstimator {
   clone(): HostEstimator;
   fit(X: number[][], y: number[]): HostEstimator | Promise<HostEstimator>;
   predict(X: number[][]): number[] | number[][] | Promise<number[] | number[][]>;
+  /** RandomForestClassifier only: tree-vote shares in the order of the declared classes. */
+  predictProba?(X: number[][], classes: readonly number[]): number[][];
   toJSON(): unknown | Promise<unknown>;
 }
 export interface SyncHostEstimator {
