@@ -60,6 +60,7 @@ export default defineConfig(({ mode }) => {
         ...(singlefile ? { '@/engine/preview-worker': path.resolve(__dirname, './src/engine/preview-worker.singlefile.ts') } : {}),
         '@nirs4all/methods': path.resolve(__dirname, './src/engine/wasm/methods/index.js'),
         '@nirs4all/formats-wasm': path.resolve(__dirname, './src/engine/wasm/formats/nirs4all_formats_wasm.js'),
+        '@nirs4all/io-wasm/assembled-wire': path.resolve(__dirname, './src/engine/wasm/io/assembled-wire.mjs'),
         '@nirs4all/io-wasm/public-dataset': path.resolve(__dirname, './src/engine/wasm/io/public-dataset.mjs'),
         '@nirs4all/io-wasm': path.resolve(__dirname, './src/engine/wasm/io/nirs4all_io_wasm.js'),
         'dag-ml-data-wasm': path.resolve(__dirname, './src/engine/wasm/dagml-data/dag_ml_data_wasm.js'),

@@ -48,6 +48,12 @@ all rows, and refuses non-public datasets and publication-policy blockers. Revie
 citations and catalog descriptions before publishing. No command in this Web feature publishes
 the generated data or deploys the app.
 
+The import dialog chooses the displayed target. Every target remains in the loaded dataset, and
+the target to model is chosen when a run is launched, as for local uploads. Public imports retain
+the decoded record rather than the raw files and IO assembly specification. Replacing missing
+spectral values currently requires those local inputs; for public imports, remove the affected
+samples or leave the values unchanged for the pipeline's explicit refusal.
+
 This import requires Web's typed IO projection (`y.columns`, validity masks, declared identity
 and numeric axes). The legacy matrix/first-target projection is incompatible. The owner
 artifacts and typed projection are acquired together. Replicate grouping continues to use

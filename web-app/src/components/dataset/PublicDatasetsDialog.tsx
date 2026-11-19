@@ -328,7 +328,7 @@ export function PublicDatasetsDialog({ open, onOpenChange, onDataset, disabled, 
 
                 {job.status === 'target' && (
                   <div className="space-y-1.5 text-xs text-muted-foreground" data-target-choice>
-                    <p>Choose the target to model. All other targets are preserved.</p>
+                    <p>Choose the target to display. All targets stay available when you run a pipeline.</p>
                     <div className="flex flex-wrap gap-2">
                       {job.options.map((target) => (
                         <Button key={target} type="button" variant="outline" size="sm" className="h-7" onClick={() => finish(job.retained, target)}>

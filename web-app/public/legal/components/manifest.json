@@ -336,8 +336,8 @@
         },
         {
           "path": "PROVENANCE.json",
-          "size": 5138,
-          "sha256": "f3ede4e47edb232a33124b7281ca5e37e03530f1f16b20831f0f4126220ac9e9"
+          "size": 5412,
+          "sha256": "e1d20f6ea1b62cf5a2d74c6290318cf0aa50605a9dd73f250aa78e0479745856"
         },
         {
           "path": "THIRD_PARTY_NOTICES.md",
@@ -347,7 +347,7 @@
         {
           "path": "nirs4all-io-wasm.cdx.json",
           "size": 34796,
-          "sha256": "c14af3a13e3db8c5e574d9014c9599177e737793bacfbc53e23b57baf758c34b"
+          "sha256": "8471017e05dfc92d0a26d0f3578a1cad9617d86ee1b6e4e3cd72b00ead01adfc"
         }
       ]
     },
