@@ -1,6 +1,9 @@
 # Public dataset imports (developer notes)
 
-**Browse public datasets** reads public metadata embedded in the Datasets WASM owner. After
+Public dataset import is paused in the Web interface while recipe coverage and access from
+the browser to original publishers are qualified.
+
+The retained dialog reads public metadata embedded in the Datasets WASM owner. After
 the user selects a supported spectral source, Web downloads its declared files directly from
 the original publisher. Datasets prepares the inputs and IO assembles them in browser memory.
 This path needs no hosted dataset mirror, Python service, catalog endpoint or upload.
@@ -58,12 +61,13 @@ cancellation, resource-kit fidelity, real-pin refusal and observed-only integrit
 IO fixture preserves missing X/Y, mixed targets, signed zero and metadata without introducing
 a Web parser.
 
-The browser smoke uses the actual staged Datasets and IO modules and intercepts one declared
-original-source request with a small, faithful synthetic CSV. It exercises browsing, keyboard
-activation, cancellation, HTTP refusal, retry and successful owner assembly:
+The startup smoke checks that the public import entry point is absent. Once the dialog is
+reconnected, run the browser integration check with the staged Datasets and IO modules. The
+check intercepts one declared original-source request with a small synthetic CSV and exercises
+browsing, keyboard activation, cancellation, HTTP refusal, retry and successful owner assembly.
 
 ```sh
-SMOKE_URL=http://localhost:4317/ node tests/public-datasets-smoke.mjs
+SMOKE_URL=http://localhost:4317/ node tests/public-datasets-integration.mjs
 ```
 
 `SMOKE_ARTIFACT_DIR` selects an outside-Git screenshot directory. Interception is deterministic

@@ -1,3 +1,4 @@
+// Run when the public dataset import dialog is connected to the upload UI.
 // Actual staged Data+IO owners with a faithful synthetic original CSV.
 // Only the declared source request is intercepted: no catalog mirror, owner mock,
 // live origin download, dataset upload or claim of publisher CORS support.
