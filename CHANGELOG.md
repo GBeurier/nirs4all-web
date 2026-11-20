@@ -63,7 +63,7 @@
 
 ### Changed
 
-- Final tested cohort: Methods 1.5.1, DAG-ML 0.5.0, DMD 0.2.17, Core 0.6.1,
+- Final tested cohort: Methods 1.5.1, DAG-ML 0.5.0, DMD 0.2.16, Core 0.6.1,
   IO 0.3.8 and the public Datasets 0.3.23 origin-plan module. The earlier
   dependency adoptions below record intermediate development states.
 
