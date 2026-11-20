@@ -182,7 +182,7 @@ export interface PublicResourceReceipt {
 async function request(resource: PublicResource, options: PublicFetchOptions): Promise<Response> {
   let response: Response
   try {
-    const init: RequestInit = { method: 'GET', credentials: 'omit', referrerPolicy: 'no-referrer', headers: { Accept: 'application/octet-stream' }, signal: options.signal }
+    const init: RequestInit = { method: 'GET', credentials: 'omit', referrerPolicy: 'no-referrer', headers: { Accept: '*/*' }, signal: options.signal }
     response = options.fetch ? await options.fetch(resource.url, init) : await fetch(resource.url, init)
   } catch (e) {
     if (isAbortError(e)) throw e

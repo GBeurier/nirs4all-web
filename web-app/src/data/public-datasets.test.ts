@@ -131,7 +131,7 @@ describe('declared original-source transport', () => {
     expect(() => resolvePublicSource(catalog.datasets[0])).toThrow(/choose one/)
     const retained = await downloadPublicDataset(catalog, catalog.datasets[0], 'mir', f)
     expect(f.calls.map((c) => c.url)).toEqual(['https://original.example/mir.csv'])
-    expect(f.calls[0].init).toMatchObject({ method: 'GET', credentials: 'omit', referrerPolicy: 'no-referrer' })
+    expect(f.calls[0].init).toMatchObject({ method: 'GET', credentials: 'omit', referrerPolicy: 'no-referrer', headers: { Accept: '*/*' } })
     expect(retained.inputs[0].name).toBe('mir.csv')
     expect(f.owner.prepareBrowserDataset).toHaveBeenCalledWith(retained.planJson, retained.inputs)
     expect(JSON.parse(retained.planJson).opaque_owner_extension).toEqual({ preserve: 'verbatim' })
