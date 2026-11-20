@@ -235,11 +235,11 @@ describe('nirs4all-core aggregate loaders', () => {
     ) as { version: string; source: { commit: string }; build: { executions: number }; reproducibility: { independent_rebuild_claimed: boolean; byte_identical_rebuild_claimed: boolean } }
     datasets.initSync({ module: wasm })
 
-    expect(datasets.abiVersion()).toBe('0.3.18')
+    expect(datasets.abiVersion()).toBe('0.3.23')
     expect(provenance).toMatchObject({
       schema: 'nirs4all-web.public-npm-acquisition.v1',
-      version: '0.3.18',
-      source: { commit: '15fe4ce830f4985e5b628bcaf49d4106f45fa1e1' },
+      version: '0.3.23',
+      source: { commit: 'c8aef1ec94ecde6a51abce1c61ee955c3fd0e838' },
       build: { target: 'web', cargo_locked: true, executions: 1, wasm_bindgen: '0.2.129' },
       reproducibility: { performed_by_web: true, independent_rebuild_claimed: false },
     })

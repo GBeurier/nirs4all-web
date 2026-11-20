@@ -41,6 +41,7 @@ function isLegalPayload(path: string): boolean {
     basename === 'PROVENANCE.json' ||
     basename === 'PROVENANCE.md' ||
     basename?.startsWith('THIRD_PARTY_') === true ||
+    basename?.endsWith('.licenses.json') === true ||
     basename?.endsWith('.cdx.json') === true
   )
 }
@@ -94,7 +95,10 @@ describe('distributed legal notices', () => {
       const paths = legalFiles(source)
       expect(paths).toContain('LICENSE')
       if (name === 'io') expect(paths).toContain('nirs4all-io-wasm.cdx.json')
-      if (name === 'datasets') expect(paths).toContain('LICENSE-CeCILL-2.1')
+      if (name === 'datasets') {
+        expect(paths).toContain('LICENSE-CeCILL-2.1')
+        expect(paths).toContain('nirs4all-datasets-wasm.licenses.json')
+      }
       if (name === 'formats') {
         for (const reader of ['hdf5-reader', 'netcdf-reader']) {
           expect(paths).toContain(`reader-backports/${reader}/LICENSE-MIT`)
