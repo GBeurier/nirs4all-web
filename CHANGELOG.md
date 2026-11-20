@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Pause public dataset import in Web while browser support for original-source recipes is qualified.
+
 ## 0.6.0 — 2026-11-20
 
 ### Added

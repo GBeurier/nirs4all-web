@@ -1,12 +1,11 @@
 import { useRef, useState } from 'react'
-import { Upload, FileText, FileUp, Globe, Loader2, ShieldCheck, Sparkles, AlertTriangle } from 'lucide-react'
+import { Upload, FileText, FileUp, Loader2, ShieldCheck, Sparkles, AlertTriangle } from 'lucide-react'
 import { datasetInputName } from '@/data/dataset'
 import { SAMPLES } from '@/data/samples'
 import { ingestFiles } from '@/data/wasm-io'
 import type { DatasetUploadProps } from '@/components/contracts'
 import { Button } from '@/app/components/ui/button'
 import { cn } from '@/app/components/ui/utils'
-import { PublicDatasetsDialog } from './PublicDatasetsDialog'
 
 /**
  * Drag-and-drop + file-picker ingestion zone. Reads CSV/TXT and vendor files
@@ -19,9 +18,7 @@ export function DatasetUpload({ onDataset, onLoadSample, onImportModel, busy: bu
   const [dragging, setDragging] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
   const [busyLocal, setBusyLocal] = useState(false)
-  const [publicOpen, setPublicOpen] = useState(false)
-  const [busyPublic, setBusyPublic] = useState(false)
-  const busy = busyProp || busyLocal || busyPublic
+  const busy = busyProp || busyLocal
 
   const shownError = error ?? localError
 
@@ -120,21 +117,6 @@ export function DatasetUpload({ onDataset, onLoadSample, onImportModel, busy: bu
               </Button>
             ))}
           </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            disabled={busy}
-            onClick={(e) => {
-              e.stopPropagation()
-              setPublicOpen(true)
-            }}
-            // Enter/Space activate this button only, never the drop zone's file picker as well
-            onKeyDown={(e) => e.stopPropagation()}
-            className="h-7 gap-1.5 text-xs text-brand-teal"
-          >
-            <Globe className="h-3.5 w-3.5" /> Browse public datasets
-          </Button>
         </div>
 
         <input
@@ -149,17 +131,6 @@ export function DatasetUpload({ onDataset, onLoadSample, onImportModel, busy: bu
           }}
         />
       </div>
-
-      <PublicDatasetsDialog
-        open={publicOpen}
-        onOpenChange={setPublicOpen}
-        disabled={busyProp || busyLocal}
-        onBusyChange={setBusyPublic}
-        onDataset={(ds, name) => {
-          setLocalError(null)
-          onDataset(ds, name)
-        }}
-      />
 
       {shownError && (
         <div className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
