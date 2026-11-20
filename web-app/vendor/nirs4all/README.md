@@ -11,6 +11,25 @@ This package is the runtime surface that `nirs4all-web` should consume. The web
 application lives in `nirs4all-web`; this directory is for the reusable
 JavaScript/WASM binding and package metadata.
 
+## Native assembled records
+
+`loadIoAssembledWire()` lazily imports IO's `assembled-wire` entry from the
+optional `@nirs4all/io-wasm` 0.3.8+ peer. Its `decodeAssembledFull(value)` function
+converts the owner's native assembled schema 3 JSON into the logical arrays
+returned by IO's `assembleDataset`, preserving identity, masks, axes, metadata
+and packet precision. IO performs every decode and refusal; Core does not parse
+the record, initialize WASM, assemble data or run scientific computation.
+
+```javascript
+import { loadIoAssembledWire } from 'nirs4all';
+
+const { decodeAssembledFull } = await loadIoAssembledWire();
+const dataset = decodeAssembledFull(JSON.parse(nativeRecordText));
+```
+
+The owner refuses unsupported schema versions or malformed packets. The optional
+peer remains lazy; importing Core does not require IO to be installed.
+
 ## Canonical V1 `.n4a` exchange
 
 The new library actions are `produceN4aNative`, `inspectN4aBytes`,
@@ -277,7 +296,7 @@ numbers labelling every fitted class id (index = id). `recipe` is a copy of
 the recipe the states attest, which is also the one exported. A state that
 embeds training rows (kernel PLS, LW-PLS, ...) is exported only with
 `toJSON({ allowTrainingRows: true })`. This path requires `@nirs4all/methods`
-1.3.18 or later; the role-pipeline native format remains ABI 2.14.
+1.5.x (`~1.5.0`); the role-pipeline native format remains ABI 2.14.
 
 Custom app hosts can inspect `executionProfiles()` (also embedded in
 `capabilityManifest()` with `runtimeSurfaces`) before selecting a runtime. The

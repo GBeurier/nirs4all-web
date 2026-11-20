@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright-core'
 
 const APP_URL = process.env.SMOKE_URL || 'http://localhost:4345/'
@@ -72,14 +73,13 @@ try {
     await page.close()
   }
 
-  // The accepted genuine Core V1 Package2 (SNV + Savitzky-Golay + PLS, width 7) staged by Root:
-  // NIRS4ALL_WEB_OWNER_FIXTURES is the directory holding shared-model.n4a, independent.json
-  // (.x 12x7) and shared-prediction.json (.point_prediction.values). The previous physical
+  // The checked-in accepted Core V1 Package2 (SNV + Savitzky-Golay + PLS, width 7).
+  // NIRS4ALL_WEB_OWNER_FIXTURES may override the directory holding shared-model.n4a,
+  // independent.json (.x 12x7) and shared-prediction.json (.point_prediction.values). The previous physical
   // Archive V2 fixtures are historical and intentionally refused, so they are not used here.
   const fixtures = process.env.NIRS4ALL_WEB_OWNER_FIXTURES
-  if (!fixtures) {
-    console.log('⚠ skipping the genuine Package2 section — NIRS4ALL_WEB_OWNER_FIXTURES is not set')
-  } else {
+    ?? fileURLToPath(new URL('./fixtures/core-v1-package2/', import.meta.url))
+  {
     const model = await readFile(join(fixtures, 'shared-model.n4a'))
     const rows = JSON.parse(await readFile(join(fixtures, 'independent.json'), 'utf8')).x
     const expected = JSON.parse(await readFile(join(fixtures, 'shared-prediction.json'), 'utf8')).point_prediction.values.map((row) => row[0])

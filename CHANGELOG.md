@@ -1,8 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.6.0 — 2026-11-20
 
 ### Added
+
+- Browse the owner catalog of public datasets, download supported selections
+  directly from their original publishers, materialize them through Datasets/IO,
+  and keep them in browser-local storage. Unsupported source profiles and
+  acquisition failures are explicit; the application does not host datasets.
 
 - Multimodal laboratory: fusion pipelines are edited in the shared rack editor
   (nirs4all-ui 0.2.7) as canonical nirs4all pipelines, one lane per source.
@@ -57,6 +62,10 @@
   nothing there and report a wrong reason.
 
 ### Changed
+
+- Final tested cohort: Methods 1.5.1, DAG-ML 0.5.0, DMD 0.2.16, Core 0.6.1,
+  IO 0.3.8 and the public Datasets 0.3.23 origin-plan module. The earlier
+  dependency adoptions below record intermediate development states.
 
 - Consume nirs4all-io 0.3.6 (partial multi-target matrices with targets missing
   on different rows; case-insensitive NA tokens), DAG-ML 0.4.3 and Core 0.5.1,

@@ -10,6 +10,7 @@ export default defineConfig({
   root: __dirname,
   resolve: {
     alias: {
+      '@nirs4all/io-wasm/assembled-wire': path.resolve(webAppRoot, './src/engine/wasm/io/assembled-wire.mjs'),
       '@nirs4all/io-wasm/public-dataset': path.resolve(webAppRoot, './src/engine/wasm/io/public-dataset.mjs'),
       'dag-ml-wasm/n4m-estimator-controller': path.resolve(webAppRoot, './src/engine/wasm/dagml/n4m_estimator_controller.mjs'),
       'dag-ml-wasm/n4m-controller': path.resolve(webAppRoot, './src/engine/wasm/dagml/n4m_controller.mjs'),

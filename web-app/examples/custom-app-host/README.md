@@ -20,8 +20,8 @@ npm test
 npm run build
 ```
 
-The package uses file dependencies against `../../vendor/nirs4all` and the exact content-addressed
-`../../vendor/npm/nirs4all-ui-0.2.2-local.20261107.2.tgz` artifact, so it is tested against the same pinned UI snapshot as the Web app.
+The package uses file dependencies against `../../vendor/nirs4all` and the pinned public
+`../../vendor/npm/nirs4all-ui-0.3.0.tgz` archive, so it is tested against the same UI package as the Web app.
 
 ## Host Boundary
 

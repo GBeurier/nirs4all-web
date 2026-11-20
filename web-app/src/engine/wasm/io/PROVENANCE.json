@@ -1,20 +1,20 @@
 {
   "schema": "nirs4all-web.public-npm-acquisition.v1",
   "package": "@nirs4all/io-wasm",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "source": {
     "repository": "https://github.com/GBeurier/nirs4all-io",
-    "commit": "fef60154f356079c62f97d90d10f08cd31900beb",
-    "tree": "73e826f59f07f422f5bfef2e37983d2d4bbd1b71",
-    "tag": "v0.3.7"
+    "commit": "ce82e0ac074b322d04a276c57cd9bf2b5f8adc91",
+    "tree": "9e0f1aa312a16285733978527277613353f14fc9",
+    "tag": "v0.3.8"
   },
   "acquisition": {
-    "metadata_url": "https://registry.npmjs.org/%40nirs4all%2Fio-wasm/0.3.7",
-    "tarball_url": "https://registry.npmjs.org/@nirs4all/io-wasm/-/io-wasm-0.3.7.tgz",
-    "size": 1123207,
-    "sha256": "f7f76b16f1e5a64c0491795f42e5e6c20b68ee9fd407948e9475ddec24d60703",
-    "sha1": "469f8e77f703914feb89cd98d957bbe53f3669b3",
-    "integrity": "sha512-QrOPOkXx0aV4iFlBXBuP8Wg2WR8Q3B3i2ZQjltUj7Mtif1c6MZBygFXCiwhky3FW0y93G9SGYfm790uOQFkQVg=="
+    "metadata_url": "https://registry.npmjs.org/@nirs4all/io-wasm/0.3.8",
+    "tarball_url": "https://registry.npmjs.org/@nirs4all/io-wasm/-/io-wasm-0.3.8.tgz",
+    "size": 1127638,
+    "sha256": "f6dff6753b8ad2036639002144db599a957b6d8d0d6acfa6aeb2b556af822f70",
+    "sha1": "1e769012d13e7cbd3775e0b290c66dc51ffd4d9f",
+    "integrity": "sha512-kSr/yZ9OE7JXlMsJXFIYqJKlqilj4sO8Kg3qIfhYwrKodmq3r9ugj7mPvGse3WUdTkzNf0gdJisyBnzpJ7GJXA=="
   },
   "reproducibility": {
     "performed_by_web": false,
@@ -27,7 +27,7 @@
     },
     "nirs4all-io-wasm.cdx.json": {
       "size": 34796,
-      "sha256": "c14af3a13e3db8c5e574d9014c9599177e737793bacfbc53e23b57baf758c34b"
+      "sha256": "8471017e05dfc92d0a26d0f3578a1cad9617d86ee1b6e4e3cd72b00ead01adfc"
     },
     "LICENSES/COMMERCIAL-LICENSE_FR.md": {
       "size": 759,
@@ -46,8 +46,8 @@
       "sha256": "b41ad1d4b8e62c89e42704fc4c9b5bb8a2099a0ad0680d72e95efb57c5d3326c"
     },
     "README.md": {
-      "size": 7489,
-      "sha256": "f47d7be4f40ee5f6616a2a8ce881096de94d2c326d7b43ddc7b80bb0b33bdbb3"
+      "size": 9605,
+      "sha256": "2285c8cebe803539518727f0ffaa7cf79da7b8db0d68f77fa7c5928d6de27c1f"
     },
     "THIRD_PARTY_NOTICES.md": {
       "size": 5732,
@@ -105,6 +105,14 @@
       "size": 1995,
       "sha256": "f7db81051789b729fea528a63ec4c938fdcb93d9d61d97dc8cc2e9df6d47f2a1"
     },
+    "assembled-wire.mjs": {
+      "size": 11485,
+      "sha256": "c48f85e9c1243e5df67c778746b2275c6d8a79f87491d1b48951775d92786b45"
+    },
+    "assembled-wire.d.ts": {
+      "size": 1034,
+      "sha256": "4a07bd3320c2b58fd4ada71b04f88152737fa2e04ab974d5420c93a3993174b3"
+    },
     "nirs4all_io_wasm.js": {
       "size": 27221,
       "sha256": "d3388bccc2540ead86cc41c27d0a932d732293df3ff61df8a85b2ff1f83bdc8c"
@@ -114,8 +122,8 @@
       "sha256": "65b2236b75322c7e2ee2e1ccb0d2303808c43593c5ab7c0ccddf1a79a69f9615"
     },
     "nirs4all_io_wasm_bg.wasm": {
-      "size": 2837805,
-      "sha256": "8c735c68fcbf134b11d19448b271dee9d9f3e7346c1590e6a9e792b7399b3d07"
+      "size": 2835353,
+      "sha256": "b60542484e75f78aa395903fefccae5a8b2d5da92a054225f29e6c560275ed6a"
     },
     "nirs4all_io_wasm_bg.wasm.d.ts": {
       "size": 1465,
@@ -123,18 +131,18 @@
     },
     "package.json": {
       "size": 689,
-      "sha256": "73c6d1158a52a368353a72ed4ea18c5af8bbae2d7e84ce98fe775d7c0314bc19"
+      "sha256": "632104d7eaf2a72e6c42b2b0c4d088fd9f02caf8a484bdc3842538f2e104ad13"
     }
   },
   "browser_deployment": {
     "payload": "Owner Release browser build; distinct from the registry Node payload.",
-    "receipt_url": "https://github.com/GBeurier/nirs4all-io/releases/download/v0.3.7/nirs4all-io-browser-web.provenance.json",
+    "receipt_url": "https://github.com/GBeurier/nirs4all-io/releases/download/v0.3.8/nirs4all-io-browser-web.provenance.json",
     "build": {
       "tool": "wasm-pack 0.15.0",
       "target": "web",
       "profile": "release",
       "cargo_locked": true,
-      "lock_sha256": "16e958f368c6410277ffe67a2405df9a447330b0a6d24343ba526c3821c57090",
+      "lock_sha256": "7dbb598f3c9213b179c4cc08b9eecc0faab8467cb9a0638f105c8bdd2b17723f",
       "command": "wasm-pack build bindings/wasm --target web --release -- --locked",
       "host": "Linux x86_64"
     }

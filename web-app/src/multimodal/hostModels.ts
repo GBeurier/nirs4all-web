@@ -9,6 +9,7 @@
  * equivalent, no portable Methods state); the maintainer accepted this
  * exception for the training laboratory.
  */
+import { summarizeAomFit, type AomSelection } from '../engine/aomSelection'
 import { createMlJsEstimator, loadMlJs } from 'nirs4all/classic-ml'
 
 import { BURN_CNN, BURN_CNN_CLASSIFIER, HOST_CLASSIFIERS, HOST_MODELS, RANDOM_FOREST, RANDOM_FOREST_CLASSIFIER, TFJS_CNN } from './hostModelIds'
@@ -342,10 +343,17 @@ class HostPipeline {
 const isHost = (steps: Step[]) => steps.some(step => HOST_MODELS.has(step.methodId))
 
 /** Internal selection a native head reports after a fit (Methods `fitResult`), in fit order. */
-export interface ModelSelection { methodId: string; sourceIds: string[]; values: Record<string, number> }
+export interface ModelSelection {
+  methodId: string; sourceIds: string[]; values: Record<string, number>; aom?: AomSelection
+  /** the native DAG task of the fit (FIT_CV per outer or inner fold, REFIT) */
+  phase?: string; foldId?: string | null
+}
 let selections: ModelSelection[] = []
 /** Selections recorded since the last call (the last one per source is the refit's). */
 export function takeModelSelections(): ModelSelection[] { const taken = selections; selections = []; return taken }
+let currentTask: { phase: string; foldId: string | null } | undefined
+/** The native DAG task about to fit (the source controller's onTask), recorded with each selection. */
+export function noteModelTask(task: { phase: string; foldId: string | null }) { currentTask = { phase: task.phase, foldId: task.foldId } }
 const SELECTING_HEADS = new Set(['aom_pop.calibration'])
 const SELECTION_KEYS = ['selected_branch', 'selected_chain_index', 'selected_n_components', 'selected_alpha']
 
@@ -371,7 +379,8 @@ class SelectingHead {
     const result = (estimator.fitResult() ?? {}) as Record<string, unknown>
     const values = Object.fromEntries(SELECTION_KEYS.filter(key => typeof result[key] === 'number').map(key => [key, result[key] as number]))
     const sourceIds = [...new Set((this.names ?? []).map(name => /^source:([^/]+)\//.exec(name)?.[1]).filter((id): id is string => Boolean(id)))]
-    selections.push({ methodId: this.step.methodId, sourceIds, values })
+    const aom = summarizeAomFit(this.step.methodId, result)
+    selections.push({ methodId: this.step.methodId, sourceIds, values, ...(aom ? { aom } : {}), ...(currentTask ?? {}) })
     return this
   }
   predict(X: Matrix, featureNames?: string[]) {

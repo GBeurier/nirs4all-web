@@ -5,29 +5,29 @@
   "metadata": {
     "component": {
       "type": "library",
-      "bom-ref": "pkg:cargo/nirs4all-io-wasm@0.3.7",
+      "bom-ref": "pkg:cargo/nirs4all-io-wasm@0.3.8",
       "name": "nirs4all-io-wasm",
-      "version": "0.3.7",
+      "version": "0.3.8",
       "licenses": [
         {
           "expression": "CECILL-2.1 OR AGPL-3.0-or-later"
         }
       ],
-      "purl": "pkg:cargo/nirs4all-io-wasm@0.3.7",
+      "purl": "pkg:cargo/nirs4all-io-wasm@0.3.8",
       "externalReferences": [
         {
           "type": "vcs",
-          "url": "https://github.com/GBeurier/nirs4all-io/tree/fef60154f356079c62f97d90d10f08cd31900beb"
+          "url": "https://github.com/GBeurier/nirs4all-io/tree/ce82e0ac074b322d04a276c57cd9bf2b5f8adc91"
         }
       ],
       "properties": [
         {
           "name": "nirs4all:source:commit",
-          "value": "fef60154f356079c62f97d90d10f08cd31900beb"
+          "value": "ce82e0ac074b322d04a276c57cd9bf2b5f8adc91"
         },
         {
           "name": "nirs4all:source:tree",
-          "value": "73e826f59f07f422f5bfef2e37983d2d4bbd1b71"
+          "value": "9e0f1aa312a16285733978527277613353f14fc9"
         }
       ]
     }
@@ -395,57 +395,57 @@
     },
     {
       "type": "library",
-      "bom-ref": "pkg:cargo/nirs4all-io-core@0.3.7",
+      "bom-ref": "pkg:cargo/nirs4all-io-core@0.3.8",
       "name": "nirs4all-io-core",
-      "version": "0.3.7",
+      "version": "0.3.8",
       "licenses": [
         {
           "expression": "CECILL-2.1 OR AGPL-3.0-or-later"
         }
       ],
-      "purl": "pkg:cargo/nirs4all-io-core@0.3.7",
+      "purl": "pkg:cargo/nirs4all-io-core@0.3.8",
       "externalReferences": [
         {
           "type": "vcs",
-          "url": "https://github.com/GBeurier/nirs4all-io/tree/fef60154f356079c62f97d90d10f08cd31900beb"
+          "url": "https://github.com/GBeurier/nirs4all-io/tree/ce82e0ac074b322d04a276c57cd9bf2b5f8adc91"
         }
       ],
       "properties": [
         {
           "name": "nirs4all:source:commit",
-          "value": "fef60154f356079c62f97d90d10f08cd31900beb"
+          "value": "ce82e0ac074b322d04a276c57cd9bf2b5f8adc91"
         },
         {
           "name": "nirs4all:source:tree",
-          "value": "73e826f59f07f422f5bfef2e37983d2d4bbd1b71"
+          "value": "9e0f1aa312a16285733978527277613353f14fc9"
         }
       ]
     },
     {
       "type": "library",
-      "bom-ref": "pkg:cargo/nirs4all-io-wasm@0.3.7",
+      "bom-ref": "pkg:cargo/nirs4all-io-wasm@0.3.8",
       "name": "nirs4all-io-wasm",
-      "version": "0.3.7",
+      "version": "0.3.8",
       "licenses": [
         {
           "expression": "CECILL-2.1 OR AGPL-3.0-or-later"
         }
       ],
-      "purl": "pkg:cargo/nirs4all-io-wasm@0.3.7",
+      "purl": "pkg:cargo/nirs4all-io-wasm@0.3.8",
       "externalReferences": [
         {
           "type": "vcs",
-          "url": "https://github.com/GBeurier/nirs4all-io/tree/fef60154f356079c62f97d90d10f08cd31900beb"
+          "url": "https://github.com/GBeurier/nirs4all-io/tree/ce82e0ac074b322d04a276c57cd9bf2b5f8adc91"
         }
       ],
       "properties": [
         {
           "name": "nirs4all:source:commit",
-          "value": "fef60154f356079c62f97d90d10f08cd31900beb"
+          "value": "ce82e0ac074b322d04a276c57cd9bf2b5f8adc91"
         },
         {
           "name": "nirs4all:source:tree",
-          "value": "73e826f59f07f422f5bfef2e37983d2d4bbd1b71"
+          "value": "9e0f1aa312a16285733978527277613353f14fc9"
         }
       ]
     },
@@ -1181,7 +1181,7 @@
       "dependsOn": []
     },
     {
-      "ref": "pkg:cargo/nirs4all-io-core@0.3.7",
+      "ref": "pkg:cargo/nirs4all-io-core@0.3.8",
       "dependsOn": [
         "pkg:cargo/csv@1.4.0",
         "pkg:cargo/indexmap@2.14.0",
@@ -1194,10 +1194,10 @@
       ]
     },
     {
-      "ref": "pkg:cargo/nirs4all-io-wasm@0.3.7",
+      "ref": "pkg:cargo/nirs4all-io-wasm@0.3.8",
       "dependsOn": [
         "pkg:cargo/js-sys@0.3.99",
-        "pkg:cargo/nirs4all-io-core@0.3.7",
+        "pkg:cargo/nirs4all-io-core@0.3.8",
         "pkg:cargo/serde-wasm-bindgen@0.6.5",
         "pkg:cargo/serde@1.0.228",
         "pkg:cargo/serde_bytes@0.11.19",

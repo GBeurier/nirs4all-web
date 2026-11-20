@@ -4,7 +4,7 @@
     "Gregory Beurier <gregory.beurier@cirad.fr>"
   ],
   "description": "WASM (wasm-bindgen) binding over nirs4all-datasets-core: resolve the download contract + SHA-256 in the browser/Node. Scoped to metadata + small public datasets.",
-  "version": "0.3.18",
+  "version": "0.3.23",
   "license": "CECILL-2.1 OR AGPL-3.0-or-later",
   "repository": {
     "type": "git",
@@ -16,7 +16,10 @@
     "nirs4all_datasets_wasm.js",
     "nirs4all_datasets_wasm.d.ts",
     "LICENSE",
-    "LICENSE-CeCILL-2.1"
+    "LICENSE-CeCILL-2.1",
+    "THIRD_PARTY_NOTICES.md",
+    "LICENSES",
+    "nirs4all-datasets-wasm.licenses.json"
   ],
   "main": "nirs4all_datasets_wasm.js",
   "types": "nirs4all_datasets_wasm.d.ts",

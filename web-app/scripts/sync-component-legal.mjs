@@ -63,6 +63,7 @@ function isLegalPayload(path) {
     basename === 'PROVENANCE.json' ||
     basename === 'PROVENANCE.md' ||
     basename?.startsWith('THIRD_PARTY_') ||
+    basename?.endsWith('.licenses.json') ||
     basename?.endsWith('.cdx.json')
   )
 }

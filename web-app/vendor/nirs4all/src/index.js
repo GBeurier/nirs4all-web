@@ -105,6 +105,8 @@ export const dagMlData = Object.freeze({
 
 export const loadFormats = () => importUpstream('formats');
 export const loadIo = () => importUpstream('io');
+/** Load the IO-owned native assembled-record decoder without initializing WASM. */
+export const loadIoAssembledWire = () => import('@nirs4all/io-wasm/assembled-wire');
 export const loadDatasets = () => importUpstream('datasets');
 export const loadMethods = () => importUpstream('methods');
 export const loadDagMl = () => importUpstream('dag_ml');
@@ -362,6 +364,7 @@ export {
 export { robustness } from './robustness.js';
 
 export { N4aContainer, inspectN4aBytes, openN4aContainer, predictN4aNative, produceN4aNative, retrainN4aNative, writeN4aContainer, writeN4aStream } from './n4a.js';
+export { inspectN4aContainer, N4aInspectionSession } from './n4a-inspection.js';
 
 export { predictMultimodalArchive } from './multimodal-archive.js';
 

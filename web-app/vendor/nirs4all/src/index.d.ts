@@ -293,6 +293,8 @@ export function upstream(name: string): Upstream | null;
 export function importUpstream(name: string): Promise<unknown>;
 export function loadFormats(): Promise<unknown>;
 export function loadIo(): Promise<unknown>;
+/** IO-owned assembled schema 3 decoder; requires the optional IO 0.3.8+ peer. */
+export function loadIoAssembledWire(): Promise<{ decodeAssembledFull(value: unknown): unknown }>;
 export function loadDatasets(): Promise<unknown>;
 export function loadMethods(): Promise<unknown>;
 export function loadDagMl(): Promise<unknown>;
@@ -482,6 +484,8 @@ export type { PublicDatasetRecord, PublicDataset, MultimodalOptions, MultimodalP
 export { robustness } from './robustness.js';
 
 export { N4aContainer, inspectN4aBytes, openN4aContainer, predictN4aNative, produceN4aNative, retrainN4aNative, writeN4aContainer, writeN4aStream } from './n4a.js';
+export { inspectN4aContainer, N4aInspectionSession } from './n4a-inspection.js';
+export type { N4aInspectionDocument, N4aInspectionPort, N4aInspectionArtifact, N4aOwnerPreview } from './n4a-inspection.js';
 export type { N4aBytes, N4aChunkStream, N4aContainerView, N4aMemberBytes, N4aMemoryOptions, N4aOpenOptions, N4aPrediction, N4aProduction, N4aRuntimeOptions, N4aRandomAccessSource, N4aSink, N4aSource, N4aTrainOptions, N4aView, N4aWriteOptions, N4aWriteReceipt, N4aWriteResult, PredictN4aOptions, ProduceN4aOptions } from './n4a.js';
 
 export { predictMultimodalArchive } from './multimodal-archive.js';

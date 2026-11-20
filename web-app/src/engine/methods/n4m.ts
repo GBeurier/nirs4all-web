@@ -18,6 +18,7 @@
 // a model with recorded columns predicts through `predictNamedPipeline`, one
 // native RolePipeline rebuilt from the same states that holds the fitted names
 // and checks the input's.
+import { summarizeAomFit, type AomSelection } from '../aomSelection'
 import { identifyNativeFitRefusal } from '../fit-refusal'
 import { nodeByType } from '@/catalog/nodes'
 import type { NativeMethodRef, NodeDef } from '@/catalog/types'
@@ -53,6 +54,9 @@ export interface NativeModelState extends N4meCheckpoint {
   /** the node params the model was fitted with (after the n_components clamp):
    *  the recipe a native pipeline rebuilt from this state must repeat */
   fitParams?: Record<string, unknown>
+  /** AOM-family models: the preprocessing the fit selected internally, with the
+   *  best internal candidates (display metadata, not used by predict) */
+  aomSelection?: AomSelection
 }
 
 /** Fit-time context: the (train) targets and the dataset's spectral axis. */
@@ -154,7 +158,9 @@ export function transform(est: NativeEstimator, X: Mat): Mat {
 export function fitModel(type: string, params: Record<string, unknown>, X: Mat, Y: Mat): NativeModelState {
   const est = fitEstimator(type, params, X, { Y })
   try {
-    const state = { ...checkpoint(est), fitParams: params }
+    const methodId = nativeNode(type).native.methodId
+    const aomSelection = methodId.startsWith('aom_pop.') ? summarizeAomFit(methodId, est.fitResult()) : undefined
+    const state: NativeModelState = { ...checkpoint(est), fitParams: params, ...(aomSelection ? { aomSelection } : {}) }
     return nativeNode(type).native.role === 'classifier' ? { ...state, nClasses: Y.cols } : state
   } finally {
     est.dispose()

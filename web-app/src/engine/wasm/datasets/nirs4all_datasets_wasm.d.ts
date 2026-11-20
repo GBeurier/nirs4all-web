@@ -7,11 +7,26 @@
 export function abiVersion(): string;
 
 /**
+ * Embedded public metadata with explicit supported/unsupported origin profiles.
+ */
+export function browserCatalog(): string;
+
+/**
+ * Apply the declared origin recipe, then return IO's exact in-memory inputs.
+ */
+export function prepareBrowserDataset(plan_json: string, files: any): any;
+
+/**
  * Resolve a dataset id against an index JSON string; return the descriptor+download-contract JSON.
  *
  * Throws (a JS `Error`) if the id is absent or the index is malformed.
  */
 export function resolve(index_json: string, dataset_id: string): string;
+
+/**
+ * Resolve one source to its owner plan; no network request is made.
+ */
+export function resolveBrowserPlan(dataset_id: string, source_id: string): string;
 
 /**
  * Hex SHA-256 of a byte buffer (so a JS host can verify a file it fetched against the
@@ -24,12 +39,17 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly abiVersion: () => [number, number];
+    readonly browserCatalog: () => [number, number];
+    readonly prepareBrowserDataset: (a: number, b: number, c: any) => [number, number, number];
     readonly resolve: (a: number, b: number, c: number, d: number) => [number, number, number, number];
+    readonly resolveBrowserPlan: (a: number, b: number, c: number, d: number) => [number, number, number, number];
     readonly sha256: (a: number, b: number) => [number, number];
-    readonly __wbindgen_externrefs: WebAssembly.Table;
-    readonly __wbindgen_free: (a: number, b: number, c: number) => void;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
+    readonly __wbindgen_exn_store: (a: number) => void;
+    readonly __externref_table_alloc: () => number;
+    readonly __wbindgen_externrefs: WebAssembly.Table;
+    readonly __wbindgen_free: (a: number, b: number, c: number) => void;
     readonly __externref_table_dealloc: (a: number) => void;
     readonly __wbindgen_start: () => void;
 }

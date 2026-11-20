@@ -33,7 +33,7 @@ describe('standalone custom app host template', () => {
     expect(readme).toContain('metadata artifacts')
     expect(readme).toContain('not a Core capability or a required-entry contract')
     expect(readme).toContain('does not compute conformal quantiles')
-    expect(readme).toContain('../../vendor/npm/nirs4all-ui-0.2.2-local.20261107.2.tgz')
+    expect(readme).toContain('../../vendor/npm/nirs4all-ui-0.3.0.tgz')
     expect(readme).not.toContain('nirs4all-ui-0.1.17.tgz')
     expect(readme).not.toContain('required_registry_entries')
   })

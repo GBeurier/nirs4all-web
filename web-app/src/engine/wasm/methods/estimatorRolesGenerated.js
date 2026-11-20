@@ -1286,6 +1286,25 @@ export class SpectralNoiseProxy extends NativeProcedure {
     }
 }
 NativeMethod.register("diagnostics.spectral_noise_proxy", SpectralNoiseProxy);
+/** Native `diagnostics.spectral_population_events_qc` (generic). */
+export class SpectralPopulationEventsQc extends NativeProcedure {
+    methodId = "diagnostics.spectral_population_events_qc";
+    paramTypes = {
+        valid_mask: "int_array",
+        axis_basis: "enum",
+        axis_values: "double_array",
+        outlier_threshold: "double",
+        min_spectra: "int",
+    };
+    constructor(params = {}) {
+        super();
+        this.params = { ...params };
+    }
+    run(X, y, inputs = {}) {
+        return this.runOutputs(X, y, inputs);
+    }
+}
+NativeMethod.register("diagnostics.spectral_population_events_qc", SpectralPopulationEventsQc);
 /** Native `diagnostics.spectral_reference_qc` (generic). */
 export class SpectralReferenceQc extends NativeProcedure {
     methodId = "diagnostics.spectral_reference_qc";
