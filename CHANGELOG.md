@@ -6,7 +6,7 @@
 
 - Browse the owner catalog of public datasets, download supported selections
   directly from their original publishers, materialize them through Datasets/IO,
-  and keep them in browser-local storage. Unsupported source profiles and
+  and keep them in browser session memory; reload requires reimport. Unsupported source profiles and
   acquisition failures are explicit; the application does not host datasets.
 
 - Multimodal laboratory: fusion pipelines are edited in the shared rack editor
