@@ -1,31 +1,28 @@
-// Public dataset catalog: the browser downloads one owner-prepared, static dataset asset
-// chosen by the user, verifies it at the trust boundary (HTTP status, schema, dataset/source
-// identity, byte size, SHA-256) and hands the published nirs4all-io `assembled_full` record to
-// the IO owner decoder. Web neither prepares, filters nor assembles the data: the projection to
-// the engine view is the existing `mapAssembledToMaterialized`, with explicit source and target
-// choices. Nothing is uploaded; requests carry no credentials.
+// Public origin acquisition belongs to nirs4all-datasets; Web transports only the
+// declared resource kit and delegates its preparation and assembly to Data + IO.
+// No dataset recipe, parser, inference or numerical fallback lives in this host.
+import { loadDatasetsWasm, loadDataIoWasm } from '@/engine/nirs4all-core'
 import type { MaterializedDataset } from '@/engine/types'
 import { mapAssembledToMaterialized, type AssembledFull, type IoProjectionChoice } from './wasm-io'
 
-export const PUBLIC_CATALOG_SCHEMA = 'nirs4all.datasets.public-browser.v1'
-export const PUBLIC_ASSET_SCHEMA = 'nirs4all.datasets.browser-dataset.v1'
-export const DEFAULT_PUBLIC_CATALOG_URL = 'https://datasets.nirs4all.org/browser/catalog.json'
+export const PUBLIC_CATALOG_SCHEMA = 'nirs4all.datasets.public-origin-catalog.v1'
+export const PUBLIC_PLAN_SCHEMA = 'nirs4all.datasets.public-origin-plan.v1'
 
-/** The catalog URL of this build: `VITE_PUBLIC_DATASETS_CATALOG_URL` when set, else the default
- *  (developer documentation: docs/PUBLIC_DATASETS.md). */
-export function publicCatalogUrl(env: Record<string, unknown> = import.meta.env): string {
-  const configured = env.VITE_PUBLIC_DATASETS_CATALOG_URL
-  return typeof configured === 'string' && configured.trim() ? configured.trim() : DEFAULT_PUBLIC_CATALOG_URL
+export interface PublicResource {
+  id: string
+  name: string
+  url: string
+  /** Only an actual publisher/owner pin; null is never replaced by an observed hash. */
+  sha256: string | null
+  size_bytes: number | null
 }
 
 export interface PublicDatasetSource {
   id: string
   name?: string
-  /** absolute URL, resolved against the fetched catalog URL */
-  url: string
-  /** lowercase hex SHA-256 of the asset bytes */
-  sha256: string
-  size_bytes: number
+  status: 'supported' | 'unsupported'
+  reason?: string
+  resources: PublicResource[]
 }
 
 export interface PublicDatasetEntry {
@@ -38,17 +35,36 @@ export interface PublicDatasetEntry {
 }
 
 export interface PublicCatalog {
-  /** the URL the catalog was finally served from (relative source URLs resolve against it) */
-  url: string
-  /** public entries only, in catalog order */
+  schema: typeof PUBLIC_CATALOG_SCHEMA
   datasets: PublicDatasetEntry[]
-  /** entries withheld because their tier is not `public` */
   withheld: number
+  provenance: Record<string, unknown>
 }
 
-export type PublicDatasetErrorKind = 'unreachable' | 'http' | 'schema' | 'integrity' | 'choice'
+export interface PublicInputFile { name: string; bytes: Uint8Array }
+export interface PublicOriginOwner {
+  browserCatalog(): string
+  resolveBrowserPlan(datasetId: string, sourceId: string): string
+  prepareBrowserDataset(planJson: string, files: PublicInputFile[]): unknown
+}
 
-/** A refusal at the public-catalog trust boundary; `kind` drives the user-facing remedy. */
+export interface PublicPreparedDataset {
+  files: PublicInputFile[]
+  record_sets: unknown[]
+  spec: Record<string, unknown>
+  provenance: Record<string, unknown>
+}
+
+export interface PublicOriginPlan {
+  schema: typeof PUBLIC_PLAN_SCHEMA
+  dataset_id: string
+  source_id: string
+  resources: PublicResource[]
+  descriptor: Record<string, unknown>
+  provenance: Record<string, unknown>
+}
+
+export type PublicDatasetErrorKind = 'unreachable' | 'http' | 'schema' | 'integrity' | 'choice' | 'unsupported' | 'owner'
 export class PublicDatasetError extends Error {
   constructor(message: string, readonly kind: PublicDatasetErrorKind) {
     super(message)
@@ -57,132 +73,95 @@ export class PublicDatasetError extends Error {
 }
 
 export const isAbortError = (e: unknown): boolean => typeof e === 'object' && e !== null && (e as { name?: unknown }).name === 'AbortError'
-
 export type FetchLike = (input: string, init: RequestInit) => Promise<Response>
-
-/** Every request is a credential-less, cancellable GET; the browser sends no cookies or auth. */
-const requestInit = (signal: AbortSignal | undefined, accept: string): RequestInit => ({
-  method: 'GET',
-  credentials: 'omit',
-  referrerPolicy: 'no-referrer',
-  headers: { Accept: accept },
-  signal,
-})
-
-async function request(url: string, what: string, signal: AbortSignal | undefined, accept: string, fetchImpl: FetchLike | undefined): Promise<Response> {
-  let response: Response
-  try {
-    // The one network read of the app shell: a credential-less public GET (allowed by name in
-    // src/app/client-side-only.test.ts). Nothing is ever sent but the request itself.
-    response = fetchImpl ? await fetchImpl(url, requestInit(signal, accept)) : await fetch(url, requestInit(signal, accept))
-  } catch (e) {
-    if (isAbortError(e)) throw e
-    throw new PublicDatasetError(`Could not reach the ${what} at ${url}. It may not be available yet, or the connection failed; try again later.`, 'unreachable')
-  }
-  if (!response.ok) {
-    const missing = response.status === 404 || response.status === 410
-    throw new PublicDatasetError(
-      missing
-        ? `The ${what} is not available yet at ${url} (HTTP ${response.status}); try again later.`
-        : `The ${what} at ${url} answered HTTP ${response.status}${response.statusText ? ` ${response.statusText}` : ''}; try again later.`,
-      missing ? 'unreachable' : 'http',
-    )
-  }
-  return response
-}
-
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 const isText = (v: unknown): v is string => typeof v === 'string' && v.trim() !== ''
 const SHA256_HEX = /^[0-9a-f]{64}$/i
-const schemaError = (message: string) => new PublicDatasetError(`The public dataset catalog is malformed: ${message}`, 'schema')
+const schemaError = (message: string) => new PublicDatasetError(`The public dataset owner returned malformed metadata: ${message}`, 'schema')
 
-function parseSource(raw: unknown, datasetId: string, baseUrl: string): PublicDatasetSource {
-  if (!isRecord(raw)) throw schemaError(`dataset "${datasetId}" has a source that is not an object.`)
-  const { id, name, url, sha256, size_bytes: size } = raw
-  if (!isText(id)) throw schemaError(`dataset "${datasetId}" has a source without an id.`)
-  const where = `source "${id}" of dataset "${datasetId}"`
-  if (name !== undefined && typeof name !== 'string') throw schemaError(`${where} has a non-text name.`)
-  if (!isText(url)) throw schemaError(`${where} has no url.`)
-  if (typeof sha256 !== 'string' || !SHA256_HEX.test(sha256)) throw schemaError(`${where} has no hex SHA-256.`)
-  if (typeof size !== 'number' || !Number.isSafeInteger(size) || size <= 0) throw schemaError(`${where} has no positive integer size_bytes.`)
-  let resolved: URL
-  try {
-    resolved = new URL(url, baseUrl)
-  } catch {
-    throw schemaError(`${where} has an invalid url "${url}".`)
+async function originOwner(): Promise<PublicOriginOwner> {
+  const owner = await loadDatasetsWasm() as unknown as Partial<PublicOriginOwner>
+  if (typeof owner.browserCatalog !== 'function' || typeof owner.resolveBrowserPlan !== 'function' || typeof owner.prepareBrowserDataset !== 'function') {
+    throw new PublicDatasetError('This build cannot import datasets from their original sources. Update the application or choose a local file.', 'owner')
   }
-  if (resolved.protocol !== 'https:' && resolved.protocol !== 'http:') throw schemaError(`${where} url must be http(s), got "${resolved.protocol}".`)
-  return { id, ...(isText(name) ? { name } : {}), url: resolved.href, sha256: sha256.toLowerCase(), size_bytes: size }
+  return owner as PublicOriginOwner
 }
 
-/**
- * Validate a catalog document and keep its public entries. Entries of another tier are withheld
- * (counted, never shown or fetched); a malformed public entry refuses the whole catalog.
- */
-export function parsePublicCatalog(value: unknown, baseUrl: string): PublicCatalog {
-  if (!isRecord(value) || value.schema !== PUBLIC_CATALOG_SCHEMA) throw schemaError(`expected schema "${PUBLIC_CATALOG_SCHEMA}".`)
-  if (!Array.isArray(value.datasets)) throw schemaError('"datasets" must be an array.')
+function ownerJson(value: string): unknown {
+  try { return JSON.parse(value) }
+  catch { throw schemaError('the document is not JSON.') }
+}
+
+function resourcesOf(value: unknown, where: string): PublicResource[] {
+  if (!Array.isArray(value)) throw schemaError(`${where} has no resource list.`)
+  const resources = value.map((raw): PublicResource => {
+    if (!isRecord(raw) || !isText(raw.id) || !isText(raw.name) || !isText(raw.url)) throw schemaError(`${where} has a resource without an id, name or URL.`)
+    let url: URL
+    try { url = new URL(raw.url) }
+    catch { throw schemaError(`resource "${raw.id}" has an invalid URL.`) }
+    if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) throw schemaError(`resource "${raw.id}" requires an absolute public http(s) URL without credentials.`)
+    if (raw.sha256 !== null && (typeof raw.sha256 !== 'string' || !SHA256_HEX.test(raw.sha256))) throw schemaError(`resource "${raw.id}" has an invalid SHA-256 pin.`)
+    if (raw.size_bytes !== null && (typeof raw.size_bytes !== 'number' || !Number.isSafeInteger(raw.size_bytes) || raw.size_bytes < 0)) throw schemaError(`resource "${raw.id}" has an invalid size pin.`)
+    return { id: raw.id, name: raw.name, url: url.href, sha256: typeof raw.sha256 === 'string' ? raw.sha256.toLowerCase() : null, size_bytes: raw.size_bytes as number | null }
+  })
+  if (new Set(resources.map((r) => r.id)).size !== resources.length || new Set(resources.map((r) => r.name)).size !== resources.length) throw schemaError(`${where} has duplicate resource identities.`)
+  return resources
+}
+
+/** Admit owner metadata, retaining unsupported sources with their declared reason. */
+export function parsePublicCatalog(value: unknown): PublicCatalog {
+  if (!isRecord(value) || value.schema !== PUBLIC_CATALOG_SCHEMA || !Array.isArray(value.datasets) || !isRecord(value.provenance)) throw schemaError(`expected schema "${PUBLIC_CATALOG_SCHEMA}" with datasets and provenance.`)
   const datasets: PublicDatasetEntry[] = []
-  const seen = new Set<string>()
+  const ids = new Set<string>()
   let withheld = 0
   for (const raw of value.datasets) {
     if (!isRecord(raw)) throw schemaError('a dataset entry is not an object.')
-    if (raw.tier !== 'public') {
-      withheld += 1
-      continue
-    }
-    const { id, name, license, description, sources } = raw
-    if (!isText(id)) throw schemaError('a public dataset has no id.')
-    if (seen.has(id)) throw schemaError(`dataset id "${id}" is listed twice.`)
-    seen.add(id)
-    if (!isText(name)) throw schemaError(`dataset "${id}" has no name.`)
-    if (!isText(license)) throw schemaError(`dataset "${id}" has no license.`)
-    if (description !== undefined && typeof description !== 'string') throw schemaError(`dataset "${id}" has a non-text description.`)
-    if (!Array.isArray(sources) || sources.length === 0) throw schemaError(`dataset "${id}" lists no source.`)
-    const parsed = sources.map((s) => parseSource(s, id, baseUrl))
-    if (new Set(parsed.map((s) => s.id)).size !== parsed.length) throw schemaError(`dataset "${id}" lists a source id twice.`)
-    datasets.push({ id, name, tier: 'public', license, ...(isText(description) ? { description } : {}), sources: parsed })
+    if (raw.tier !== 'public') { withheld += 1; continue }
+    if (!isText(raw.id) || !isText(raw.name) || !isText(raw.license) || !Array.isArray(raw.sources) || !raw.sources.length) throw schemaError('a public dataset requires id, name, license and sources.')
+    if (ids.has(raw.id)) throw schemaError(`dataset "${raw.id}" is listed twice.`)
+    ids.add(raw.id)
+    const sources = raw.sources.map((source): PublicDatasetSource => {
+      if (!isRecord(source) || !isText(source.id) || (source.status !== 'supported' && source.status !== 'unsupported')) throw schemaError(`dataset "${raw.id}" has an invalid source.`)
+      if (source.status === 'unsupported' && !isText(source.reason)) throw schemaError(`source "${source.id}" requires its unsupported reason.`)
+      if (source.name !== undefined && typeof source.name !== 'string') throw schemaError(`source "${source.id}" has a non-text name.`)
+      const resources = resourcesOf(source.resources, `source "${source.id}"`)
+      if (source.status === 'supported' && !resources.length) throw schemaError(`source "${source.id}" has no declared resource.`)
+      return { id: source.id, ...(isText(source.name) ? { name: source.name } : {}), status: source.status, ...(isText(source.reason) ? { reason: source.reason } : {}), resources }
+    })
+    if (new Set(sources.map((s) => s.id)).size !== sources.length) throw schemaError(`dataset "${raw.id}" has duplicate source ids.`)
+    if (raw.description !== undefined && typeof raw.description !== 'string') throw schemaError(`dataset "${raw.id}" has a non-text description.`)
+    datasets.push({ id: raw.id, name: raw.name, tier: 'public', license: raw.license, ...(isText(raw.description) ? { description: raw.description } : {}), sources })
   }
-  return { url: baseUrl, datasets, withheld }
+  return { schema: PUBLIC_CATALOG_SCHEMA, datasets, withheld, provenance: value.provenance }
 }
 
 export interface PublicFetchOptions {
   signal?: AbortSignal
-  /** injected for tests; defaults to the browser fetch */
   fetch?: FetchLike
+  /** Test injection at the same owner boundary; production loads the staged owner. */
+  owner?: PublicOriginOwner
 }
 
-/** Fetch and validate the public catalog (metadata only: no dataset bytes are downloaded). */
-export async function fetchPublicCatalog(url: string = publicCatalogUrl(), options: PublicFetchOptions = {}): Promise<PublicCatalog> {
-  const response = await request(url, 'public dataset catalog', options.signal, 'application/json', options.fetch)
-  let value: unknown
-  try {
-    value = await response.json()
-  } catch (e) {
-    if (isAbortError(e)) throw e
-    throw schemaError('the response is not JSON.')
-  }
-  return parsePublicCatalog(value, response.url || url)
+/** Load the owner's embedded public metadata; browsing downloads no dataset or index. */
+export async function loadPublicCatalog(options: PublicFetchOptions = {}): Promise<PublicCatalog> {
+  const owner = options.owner ?? await originOwner()
+  options.signal?.throwIfAborted()
+  const catalog = parsePublicCatalog(ownerJson(owner.browserCatalog()))
+  options.signal?.throwIfAborted()
+  return catalog
 }
 
-/** Free-text search over the visible catalog fields (name, id, license, description, sources). */
 export function searchPublicDatasets(datasets: PublicDatasetEntry[], query: string): PublicDatasetEntry[] {
   const terms = query.toLowerCase().split(/\s+/).filter(Boolean)
-  if (!terms.length) return datasets
-  return datasets.filter((d) => {
-    const text = [d.name, d.id, d.license, d.description ?? '', ...d.sources.flatMap((s) => [s.id, s.name ?? ''])].join(' ').toLowerCase()
-    return terms.every((t) => text.includes(t))
-  })
+  return datasets.filter((d) => terms.every((term) => [d.name, d.id, d.license, d.description ?? '', ...d.sources.flatMap((s) => [s.id, s.name ?? '', s.reason ?? ''])].join(' ').toLowerCase().includes(term)))
 }
 
-/** The source the user selected. A dataset with several sources needs an explicit choice. */
 export function resolvePublicSource(dataset: PublicDatasetEntry, sourceId?: string): PublicDatasetSource {
-  if (sourceId === undefined) {
-    if (dataset.sources.length === 1) return dataset.sources[0]
-    throw new PublicDatasetError(`"${dataset.name}" publishes ${dataset.sources.length} sources (${dataset.sources.map((s) => s.id).join(', ')}); choose one — Web does not take the first.`, 'choice')
-  }
-  const source = dataset.sources.find((s) => s.id === sourceId)
-  if (!source) throw new PublicDatasetError(`"${dataset.name}" has no source "${sourceId}".`, 'choice')
+  const source = sourceId === undefined
+    ? dataset.sources.length === 1 ? dataset.sources[0] : undefined
+    : dataset.sources.find((s) => s.id === sourceId)
+  if (!source) throw new PublicDatasetError(sourceId === undefined ? `"${dataset.name}" has ${dataset.sources.length} sources; choose one — Web does not take the first.` : `"${dataset.name}" has no source "${sourceId}".`, 'choice')
+  if (source.status !== 'supported') throw new PublicDatasetError(source.reason ?? 'This source is not supported by the browser.', 'unsupported')
   return source
 }
 
@@ -190,168 +169,151 @@ export const sha256Hex = async (bytes: Uint8Array): Promise<string> =>
   Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), (b) => b.toString(16).padStart(2, '0')).join('')
 
 export type PublicImportPhase = 'downloading' | 'verifying' | 'decoding'
-export interface PublicImportProgress {
-  phase: PublicImportPhase
-  receivedBytes: number
-  totalBytes: number
+export interface PublicImportProgress { phase: PublicImportPhase; receivedBytes: number; totalBytes: number | null }
+export interface PublicResourceReceipt {
+  resource: PublicResource
+  finalUrl: string
+  observed_size_bytes: number
+  observed_sha256: string
+  sha256_verified: boolean
+  size_verified: boolean
 }
 
-/**
- * Download one asset and verify it against its catalog entry: the body may not exceed the
- * declared size (the read stops as soon as it does), must match it exactly, and its SHA-256 must
- * equal the declared digest. Cancellation goes through `signal`.
- */
-export async function downloadPublicAsset(
-  source: PublicDatasetSource,
-  options: PublicFetchOptions & { onProgress?: (p: PublicImportProgress) => void } = {},
-): Promise<Uint8Array> {
-  const { signal, onProgress } = options
-  const total = source.size_bytes
-  const response = await request(source.url, `dataset asset "${source.id}"`, signal, 'application/json', options.fetch)
-  const tooLarge = () => new PublicDatasetError(`Dataset asset "${source.id}" is larger than the ${total} bytes declared by the catalog; it was not read further.`, 'integrity')
-  const bytes = new Uint8Array(total)
+async function request(resource: PublicResource, options: PublicFetchOptions): Promise<Response> {
+  let response: Response
+  try {
+    const init: RequestInit = { method: 'GET', credentials: 'omit', referrerPolicy: 'no-referrer', headers: { Accept: 'application/octet-stream' }, signal: options.signal }
+    response = options.fetch ? await options.fetch(resource.url, init) : await fetch(resource.url, init)
+  } catch (e) {
+    if (isAbortError(e)) throw e
+    throw new PublicDatasetError(`Could not reach the original source at ${resource.url}. The publisher may not allow this browser request (CORS), or the network failed; try again later.`, 'unreachable')
+  }
+  if (!response.ok) throw new PublicDatasetError(`The original source at ${resource.url} answered HTTP ${response.status}${response.statusText ? ` ${response.statusText}` : ''}; try again later.`, response.status === 404 || response.status === 410 ? 'unreachable' : 'http')
+  return response
+}
+
+/** Transport bytes, enforce only genuine pins, and retain observed integrity separately. */
+export async function downloadPublicResource(resource: PublicResource, options: PublicFetchOptions & { onProgress?: (p: PublicImportProgress) => void } = {}): Promise<{ bytes: Uint8Array; receipt: PublicResourceReceipt }> {
+  options.signal?.throwIfAborted()
+  const response = await request(resource, options)
+  const total = resource.size_bytes
+  const fixed = total === null ? null : new Uint8Array(total)
+  const chunks: Uint8Array[] = []
   let received = 0
-  onProgress?.({ phase: 'downloading', receivedBytes: 0, totalBytes: total })
+  const progress = (phase: PublicImportPhase) => options.onProgress?.({ phase, receivedBytes: received, totalBytes: total })
+  const append = (chunk: Uint8Array) => {
+    if (total !== null && received + chunk.byteLength > total) throw new PublicDatasetError(`Resource "${resource.id}" is larger than its declared ${total} bytes.`, 'integrity')
+    if (fixed) fixed.set(chunk, received)
+    else chunks.push(chunk)
+    received += chunk.byteLength
+    progress('downloading')
+  }
+  progress('downloading')
   const reader = response.body?.getReader()
   if (reader) {
     try {
       for (;;) {
-        signal?.throwIfAborted()
+        options.signal?.throwIfAborted()
         const { done, value } = await reader.read()
         if (done) break
-        if (received + value.byteLength > total) throw tooLarge()
-        bytes.set(value, received)
-        received += value.byteLength
-        onProgress?.({ phase: 'downloading', receivedBytes: received, totalBytes: total })
+        append(value)
       }
-    } catch (e) {
-      void reader.cancel().catch(() => undefined)
-      throw e
-    }
-  } else {
-    const buffer = new Uint8Array(await response.arrayBuffer())
-    if (buffer.byteLength > total) throw tooLarge()
-    bytes.set(buffer)
-    received = buffer.byteLength
-    onProgress?.({ phase: 'downloading', receivedBytes: received, totalBytes: total })
-  }
-  signal?.throwIfAborted()
-  if (received !== total) throw new PublicDatasetError(`Dataset asset "${source.id}" has ${received} bytes, but the catalog declares ${total}.`, 'integrity')
-  onProgress?.({ phase: 'verifying', receivedBytes: received, totalBytes: total })
-  const digest = await sha256Hex(bytes)
-  signal?.throwIfAborted()
-  if (digest !== source.sha256) throw new PublicDatasetError(`Dataset asset "${source.id}" does not match its catalog SHA-256 (expected ${source.sha256}, got ${digest}); it was refused.`, 'integrity')
-  return bytes
+    } catch (e) { void reader.cancel().catch(() => undefined); throw e }
+  } else append(new Uint8Array(await response.arrayBuffer()))
+  options.signal?.throwIfAborted()
+  if (total !== null && received !== total) throw new PublicDatasetError(`Resource "${resource.id}" has ${received} bytes, but its source declares ${total}.`, 'integrity')
+  const bytes = fixed ?? new Uint8Array(received)
+  if (!fixed) { let offset = 0; for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length } }
+  progress('verifying')
+  const observed = await sha256Hex(bytes)
+  options.signal?.throwIfAborted()
+  if (resource.sha256 !== null && observed !== resource.sha256) throw new PublicDatasetError(`Resource "${resource.id}" does not match its declared SHA-256 (expected ${resource.sha256}, got ${observed}); it was refused.`, 'integrity')
+  return { bytes, receipt: { resource, finalUrl: response.url || resource.url, observed_size_bytes: received, observed_sha256: observed, sha256_verified: resource.sha256 !== null, size_verified: total !== null } }
 }
 
-/** The verified asset document: owner provenance and the published nirs4all-io `assembled_full`. */
-export interface PublicAsset {
-  provenance: Record<string, unknown>
-  assembled: Record<string, unknown>
+function parsePlan(value: unknown, dataset: PublicDatasetEntry, source: PublicDatasetSource): PublicOriginPlan {
+  if (!isRecord(value) || value.schema !== PUBLIC_PLAN_SCHEMA || value.dataset_id !== dataset.id || value.source_id !== source.id || !isRecord(value.descriptor) || !isRecord(value.provenance)) throw schemaError('the acquisition plan does not identify the selected dataset/source.')
+  const resources = resourcesOf(value.resources, 'the acquisition plan')
+  if (JSON.stringify(resources) !== JSON.stringify(source.resources)) throw schemaError('the acquisition plan differs from its catalog resource kit.')
+  return { schema: PUBLIC_PLAN_SCHEMA, dataset_id: dataset.id, source_id: source.id, resources, descriptor: value.descriptor, provenance: value.provenance }
 }
 
-/** Validate the asset envelope and that it is the asset of the selected dataset and source. */
-export function parsePublicAsset(bytes: Uint8Array, dataset: PublicDatasetEntry, source: PublicDatasetSource): PublicAsset {
-  const refuse = (why: string) => new PublicDatasetError(`Dataset asset "${source.id}" of "${dataset.id}" was refused: ${why}`, 'schema')
-  let value: unknown
-  try {
-    value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes))
-  } catch {
-    throw refuse('it is not UTF-8 JSON.')
-  }
-  if (!isRecord(value) || value.schema !== PUBLIC_ASSET_SCHEMA) throw refuse(`expected schema "${PUBLIC_ASSET_SCHEMA}".`)
-  if (value.dataset_id !== dataset.id) throw refuse(`it declares dataset "${String(value.dataset_id)}".`)
-  if (value.source_id !== source.id) throw refuse(`it declares source "${String(value.source_id)}".`)
-  if (!isRecord(value.provenance)) throw refuse('it carries no provenance object.')
-  if (!isRecord(value.assembled)) throw refuse('it carries no assembled object.')
-  return { provenance: value.provenance, assembled: value.assembled }
+function parsePrepared(value: unknown): PublicPreparedDataset {
+  if (!isRecord(value) || !Array.isArray(value.files) || !Array.isArray(value.record_sets) || !isRecord(value.spec) || !isRecord(value.provenance)) throw schemaError('the preparation result requires files, record_sets, spec and provenance.')
+  const files = value.files.map((file): PublicInputFile => {
+    if (!isRecord(file) || !isText(file.name) || !(file.bytes instanceof Uint8Array)) throw schemaError('a prepared file requires its name and Uint8Array bytes.')
+    return { name: file.name, bytes: file.bytes }
+  })
+  return { files, record_sets: value.record_sets, spec: value.spec, provenance: value.provenance }
 }
 
-/** The IO owner adapter from the native `assembled_full` JSON to the WASM `assembleDataset` shape. */
-export type AssembledDecoder = (value: unknown) => unknown
-
-const loadOwnerDecoder = async (): Promise<AssembledDecoder> => (await import('@/engine/wasm/io/assembled-wire')).decodeAssembledFull
-
-/**
- * The complete published evidence of an imported public dataset, kept beside the engine view:
- * the catalog entry and selected source, the verified digest, the owner provenance and the
- * IO-decoded record with every partition, target, metadata column, identity, axis and mask.
- */
 export interface PublicDatasetRetained {
-  catalogUrl: string
+  catalog: PublicCatalog
   dataset: PublicDatasetEntry
   source: PublicDatasetSource
-  sha256: string
+  plan: PublicOriginPlan
+  planJson: string
+  resources: PublicResourceReceipt[]
+  inputs: PublicInputFile[]
+  prepared: PublicPreparedDataset
   provenance: Record<string, unknown>
   record: AssembledFull
 }
+export type PublicAssembler = (files: PublicInputFile[], recordSets: unknown[], specJson: string) => AssembledFull | Promise<AssembledFull>
+const assembleOwner: PublicAssembler = async (files, records, spec) => (await loadDataIoWasm()).io.assembleDataset(files, records, spec) as unknown as AssembledFull
 
-/** Download, verify and IO-decode the selected source of a public dataset (one asset, nothing else). */
-export async function downloadPublicDataset(
-  catalogUrl: string,
-  dataset: PublicDatasetEntry,
-  sourceId: string | undefined,
-  options: PublicFetchOptions & { onProgress?: (p: PublicImportProgress) => void; decode?: AssembledDecoder } = {},
-): Promise<PublicDatasetRetained> {
+/** Resolve the owner's source plan, fetch its kit, then prepare and assemble it with owners. */
+export async function downloadPublicDataset(catalog: PublicCatalog, dataset: PublicDatasetEntry, sourceId: string | undefined, options: PublicFetchOptions & { onProgress?: (p: PublicImportProgress) => void; assemble?: PublicAssembler } = {}): Promise<PublicDatasetRetained> {
   if (dataset.tier !== 'public') throw new PublicDatasetError(`"${dataset.id}" is not a public dataset.`, 'choice')
   const source = resolvePublicSource(dataset, sourceId)
-  const bytes = await downloadPublicAsset(source, options)
-  const asset = parsePublicAsset(bytes, dataset, source)
-  options.onProgress?.({ phase: 'decoding', receivedBytes: source.size_bytes, totalBytes: source.size_bytes })
-  const decode = options.decode ?? (await loadOwnerDecoder())
+  const owner = options.owner ?? await originOwner()
   options.signal?.throwIfAborted()
-  const record = decode(asset.assembled)
-  if (!isRecord(record) || !isRecord(record.blocks)) throw new PublicDatasetError(`nirs4all-io did not decode dataset asset "${source.id}" into an assembled record.`, 'schema')
-  return { catalogUrl, dataset, source, sha256: source.sha256, provenance: asset.provenance, record: record as unknown as AssembledFull }
-}
-
-/** Host-boundary key of the retained public evidence. An enumerable symbol property, like
- *  `IO_RECORD`: the `{ ...ds }` patches of the app keep the reference, while the structured clone
- *  sent to the engine worker drops symbol keys (no copy, nothing leaves the host). */
-export const PUBLIC_DATASET_RECORD: unique symbol = Symbol.for('nirs4all.web.public-dataset-record')
-
-/** A dataset view that may carry its retained public evidence. */
-export type PublicMaterializedDataset = MaterializedDataset & { [PUBLIC_DATASET_RECORD]?: PublicDatasetRetained }
-
-/** The retained public evidence of a dataset imported from the catalog (undefined otherwise). */
-export const publicDatasetOf = (dataset: MaterializedDataset): PublicDatasetRetained | undefined =>
-  (dataset as PublicMaterializedDataset)[PUBLIC_DATASET_RECORD]
-
-/** A public import needs an explicit displayed target when several are available. */
-export class PublicDatasetTargetChoiceRequired extends Error {
-  constructor(message: string, readonly options: string[]) {
-    super(message)
-    this.name = 'PublicDatasetTargetChoiceRequired'
+  const planJson = owner.resolveBrowserPlan(dataset.id, source.id)
+  const plan = parsePlan(ownerJson(planJson), dataset, source)
+  const inputs: PublicInputFile[] = []
+  const receipts: PublicResourceReceipt[] = []
+  const total = plan.resources.every((r) => r.size_bytes !== null) ? plan.resources.reduce((sum, r) => sum + r.size_bytes!, 0) : null
+  let received = 0
+  for (const resource of plan.resources) {
+    const downloaded = await downloadPublicResource(resource, { ...options, onProgress: (p) => options.onProgress?.({ phase: p.phase, receivedBytes: received + p.receivedBytes, totalBytes: total }) })
+    inputs.push({ name: resource.name, bytes: downloaded.bytes })
+    receipts.push(downloaded.receipt)
+    received += downloaded.bytes.byteLength
   }
+  options.signal?.throwIfAborted()
+  options.onProgress?.({ phase: 'decoding', receivedBytes: received, totalBytes: total })
+  const prepared = parsePrepared(owner.prepareBrowserDataset(planJson, inputs))
+  options.signal?.throwIfAborted()
+  const record = await (options.assemble ?? assembleOwner)(prepared.files, prepared.record_sets, JSON.stringify(prepared.spec))
+  options.signal?.throwIfAborted()
+  if (!isRecord(record) || !isRecord(record.blocks)) throw schemaError('nirs4all-io did not return an assembled record.')
+  return { catalog, dataset, source, plan, planJson, resources: receipts, inputs, prepared, provenance: { catalog: catalog.provenance, plan: plan.provenance, preparation: prepared.provenance }, record: record as unknown as AssembledFull }
 }
 
-/**
- * Project a downloaded public dataset to the engine view through `mapAssembledToMaterialized`.
- * Several assembled targets throw `PublicDatasetTargetChoiceRequired` until `choice.target` names one; the
- * record is only read, so another choice reprojects it without downloading again.
- */
+/** Retained by host object patches; deliberately absent from worker structured clones. */
+export const PUBLIC_DATASET_RECORD: unique symbol = Symbol.for('nirs4all.web.public-dataset-record')
+export type PublicMaterializedDataset = MaterializedDataset & { [PUBLIC_DATASET_RECORD]?: PublicDatasetRetained }
+export const publicDatasetOf = (dataset: MaterializedDataset): PublicDatasetRetained | undefined => (dataset as PublicMaterializedDataset)[PUBLIC_DATASET_RECORD]
+
+export class PublicDatasetTargetChoiceRequired extends Error {
+  constructor(message: string, readonly options: string[]) { super(message); this.name = 'PublicDatasetTargetChoiceRequired' }
+}
+
+/** Keep the full owner record; display-target selection never downloads or drops another target. */
 export function projectPublicDataset(retained: PublicDatasetRetained, choice: IoProjectionChoice = {}): PublicMaterializedDataset {
   const dataset: PublicMaterializedDataset = mapAssembledToMaterialized(retained.record, choice)
   const names = dataset.targets?.map((target) => target.name) ?? []
-  if (choice.target === undefined && names.length > 1) {
-    throw new PublicDatasetTargetChoiceRequired(`This dataset carries ${names.length} targets (${names.join(', ')}); choose one to display. All targets remain available when launching a run.`, names)
-  }
+  if (choice.target === undefined && names.length > 1) throw new PublicDatasetTargetChoiceRequired(`This dataset carries ${names.length} targets (${names.join(', ')}); choose one to display. All targets remain available when launching a run.`, names)
   dataset[PUBLIC_DATASET_RECORD] = retained
   return dataset
 }
 
-/** Display name of an imported dataset: the catalog name, plus the source when there are several. */
-export const publicDatasetName = (dataset: PublicDatasetEntry, source: PublicDatasetSource): string =>
-  dataset.sources.length > 1 ? `${dataset.name} — ${source.name ?? source.id}` : dataset.name
-
+export const publicDatasetName = (dataset: PublicDatasetEntry, source: PublicDatasetSource): string => dataset.sources.length > 1 ? `${dataset.name} — ${source.name ?? source.id}` : dataset.name
 export function formatBytes(n: number): string {
   if (n < 1024) return `${n} B`
   const units = ['KB', 'MB', 'GB']
   let value = n / 1024
   let unit = 0
-  while (value >= 1024 && unit < units.length - 1) {
-    value /= 1024
-    unit += 1
-  }
+  while (value >= 1024 && unit < units.length - 1) { value /= 1024; unit += 1 }
   return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[unit]}`
 }

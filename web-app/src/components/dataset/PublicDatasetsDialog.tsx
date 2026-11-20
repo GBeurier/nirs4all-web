@@ -4,16 +4,16 @@ import type { MaterializedDataset } from '@/engine/types'
 import {
   PublicDatasetTargetChoiceRequired,
   downloadPublicDataset,
-  fetchPublicCatalog,
+  loadPublicCatalog,
   formatBytes,
   isAbortError,
   projectPublicDataset,
-  publicCatalogUrl,
   publicDatasetName,
   searchPublicDatasets,
   type PublicCatalog,
   type PublicDatasetEntry,
   type PublicDatasetRetained,
+  type PublicDatasetSource,
   type PublicImportProgress,
 } from '@/data/public-datasets'
 import {
@@ -41,14 +41,12 @@ import { cn } from '@/app/components/ui/utils'
 export interface PublicDatasetsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  /** receives the projected dataset; its full published record stays reachable via `publicDatasetOf` */
+  /** receives the projection; its complete owner record stays reachable via `publicDatasetOf` */
   onDataset: (ds: MaterializedDataset, sourceName: string) => void
   /** another import is running: no new download starts */
   disabled?: boolean
-  /** true while a dataset asset is being downloaded, verified or decoded */
+  /** true while original-source files are downloaded, checked or prepared */
   onBusyChange?: (busy: boolean) => void
-  /** defaults to the build catalog URL (see docs/PUBLIC_DATASETS.md) */
-  catalogUrl?: string
 }
 
 type CatalogState =
@@ -63,30 +61,21 @@ type ImportState =
   | { status: 'error'; message: string }
   | { status: 'target'; retained: PublicDatasetRetained; options: string[]; message: string }
 
-const sourceSize = (d: PublicDatasetEntry) => d.sources.reduce((n, s) => n + s.size_bytes, 0)
+const resourceSize = (resources: PublicDatasetSource['resources']) => !resources.length ? 'no browser resource'
+  : resources.every((r) => r.size_bytes !== null) ? formatBytes(resources.reduce((n, r) => n + r.size_bytes!, 0)) : 'size not declared'
+const sourceSize = (d: PublicDatasetEntry) => resourceSize(d.sources.flatMap((s) => s.resources))
 
 function progressLabel(p: PublicImportProgress | null): string {
   if (!p) return 'Connecting…'
-  if (p.phase === 'verifying') return 'Verifying size and SHA-256…'
+  if (p.phase === 'verifying') return 'Checking downloaded files…'
   if (p.phase === 'decoding') return 'Preparing dataset…'
-  return `Downloading ${formatBytes(p.receivedBytes)} of ${formatBytes(p.totalBytes)}…`
+  return p.totalBytes === null ? `Downloading ${formatBytes(p.receivedBytes)}…` : `Downloading ${formatBytes(p.receivedBytes)} of ${formatBytes(p.totalBytes)}…`
 }
 
-/**
- * Browse the public dataset catalog and import one owner-prepared asset. Only the selected source
- * is downloaded (no credentials, cancellable); it is verified against the catalog, decoded by the
- * nirs4all-io owner binding and projected with explicit source and target choices. Closing the
- * dialog cancels a running download. Nothing is uploaded.
- */
-export function PublicDatasetsDialog({ open, onOpenChange, onDataset, disabled, onBusyChange, catalogUrl }: PublicDatasetsDialogProps) {
-  const url = catalogUrl ?? publicCatalogUrl()
-  const origin = useMemo(() => {
-    try {
-      return new URL('/', url)
-    } catch {
-      return null
-    }
-  }, [url])
+/** Browse the owner's embedded public catalog and acquire a declared source kit.
+ * Original files are downloaded without credentials; Data prepares and IO assembles them.
+ * Closing the dialog cancels the download. Source/target choices stay explicit. */
+export function PublicDatasetsDialog({ open, onOpenChange, onDataset, disabled, onBusyChange }: PublicDatasetsDialogProps) {
   const [catalog, setCatalog] = useState<CatalogState>({ status: 'idle' })
   const [query, setQuery] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -101,7 +90,7 @@ export function PublicDatasetsDialog({ open, onOpenChange, onDataset, disabled, 
     const controller = new AbortController()
     catalogAbort.current = controller
     setCatalog({ status: 'loading' })
-    fetchPublicCatalog(url, { signal: controller.signal })
+    loadPublicCatalog({ signal: controller.signal })
       .then((c) => {
         if (catalogAbort.current === controller) setCatalog({ status: 'ready', catalog: c })
       })
@@ -109,7 +98,7 @@ export function PublicDatasetsDialog({ open, onOpenChange, onDataset, disabled, 
         if (catalogAbort.current !== controller) return
         setCatalog(isAbortError(e) ? { status: 'idle' } : { status: 'error', message: e instanceof Error ? e.message : String(e) })
       })
-  }, [url])
+  }, [])
 
   useEffect(() => {
     if (open && catalog.status === 'idle') loadCatalog()
@@ -169,11 +158,11 @@ export function PublicDatasetsDialog({ open, onOpenChange, onDataset, disabled, 
   }
 
   const startImport = () => {
-    if (!selected || !selectedSource || disabled || running || catalog.status !== 'ready') return
+    if (!selected || !selectedSource || selectedSource.status !== 'supported' || disabled || running || catalog.status !== 'ready') return
     const controller = new AbortController()
     importAbort.current = controller
     setJob({ status: 'running', progress: null })
-    downloadPublicDataset(catalog.catalog.url, selected, selectedSource.id, {
+    downloadPublicDataset(catalog.catalog, selected, selectedSource.id, {
       signal: controller.signal,
       onProgress: (progress) => {
         if (importAbort.current === controller) setJob({ status: 'running', progress })
@@ -192,7 +181,7 @@ export function PublicDatasetsDialog({ open, onOpenChange, onDataset, disabled, 
   }
 
   const progress = job.status === 'running' ? job.progress : null
-  const percent = progress && progress.totalBytes > 0 ? Math.round((100 * progress.receivedBytes) / progress.totalBytes) : 0
+  const percent = progress && progress.totalBytes !== null && progress.totalBytes > 0 ? Math.round((100 * progress.receivedBytes) / progress.totalBytes) : 0
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -205,15 +194,13 @@ export function PublicDatasetsDialog({ open, onOpenChange, onDataset, disabled, 
             Public datasets
           </DialogTitle>
           <DialogDescription>
-            Import a published dataset prepared by nirs4all. Only the asset you choose is downloaded,
-            without cookies or credentials, and verified before use. Nothing is uploaded.
+            Download public data from its original publisher, without cookies or credentials.
+            Checksums are checked when available. Nothing is uploaded.
           </DialogDescription>
-          {origin && (
-            <p className="text-[11px] text-muted-foreground">
-              Published by{' '}
-              <a href={origin.href} target="_blank" rel="noopener noreferrer" className="font-medium text-brand-teal hover:underline">{origin.host}</a>
-            </p>
-          )}
+          <p className="text-[11px] text-muted-foreground">
+            Catalogued by{' '}
+            <a href="https://datasets.nirs4all.org/" target="_blank" rel="noopener noreferrer" className="font-medium text-brand-teal hover:underline">nirs4all-datasets</a>
+          </p>
         </DialogHeader>
 
         {catalog.status === 'loading' && (
@@ -274,7 +261,7 @@ export function PublicDatasetsDialog({ open, onOpenChange, onDataset, disabled, 
                       </div>
                       {d.description && <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{d.description}</p>}
                       <p className="mt-1 text-[11px] text-muted-foreground">
-                        {d.sources.length === 1 ? '1 source' : `${d.sources.length} sources`} · {formatBytes(sourceSize(d))}
+                        {d.sources.length === 1 ? '1 source' : `${d.sources.length} sources`} · {sourceSize(d)}
                       </p>
                     </button>
                   </li>
@@ -296,19 +283,25 @@ export function PublicDatasetsDialog({ open, onOpenChange, onDataset, disabled, 
                       </SelectTrigger>
                       <SelectContent>
                         {selected.sources.map((s) => (
-                          <SelectItem key={s.id} value={s.id}>
-                            {s.name ?? s.id} · {formatBytes(s.size_bytes)}
+                          <SelectItem key={s.id} value={s.id} disabled={s.status !== 'supported'}>
+                            {s.name ?? s.id} · {s.status === 'supported' ? resourceSize(s.resources) : 'unavailable in this browser'}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    <p className="text-[11px] text-muted-foreground">This dataset publishes several sources; each is a separate asset, and only the chosen one is downloaded.</p>
+                    <p className="text-[11px] text-muted-foreground">This dataset has several spectral sources. Only the files declared for the chosen source are downloaded.</p>
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground">
-                    Source: <span className="font-medium text-foreground">{selected.sources[0].name ?? selected.sources[0].id}</span> · {formatBytes(selected.sources[0].size_bytes)}
+                    Source: <span className="font-medium text-foreground">{selected.sources[0].name ?? selected.sources[0].id}</span> · {resourceSize(selected.sources[0].resources)}
                   </p>
                 )}
+
+                {selected.sources.filter((source) => source.status === 'unsupported').map((source) => (
+                  <p key={source.id} className="text-xs text-muted-foreground" role="status">
+                    {source.name ?? source.id}: {source.reason}
+                  </p>
+                ))}
 
                 {job.status === 'running' && (
                   <div className="space-y-1.5" aria-live="polite">
@@ -345,7 +338,7 @@ export function PublicDatasetsDialog({ open, onOpenChange, onDataset, disabled, 
 
         <DialogFooter className="items-center gap-2 sm:justify-between">
           <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <ShieldCheck className="h-3.5 w-3.5 text-brand-green" /> Size and SHA-256 checked against the catalog.
+            <ShieldCheck className="h-3.5 w-3.5 text-brand-green" /> Publisher checksums are checked when available.
           </span>
           <div className="flex gap-2">
             {running ? (
@@ -357,7 +350,7 @@ export function PublicDatasetsDialog({ open, onOpenChange, onDataset, disabled, 
               <Button
                 type="button"
                 className="gap-1.5"
-                disabled={!selectedSource || disabled || running || catalog.status !== 'ready'}
+                disabled={!selectedSource || selectedSource.status !== 'supported' || disabled || running || catalog.status !== 'ready'}
                 onClick={startImport}
               >
                 {running ? <Loader2 className="h-4 w-4 animate-spin" /> : job.status === 'error' ? <RotateCcw className="h-4 w-4" /> : <Download className="h-4 w-4" />}

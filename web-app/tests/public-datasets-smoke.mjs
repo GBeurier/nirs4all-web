@@ -1,41 +1,29 @@
-// Browser import contract: source/target choice, integrity refusal, cancellation,
-// and successful import. The default fixture is synthetic native IO output.
-// Set PUBLIC_DATASETS_FIXTURE_DIR to additionally import a locally prepared bank
-// export. No live origin access, uploads or public publication occur in this test.
+// Actual staged Data+IO owners with a faithful synthetic original CSV.
+// Only the declared source request is intercepted: no catalog mirror, owner mock,
+// live origin download, dataset upload or claim of publisher CORS support.
 import assert from 'node:assert/strict'
-import { createHash } from 'node:crypto'
-import { readFile, mkdtemp } from 'node:fs/promises'
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { createHash } from 'node:crypto'
 import { chromium } from 'playwright-core'
 
 const appUrl = process.env.SMOKE_URL || 'http://localhost:4317/'
-const catalogUrl = process.env.SMOKE_PUBLIC_CATALOG_URL || 'https://datasets.nirs4all.org/browser/catalog.json'
-const output = process.env.SMOKE_ARTIFACT_DIR || await mkdtemp(join(tmpdir(), 'n4a-public-datasets-'))
-const synthetic = await readFile(new URL('./fixtures/public-dataset-assembled.json', import.meta.url))
-const assetFact = (id, bytes) => ({ id, url: `sources/${id}.json`, sha256: createHash('sha256').update(bytes).digest('hex'), size_bytes: bytes.length })
-const bytesBySource = new Map([['m', synthetic]])
-const mirror = JSON.parse(synthetic)
-mirror.source_id = 'mirror'
-mirror.assembled.blocks.train.source_ids = ['mirror']
-mirror.assembled.identity.provenance.source_ids = ['mirror']
-bytesBySource.set('mirror', Buffer.from(JSON.stringify(mirror)))
-const catalog = {
-  schema: 'nirs4all.datasets.public-browser.v1',
-  datasets: [
-    { id: 'private_smoke', name: 'Private fixture must stay hidden', tier: 'private' },
-    { id: 'public_smoke', name: 'Synthetic public dataset', tier: 'public', license: 'CC0-1.0',
-      sources: ['mirror', 'm'].map(id => ({ ...assetFact(id, bytesBySource.get(id)), name: id === 'm' ? 'Original source' : 'Other source' })) },
-  ],
-}
-
+const output = process.env.SMOKE_ARTIFACT_DIR || await mkdtemp(join(tmpdir(), 'n4a-public-origins-'))
+await mkdir(output, { recursive: true })
+const datasetId = 'canopy_treatment_2009_2016_to_cedar_ecosis'
+const sourceUrl = 'https://data.ecosis.org/dataset/e7459b49-06d3-4e1d-beaa-cab0e012cc23/resource/73612f6f-0627-44c3-be63-2ab4e33002a1/download/e244_multispec_raw_data.csv'
+// The real owner's declared columns and mappings, with two synthetic observations.
+// Repeated Experiment is metadata, not permission to collapse observation IDs.
+const csv = Buffer.from('Experiment,Treatment, 485 (nm) wavelength ,560 (nm) wavelength ,660 (nm) wavelength,830 (nm) wavelength,1650 (nm) wavelength ,PLOT,Note\ne244,Control,-0.0,0.2,,0.4,0.5,1,first\ne244,Insecticide,0.6,0.7,0.8,0.9,1.0,2,second\n')
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', headless: true, args: ['--no-sandbox'] })
 const errors = []
-let page
+const requests = []
 try {
-  page = await browser.newPage({ viewport: { width: 1280, height: 960 } })
+  const page = await browser.newPage({ viewport: { width: 1280, height: 960 } })
   page.on('pageerror', error => errors.push(error.message))
   page.on('console', message => { if (message.type() === 'error' && !/Failed to load resource/.test(message.text())) errors.push(message.text()) })
+  page.on('request', request => { if (request.url().startsWith('https://')) requests.push(request.url()) })
   let filePickers = 0
   page.on('filechooser', () => { filePickers++ })
   let downloads = 0
@@ -43,94 +31,52 @@ try {
   let releaseSlow
   let signalSlowStarted
   const slowStarted = new Promise(resolve => { signalSlowStarted = resolve })
-  await page.route(new URL('.', catalogUrl).href + '**', async route => {
+  await page.route(sourceUrl, async route => {
     const request = route.request()
     assert.equal(request.method(), 'GET')
     assert.equal(request.headers().cookie, undefined)
-    if (request.url() === catalogUrl) {
-      return route.fulfill({ json: catalog })
-    }
-    assert.equal(request.url(), new URL('sources/m.json', catalogUrl).href, 'only the explicitly chosen source is fetched')
+    assert.equal(request.headers().authorization, undefined)
+    assert.equal(request.headers().referer, undefined)
     downloads++
-    const bytes = Buffer.from(synthetic)
     if (mode === 'slow') await new Promise(resolve => { releaseSlow = resolve; signalSlowStarted() })
-    if (mode === 'corrupt') bytes[0] ^= 1
-    await route.fulfill({ contentType: 'application/json', body: bytes }).catch(() => {})
+    if (mode === 'http-error') return route.fulfill({ status: 503, body: 'Synthetic publisher failure' })
+    await route.fulfill({ contentType: 'text/csv', body: csv }).catch(() => {})
   })
   await page.goto(appUrl, { waitUntil: 'load' })
   const browse = page.getByRole('button', { name: 'Browse public datasets', exact: true })
   await browse.focus()
   await browse.press('Enter')
   const dialog = page.getByRole('dialog')
-  await dialog.getByLabel('Search public datasets').fill('Synthetic')
-  assert.equal(await dialog.getByText('Private fixture must stay hidden').count(), 0)
-  await dialog.getByRole('button', { name: /Synthetic public dataset/ }).click()
+  const search = dialog.getByLabel('Search public datasets')
+  await search.fill('cartilage_spectroscopy_scientificdata_nir')
+  await dialog.getByRole('button', { name: /cartilage_spectroscopy_scientificdata_nir/ }).click()
+  await dialog.getByRole('status').filter({ hasText: /not implemented by browser profile/ }).waitFor()
+  assert.equal(await dialog.getByRole('button', { name: 'Download and import' }).isDisabled(), true)
+  assert.equal(downloads, 0, 'unsupported source refuses before any dataset download')
+  await search.fill(datasetId)
+  await dialog.getByRole('button', { name: new RegExp(datasetId) }).click()
+  assert.equal(downloads, 0, 'embedded catalog browsing downloads no dataset or index')
   const importButton = dialog.getByRole('button', { name: 'Download and import' })
-  assert.equal(await importButton.isDisabled(), true, 'multiple sources require an explicit choice')
-  assert.equal(downloads, 0, 'browsing downloads no dataset bytes')
-  await dialog.getByRole('combobox').click()
-  await page.getByRole('option', { name: /Original source/ }).click()
   await importButton.click()
   await slowStarted
-  await page.waitForFunction(() => document.body.textContent.includes('Cancel download'))
   await dialog.getByRole('button', { name: 'Cancel download' }).click()
   releaseSlow?.()
-  assert.equal(await dialog.locator('[data-target-choice]').count(), 0, 'canceled imports cannot adopt a late response')
-  mode = 'corrupt'
+  assert.equal(await dialog.locator('[data-target-choice]').count(), 0, 'cancelled imports cannot adopt a late response')
+  mode = 'http-error'
   await importButton.click()
-  await dialog.getByText(/does not match its catalog SHA-256/).waitFor()
+  await dialog.getByText(/answered HTTP 503/).waitFor()
   mode = 'valid'
   await dialog.getByRole('button', { name: 'Retry import' }).click()
-  const targetChoice = dialog.locator('[data-target-choice]')
-  await targetChoice.waitFor()
-  assert.deepEqual(await targetChoice.getByRole('button').allTextContents(), ['y', 'cls', 'k'])
-  await page.screenshot({ path: join(output, 'public-datasets-target-choice.png') })
-  await targetChoice.getByRole('button', { name: 'y', exact: true }).click()
-  await page.getByText(/3 samples × 2 wavelengths/).first().waitFor()
+  await page.getByText(/2 samples × 5 wavelengths/).first().waitFor()
   assert.equal(await dialog.count(), 0)
-  assert.equal(downloads, 3, 'cancel, corrupt, retry; target choice never downloads again')
-  assert.equal(filePickers, 0, 'keyboard activation must not open the local file picker')
-  await page.screenshot({ path: join(output, 'public-datasets-imported.png') })
-  console.log('✓ source/target choice, cancellation, checksum refusal and import')
-
-  if (process.env.PUBLIC_DATASETS_FIXTURE_DIR) {
-    const directory = process.env.PUBLIC_DATASETS_FIXTURE_DIR
-    const realCatalog = JSON.parse(await readFile(join(directory, 'catalog.json'), 'utf8'))
-    const entry = realCatalog.datasets[0]
-    assert.equal(entry.tier, 'public')
-    const source = entry.sources[0]
-    const bytes = await readFile(join(directory, source.url))
-    const real = JSON.parse(bytes)
-    const rows = Object.values(real.assembled.blocks).reduce((n, block) => n + block.n_samples, 0)
-    const columns = Object.values(real.assembled.blocks)[0].x[0].n_cols
-    const realPage = await browser.newPage({ viewport: { width: 1280, height: 960 } })
-    realPage.on('pageerror', error => errors.push(error.message))
-    await realPage.route(new URL('.', catalogUrl).href + '**', async route => {
-      assert.equal(route.request().method(), 'GET')
-      if (route.request().url() === catalogUrl) return route.fulfill({ json: realCatalog })
-      assert.equal(route.request().url(), new URL(source.url, catalogUrl).href)
-      return route.fulfill({ contentType: 'application/json', body: bytes })
-    })
-    await realPage.goto(appUrl, { waitUntil: 'load' })
-    await realPage.getByRole('button', { name: 'Browse public datasets', exact: true }).click()
-    const realDialog = realPage.getByRole('dialog')
-    await realDialog.getByLabel('Search public datasets').fill(entry.id)
-    await realDialog.getByRole('button', { name: new RegExp(entry.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) }).click()
-    if (entry.sources.length > 1) {
-      await realDialog.getByRole('combobox').click()
-      await realPage.getByRole('option', { name: new RegExp(source.name || source.id) }).click()
-    }
-    await realDialog.getByRole('button', { name: 'Download and import' }).click()
-    const firstTarget = Object.values(real.assembled.blocks)[0].y_headers[0]
-    if (Object.values(real.assembled.blocks)[0].y_headers.length > 1) {
-      await realDialog.locator('[data-target-choice]').getByRole('button', { name: firstTarget, exact: true }).click()
-    }
-    await realPage.getByText(`${rows} samples × ${columns} wavelengths`, { exact: false }).first().waitFor()
-    await realPage.screenshot({ path: join(output, 'public-dataset-real-imported.png') })
-    console.log(`✓ prepared public ${entry.id}: ${rows} × ${columns}`)
-  }
+  assert.equal(downloads, 3, 'cancel, HTTP failure and successful retry')
+  assert.equal(filePickers, 0, 'keyboard browsing must not open the local file picker')
+  assert.deepEqual(requests, [sourceUrl, sourceUrl, sourceUrl], 'only the declared original resource is fetched')
+  await page.screenshot({ path: join(output, 'public-origin-imported.png') })
   assert.deepEqual(errors, [], 'no browser execution errors')
-  console.log(`Screenshots: ${output}`)
+  await writeFile(join(output, 'public-origin-smoke.json'), JSON.stringify({ status: 'PASS', scope: 'Actual staged Data+IO with a synthetic source CSV; no live origin/CORS claim.', dataset_id: datasetId, source_url: sourceUrl, shape: [2, 5], synthetic_csv_sha256: createHash('sha256').update(csv).digest('hex'), downloads, errors, checks: ['embedded catalog without network', 'explicit unsupported reason', 'keyboard activation', 'cancellation', 'HTTP refusal and retry', 'owner recipe and IO assembly'] }, null, 2) + '\n')
+  console.log('✓ embedded owner catalog, unsupported refusal, cancellation, HTTP retry and original-source preparation')
+  console.log(`Screenshots and receipt: ${output}`)
 } finally {
   await browser.close()
 }
