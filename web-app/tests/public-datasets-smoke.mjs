@@ -30,7 +30,9 @@ try {
   let mode = 'slow'
   let releaseSlow
   let signalSlowStarted
+  let signalSlowSettled
   const slowStarted = new Promise(resolve => { signalSlowStarted = resolve })
+  const slowSettled = new Promise(resolve => { signalSlowSettled = resolve })
   await page.route(sourceUrl, async route => {
     const request = route.request()
     assert.equal(request.method(), 'GET')
@@ -38,9 +40,11 @@ try {
     assert.equal(request.headers().authorization, undefined)
     assert.equal(request.headers().referer, undefined)
     downloads++
-    if (mode === 'slow') await new Promise(resolve => { releaseSlow = resolve; signalSlowStarted() })
+    const slow = mode === 'slow'
+    if (slow) await new Promise(resolve => { releaseSlow = resolve; signalSlowStarted() })
     if (mode === 'http-error') return route.fulfill({ status: 503, body: 'Synthetic publisher failure' })
     await route.fulfill({ contentType: 'text/csv', body: csv }).catch(() => {})
+    if (slow) signalSlowSettled()
   })
   await page.goto(appUrl, { waitUntil: 'load' })
   const browse = page.getByRole('button', { name: 'Browse public datasets', exact: true })
@@ -61,7 +65,10 @@ try {
   await slowStarted
   await dialog.getByRole('button', { name: 'Cancel download' }).click()
   releaseSlow?.()
-  assert.equal(await dialog.locator('[data-target-choice]').count(), 0, 'cancelled imports cannot adopt a late response')
+  await slowSettled
+  await page.waitForLoadState('networkidle')
+  assert.equal(await dialog.isVisible(), true, 'cancellation keeps the import dialog open after the late response settles')
+  assert.equal(await page.getByText(/\d+ samples × \d+ wavelengths/).count(), 0, 'cancelled imports cannot adopt a late dataset')
   mode = 'http-error'
   await importButton.click()
   await dialog.getByText(/answered HTTP 503/).waitFor()
