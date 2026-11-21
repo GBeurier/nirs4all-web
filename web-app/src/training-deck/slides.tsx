@@ -88,7 +88,7 @@ const R = {
   ts: (name: string) => preset('timeseries', name),
 }
 
-const BASE_SLIDES: Slide[] = [
+export const SLIDES: Slide[] = [
   {
     id: 'title', section: '', title: 'Données multimodales dans nirs4all', minutes: 0.5,
     body: () => (
@@ -682,16 +682,3 @@ const BASE_SLIDES: Slide[] = [
     ],
   },
 ]
-
-/** What a private overlay may use to write its own demonstration slides. */
-export interface DeckParts {
-  Watch: typeof Watch; Points: typeof Points; Capture: typeof Capture
-  ResultsChart: typeof ResultsChart; Provenance: typeof Provenance; fmt: typeof fmt; R: typeof R
-}
-type Overlay = (parts: DeckParts, base: Readonly<Record<string, Slide>>) => Record<string, Slide>
-// Optional local overlay, never committed (src/training-deck/private/ is gitignored): it replaces
-// slides by id, for example a demonstration on private data kept on the presenter's machine.
-const overlays = Object.values(import.meta.glob<{ default: Overlay }>('./private/slides.tsx', { eager: true }))
-const replaced = overlays.reduce<Record<string, Slide>>((acc, module) => ({ ...acc,
-  ...module.default({ Watch, Points, Capture, ResultsChart, Provenance, fmt, R }, Object.fromEntries(BASE_SLIDES.map(slide => [slide.id, slide]))) }), {})
-export const SLIDES: Slide[] = BASE_SLIDES.map(slide => replaced[slide.id] ?? slide)
