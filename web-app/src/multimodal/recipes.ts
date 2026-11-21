@@ -78,8 +78,8 @@ function describeLegacyRecipe(dataset: LabDataset, config: LabConfig): RecipeDes
     { methodId: PLS, params: { n_components: config.nComponents, center_x: true, scale_x: false, center_y: true, scale_y: false } } :
     { methodId: RIDGE, params: { alpha: config.ridgeAlpha, center_x: true, center_y: true, scale_x: false } }
   const neuralHead = (sources: LabSource[]): LabStep => ({ methodId: NEURAL, params: { ...config.cnn,
-    branch_kinds: sources.map(source => source.modality === 'image' ? 2 : source.modality === 'genetics' ? 0 : 1),
-    branch_shapes: sources.flatMap(source => source.modality === 'image' ? source.shape : [source.shape[0], 1, 1]),
+    branch_kinds: sources.map(source => source.modality === 'image' ? 2 : source.modality === 'genetics' || source.modality === 'timeseries' ? 0 : 1),
+    branch_shapes: sources.flatMap(source => source.modality === 'image' ? source.shape : [source.shape.reduce((n, size) => n * size, 1), 1, 1]),
     pool_size: 2, seed: BigInt.asIntN(64, BigInt(config.validation.seed)).toString() } })
   const model = (id: string, sources: LabSource[], head: LabStep, hybrid = false, inputName = 'x') => {
     const operator = sourceOperator(sources, config, head, hybrid)
@@ -278,17 +278,19 @@ function describeDocument(dataset: LabDataset, config: LabConfig): RecipeDescrip
         return Number(item.params.n_components)
       }
       return width
-    }, source.shape[0])
+    }, source.modality === 'timeseries' ? source.shape[0] * source.shape[1] : source.shape[0])
+    // A time series enters a network flattened (time-major) and is read by a dense branch.
     const lineShape = (source: LabSource) => source.modality === 'image' ? source.shape : [widthAfter(source), 1, 1]
     // Host models take the task seed as a decimal string; the TF.js CNN reads ordered markers with a 1-D convolution.
     if (head.methodId === RANDOM_FOREST || head.methodId === RANDOM_FOREST_CLASSIFIER) head.params = { ...head.params, seed: config.validation.seed }
     if (classes && (head.methodId === RANDOM_FOREST_CLASSIFIER || head.methodId === BURN_CNN_CLASSIFIER)) head.params = { ...head.params, n_classes: classes.length }
     if (head.methodId === TFJS_CNN || head.methodId === BURN_CNN || head.methodId === BURN_CNN_CLASSIFIER) head.params = { ...head.params,
-      branch_kinds: sources.map(source => source.modality === 'image' ? 2 : 1),
+      // A flattened time series interleaves variables: a dense branch, never a 1-D convolution across them.
+      branch_kinds: sources.map(source => source.modality === 'image' ? 2 : source.modality === 'timeseries' ? 0 : 1),
       branch_shapes: sources.flatMap(lineShape),
       seed: config.validation.seed }
     if (head.methodId === NEURAL) head.params = { ...head.params,
-      branch_kinds: sources.map(source => source.modality === 'image' ? 2 : source.modality === 'genetics' ? 0 : 1),
+      branch_kinds: sources.map(source => source.modality === 'image' ? 2 : source.modality === 'genetics' || source.modality === 'timeseries' ? 0 : 1),
       branch_shapes: sources.flatMap(lineShape),
       pool_size: head.params.pool_size ?? 2, seed: BigInt.asIntN(64, BigInt(config.validation.seed)).toString() }
     const localConfig: LabConfig = { ...config, blockScaling: false,

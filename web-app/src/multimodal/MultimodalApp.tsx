@@ -11,10 +11,10 @@ import {
   ValidationPanel,
   defaultCandidates,
   type MultimodalCandidate,
-  type MultimodalCaseId,
+  type MultimodalCaseInfo,
   type MultimodalConfig,
+  type MultimodalDataset,
   type MultimodalDataOrigin,
-  type MultimodalDataPreset,
   type MultimodalDataStatus,
   type MultimodalParamValue,
   type MultimodalRunResult,
@@ -25,7 +25,8 @@ import type { PipelineChainDocument } from 'nirs4all-ui/pipelineEditor'
 import { fromCanonicalPipeline, toCanonicalPipeline } from 'nirs4all-ui/pipelineEditor'
 import { downloadJson } from '@/lib/download'
 import { createLabClient, defaultLabConfig, type LabClient } from './client'
-import { TEACHING_PRESETS, loadTeachingDataset } from './data'
+import { TEACHING_PRESETS, loadTeachingDataset, type LabDataPreset } from './data'
+import { TimeSeriesView } from './TimeSeriesView'
 import { toExecutionConfig, toWorkbenchProgress, toWorkbenchResult } from './presentation'
 import type { LabCase, LabConfig, LabDataset, LabRunResult } from './types'
 import { DatasetBuilderHost } from './DatasetBuilderHost'
@@ -42,12 +43,30 @@ const HISTORY_LIMIT = 50
 const PIPELINE_SCHEMA = 'nirs4all.multimodal-lab.pipeline.v2'
 
 /** `?case=genetics&preset=late-stacking` opens a case on a preset (links from the training slides). */
-function linkTarget(): { caseId: MultimodalCaseId | null; presetId: string | null } {
+function linkTarget(): { caseId: LabCase | null; presetId: string | null } {
   if (typeof window === 'undefined') return { caseId: null, presetId: null }
   const params = new URLSearchParams(window.location.search)
   const value = params.get('case')
-  return { caseId: value === 'spectroscopy' || value === 'genetics' || value === 'images' ? value : null, presetId: params.get('preset') }
+  return { caseId: LAB_CASES.some(info => info.id === value) ? value as LabCase : null, presetId: params.get('preset') }
 }
+/**
+ * The shared cases plus the laboratory's time-series case. The shared presentation
+ * package does not know time series yet, so the host widens its case and dataset
+ * types at the component boundary (tracked debt: move the case and its view to UI).
+ */
+type LabCaseInfo = Omit<MultimodalCaseInfo, 'id'> & { id: LabCase }
+const LAB_CASES: readonly LabCaseInfo[] = [...MULTIMODAL_CASES, {
+  id: 'timeseries', title: 'Spectra and time series', modalities: 'NIRS · daily weather (several variables)',
+  goal: 'A spectrum of each sample plus one multivariate series (here the weather of the 90 days before harvest). The series is context shared by every sample of a harvest: it explains differences between harvests, not between samples.',
+  prompts: [
+    'What can a weather series explain that the spectrum of one fruit cannot, and the reverse?',
+    'Why are the folds grouped by region and season here, and what would a random split hide?',
+    'Does the weather alone predict dry matter on a new season, or only on the harvests it has seen?',
+    'Which fusion keeps the series as one block of time × variables rather than many unrelated columns?',
+  ],
+}]
+const asUiCases = (cases: readonly LabCaseInfo[]) => cases as unknown as readonly MultimodalCaseInfo[]
+const asUiDataset = (dataset: LabDataset) => dataset as unknown as MultimodalDataset
 const LINK = linkTarget()
 
 /**
@@ -59,7 +78,7 @@ const LINK = linkTarget()
 
 /** Type-only seam for the data lane (DATA_CONTRACT.md); a mismatch fails here, precisely. */
 interface LabDataHost {
-  presets: readonly MultimodalDataPreset[]
+  presets: readonly LabDataPreset[]
   loadTeachingDataset(caseId: LabCase, presetId?: string): Promise<LabDataset>
 }
 
@@ -99,16 +118,17 @@ const EMPTY_WORKSPACE: CaseWorkspace = {
   presets: [], presetId: null, basePresetId: null, chain: null, past: [], future: [], pipelineError: null, pipelineNotice: null, runs: [],
 }
 
-type Workspaces = Record<MultimodalCaseId, CaseWorkspace>
+type Workspaces = Record<LabCase, CaseWorkspace>
 
 const INITIAL_WORKSPACES: Workspaces = {
-  spectroscopy: EMPTY_WORKSPACE, genetics: EMPTY_WORKSPACE, images: EMPTY_WORKSPACE,
+  spectroscopy: EMPTY_WORKSPACE, genetics: EMPTY_WORKSPACE, images: EMPTY_WORKSPACE, timeseries: EMPTY_WORKSPACE,
 }
 
 /** Execution params are `unknown`; the controlled UI only edits primitive values. */
 function toWorkbenchConfig(config: LabConfig): MultimodalConfig {
   return {
     ...config,
+    caseId: config.caseId as MultimodalConfig['caseId'],
     sourceChains: config.sourceChains.map(chain => ({
       sourceId: chain.sourceId,
       steps: chain.steps.map(step => ({
@@ -124,7 +144,7 @@ function teachingSetup(dataset: LabDataset, wanted: string | null = null): Pick<
   const config = toWorkbenchConfig(defaultLabConfig(dataset))
   const presets = fusionPresets(dataset)
   const preset = presets.find(item => item.id === wanted) ?? presets.find(item => item.id === DEFAULT_PRESET) ?? presets[0]
-  return { config, candidates: defaultCandidates(dataset, config.sourceIds), presets,
+  return { config, candidates: defaultCandidates(asUiDataset(dataset), config.sourceIds), presets,
     presetId: preset?.id ?? null, basePresetId: preset?.id ?? null, chain: preset ? structuredClone(preset.document) : null, past: [], future: [] }
 }
 
@@ -169,12 +189,12 @@ function datasetMeta(dataset: LabDataset, origin: MultimodalDataOrigin | null) {
 }
 
 export default function MultimodalApp() {
-  const [caseId, setCaseId] = useState<MultimodalCaseId>(LINK.caseId ?? 'spectroscopy')
+  const [caseId, setCaseId] = useState<LabCase>(LINK.caseId ?? 'spectroscopy')
   const [workspaces, setWorkspaces] = useState<Workspaces>(INITIAL_WORKSPACES)
   const [runtime, setRuntime] = useState<MultimodalRuntimeStatus>(browserRuntime)
   const clientRef = useRef<LabClient | null>(null)
   const abortRef = useRef<AbortController | null>(null)
-  const loadToken = useRef<Record<MultimodalCaseId, number>>({ spectroscopy: 0, genetics: 0, images: 0 })
+  const loadToken = useRef<Record<LabCase, number>>({ spectroscopy: 0, genetics: 0, images: 0, timeseries: 0 })
   const runToken = useRef(0)
   const linkPreset = useRef<string | null>(LINK.presetId)
   const workspace = workspaces[caseId]
@@ -192,7 +212,7 @@ export default function MultimodalApp() {
   }, [workspace.dataset, workspace.chain, laneLabel])
   const pipelineProblem = pipelineCheck.problem
 
-  const patch = useCallback((id: MultimodalCaseId, update: (current: CaseWorkspace) => CaseWorkspace) => {
+  const patch = useCallback((id: LabCase, update: (current: CaseWorkspace) => CaseWorkspace) => {
     setWorkspaces(previous => ({ ...previous, [id]: update(previous[id]) }))
   }, [])
 
@@ -200,7 +220,7 @@ export default function MultimodalApp() {
 
   // ---- data ---------------------------------------------------------------
 
-  const acceptDataset = useCallback((id: MultimodalCaseId, token: number, dataset: LabDataset, origin: MultimodalDataOrigin) => {
+  const acceptDataset = useCallback((id: LabCase, token: number, dataset: LabDataset, origin: MultimodalDataOrigin) => {
     if (loadToken.current[id] !== token) return
     if (dataset.caseId !== id) {
       patch(id, current => ({ ...current, status: { kind: 'error', name: 'Case mismatch',
@@ -213,14 +233,14 @@ export default function MultimodalApp() {
       selectedSampleId: dataset.sampleIds[0] ?? null }))
   }, [patch])
 
-  const failLoad = useCallback((id: MultimodalCaseId, token: number, reason: unknown) => {
+  const failLoad = useCallback((id: LabCase, token: number, reason: unknown) => {
     if (loadToken.current[id] !== token) return
     const { name, message } = errorStatus(reason)
     // Previous data, configuration and results stay intact when a new import is refused.
     patch(id, current => ({ ...current, status: { kind: 'error', name, message } }))
   }, [patch])
 
-  const loadPreset = useCallback((id: MultimodalCaseId, presetId: string) => {
+  const loadPreset = useCallback((id: LabCase, presetId: string) => {
     const token = ++loadToken.current[id]
     const preset = dataHost.presets.find(candidate => candidate.id === presetId)
     patch(id, current => ({ ...current, status: { kind: 'loading', label: `Loading ${preset?.label ?? presetId} through the IO import route…` } }))
@@ -408,7 +428,7 @@ export default function MultimodalApp() {
   const selectSample = (sampleId: string | null) => patch(caseId, current => ({ ...current, selectedSampleId: sampleId }))
   const dataset = workspace.dataset
   const ready = Boolean(dataset && workspace.config && dataset.caseId === caseId)
-  const caseInfo = MULTIMODAL_CASES.find(info => info.id === caseId)
+  const caseInfo = LAB_CASES.find(info => info.id === caseId)
   const createFromBuilder = (created: LabDataset, fileNames: string[]) => {
     const id = created.caseId
     setCaseId(id)
@@ -424,23 +444,27 @@ export default function MultimodalApp() {
             <DatasetStep
               builder={<DatasetBuilderHost key={caseId} disabled={running} onCreate={createFromBuilder} />}
               examples={dataHost.presets}
+              caseTitles={Object.fromEntries(LAB_CASES.map(info => [info.id, info.title]))}
               origin={workspace.origin}
               status={workspace.status}
               disabled={running}
               onLoadExample={preset => { setCaseId(preset.caseId); loadPreset(preset.caseId, preset.id) }}
             />
-            {ready && dataset ? <AlignmentTable dataset={dataset} /> : null}
+            {ready && dataset ? <AlignmentTable dataset={asUiDataset(dataset)} /> : null}
           </Section>
           {ready && dataset ? (
             <Section id="n4mm-explore" step={2} title="Explore each source"
               lead="Each source keeps its own axis, unit and representation. Select one sample to follow it everywhere.">
-              <SampleNavigator dataset={dataset} selectedSampleId={workspace.selectedSampleId} onSelectSample={selectSample} />
-              <SourceViews dataset={dataset} selectedSampleId={workspace.selectedSampleId} onSelectSample={selectSample} />
+              <SampleNavigator dataset={asUiDataset(dataset)} selectedSampleId={workspace.selectedSampleId} onSelectSample={selectSample} />
+              <SourceViews dataset={asUiDataset({ ...dataset, sources: dataset.sources.filter(source => source.representation !== 'series_mv') })}
+                selectedSampleId={workspace.selectedSampleId} onSelectSample={selectSample} />
+              {dataset.sources.filter(source => source.representation === 'series_mv').map(source =>
+                <TimeSeriesView key={source.id} dataset={dataset} source={source} index={dataset.sources.indexOf(source)} selectedSampleId={workspace.selectedSampleId} />)}
             </Section>
           ) : null}
           <Section id="n4mm-case" step={ready ? 3 : 2} title="Analysis"
             lead="The kind of analysis sets the fusion pipelines offered below. Importing files selects the matching kind; each kind keeps its own dataset.">
-            <CaseSelector caseId={caseId} onCaseChange={setCaseId} disabled={running} />
+            <CaseSelector caseId={caseId as MultimodalConfig['caseId']} cases={asUiCases(LAB_CASES)} onCaseChange={id => setCaseId(id)} disabled={running} />
             <p className="n4mm-note" role="status">
               {dataset && dataset.caseId === caseId
                 ? <>Dataset of this analysis: <strong>{dataset.name}</strong> ({workspace.origin?.kind === 'import' ? 'your files' : 'example'}, {dataset.sampleIds.length} samples, target {dataset.target.name}).</>
@@ -451,7 +475,7 @@ export default function MultimodalApp() {
             <>
               <Section id="n4mm-protocol" step={4} title="Validation protocol"
                 lead="One protocol for every run: the same held-out samples, the same outer folds and the same inner folds.">
-                <ValidationPanel dataset={dataset} config={workspace.config} onConfigChange={onConfigChange} disabled={running} />
+                <ValidationPanel dataset={asUiDataset(dataset)} config={workspace.config} onConfigChange={onConfigChange} disabled={running} />
               </Section>
               <Section id="n4mm-pipeline" step={5} title="Build and run the pipeline"
                 lead="Pick a fusion preset, then edit it: each source has its own lane; the step after the lanes decides where the sources are fused. Runs accumulate in the comparison below.">
@@ -498,7 +522,7 @@ export default function MultimodalApp() {
             </>
           ) : null}
           <Section id="n4mm-guide" step={ready ? 7 : 3} title="Instructor guide">
-            <InstructorGuide caseId={caseId} />
+            <InstructorGuide caseId={caseId as MultimodalConfig['caseId']} cases={asUiCases(LAB_CASES)} />
           </Section>
         </main>
         <footer className="n4mm-footer">

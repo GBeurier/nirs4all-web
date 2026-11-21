@@ -4,7 +4,8 @@
  "source": {
   "web": "e1929293605571d4752fdd7ecd9d9afa3dcb9604 (+ CNN preset change)",
   "ui": "787699446281d2a4a5a45cf73847b2cc3d90828e",
-  "build": "local served build of the multimodal laboratory; presets re-run with the Mid \u00b7 CNN preset, edits from the earlier recording on the same folds"
+  "build": "local served build of the multimodal laboratory; presets re-run with the Mid · CNN preset, edits from the earlier recording on the same folds",
+  "timeseries": "feat/multimodal-timeseries (local IO 0.3.9 build); presets run once, best component count of each sweep kept (by OOF)"
  },
  "note": "Native owner outputs (IO import, DAG-ML folds/merges, Methods models) from the browser worker. OOF = outer 3-fold cross-validation on the 96 calibration samples; test = the 24 declared held-out samples. No value is computed by the slides.",
  "cases": {
@@ -193,7 +194,7 @@
      ]
     },
     {
-     "name": "Early \u00b7 concatenate",
+     "name": "Early · concatenate",
      "level": "early",
      "oofRmse": 0.25294434131417365,
      "oofR2": 0.87580637668738,
@@ -254,7 +255,7 @@
      ]
     },
     {
-     "name": "Mid \u00b7 PCA scores",
+     "name": "Mid · PCA scores",
      "level": "mid",
      "oofRmse": 0.2557185800562559,
      "oofR2": 0.8730671796395335,
@@ -333,7 +334,7 @@
      ]
     },
     {
-     "name": "Early \u00b7 MB-PLS",
+     "name": "Early · MB-PLS",
      "level": "early",
      "oofRmse": 0.2638862117323863,
      "oofR2": 0.8648292390864414,
@@ -387,7 +388,7 @@
      ]
     },
     {
-     "name": "Mid \u00b7 CNN",
+     "name": "Mid · CNN",
      "level": "mid",
      "oofRmse": 0.23847194620964876,
      "oofR2": 0.8896114691119128,
@@ -449,7 +450,7 @@
      ]
     },
     {
-     "name": "Late \u00b7 average",
+     "name": "Late · average",
      "level": "late",
      "oofRmse": 0.36492136886065435,
      "oofR2": 0.7415074969350103,
@@ -542,7 +543,7 @@
      ]
     },
     {
-     "name": "Late \u00b7 stacking",
+     "name": "Late · stacking",
      "level": "late",
      "oofRmse": 0.12110742422082371,
      "oofR2": 0.9715297752061292,
@@ -646,7 +647,7 @@
    ],
    "edits": [
     {
-     "name": "Edited Early \u00b7 concatenate",
+     "name": "Edited Early · concatenate",
      "level": "early",
      "oofRmse": 0.08168572409919417,
      "oofR2": 0.9870478552966176,
@@ -702,10 +703,10 @@
        "name": "PLS"
       }
      ],
-     "edit": "Early \u00b7 PLS 6"
+     "edit": "Early · PLS 6"
     },
     {
-     "name": "Edited Early \u00b7 concatenate",
+     "name": "Edited Early · concatenate",
      "level": "early",
      "oofRmse": 0.06881542789505403,
      "oofR2": 0.9908077677057553,
@@ -752,7 +753,7 @@
        "name": "PLS"
       }
      ],
-     "edit": "Early \u00b7 PLS 6 \u00b7 without MIR"
+     "edit": "Early · PLS 6 · without MIR"
     },
     {
      "name": "Edited Raman alone",
@@ -790,10 +791,10 @@
        "name": "PLS"
       }
      ],
-     "edit": "Raman alone \u00b7 PLS 6"
+     "edit": "Raman alone · PLS 6"
     },
     {
-     "name": "Edited Intermediate \u00b7 network",
+     "name": "Edited Intermediate · network",
      "level": "intermediate",
      "oofRmse": 0.33558656647771573,
      "oofR2": 0.7813958024576962,
@@ -979,7 +980,7 @@
      ]
     },
     {
-     "name": "Early \u00b7 concatenate",
+     "name": "Early · concatenate",
      "level": "early",
      "oofRmse": 0.2678951946441552,
      "oofR2": 0.7740557996580866,
@@ -1030,7 +1031,7 @@
      ]
     },
     {
-     "name": "Mid \u00b7 PCA scores",
+     "name": "Mid · PCA scores",
      "level": "mid",
      "oofRmse": 0.38757467876830964,
      "oofR2": 0.5270860309323337,
@@ -1093,7 +1094,7 @@
      ]
     },
     {
-     "name": "Early \u00b7 MB-PLS",
+     "name": "Early · MB-PLS",
      "level": "early",
      "oofRmse": 0.23948185570390484,
      "oofR2": 0.8194420644319805,
@@ -1137,7 +1138,7 @@
      ]
     },
     {
-     "name": "Mid \u00b7 CNN",
+     "name": "Mid · CNN",
      "level": "mid",
      "oofRmse": 0.31319902278355466,
      "oofR2": 0.691175215031762,
@@ -1189,7 +1190,7 @@
      ]
     },
     {
-     "name": "Late \u00b7 average",
+     "name": "Late · average",
      "level": "late",
      "oofRmse": 0.4216875656165104,
      "oofR2": 0.4401741590247673,
@@ -1259,7 +1260,7 @@
      ]
     },
     {
-     "name": "Late \u00b7 stacking",
+     "name": "Late · stacking",
      "level": "late",
      "oofRmse": 0.3506803553880651,
      "oofR2": 0.6128366606817521,
@@ -1340,7 +1341,7 @@
    ],
    "edits": [
     {
-     "name": "Edited Early \u00b7 concatenate",
+     "name": "Edited Early · concatenate",
      "level": "early",
      "oofRmse": 0.18300391223740584,
      "oofR2": 0.8945632284937614,
@@ -1387,7 +1388,7 @@
        "name": "PLS"
       }
      ],
-     "edit": "Early \u00b7 PLS 5"
+     "edit": "Early · PLS 5"
     },
     {
      "name": "Edited NIRS alone",
@@ -1425,7 +1426,7 @@
        "name": "PLS"
       }
      ],
-     "edit": "NIRS alone \u00b7 PLS 5"
+     "edit": "NIRS alone · PLS 5"
     },
     {
      "name": "Edited Genetic markers alone",
@@ -1463,10 +1464,10 @@
        "name": "PLS"
       }
      ],
-     "edit": "Markers alone \u00b7 PLS 5"
+     "edit": "Markers alone · PLS 5"
     },
     {
-     "name": "Edited Intermediate \u00b7 MB-PLS",
+     "name": "Edited Intermediate · MB-PLS",
      "level": "intermediate",
      "oofRmse": 0.19086709467090385,
      "oofR2": 0.8853079073956666,
@@ -1506,10 +1507,10 @@
        "name": "MB-PLS"
       }
      ],
-     "edit": "MB-PLS \u00b7 5 components"
+     "edit": "MB-PLS · 5 components"
     },
     {
-     "name": "Edited Intermediate \u00b7 network",
+     "name": "Edited Intermediate · network",
      "level": "intermediate",
      "oofRmse": 0.6021201538941915,
      "oofR2": -0.14139950254679756,
@@ -1688,7 +1689,7 @@
      ]
     },
     {
-     "name": "Early \u00b7 concatenate",
+     "name": "Early · concatenate",
      "level": "early",
      "oofRmse": 0.10054730016672742,
      "oofR2": 0.9581950227519475,
@@ -1739,7 +1740,7 @@
      ]
     },
     {
-     "name": "Mid \u00b7 PCA scores",
+     "name": "Mid · PCA scores",
      "level": "mid",
      "oofRmse": 0.10265453934471513,
      "oofR2": 0.9564243894370702,
@@ -1802,7 +1803,7 @@
      ]
     },
     {
-     "name": "Early \u00b7 MB-PLS",
+     "name": "Early · MB-PLS",
      "level": "early",
      "oofRmse": 0.11731526266311992,
      "oofR2": 0.9430890023766446,
@@ -1846,7 +1847,7 @@
      ]
     },
     {
-     "name": "Mid \u00b7 CNN",
+     "name": "Mid · CNN",
      "level": "mid",
      "oofRmse": 0.12306307754684255,
      "oofR2": 0.9373757255338714,
@@ -1898,7 +1899,7 @@
      ]
     },
     {
-     "name": "Late \u00b7 average",
+     "name": "Late · average",
      "level": "late",
      "oofRmse": 0.2191012945640582,
      "oofR2": 0.8014924399633957,
@@ -1968,7 +1969,7 @@
      ]
     },
     {
-     "name": "Late \u00b7 stacking",
+     "name": "Late · stacking",
      "level": "late",
      "oofRmse": 0.16985853070061863,
      "oofR2": 0.8806941085393784,
@@ -2049,7 +2050,7 @@
    ],
    "edits": [
     {
-     "name": "Edited Early \u00b7 concatenate",
+     "name": "Edited Early · concatenate",
      "level": "early",
      "oofRmse": 0.0909094000915994,
      "oofR2": 0.9658252970917217,
@@ -2096,7 +2097,7 @@
        "name": "PLS"
       }
      ],
-     "edit": "Early \u00b7 PLS 6"
+     "edit": "Early · PLS 6"
     },
     {
      "name": "Edited Grayscale images alone",
@@ -2134,10 +2135,10 @@
        "name": "PLS"
       }
      ],
-     "edit": "Image alone \u00b7 PLS 6"
+     "edit": "Image alone · PLS 6"
     },
     {
-     "name": "Edited Intermediate \u00b7 network",
+     "name": "Edited Intermediate · network",
      "level": "intermediate",
      "oofRmse": 0.2056874437919952,
      "oofR2": 0.825054520123115,
@@ -2188,6 +2189,683 @@
      "edit": "Tiny CNN (4 filters, 24 epochs)"
     }
    ]
+  },
+  "timeseries": {
+   "dataset": {
+    "name": "mango-dry-matter-weather",
+    "fingerprint": "5816bcaba8b78a5630f20f31210f9239bf624bff53b2d1a89cf44becddb9564b",
+    "samples": 565,
+    "target": {
+     "name": "dry_matter",
+     "unit": "% DM"
+    },
+    "sources": [
+     {
+      "id": "nir",
+      "label": "Vis-SWNIR spectrum",
+      "modality": "spectroscopy",
+      "representation": "signal_1d",
+      "shape": [
+       245
+      ],
+      "axis": {
+       "unit": "nm",
+       "kind": "wavelength",
+       "first": 405,
+       "last": 1137,
+       "points": 245
+      }
+     },
+     {
+      "id": "weather",
+      "label": "Daily weather, 90 days before harvest",
+      "modality": "timeseries",
+      "representation": "series_mv",
+      "shape": [
+       90,
+       4
+      ],
+      "axis": {
+       "unit": "day before harvest",
+       "kind": "time",
+       "first": -89,
+       "last": 0,
+       "points": 90
+      }
+     }
+    ]
+   },
+   "ownerVersions": {
+    "dag": "0.5.0",
+    "methods": "1.5.1+abi.2.24.0",
+    "methodsAbi": "2.24.0",
+    "sourceProfile": "source_composition.v1"
+   },
+   "calibration": 430,
+   "holdout": 135,
+   "foldsFingerprint": "5629352a0c681e75e4289173088af3beabdf3659b320fdb95e01d55060d27c16",
+   "presets": [
+    {
+     "name": "Vis-SWNIR spectrum alone · 15 comp.",
+     "level": "single",
+     "oofRmse": 1.4094032138621695,
+     "oofR2": 0.6440144077730865,
+     "testRmse": 1.64694187093794,
+     "foldsFingerprint": "5629352a0c681e75e4289173088af3beabdf3659b320fdb95e01d55060d27c16",
+     "recipeFingerprint": "05e14b1b9c8eb0986bfa0fd3778a98d54e5f9933fcfc9bbf5e4d0d1a1bd8e6e5",
+     "pipeline": [
+      {
+       "name": "Vis-SWNIR spectrum alone · PLS",
+       "pipeline": [
+        {
+         "source_branch": {
+          "nir": [
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ]
+         }
+        },
+        {
+         "model": {
+          "class": "models.pls.pls_regression",
+          "params": {
+           "n_components": 15,
+           "center_x": true,
+           "scale_x": false,
+           "center_y": true,
+           "scale_y": false
+          }
+         },
+         "name": "PLS"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Daily weather, 90 days before harvest alone · 15 comp.",
+     "level": "single",
+     "oofRmse": 3.574139252991743,
+     "oofR2": -1.28931126085451,
+     "testRmse": 2.6525867448743043,
+     "foldsFingerprint": "5629352a0c681e75e4289173088af3beabdf3659b320fdb95e01d55060d27c16",
+     "recipeFingerprint": "6185d086e65572409c431bdbef69b2b02a57e25655bed7a9fdb6c47b09e96930",
+     "pipeline": [
+      {
+       "name": "Daily weather, 90 days before harvest alone · PLS",
+       "pipeline": [
+        {
+         "source_branch": {
+          "weather": [
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ]
+         }
+        },
+        {
+         "model": {
+          "class": "models.pls.pls_regression",
+          "params": {
+           "n_components": 15,
+           "center_x": true,
+           "scale_x": false,
+           "center_y": true,
+           "scale_y": false
+          }
+         },
+         "name": "PLS"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Early · concatenate · 10 comp.",
+     "level": "early",
+     "oofRmse": 2.932557357884885,
+     "oofR2": -0.5411855791392439,
+     "testRmse": 2.4600311235623624,
+     "foldsFingerprint": "5629352a0c681e75e4289173088af3beabdf3659b320fdb95e01d55060d27c16",
+     "recipeFingerprint": "84b2ccf23779756ba19dbbd22ad10da3d549437c2ddef58f52a7377811f92206",
+     "pipeline": [
+      {
+       "name": "Early fusion · Vis-SWNIR spectrum + Daily weather, 90 days before harvest → PLS",
+       "pipeline": [
+        {
+         "source_branch": {
+          "nir": [
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ],
+          "weather": [
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ]
+         }
+        },
+        {
+         "merge_sources": "concat"
+        },
+        {
+         "model": {
+          "class": "models.pls.pls_regression",
+          "params": {
+           "n_components": 10,
+           "center_x": true,
+           "scale_x": false,
+           "center_y": true,
+           "scale_y": false
+          }
+         },
+         "name": "PLS"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Mid · PCA scores",
+     "level": "mid",
+     "oofRmse": 2.609411784594638,
+     "oofR2": -0.22024530407463594,
+     "testRmse": 2.856006944532179,
+     "foldsFingerprint": "5629352a0c681e75e4289173088af3beabdf3659b320fdb95e01d55060d27c16",
+     "recipeFingerprint": "88377364ce16cb5836f6d54cefc21642e8ea6f7d126553410412f50d8ac9a9ff",
+     "pipeline": [
+      {
+       "name": "Mid fusion · PCA scores of Vis-SWNIR spectrum + Daily weather, 90 days before harvest → PLS",
+       "pipeline": [
+        {
+         "source_branch": {
+          "nir": [
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           },
+           {
+            "class": "preprocessing.feature_selection.flexible_pca",
+            "params": {
+             "n_components": 5
+            }
+           }
+          ],
+          "weather": [
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           },
+           {
+            "class": "preprocessing.feature_selection.flexible_pca",
+            "params": {
+             "n_components": 5
+            }
+           }
+          ]
+         }
+        },
+        {
+         "merge_sources": "concat"
+        },
+        {
+         "model": {
+          "class": "models.pls.pls_regression",
+          "params": {
+           "n_components": 3,
+           "center_x": true,
+           "scale_x": false,
+           "center_y": true,
+           "scale_y": false
+          }
+         },
+         "name": "PLS"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Early · MB-PLS · 10 comp.",
+     "level": "early",
+     "oofRmse": 2.838429392353067,
+     "oofR2": -0.4438367672618828,
+     "testRmse": 2.456531830889054,
+     "foldsFingerprint": "5629352a0c681e75e4289173088af3beabdf3659b320fdb95e01d55060d27c16",
+     "recipeFingerprint": "d4d44e98c59b40a527b20c0a9fac79f37d88fc82828fa9887e40879c572c1947",
+     "pipeline": [
+      {
+       "name": "Early fusion · MB-PLS on Vis-SWNIR spectrum + Daily weather, 90 days before harvest",
+       "pipeline": [
+        {
+         "source_branch": {
+          "nir": [
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ],
+          "weather": [
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ]
+         }
+        },
+        {
+         "model": {
+          "class": "models.multiblock.mb_pls",
+          "params": {
+           "n_components": 10
+          }
+         },
+         "name": "MB-PLS"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Mid · CNN",
+     "level": "mid",
+     "oofRmse": 5.238245483355053,
+     "oofR2": -3.91737807582414,
+     "testRmse": 1.8198215396838517,
+     "foldsFingerprint": "5629352a0c681e75e4289173088af3beabdf3659b320fdb95e01d55060d27c16",
+     "recipeFingerprint": "696df3addefb0f7bfb4be3fb5aab098f10376249d76e188054afaabe4fde2a01",
+     "pipeline": [
+      {
+       "name": "Mid fusion · CNN on Vis-SWNIR spectrum + Daily weather, 90 days before harvest",
+       "pipeline": [
+        {
+         "source_branch": {
+          "nir": [
+           {
+            "class": "preprocessing.resampling.resample_transformer",
+            "params": {
+             "num_samples": 128
+            }
+           },
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ],
+          "weather": [
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ]
+         }
+        },
+        {
+         "model": {
+          "class": "models.neural.multibranch_regressor",
+          "params": {
+           "filters": 8,
+           "kernel_size": 3,
+           "pool_size": 2,
+           "embedding_dim": 16,
+           "head_hidden": 16,
+           "epochs": 150,
+           "batch_size": 16,
+           "learning_rate": 0.01,
+           "weight_decay": 0.0001
+          }
+         },
+         "name": "Multibranch network"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Early · random forest",
+     "level": "early",
+     "oofRmse": 2.14494155743305,
+     "oofR2": 0.17549587382265586,
+     "testRmse": 2.3313773358551972,
+     "foldsFingerprint": "5629352a0c681e75e4289173088af3beabdf3659b320fdb95e01d55060d27c16",
+     "recipeFingerprint": "ca98419efa35e2bc353d94943b1cb06bbdea403f353f46b6012121dc8881fca0",
+     "pipeline": [
+      {
+       "name": "Early fusion · Vis-SWNIR spectrum + Daily weather, 90 days before harvest → random forest",
+       "pipeline": [
+        {
+         "source_branch": {
+          "nir": [
+           {
+            "class": "preprocessing.resampling.resample_transformer",
+            "params": {
+             "num_samples": 128
+            }
+           },
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ],
+          "weather": [
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ]
+         }
+        },
+        {
+         "merge_sources": "concat"
+        },
+        {
+         "model": {
+          "class": "host.mljs.random_forest_regressor",
+          "params": {
+           "n_estimators": 50,
+           "max_features": 0.33,
+           "max_depth": 10,
+           "min_samples_leaf": 3
+          }
+         },
+         "name": "Random forest"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Late · AOM stacking",
+     "level": "late",
+     "oofRmse": 1.9933257434851528,
+     "oofR2": 0.287936938027754,
+     "testRmse": 2.4762019868157323,
+     "foldsFingerprint": "5629352a0c681e75e4289173088af3beabdf3659b320fdb95e01d55060d27c16",
+     "recipeFingerprint": "8e64980d6bcda132321ed4c3f0ddad406cb20704d8ea37af070a3c2deaeb78bd",
+     "pipeline": [
+      {
+       "name": "Late fusion · AOM-PLS per spectrum (Vis-SWNIR spectrum + Daily weather, 90 days before harvest) → Ridge",
+       "pipeline": [
+        {
+         "branch": {
+          "by_source": true,
+          "steps": {
+           "nir": [
+            {
+             "model": {
+              "class": "aom_pop.calibration",
+              "params": {
+               "head": "pls",
+               "max_components": 15,
+               "cv": 3,
+               "fast": true
+              }
+             },
+             "name": "AOM-PLS"
+            }
+           ],
+           "weather": [
+            {
+             "class": "preprocessing.scaling.standard_scale",
+             "params": {
+              "with_mean": true,
+              "with_std": true,
+              "ddof": 0
+             }
+            },
+            {
+             "model": {
+              "class": "models.pls.pls_regression",
+              "params": {
+               "n_components": 10,
+               "center_x": true,
+               "scale_x": false,
+               "center_y": true,
+               "scale_y": false
+              }
+             },
+             "name": "PLS"
+            }
+           ]
+          }
+         }
+        },
+        {
+         "merge": "predictions"
+        },
+        {
+         "model": {
+          "class": "models.regularized.ridge",
+          "params": {
+           "alpha": 1,
+           "center_x": true,
+           "center_y": true,
+           "scale_x": false
+          }
+         },
+         "name": "Meta-model (Ridge)"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Late · average",
+     "level": "late",
+     "oofRmse": 2.1673994338020184,
+     "oofR2": 0.15814011176064202,
+     "testRmse": 2.2228475000666674,
+     "foldsFingerprint": "5629352a0c681e75e4289173088af3beabdf3659b320fdb95e01d55060d27c16",
+     "recipeFingerprint": "62c53837913c7450e3403ffa1c8db2cdfca0eeb7424d52bf3ed6f0040135d091",
+     "pipeline": [
+      {
+       "name": "Late fusion · mean of per-source PLS (Vis-SWNIR spectrum + Daily weather, 90 days before harvest)",
+       "pipeline": [
+        {
+         "branch": {
+          "by_source": true,
+          "steps": {
+           "nir": [
+            {
+             "class": "preprocessing.scaling.standard_scale",
+             "params": {
+              "with_mean": true,
+              "with_std": true,
+              "ddof": 0
+             }
+            },
+            {
+             "model": {
+              "class": "models.pls.pls_regression",
+              "params": {
+               "n_components": 10,
+               "center_x": true,
+               "scale_x": false,
+               "center_y": true,
+               "scale_y": false
+              }
+             },
+             "name": "PLS"
+            }
+           ],
+           "weather": [
+            {
+             "class": "preprocessing.scaling.standard_scale",
+             "params": {
+              "with_mean": true,
+              "with_std": true,
+              "ddof": 0
+             }
+            },
+            {
+             "model": {
+              "class": "models.pls.pls_regression",
+              "params": {
+               "n_components": 10,
+               "center_x": true,
+               "scale_x": false,
+               "center_y": true,
+               "scale_y": false
+              }
+             },
+             "name": "PLS"
+            }
+           ]
+          }
+         }
+        },
+        {
+         "merge": {
+          "predictions": "all",
+          "aggregate": "mean"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Late · stacking",
+     "level": "late",
+     "oofRmse": 2.0794491707751273,
+     "oofR2": 0.225077047616713,
+     "testRmse": 2.4486707654717845,
+     "foldsFingerprint": "5629352a0c681e75e4289173088af3beabdf3659b320fdb95e01d55060d27c16",
+     "recipeFingerprint": "94a1b74b0ef906e7986280381a674031fa668a9ab7b14ff3b0f04ecde6ea8ec8",
+     "pipeline": [
+      {
+       "name": "Late fusion · stacking of per-source PLS (Vis-SWNIR spectrum + Daily weather, 90 days before harvest) → Ridge",
+       "pipeline": [
+        {
+         "branch": {
+          "by_source": true,
+          "steps": {
+           "nir": [
+            {
+             "class": "preprocessing.scaling.standard_scale",
+             "params": {
+              "with_mean": true,
+              "with_std": true,
+              "ddof": 0
+             }
+            },
+            {
+             "model": {
+              "class": "models.pls.pls_regression",
+              "params": {
+               "n_components": 10,
+               "center_x": true,
+               "scale_x": false,
+               "center_y": true,
+               "scale_y": false
+              }
+             },
+             "name": "PLS"
+            }
+           ],
+           "weather": [
+            {
+             "class": "preprocessing.scaling.standard_scale",
+             "params": {
+              "with_mean": true,
+              "with_std": true,
+              "ddof": 0
+             }
+            },
+            {
+             "model": {
+              "class": "models.pls.pls_regression",
+              "params": {
+               "n_components": 10,
+               "center_x": true,
+               "scale_x": false,
+               "center_y": true,
+               "scale_y": false
+              }
+             },
+             "name": "PLS"
+            }
+           ]
+          }
+         }
+        },
+        {
+         "merge": "predictions"
+        },
+        {
+         "model": {
+          "class": "models.regularized.ridge",
+          "params": {
+           "alpha": 1,
+           "center_x": true,
+           "center_y": true,
+           "scale_x": false
+          }
+         },
+         "name": "Meta-model (Ridge)"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "edits": [],
+   "capturedAt": "2026-11-21",
+   "data": "données publiques réelles : mangue (Anderson et al., CC BY 4.0) et météo Open-Meteo/ERA5 (CC BY 4.0)"
   }
  }
 }

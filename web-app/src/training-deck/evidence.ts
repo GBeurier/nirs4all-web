@@ -2,7 +2,7 @@ import raw from './evidence.json'
 import type { LevelKind } from './diagrams'
 
 /** Native results recorded from the laboratory; the slides only format them. */
-export type CaseId = 'spectroscopy' | 'genetics' | 'images'
+export type CaseId = 'spectroscopy' | 'genetics' | 'images' | 'timeseries'
 export interface EvidenceRun {
   name: string
   level: LevelKind
@@ -22,6 +22,9 @@ export interface EvidenceCase {
   foldsFingerprint: string
   presets: EvidenceRun[]
   edits: EvidenceRun[]
+  /** Per-case recording date and data provenance when they differ from the deck defaults. */
+  capturedAt?: string
+  data?: string
 }
 type Recorded = { capturedAt: string; source: { web: string; ui: string }; cases: Record<CaseId, EvidenceCase> }
 
@@ -35,6 +38,9 @@ const DISPLAY: Record<string, [string, LevelKind]> = {
   'Early · concatenate': ['Early · concaténation', 'early'], 'Early · MB-PLS': ['Early · MB-PLS', 'early'],
   'Mid · PCA scores': ['Mid · scores ACP', 'mid'], 'Mid · CNN': ['Mid · CNN', 'mid'],
   'Late · average': ['Late · moyenne', 'late'], 'Late · stacking': ['Late · stacking', 'late'],
+  'Vis-SWNIR spectrum alone · 15 comp.': ['NIR seul', 'single'], 'Daily weather, 90 days before harvest alone · 15 comp.': ['Météo seule', 'single'],
+  'Early · concatenate · 10 comp.': ['Early · concaténation', 'early'], 'Early · MB-PLS · 10 comp.': ['Early · MB-PLS', 'early'],
+  'Early · random forest': ['Early · forêt aléatoire', 'early'], 'Late · AOM stacking': ['Late · stacking AOM', 'late'],
 }
 const EDITS: Record<string, [string, LevelKind]> = {
   'Early · PLS 6': ['Early · PLS 6', 'early'], 'Early · PLS 6 · without MIR': ['Early · PLS 6 · sans MIR', 'early'],

@@ -1,16 +1,19 @@
 import { useState, type ReactNode } from 'react'
-import { MULTIMODAL_CASES, type MultimodalDataOrigin, type MultimodalDataPreset, type MultimodalDataStatus } from 'nirs4all-ui/multimodal'
+import type { MultimodalDataOrigin, MultimodalDataStatus } from 'nirs4all-ui/multimodal'
+import type { LabDataPreset } from './data'
 
 /**
  * First step of the laboratory: your files through the Dataset Builder, or one of the
  * bundled examples. The analysis kind follows the data (see the Analysis step).
  */
-export function DatasetStep({ builder, examples, origin, status, onLoadExample, disabled }: {
+export function DatasetStep({ builder, examples, caseTitles, origin, status, onLoadExample, disabled }: {
   builder: ReactNode
-  examples: readonly MultimodalDataPreset[]
+  examples: readonly LabDataPreset[]
+  /** Case titles, by case id (the laboratory's cases include time series). */
+  caseTitles: Readonly<Record<string, string>>
   origin: MultimodalDataOrigin | null
   status: MultimodalDataStatus
-  onLoadExample: (preset: MultimodalDataPreset) => void
+  onLoadExample: (preset: LabDataPreset) => void
   disabled: boolean
 }) {
   const [tab, setTab] = useState<'import' | 'examples'>('import')
@@ -25,7 +28,7 @@ export function DatasetStep({ builder, examples, origin, status, onLoadExample, 
         <p className="n4mm-note">
           Drop all the files of your dataset (a target table, one table per source, and optionally <code>manifest.json</code>). They are
           read in this browser by the nirs4all IO and Formats owners; sources are joined by sample identifier, never by row position.
-          The analysis kind follows your sources: marker tables give a spectra-and-markers analysis, images a spectra-and-images one.
+          The analysis kind follows your sources: marker tables give a spectra-and-markers analysis, images a spectra-and-images one, time series a spectra-and-time-series one.
         </p>
         {builder}
       </div>
@@ -38,7 +41,7 @@ export function DatasetStep({ builder, examples, origin, status, onLoadExample, 
           <ul className="n4mm-list">
             {examples.map(preset => {
               const loaded = origin?.kind === 'preset' && origin.presetId === preset.id
-              const kind = MULTIMODAL_CASES.find(info => info.id === preset.caseId)?.title
+              const kind = caseTitles[preset.caseId]
               return (
                 <li key={preset.id} className="n4mm-list__item" data-active={loaded || undefined}>
                   <div className="n4mm-list__main">

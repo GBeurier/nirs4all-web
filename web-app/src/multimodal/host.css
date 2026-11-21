@@ -58,6 +58,7 @@
 /* Web application frame (LabShell): the shell carries the header and the step rail,
    so the workbench's own header and anchor bar are hidden and its type follows Web. */
 .n4mm-embedded { min-height: 0; font-size: 15px; }
+.n4mm-series-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); gap: 0.75rem; }
 .n4mm-embedded > .n4mm-header, .n4mm-embedded > .n4mm-workflow { display: none; }
 .n4mm-embedded .n4mm-main { max-width: 104rem; padding: 1.5rem clamp(.75rem, 3vw, 2rem) 2.5rem; gap: 1rem; }
 .n4mm-embedded .n4mm-section { scroll-margin-top: 4.5rem; border-radius: 14px; border-color: var(--n4mm-border-warm);

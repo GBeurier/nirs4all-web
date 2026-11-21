@@ -1,0 +1,11 @@
+{
+  "schema": "nirs4all.teaching-files.v1",
+  "files": [
+    "README.txt",
+    "manifest.json",
+    "markers.csv",
+    "metadata.csv",
+    "nirs_grain.csv",
+    "nirs_leaf.csv"
+  ]
+}
