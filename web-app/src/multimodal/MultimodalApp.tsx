@@ -362,9 +362,10 @@ export default function MultimodalApp() {
       .catch(reason => patch(id, current => ({ ...current, pipelineError: errorStatus(reason).message })))
   }, [caseId, execute, patch, variantJobs, workspaces])
 
-  const onRunPresets = useCallback(() => {
+  const onRunPresets = useCallback((ids: readonly string[] | null) => {
     const id = caseId
-    Promise.all(workspaces[id].presets.map(preset => variantJobs(preset.document, preset.label)))
+    const chosen = workspaces[id].presets.filter(preset => ids === null || ids.includes(preset.id))
+    Promise.all(chosen.map(preset => variantJobs(preset.document, preset.label)))
       .then(jobs => execute(jobs.flat(), true))
       .catch(reason => patch(id, current => ({ ...current, pipelineError: errorStatus(reason).message })))
   }, [caseId, execute, patch, variantJobs, workspaces])

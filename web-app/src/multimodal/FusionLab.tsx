@@ -28,7 +28,8 @@ export interface FusionEditorProps {
   notice: string | null
   runtimeReady: boolean
   onRun: () => void
-  onRunPresets: () => void
+  /** Runs the unedited presets: all of them (`null`) or the selected subset. */
+  onRunPresets: (ids: readonly string[] | null) => void
   onCancel: () => void
   onExport: () => void
   onImport: (file: File) => void
@@ -39,6 +40,10 @@ export function FusionEditor(props: FusionEditorProps) {
   const { dataset, presets, presetId, document, running } = props
   const preset = presets.find(item => item.id === presetId) ?? null
   const fused = presets.filter(item => item.level !== 'single').length
+  // Presets ticked for a batch run; cleared when the preset list changes (another dataset or case).
+  const [picked, setPicked] = useState<readonly string[]>([])
+  useEffect(() => { setPicked([]) }, [presets])
+  const toggle = (id: string) => setPicked(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id])
   return (
     <div className="n4fl" data-fusion-lab>
       <div className="n4fl-presets" role="group" aria-label="Fusion presets">
@@ -50,8 +55,12 @@ export function FusionEditor(props: FusionEditorProps) {
               <span className="n4fl-preset-level">{FUSION_LEVEL_LABEL[level]}</span>
               <div className="n4fl-preset-row">
                 {items.map(item => (
-                  <button key={item.id} type="button" className="n4fl-chip" aria-pressed={item.id === presetId} disabled={running}
-                    title={item.summary} onClick={() => props.onLoadPreset(item.id)}>{item.label}</button>
+                  <span key={item.id} className="n4fl-chip-pick">
+                    <input type="checkbox" className="n4fl-pick" checked={picked.includes(item.id)} disabled={running}
+                      aria-label={`Select ${item.label} for a batch run`} title="Select for “Run selected presets”" onChange={() => toggle(item.id)} />
+                    <button type="button" className="n4fl-chip" aria-pressed={item.id === presetId} disabled={running}
+                      title={item.summary} onClick={() => props.onLoadPreset(item.id)}>{item.label}</button>
+                  </span>
                 ))}
               </div>
             </div>
@@ -94,10 +103,15 @@ export function FusionEditor(props: FusionEditorProps) {
             <button type="button" className="n4mm-button" data-variant="primary" disabled={props.problem !== null || !props.runtimeReady} onClick={props.onRun}>
               Run this pipeline
             </button>
-            <button type="button" className="n4mm-button" disabled={!props.runtimeReady} onClick={props.onRunPresets}
+            <button type="button" className="n4mm-button" disabled={!props.runtimeReady || !picked.length} onClick={() => props.onRunPresets(picked)}
+              title="Runs the ticked presets, unedited, with the same validation protocol and adds them to the comparison.">
+              {picked.length ? `Run ${picked.length} selected preset${picked.length === 1 ? '' : 's'}` : 'Run selected presets (tick them above)'}
+            </button>
+            <button type="button" className="n4mm-button" disabled={!props.runtimeReady} onClick={() => props.onRunPresets(null)}
               title="Runs the unedited presets of this dataset with the same validation protocol and adds them to the comparison.">
               Run all {presets.length} presets ({fused} fusions + {presets.length - fused} single-source)
             </button>
+            {picked.length ? <button type="button" className="n4mm-button" data-variant="quiet" onClick={() => setPicked([])}>Clear selection</button> : null}
           </>
         )}
         <div className="n4fl-status" role="status" aria-live="polite">

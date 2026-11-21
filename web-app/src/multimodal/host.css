@@ -153,3 +153,8 @@
 @media (max-width: 767px) { .n4lab-rail, .n4lab-title { display: none; } }
 @media (max-width: 639px) { .n4lab-pill[data-hide="sm"], .n4lab-hide-sm { display: none; } }
 @media (prefers-reduced-motion: reduce) { .n4lab-spin { animation: none; } }
+
+/* Preset chips with a tick box for "Run selected presets". */
+.n4fl-chip-pick { display: inline-flex; align-items: center; gap: .2rem; }
+.n4fl-pick { width: 1rem; height: 1rem; margin: 0; accent-color: var(--n4mm-master-dark); cursor: pointer; }
+.n4fl-pick:disabled { cursor: default; opacity: .55; }
