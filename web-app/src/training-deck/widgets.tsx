@@ -57,9 +57,10 @@ export function ResultsChart({ caseId, include, highlight = [] }: { caseId: Case
   const bestSingle = Math.min(...data.presets.filter(run => run.level === 'single').map(run => run.oofRmse))
   const levels = (['single', 'early', 'mid', 'late'] as const).filter(level => runs.some(run => run.level === level))
   const edited = runs.some(run => run.edit)
-  const row = 42, left = 360, width = 500, top = 34
+  const row = 42, left = 360, width = 450, top = 34
   const bottom = top + runs.length * row
-  const height = bottom + 128
+  const swept = runs.some(run => run.components)
+  const height = bottom + (swept ? 154 : 128)
   const x = (value: number) => left + (value / max) * width
   const unit = data.dataset.target.unit ? ` (${data.dataset.target.unit})` : ''
   return (
@@ -94,6 +95,11 @@ export function ResultsChart({ caseId, include, highlight = [] }: { caseId: Case
         <text x={406} y={13}>meilleure source seule</text>
         {edited ? <><rect x={616} y={1} width={26} height={14} rx={3} fill="#fff" stroke="var(--text-3)" strokeWidth={1.8} /><text x={648} y={13}>✎ modif. en direct</text></> : null}
       </g>
+      {swept ? (
+        <text x={left - 200} y={bottom + 144} fontFamily="var(--font)" fontSize={16} fill="var(--text-2)">
+          « 10 comp. » : composantes PLS retenues, meilleur essai parmi 5 · 10 · 15
+        </text>
+      ) : null}
       {runs.map((run, index) => {
         const y = top + index * row
         const color = LEVEL_COLORS[run.level]
@@ -102,7 +108,7 @@ export function ResultsChart({ caseId, include, highlight = [] }: { caseId: Case
         return (
           <g key={`${run.name}-${run.edit ?? ''}`} opacity={dim}>
             <text x={left - 12} y={y + 26} textAnchor="end" fontFamily="var(--font)" fontSize={19} fontWeight={strong ? 800 : 600} fill="var(--text)">
-              {run.edit ? `✎ ${run.edit}` : run.components ? `${run.name} · ${run.components} VL` : run.name}
+              {run.edit ? `✎ ${run.edit}` : run.components ? `${run.name} · ${run.components} comp.` : run.name}
             </text>
             <rect x={left} y={y + 9} width={x(run.oofRmse) - left} height={row - 18} rx={4}
               fill={run.edit ? '#fff' : color} fillOpacity={run.edit ? 1 : 0.85} stroke={color} strokeWidth={run.edit ? 1.8 : 0} />

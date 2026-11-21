@@ -364,7 +364,7 @@ export function EmbeddingDiagram() {
             <Block x={20} y={y} w={kind === 'image' ? 80 : 130} h={60} kind={kind} motif={kind === 'image' ? 'image' : 'spectrum'} seed={index + 1} />
             <Caption x={kind === 'image' ? 60 : 85} y={y - 6} color={SOURCE_COLORS[kind]} weight={700}>{kind === 'nirs' ? 'NIRS · 64 var.' : kind === 'raman' ? 'Raman · 48 var.' : 'Image · 144 px'}</Caption>
             <Arrow x1={155} y1={y + 30} x2={205} y2={y + 30} />
-            <StepBox x={210} y={y + 6} w={150} h={48} title="ACP (k = 5)" detail="ajustée sur le train" accent={LEVEL_COLORS.mid} />
+            <StepBox x={210} y={y + 6} w={150} h={48} title="ACP (k = 5)" detail="sur le train seul" accent={LEVEL_COLORS.mid} />
             <Arrow x1={362} y1={y + 30} x2={402} y2={y + 30} />
             <Block x={407} y={y + 10} w={48} h={40} kind={kind} motif="scores" seed={index} />
             <path d={`M457 ${y + 30} C 500 ${y + 30}, 500 165, 540 165`} fill="none" stroke="var(--text-3)" strokeWidth={2} />
@@ -398,7 +398,7 @@ export function IntermediateDiagram() {
     </g>
   )
   return (
-    <svg viewBox="0 0 1000 300" role="img" aria-label="Mid fusion dans un CNN : une branche apprise par source, embeddings concaténés au milieu du réseau, une tête commune ; tout est entraîné ensemble">
+    <svg viewBox="0 0 1000 300" role="img" aria-label="Mid fusion dans un réseau de neurones : une branche apprise par source, embeddings concaténés au milieu du réseau, une tête commune ; tout est entraîné ensemble">
       <rect x={180} y={6} width={600} height={268} rx={16} fill={LEVEL_COLORS.mid} opacity={0.06} stroke={LEVEL_COLORS.mid} strokeDasharray="6 6" />
       <Caption x={480} y={292} color={LEVEL_COLORS.mid} weight={700} size={13.5}>un seul modèle, entraîné d’un bloc : chaque branche apprend ce qui compte pour y</Caption>
       {branch('nirs', 26, 'convolution 1D')}
@@ -407,16 +407,22 @@ export function IntermediateDiagram() {
       <Junction x={545} y={140} level="mid" />
       <Caption x={545} y={108} color={LEVEL_COLORS.mid} weight={800} size={14}>concaténation</Caption>
       <StepBox x={590} y={113} w={170} h={54} title="tête commune" detail="dense → ŷ" accent="var(--teal)" />
-      <Arrow x1={762} y1={140} x2={800} y2={140} />
-      <Caption x={822} y={146} weight={800} color="var(--text)" size={18}>ŷ</Caption>
+      <Arrow x1={762} y1={140} x2={786} y2={140} />
+      <Caption x={800} y={146} weight={800} color="var(--text)" size={18}>ŷ</Caption>
       <g>
-        <rect x={845} y={40} width={145} height={200} rx={12} fill="var(--paper-2)" stroke="var(--border-warm)" />
-        <Caption x={917} y={70} weight={800} color="var(--text)" size={15}>Dans le navigateur</Caption>
-        <Caption x={917} y={102} size={12.5}>C++ (Methods)</Caption>
-        <Caption x={917} y={122} size={12.5}>compilé en WASM</Caption>
-        <Caption x={917} y={142} size={12.5}>rétropropagation</Caption>
-        <Caption x={917} y={162} size={12.5}>Adam · MSE</Caption>
-        <Caption x={917} y={182} size={12.5}>pas de GPU</Caption>
+        <rect x={818} y={6} width={178} height={268} rx={12} fill="var(--paper-2)" stroke="var(--border-warm)" />
+        <Caption x={907} y={32} weight={800} color="var(--text)" size={14.5}>Comment il apprend</Caption>
+        <Caption x={907} y={54} size={12.5}>branches et tête sont</Caption>
+        <Caption x={907} y={72} size={12.5}>ajustées ensemble, par</Caption>
+        <Caption x={907} y={90} size={12.5}>petites corrections, pour</Caption>
+        <Caption x={907} y={108} size={12.5}>réduire l’erreur sur y</Caption>
+        <line x1={834} y1={128} x2={980} y2={128} stroke="var(--border-warm)" />
+        <Caption x={907} y={154} weight={800} color="var(--text)" size={14.5}>Où l’utiliser</Caption>
+        <Caption x={907} y={178} size={12.5} weight={700} color="var(--text-2)">Web : démonstration</Caption>
+        <Caption x={907} y={196} size={12.5}>un petit réseau, sans GPU</Caption>
+        <Caption x={907} y={222} size={12.5} weight={700} color="var(--text-2)">Analyses réelles :</Caption>
+        <Caption x={907} y={240} size={12.5}>nirs4all (Python)</Caption>
+        <Caption x={907} y={258} size={12.5}>ou nirs4all Studio</Caption>
       </g>
     </svg>
   )
@@ -443,9 +449,9 @@ export function LateDiagram() {
         )
       })}
       <Junction x={665} y={155} level="late" />
-      <StepBox x={705} y={70} w={250} h={58} title="Moyenne" detail="(ŷ₁ + ŷ₂ + ŷ₃) / 3 · rien n’est appris" accent={LEVEL_COLORS.late} />
-      <Caption x={830} y={160} color="var(--text-3)" weight={700}>ou</Caption>
-      <StepBox x={705} y={180} w={250} h={58} title="Stacking" detail="méta-modèle sur ŷ OOF · apprend les poids" accent={LEVEL_COLORS.late} />
+      <StepBox x={705} y={70} w={290} h={58} title="Moyenne" detail="(ŷ₁ + ŷ₂ + ŷ₃) / 3 : rien n’est appris" accent={LEVEL_COLORS.late} />
+      <Caption x={850} y={160} color="var(--text-3)" weight={700}>ou</Caption>
+      <StepBox x={705} y={180} w={290} h={58} title="Stacking" detail="un méta-modèle apprend les poids" accent={LEVEL_COLORS.late} />
       <path d="M680 150 L700 100 M680 160 L700 208" stroke="var(--text-3)" strokeWidth={2} fill="none" />
     </svg>
   )
@@ -518,14 +524,14 @@ export function MultimodalEmbeddingDiagram() {
       <Block x={538} y={50} w={28} h={46} kind="image" motif="scores" seed={2} />
       <Block x={566} y={50} w={28} h={46} kind="markers" motif="scores" seed={3} />
       <Arrow x1={602} y1={73} x2={640} y2={73} />
-      <StepBox x={645} y={48} w={130} h={50} title="modèle" detail="PLS · Ridge · tête" accent="var(--teal)" />
-      <Arrow x1={777} y1={73} x2={808} y2={73} />
-      <Caption x={826} y={79} weight={800} color="var(--text)" size={18}>ŷ</Caption>
-      <Caption x={905} y={70} color="var(--text-3)" size={12}>mid fusion</Caption>
-      <Caption x={905} y={86} color="var(--text-3)" size={12}>(feature-level)</Caption>
+      <StepBox x={645} y={48} w={150} h={50} title="modèle" detail="PLS · Ridge · tête" accent="var(--teal)" />
+      <Arrow x1={797} y1={73} x2={820} y2={73} />
+      <Caption x={836} y={79} weight={800} color="var(--text)" size={18}>ŷ</Caption>
+      <Caption x={915} y={70} color="var(--text-3)" size={12}>mid fusion</Caption>
+      <Caption x={915} y={86} color="var(--text-3)" size={12}>(feature-level)</Caption>
       {/* ② shared space */}
       <rect x={492} y={124} width={496} height={166} rx={12} fill="#fff" stroke={LEVEL_COLORS.mid} strokeDasharray="6 6" />
-      <Caption x={505} y={148} anchor="start" weight={800} color="var(--text)" size={14}>② un espace commun : un même échantillon, des points proches</Caption>
+      <Caption x={505} y={148} anchor="start" weight={800} color="var(--text)" size={14}>② un espace commun où un même échantillon se regroupe</Caption>
       {samples.map(([cx, cy], s) => (
         <g key={s}>
           <circle cx={cx} cy={cy} r={27} fill={LEVEL_COLORS.mid} opacity={0.07} />
