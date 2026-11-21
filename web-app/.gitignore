@@ -6,3 +6,5 @@ node_modules
 .DS_Store
 /dist-strict
 /dist-transitional
+# Private deck overlay (maintainer's own data): never committed
+/src/training-deck/private/

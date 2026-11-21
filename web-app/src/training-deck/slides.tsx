@@ -3,7 +3,7 @@ import {
   AlignmentDiagram, DatasetShapeDiagram, EarlyDiagram, EmbeddingDiagram, FusionPointsDiagram, IntermediateDiagram,
   LateDiagram, MultimodalEmbeddingDiagram, OofDiagram, SampleViewsDiagram,
 } from './diagrams'
-import { edit, fmt, preset, sweep, type CaseId } from './evidence'
+import { fmt, preset, sweep, type CaseId } from './evidence'
 import { LevelTag, PipelineView, Provenance, ResultsChart } from './widgets'
 
 export interface Slide {
@@ -81,13 +81,14 @@ function Capture({ src, alt }: { src: string; alt: string }) {
 }
 
 const R = {
-  spec: (name: string) => preset('spectroscopy', name).oofRmse,
-  gen: (name: string) => preset('genetics', name).oofRmse,
-  img: (name: string) => preset('images', name).oofRmse,
+  spec: (name: string) => preset('spectroscopy', name).oof,
+  gen: (name: string) => preset('genetics', name).oof,
+  img: (name: string) => preset('images', name).oof,
+  ba: (value: number) => value.toFixed(2),
   ts: (name: string) => preset('timeseries', name),
 }
 
-export const SLIDES: Slide[] = [
+const BASE_SLIDES: Slide[] = [
   {
     id: 'title', section: '', title: 'Données multimodales dans nirs4all', minutes: 0.5,
     body: () => (
@@ -435,7 +436,7 @@ export const SLIDES: Slide[] = [
     notes: [
       'Avant les démonstrations, les règles du jeu.',
       'Un : les références source par source font partie de chaque comparaison. Deux : toutes les recettes utilisent exactement les mêmes folds ; vous verrez leur empreinte dans l’Inspector. Trois : on classe sur les prédictions out-of-fold de la validation croisée. Quatre : le jeu de test se regarde une fois, à la fin.',
-      'Dernier point : quand je modifie un pipeline en direct et que je garde la meilleure variante, je fais aussi une sélection. Avec quelques essais sur 96 échantillons, c’est acceptable pour l’enseignement ; dans une vraie étude, on confirme sur de nouvelles données.',
+      'Dernier point : quand je modifie un pipeline en direct et que je garde la meilleure variante, je fais aussi une sélection. Avec quelques essais sur quelques centaines d’échantillons, c’est acceptable pour l’enseignement ; dans une vraie étude, on confirme sur de nouvelles données.',
     ],
   },
   {
@@ -458,7 +459,7 @@ export const SLIDES: Slide[] = [
       'On passe au navigateur. Je parcours la page de haut en bas : le jeu de données et ses sources, le protocole de validation, l’éditeur de pipeline avec ses presets rangés par niveau de fusion, et l’Inspector des résultats.',
       'L’interface du labo est en anglais : « Run this pipeline » lance le pipeline affiché, « Run all presets » lance tous les presets du jeu de données.',
       'Les presets sont des pipelines nirs4all canoniques : la même structure qu’en Python, avec source_branch ou une branche par source. L’exécution est native, en WebAssembly, dans un worker en arrière-plan.',
-      'Les démos 1 à 3 utilisent les jeux d’exemple pédagogiques intégrés à la page ; la démo 4, la mangue, utilise des données réelles, les mêmes que dans le dossier 4 du kit.',
+      'La démo 1 utilise l’exemple pédagogique du labo. Les démos 2 à 4 utilisent des jeux réels publics, blé, riz et mangue : ils sont dans le kit et parmi les exemples du labo en ligne.',
     ],
   },
   {
@@ -466,129 +467,125 @@ export const SLIDES: Slide[] = [
     body: () => (
       <div className="deck-split deck-split--demo">
         <div>
-          <p className="deck-case">jeu pédagogique · 120 échantillons · Raman 48 · NIRS 64 · MIR 56 variables · 96 calibration / 24 test · <a href={labLink('spectroscopy')}>ouvrir</a></p>
+          <p className="deck-case">exemple pédagogique du labo · 120 échantillons · Raman 48 · NIRS 64 · MIR 56 variables · 96 calibration / 24 test · <a href={labLink('spectroscopy')}>ouvrir</a></p>
           <Watch items={[
-            <>Toutes les recettes sur les <strong>mêmes folds</strong> : qui gagne ?</>,
+            <>Trois instruments sur les mêmes échantillons : lequel porte le signal ?</>,
             <>Le nombre de composantes : la fusion en demande-t-elle plus qu’une source seule ?</>,
             <>Combiner les <strong>variables</strong> ou les <strong>prédictions</strong> ?</>,
           ]} />
         </div>
-        <Capture src="../captures/spectroscopy-inspector.png" alt="L’Inspector classe les recettes du cas spectroscopie" />
+        <Capture src="../captures/spectroscopy-data.png" alt="Les trois spectres de l’exemple pédagogique, colorés par la cible" />
       </div>
     ),
     notes: [
-      'Trois spectroscopies simulées sur les mêmes 120 échantillons : un jeu pédagogique intégré à la page. Chaque technique a son axe et son bruit ; la cible dépend d’une chimie que chaque fenêtre voit en partie.',
+      'Trois spectroscopies simulées sur les mêmes 120 échantillons : l’exemple pédagogique du labo. Chaque technique a son axe et son bruit ; la cible dépend d’une chimie que chaque fenêtre voit en partie. Sur le graphique, les spectres sont colorés par la cible.',
       'Je lance tous les presets, une trentaine de secondes. Les presets PLS essaient 5, 10 et 15 composantes ; chaque valeur est un run complet, sur les mêmes folds.',
-      'Dans l’Inspector, trié par RMSE de validation croisée : la fusion early arrive en tête, à 10 composantes, devant le Raman seul. Le NIRS et le MIR sont mauvais seuls, et pourtant ils apportent quelque chose au Raman.',
-      'Vue Tuning : le Raman seul est meilleur à 5 composantes, la fusion à 10. Une matrice plus large demande plus de variables latentes ; c’est le piège quand on garde le réglage d’une source seule.',
-      'Côté late : la moyenne est très mauvaise, elle donne autant de poids aux sources faibles qu’au Raman ; le stacking simple ne fait pas mieux que le Raman seul. Le stacking AOM, qui choisit le prétraitement de chaque source, bat le Raman seul mais reste loin derrière la fusion early.',
+      'Dans l’Inspector : la fusion early arrive en tête, à 10 composantes, devant le Raman seul. Le NIRS et le MIR sont mauvais seuls, et pourtant ils apportent quelque chose au Raman. Vue Tuning : le Raman seul est meilleur à 5 composantes, la fusion à 10.',
     ],
   },
   {
     id: 'concl-spectro', section: 'Démonstration', title: 'Démo 1 · ce qu’on retient', minutes: 1.5,
     body: () => (
       <div className="deck-split deck-split--chart">
-        <ResultsChart caseId="spectroscopy" highlight={['Raman seul', 'Early · concaténation', 'Late · moyenne', 'Late · stacking']} />
+        <ResultsChart caseId="spectroscopy" highlight={['Raman seul', 'Early · concaténation', 'Late · moyenne', 'Late · stacking AOM']} />
         <div>
           <Points items={[
             <><strong>La fusion gagne</strong> : early {fmt(R.spec('Early · concaténation'))} contre Raman seul {fmt(R.spec('Raman seul'))}, alors que NIRS ({fmt(R.spec('NIRS seul'))}) et MIR ({fmt(R.spec('MIR seul'))}) sont mauvais seuls</>,
-            <><strong>Avec plus de composantes</strong> : la fusion passe de {fmt(sweep('spectroscopy', 'Early · concaténation', 5).oofRmse)} à {fmt(sweep('spectroscopy', 'Early · concaténation', 10).oofRmse)} entre 5 et 10 composantes ; le Raman seul est meilleur à 5</>,
-            <><strong>Combiner les prédictions aide moins</strong> : moyenne {fmt(R.spec('Late · moyenne'))}, stacking {fmt(R.spec('Late · stacking'))}, stacking AOM {fmt(R.spec('Late · stacking AOM'))}, tous derrière la fusion des variables</>,
+            <><strong>Avec plus de composantes</strong> : la fusion passe de {fmt(sweep('spectroscopy', 'Early · concaténation', 5).oof)} à {fmt(sweep('spectroscopy', 'Early · concaténation', 10).oof)} entre 5 et 10 composantes ; le Raman seul est meilleur à 5</>,
+            <><strong>Combiner les prédictions aide moins</strong> : moyenne {fmt(R.spec('Late · moyenne'))}, stacking {fmt(R.spec('Late · stacking'))}, stacking AOM {fmt(R.spec('Late · stacking AOM'))}</>,
           ]} />
           <Provenance caseId="spectroscopy" />
         </div>
       </div>
     ),
     notes: [
-      'Toutes les barres sont des RMSE de validation croisée, sur les mêmes 96 échantillons et les mêmes folds ; les losanges sont le test, regardé une fois. La ligne pointillée est la meilleure source seule. Pour les presets PLS, la barre montre le meilleur nombre de composantes du sweep, indiqué dans le nom.',
-      'Trois messages. Un : fusionner les variables bat nettement la meilleure source, alors que deux sources sur trois sont mauvaises seules. Deux : la fusion a besoin de plus de composantes qu’une source seule ; la comparaison est loyale, le Raman seul a eu droit aux mêmes 5, 10 et 15. Trois : combiner seulement les prédictions récupère mal cette complémentarité ; la moyenne dilue le Raman, le stacking simple revient à lui, le stacking AOM fait mieux mais reste derrière.',
-      'Garder le meilleur nombre de composantes d’après la validation croisée est déjà une sélection, un peu optimiste ; le test, regardé une fois, confirme l’ordre.',
+      'Barres : RMSE de validation croisée, mêmes 96 échantillons et mêmes folds ; losanges : le test, regardé une fois. La ligne pointillée est la meilleure source seule.',
+      'Trois messages. Un : fusionner les variables bat nettement la meilleure source, alors que deux sources sur trois sont mauvaises seules. Deux : la fusion demande plus de composantes qu’une source seule ; la comparaison est loyale, le Raman seul a eu droit aux mêmes 5, 10 et 15. Trois : combiner seulement les prédictions récupère moins bien cette complémentarité.',
       'Ce sont des données simulées : ces classements illustrent des mécanismes, pas des résultats généralisables.',
     ],
   },
   {
-    id: 'demo-genetics', section: 'Démonstration', title: 'Démo 2 · NIRS + marqueurs génétiques', minutes: 3,
+    id: 'demo-genetics', section: 'Démonstration', title: 'Démo 2 · Blé : NIRS grain + feuille + SNP', minutes: 3,
     body: () => (
       <div className="deck-split deck-split--demo">
         <div>
-          <p className="deck-case">jeu pédagogique · 60 plantes × 2 mesures = 120 échantillons · NIRS 64 · 16 dosages de marqueurs (0/1/2) · <a href={labLink('genetics')}>ouvrir</a></p>
+          <p className="deck-case">données publiques (Rincent et al. 2018) · 223 variétés · NIRS grain et feuille, 525 points (dérivée publiée) · 2 000 SNP · cible : rendement en irrigué · 178 calibration / 45 test · dossier 2 du kit</p>
           <Watch items={[
-            <>Une plante, deux échantillons : les folds gardent la plante <strong>entière</strong></>,
-            <>Les marqueurs seuls prédisent mal : faut-il les jeter ?</>,
-            <>Où l’apport des marqueurs apparaît-il : en combinant les variables ou les prédictions ?</>,
+            <>Le génotype (2 000 SNP) aide-t-il le spectre du grain ?</>,
+            <>Deux organes, deux spectres : grain ou feuille ?</>,
+            <>Une fusion bat-elle la <strong>meilleure source seule</strong> ?</>,
           ]} />
         </div>
-        <Capture src="../captures/genetics-inspector.png" alt="L’Inspector classe les recettes du cas génétique" />
+        <Capture src="../captures/genetics-data.png" alt="Spectres du grain et de la feuille colorés par le rendement, et dosages SNP du blé" />
       </div>
     ),
     notes: [
-      'Deuxième jeu pédagogique : deux modalités vraiment différentes, un spectre continu et un petit tableau de dosages génotypiques. Chaque plante a été mesurée deux fois ; les deux lignes ont les mêmes marqueurs mais pas le même spectre. Elles forment un groupe, et les folds gardent les groupes entiers.',
-      'Tous les presets, une vingtaine de secondes. Les marqueurs seuls sont très mauvais. Mais la fusion early et le MB-PLS font bien mieux que le NIRS seul.',
-      'Et la fusion late, qui combine les prédictions, fait au mieux comme le NIRS seul : l’information des marqueurs n’apparaît qu’en regardant les deux blocs ensemble.',
+      'Deuxième jeu réel et public : 223 variétés de blé (Rincent et al., 2018). Pour chaque variété, un spectre NIRS du grain, un spectre de la feuille, publiés déjà prétraités en dérivée première, et 2 000 marqueurs SNP. La cible est le rendement en essai irrigué : une cible difficile, très dépendante de l’environnement.',
+      'J’importe le dossier 2 du kit et je lance tous les presets : un peu moins de dix minutes, dont la moitié pour le réseau NICON ; on peut le décocher et lancer les autres presets seulement.',
+      'Lecture : le spectre du grain est la seule source qui prédit un peu. La feuille et les SNP seuls ne font pas mieux que la moyenne. Et aucune fusion ne bat le grain seul.',
     ],
   },
   {
     id: 'concl-genetics', section: 'Démonstration', title: 'Démo 2 · ce qu’on retient', minutes: 1.5,
     body: () => (
       <div className="deck-split deck-split--chart">
-        <ResultsChart caseId="genetics" highlight={['NIRS seul', 'Marqueurs seuls', 'Early · concaténation', 'Late · moyenne', 'Late · stacking']} />
+        <ResultsChart caseId="genetics" highlight={['NIRS grain seul', 'NIRS feuille seul', 'SNP seuls', 'Late · moyenne', 'Early · concaténation']} />
         <div>
           <Points items={[
-            <><strong>Faible seule ≠ inutile</strong> : marqueurs seuls {fmt(R.gen('Marqueurs seuls'))}, mais NIRS + marqueurs {fmt(R.gen('Early · concaténation'))} contre NIRS seul {fmt(R.gen('NIRS seul'))}</>,
-            <><strong>Il faut voir les blocs ensemble</strong> : en combinant les prédictions, moyenne {fmt(R.gen('Late · moyenne'))}, stacking {fmt(R.gen('Late · stacking'))}, stacking AOM {fmt(R.gen('Late · stacking AOM'))} : au mieux à peine mieux que le NIRS seul ({fmt(R.gen('NIRS seul'))})</>,
-            <><strong>CNN</strong> {fmt(R.gen('Mid · CNN'))} : bat le NIRS seul, pas la PLS sur la concaténation</>,
+            <><strong>Le grain porte un signal faible</strong> : NIRS grain {fmt(R.gen('NIRS grain seul'))} (R² {preset('genetics', 'NIRS grain seul').oofR2?.toFixed(2)})</>,
+            <><strong>Feuille et SNP seuls ne prédisent pas</strong> : {fmt(R.gen('NIRS feuille seul'))} et {fmt(R.gen('SNP seuls'))}, R² négatif</>,
+            <><strong>Aucune fusion ne bat le grain seul</strong> : moyenne {fmt(R.gen('Late · moyenne'))}, concaténation {fmt(R.gen('Early · concaténation'))} : ajouter des sources faibles dilue</>,
           ]} />
           <Provenance caseId="genetics" />
         </div>
       </div>
     ),
     notes: [
-      'Message principal : on juge une source sur ce qu’elle apporte, pas sur son score seule. Les marqueurs seuls sont inutiles comme prédicteur ; combinés au spectre, ils divisent l’erreur par près de quatre.',
-      'Pourquoi le late échoue : ici l’effet des marqueurs dépend du spectre. Un modèle par source ne peut pas le voir : le stacking AOM fait à peine mieux que le NIRS seul, et la moyenne fait même pire.',
-      'Le CNN fait mieux que le NIRS seul et que la fusion late, mais reste derrière la fusion de bas niveau : avec 96 échantillons, un modèle plus complexe n’est pas automatiquement meilleur.',
+      'Résultat honnête, et utile pour la discussion : fusionner n’est pas une garantie. Quand les autres sources n’apportent rien sur cette cible, la meilleure fusion se contente de ne pas trop dégrader le grain seul.',
+      'Pourquoi les SNP échouent ici : 2 000 marqueurs pour 178 variétés en calibration, une PLS et un rendement très dépendant du milieu. En sélection génomique, la référence serait un GBLUP, et la publication de Rincent compare des capacités prédictives sur d’autres découpages : nos scores ne sont pas comparables aux siens.',
+      'Ce qu’on retient pour vos données : comparer chaque fusion à la meilleure source seule, et accepter qu’elle perde.',
     ],
   },
   {
-    id: 'demo-images', section: 'Démonstration', title: 'Démo 3 · NIRS + images', minutes: 3,
+    id: 'demo-images', section: 'Démonstration', title: 'Démo 3 · Riz : spectres de pixels + image, 10 variétés', minutes: 3,
     body: () => (
       <div className="deck-split deck-split--demo">
         <div>
-          <p className="deck-case">jeu pédagogique · 120 échantillons · NIRS 64 · une image 12 × 12 en niveaux de gris par échantillon · 96 calibration / 24 test · <a href={labLink('images', 'cnn')}>ouvrir</a></p>
+          <p className="deck-case">données publiques (Vu et al. 2019) · 240 grains · 10 variétés · 3 spectres de pixels hyperspectraux (256 bandes) · image RGB 32 × 32 · 190 calibration / 50 test · classification, hasard = 0.10 · dossier 3 du kit</p>
           <Watch items={[
-            <>Les pixels comme 144 variables, ou une <strong>convolution 2D</strong> ?</>,
-            <><LevelTag level="mid">Mid · CNN</LevelTag> : une branche par source, concaténées au milieu</>,
-            <>Un CNN plus petit (4 filtres, 24 epochs) : que perd-on ?</>,
+            <>Classer 10 variétés : quelle mesure distingue le mieux ?</>,
+            <>Trois pixels d’un même grain : vaut-il mieux les combiner ?</>,
+            <>L’image RGB et les réseaux apportent-ils quelque chose ?</>,
           ]} />
         </div>
-        <Capture src="../captures/images-inspector.png" alt="L’Inspector classe les recettes du cas images" />
+        <Capture src="../captures/images-data.png" alt="Spectres moyens des trois pixels par variété de riz, et deux images par variété" />
       </div>
     ),
     notes: [
-      'Troisième jeu pédagogique : un spectre et une petite image 12 × 12 par échantillon. La fusion early et la PLS traitent les 144 pixels comme 144 variables indépendantes ; le CNN garde la disposition 2D avec une convolution et fusionne au milieu du réseau.',
-      'Dans l’éditeur, le preset Mid · CNN : les mêmes voies par source, et c’est l’étape modèle qui contient les branches et la concaténation. Tous les presets tournent en une trentaine de secondes.',
-      'Puis je réduis le CNN — 4 filtres, embeddings de 6, 24 epochs, taux d’apprentissage 0,003 — et je relance : il perd beaucoup. La taille du réseau et l’entraînement comptent autant que l’architecture.',
-      'Honnêteté : les réglages du CNN ont été choisis après quelques essais sur ces mêmes données, son score est donc un peu optimiste.',
+      'Troisième jeu réel et public, en classification : 240 grains de riz de 10 variétés (sous-ensemble de Vu et al., 2019). Pour chaque grain, trois spectres hyperspectraux pris en trois points du grain et une petite image couleur.',
+      'Le labo passe en classification tout seul : PLS-DA, forêt aléatoire, CNN, et fusion late des probabilités. Le score est la balanced accuracy : la moyenne des taux de bonne classification par variété ; le hasard vaut 0,10. Tous les presets tournent en cinq minutes environ.',
+      'Point de vigilance à dire tout de suite : dans ce jeu, chaque variété a été photographiée lors d’une seule session. Le modèle peut aussi reconnaître la session ; le labo l’affiche à côté des scores.',
     ],
   },
   {
     id: 'concl-images', section: 'Démonstration', title: 'Démo 3 · ce qu’on retient', minutes: 1.5,
     body: () => (
       <div className="deck-split deck-split--chart">
-        <ResultsChart caseId="images" highlight={['Image seule', 'Early · concaténation', 'Mid · scores ACP', 'Mid · CNN', 'CNN minuscule']} />
+        <ResultsChart caseId="images" highlight={['Pixel central seul', 'Image RGB seule', 'Early · concaténation', 'Late · moyenne', 'Mid · CNN (Burn)']} />
         <div>
           <Points items={[
-            <><strong>L’image domine</strong> ({fmt(R.img('Image seule'))}), le spectre complète : early {fmt(R.img('Early · concaténation'))}</>,
-            <><strong>Résumer suffit presque</strong> : scores ACP {fmt(R.img('Mid · scores ACP'))} avec 10 colonnes au lieu de 208</>,
-            <><strong>Mid · CNN</strong> {fmt(R.img('Mid · CNN'))} bat l’image seule ; plus petit, {fmt(edit('images', 'CNN minuscule').oofRmse)} : la taille compte</>,
+            <><strong>Combiner les pixels aide</strong> : moyenne des probabilités {R.ba(R.img('Late · moyenne'))}, concaténation {R.ba(R.img('Early · concaténation'))}, contre {R.ba(R.img('Pixel central seul'))} pour le meilleur pixel seul</>,
+            <><strong>L’image RGB seule est faible</strong> ({R.ba(R.img('Image RGB seule'))}) ; le CNN ({R.ba(R.img('Mid · CNN (Burn)'))}) ne bat pas la PLS-DA sur la concaténation</>,
+            <><strong>Prudence</strong> : une variété = une session d’imagerie ; le score mesure aussi la session</>,
           ]} />
           <Provenance caseId="images" />
         </div>
       </div>
     ),
     notes: [
-      'Ici la fusion aide clairement : early comme mid fusion battent la meilleure source seule.',
-      'Les scores ACP, cinq par source, font presque aussi bien que les 208 variables : c’est l’idée des embeddings, qu’on reprend avec des encodeurs pré-entraînés sur de plus gros problèmes.',
-      'Le CNN bat l’image seule sans rattraper la PLS ; réduit, il est loin derrière. Avec de vraies images et plus d’échantillons, l’avantage de la convolution peut grandir. Le CNN réduit a été enregistré le 18 novembre sur les mêmes folds ; le preset CNN redonne aujourd’hui exactement le même score qu’alors.',
+      'Ici le graphique est en balanced accuracy : plus haut = mieux. La ligne pointillée est la meilleure source seule, le pixel central.',
+      'Trois pixels d’un même grain se complètent : les combiner, par concaténation ou en moyennant les probabilités, gagne une dizaine de points. L’image couleur 32 × 32 seule distingue mal les variétés, et le CNN, avec 190 grains, ne rattrape pas une PLS-DA bien faite.',
+      'Le test, 50 grains, va dans le même sens mais il est petit : une variété de plus ou de moins bien classée fait bouger le score de plusieurs points. Et le biais de session reste à garder en tête pour toute conclusion.',
     ],
   },
   {
@@ -596,14 +593,14 @@ export const SLIDES: Slide[] = [
     body: () => (
       <div className="deck-split deck-split--demo">
         <div>
-          <p className="deck-case">565 mangues réelles · spectre Vis-SWNIR 245 points · météo 90 jours × 4 variables · saisons 1–3 calibration (430) / saison 4 test (135) · folds groupés région × saison · <a href={labLink('timeseries')}>ouvrir</a></p>
+          <p className="deck-case">565 mangues réelles · spectre Vis-SWNIR 245 points · météo 90 jours × 4 variables · saisons 1–3 calibration (430) / saison 4 test (135) · folds groupés région × saison · dossier 4 du kit</p>
           <Watch items={[
             <>La météo : <strong>une</strong> source, quatre courbes sur 90 jours</>,
             <>Folds groupés région × saison : prédire une saison <strong>jamais vue</strong></>,
             <>La météo aide-t-elle le spectre ?</>,
           ]} />
         </div>
-        <Capture src="../captures/timeseries-inspector.png" alt="L’Inspector classe les recettes du cas mangue et météo" />
+        <Capture src="../captures/timeseries-data.png" alt="Spectres des mangues colorés par la matière sèche, et météo de chaque récolte" />
       </div>
     ),
     notes: [
@@ -620,9 +617,9 @@ export const SLIDES: Slide[] = [
         <ResultsChart caseId="timeseries" highlight={['NIR seul', 'Météo seule', 'Early · concaténation', 'Late · stacking']} />
         <div>
           <Points items={[
-            <><strong>Le spectre porte le signal</strong> : NIR seul {fmt(R.ts('NIR seul').oofRmse)} % MS (R² {R.ts('NIR seul').oofR2?.toFixed(2)})</>,
-            <><strong>La météo seule ne se transfère pas</strong> d’une saison à l’autre : {fmt(R.ts('Météo seule').oofRmse)}, R² négatif</>,
-            <>Fusion early {fmt(R.ts('Early · concaténation').oofRmse)} : 360 colonnes de contexte <strong>diluent</strong> le spectre ; stacking {fmt(R.ts('Late · stacking').oofRmse)} (sa PLS spectre est fixée à 10 composantes)</>,
+            <><strong>Le spectre porte le signal</strong> : NIR seul {fmt(R.ts('NIR seul').oof)} % MS (R² {R.ts('NIR seul').oofR2?.toFixed(2)})</>,
+            <><strong>La météo seule ne se transfère pas</strong> d’une saison à l’autre : {fmt(R.ts('Météo seule').oof)}, R² négatif</>,
+            <>Fusion early {fmt(R.ts('Early · concaténation').oof)} : 360 colonnes de contexte <strong>diluent</strong> le spectre ; stacking {fmt(R.ts('Late · stacking').oof)} (sa PLS spectre est fixée à 10 composantes)</>,
           ]} />
           <Provenance caseId="timeseries" />
         </div>
@@ -685,3 +682,16 @@ export const SLIDES: Slide[] = [
     ],
   },
 ]
+
+/** What a private overlay may use to write its own demonstration slides. */
+export interface DeckParts {
+  Watch: typeof Watch; Points: typeof Points; Capture: typeof Capture
+  ResultsChart: typeof ResultsChart; Provenance: typeof Provenance; fmt: typeof fmt; R: typeof R
+}
+type Overlay = (parts: DeckParts, base: Readonly<Record<string, Slide>>) => Record<string, Slide>
+// Optional local overlay, never committed (src/training-deck/private/ is gitignored): it replaces
+// slides by id, for example a demonstration on private data kept on the presenter's machine.
+const overlays = Object.values(import.meta.glob<{ default: Overlay }>('./private/slides.tsx', { eager: true }))
+const replaced = overlays.reduce<Record<string, Slide>>((acc, module) => ({ ...acc,
+  ...module.default({ Watch, Points, Capture, ResultsChart, Provenance, fmt, R }, Object.fromEntries(BASE_SLIDES.map(slide => [slide.id, slide]))) }), {})
+export const SLIDES: Slide[] = BASE_SLIDES.map(slide => replaced[slide.id] ?? slide)
