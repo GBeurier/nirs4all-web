@@ -1628,7 +1628,7 @@
   "license": "CC-BY-4.0",
   "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
   "changes": "10 varieties x 24 kernels; RGB kernel crop padded to square and resized to 32x32; three 3x3-mean calibrated pixel spectra (centre and two offsets), 256 bands 383-1006 nm; stratified 19 train / 5 test kernels per variety (seed 20261118).",
-  "limitation": "Each variety comes from a single imaging bundle, so variety is confounded with acquisition; scores measure separability under this design, not field performance.",
+  "limitation": "All grains of a variety were imaged in the same session, so a model can partly recognise the session (lighting, background, camera settings) instead of the variety. The scores show how well the varieties separate in this dataset, not how well a variety would be recognised in new images.",
   "seed": "20261118"
  }
 }

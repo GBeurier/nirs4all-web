@@ -2,12 +2,11 @@
  "schema": "nirs4all.multimodal-training.evidence.v1",
  "capturedAt": "2026-11-21",
  "source": {
-  "web": "web.nirs4all.org (main after PR #44: AOM on full spectra), Run all presets on the four example datasets",
+  "web": "local served build of the laboratory (AOM on full spectra), Run all presets on the four demo-kit folders imported through the Dataset Builder",
   "ui": "787699446281d2a4a5a45cf73847b2cc3d90828e",
-  "build": "served site, 21 November 2026; sweeps (5, 10, 15 components) keep the best component count by OOF",
-  "edits": "Tiny CNN edit (images) recorded on 18 November on the same folds; the unedited CNN preset reproduces exactly (0.123) on the current build"
+  "build": "sweeps (5, 10, 15 components): best count kept by the OOF score, whole sweep stored"
  },
- "note": "Native owner outputs (IO import, DAG-ML folds/merges, Methods models) from the browser worker. OOF = outer 3-fold cross-validation on the 96 calibration samples; test = the 24 declared held-out samples. No value is computed by the slides.",
+ "note": "Native owner outputs from the browser worker. OOF = outer 3-fold cross-validation on the calibration samples; test = the declared or 20 % held-out samples. Regression ranks on RMSE, classification on balanced accuracy. No value is computed by the slides.",
  "cases": {
   "spectroscopy": {
    "dataset": {
@@ -26,14 +25,7 @@
       "representation": "signal_1d",
       "shape": [
        48
-      ],
-      "axis": {
-       "unit": "cm-1",
-       "kind": "raman_shift",
-       "first": 200,
-       "last": 1800,
-       "points": 48
-      }
+      ]
      },
      {
       "id": "nirs",
@@ -42,14 +34,7 @@
       "representation": "signal_1d",
       "shape": [
        64
-      ],
-      "axis": {
-       "unit": "nm",
-       "kind": "wavelength",
-       "first": 1000,
-       "last": 2300,
-       "points": 64
-      }
+      ]
      },
      {
       "id": "mir",
@@ -58,14 +43,7 @@
       "representation": "signal_1d",
       "shape": [
        56
-      ],
-      "axis": {
-       "unit": "cm-1",
-       "kind": "wavenumber",
-       "first": 4000,
-       "last": 600,
-       "points": 56
-      }
+      ]
      }
     ]
    },
@@ -75,16 +53,20 @@
     "methodsAbi": "2.24.0",
     "sourceProfile": "source_composition.v1"
    },
+   "metric": {
+    "label": "RMSE",
+    "higherIsBetter": false
+   },
    "calibration": 96,
    "holdout": 24,
    "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
    "presets": [
     {
-     "name": "Raman alone",
+     "name": "Raman seul",
      "level": "single",
-     "oofRmse": 0.15083946354900518,
+     "oof": 0.15083946354900518,
      "oofR2": 0.9558348896590615,
-     "testRmse": 0.1842138629149066,
+     "test": 0.1842138629149066,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
      "recipeFingerprint": "27d94085af5f40d0eb70604e50bff36e6b8b4fc55be173964dbcbff1ebe12157",
      "pipeline": [
@@ -125,27 +107,27 @@
      "sweep": [
       {
        "components": 5,
-       "oofRmse": 0.15083946354900518,
-       "testRmse": 0.1842138629149066
+       "oof": 0.15083946354900518,
+       "test": 0.1842138629149066
       },
       {
        "components": 10,
-       "oofRmse": 0.18083027997291426,
-       "testRmse": 0.20424479120937905
+       "oof": 0.18083027997291426,
+       "test": 0.20424479120937905
       },
       {
        "components": 15,
-       "oofRmse": 0.20120442340938838,
-       "testRmse": 0.20519061879565698
+       "oof": 0.20120442340938838,
+       "test": 0.20519061879565698
       }
      ]
     },
     {
-     "name": "NIRS alone",
+     "name": "NIRS seul",
      "level": "single",
-     "oofRmse": 0.5423915910539706,
+     "oof": 0.5423915910539706,
      "oofR2": 0.42894852570048736,
-     "testRmse": 0.5807464316644956,
+     "test": 0.5807464316644956,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
      "recipeFingerprint": "337fbc8c72ba830555bb2580ce965527c78ad9eb4f4ed0ebb10a4c7daf7b02a5",
      "pipeline": [
@@ -186,27 +168,27 @@
      "sweep": [
       {
        "components": 5,
-       "oofRmse": 0.5423915910539706,
-       "testRmse": 0.5807464316644956
+       "oof": 0.5423915910539706,
+       "test": 0.5807464316644956
       },
       {
        "components": 10,
-       "oofRmse": 0.7469064838895662,
-       "testRmse": 0.8571710777906904
+       "oof": 0.7469064838895662,
+       "test": 0.8571710777906904
       },
       {
        "components": 15,
-       "oofRmse": 0.9295999631921399,
-       "testRmse": 0.9605976561401126
+       "oof": 0.9295999631921399,
+       "test": 0.9605976561401126
       }
      ]
     },
     {
-     "name": "MIR alone",
+     "name": "MIR seul",
      "level": "single",
-     "oofRmse": 0.7162076592989336,
+     "oof": 0.7162076592989336,
      "oofR2": 0.004302804893417833,
-     "testRmse": 0.7671825078874549,
+     "test": 0.7671825078874549,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
      "recipeFingerprint": "e4356ca128569a9e21ad6d4795239eb24cfcbbbc8efe93f22c2a0ae5e257dd3a",
      "pipeline": [
@@ -247,27 +229,27 @@
      "sweep": [
       {
        "components": 5,
-       "oofRmse": 0.7162076592989336,
-       "testRmse": 0.7671825078874549
+       "oof": 0.7162076592989336,
+       "test": 0.7671825078874549
       },
       {
        "components": 10,
-       "oofRmse": 1.0166572704050383,
-       "testRmse": 0.8203531597758505
+       "oof": 1.0166572704050383,
+       "test": 0.8203531597758505
       },
       {
        "components": 15,
-       "oofRmse": 1.0964150157460075,
-       "testRmse": 0.8646587498645386
+       "oof": 1.0964150157460075,
+       "test": 0.8646587498645386
       }
      ]
     },
     {
-     "name": "Early · concatenate",
-     "level": "single",
-     "oofRmse": 0.07712145903552063,
+     "name": "Early · concaténation",
+     "level": "early",
+     "oof": 0.07712145903552063,
      "oofR2": 0.988454843192987,
-     "testRmse": 0.09185466142827793,
+     "test": 0.09185466142827793,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
      "recipeFingerprint": "3e357e2fdafa2a9b2f6e1c359c7fc33d3360cbdf8fde70ebf2084fcccd3fd47a",
      "pipeline": [
@@ -331,27 +313,27 @@
      "sweep": [
       {
        "components": 5,
-       "oofRmse": 0.11537187761663849,
-       "testRmse": 0.1082839027534641
+       "oof": 0.11537187761663849,
+       "test": 0.1082839027534641
       },
       {
        "components": 10,
-       "oofRmse": 0.07712145903552063,
-       "testRmse": 0.09185466142827793
+       "oof": 0.07712145903552063,
+       "test": 0.09185466142827793
       },
       {
        "components": 15,
-       "oofRmse": 0.10039827398064324,
-       "testRmse": 0.12217100530540238
+       "oof": 0.10039827398064324,
+       "test": 0.12217100530540238
       }
      ]
     },
     {
-     "name": "Mid · PCA scores",
-     "level": "single",
-     "oofRmse": 0.2557185800562559,
+     "name": "Mid · scores ACP",
+     "level": "mid",
+     "oof": 0.2557185800562559,
      "oofR2": 0.8730671796395335,
-     "testRmse": 0.2621444564871366,
+     "test": 0.2621444564871366,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
      "recipeFingerprint": "a57700c7f35d5680680150e77de8a6b5a53f5bad14794161b9c5d74b2aac166c",
      "pipeline": [
@@ -432,10 +414,10 @@
     },
     {
      "name": "Early · MB-PLS",
-     "level": "single",
-     "oofRmse": 0.07994287800301937,
+     "level": "early",
+     "oof": 0.07994287800301937,
      "oofR2": 0.9875946529173988,
-     "testRmse": 0.09236715578855692,
+     "test": 0.09236715578855692,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
      "recipeFingerprint": "c2d3e8c18453e573bd93b4c9972a699c6380a8d14109f14249053a7d48721c0f",
      "pipeline": [
@@ -492,27 +474,27 @@
      "sweep": [
       {
        "components": 5,
-       "oofRmse": 0.11691404723317904,
-       "testRmse": 0.10791199414506787
+       "oof": 0.11691404723317904,
+       "test": 0.10791199414506787
       },
       {
        "components": 10,
-       "oofRmse": 0.07994287800301937,
-       "testRmse": 0.09236715578855692
+       "oof": 0.07994287800301937,
+       "test": 0.09236715578855692
       },
       {
        "components": 15,
-       "oofRmse": 0.10183916843705368,
-       "testRmse": 0.12210742888425377
+       "oof": 0.10183916843705368,
+       "test": 0.12210742888425377
       }
      ]
     },
     {
      "name": "Mid · CNN",
-     "level": "single",
-     "oofRmse": 0.23847194620964876,
+     "level": "mid",
+     "oof": 0.23847194620964876,
      "oofR2": 0.8896114691119128,
-     "testRmse": 0.15187196336011952,
+     "test": 0.15187196336011952,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
      "recipeFingerprint": "369a36883edc7fc46646b77516212eee60ba963fe25e09607dcc4fc41fc65783",
      "pipeline": [
@@ -575,11 +557,11 @@
      ]
     },
     {
-     "name": "Early · random forest",
-     "level": "single",
-     "oofRmse": 0.3097689172125138,
+     "name": "Early · forêt aléatoire",
+     "level": "early",
+     "oof": 0.3097689172125138,
      "oofR2": 0.8137376676589722,
-     "testRmse": 0.26250997213667077,
+     "test": 0.26250997213667077,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
      "recipeFingerprint": "9e0b3a087f99cb3ab8d97617b34879adbb28dc0a10b800264355f5ccf3cc3d5b",
      "pipeline": [
@@ -640,11 +622,11 @@
      ]
     },
     {
-     "name": "Late · AOM stacking",
-     "level": "single",
-     "oofRmse": 0.11608305426715075,
+     "name": "Late · stacking AOM",
+     "level": "late",
+     "oof": 0.11608305426715075,
      "oofR2": 0.9738430553092802,
-     "testRmse": 0.1688080353206193,
+     "test": 0.1688080353206193,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
      "recipeFingerprint": "25b039dbf69e9b3a275413561fd885d7a373377bf27c13ec276e5ea13767fcd1",
      "pipeline": [
@@ -720,11 +702,11 @@
      ]
     },
     {
-     "name": "Late · average",
-     "level": "single",
-     "oofRmse": 0.510211846054335,
+     "name": "Late · moyenne",
+     "level": "late",
+     "oof": 0.510211846054335,
      "oofR2": 0.49469867503247167,
-     "testRmse": 0.5385429627366111,
+     "test": 0.5385429627366111,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
      "recipeFingerprint": "34f7f0a28cedf27690ff66fc90cd1ec4aa48bd1c9ea920b8e658f57e0488ef84",
      "pipeline": [
@@ -819,10 +801,10 @@
     },
     {
      "name": "Late · stacking",
-     "level": "single",
-     "oofRmse": 0.1821064233302049,
+     "level": "late",
+     "oof": 0.1821064233302049,
      "oofR2": 0.9356275719116054,
-     "testRmse": 0.21227176113788843,
+     "test": 0.21227176113788843,
      "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
      "recipeFingerprint": "c54877ff2bc82e17b1fdd23df474cc59dbac37ef511918827ba6f5366a85e30f",
      "pipeline": [
@@ -927,43 +909,44 @@
    ],
    "edits": [],
    "capturedAt": "2026-11-21",
-   "data": "jeu d’exemple pédagogique synthétique de la page"
+   "data": "jeu d’exemple pédagogique synthétique du labo"
   },
   "genetics": {
    "dataset": {
-    "name": "genetics-replicates",
-    "fingerprint": "972d20477402c3b7f15aa50708dd5cafdd9d33da64225fb344fd92991dd4e55c",
-    "samples": 120,
+    "name": "wheat-phenomic-rincent2018",
+    "fingerprint": "59475b06a2121a2ca9227156c273baee6dc06ccccc7c6af6c54af58f8a56b46a",
+    "samples": 223,
     "target": {
-     "name": "target",
-     "unit": "a.u."
+     "name": "grain_yield",
+     "unit": "published units"
     },
     "sources": [
      {
-      "id": "nirs",
-      "label": "NIRS",
+      "id": "nirs_grain",
+      "label": "NIRS grain (1st derivative)",
       "modality": "spectroscopy",
       "representation": "signal_1d",
       "shape": [
-       64
-      ],
-      "axis": {
-       "unit": "nm",
-       "kind": "wavelength",
-       "first": 1000,
-       "last": 2300,
-       "points": 64
-      }
+       525
+      ]
      },
      {
-      "id": "genetics",
-      "label": "Genetic markers",
+      "id": "nirs_leaf",
+      "label": "NIRS leaf (1st derivative)",
+      "modality": "spectroscopy",
+      "representation": "signal_1d",
+      "shape": [
+       525
+      ]
+     },
+     {
+      "id": "markers",
+      "label": "SNP markers",
       "modality": "genetics",
       "representation": "tabular_numeric",
       "shape": [
-       16
-      ],
-      "axis": null
+       2000
+      ]
      }
     ]
    },
@@ -973,25 +956,29 @@
     "methodsAbi": "2.24.0",
     "sourceProfile": "source_composition.v1"
    },
-   "calibration": 96,
-   "holdout": 24,
-   "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
+   "metric": {
+    "label": "RMSE",
+    "higherIsBetter": false
+   },
+   "calibration": 178,
+   "holdout": 45,
+   "foldsFingerprint": "944cc71e267e16e77e24073f38bd1de71e0836195076300256ebbcfd686eb91b",
    "presets": [
     {
-     "name": "NIRS alone",
+     "name": "NIRS grain seul",
      "level": "single",
-     "oofRmse": 0.3849556703511783,
-     "oofR2": 0.5334558015770394,
-     "testRmse": 0.32950553510653274,
-     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
-     "recipeFingerprint": "889f2f8376a4447f2026dc63db54076a74138bdf4ea9cc105f6058e26669c784",
+     "oof": 9.137880427804209,
+     "oofR2": 0.24992726001845056,
+     "test": 8.731345172616546,
+     "foldsFingerprint": "944cc71e267e16e77e24073f38bd1de71e0836195076300256ebbcfd686eb91b",
+     "recipeFingerprint": "ac6642cc0e7a6becdd79e6d7bbac08c28794ee9dbb1623c56cae328c643262f0",
      "pipeline": [
       {
-       "name": "NIRS alone · PLS",
+       "name": "NIRS grain (1st derivative) alone · PLS",
        "pipeline": [
         {
          "source_branch": {
-          "nirs": [
+          "nirs_grain": [
            {
             "class": "preprocessing.scaling.standard_scale",
             "params": {
@@ -1023,36 +1010,36 @@
      "sweep": [
       {
        "components": 5,
-       "oofRmse": 0.3849556703511783,
-       "testRmse": 0.32950553510653274
+       "oof": 9.137880427804209,
+       "test": 8.731345172616546
       },
       {
        "components": 10,
-       "oofRmse": 0.48510219601012683,
-       "testRmse": 0.30186634054673456
+       "oof": 9.303926854670598,
+       "test": 8.923919628585178
       },
       {
        "components": 15,
-       "oofRmse": 0.6489209677783185,
-       "testRmse": 0.3088945910675969
+       "oof": 9.798221603498389,
+       "test": 8.949360408961903
       }
      ]
     },
     {
-     "name": "Genetic markers alone",
+     "name": "NIRS feuille seul",
      "level": "single",
-     "oofRmse": 0.8331146788903698,
-     "oofR2": -1.1851483369101024,
-     "testRmse": 0.3470697611691893,
-     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
-     "recipeFingerprint": "89e2f841900ad0846e0104cd0ab570b7a01ed40f16543a1f134098e2ceccdd9d",
+     "oof": 10.652466980881227,
+     "oofR2": -0.01932537065302742,
+     "test": 10.963147402334458,
+     "foldsFingerprint": "944cc71e267e16e77e24073f38bd1de71e0836195076300256ebbcfd686eb91b",
+     "recipeFingerprint": "ceb1a7f185f9e1d49a1e51f27e9734083a8e4d5fb59f79f63a24555f59613f40",
      "pipeline": [
       {
-       "name": "Genetic markers alone · PLS",
+       "name": "NIRS leaf (1st derivative) alone · PLS",
        "pipeline": [
         {
          "source_branch": {
-          "genetics": [
+          "nirs_leaf": [
            {
             "class": "preprocessing.scaling.standard_scale",
             "params": {
@@ -1084,36 +1071,97 @@
      "sweep": [
       {
        "components": 5,
-       "oofRmse": 0.8331146788903698,
-       "testRmse": 0.3470697611691893
+       "oof": 10.652466980881227,
+       "test": 10.963147402334458
       },
       {
        "components": 10,
-       "oofRmse": 0.8448320644540971,
-       "testRmse": 0.34832661666870324
+       "oof": 11.728944559736867,
+       "test": 11.275603817694142
       },
       {
        "components": 15,
-       "oofRmse": 0.8452884866793096,
-       "testRmse": 0.34832039621945915
+       "oof": 12.327478545787073,
+       "test": 10.976694936628915
       }
      ]
     },
     {
-     "name": "Genetic markers · CNN (Burn)",
+     "name": "SNP seuls",
      "level": "single",
-     "oofRmse": 0.6197398602675647,
-     "oofR2": -0.2091779271807377,
-     "testRmse": 0.45931923268203095,
-     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
-     "recipeFingerprint": "f44c0fb6a1ed2e8c97988960eca30320ff7f184419e3eaf75e6e9c031f923def",
+     "oof": 10.867042909100363,
+     "oofR2": -0.06080413557062525,
+     "test": 10.914313055695862,
+     "foldsFingerprint": "944cc71e267e16e77e24073f38bd1de71e0836195076300256ebbcfd686eb91b",
+     "recipeFingerprint": "4f2cd73fd7e2b922982f714dce70bc761c7bbcaa31b46c43769f6332ae05d093",
      "pipeline": [
       {
-       "name": "Genetic markers alone · Burn CNN",
+       "name": "SNP markers alone · PLS",
        "pipeline": [
         {
          "source_branch": {
-          "genetics": [
+          "markers": [
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ]
+         }
+        },
+        {
+         "model": {
+          "class": "models.pls.pls_regression",
+          "params": {
+           "n_components": 5,
+           "center_x": true,
+           "scale_x": false,
+           "center_y": true,
+           "scale_y": false
+          }
+         },
+         "name": "PLS"
+        }
+       ]
+      }
+     ],
+     "components": 5,
+     "sweep": [
+      {
+       "components": 5,
+       "oof": 10.867042909100363,
+       "test": 10.914313055695862
+      },
+      {
+       "components": 10,
+       "oof": 11.039731616587463,
+       "test": 11.250804961870383
+      },
+      {
+       "components": 15,
+       "oof": 11.394475806339093,
+       "test": 11.276726583362557
+      }
+     ]
+    },
+    {
+     "name": "SNP · CNN (Burn)",
+     "level": "single",
+     "oof": 10.904914355408293,
+     "oofR2": -0.06821078526444113,
+     "test": 10.346126604306566,
+     "foldsFingerprint": "944cc71e267e16e77e24073f38bd1de71e0836195076300256ebbcfd686eb91b",
+     "recipeFingerprint": "89a4fc4d59a04592e51cef111334f3dafc9ed56877fff1c4cf77a2bd536fbe5d",
+     "pipeline": [
+      {
+       "name": "SNP markers alone · Burn CNN",
+       "pipeline": [
+        {
+         "source_branch": {
+          "markers": [
            {
             "class": "preprocessing.scaling.standard_scale",
             "params": {
@@ -1146,20 +1194,20 @@
      ]
     },
     {
-     "name": "Early · concatenate",
-     "level": "single",
-     "oofRmse": 0.10253646002878991,
-     "oofR2": 0.9669000002453318,
-     "testRmse": 0.1197424606083424,
-     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
-     "recipeFingerprint": "326579dfe9df14219ee685e825de90b0975f57a304aacb697b76ebaae0f7dbb0",
+     "name": "Early · concaténation",
+     "level": "early",
+     "oof": 10.187329855503187,
+     "oofR2": 0.06774831460710873,
+     "test": 9.412115615694352,
+     "foldsFingerprint": "944cc71e267e16e77e24073f38bd1de71e0836195076300256ebbcfd686eb91b",
+     "recipeFingerprint": "e2829fb47310b60f00e9122d3bac64f8bee9159bd1ade005ddb8d1e3da497a11",
      "pipeline": [
       {
-       "name": "Early fusion · NIRS + Genetic markers → PLS",
+       "name": "Early fusion · NIRS grain (1st derivative) + NIRS leaf (1st derivative) + SNP markers → PLS",
        "pipeline": [
         {
          "source_branch": {
-          "nirs": [
+          "nirs_grain": [
            {
             "class": "preprocessing.scaling.standard_scale",
             "params": {
@@ -1169,7 +1217,17 @@
             }
            }
           ],
-          "genetics": [
+          "nirs_leaf": [
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ],
+          "markers": [
            {
             "class": "preprocessing.scaling.standard_scale",
             "params": {
@@ -1188,7 +1246,7 @@
          "model": {
           "class": "models.pls.pls_regression",
           "params": {
-           "n_components": 10,
+           "n_components": 5,
            "center_x": true,
            "scale_x": false,
            "center_y": true,
@@ -1200,40 +1258,40 @@
        ]
       }
      ],
-     "components": 10,
+     "components": 5,
      "sweep": [
       {
        "components": 5,
-       "oofRmse": 0.18300391223740584,
-       "testRmse": 0.16352864367310918
+       "oof": 10.187329855503187,
+       "test": 9.412115615694352
       },
       {
        "components": 10,
-       "oofRmse": 0.10253646002878991,
-       "testRmse": 0.1197424606083424
+       "oof": 10.568269856897489,
+       "test": 10.183307297581454
       },
       {
        "components": 15,
-       "oofRmse": 0.11456340141746586,
-       "testRmse": 0.10333013273247149
+       "oof": 11.045914100048604,
+       "test": 10.420901597318577
       }
      ]
     },
     {
-     "name": "Mid · PCA scores",
-     "level": "single",
-     "oofRmse": 0.38757467876830964,
-     "oofR2": 0.5270860309323337,
-     "testRmse": 0.3448699847784177,
-     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
-     "recipeFingerprint": "1fd8fc29daf858e1b0528802d279d0eb9565a55f50bf3e26e6a8a2a0613350b1",
+     "name": "Mid · scores ACP",
+     "level": "mid",
+     "oof": 9.748930322463542,
+     "oofR2": 0.14625853853002857,
+     "test": 9.43301758197438,
+     "foldsFingerprint": "944cc71e267e16e77e24073f38bd1de71e0836195076300256ebbcfd686eb91b",
+     "recipeFingerprint": "3f07384c2dbf6e3fc06cf89b39dabb5044fa00ba71f59e6fdc6b0996962a7594",
      "pipeline": [
       {
-       "name": "Mid fusion · PCA scores of NIRS + Genetic markers → PLS",
+       "name": "Mid fusion · PCA scores of NIRS grain (1st derivative) + NIRS leaf (1st derivative) + SNP markers → PLS",
        "pipeline": [
         {
          "source_branch": {
-          "nirs": [
+          "nirs_grain": [
            {
             "class": "preprocessing.scaling.standard_scale",
             "params": {
@@ -1249,7 +1307,23 @@
             }
            }
           ],
-          "genetics": [
+          "nirs_leaf": [
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           },
+           {
+            "class": "preprocessing.feature_selection.flexible_pca",
+            "params": {
+             "n_components": 5
+            }
+           }
+          ],
+          "markers": [
            {
             "class": "preprocessing.scaling.standard_scale",
             "params": {
@@ -1289,19 +1363,19 @@
     },
     {
      "name": "Early · MB-PLS",
-     "level": "single",
-     "oofRmse": 0.10869545252561212,
-     "oofR2": 0.9628041831220605,
-     "testRmse": 0.12399774410550621,
-     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
-     "recipeFingerprint": "876eb4af6ccb7bbb1e0acf0411479e94f0f5f9a6370c482ecf2eb7106395f31e",
+     "level": "early",
+     "oof": 10.20251752683743,
+     "oofR2": 0.06496656775166032,
+     "test": 9.37972858574384,
+     "foldsFingerprint": "944cc71e267e16e77e24073f38bd1de71e0836195076300256ebbcfd686eb91b",
+     "recipeFingerprint": "7f871a3dbb1a712c5a382968d0fb294421a012b6fdfa5832d4bb04ddc095d8fe",
      "pipeline": [
       {
-       "name": "Early fusion · MB-PLS on NIRS + Genetic markers",
+       "name": "Early fusion · MB-PLS on NIRS grain (1st derivative) + NIRS leaf (1st derivative) + SNP markers",
        "pipeline": [
         {
          "source_branch": {
-          "nirs": [
+          "nirs_grain": [
            {
             "class": "preprocessing.scaling.standard_scale",
             "params": {
@@ -1311,7 +1385,17 @@
             }
            }
           ],
-          "genetics": [
+          "nirs_leaf": [
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ],
+          "markers": [
            {
             "class": "preprocessing.scaling.standard_scale",
             "params": {
@@ -1327,7 +1411,7 @@
          "model": {
           "class": "models.multiblock.mb_pls",
           "params": {
-           "n_components": 10
+           "n_components": 5
           }
          },
          "name": "MB-PLS"
@@ -1335,40 +1419,46 @@
        ]
       }
      ],
-     "components": 10,
+     "components": 5,
      "sweep": [
       {
        "components": 5,
-       "oofRmse": 0.19086709467090385,
-       "testRmse": 0.16189350360636934
+       "oof": 10.20251752683743,
+       "test": 9.37972858574384
       },
       {
        "components": 10,
-       "oofRmse": 0.10869545252561212,
-       "testRmse": 0.12399774410550621
+       "oof": 10.524393178437911,
+       "test": 9.868946119761992
       },
       {
        "components": 15,
-       "oofRmse": 0.11789222949370141,
-       "testRmse": 0.10699221694917266
+       "oof": 10.854722383702839,
+       "test": 10.198159910093086
       }
      ]
     },
     {
      "name": "Mid · CNN",
-     "level": "single",
-     "oofRmse": 0.31319902278355466,
-     "oofR2": 0.691175215031762,
-     "testRmse": 0.36274097400126937,
-     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
-     "recipeFingerprint": "7a0e390285ecc4d193ff5b6a504d148da2d3eb8caf5d526401f918589d4a5a73",
+     "level": "mid",
+     "oof": 10.365525747487075,
+     "oofR2": 0.03484934475814494,
+     "test": 10.911103646393377,
+     "foldsFingerprint": "944cc71e267e16e77e24073f38bd1de71e0836195076300256ebbcfd686eb91b",
+     "recipeFingerprint": "1a479963ac1e59d79b9c3c5f841a0ba452305725e9a9488ae88e04367f7648ad",
      "pipeline": [
       {
-       "name": "Mid fusion · CNN on NIRS + Genetic markers",
+       "name": "Mid fusion · CNN on NIRS grain (1st derivative) + NIRS leaf (1st derivative) + SNP markers",
        "pipeline": [
         {
          "source_branch": {
-          "nirs": [
+          "nirs_grain": [
+           {
+            "class": "preprocessing.resampling.resample_transformer",
+            "params": {
+             "num_samples": 128
+            }
+           },
            {
             "class": "preprocessing.scaling.standard_scale",
             "params": {
@@ -1378,7 +1468,23 @@
             }
            }
           ],
-          "genetics": [
+          "nirs_leaf": [
+           {
+            "class": "preprocessing.resampling.resample_transformer",
+            "params": {
+             "num_samples": 128
+            }
+           },
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ],
+          "markers": [
            {
             "class": "preprocessing.scaling.standard_scale",
             "params": {
@@ -1412,20 +1518,26 @@
      ]
     },
     {
-     "name": "Early · random forest",
-     "level": "single",
-     "oofRmse": 0.3973361370928748,
-     "oofR2": 0.5029644166236457,
-     "testRmse": 0.2958967133480354,
-     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
-     "recipeFingerprint": "51f56c7ce2e1067c4d3a852772f75a808fd240ac29f6d1f914aa93531677bf29",
+     "name": "Early · forêt aléatoire",
+     "level": "early",
+     "oof": 9.774100892031452,
+     "oofR2": 0.14184433115477046,
+     "test": 9.075651201682941,
+     "foldsFingerprint": "944cc71e267e16e77e24073f38bd1de71e0836195076300256ebbcfd686eb91b",
+     "recipeFingerprint": "4fed98aa1e1b07a65b47f8b3f1edc5d7cfe06406ab5494327b5fa4843381f259",
      "pipeline": [
       {
-       "name": "Early fusion · NIRS + Genetic markers → random forest",
+       "name": "Early fusion · NIRS grain (1st derivative) + NIRS leaf (1st derivative) + SNP markers → random forest",
        "pipeline": [
         {
          "source_branch": {
-          "nirs": [
+          "nirs_grain": [
+           {
+            "class": "preprocessing.resampling.resample_transformer",
+            "params": {
+             "num_samples": 128
+            }
+           },
            {
             "class": "preprocessing.scaling.standard_scale",
             "params": {
@@ -1435,7 +1547,23 @@
             }
            }
           ],
-          "genetics": [
+          "nirs_leaf": [
+           {
+            "class": "preprocessing.resampling.resample_transformer",
+            "params": {
+             "num_samples": 128
+            }
+           },
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ],
+          "markers": [
            {
             "class": "preprocessing.scaling.standard_scale",
             "params": {
@@ -1468,19 +1596,25 @@
     },
     {
      "name": "Mid · CNN (Burn)",
-     "level": "single",
-     "oofRmse": 0.39616918840755816,
-     "oofR2": 0.5058796475053069,
-     "testRmse": 0.2990906149724771,
-     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
-     "recipeFingerprint": "bf84243915dafdf6b543983692898fe24091e066d8e890edd79c3ce8aae38752",
+     "level": "mid",
+     "oof": 10.833645910516545,
+     "oofR2": -0.054293949554198084,
+     "test": 10.234604000959546,
+     "foldsFingerprint": "944cc71e267e16e77e24073f38bd1de71e0836195076300256ebbcfd686eb91b",
+     "recipeFingerprint": "04cfd351332cda2ddb51f4ea8fccb251f8c827cdee6cf02b67efa0ae70ebcda4",
      "pipeline": [
       {
-       "name": "Mid fusion · Burn CNN on NIRS + Genetic markers",
+       "name": "Mid fusion · Burn CNN on NIRS grain (1st derivative) + NIRS leaf (1st derivative) + SNP markers",
        "pipeline": [
         {
          "source_branch": {
-          "nirs": [
+          "nirs_grain": [
+           {
+            "class": "preprocessing.resampling.resample_transformer",
+            "params": {
+             "num_samples": 128
+            }
+           },
            {
             "class": "preprocessing.scaling.standard_scale",
             "params": {
@@ -1490,7 +1624,23 @@
             }
            }
           ],
-          "genetics": [
+          "nirs_leaf": [
+           {
+            "class": "preprocessing.resampling.resample_transformer",
+            "params": {
+             "num_samples": 128
+            }
+           },
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ],
+          "markers": [
            {
             "class": "preprocessing.scaling.standard_scale",
             "params": {
@@ -1523,22 +1673,124 @@
      ]
     },
     {
-     "name": "Late · AOM stacking",
-     "level": "single",
-     "oofRmse": 0.3699817247958992,
-     "oofR2": 0.569045027251043,
-     "testRmse": 0.24725055757989461,
-     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
-     "recipeFingerprint": "cf1885f5ec7f1967c5cfde6dafe0674d19085b5808c6f436328e32d0fe2dba3c",
+     "name": "Mid · NICON (Burn)",
+     "level": "mid",
+     "oof": 10.269245811468295,
+     "oofR2": 0.05269563281601275,
+     "test": 10.269808011808967,
+     "foldsFingerprint": "944cc71e267e16e77e24073f38bd1de71e0836195076300256ebbcfd686eb91b",
+     "recipeFingerprint": "c5f5531370e506fc009ba7a775c1bd327d5b382fcaafebd3cb67bd4afe0f2cdd",
      "pipeline": [
       {
-       "name": "Late fusion · AOM-PLS per spectrum (NIRS + Genetic markers) → Ridge",
+       "name": "Mid fusion · NICON on NIRS grain (1st derivative) + NIRS leaf (1st derivative) + SNP markers",
+       "pipeline": [
+        {
+         "source_branch": {
+          "nirs_grain": [
+           {
+            "class": "preprocessing.resampling.resample_transformer",
+            "params": {
+             "num_samples": 256
+            }
+           },
+           {
+            "class": "preprocessing.scatter.snv",
+            "params": {}
+           },
+           {
+            "class": "preprocessing.derivatives.savitzky_golay",
+            "params": {
+             "window_length": 15,
+             "polyorder": 2,
+             "deriv": 1
+            }
+           },
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ],
+          "nirs_leaf": [
+           {
+            "class": "preprocessing.resampling.resample_transformer",
+            "params": {
+             "num_samples": 256
+            }
+           },
+           {
+            "class": "preprocessing.scatter.snv",
+            "params": {}
+           },
+           {
+            "class": "preprocessing.derivatives.savitzky_golay",
+            "params": {
+             "window_length": 15,
+             "polyorder": 2,
+             "deriv": 1
+            }
+           },
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ],
+          "markers": [
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ]
+         }
+        },
+        {
+         "model": {
+          "class": "host.burn.cnn_regressor",
+          "params": {
+           "architecture": "nicon",
+           "filters": 8,
+           "kernel_size": 5,
+           "embedding_dim": 16,
+           "head_hidden": 16,
+           "epochs": 20,
+           "batch_size": 64,
+           "learning_rate": 0.002
+          }
+         },
+         "name": "NICON (Burn)"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Late · stacking AOM",
+     "level": "late",
+     "oof": 10.112906519283353,
+     "oofR2": 0.08131965269455899,
+     "test": 9.12937729753747,
+     "foldsFingerprint": "944cc71e267e16e77e24073f38bd1de71e0836195076300256ebbcfd686eb91b",
+     "recipeFingerprint": "4c2d6f112b3bbedf0f45a784515806fd1c5b70f488588234baadfdb0fdcdb77d",
+     "pipeline": [
+      {
+       "name": "Late fusion · AOM-PLS per spectrum (NIRS grain (1st derivative) + NIRS leaf (1st derivative) + SNP markers) → Ridge",
        "pipeline": [
         {
          "branch": {
           "by_source": true,
           "steps": {
-           "nirs": [
+           "nirs_grain": [
             {
              "model": {
               "class": "aom_pop.calibration",
@@ -1552,7 +1804,21 @@
              "name": "AOM-PLS"
             }
            ],
-           "genetics": [
+           "nirs_leaf": [
+            {
+             "model": {
+              "class": "aom_pop.calibration",
+              "params": {
+               "head": "pls",
+               "max_components": 15,
+               "cv": 3,
+               "fast": true
+              }
+             },
+             "name": "AOM-PLS"
+            }
+           ],
+           "markers": [
             {
              "class": "preprocessing.scaling.standard_scale",
              "params": {
@@ -1598,22 +1864,22 @@
      ]
     },
     {
-     "name": "Late · average",
-     "level": "single",
-     "oofRmse": 0.48676250899196927,
-     "oofR2": 0.2540570856358422,
-     "testRmse": 0.20565110388876925,
-     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
-     "recipeFingerprint": "be94f6e8d176aa8a87be5a0a76c8f5f9dda5fdbeef68ae926494c51b88345d8d",
+     "name": "Late · moyenne",
+     "level": "late",
+     "oof": 9.389645163583905,
+     "oofR2": 0.20802622398006632,
+     "test": 9.426354842497,
+     "foldsFingerprint": "944cc71e267e16e77e24073f38bd1de71e0836195076300256ebbcfd686eb91b",
+     "recipeFingerprint": "39bd9f378eac05ee9c97c3d304253504c9824d096dd46450052e95e8b88caeb7",
      "pipeline": [
       {
-       "name": "Late fusion · mean of per-source PLS (NIRS + Genetic markers)",
+       "name": "Late fusion · mean of per-source PLS (NIRS grain (1st derivative) + NIRS leaf (1st derivative) + SNP markers)",
        "pipeline": [
         {
          "branch": {
           "by_source": true,
           "steps": {
-           "nirs": [
+           "nirs_grain": [
             {
              "class": "preprocessing.scaling.standard_scale",
              "params": {
@@ -1636,7 +1902,30 @@
              "name": "PLS"
             }
            ],
-           "genetics": [
+           "nirs_leaf": [
+            {
+             "class": "preprocessing.scaling.standard_scale",
+             "params": {
+              "with_mean": true,
+              "with_std": true,
+              "ddof": 0
+             }
+            },
+            {
+             "model": {
+              "class": "models.pls.pls_regression",
+              "params": {
+               "n_components": 10,
+               "center_x": true,
+               "scale_x": false,
+               "center_y": true,
+               "scale_y": false
+              }
+             },
+             "name": "PLS"
+            }
+           ],
+           "markers": [
             {
              "class": "preprocessing.scaling.standard_scale",
              "params": {
@@ -1674,21 +1963,21 @@
     },
     {
      "name": "Late · stacking",
-     "level": "single",
-     "oofRmse": 0.4144137074283457,
-     "oofR2": 0.4593209089692222,
-     "testRmse": 0.26819790584209224,
-     "foldsFingerprint": "7566ce4e4ce9a3c6f251e469e3a6b94d8a1607c8396482df84fb3117c026436f",
-     "recipeFingerprint": "cb375648494dad7d9a9a580dd6da7d37d056b667c6db67f4b9e621f253ce3ec7",
+     "level": "late",
+     "oof": 9.409643727697645,
+     "oofR2": 0.2046490558919689,
+     "test": 8.860585471944416,
+     "foldsFingerprint": "944cc71e267e16e77e24073f38bd1de71e0836195076300256ebbcfd686eb91b",
+     "recipeFingerprint": "b8de03b5d489767f9f32a6a03d5c7ab537084216620a91f307055cc03f8feda5",
      "pipeline": [
       {
-       "name": "Late fusion · stacking of per-source PLS (NIRS + Genetic markers) → Ridge",
+       "name": "Late fusion · stacking of per-source PLS (NIRS grain (1st derivative) + NIRS leaf (1st derivative) + SNP markers) → Ridge",
        "pipeline": [
         {
          "branch": {
           "by_source": true,
           "steps": {
-           "nirs": [
+           "nirs_grain": [
             {
              "class": "preprocessing.scaling.standard_scale",
              "params": {
@@ -1711,7 +2000,30 @@
              "name": "PLS"
             }
            ],
-           "genetics": [
+           "nirs_leaf": [
+            {
+             "class": "preprocessing.scaling.standard_scale",
+             "params": {
+              "with_mean": true,
+              "with_std": true,
+              "ddof": 0
+             }
+            },
+            {
+             "model": {
+              "class": "models.pls.pls_regression",
+              "params": {
+               "n_components": 10,
+               "center_x": true,
+               "scale_x": false,
+               "center_y": true,
+               "scale_y": false
+              }
+             },
+             "name": "PLS"
+            }
+           ],
+           "markers": [
             {
              "class": "preprocessing.scaling.standard_scale",
              "params": {
@@ -1759,45 +2071,55 @@
    ],
    "edits": [],
    "capturedAt": "2026-11-21",
-   "data": "jeu d’exemple pédagogique synthétique de la page"
+   "data": "données publiques réelles : blé, Rincent et al. 2018 (Etalab 2.0)"
   },
   "images": {
    "dataset": {
-    "name": "images-spatial",
-    "fingerprint": "cb88582c4e008cacf37a2849154c5da3be36e197d351c3150eed97733a33d287",
-    "samples": 120,
+    "name": "rice-varieties",
+    "fingerprint": "0a98b3f55ff97e3c9818b4b2bd025727b0c0d5e4b47339facdb29908ccdac874",
+    "samples": 240,
     "target": {
-     "name": "target",
-     "unit": "a.u."
+     "name": "variety",
+     "unit": "variety"
     },
     "sources": [
      {
-      "id": "nirs",
-      "label": "NIRS",
+      "id": "pixel_center",
+      "label": "HSI pixel centre",
       "modality": "spectroscopy",
       "representation": "signal_1d",
       "shape": [
-       64
-      ],
-      "axis": {
-       "unit": "nm",
-       "kind": "wavelength",
-       "first": 1000,
-       "last": 2300,
-       "points": 64
-      }
+       256
+      ]
+     },
+     {
+      "id": "pixel_a",
+      "label": "HSI pixel A (upper end)",
+      "modality": "spectroscopy",
+      "representation": "signal_1d",
+      "shape": [
+       256
+      ]
+     },
+     {
+      "id": "pixel_b",
+      "label": "HSI pixel B (lower end)",
+      "modality": "spectroscopy",
+      "representation": "signal_1d",
+      "shape": [
+       256
+      ]
      },
      {
       "id": "image",
-      "label": "Grayscale images",
+      "label": "RGB image 32x32",
       "modality": "image",
-      "representation": "gray_image",
+      "representation": "rgb_image",
       "shape": [
-       12,
-       12,
-       1
-      ],
-      "axis": null
+       32,
+       32,
+       3
+      ]
      }
     ]
    },
@@ -1807,25 +2129,29 @@
     "methodsAbi": "2.24.0",
     "sourceProfile": "source_composition.v1"
    },
-   "calibration": 96,
-   "holdout": 24,
-   "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
+   "metric": {
+    "label": "Balanced accuracy",
+    "higherIsBetter": true
+   },
+   "calibration": 190,
+   "holdout": 50,
+   "foldsFingerprint": "d0894c0ae1ba4814ef6825e5ff5e7d6506546562b4727a1598ec752ed79fd029",
    "presets": [
     {
-     "name": "NIRS alone",
+     "name": "Pixel central seul",
      "level": "single",
-     "oofRmse": 0.3470279047451324,
-     "oofR2": 0.502015345323663,
-     "testRmse": 0.3759248766747604,
-     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "0eafdd3da4d145fddd62f30202bf2c2f08bc8fae162ca90ca8dc97c51f1e6821",
+     "oof": 0.5736842105263158,
+     "oofR2": null,
+     "test": 0.5999999999999999,
+     "foldsFingerprint": "d0894c0ae1ba4814ef6825e5ff5e7d6506546562b4727a1598ec752ed79fd029",
+     "recipeFingerprint": "28c8de87f48ad83235d2df00f15b1b1251170baca43cf859d1d15f7038ed54e6",
      "pipeline": [
       {
-       "name": "NIRS alone · PLS",
+       "name": "HSI pixel centre alone · PLS-DA",
        "pipeline": [
         {
          "source_branch": {
-          "nirs": [
+          "pixel_center": [
            {
             "class": "preprocessing.scaling.standard_scale",
             "params": {
@@ -1839,16 +2165,13 @@
         },
         {
          "model": {
-          "class": "models.pls.pls_regression",
+          "class": "models.classification.pls_logistic",
           "params": {
            "n_components": 5,
-           "center_x": true,
-           "scale_x": false,
-           "center_y": true,
-           "scale_y": false
+           "max_iter": 500
           }
          },
-         "name": "PLS"
+         "name": "PLS-DA"
         }
        ]
       }
@@ -1857,36 +2180,36 @@
      "sweep": [
       {
        "components": 5,
-       "oofRmse": 0.3470279047451324,
-       "testRmse": 0.3759248766747604
+       "oof": 0.5736842105263158,
+       "test": 0.5999999999999999
       },
       {
        "components": 10,
-       "oofRmse": 0.4223735284019454,
-       "testRmse": 0.5185416308452601
+       "oof": 0.47894736842105257,
+       "test": 0.6199999999999999
       },
       {
        "components": 15,
-       "oofRmse": 0.5390514114230993,
-       "testRmse": 0.555341500907391
+       "oof": 0.4842105263157895,
+       "test": 0.58
       }
      ]
     },
     {
-     "name": "Grayscale images alone",
+     "name": "Pixel A seul",
      "level": "single",
-     "oofRmse": 0.18234540792287424,
-     "oofR2": 0.8625081911544332,
-     "testRmse": 0.20410515206461985,
-     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "2ca80e5d9b13dccbcb4b06ee5ff9cae43660666afb1c0fc3b24a05862b2d4a0f",
+     "oof": 0.568421052631579,
+     "oofR2": null,
+     "test": 0.56,
+     "foldsFingerprint": "d0894c0ae1ba4814ef6825e5ff5e7d6506546562b4727a1598ec752ed79fd029",
+     "recipeFingerprint": "7123f8ae9b4815a7bb7ca389252a1e3af9c29ca6d9993c45b4a3eda77f9d3b26",
      "pipeline": [
       {
-       "name": "Grayscale images alone · PLS",
+       "name": "HSI pixel A (upper end) alone · PLS-DA",
        "pipeline": [
         {
          "source_branch": {
-          "image": [
+          "pixel_a": [
            {
             "class": "preprocessing.scaling.standard_scale",
             "params": {
@@ -1900,16 +2223,13 @@
         },
         {
          "model": {
-          "class": "models.pls.pls_regression",
+          "class": "models.classification.pls_logistic",
           "params": {
            "n_components": 5,
-           "center_x": true,
-           "scale_x": false,
-           "center_y": true,
-           "scale_y": false
+           "max_iter": 500
           }
          },
-         "name": "PLS"
+         "name": "PLS-DA"
         }
        ]
       }
@@ -1918,188 +2238,36 @@
      "sweep": [
       {
        "components": 5,
-       "oofRmse": 0.18234540792287424,
-       "testRmse": 0.20410515206461985
+       "oof": 0.568421052631579,
+       "test": 0.56
       },
       {
        "components": 10,
-       "oofRmse": 0.18781264206466422,
-       "testRmse": 0.23748872695794657
+       "oof": 0.5105263157894737,
+       "test": 0.56
       },
       {
        "components": 15,
-       "oofRmse": 0.18675075201648556,
-       "testRmse": 0.24173064075016013
+       "oof": 0.43684210526315786,
+       "test": 0.56
       }
      ]
     },
     {
-     "name": "Early · concatenate",
+     "name": "Pixel B seul",
      "level": "single",
-     "oofRmse": 0.08964144735768523,
-     "oofR2": 0.9667719477902428,
-     "testRmse": 0.10336581498376529,
-     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "b4fd6e34a6598c93c9f21f3c884f9a839334a3fa2429d889225cc19dc6225cd7",
+     "oof": 0.47368421052631576,
+     "oofR2": null,
+     "test": 0.54,
+     "foldsFingerprint": "d0894c0ae1ba4814ef6825e5ff5e7d6506546562b4727a1598ec752ed79fd029",
+     "recipeFingerprint": "6851698959cda0983e95be49d79b1b2899b61180d6bc3eea75c9290bc96df7db",
      "pipeline": [
       {
-       "name": "Early fusion · NIRS + Grayscale images → PLS",
+       "name": "HSI pixel B (lower end) alone · PLS-DA",
        "pipeline": [
         {
          "source_branch": {
-          "nirs": [
-           {
-            "class": "preprocessing.scaling.standard_scale",
-            "params": {
-             "with_mean": true,
-             "with_std": true,
-             "ddof": 0
-            }
-           }
-          ],
-          "image": [
-           {
-            "class": "preprocessing.scaling.standard_scale",
-            "params": {
-             "with_mean": true,
-             "with_std": true,
-             "ddof": 0
-            }
-           }
-          ]
-         }
-        },
-        {
-         "merge_sources": "concat"
-        },
-        {
-         "model": {
-          "class": "models.pls.pls_regression",
-          "params": {
-           "n_components": 5,
-           "center_x": true,
-           "scale_x": false,
-           "center_y": true,
-           "scale_y": false
-          }
-         },
-         "name": "PLS"
-        }
-       ]
-      }
-     ],
-     "components": 5,
-     "sweep": [
-      {
-       "components": 5,
-       "oofRmse": 0.08964144735768523,
-       "testRmse": 0.10336581498376529
-      },
-      {
-       "components": 10,
-       "oofRmse": 0.092952076309448,
-       "testRmse": 0.12110155513005443
-      },
-      {
-       "components": 15,
-       "oofRmse": 0.09421045365761496,
-       "testRmse": 0.12822661299003618
-      }
-     ]
-    },
-    {
-     "name": "Mid · PCA scores",
-     "level": "single",
-     "oofRmse": 0.10265453934471513,
-     "oofR2": 0.9564243894370702,
-     "testRmse": 0.13639279906629884,
-     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "351bfe4d4e5b4463d7b8dc95331dc029a54a9c0048abcabda995821ef62e758f",
-     "pipeline": [
-      {
-       "name": "Mid fusion · PCA scores of NIRS + Grayscale images → PLS",
-       "pipeline": [
-        {
-         "source_branch": {
-          "nirs": [
-           {
-            "class": "preprocessing.scaling.standard_scale",
-            "params": {
-             "with_mean": true,
-             "with_std": true,
-             "ddof": 0
-            }
-           },
-           {
-            "class": "preprocessing.feature_selection.flexible_pca",
-            "params": {
-             "n_components": 5
-            }
-           }
-          ],
-          "image": [
-           {
-            "class": "preprocessing.scaling.standard_scale",
-            "params": {
-             "with_mean": true,
-             "with_std": true,
-             "ddof": 0
-            }
-           },
-           {
-            "class": "preprocessing.feature_selection.flexible_pca",
-            "params": {
-             "n_components": 5
-            }
-           }
-          ]
-         }
-        },
-        {
-         "merge_sources": "concat"
-        },
-        {
-         "model": {
-          "class": "models.pls.pls_regression",
-          "params": {
-           "n_components": 3,
-           "center_x": true,
-           "scale_x": false,
-           "center_y": true,
-           "scale_y": false
-          }
-         },
-         "name": "PLS"
-        }
-       ]
-      }
-     ]
-    },
-    {
-     "name": "Early · MB-PLS",
-     "level": "single",
-     "oofRmse": 0.0983908835876329,
-     "oofR2": 0.9599689588642981,
-     "testRmse": 0.11919652056478477,
-     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "709baeaf93ba6d099780164756be2f78d1c4d28b9d735454f8df2e8f1240576b",
-     "pipeline": [
-      {
-       "name": "Early fusion · MB-PLS on NIRS + Grayscale images",
-       "pipeline": [
-        {
-         "source_branch": {
-          "nirs": [
-           {
-            "class": "preprocessing.scaling.standard_scale",
-            "params": {
-             "with_mean": true,
-             "with_std": true,
-             "ddof": 0
-            }
-           }
-          ],
-          "image": [
+          "pixel_b": [
            {
             "class": "preprocessing.scaling.standard_scale",
             "params": {
@@ -2113,12 +2281,13 @@
         },
         {
          "model": {
-          "class": "models.multiblock.mb_pls",
+          "class": "models.classification.pls_logistic",
           "params": {
-           "n_components": 10
+           "n_components": 10,
+           "max_iter": 500
           }
          },
-         "name": "MB-PLS"
+         "name": "PLS-DA"
         }
        ]
       }
@@ -2127,45 +2296,35 @@
      "sweep": [
       {
        "components": 5,
-       "oofRmse": 0.10002837846110227,
-       "testRmse": 0.11418812284654183
+       "oof": 0.43157894736842095,
+       "test": 0.5399999999999999
       },
       {
        "components": 10,
-       "oofRmse": 0.0983908835876329,
-       "testRmse": 0.11919652056478477
+       "oof": 0.47368421052631576,
+       "test": 0.54
       },
       {
        "components": 15,
-       "oofRmse": 0.09872336210726333,
-       "testRmse": 0.1220691101266302
+       "oof": 0.4473684210526315,
+       "test": 0.5
       }
      ]
     },
     {
-     "name": "Mid · CNN",
+     "name": "Image RGB seule",
      "level": "single",
-     "oofRmse": 0.12306307754684255,
-     "oofR2": 0.9373757255338714,
-     "testRmse": 0.12630593937218973,
-     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "86a0d5e0c90f3b5f05670e3fb3cab802a1ad3003b59af9de47b150bd87e1ae3f",
+     "oof": 0.41052631578947363,
+     "oofR2": null,
+     "test": 0.33999999999999997,
+     "foldsFingerprint": "d0894c0ae1ba4814ef6825e5ff5e7d6506546562b4727a1598ec752ed79fd029",
+     "recipeFingerprint": "4cc21378d677f15e23d45c7c548d2b235ed5bd4a84dd8d5cbb9415c4e12cefd2",
      "pipeline": [
       {
-       "name": "Mid fusion · CNN on NIRS + Grayscale images",
+       "name": "RGB image 32x32 alone · PLS-DA",
        "pipeline": [
         {
          "source_branch": {
-          "nirs": [
-           {
-            "class": "preprocessing.scaling.standard_scale",
-            "params": {
-             "with_mean": true,
-             "with_std": true,
-             "ddof": 0
-            }
-           }
-          ],
           "image": [
            {
             "class": "preprocessing.scaling.standard_scale",
@@ -2180,40 +2339,71 @@
         },
         {
          "model": {
-          "class": "models.neural.multibranch_regressor",
+          "class": "models.classification.pls_logistic",
           "params": {
-           "filters": 8,
-           "kernel_size": 3,
-           "pool_size": 2,
-           "embedding_dim": 16,
-           "head_hidden": 16,
-           "epochs": 150,
-           "batch_size": 16,
-           "learning_rate": 0.01,
-           "weight_decay": 0.0001
+           "n_components": 5,
+           "max_iter": 500
           }
          },
-         "name": "Multibranch network"
+         "name": "PLS-DA"
         }
        ]
+      }
+     ],
+     "components": 5,
+     "sweep": [
+      {
+       "components": 5,
+       "oof": 0.41052631578947363,
+       "test": 0.33999999999999997
+      },
+      {
+       "components": 10,
+       "oof": 0.3368421052631579,
+       "test": 0.4400000000000001
+      },
+      {
+       "components": 15,
+       "oof": 0.3421052631578947,
+       "test": 0.4600000000000001
       }
      ]
     },
     {
-     "name": "Early · random forest",
-     "level": "single",
-     "oofRmse": 0.18584579176358781,
-     "oofR2": 0.8571788166697587,
-     "testRmse": 0.2101732726976033,
-     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "aaef847d8fb47cacd08bb45d5f804d2c58bb11909495ff99d46ff7c96e1c9af4",
+     "name": "Early · concaténation",
+     "level": "early",
+     "oof": 0.6578947368421052,
+     "oofR2": null,
+     "test": 0.6399999999999999,
+     "foldsFingerprint": "d0894c0ae1ba4814ef6825e5ff5e7d6506546562b4727a1598ec752ed79fd029",
+     "recipeFingerprint": "0027147cb2d603cc46d5b9054e5182200ec694176b700ea8714bce8c1fe09df9",
      "pipeline": [
       {
-       "name": "Early fusion · NIRS + Grayscale images → random forest",
+       "name": "Early fusion · HSI pixel centre + HSI pixel A (upper end) + HSI pixel B (lower end) + RGB image 32x32 → PLS-DA",
        "pipeline": [
         {
          "source_branch": {
-          "nirs": [
+          "pixel_center": [
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ],
+          "pixel_a": [
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ],
+          "pixel_b": [
            {
             "class": "preprocessing.scaling.standard_scale",
             "params": {
@@ -2240,10 +2430,119 @@
         },
         {
          "model": {
-          "class": "host.mljs.random_forest_regressor",
+          "class": "models.classification.pls_logistic",
+          "params": {
+           "n_components": 10,
+           "max_iter": 500
+          }
+         },
+         "name": "PLS-DA"
+        }
+       ]
+      }
+     ],
+     "components": 10,
+     "sweep": [
+      {
+       "components": 5,
+       "oof": 0.4578947368421053,
+       "test": 0.5800000000000001
+      },
+      {
+       "components": 10,
+       "oof": 0.6578947368421052,
+       "test": 0.6399999999999999
+      },
+      {
+       "components": 15,
+       "oof": 0.631578947368421,
+       "test": 0.76
+      }
+     ]
+    },
+    {
+     "name": "Early · forêt aléatoire",
+     "level": "early",
+     "oof": 0.5578947368421052,
+     "oofR2": null,
+     "test": 0.6599999999999999,
+     "foldsFingerprint": "d0894c0ae1ba4814ef6825e5ff5e7d6506546562b4727a1598ec752ed79fd029",
+     "recipeFingerprint": "5ba2183f26e3cff78fd5696925136878901e4052fb5654b23ea7411e5d52e657",
+     "pipeline": [
+      {
+       "name": "Early fusion · HSI pixel centre + HSI pixel A (upper end) + HSI pixel B (lower end) + RGB image 32x32 → random forest",
+       "pipeline": [
+        {
+         "source_branch": {
+          "pixel_center": [
+           {
+            "class": "preprocessing.resampling.resample_transformer",
+            "params": {
+             "num_samples": 128
+            }
+           },
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ],
+          "pixel_a": [
+           {
+            "class": "preprocessing.resampling.resample_transformer",
+            "params": {
+             "num_samples": 128
+            }
+           },
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ],
+          "pixel_b": [
+           {
+            "class": "preprocessing.resampling.resample_transformer",
+            "params": {
+             "num_samples": 128
+            }
+           },
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ],
+          "image": [
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ]
+         }
+        },
+        {
+         "merge_sources": "concat"
+        },
+        {
+         "model": {
+          "class": "host.mljs.random_forest_classifier",
           "params": {
            "n_estimators": 50,
-           "max_features": 0.33,
+           "max_features": 0.05,
            "max_depth": 10,
            "min_samples_leaf": 3
           }
@@ -2255,97 +2554,325 @@
      ]
     },
     {
-     "name": "Late · AOM stacking",
-     "level": "single",
-     "oofRmse": 0.17861406269843588,
-     "oofR2": 0.8680776248363106,
-     "testRmse": 0.2146033484929627,
-     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "074371f49aba5eb604c38669b0661a73af9d5f9790a728b9819a09b036bebdc9",
+     "name": "Mid · scores ACP",
+     "level": "mid",
+     "oof": 0.42105263157894735,
+     "oofR2": null,
+     "test": 0.45999999999999996,
+     "foldsFingerprint": "d0894c0ae1ba4814ef6825e5ff5e7d6506546562b4727a1598ec752ed79fd029",
+     "recipeFingerprint": "83fa8ada0355c3015d2964886fe314f497214a0d3b32c1c7ba9d69e6008e6b05",
      "pipeline": [
       {
-       "name": "Late fusion · AOM-PLS per spectrum (NIRS + Grayscale images) → Ridge",
+       "name": "Mid fusion · PCA scores of HSI pixel centre + HSI pixel A (upper end) + HSI pixel B (lower end) + RGB image 32x32 → PLS-DA",
        "pipeline": [
         {
-         "branch": {
-          "by_source": true,
-          "steps": {
-           "nirs": [
-            {
-             "model": {
-              "class": "aom_pop.calibration",
-              "params": {
-               "head": "pls",
-               "max_components": 15,
-               "cv": 3,
-               "fast": true
-              }
-             },
-             "name": "AOM-PLS"
+         "source_branch": {
+          "pixel_center": [
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
             }
-           ],
-           "image": [
-            {
-             "class": "preprocessing.scaling.standard_scale",
-             "params": {
-              "with_mean": true,
-              "with_std": true,
-              "ddof": 0
-             }
-            },
-            {
-             "model": {
-              "class": "models.pls.pls_regression",
-              "params": {
-               "n_components": 10,
-               "center_x": true,
-               "scale_x": false,
-               "center_y": true,
-               "scale_y": false
-              }
-             },
-             "name": "PLS"
+           },
+           {
+            "class": "preprocessing.feature_selection.flexible_pca",
+            "params": {
+             "n_components": 5
             }
-           ]
-          }
+           }
+          ],
+          "pixel_a": [
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           },
+           {
+            "class": "preprocessing.feature_selection.flexible_pca",
+            "params": {
+             "n_components": 5
+            }
+           }
+          ],
+          "pixel_b": [
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           },
+           {
+            "class": "preprocessing.feature_selection.flexible_pca",
+            "params": {
+             "n_components": 5
+            }
+           }
+          ],
+          "image": [
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           },
+           {
+            "class": "preprocessing.feature_selection.flexible_pca",
+            "params": {
+             "n_components": 5
+            }
+           }
+          ]
          }
         },
         {
-         "merge": "predictions"
+         "merge_sources": "concat"
         },
         {
          "model": {
-          "class": "models.regularized.ridge",
+          "class": "models.classification.pls_logistic",
           "params": {
-           "alpha": 1,
-           "center_x": true,
-           "center_y": true,
-           "scale_x": false
+           "n_components": 5,
+           "max_iter": 500
           }
          },
-         "name": "Meta-model (Ridge)"
+         "name": "PLS-DA"
         }
        ]
       }
      ]
     },
     {
-     "name": "Late · average",
-     "level": "single",
-     "oofRmse": 0.2333788593886165,
-     "oofR2": 0.7747783219464163,
-     "testRmse": 0.27390783812618397,
-     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "38fa44737ae277fe4e988f1f551103a68e4c68a4950f0cb96cdd57f402f8ee1f",
+     "name": "Mid · CNN (Burn)",
+     "level": "mid",
+     "oof": 0.5473684210526315,
+     "oofR2": null,
+     "test": 0.72,
+     "foldsFingerprint": "d0894c0ae1ba4814ef6825e5ff5e7d6506546562b4727a1598ec752ed79fd029",
+     "recipeFingerprint": "c284f73b9caa02ab123f3802318dda73c0d4b6c46f603578611cdc7f0f8595d3",
      "pipeline": [
       {
-       "name": "Late fusion · mean of per-source PLS (NIRS + Grayscale images)",
+       "name": "Mid fusion · Burn CNN classifier on HSI pixel centre + HSI pixel A (upper end) + HSI pixel B (lower end) + RGB image 32x32",
+       "pipeline": [
+        {
+         "source_branch": {
+          "pixel_center": [
+           {
+            "class": "preprocessing.resampling.resample_transformer",
+            "params": {
+             "num_samples": 128
+            }
+           },
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ],
+          "pixel_a": [
+           {
+            "class": "preprocessing.resampling.resample_transformer",
+            "params": {
+             "num_samples": 128
+            }
+           },
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ],
+          "pixel_b": [
+           {
+            "class": "preprocessing.resampling.resample_transformer",
+            "params": {
+             "num_samples": 128
+            }
+           },
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ],
+          "image": [
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ]
+         }
+        },
+        {
+         "model": {
+          "class": "host.burn.cnn_classifier",
+          "params": {
+           "architecture": "compact",
+           "filters": 4,
+           "kernel_size": 5,
+           "embedding_dim": 16,
+           "head_hidden": 16,
+           "epochs": 30,
+           "batch_size": 64,
+           "learning_rate": 0.005
+          }
+         },
+         "name": "CNN (Burn)"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Mid · NICON (Burn)",
+     "level": "mid",
+     "oof": 0.4894736842105263,
+     "oofR2": null,
+     "test": 0.48,
+     "foldsFingerprint": "d0894c0ae1ba4814ef6825e5ff5e7d6506546562b4727a1598ec752ed79fd029",
+     "recipeFingerprint": "75b31e43aeea70c5d5bb70dd3434888e96c35162388a7b510d198000e960cba9",
+     "pipeline": [
+      {
+       "name": "Mid fusion · NICON classifier on HSI pixel centre + HSI pixel A (upper end) + HSI pixel B (lower end) + RGB image 32x32",
+       "pipeline": [
+        {
+         "source_branch": {
+          "pixel_center": [
+           {
+            "class": "preprocessing.scatter.snv",
+            "params": {}
+           },
+           {
+            "class": "preprocessing.derivatives.savitzky_golay",
+            "params": {
+             "window_length": 15,
+             "polyorder": 2,
+             "deriv": 1
+            }
+           },
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ],
+          "pixel_a": [
+           {
+            "class": "preprocessing.scatter.snv",
+            "params": {}
+           },
+           {
+            "class": "preprocessing.derivatives.savitzky_golay",
+            "params": {
+             "window_length": 15,
+             "polyorder": 2,
+             "deriv": 1
+            }
+           },
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ],
+          "pixel_b": [
+           {
+            "class": "preprocessing.scatter.snv",
+            "params": {}
+           },
+           {
+            "class": "preprocessing.derivatives.savitzky_golay",
+            "params": {
+             "window_length": 15,
+             "polyorder": 2,
+             "deriv": 1
+            }
+           },
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ],
+          "image": [
+           {
+            "class": "preprocessing.scaling.standard_scale",
+            "params": {
+             "with_mean": true,
+             "with_std": true,
+             "ddof": 0
+            }
+           }
+          ]
+         }
+        },
+        {
+         "model": {
+          "class": "host.burn.cnn_classifier",
+          "params": {
+           "architecture": "nicon",
+           "filters": 8,
+           "kernel_size": 5,
+           "embedding_dim": 16,
+           "head_hidden": 16,
+           "epochs": 20,
+           "batch_size": 64,
+           "learning_rate": 0.002
+          }
+         },
+         "name": "NICON (Burn)"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Late · moyenne",
+     "level": "late",
+     "oof": 0.6736842105263158,
+     "oofR2": null,
+     "test": 0.7399999999999999,
+     "foldsFingerprint": "d0894c0ae1ba4814ef6825e5ff5e7d6506546562b4727a1598ec752ed79fd029",
+     "recipeFingerprint": "d6c499cb7dadca930731a907269a8ab96e689464cfe825b81d43ce4db858620c",
+     "pipeline": [
+      {
+       "name": "Late fusion · mean of per-source PLS-DA probabilities (HSI pixel centre + HSI pixel A (upper end) + HSI pixel B (lower end) + RGB image 32x32)",
        "pipeline": [
         {
          "branch": {
           "by_source": true,
           "steps": {
-           "nirs": [
+           "pixel_center": [
             {
              "class": "preprocessing.scaling.standard_scale",
              "params": {
@@ -2356,16 +2883,53 @@
             },
             {
              "model": {
-              "class": "models.pls.pls_regression",
+              "class": "models.classification.pls_logistic",
               "params": {
-               "n_components": 10,
-               "center_x": true,
-               "scale_x": false,
-               "center_y": true,
-               "scale_y": false
+               "n_components": 5,
+               "max_iter": 500
               }
              },
-             "name": "PLS"
+             "name": "PLS-DA"
+            }
+           ],
+           "pixel_a": [
+            {
+             "class": "preprocessing.scaling.standard_scale",
+             "params": {
+              "with_mean": true,
+              "with_std": true,
+              "ddof": 0
+             }
+            },
+            {
+             "model": {
+              "class": "models.classification.pls_logistic",
+              "params": {
+               "n_components": 5,
+               "max_iter": 500
+              }
+             },
+             "name": "PLS-DA"
+            }
+           ],
+           "pixel_b": [
+            {
+             "class": "preprocessing.scaling.standard_scale",
+             "params": {
+              "with_mean": true,
+              "with_std": true,
+              "ddof": 0
+             }
+            },
+            {
+             "model": {
+              "class": "models.classification.pls_logistic",
+              "params": {
+               "n_components": 5,
+               "max_iter": 500
+              }
+             },
+             "name": "PLS-DA"
             }
            ],
            "image": [
@@ -2379,16 +2943,13 @@
             },
             {
              "model": {
-              "class": "models.pls.pls_regression",
+              "class": "models.classification.pls_logistic",
               "params": {
-               "n_components": 10,
-               "center_x": true,
-               "scale_x": false,
-               "center_y": true,
-               "scale_y": false
+               "n_components": 5,
+               "max_iter": 500
               }
              },
-             "name": "PLS"
+             "name": "PLS-DA"
             }
            ]
           }
@@ -2406,21 +2967,21 @@
     },
     {
      "name": "Late · stacking",
-     "level": "single",
-     "oofRmse": 0.17307673702694282,
-     "oofR2": 0.8761304494057847,
-     "testRmse": 0.21036127671857274,
-     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "d6337ed8010003ef5d3908b2bbe9bea97a2a5b5c94fbd912f82602ba13298bca",
+     "level": "late",
+     "oof": 0.6473684210526315,
+     "oofR2": null,
+     "test": 0.7999999999999999,
+     "foldsFingerprint": "d0894c0ae1ba4814ef6825e5ff5e7d6506546562b4727a1598ec752ed79fd029",
+     "recipeFingerprint": "23791ff9b35b7ce9311accc53b642995c3197417fe4e232fb0164c520a6322c0",
      "pipeline": [
       {
-       "name": "Late fusion · stacking of per-source PLS (NIRS + Grayscale images) → Ridge",
+       "name": "Late fusion · stacking of per-source PLS-DA (HSI pixel centre + HSI pixel A (upper end) + HSI pixel B (lower end) + RGB image 32x32) → PLS-DA",
        "pipeline": [
         {
          "branch": {
           "by_source": true,
           "steps": {
-           "nirs": [
+           "pixel_center": [
             {
              "class": "preprocessing.scaling.standard_scale",
              "params": {
@@ -2431,16 +2992,53 @@
             },
             {
              "model": {
-              "class": "models.pls.pls_regression",
+              "class": "models.classification.pls_logistic",
               "params": {
-               "n_components": 10,
-               "center_x": true,
-               "scale_x": false,
-               "center_y": true,
-               "scale_y": false
+               "n_components": 5,
+               "max_iter": 500
               }
              },
-             "name": "PLS"
+             "name": "PLS-DA"
+            }
+           ],
+           "pixel_a": [
+            {
+             "class": "preprocessing.scaling.standard_scale",
+             "params": {
+              "with_mean": true,
+              "with_std": true,
+              "ddof": 0
+             }
+            },
+            {
+             "model": {
+              "class": "models.classification.pls_logistic",
+              "params": {
+               "n_components": 5,
+               "max_iter": 500
+              }
+             },
+             "name": "PLS-DA"
+            }
+           ],
+           "pixel_b": [
+            {
+             "class": "preprocessing.scaling.standard_scale",
+             "params": {
+              "with_mean": true,
+              "with_std": true,
+              "ddof": 0
+             }
+            },
+            {
+             "model": {
+              "class": "models.classification.pls_logistic",
+              "params": {
+               "n_components": 5,
+               "max_iter": 500
+              }
+             },
+             "name": "PLS-DA"
             }
            ],
            "image": [
@@ -2454,16 +3052,13 @@
             },
             {
              "model": {
-              "class": "models.pls.pls_regression",
+              "class": "models.classification.pls_logistic",
               "params": {
-               "n_components": 10,
-               "center_x": true,
-               "scale_x": false,
-               "center_y": true,
-               "scale_y": false
+               "n_components": 5,
+               "max_iter": 500
               }
              },
-             "name": "PLS"
+             "name": "PLS-DA"
             }
            ]
           }
@@ -2474,76 +3069,22 @@
         },
         {
          "model": {
-          "class": "models.regularized.ridge",
+          "class": "models.classification.pls_logistic",
           "params": {
-           "alpha": 1,
-           "center_x": true,
-           "center_y": true,
-           "scale_x": false
+           "n_components": 5,
+           "max_iter": 500
           }
          },
-         "name": "Meta-model (Ridge)"
+         "name": "Meta-model (PLS-DA)"
         }
        ]
       }
      ]
     }
    ],
-   "edits": [
-    {
-     "name": "Edited Intermediate · network",
-     "level": "intermediate",
-     "oofRmse": 0.2056874437919952,
-     "oofR2": 0.825054520123115,
-     "testRmse": 0.16861074130400397,
-     "foldsFingerprint": "cab6712dbde0b41fbf8e895211fa7b903623702a154f5591ed2259bcd945bf3f",
-     "recipeFingerprint": "02571ba926cafe3c6c170040e990f9a71a1d7d8f51c93c5b3210975073f68c09",
-     "pipeline": [
-      {
-       "source_branch": {
-        "nirs": [
-         {
-          "class": "preprocessing.scaling.standard_scale",
-          "params": {
-           "with_mean": true,
-           "with_std": true
-          }
-         }
-        ],
-        "image": [
-         {
-          "class": "preprocessing.scaling.standard_scale",
-          "params": {
-           "with_mean": true,
-           "with_std": true
-          }
-         }
-        ]
-       }
-      },
-      {
-       "model": {
-        "class": "models.neural.multibranch_regressor",
-        "params": {
-         "filters": 4,
-         "kernel_size": 3,
-         "pool_size": 2,
-         "embedding_dim": 6,
-         "head_hidden": 8,
-         "epochs": 24,
-         "batch_size": 16,
-         "learning_rate": 0.003,
-         "weight_decay": 0.0001
-        }
-       },
-       "name": "Multibranch network"
-      }
-     ],
-     "edit": "Tiny CNN (4 filters, 24 epochs)"
-    }
-   ],
+   "edits": [],
    "capturedAt": "2026-11-21",
-   "data": "jeu d’exemple pédagogique synthétique de la page"
+   "data": "données publiques réelles : riz, Vu et al. 2019 (CC BY 4.0), sous-ensemble"
   },
   "timeseries": {
    "dataset": {
@@ -2562,14 +3103,7 @@
       "representation": "signal_1d",
       "shape": [
        245
-      ],
-      "axis": {
-       "unit": "nm",
-       "kind": "wavelength",
-       "first": 405,
-       "last": 1137,
-       "points": 245
-      }
+      ]
      },
      {
       "id": "weather",
@@ -2579,14 +3113,7 @@
       "shape": [
        90,
        4
-      ],
-      "axis": {
-       "unit": "day before harvest",
-       "kind": "time",
-       "first": -89,
-       "last": 0,
-       "points": 90
-      }
+      ]
      }
     ]
    },
@@ -2596,16 +3123,20 @@
     "methodsAbi": "2.24.0",
     "sourceProfile": "source_composition.v1"
    },
+   "metric": {
+    "label": "RMSE",
+    "higherIsBetter": false
+   },
    "calibration": 430,
    "holdout": 135,
    "foldsFingerprint": "5629352a0c681e75e4289173088af3beabdf3659b320fdb95e01d55060d27c16",
    "presets": [
     {
-     "name": "Vis-SWNIR spectrum alone",
+     "name": "NIR seul",
      "level": "single",
-     "oofRmse": 1.4094032138621695,
+     "oof": 1.4094032138621695,
      "oofR2": 0.6440144077730865,
-     "testRmse": 1.64694187093794,
+     "test": 1.64694187093794,
      "foldsFingerprint": "5629352a0c681e75e4289173088af3beabdf3659b320fdb95e01d55060d27c16",
      "recipeFingerprint": "05e14b1b9c8eb0986bfa0fd3778a98d54e5f9933fcfc9bbf5e4d0d1a1bd8e6e5",
      "pipeline": [
@@ -2646,27 +3177,27 @@
      "sweep": [
       {
        "components": 5,
-       "oofRmse": 1.9424735263709996,
-       "testRmse": 2.9965481320333818
+       "oof": 1.9424735263709996,
+       "test": 2.9965481320333818
       },
       {
        "components": 10,
-       "oofRmse": 2.028345147394306,
-       "testRmse": 2.6005869425572983
+       "oof": 2.028345147394306,
+       "test": 2.6005869425572983
       },
       {
        "components": 15,
-       "oofRmse": 1.4094032138621695,
-       "testRmse": 1.64694187093794
+       "oof": 1.4094032138621695,
+       "test": 1.64694187093794
       }
      ]
     },
     {
-     "name": "Daily weather, 90 days before harvest alone",
+     "name": "Météo seule",
      "level": "single",
-     "oofRmse": 3.574139252991743,
+     "oof": 3.574139252991743,
      "oofR2": -1.28931126085451,
-     "testRmse": 2.6525867448743043,
+     "test": 2.6525867448743043,
      "foldsFingerprint": "5629352a0c681e75e4289173088af3beabdf3659b320fdb95e01d55060d27c16",
      "recipeFingerprint": "6185d086e65572409c431bdbef69b2b02a57e25655bed7a9fdb6c47b09e96930",
      "pipeline": [
@@ -2707,27 +3238,27 @@
      "sweep": [
       {
        "components": 5,
-       "oofRmse": 3.608935651071828,
-       "testRmse": 2.5537594401703534
+       "oof": 3.608935651071828,
+       "test": 2.5537594401703534
       },
       {
        "components": 10,
-       "oofRmse": 3.5806528529524013,
-       "testRmse": 2.6660933842628722
+       "oof": 3.5806528529524013,
+       "test": 2.6660933842628722
       },
       {
        "components": 15,
-       "oofRmse": 3.574139252991743,
-       "testRmse": 2.6525867448743043
+       "oof": 3.574139252991743,
+       "test": 2.6525867448743043
       }
      ]
     },
     {
-     "name": "Early · concatenate",
-     "level": "single",
-     "oofRmse": 2.932557357884885,
+     "name": "Early · concaténation",
+     "level": "early",
+     "oof": 2.932557357884885,
      "oofR2": -0.5411855791392439,
-     "testRmse": 2.4600311235623624,
+     "test": 2.4600311235623624,
      "foldsFingerprint": "5629352a0c681e75e4289173088af3beabdf3659b320fdb95e01d55060d27c16",
      "recipeFingerprint": "84b2ccf23779756ba19dbbd22ad10da3d549437c2ddef58f52a7377811f92206",
      "pipeline": [
@@ -2781,27 +3312,27 @@
      "sweep": [
       {
        "components": 5,
-       "oofRmse": 3.157424319677804,
-       "testRmse": 2.716545021540406
+       "oof": 3.157424319677804,
+       "test": 2.716545021540406
       },
       {
        "components": 10,
-       "oofRmse": 2.932557357884885,
-       "testRmse": 2.4600311235623624
+       "oof": 2.932557357884885,
+       "test": 2.4600311235623624
       },
       {
        "components": 15,
-       "oofRmse": 3.1396320002537457,
-       "testRmse": 2.3820846094162165
+       "oof": 3.1396320002537457,
+       "test": 2.3820846094162165
       }
      ]
     },
     {
-     "name": "Mid · PCA scores",
-     "level": "single",
-     "oofRmse": 2.609411784594638,
+     "name": "Mid · scores ACP",
+     "level": "mid",
+     "oof": 2.609411784594638,
      "oofR2": -0.22024530407463594,
-     "testRmse": 2.856006944532179,
+     "test": 2.856006944532179,
      "foldsFingerprint": "5629352a0c681e75e4289173088af3beabdf3659b320fdb95e01d55060d27c16",
      "recipeFingerprint": "88377364ce16cb5836f6d54cefc21642e8ea6f7d126553410412f50d8ac9a9ff",
      "pipeline": [
@@ -2866,10 +3397,10 @@
     },
     {
      "name": "Early · MB-PLS",
-     "level": "single",
-     "oofRmse": 2.838429392353067,
+     "level": "early",
+     "oof": 2.838429392353067,
      "oofR2": -0.4438367672618828,
-     "testRmse": 2.456531830889054,
+     "test": 2.456531830889054,
      "foldsFingerprint": "5629352a0c681e75e4289173088af3beabdf3659b320fdb95e01d55060d27c16",
      "recipeFingerprint": "d4d44e98c59b40a527b20c0a9fac79f37d88fc82828fa9887e40879c572c1947",
      "pipeline": [
@@ -2916,27 +3447,27 @@
      "sweep": [
       {
        "components": 5,
-       "oofRmse": 3.261500200483663,
-       "testRmse": 2.7260649825113763
+       "oof": 3.261500200483663,
+       "test": 2.7260649825113763
       },
       {
        "components": 10,
-       "oofRmse": 2.838429392353067,
-       "testRmse": 2.456531830889054
+       "oof": 2.838429392353067,
+       "test": 2.456531830889054
       },
       {
        "components": 15,
-       "oofRmse": 3.2611281895990345,
-       "testRmse": 2.3267079909962938
+       "oof": 3.2611281895990345,
+       "test": 2.3267079909962938
       }
      ]
     },
     {
      "name": "Mid · CNN",
-     "level": "single",
-     "oofRmse": 5.238245483355053,
+     "level": "mid",
+     "oof": 5.238245483355053,
      "oofR2": -3.91737807582414,
-     "testRmse": 1.8198215396838517,
+     "test": 1.8198215396838517,
      "foldsFingerprint": "5629352a0c681e75e4289173088af3beabdf3659b320fdb95e01d55060d27c16",
      "recipeFingerprint": "696df3addefb0f7bfb4be3fb5aab098f10376249d76e188054afaabe4fde2a01",
      "pipeline": [
@@ -2995,11 +3526,11 @@
      ]
     },
     {
-     "name": "Early · random forest",
-     "level": "single",
-     "oofRmse": 2.14494155743305,
+     "name": "Early · forêt aléatoire",
+     "level": "early",
+     "oof": 2.14494155743305,
      "oofR2": 0.17549587382265586,
-     "testRmse": 2.3313773358551972,
+     "test": 2.3313773358551972,
      "foldsFingerprint": "5629352a0c681e75e4289173088af3beabdf3659b320fdb95e01d55060d27c16",
      "recipeFingerprint": "ca98419efa35e2bc353d94943b1cb06bbdea403f353f46b6012121dc8881fca0",
      "pipeline": [
@@ -3056,11 +3587,11 @@
      ]
     },
     {
-     "name": "Late · AOM stacking",
-     "level": "single",
-     "oofRmse": 1.9933257434851528,
+     "name": "Late · stacking AOM",
+     "level": "late",
+     "oof": 1.9933257434851528,
      "oofR2": 0.287936938027754,
-     "testRmse": 2.4762019868157323,
+     "test": 2.4762019868157323,
      "foldsFingerprint": "5629352a0c681e75e4289173088af3beabdf3659b320fdb95e01d55060d27c16",
      "recipeFingerprint": "8e64980d6bcda132321ed4c3f0ddad406cb20704d8ea37af070a3c2deaeb78bd",
      "pipeline": [
@@ -3131,11 +3662,11 @@
      ]
     },
     {
-     "name": "Late · average",
-     "level": "single",
-     "oofRmse": 2.1673994338020184,
+     "name": "Late · moyenne",
+     "level": "late",
+     "oof": 2.1673994338020184,
      "oofR2": 0.15814011176064202,
-     "testRmse": 2.2228475000666674,
+     "test": 2.2228475000666674,
      "foldsFingerprint": "5629352a0c681e75e4289173088af3beabdf3659b320fdb95e01d55060d27c16",
      "recipeFingerprint": "62c53837913c7450e3403ffa1c8db2cdfca0eeb7424d52bf3ed6f0040135d091",
      "pipeline": [
@@ -3207,10 +3738,10 @@
     },
     {
      "name": "Late · stacking",
-     "level": "single",
-     "oofRmse": 2.0794491707751273,
+     "level": "late",
+     "oof": 2.0794491707751273,
      "oofR2": 0.225077047616713,
-     "testRmse": 2.4486707654717845,
+     "test": 2.4486707654717845,
      "foldsFingerprint": "5629352a0c681e75e4289173088af3beabdf3659b320fdb95e01d55060d27c16",
      "recipeFingerprint": "94a1b74b0ef906e7986280381a674031fa668a9ab7b14ff3b0f04ecde6ea8ec8",
      "pipeline": [

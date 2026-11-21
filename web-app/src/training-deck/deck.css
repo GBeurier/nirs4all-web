@@ -61,7 +61,7 @@ html, body { background: #e9e4d8; color: var(--text); font-family: var(--font); 
 .deck-split { display: grid; grid-template-columns: 1.15fr 1fr; gap: 40px; align-items: center; min-height: 0; flex: 1; }
 .deck-split--wide { grid-template-columns: 1.45fr 1fr; }
 .deck-split--hero { grid-template-columns: 1.6fr 1fr; }
-.deck-split--demo { grid-template-columns: 1fr 1.1fr; align-items: center; }
+.deck-split--demo { grid-template-columns: 0.8fr 1.35fr; align-items: center; }
 .deck-split--chart { grid-template-columns: 1.25fr 1fr; align-items: start; gap: 44px; }
 .deck-split--chart .deck-points { font-size: 23px; }
 .deck-split--rack { grid-template-columns: 1.7fr 1fr; gap: 28px; flex: 0 0 auto; font-size: 21px; align-items: center; }

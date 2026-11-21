@@ -6,21 +6,23 @@ export type CaseId = 'spectroscopy' | 'genetics' | 'images' | 'timeseries'
 export interface EvidenceRun {
   name: string
   level: LevelKind
-  oofRmse: number
+  oof: number
   oofR2: number | null
-  testRmse: number
+  test: number
   foldsFingerprint: string
   recipeFingerprint: string
   edit?: string
   /** Best component count of a swept PLS preset (the run kept, by OOF RMSE). */
   components?: number
   /** Every component count of the sweep, when the preset swept it. */
-  sweep?: Array<{ components: number; oofRmse: number; testRmse: number }>
+  sweep?: Array<{ components: number; oof: number; test: number }>
   pipeline: unknown[]
 }
 export interface EvidenceCase {
   dataset: { name: string; samples: number; target: { name: string; unit: string }; sources: Array<{ id: string; label: string; modality: string; representation: string; shape: number[] }> }
   ownerVersions: Record<string, string>
+  /** The ranking score: RMSE (lower is better) for regression, balanced accuracy (higher) for classification. */
+  metric: { label: string; higherIsBetter: boolean }
   calibration: number
   holdout: number
   foldsFingerprint: string
@@ -33,8 +35,8 @@ export interface EvidenceCase {
 type Recorded = { capturedAt: string; source: Record<string, string>; cases: Record<CaseId, EvidenceCase> }
 
 /**
- * Display names (French) and fusion levels for the recorded runs. The JSON keeps
- * the names under which the runs were recorded.
+ * Display names (French) and fusion levels for runs recorded under their English
+ * laboratory names; runs recorded with a French name pass through unchanged.
  */
 const DISPLAY: Record<string, [string, LevelKind]> = {
   'Raman alone': ['Raman seul', 'single'], 'NIRS alone': ['NIRS seul', 'single'], 'MIR alone': ['MIR seul', 'single'],
@@ -51,11 +53,16 @@ const EDITS: Record<string, [string, LevelKind]> = {
 }
 function relabel(run: EvidenceRun, table: Record<string, [string, LevelKind]>, key: string): EvidenceRun {
   const entry = table[key]
-  if (!entry) throw new Error(`No display name for recorded run ${key}`)
+  // Runs recorded from the demo kit already carry their French display name and level.
+  if (!entry) return run
   return run.edit === undefined ? { ...run, name: entry[0], level: entry[1] } : { ...run, edit: entry[0], level: entry[1] }
 }
 const recorded = raw as unknown as Recorded
-export const EVIDENCE: Recorded = { ...recorded, cases: Object.fromEntries(Object.entries(recorded.cases).map(([id, data]) => [id, {
+// Optional local overlay, never committed (src/training-deck/private/ is gitignored): private
+// demonstration cases replace the public ones on the presenter's machine only.
+const overlay = Object.values(import.meta.glob<{ cases: Partial<Record<CaseId, EvidenceCase>> }>('./private/evidence.json', { eager: true, import: 'default' }))[0]
+const cases = { ...recorded.cases, ...(overlay?.cases ?? {}) }
+export const EVIDENCE: Recorded = { ...recorded, cases: Object.fromEntries(Object.entries(cases).map(([id, data]) => [id, {
   ...data,
   presets: data.presets.map(run => relabel(run, DISPLAY, run.name)),
   edits: data.edits.map(run => relabel(run, EDITS, run.edit!)),
@@ -71,7 +78,7 @@ export function edit(caseId: CaseId, text: string): EvidenceRun {
   if (!run) throw new Error(`Missing recorded edit "${text}" for ${caseId}`)
   return run
 }
-export function sweep(caseId: CaseId, name: string, components: number): { oofRmse: number; testRmse: number } {
+export function sweep(caseId: CaseId, name: string, components: number): { oof: number; test: number } {
   const point = preset(caseId, name).sweep?.find(item => item.components === components)
   if (!point) throw new Error(`Missing ${components}-component sweep point of ${name} for ${caseId}`)
   return point

@@ -50,11 +50,13 @@ function ticks(max: number): number[] {
  */
 export function ResultsChart({ caseId, include, highlight = [] }: { caseId: CaseId; include?: (run: EvidenceRun) => boolean; highlight?: string[] }) {
   const data = EVIDENCE.cases[caseId]
-  const runs = [...data.presets, ...data.edits].filter(run => !include || include(run)).sort((a, b) => a.oofRmse - b.oofRmse)
-  const axisMax = Math.max(...runs.flatMap(run => [run.oofRmse, run.testRmse])) * 1.06
+  const runs = [...data.presets, ...data.edits].filter(run => !include || include(run)).sort((a, b) => (data.metric.higherIsBetter ? b.oof - a.oof : a.oof - b.oof))
+  const axisMax = Math.max(...runs.flatMap(run => [run.oof, run.test])) * 1.06
   const grid = ticks(axisMax)
   const max = Math.max(axisMax, grid[grid.length - 1])
-  const bestSingle = Math.min(...data.presets.filter(run => run.level === 'single').map(run => run.oofRmse))
+  const singles = data.presets.filter(run => run.level === 'single').map(run => run.oof)
+  const bestSingle = data.metric.higherIsBetter ? Math.max(...singles) : Math.min(...singles)
+  const metric = data.metric.label, direction = data.metric.higherIsBetter ? 'plus haut = mieux' : 'plus bas = mieux'
   const levels = (['single', 'early', 'mid', 'late'] as const).filter(level => runs.some(run => run.level === level))
   const edited = runs.some(run => run.edit)
   const row = 42, left = 360, width = 450, top = 34
@@ -65,7 +67,7 @@ export function ResultsChart({ caseId, include, highlight = [] }: { caseId: Case
   const unit = data.dataset.target.unit ? ` (${data.dataset.target.unit})` : ''
   return (
     <svg className="deck-chart" viewBox={`0 0 960 ${height}`} preserveAspectRatio="xMinYMin meet" role="img"
-      aria-label={`RMSE en validation croisée et sur le test de ${runs.length} recettes sur ${data.dataset.name} ; plus bas = mieux`}>
+      aria-label={`${metric} en validation croisée et sur le test de ${runs.length} recettes sur ${data.dataset.name} ; ${direction}`}>
       {/* Axis grid and ticks. */}
       {grid.map(value => (
         <g key={value}>
@@ -75,7 +77,7 @@ export function ResultsChart({ caseId, include, highlight = [] }: { caseId: Case
       ))}
       <line x1={left} y1={bottom} x2={left + width} y2={bottom} stroke="var(--text-3)" strokeWidth={1.2} />
       <text x={left + width / 2} y={bottom + 44} textAnchor="middle" fontFamily="var(--font)" fontSize={15} fill="var(--text-2)">
-        RMSE{unit} · plus bas = mieux
+        {metric}{data.metric.higherIsBetter ? '' : unit} · {direction}
       </text>
       {/* Legend under the axis: fusion level colours, then the marks. */}
       <g fontFamily="var(--font)" fontSize={16} fill="var(--text-2)" transform={`translate(${left - 200}, ${bottom + 74})`}>
@@ -88,9 +90,9 @@ export function ResultsChart({ caseId, include, highlight = [] }: { caseId: Case
       </g>
       <g fontFamily="var(--font)" fontSize={16} fill="var(--text-2)" transform={`translate(${left - 200}, ${bottom + 104})`}>
         <rect width={26} height={14} rx={3} fill="var(--text-3)" fillOpacity={0.6} y={1} />
-        <text x={32} y={13}>RMSE OOF (CV)</text>
+        <text x={32} y={13}>{data.metric.higherIsBetter ? 'BA' : 'RMSE'} OOF (CV)</text>
         <path d="M 178 1 l 7 7 l -7 7 l -7 -7 z" fill="#fff" stroke="var(--text)" strokeWidth={1.6} />
-        <text x={192} y={13}>RMSE test (jamais vu)</text>
+        <text x={192} y={13}>{data.metric.higherIsBetter ? 'BA' : 'RMSE'} test (jamais vu)</text>
         <line x1={398} y1={0} x2={398} y2={16} stroke="var(--text)" strokeDasharray="4 3" strokeWidth={1.4} />
         <text x={406} y={13}>meilleure source seule</text>
         {edited ? <><rect x={616} y={1} width={26} height={14} rx={3} fill="#fff" stroke="var(--text-3)" strokeWidth={1.8} /><text x={648} y={13}>✎ modif. en direct</text></> : null}
@@ -110,11 +112,11 @@ export function ResultsChart({ caseId, include, highlight = [] }: { caseId: Case
             <text x={left - 12} y={y + 26} textAnchor="end" fontFamily="var(--font)" fontSize={19} fontWeight={strong ? 800 : 600} fill="var(--text)">
               {run.edit ? `✎ ${run.edit}` : run.components ? `${run.name} · ${run.components} comp.` : run.name}
             </text>
-            <rect x={left} y={y + 9} width={x(run.oofRmse) - left} height={row - 18} rx={4}
+            <rect x={left} y={y + 9} width={x(run.oof) - left} height={row - 18} rx={4}
               fill={run.edit ? '#fff' : color} fillOpacity={run.edit ? 1 : 0.85} stroke={color} strokeWidth={run.edit ? 1.8 : 0} />
-            <path d={`M ${x(run.testRmse)} ${y + 13} l 7 8 l -7 8 l -7 -8 z`} fill="#fff" stroke="var(--text)" strokeWidth={1.6} />
-            <text x={Math.max(x(run.oofRmse), x(run.testRmse)) + 12} y={y + 26} fontFamily="var(--mono)" fontSize={16} fontWeight={strong ? 800 : 500} fill="var(--text)">
-              {fmt(run.oofRmse)} <tspan fill="var(--text-3)">◆ {fmt(run.testRmse)}</tspan>
+            <path d={`M ${x(run.test)} ${y + 13} l 7 8 l -7 8 l -7 -8 z`} fill="#fff" stroke="var(--text)" strokeWidth={1.6} />
+            <text x={Math.max(x(run.oof), x(run.test)) + 12} y={y + 26} fontFamily="var(--mono)" fontSize={16} fontWeight={strong ? 800 : 500} fill="var(--text)">
+              {fmt(run.oof)} <tspan fill="var(--text-3)">◆ {fmt(run.test)}</tspan>
             </text>
           </g>
         )

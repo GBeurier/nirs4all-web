@@ -52,11 +52,15 @@ async function inputFiles(caseId, { manifest = true, renameVcf = false, missingS
 }
 async function openCase(caseId) {
   await page.locator(`input[name="n4mm-case"][value="${caseId}"]`).check()
-  await page.locator('[data-fusion-lab]').waitFor({ timeout: 30000 })
   await page.getByRole('button', { name: 'Import your files', exact: true }).click()
+  // After "Create dataset" the builder is closed; reopen it for the next import.
+  const reopen = page.getByRole('button', { name: 'Import other files', exact: true })
+  if (await reopen.count()) await reopen.click()
   await builder.waitFor()
 }
 async function pick(files) {
+  const reopen = page.getByRole('button', { name: 'Import other files', exact: true })
+  if (await reopen.count()) await reopen.click()
   await step('Source')
   await builder.locator('input[type="file"]').setInputFiles(files)
   await ready()
