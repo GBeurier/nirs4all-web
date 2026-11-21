@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react'
 import {
   AlignmentDiagram, DatasetShapeDiagram, EarlyDiagram, EmbeddingDiagram, FusionPointsDiagram, IntermediateDiagram,
-  LateDiagram, OofDiagram, SampleViewsDiagram,
+  LateDiagram, MultimodalEmbeddingDiagram, OofDiagram, SampleViewsDiagram,
 } from './diagrams'
-import { edit, fmt, preset, type CaseId } from './evidence'
+import { edit, fmt, preset, sweep, type CaseId } from './evidence'
 import { LevelTag, PipelineView, Provenance, ResultsChart } from './widgets'
 
 export interface Slide {
@@ -54,6 +54,15 @@ function Method({ name, origin, idea, pros = [], cons = [] }: { name: string; or
   )
 }
 
+/** What a live demonstration looks at: questions for the room, not instructions. */
+function Watch({ items }: { items: ReactNode[] }) {
+  return <div className="deck-watch"><h3>Ce qu’on regarde</h3><Points items={items} /></div>
+}
+
+function LabLink({ href }: { href: string }) {
+  return <a className="deck-link" href={href}>↗ web.nirs4all.org/<wbr />nirs4all_multimodale</a>
+}
+
 function Callout({ children, tone = 'teal' }: { children: ReactNode; tone?: 'teal' | 'amber' }) {
   return <p className="deck-callout" data-tone={tone}>{children}</p>
 }
@@ -72,7 +81,6 @@ function Capture({ src, alt }: { src: string; alt: string }) {
 }
 
 const R = {
-  ramanAlone: () => preset('spectroscopy', 'Raman seul').oofRmse,
   spec: (name: string) => preset('spectroscopy', name).oofRmse,
   gen: (name: string) => preset('genetics', name).oofRmse,
   img: (name: string) => preset('images', name).oofRmse,
@@ -86,7 +94,7 @@ export const SLIDES: Slide[] = [
       <div className="deck-title">
         <p className="deck-kicker">formation nirs4all · session multimodale</p>
         <h1>Un échantillon, plusieurs mesures,<br /><span className="n4-gradient-text">une prédiction défendable</span></h1>
-        <p className="deck-lead">Les données multimodales · early, mid et late fusion · trois démonstrations</p>
+        <p className="deck-lead">Les données multimodales · early, mid et late fusion · quatre démonstrations</p>
         <div className="deck-title-levels">
           <LevelTag level="early" /><LevelTag level="mid" /><LevelTag level="late" />
         </div>
@@ -95,7 +103,7 @@ export const SLIDES: Slide[] = [
     ),
     notes: [
       'Bienvenue. Dans cette session, on regarde ce qui se passe quand un même échantillon est mesuré par plusieurs instruments.',
-      'Le plan : une vingtaine de minutes de concepts, une image par idée, puis trois démonstrations en direct dans le labo du navigateur, une par jeu de données, et une courte synthèse.',
+      'Le plan : une vingtaine de minutes de concepts, une image par idée, puis quatre démonstrations en direct dans le labo du navigateur, une par jeu de données, et une courte synthèse.',
       'Tout ce que vous allez voir tourne localement dans le navigateur ; aucune donnée n’est envoyée.',
     ],
   },
@@ -136,40 +144,21 @@ export const SLIDES: Slide[] = [
     ],
   },
   {
-    id: 'alignment', section: 'Concepts', title: 'Règle zéro : aligner par identifiant', minutes: 1.5,
+    id: 'alignment', section: 'Concepts', title: 'Règle zéro : aligner les sources', minutes: 1.5,
     body: () => (
       <>
         <AlignmentDiagram />
-        <Callout>Jointure par <strong>identifiant d’échantillon</strong>, jamais par numéro de ligne · les <strong>groupes</strong> de répétitions restent ensemble</Callout>
+        <Callout>On joint <strong>de plusieurs façons</strong> : identifiant, clé, nom de fichier, ordre des lignes… mais les <strong>groupes</strong> et les <strong>répétitions</strong> restent toujours ensemble</Callout>
       </>
     ),
     notes: [
-      'Avant toute fusion, les lignes doivent décrire les mêmes échantillons. Deux fichiers exportés par deux instruments ne sont presque jamais dans le même ordre.',
-      'nirs4all joint par identifiant, exactement. S’il manque un échantillon dans une source, vous le voyez dans le tableau d’alignement ; il n’est jamais complété par numéro de ligne.',
-      'Deuxième règle : les mesures répétées d’une même plante ou d’un même lot forment un groupe. Le groupe doit rester entièrement en entraînement ou entièrement en validation, sinon les scores sont optimistes. L’exemple génétique s’en sert.',
+      'Avant toute fusion, les lignes de chaque source doivent décrire les mêmes échantillons.',
+      'nirs4all sait joindre de plusieurs façons : par identifiant d’échantillon, par une clé composite (lot + date, par exemple), par nom de fichier quand les spectres sont exportés un par un, par l’ordre des lignes quand les fichiers sont produits ensemble, ou par une table de correspondance, par exemple un génotype partagé par plusieurs mesures. Un échantillon absent d’une source se voit dans le tableau d’alignement.',
+      'Ce qui ne se négocie pas : les mesures répétées d’une même plante ou d’un même lot forment un groupe. Le groupe reste entièrement en entraînement ou entièrement en validation, sinon les scores sont optimistes. L’exemple génétique s’en sert, et l’exemple mangue groupe par région et par saison.',
     ],
   },
   {
-    id: 'series', section: 'Concepts', title: 'Séries temporelles : une série, une source', minutes: 1.5,
-    body: () => (
-      <div className="deck-split">
-        <Points items={[
-          <><strong>Une source</strong> = une série multivariée par échantillon : temps × variables (T<sub>max</sub>, T<sub>min</sub>, pluie, rayonnement), pas une source par variable</>,
-          <><strong>Un axe déclaré</strong> : jours avant récolte, même grille pour tous ; rien n’est rééchantillonné ni interpolé en douce</>,
-          <><strong>Souvent un contexte</strong> partagé : même météo pour toute une récolte, fenêtres qui se chevauchent dans une saison → folds <strong>groupés</strong> (ici région × saison)</>,
-        ]} />
-        <Capture src="../captures/timeseries-explore.png" alt="La source météo dans le labo : une série de quatre variables par fruit" />
-      </div>
-    ),
-    notes: [
-      'Les séries temporelles sont une autre nature de données : météo avant récolte, capteurs d’un procédé, suivi de maturation. nirs4all les traite comme une source à part entière.',
-      'Point important : une série, c’est un tableau temps × variables pour chaque échantillon. La météo entière est une seule source avec ses quatre variables, pas quatre sources indépendantes. La série garde son axe de temps déclaré, avec son unité, comme un spectre garde ses longueurs d’onde.',
-      'Souvent, la série est un contexte partagé : tous les fruits d’une même récolte ont la même météo, et deux récoltes à quelques jours d’écart partagent presque toute leur fenêtre de 90 jours. La série ne peut expliquer que les différences entre récoltes. Il faut donc grouper les folds par saison et par région, sinon le modèle reconnaît la saison et les scores sont optimistes. On le verra en démonstration.',
-      'Pour la fusion, les mêmes quatre niveaux s’appliquent : aplatir temps × variables en early, résumer la série (ACP, encodeur) en mid, un modèle par source en late.',
-    ],
-  },
-  {
-    id: 'fusion-points', section: 'Concepts', title: 'Quatre endroits où les sources se rejoignent', minutes: 2,
+    id: 'fusion-points', section: 'Concepts', title: 'Quatre endroits où l’on peut joindre les sources', minutes: 2,
     body: () => (
       <>
         <FusionPointsDiagram />
@@ -238,6 +227,24 @@ export const SLIDES: Slide[] = [
       'Chaque source a une branche adaptée à sa nature : une convolution 1D glisse le long du spectre, une couche dense lit le tableau de marqueurs, une convolution 2D lit l’image. Chaque branche produit un petit vecteur, un embedding ; on concatène ces vecteurs au milieu du réseau et une tête commune prédit y. Tout est entraîné d’un bloc : les branches apprennent ce qui est utile pour y, en tenant compte des autres sources. C’est la différence avec les scores ACP, calculés à part et sans regarder y.',
       'Le labo entraîne vraiment ce CNN dans le navigateur. Ce n’est ni PyTorch ni TensorFlow : c’est un petit réseau écrit en C++ dans Methods, compilé en WebAssembly avec le reste. Rétropropagation, optimiseur Adam, erreur quadratique, graine fixée : le résultat est reproductible. Il reste petit — 8 filtres par branche, des embeddings de 16, 150 epochs — et tourne sur le processeur, sans GPU, en quelques secondes.',
       'Le prix : beaucoup plus de paramètres qu’un PLS, donc plus d’échantillons nécessaires, et des choix d’entraînement — taille, nombre d’epochs, taux d’apprentissage — qui comptent.',
+    ],
+  },
+  {
+    id: 'embedding', section: 'Concepts', title: 'Embeddings multimodaux', minutes: 1.5,
+    body: () => (
+      <>
+        <div className="deck-heading-tag"><LevelTag level="mid" /></div>
+        <MultimodalEmbeddingDiagram />
+        <ProsCons pro="réutilise de gros encodeurs · peu de colonnes · espace commun : comparer les modalités, tolérer une modalité absente"
+          con="encodeur hors domaine (photos ≠ grains) · ajusté sur vos données : dans le fold · toujours battre les sources seules" />
+      </>
+    ),
+    notes: [
+      'Un embedding, c’est un vecteur court qui résume une mesure. Vous en avez déjà vu deux : les scores ACP de la mid fusion ①, et la sortie de chaque branche du CNN. Le terme vient du deep learning, où l’on utilise surtout des encodeurs pré-entraînés : un réseau d’images, un modèle de séquences ADN, et maintenant des modèles de fondation pour les spectres.',
+      'Première façon de s’en servir, en haut : chaque modalité a son encodeur, on concatène les vecteurs et un modèle prédit y. C’est la mid fusion, au niveau des caractéristiques. Si l’encodeur est gelé, ses vecteurs sont des variables comme les autres.',
+      'Deuxième façon, en bas : un espace commun. Les encodeurs sont entraînés ensemble pour que les mesures d’un même échantillon tombent au même endroit, quelle que soit la modalité : c’est l’apprentissage contrastif, popularisé par CLIP pour les images et le texte. On peut alors comparer des échantillons d’une modalité à l’autre, ou prédire quand une modalité manque. La chimiométrie a des équivalents linéaires : l’analyse canonique (CCA), ou les parts communes de ComDim et O2PLS.',
+      'Précautions. Un encodeur entraîné sur des photos du quotidien ne connaît pas vos grains : il faut vérifier qu’il apporte quelque chose. Un encodeur pré-entraîné sur des données externes ne crée pas de fuite ; un encodeur ajusté sur vos données doit l’être dans chaque fold, comme l’ACP. Et la règle reste la même : battre la meilleure source seule.',
+      'Dans le labo : l’ACP par source et les branches du CNN. Des embeddings calculés ailleurs s’importent comme une source tabulaire avec le Dataset Builder.',
     ],
   },
   {
@@ -351,7 +358,7 @@ export const SLIDES: Slide[] = [
           <Method name="ComDim · O2PLS" origin="Qannari · Trygg" idea="parts communes et spécifiques des blocs"
             pros={['exploration, saliences par bloc']} cons={['souvent non supervisé (ComDim)']} />
         </div>
-        <Callout>Tous restent du <strong>bas niveau</strong> (ou intermédiaire) <strong>linéaire</strong>. Dans nirs4all-methods : MB-PLS, SO-PLS, ROSA, O2PLS, ON-PLS ; le labo expose MB-PLS.</Callout>
+        <Callout>Tous restent du <strong>bas niveau</strong> (ou intermédiaire) <strong>linéaire</strong>. Dans nirs4all-methods : MB-PLS, SO-PLS, ROSA, O2PLS, ON-PLS ; la démo expose MB-PLS.</Callout>
       </>
     ),
     notes: [
@@ -359,34 +366,42 @@ export const SLIDES: Slide[] = [
       'MB-PLS : un super-score commun et un poids par bloc. Westerhuis a montré que c’est équivalent à une PLS sur la concaténation pondérée : c’est donc du bas niveau, avec une lecture par bloc. Son point faible : le résultat dépend de la pondération des blocs.',
       'SO-PLS : les blocs entrent l’un après l’autre, chacun orthogonalisé par rapport aux précédents. On lit directement ce qu’un bloc ajoute aux autres, et c’est invariant à l’échelle relative des blocs. Mais l’ordre compte, et il faut choisir un nombre de composantes par bloc.',
       'ROSA : à chaque composante, le bloc qui explique le mieux y gagne. C’est rapide et ça fait de la sélection de blocs. ComDim et O2PLS séparent ce qui est commun et ce qui est spécifique à chaque bloc ; ComDim est surtout exploratoire.',
-      'Point commun : ce sont des méthodes linéaires, de bas niveau ou intermédiaire. Plusieurs sont déjà dans nirs4all-methods ; dans ce labo, j’expose MB-PLS.',
+      'Point commun : ce sont des méthodes linéaires, de bas niveau ou intermédiaire. Plusieurs sont déjà dans nirs4all-methods ; la démo expose MB-PLS.',
     ],
   },
   {
-    id: 'kernels', section: 'Concepts', title: 'Les approches à noyaux', minutes: 1.5,
+    id: 'kernels', section: 'Concepts', title: 'Les approches à noyaux', minutes: 2,
     body: () => (
       <>
-        <div className="deck-kernel">
-          <div className="deck-kernel__flow">
-            <span className="deck-kernel__src">NIRS</span><span className="deck-kernel__arrow">→</span><span className="deck-kernel__k">K₁ (n × n)</span>
-            <span className="deck-kernel__src">Marqueurs</span><span className="deck-kernel__arrow">→</span><span className="deck-kernel__k">K₂ = GRM</span>
-            <span className="deck-kernel__src">Images</span><span className="deck-kernel__arrow">→</span><span className="deck-kernel__k">K₃</span>
+        <div className="deck-kernel-steps">
+          <div>
+            <h3><span className="deck-num">1</span>Une similarité par source</h3>
+            <p>K[i, j] = ressemblance des échantillons i et j : une matrice <strong>n × n</strong>, quel que soit le nombre de variables</p>
+            <p className="deck-kernel-ex">spectres : linéaire ou gaussien · marqueurs : parenté génomique (GBLUP) · images : sur leurs embeddings</p>
           </div>
-          <div className="deck-kernel__sum">K = w₁K₁ + w₂K₂ + w₃K₃<small>MKL : les poids w sont appris</small></div>
-          <div className="deck-kernel__model">KRR · SVR · kernel PLS · GP</div>
+          <div>
+            <h3><span className="deck-num">2</span>On additionne</h3>
+            <p className="deck-kernel-formula">K = w₁K₁ + w₂K₂ + w₃K₃</p>
+            <p>poids fixés, ou <strong>appris</strong> (multiple kernel learning) : ils disent quelle source compte</p>
+          </div>
+          <div>
+            <h3><span className="deck-num">3</span>On prédit par ressemblance</h3>
+            <p className="deck-kernel-formula">ŷ(x) = Σᵢ αᵢ · K(x, xᵢ)</p>
+            <p>kernel ridge · SVR · kernel PLS · processus gaussien</p>
+          </div>
         </div>
-        <div className="deck-methods deck-methods--two">
-          <Method name="Pour" pros={['non linéaire, peu de paramètres', 'tout type de source (un noyau adapté)', 'p ≫ n sans problème', 'poids par source lisibles (MKL)']} />
-          <Method name="Contre" cons={['mémoire et temps en n² à n³', 'choix du noyau et de sa largeur', 'le modèle garde les échantillons d’entraînement', 'plus de lecture par variable']} />
-        </div>
+        <Callout>Des noyaux <strong>linéaires</strong> additionnés = une early fusion pondérée. Le gain vient des noyaux <strong>non linéaires</strong> et des poids appris par source.</Callout>
+        <ProsCons pro="non linéaire avec peu de paramètres · p ≫ n sans problème · un noyau adapté à chaque nature de source"
+          con="mémoire en n², calcul en n³ · largeur du noyau à valider · le modèle garde les échantillons d’entraînement" />
       </>
     ),
     notes: [
-      'D’autres parmi vous viennent des noyaux. L’idée : chaque source devient une matrice de similarité entre échantillons, n par n. On combine ces matrices, puis un modèle à noyau apprend : kernel ridge, SVR, kernel PLS ou processus gaussien.',
-      'Pont utile avec la génétique : le GBLUP de la sélection génomique, c’est un noyau linéaire sur les marqueurs, la matrice de parenté génomique. Le multiple kernel learning apprend en plus le poids de chaque noyau, donc de chaque source.',
-      'Les avantages : non linéaire avec peu de paramètres, n’importe quelle source dès qu’on a une similarité adaptée, et aucun problème quand il y a beaucoup plus de variables que d’échantillons.',
-      'Les limites : le coût grandit avec le nombre d’échantillons au carré ou au cube ; il faut choisir le noyau et sa largeur, c’est un hyperparamètre à valider ; le modèle garde les échantillons d’entraînement, ce qui compte pour le partage et la confidentialité ; et on perd la lecture variable par variable.',
-      'Où on se situe : la combinaison de noyaux est une fusion intermédiaire, sur l’espace des similarités. Dans nirs4all-methods il y a une kernel PLS et une GPR-PLS ; elles ne sont pas encore dans ce labo.',
+      'Les méthodes à noyaux changent de point de vue : on ne décrit plus un échantillon par ses variables, mais par sa ressemblance avec les autres échantillons.',
+      'Étape 1 : pour chaque source, une matrice n × n. La case i, j dit à quel point les échantillons i et j se ressemblent selon cette source. Noyau linéaire : le produit scalaire des deux spectres. Noyau gaussien : proche de 1 quand les spectres sont proches, vers 0 quand ils s’éloignent ; sa largeur fixe ce que « proche » veut dire. Pour les marqueurs, la matrice de parenté génomique du GBLUP est exactement un noyau linéaire. La taille ne dépend que du nombre d’échantillons : 200 échantillons donnent 200 × 200, que le spectre ait 100 ou 2 000 longueurs d’onde.',
+      'Étape 2 : on additionne les matrices avec un poids par source. Poids fixés, ou appris : c’est le multiple kernel learning, et les poids appris se lisent comme l’importance de chaque source. Il faut mettre les noyaux à la même échelle avant de les additionner, comme on pondère les blocs en early.',
+      'Étape 3 : un nouvel échantillon est prédit comme une somme pondérée de ses ressemblances aux échantillons d’entraînement. Kernel ridge, SVR, kernel PLS et processus gaussien diffèrent par la façon d’apprendre les coefficients α ; le processus gaussien donne en plus une incertitude.',
+      'À savoir : additionner des noyaux linéaires revient exactement à une early fusion avec des blocs pondérés. Le gain vient des noyaux non linéaires, qui captent des interactions, et des poids appris. On fusionne des similarités : ni les variables brutes, ni les prédictions.',
+      'Limites : mémoire en n² et calcul en n³, donc des approximations au-delà de quelques milliers d’échantillons ; la largeur du noyau est un hyperparamètre à régler en validation croisée ; le modèle garde les échantillons d’entraînement, ce qui compte pour le partage et la confidentialité ; on perd la lecture variable par variable. Dans nirs4all-methods il y a une kernel PLS (noyaux gaussien, polynomial, sigmoïde) et une GPR-PLS ; elles ne sont pas encore dans le labo.',
     ],
   },
   {
@@ -437,21 +452,22 @@ export const SLIDES: Slide[] = [
     body: () => (
       <div className="deck-split deck-split--wide">
         <Capture src="../captures/lab-editor.png" alt="L’éditeur de pipeline de fusion, avec les presets et une voie par source" />
-        <div>
-          <Steps items={[
-            <>Choisir un cas</>,
-            <>Choisir un <strong>preset</strong> de fusion, l’éditer</>,
-            <>Lancer un ou tous les presets</>,
-            <>Comparer dans l’<strong>Inspector</strong></>,
+        <div className="deck-lab">
+          <Points items={[
+            <>Une page : <strong>données</strong>, <strong>pipeline</strong>, <strong>résultats</strong></>,
+            <>Des <strong>presets</strong> rangés par niveau de fusion, éditables</>,
+            <>Calcul <strong>dans le navigateur</strong> (WebAssembly) : aucune donnée envoyée</>,
+            <>L’<strong>Inspector</strong> compare toutes les recettes sur les mêmes folds</>,
           ]} />
-          <p className="deck-url"><a href={labLink('spectroscopy')}>web.nirs4all.org/nirs4all_multimodale</a></p>
+          <LabLink href={labLink('spectroscopy')} />
         </div>
       </div>
     ),
     notes: [
-      'On passe au navigateur. Parcourir la page de haut en bas rapidement : le cas, les données et les sources, le protocole de validation, l’éditeur de pipeline avec ses presets rangés par niveau de fusion, et l’Inspector des résultats.',
+      'On passe au navigateur. Je parcours la page de haut en bas : le jeu de données et ses sources, le protocole de validation, l’éditeur de pipeline avec ses presets rangés par niveau de fusion, et l’Inspector des résultats.',
       'L’interface du labo est en anglais : « Run this pipeline » lance le pipeline affiché, « Run all presets » lance tous les presets du jeu de données.',
-      'Les presets sont des pipelines nirs4all canoniques : la même structure qu’en Python avec source_branch ou une branche par source. L’exécution est native, en WebAssembly, dans un worker en arrière-plan.',
+      'Les presets sont des pipelines nirs4all canoniques : la même structure qu’en Python, avec source_branch ou une branche par source. L’exécution est native, en WebAssembly, dans un worker en arrière-plan.',
+      'Les démos 1 à 3 utilisent les jeux d’exemple pédagogiques intégrés à la page ; la démo 4, la mangue, utilise des données réelles, les mêmes que dans le dossier 4 du kit.',
     ],
   },
   {
@@ -459,46 +475,44 @@ export const SLIDES: Slide[] = [
     body: () => (
       <div className="deck-split deck-split--demo">
         <div>
-          <p className="deck-case">120 échantillons · Raman 48 · NIRS 64 · MIR 56 variables · 96 calibration / 24 test</p>
-          <Steps items={[
-            <><a href={labLink('spectroscopy')}>Ouvrir le cas</a>, suivre un échantillon</>,
-            <><strong>« Run all presets »</strong> : qui gagne ?</>,
-            <><LevelTag level="early">Early</LevelTag> sweep des composantes PLS <strong>5 · 10 · 15</strong> (vue <em>Tuning</em>)</>,
-            <>Supprimer la voie <em>MIR</em>, relancer</>,
+          <p className="deck-case">jeu pédagogique · 120 échantillons · Raman 48 · NIRS 64 · MIR 56 variables · 96 calibration / 24 test · <a href={labLink('spectroscopy')}>ouvrir</a></p>
+          <Watch items={[
+            <>Toutes les recettes sur les <strong>mêmes folds</strong> : qui gagne ?</>,
+            <>Le nombre de composantes : la fusion en demande-t-elle plus qu’une source seule ?</>,
+            <>Combiner les <strong>variables</strong> ou les <strong>prédictions</strong> ?</>,
           ]} />
         </div>
         <Capture src="../captures/spectroscopy-inspector.png" alt="L’Inspector classe les recettes du cas spectroscopie" />
       </div>
     ),
     notes: [
-      'Trois spectroscopies mesurées sur les mêmes échantillons. Chaque technique a son axe et son bruit ; la cible dépend d’une chimie que chaque fenêtre voit en partie.',
-      'Lancer tous les presets. Cela prend quelques secondes. Dans l’Inspector, trier par RMSE de validation croisée.',
-      'Surprise : avec les réglages par défaut, le Raman seul vaut tout le reste, et la fusion early est moins bonne que le Raman seul. Demander à la salle pourquoi.',
-      'Réponse : avec 168 variables, 3 composantes PLS sous-ajustent la fusion early. Les presets PLS font maintenant un sweep des composantes (5, 10, 15) : chaque valeur est un run complet. Dans l’Inspector, la vue Tuning trace le score en fonction du nombre de composantes ; avec plus de composantes, la fusion early bat nettement le Raman seul. Le graphique de conclusion montre la même chose avec l’édition 3 → 6 enregistrée.',
-      'Puis sélectionner la voie MIR et la supprimer : deux sources, relancer. Montrer qu’enlever une source peut aider.',
-      'Noter que le stacking a trouvé tout seul la bonne réponse : il a appris à faire confiance au Raman.',
+      'Trois spectroscopies simulées sur les mêmes 120 échantillons : un jeu pédagogique intégré à la page. Chaque technique a son axe et son bruit ; la cible dépend d’une chimie que chaque fenêtre voit en partie.',
+      'Je lance tous les presets, une trentaine de secondes. Les presets PLS essaient 5, 10 et 15 composantes ; chaque valeur est un run complet, sur les mêmes folds.',
+      'Dans l’Inspector, trié par RMSE de validation croisée : la fusion early arrive en tête, à 10 composantes, devant le Raman seul. Le NIRS et le MIR sont mauvais seuls, et pourtant ils apportent quelque chose au Raman.',
+      'Vue Tuning : le Raman seul est meilleur à 5 composantes, la fusion à 10. Une matrice plus large demande plus de variables latentes ; c’est le piège quand on garde le réglage d’une source seule.',
+      'Côté late : la moyenne est très mauvaise, elle donne autant de poids aux sources faibles qu’au Raman ; le stacking simple ne fait pas mieux que le Raman seul. Le stacking AOM, qui choisit le prétraitement de chaque source, bat le Raman seul mais reste loin derrière la fusion early.',
     ],
   },
   {
     id: 'concl-spectro', section: 'Démonstration', title: 'Démo 1 · ce qu’on retient', minutes: 1.5,
     body: () => (
       <div className="deck-split deck-split--chart">
-        <ResultsChart caseId="spectroscopy" highlight={['Raman seul', 'Late · stacking', 'Early · PLS 6', 'Early · PLS 6 · sans MIR']} />
+        <ResultsChart caseId="spectroscopy" highlight={['Raman seul', 'Early · concaténation', 'Late · moyenne', 'Late · stacking']} />
         <div>
           <Points items={[
-            <><strong>Pas automatique</strong> : early PLS‑3 {fmt(R.spec('Early · concaténation'))} contre Raman {fmt(R.ramanAlone())}</>,
-            <><strong>Plus de VL</strong> : fusion PLS‑6 {fmt(edit('spectroscopy', 'Early · PLS 6').oofRmse)} (Raman PLS‑6 : {fmt(edit('spectroscopy', 'Raman seul · PLS 6').oofRmse)})</>,
-            <><strong>La moyenne dilue</strong> ({fmt(R.spec('Late · moyenne'))}), le <strong>stacking</strong> mise sur le Raman ({fmt(R.spec('Late · stacking'))})</>,
+            <><strong>La fusion gagne</strong> : early {fmt(R.spec('Early · concaténation'))} contre Raman seul {fmt(R.spec('Raman seul'))}, alors que NIRS ({fmt(R.spec('NIRS seul'))}) et MIR ({fmt(R.spec('MIR seul'))}) sont mauvais seuls</>,
+            <><strong>Avec plus de composantes</strong> : la fusion passe de {fmt(sweep('spectroscopy', 'Early · concaténation', 5).oofRmse)} à {fmt(sweep('spectroscopy', 'Early · concaténation', 10).oofRmse)} entre 5 et 10 VL ; le Raman seul est meilleur à 5</>,
+            <><strong>Combiner les prédictions aide moins</strong> : moyenne {fmt(R.spec('Late · moyenne'))}, stacking {fmt(R.spec('Late · stacking'))}, stacking AOM {fmt(R.spec('Late · stacking AOM'))}, tous derrière la fusion des variables</>,
           ]} />
           <Provenance caseId="spectroscopy" />
         </div>
       </div>
     ),
     notes: [
-      'Toutes les barres sont des RMSE de validation croisée sur les mêmes 96 échantillons et les mêmes folds ; la ligne pointillée est la meilleure source seule. Les barres hachurées sont les modifications faites en direct.',
-      'Trois messages. Un : concaténer ne suffit pas ; la capacité du modèle doit suivre le nombre de variables. Deux : la comparaison est loyale — le Raman seul ne s’améliore pas avec plus de composantes, le gain vient bien des autres sources. Trois : la moyenne donne aux sources faibles le même poids qu’à la forte ; le stacking apprend les poids.',
-      'Retirer le MIR améliore encore le score, mais rappelez-vous la règle : chaque essai sur les mêmes folds est une sélection ; on confirme sur le jeu de test une seule fois, ou sur de nouveaux échantillons.',
-      'Ces données sont des simulations pédagogiques : ces classements illustrent des mécanismes, pas des résultats généralisables.',
+      'Toutes les barres sont des RMSE de validation croisée, sur les mêmes 96 échantillons et les mêmes folds ; les losanges sont le test, regardé une fois. La ligne pointillée est la meilleure source seule. Pour les presets PLS, la barre montre le meilleur nombre de composantes du sweep, indiqué dans le nom.',
+      'Trois messages. Un : fusionner les variables bat nettement la meilleure source, alors que deux sources sur trois sont mauvaises seules. Deux : la fusion a besoin de plus de composantes qu’une source seule ; la comparaison est loyale, le Raman seul a eu droit aux mêmes 5, 10 et 15. Trois : combiner seulement les prédictions récupère mal cette complémentarité ; la moyenne dilue le Raman, le stacking simple revient à lui, le stacking AOM fait mieux mais reste derrière.',
+      'Garder le meilleur nombre de composantes d’après la validation croisée est déjà une sélection, un peu optimiste ; le test, regardé une fois, confirme l’ordre.',
+      'Ce sont des données simulées : ces classements illustrent des mécanismes, pas des résultats généralisables.',
     ],
   },
   {
@@ -506,42 +520,40 @@ export const SLIDES: Slide[] = [
     body: () => (
       <div className="deck-split deck-split--demo">
         <div>
-          <p className="deck-case">60 plantes × 2 mesures = 120 échantillons · NIRS 64 · 16 dosages de marqueurs (0/1/2) · groupes gardés entiers</p>
-          <Steps items={[
-            <><a href={labLink('genetics')}>Ouvrir le cas</a> : une plante, deux échantillons</>,
-            <><strong>« Run all presets »</strong></>,
-            <><LevelTag level="early">Early</LevelTag> et <em>NIRS seul</em> : PLS <strong>3 → 5</strong></>,
-            <><LevelTag level="late">Moyenne</LevelTag> contre <LevelTag level="early">MB-PLS</LevelTag></>,
+          <p className="deck-case">jeu pédagogique · 60 plantes × 2 mesures = 120 échantillons · NIRS 64 · 16 dosages de marqueurs (0/1/2) · <a href={labLink('genetics')}>ouvrir</a></p>
+          <Watch items={[
+            <>Une plante, deux échantillons : les folds gardent la plante <strong>entière</strong></>,
+            <>Les marqueurs seuls prédisent mal : faut-il les jeter ?</>,
+            <>Où l’apport des marqueurs apparaît-il : en combinant les variables ou les prédictions ?</>,
           ]} />
         </div>
         <Capture src="../captures/genetics-inspector.png" alt="L’Inspector classe les recettes du cas génétique" />
       </div>
     ),
     notes: [
-      'Deuxième cas : deux modalités vraiment différentes, un spectre continu et un petit tableau de dosages génotypiques. Chaque plante a été mesurée deux fois : les deux lignes ont les mêmes marqueurs mais pas le même spectre. Elles forment un groupe, et les folds gardent les groupes entiers.',
-      'Lancer tous les presets. Les marqueurs seuls prédisent mal, moins bien que la moyenne. Faut-il les jeter ? Regardez les fusions : early et MB-PLS font bien mieux que le NIRS seul. Les marqueurs apportent une information qui n’apparaît qu’avec le spectre.',
-      'Puis la comparaison loyale : le sweep a déjà essayé 5, 10 et 15 composantes pour la fusion early comme pour le NIRS seul. À capacité égale, l’écart reste.',
-      'Enfin comparer la moyenne late et le MB-PLS : moyenner avec une source faible fait pire que le NIRS seul.',
+      'Deuxième jeu pédagogique : deux modalités vraiment différentes, un spectre continu et un petit tableau de dosages génotypiques. Chaque plante a été mesurée deux fois ; les deux lignes ont les mêmes marqueurs mais pas le même spectre. Elles forment un groupe, et les folds gardent les groupes entiers.',
+      'Tous les presets, une vingtaine de secondes. Les marqueurs seuls sont très mauvais. Mais la fusion early et le MB-PLS font bien mieux que le NIRS seul.',
+      'Et la fusion late, qui combine les prédictions, fait au mieux comme le NIRS seul : l’information des marqueurs n’apparaît qu’en regardant les deux blocs ensemble.',
     ],
   },
   {
     id: 'concl-genetics', section: 'Démonstration', title: 'Démo 2 · ce qu’on retient', minutes: 1.5,
     body: () => (
       <div className="deck-split deck-split--chart">
-        <ResultsChart caseId="genetics" highlight={['NIRS seul', 'Early · MB-PLS', 'Early · PLS 5', 'NIRS seul · PLS 5', 'Late · moyenne']} />
+        <ResultsChart caseId="genetics" highlight={['NIRS seul', 'Marqueurs seuls', 'Early · concaténation', 'Late · moyenne', 'Late · stacking']} />
         <div>
           <Points items={[
-            <><strong>Faible seule ≠ inutile</strong> : marqueurs {fmt(R.gen('Marqueurs seuls'))}, mais fusion {fmt(edit('genetics', 'Early · PLS 5').oofRmse)} contre NIRS {fmt(edit('genetics', 'NIRS seul · PLS 5').oofRmse)}</>,
-            <><strong>Le bas niveau gagne</strong> : MB-PLS {fmt(R.gen('Early · MB-PLS'))} ; moyenne {fmt(R.gen('Late · moyenne'))}</>,
-            <><strong>CNN</strong> {fmt(R.gen('Mid · CNN'))} : bat le NIRS seul, pas le bas niveau</>,
+            <><strong>Faible seule ≠ inutile</strong> : marqueurs seuls {fmt(R.gen('Marqueurs seuls'))}, mais NIRS + marqueurs {fmt(R.gen('Early · concaténation'))} contre NIRS seul {fmt(R.gen('NIRS seul'))}</>,
+            <><strong>Il faut voir les blocs ensemble</strong> : en combinant les prédictions, moyenne {fmt(R.gen('Late · moyenne'))}, stacking {fmt(R.gen('Late · stacking'))}, stacking AOM {fmt(R.gen('Late · stacking AOM'))} : pas mieux que le NIRS seul</>,
+            <><strong>CNN</strong> {fmt(R.gen('Mid · CNN'))} : bat le NIRS seul, pas la PLS sur la concaténation</>,
           ]} />
           <Provenance caseId="genetics" />
         </div>
       </div>
     ),
     notes: [
-      'Message principal : on juge une source sur ce qu’elle apporte, pas sur son score seule. Les marqueurs seuls sont inutiles comme prédicteur, mais combinés au spectre ils divisent l’erreur par deux.',
-      'Les fusions de bas niveau voient les deux blocs en même temps ; la fusion late voit chaque bloc séparément, elle exploite moins bien la complémentarité, et la moyenne fait même moins bien que le NIRS seul.',
+      'Message principal : on juge une source sur ce qu’elle apporte, pas sur son score seule. Les marqueurs seuls sont inutiles comme prédicteur ; combinés au spectre, ils divisent l’erreur par près de quatre.',
+      'Pourquoi le late échoue : ici l’effet des marqueurs dépend du spectre. Un modèle par source ne peut pas le voir : le stacking AOM fait à peine mieux que le NIRS seul, et la moyenne fait même pire.',
       'Le CNN fait mieux que le NIRS seul et que la fusion late, mais reste derrière la fusion de bas niveau : avec 96 échantillons, un modèle plus complexe n’est pas automatiquement meilleur.',
     ],
   },
@@ -550,21 +562,20 @@ export const SLIDES: Slide[] = [
     body: () => (
       <div className="deck-split deck-split--demo">
         <div>
-          <p className="deck-case">120 échantillons · NIRS 64 · une image 12 × 12 en niveaux de gris par échantillon · 96 calibration / 24 test</p>
-          <Steps items={[
-            <><a href={labLink('images', 'cnn')}>Ouvrir le cas</a> : spectre + image</>,
-            <><LevelTag level="mid">Mid · CNN</LevelTag> : branches 1D et 2D, concaténées au milieu</>,
-            <><strong>« Run all presets »</strong></>,
-            <>CNN minuscule : <strong>4 filtres, 24 epochs</strong>, relancer</>,
+          <p className="deck-case">jeu pédagogique · 120 échantillons · NIRS 64 · une image 12 × 12 en niveaux de gris par échantillon · 96 calibration / 24 test · <a href={labLink('images', 'cnn')}>ouvrir</a></p>
+          <Watch items={[
+            <>Les pixels comme 144 variables, ou une <strong>convolution 2D</strong> ?</>,
+            <><LevelTag level="mid">Mid · CNN</LevelTag> : une branche par source, concaténées au milieu</>,
+            <>Un CNN plus petit (4 filtres, 24 epochs) : que perd-on ?</>,
           ]} />
         </div>
         <Capture src="../captures/images-inspector.png" alt="L’Inspector classe les recettes du cas images" />
       </div>
     ),
     notes: [
-      'Dernier cas : un spectre et une petite image par échantillon. La fusion early et le PLS traitent les 144 pixels comme 144 variables indépendantes ; le CNN garde la disposition 2D avec une convolution, et fusionne au milieu du réseau.',
-      'Montrer le preset Mid · CNN dans l’éditeur : les mêmes voies par source, et c’est l’étape modèle qui contient les branches et la concaténation. Lancer tous les presets.',
-      'Puis réduire le CNN — 4 filtres, embeddings de 6, 24 epochs, taux d’apprentissage 0,003 — et relancer : il perd beaucoup. La taille du réseau et l’entraînement comptent autant que l’architecture.',
+      'Troisième jeu pédagogique : un spectre et une petite image 12 × 12 par échantillon. La fusion early et la PLS traitent les 144 pixels comme 144 variables indépendantes ; le CNN garde la disposition 2D avec une convolution et fusionne au milieu du réseau.',
+      'Dans l’éditeur, le preset Mid · CNN : les mêmes voies par source, et c’est l’étape modèle qui contient les branches et la concaténation. Tous les presets tournent en une trentaine de secondes.',
+      'Puis je réduis le CNN — 4 filtres, embeddings de 6, 24 epochs, taux d’apprentissage 0,003 — et je relance : il perd beaucoup. La taille du réseau et l’entraînement comptent autant que l’architecture.',
       'Honnêteté : les réglages du CNN ont été choisis après quelques essais sur ces mêmes données, son score est donc un peu optimiste.',
     ],
   },
@@ -572,12 +583,12 @@ export const SLIDES: Slide[] = [
     id: 'concl-images', section: 'Démonstration', title: 'Démo 3 · ce qu’on retient', minutes: 1.5,
     body: () => (
       <div className="deck-split deck-split--chart">
-        <ResultsChart caseId="images" highlight={['Image seule', 'Early · concaténation', 'Mid · CNN', 'CNN minuscule']} />
+        <ResultsChart caseId="images" highlight={['Image seule', 'Early · concaténation', 'Mid · scores ACP', 'Mid · CNN', 'CNN minuscule']} />
         <div>
           <Points items={[
             <><strong>L’image domine</strong> ({fmt(R.img('Image seule'))}), le spectre complète : early {fmt(R.img('Early · concaténation'))}</>,
-            <><strong>Mid · CNN</strong> {fmt(R.img('Mid · CNN'))} : bat l’image seule ; minuscule : {fmt(edit('images', 'CNN minuscule').oofRmse)}</>,
-            <><strong>Mid · scores ACP</strong> {fmt(R.img('Mid · scores ACP'))} avec 10 colonnes au lieu de 208</>,
+            <><strong>Résumer suffit presque</strong> : scores ACP {fmt(R.img('Mid · scores ACP'))} avec 10 colonnes au lieu de 208</>,
+            <><strong>Mid · CNN</strong> {fmt(R.img('Mid · CNN'))} bat l’image seule ; plus petit, {fmt(edit('images', 'CNN minuscule').oofRmse)} : la taille compte</>,
           ]} />
           <Provenance caseId="images" />
         </div>
@@ -585,8 +596,8 @@ export const SLIDES: Slide[] = [
     ),
     notes: [
       'Ici la fusion aide clairement : early comme mid fusion battent la meilleure source seule.',
-      'Le CNN, avec sa fusion au milieu, bat l’image seule et se rapproche du PLS ; le CNN minuscule est loin derrière. Avec de vraies images et plus d’échantillons, l’avantage de la convolution peut grandir.',
-      'Les scores ACP sont aussi intéressants : cinq scores par source font presque aussi bien que les 208 variables. C’est l’idée qu’on reprend avec des encodeurs pré-entraînés d’images ou de spectres sur de plus gros problèmes.',
+      'Les scores ACP, cinq par source, font presque aussi bien que les 208 variables : c’est l’idée des embeddings, qu’on reprend avec des encodeurs pré-entraînés sur de plus gros problèmes.',
+      'Le CNN bat l’image seule sans rattraper la PLS ; réduit, il est loin derrière. Avec de vraies images et plus d’échantillons, l’avantage de la convolution peut grandir. Le CNN réduit a été enregistré le 18 novembre sur les mêmes folds ; le preset CNN redonne aujourd’hui exactement le même score qu’alors.',
     ],
   },
   {
@@ -594,12 +605,11 @@ export const SLIDES: Slide[] = [
     body: () => (
       <div className="deck-split deck-split--demo">
         <div>
-          <p className="deck-case">565 mangues réelles · spectre Vis-SWNIR 245 points · météo 90 jours × 4 variables · saisons 1–3 calibration (430) / saison 4 test (135) · folds groupés région × saison</p>
-          <Steps items={[
-            <><a href={labLink('timeseries')}>Ouvrir le cas</a> : un spectre et une série météo par fruit</>,
-            <>Explorer : la météo est <strong>une</strong> source, 4 courbes</>,
-            <><strong>« Run all presets »</strong> (≈ 1 min 40)</>,
-            <>Comparer <LevelTag level="single">NIR seul</LevelTag> et les fusions</>,
+          <p className="deck-case">565 mangues réelles · spectre Vis-SWNIR 245 points · météo 90 jours × 4 variables · saisons 1–3 calibration (430) / saison 4 test (135) · folds groupés région × saison · <a href={labLink('timeseries')}>ouvrir</a></p>
+          <Watch items={[
+            <>La météo : <strong>une</strong> source, quatre courbes sur 90 jours</>,
+            <>Folds groupés région × saison : prédire une saison <strong>jamais vue</strong></>,
+            <>La météo aide-t-elle le spectre ?</>,
           ]} />
         </div>
         <Capture src="../captures/timeseries-inspector.png" alt="L’Inspector classe les recettes du cas mangue et météo" />
@@ -608,8 +618,8 @@ export const SLIDES: Slide[] = [
     notes: [
       'Données réelles et publiques : des mangues australiennes, un spectre Vis-SWNIR par fruit (Anderson et al., CC BY 4.0), et la météo journalière des 90 jours avant la récolte (Open-Meteo, réanalyse ERA5). La cible est la matière sèche.',
       'Limite à dire tout de suite : la source ne publie que la région et la date de récolte, pas l’emplacement des vergers. La météo vient d’un point représentatif par région, et elle est la même pour tous les fruits d’une récolte.',
-      'Montrer la vue Explore : la météo est une seule source, avec quatre courbes : températures maximale et minimale, pluie, rayonnement. Le fruit sélectionné en rouge, l’enveloppe de tous les fruits derrière.',
-      'La validation suit les auteurs : saisons 1 à 3 en calibration, saison 4 en test. Les folds sont groupés par région et par saison, parce que les récoltes d’une même saison partagent presque toute leur météo. Lancer tous les presets, environ une minute quarante. Les scores ne sont pas comparables à ceux des publications, qui utilisent leurs propres découpages.',
+      'Vue Explore : la météo est une seule source, un tableau temps × variables par fruit, avec quatre courbes : températures maximale et minimale, pluie, rayonnement. Le fruit sélectionné en rouge, l’enveloppe de tous les fruits derrière. Une série multivariée, c’est une source, pas une source par variable.',
+      'La validation suit les auteurs : saisons 1 à 3 en calibration, saison 4 en test. Les folds sont groupés par région et par saison, parce que les récoltes d’une même saison partagent presque toute leur météo. Tous les presets tournent en une minute quarante environ. Les scores ne sont pas comparables à ceux des publications, qui utilisent leurs propres découpages.',
     ],
   },
   {
@@ -631,7 +641,7 @@ export const SLIDES: Slide[] = [
       'Résultat honnête, et c’est la leçon : ici, la météo n’aide pas. Le spectre seul est le meilleur.',
       'Pourquoi ? La météo est la même pour tous les fruits d’une récolte, il n’y a que 36 récoltes et six blocs région × saison en calibration. Avec des folds groupés, le modèle doit prédire une saison qu’il n’a jamais vue : la météo seule n’y arrive pas, son R² est négatif.',
       'En early, on ajoute 360 colonnes météo, constantes au sein d’une récolte, aux 245 longueurs d’onde ; après mise à l’échelle, elles pèsent plus que le spectre et la PLS fait nettement moins bien que le spectre seul. Le stacking fait mieux que l’early mais ne bat pas le spectre seul ; attention, sa PLS sur le spectre est fixée à 10 composantes, la comparaison avec le NIR seul à 15 composantes n’est pas à armes égales.',
-      'Sans folds groupés, un modèle pourrait simplement reconnaître la récolte à sa météo et paraître meilleur qu’il ne l’est : c’est le piège de la slide sur les séries temporelles. Pour qu’une série de contexte aide, il faut beaucoup plus de récoltes, ou des résumés agronomiques (somme de températures, cumul de pluie) plutôt que 90 jours bruts.',
+      'Sans folds groupés, un modèle pourrait simplement reconnaître la récolte à sa météo et paraître meilleur qu’il ne l’est : c’est pour ça que les folds sont groupés. Pour qu’une série de contexte aide, il faut beaucoup plus de récoltes, ou des résumés agronomiques (somme de températures, cumul de pluie) plutôt que 90 jours bruts.',
     ],
   },
   {
@@ -657,7 +667,7 @@ export const SLIDES: Slide[] = [
       <div className="deck-split">
         <div>
           <h3>Le labo</h3>
-          <p className="deck-url"><a href={LAB}>web.nirs4all.org/nirs4all_multimodale</a></p>
+          <LabLink href={LAB} />
           <p>Importez vos propres fichiers CSV / VCF / PNG avec le Dataset Builder ; exportez n’importe quel pipeline en JSON.</p>
           <h3>Les mêmes pipelines en Python</h3>
           <pre className="deck-code">{`pipeline = [
