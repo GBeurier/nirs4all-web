@@ -535,7 +535,7 @@ export const SLIDES: Slide[] = [
         <div>
           <Points items={[
             <><strong>Faible seule ≠ inutile</strong> : marqueurs seuls {fmt(R.gen('Marqueurs seuls'))}, mais NIRS + marqueurs {fmt(R.gen('Early · concaténation'))} contre NIRS seul {fmt(R.gen('NIRS seul'))}</>,
-            <><strong>Il faut voir les blocs ensemble</strong> : en combinant les prédictions, moyenne {fmt(R.gen('Late · moyenne'))}, stacking {fmt(R.gen('Late · stacking'))}, stacking AOM {fmt(R.gen('Late · stacking AOM'))} : pas mieux que le NIRS seul</>,
+            <><strong>Il faut voir les blocs ensemble</strong> : en combinant les prédictions, moyenne {fmt(R.gen('Late · moyenne'))}, stacking {fmt(R.gen('Late · stacking'))}, stacking AOM {fmt(R.gen('Late · stacking AOM'))} : au mieux à peine mieux que le NIRS seul ({fmt(R.gen('NIRS seul'))})</>,
             <><strong>CNN</strong> {fmt(R.gen('Mid · CNN'))} : bat le NIRS seul, pas la PLS sur la concaténation</>,
           ]} />
           <Provenance caseId="genetics" />
