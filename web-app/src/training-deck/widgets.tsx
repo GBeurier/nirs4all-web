@@ -8,9 +8,10 @@ const LEVEL_LABEL: Record<LevelKind, string> = {
   single: 'Source seule', early: 'Early · bas niveau', mid: 'Mid fusion', late: 'Late · haut niveau',
 }
 
-/** Display-only dataset stand-in: the presets read source IDs and labels only. */
+/** Display-only dataset stand-in: the presets read source IDs, labels and the (numeric) target kind only. */
 function sourcesOf(caseId: CaseId): LabDataset {
-  return { sources: EVIDENCE.cases[caseId].dataset.sources.map(source => ({ ...source, shape: [...source.shape] })) } as unknown as LabDataset
+  return { sources: EVIDENCE.cases[caseId].dataset.sources.map(source => ({ ...source, shape: [...source.shape] })),
+    target: { name: 'y', unit: '', values: new Float64Array(0) } } as unknown as LabDataset
 }
 
 export function presetDocument(caseId: CaseId, id: string): PipelineChainDocument {
