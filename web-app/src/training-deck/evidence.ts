@@ -12,6 +12,10 @@ export interface EvidenceRun {
   foldsFingerprint: string
   recipeFingerprint: string
   edit?: string
+  /** Best component count of a swept PLS preset (the run kept, by OOF RMSE). */
+  components?: number
+  /** Every component count of the sweep, when the preset swept it. */
+  sweep?: Array<{ components: number; oofRmse: number; testRmse: number }>
   pipeline: unknown[]
 }
 export interface EvidenceCase {
@@ -26,7 +30,7 @@ export interface EvidenceCase {
   capturedAt?: string
   data?: string
 }
-type Recorded = { capturedAt: string; source: { web: string; ui: string }; cases: Record<CaseId, EvidenceCase> }
+type Recorded = { capturedAt: string; source: Record<string, string>; cases: Record<CaseId, EvidenceCase> }
 
 /**
  * Display names (French) and fusion levels for the recorded runs. The JSON keeps
@@ -38,15 +42,11 @@ const DISPLAY: Record<string, [string, LevelKind]> = {
   'Early · concatenate': ['Early · concaténation', 'early'], 'Early · MB-PLS': ['Early · MB-PLS', 'early'],
   'Mid · PCA scores': ['Mid · scores ACP', 'mid'], 'Mid · CNN': ['Mid · CNN', 'mid'],
   'Late · average': ['Late · moyenne', 'late'], 'Late · stacking': ['Late · stacking', 'late'],
-  'Vis-SWNIR spectrum alone · 15 comp.': ['NIR seul', 'single'], 'Daily weather, 90 days before harvest alone · 15 comp.': ['Météo seule', 'single'],
-  'Early · concatenate · 10 comp.': ['Early · concaténation', 'early'], 'Early · MB-PLS · 10 comp.': ['Early · MB-PLS', 'early'],
+  'Vis-SWNIR spectrum alone': ['NIR seul', 'single'], 'Daily weather, 90 days before harvest alone': ['Météo seule', 'single'],
+  'Mid · CNN (Burn)': ['Mid · CNN (Burn)', 'mid'], 'Genetic markers · CNN (Burn)': ['Marqueurs · CNN (Burn)', 'single'],
   'Early · random forest': ['Early · forêt aléatoire', 'early'], 'Late · AOM stacking': ['Late · stacking AOM', 'late'],
 }
 const EDITS: Record<string, [string, LevelKind]> = {
-  'Early · PLS 6': ['Early · PLS 6', 'early'], 'Early · PLS 6 · without MIR': ['Early · PLS 6 · sans MIR', 'early'],
-  'Raman alone · PLS 6': ['Raman seul · PLS 6', 'single'], 'Early · PLS 5': ['Early · PLS 5', 'early'],
-  'NIRS alone · PLS 5': ['NIRS seul · PLS 5', 'single'], 'Markers alone · PLS 5': ['Marqueurs seuls · PLS 5', 'single'],
-  'MB-PLS · 5 components': ['MB-PLS · 5 composantes', 'early'], 'Image alone · PLS 6': ['Image seule · PLS 6', 'single'],
   'Tiny CNN (4 filters, 24 epochs)': ['CNN minuscule', 'mid'],
 }
 function relabel(run: EvidenceRun, table: Record<string, [string, LevelKind]>, key: string): EvidenceRun {
@@ -70,5 +70,10 @@ export function edit(caseId: CaseId, text: string): EvidenceRun {
   const run = EVIDENCE.cases[caseId].edits.find(item => item.edit === text)
   if (!run) throw new Error(`Missing recorded edit "${text}" for ${caseId}`)
   return run
+}
+export function sweep(caseId: CaseId, name: string, components: number): { oofRmse: number; testRmse: number } {
+  const point = preset(caseId, name).sweep?.find(item => item.components === components)
+  if (!point) throw new Error(`Missing ${components}-component sweep point of ${name} for ${caseId}`)
+  return point
 }
 export const fmt = (value: number) => value.toFixed(3)

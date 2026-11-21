@@ -7,7 +7,7 @@ import spectra from './spectra.json'
  */
 
 export const SOURCE_COLORS = {
-  raman: '#be123c', nirs: '#4f46e5', mir: '#a16207', markers: '#15803d', image: '#475569', y: '#0f172a',
+  raman: '#be123c', nirs: '#4f46e5', mir: '#a16207', markers: '#15803d', image: '#475569', series: '#0d9488', y: '#0f172a',
 } as const
 export const LEVEL_COLORS = {
   single: '#64748b', early: '#0891b2', mid: '#7c3aed', late: '#d97706',
@@ -104,7 +104,23 @@ function ScoresMotif({ x, y, w, h, kind, seed = 1 }: { x: number; y: number; w: 
   )
 }
 
-interface BlockProps { x: number; y: number; w: number; h: number; kind: SourceKind; label?: string; sub?: string; motif?: 'spectrum' | 'table' | 'image' | 'scores' | 'none'; seed?: number; faded?: boolean }
+/** A multivariate time series: a few variables as stacked curves over a shared time axis. */
+function SeriesMotif({ x, y, w, h, seed = 1 }: { x: number; y: number; w: number; h: number; seed?: number }) {
+  const lanes = 3, lane = h / lanes, steps = 28
+  return (
+    <g>
+      {Array.from({ length: lanes }, (_, v) => {
+        const points = Array.from({ length: steps }, (_, t) => {
+          const value = 0.5 + 0.32 * Math.sin(t * (0.35 + v * 0.17) + seed + v * 1.3) + 0.12 * Math.sin(t * 1.9 + v * 2.1)
+          return `${(x + (t / (steps - 1)) * w).toFixed(1)},${(y + v * lane + lane * (1 - value)).toFixed(1)}`
+        })
+        return <path key={v} d={`M${points.join('L')}`} fill="none" stroke={SOURCE_COLORS.series} strokeWidth={1.5} opacity={0.95 - v * 0.2} />
+      })}
+    </g>
+  )
+}
+
+interface BlockProps { x: number; y: number; w: number; h: number; kind: SourceKind; label?: string; sub?: string; motif?: 'spectrum' | 'table' | 'image' | 'series' | 'scores' | 'none'; seed?: number; faded?: boolean }
 
 /** One source block: a matrix of samples × variables, with a motif telling what it holds. */
 export function Block({ x, y, w, h, kind, label, sub, motif = 'spectrum', seed = 1, faded }: BlockProps) {
@@ -113,6 +129,7 @@ export function Block({ x, y, w, h, kind, label, sub, motif = 'spectrum', seed =
   const inner = motif === 'spectrum' ? <SpectraMotif kind={kind} x={x + pad} y={y + pad + 2} w={w - 2 * pad} h={h - 2 * pad - 4} count={h > 90 ? 5 : 3} />
     : motif === 'table' ? <MarkerMotif x={x + pad} y={y + pad} w={w - 2 * pad} h={h - 2 * pad} seed={seed} />
     : motif === 'image' ? <GrainMotif x={x + 3} y={y + 3} w={w - 6} h={h - 6} seed={seed} />
+    : motif === 'series' ? <SeriesMotif x={x + pad} y={y + pad} w={w - 2 * pad} h={h - 2 * pad} seed={seed} />
     : motif === 'scores' ? <ScoresMotif x={x} y={y} w={w} h={h} kind={kind} seed={seed} /> : null
   return (
     <g opacity={faded ? 0.35 : 1}>
@@ -205,10 +222,11 @@ export function SampleViewsDiagram() {
 /** Samples × blocks: the shape of a multisource dataset. */
 export function DatasetShapeDiagram() {
   const blocks: Array<{ kind: SourceKind; label: string; w: number; motif: BlockProps['motif']; sub: string }> = [
-    { kind: 'nirs', label: 'NIRS', w: 200, motif: 'spectrum', sub: '64 longueurs d’onde (nm)' },
-    { kind: 'raman', label: 'Raman', w: 150, motif: 'spectrum', sub: '48 déplacements (cm⁻¹)' },
-    { kind: 'markers', label: 'Marqueurs', w: 110, motif: 'table', sub: '16 dosages' },
-    { kind: 'image', label: 'Image', w: 150, motif: 'image', sub: '12 × 12 pixels' },
+    { kind: 'nirs', label: 'NIRS', w: 150, motif: 'spectrum', sub: '64 λ (nm)' },
+    { kind: 'raman', label: 'Raman', w: 120, motif: 'spectrum', sub: '48 cm⁻¹' },
+    { kind: 'markers', label: 'Marqueurs', w: 100, motif: 'table', sub: '16 dosages' },
+    { kind: 'image', label: 'Image', w: 120, motif: 'image', sub: '12 × 12 px' },
+    { kind: 'series', label: 'Série temp.', w: 140, motif: 'series', sub: '90 j × 4 var.' },
   ]
   let x = 170
   return (
@@ -233,7 +251,7 @@ export function DatasetShapeDiagram() {
   )
 }
 
-/** Join by identity, not by row position; groups stay together. */
+/** Sources joined (here by identifier, rows in a different order); groups stay together. */
 export function AlignmentDiagram() {
   const left = ['s-002', 's-003', 's-004', 's-005']
   const right = ['s-004', 's-002', 's-005', 's-003']
@@ -260,7 +278,7 @@ export function AlignmentDiagram() {
       <rect x={850} y={50} width={14} height={110} rx={4} fill="var(--amber)" opacity={0.25} />
       <Caption x={872} y={100} anchor="start" size={13} color="var(--amber)" weight={700}>groupe : plante 1</Caption>
       <Caption x={872} y={118} anchor="start" size={12} color="var(--text-3)">s-004 + s-002</Caption>
-      <Caption x={455} y={325} color="var(--teal-d)" weight={700} size={15}>Jointure par identifiant — jamais par numéro de ligne</Caption>
+      <Caption x={455} y={325} color="var(--teal-d)" weight={700} size={15}>Ici par identifiant · aussi par clé composite, nom de fichier, ordre des lignes ou table de correspondance</Caption>
     </svg>
   )
 }
@@ -460,6 +478,60 @@ export function OofDiagram() {
       <Arrow x1={765} y1={128} x2={815} y2={128} />
       <StepBox x={820} y={100} w={160} h={56} title="méta-modèle" detail="apprend les poids" accent={LEVEL_COLORS.late} />
       <Caption x={500} y={270} color="var(--text-2)" size={14}>Prédites sur le train, les prédictions sont trop belles : le méta-modèle sur-fait confiance à la source la plus flexible.</Caption>
+    </svg>
+  )
+}
+
+/** Multimodal embeddings: one encoder per modality, vectors concatenated or aligned in one shared space. */
+export function MultimodalEmbeddingDiagram() {
+  const lanes: Array<{ kind: SourceKind; motif: BlockProps['motif']; label: string; encoder: string }> = [
+    { kind: 'nirs', motif: 'spectrum', label: 'Spectre', encoder: 'ACP · PLS · réseau 1D' },
+    { kind: 'image', motif: 'image', label: 'Image', encoder: 'CNN pré-entraîné' },
+    { kind: 'markers', motif: 'table', label: 'Génotype', encoder: 'modèle de séquences' },
+  ]
+  // Five samples in the shared space: the three measurements of one sample land close together.
+  const samples = [[555, 196], [650, 232], [750, 190], [845, 236], [930, 196]]
+  const offsets: Array<[number, number]> = [[-13, -6], [11, -10], [2, 12]]
+  return (
+    <svg viewBox="0 0 1000 300" role="img" aria-label="Embeddings multimodaux : un encodeur par modalité donne un vecteur par échantillon ; les vecteurs sont concaténés, ou alignés dans un espace commun où les mesures d’un même échantillon sont proches">
+      {lanes.map((lane, index) => {
+        const y = 22 + index * 92
+        return (
+          <g key={lane.kind}>
+            <Block x={20} y={y} w={lane.motif === 'image' ? 70 : 110} h={56} kind={lane.kind} motif={lane.motif} seed={index + 1} />
+            <Caption x={lane.motif === 'image' ? 55 : 75} y={y + 74} color={SOURCE_COLORS[lane.kind]} weight={700} size={12.5}>{lane.label}</Caption>
+            <Arrow x1={135} y1={y + 28} x2={170} y2={y + 28} />
+            <StepBox x={175} y={y + 4} w={180} h={48} title="encodeur" detail={lane.encoder} accent={LEVEL_COLORS.mid} />
+            <Arrow x1={357} y1={y + 28} x2={385} y2={y + 28} />
+            <Block x={390} y={y + 8} w={40} h={40} kind={lane.kind} motif="scores" seed={index} />
+            <path d={`M432 ${y + 28} C 465 ${y + 28}, 465 58, 492 58`} fill="none" stroke="var(--text-3)" strokeWidth={1.8} />
+            <path d={`M432 ${y + 28} C 465 ${y + 28}, 465 232, 492 232`} fill="none" stroke="var(--text-3)" strokeWidth={1.8} strokeDasharray="5 5" />
+          </g>
+        )
+      })}
+      <Caption x={410} y={20} color="var(--text-3)" size={12.5}>un vecteur</Caption>
+      {/* ① concatenate */}
+      <rect x={492} y={14} width={496} height={92} rx={12} fill="var(--paper-2)" stroke="var(--border-warm)" />
+      <Caption x={505} y={38} anchor="start" weight={800} color="var(--text)" size={14}>① concaténer les vecteurs</Caption>
+      <Block x={510} y={50} w={28} h={46} kind="nirs" motif="scores" />
+      <Block x={538} y={50} w={28} h={46} kind="image" motif="scores" seed={2} />
+      <Block x={566} y={50} w={28} h={46} kind="markers" motif="scores" seed={3} />
+      <Arrow x1={602} y1={73} x2={640} y2={73} />
+      <StepBox x={645} y={48} w={130} h={50} title="modèle" detail="PLS · Ridge · tête" accent="var(--teal)" />
+      <Arrow x1={777} y1={73} x2={808} y2={73} />
+      <Caption x={826} y={79} weight={800} color="var(--text)" size={18}>ŷ</Caption>
+      <Caption x={905} y={70} color="var(--text-3)" size={12}>mid fusion</Caption>
+      <Caption x={905} y={86} color="var(--text-3)" size={12}>(feature-level)</Caption>
+      {/* ② shared space */}
+      <rect x={492} y={124} width={496} height={166} rx={12} fill="#fff" stroke={LEVEL_COLORS.mid} strokeDasharray="6 6" />
+      <Caption x={505} y={148} anchor="start" weight={800} color="var(--text)" size={14}>② un espace commun : un même échantillon, des points proches</Caption>
+      {samples.map(([cx, cy], s) => (
+        <g key={s}>
+          <circle cx={cx} cy={cy} r={27} fill={LEVEL_COLORS.mid} opacity={0.07} />
+          {lanes.map((lane, m) => <circle key={lane.kind} cx={cx + offsets[m][0]} cy={cy + offsets[m][1]} r={6.5} fill={SOURCE_COLORS[lane.kind]} />)}
+        </g>
+      ))}
+      <Caption x={740} y={278} color="var(--text-3)" size={12.5}>entraînés ensemble (contrastif, type CLIP) · CCA en chimiométrie</Caption>
     </svg>
   )
 }

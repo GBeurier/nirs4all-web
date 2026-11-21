@@ -253,24 +253,30 @@ The detailed owner contract is
 Numerical operations belong to Methods, source-controller orchestration and
 native folds/OOF/scoring/replay to DAG-ML, and reusable presentation to UI.
 
-## Forty-minute session
+## Training session
 
 The training slides (in French, at the maintainer's request) are a page of this site,
 `https://web.nirs4all.org/multimodal-training/slides/`, built from
 `src/training-deck/` with the same theme and the laboratory's own pipeline
 editor. Keys: arrows/space to move, **N** speaker notes, **P** a synchronised
-presenter window (current and next slide, notes, a timer against the 40-minute
-plan), **F** full screen. `?print` lays the deck out for PDF export and
+presenter window (current and next slide, notes, a timer against the planned
+minutes), **F** full screen. `?print` lays the deck out for PDF export and
 `?print&notes` adds the notes; the exported PDFs are in
 `public/multimodal-training/`.
 
-The plan is 21 minutes of concepts (multimodal data, alignment, the four fusion
-levels, honest stacking and comparison), 17 minutes for three live
-demonstrations with one conclusion slide each, and two minutes of wrap-up. The
-conclusion charts read `src/training-deck/evidence.json`: native scores recorded
-from this laboratory (presets and the live edits of the demonstrations) on one
-fold set per case. Regenerate it after any owner or recipe change by running the
-presets and the scripted edits, and check the fold fingerprints match.
+The deck has concept slides (multimodal data and time series as one source,
+alignment, the four places where sources meet, multimodal embeddings, multiblock
+and kernel methods, honest stacking and comparison), then four live
+demonstrations with one conclusion slide each, and a short wrap-up. The
+demonstration slides list what the room looks at, not instructions.
+
+The conclusion charts read `src/training-deck/evidence.json`: native scores of
+"Run all presets" on the served laboratory, one fold set per case. Demonstrations
+1 to 3 use the bundled synthetic teaching examples; demonstration 4 uses the
+public mango data. For swept PLS presets the chart keeps the best component count
+by OOF RMSE and the JSON keeps the whole sweep. Regenerate it after any owner or
+recipe change by running every preset of each case, and check the fold
+fingerprints match.
 
 Useful primary conceptual references are Wolpert (1992),
 [Stacked generalization](https://doi.org/10.1016/S0893-6080%2805%2980023-1),

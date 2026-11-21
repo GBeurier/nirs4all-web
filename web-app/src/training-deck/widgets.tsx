@@ -102,7 +102,7 @@ export function ResultsChart({ caseId, include, highlight = [] }: { caseId: Case
         return (
           <g key={`${run.name}-${run.edit ?? ''}`} opacity={dim}>
             <text x={left - 12} y={y + 26} textAnchor="end" fontFamily="var(--font)" fontSize={19} fontWeight={strong ? 800 : 600} fill="var(--text)">
-              {run.edit ? `✎ ${run.edit}` : run.name}
+              {run.edit ? `✎ ${run.edit}` : run.components ? `${run.name} · ${run.components} VL` : run.name}
             </text>
             <rect x={left} y={y + 9} width={x(run.oofRmse) - left} height={row - 18} rx={4}
               fill={run.edit ? '#fff' : color} fillOpacity={run.edit ? 1 : 0.85} stroke={color} strokeWidth={run.edit ? 1.8 : 0} />
