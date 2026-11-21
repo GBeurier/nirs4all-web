@@ -191,8 +191,6 @@ const cnnChain = (source: LabSource): Json[] => source.modality === 'spectroscop
 const NICON_POINTS = 256
 /** Compact Burn CNN for marker tables and mixed sources: fastest browser CNN on CPU. */
 const COMPACT_CNN = { architecture: 'compact', filters: 4, epochs: 30, learning_rate: 0.005 }
-/** AOM screens many chains per component: long spectra are resampled first in the browser. */
-const AOM_POINTS = 256
 const niconChain = (source: LabSource): Json[] => source.modality === 'spectroscopy'
   ? [...(source.shape[0] > NICON_POINTS ? [step(RESAMPLE, { num_samples: NICON_POINTS })] : []), step('preprocessing.scatter.snv'),
     step('preprocessing.derivatives.savitzky_golay', { window_length: 15, polyorder: 2, deriv: 1 }), ...sourceChain()]
@@ -280,7 +278,7 @@ export function fusionPresets(dataset: LabDataset): FusionPreset[] {
       document: {
         name: `Late fusion · AOM-PLS per spectrum (${all}) → Ridge`,
         pipeline: [{ branch: { by_source: true, steps: lanes(sources, source => source.modality === 'spectroscopy'
-          ? [...(source.shape[0] > AOM_POINTS ? [step(RESAMPLE, { num_samples: AOM_POINTS })] : []), model(AOM, defaults(AOM), 'AOM-PLS')]
+          ? [model(AOM, defaults(AOM), 'AOM-PLS')]
           : [...sourceChain(), plsLate(source)]) } },
         { merge: 'predictions' }, model(RIDGE, defaults(RIDGE), 'Meta-model (Ridge)')],
       },

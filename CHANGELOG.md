@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Multimodal laboratory: tick presets to run a selected subset ("Run N selected presets"), next to "Run all".
+- Multimodal laboratory: the AOM stacking preset no longer resamples spectra before AOM-PLS; AOM works on the full spectra (scores of long-spectrum datasets change).
 - Pause public dataset import in Web while browser support for original-source recipes is qualified.
 
 ## 0.6.0 — 2026-11-20
