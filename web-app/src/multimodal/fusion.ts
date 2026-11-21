@@ -432,7 +432,7 @@ function checkHead(sources: readonly LabSource[], head: LabPipelineStep, where: 
 function checkTransforms(source: LabSource, steps: readonly LabPipelineStep[], where: string): void {
   for (const transform of steps) {
     insist(source.modality === 'spectroscopy' || !OPERATOR.get(transform.methodId)?.tags?.includes('spectra'),
-      `${where}: ${OPERATOR.get(transform.methodId)!.name} applies to spectra; ${source.label} is ${source.modality === 'image' ? 'an image' : 'a marker table'}.`)
+      `${where}: ${OPERATOR.get(transform.methodId)!.name} applies to spectra; ${source.label} is ${source.modality === 'image' ? 'an image' : source.modality === 'timeseries' ? 'a time series' : 'a marker table'}.`)
   }
 }
 

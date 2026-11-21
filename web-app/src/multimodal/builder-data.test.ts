@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import type { MultimodalBuilderDraft, MultimodalBuilderSource } from 'nirs4all-ui/datasetBuilder'
 import { buildBuilderManifest } from './builder-data'
+import { withSeriesColumns } from './data'
+import type { LabDataset } from './types'
 
 const source: MultimodalBuilderSource = {
   id: 'nir', file: 'measurements.csv', label: 'NIRS', role: 'combined', profile: 'numeric_csv', modality: 'spectroscopy',
@@ -32,6 +34,20 @@ describe('explicit Dataset Builder declaration transport', () => {
     const changed = buildBuilderManifest({ ...draft, sources: [{ ...source, target: 'material', group: '' }] }, 'spectroscopy', {}, declared)
     expect(changed.metadata).not.toHaveProperty('targetKind')
     expect(changed.metadata).not.toHaveProperty('classes')
+  })
+  it('passes a manifest-declared time series to IO unchanged, under the edited label', () => {
+    const series = { id: 'weather', label: 'Weather', modality: 'timeseries' as const, profile: 'timeseries_csv' as const, file: 'weather.csv',
+      sampleId: 'sample_id', time: 'day', features: ['t_max', 'rain'], axis: { values: [-1, 0], unit: 'day', kind: 'time' } }
+    const weather = { ...source, id: 'weather', file: 'weather.csv', label: 'Daily weather', role: 'source' as const, features: ['t_max', 'rain'] }
+    const manifest = buildBuilderManifest({ ...draft, sources: [source, weather] }, 'timeseries', {}, undefined, [series])
+    expect(manifest.sources[1]).toEqual({ ...series, label: 'Daily weather' })
+  })
+  it('names every stored column of a time series, time-major, and keeps its variables', () => {
+    const dataset = { sources: [{ id: 'weather', representation: 'series_mv', shape: [2, 2], featureNames: ['t_max', 'rain'],
+      axis: { values: [-1, 0], unit: 'day', kind: 'time' } }] } as unknown as LabDataset
+    const [series] = withSeriesColumns(dataset).sources
+    expect(series.variables).toEqual(['t_max', 'rain'])
+    expect(series.featureNames).toEqual(['t_max@-1', 'rain@-1', 't_max@0', 'rain@0'])
   })
   it('refuses missing declared coordinates instead of inventing an index axis', () => {
     expect(() => buildBuilderManifest({ ...draft, sources: [{ ...source, features: ['new-column'] }] }, 'spectroscopy')).toThrow('finite explicit')

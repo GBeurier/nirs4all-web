@@ -45,7 +45,7 @@ export function DatasetBuilderHost({ disabled, onCreate }: {
     if (!inspected) return
     const token = invalidate(); setValidation({ status: 'checking' }); setBusy(true)
     try {
-      const result = await validateBuilderDraft(draft, inspected.inputs, inspected.provenance, inspected.declaredTarget)
+      const result = await validateBuilderDraft(draft, inspected.inputs, inspected.provenance, inspected.declaredTarget, inspected.declaredSeries)
       if (token !== revision.current) return
       accepted.current = result.dataset ? { revision: token, dataset: result.dataset } : null
       setValidation(result.validation)

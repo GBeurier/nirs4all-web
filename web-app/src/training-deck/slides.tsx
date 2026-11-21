@@ -76,6 +76,7 @@ const R = {
   spec: (name: string) => preset('spectroscopy', name).oofRmse,
   gen: (name: string) => preset('genetics', name).oofRmse,
   img: (name: string) => preset('images', name).oofRmse,
+  ts: (name: string) => preset('timeseries', name),
 }
 
 export const SLIDES: Slide[] = [
@@ -124,14 +125,14 @@ export const SLIDES: Slide[] = [
         <div className="deck-columns">
           <div><h3>Source = bloc</h3><p>une table par instrument, mêmes échantillons</p></div>
           <div><h3>Multisource</h3><p>même nature de données : NIRS + Raman + MIR</p></div>
-          <div><h3>Multimodal</h3><p>natures différentes : spectres, marqueurs, images</p></div>
+          <div><h3>Multimodal</h3><p>natures différentes : spectres, marqueurs, images, séries temporelles</p></div>
         </div>
       </>
     ),
     notes: [
       'D’abord le vocabulaire, parce qu’il est simple. Un jeu de données, ce sont toujours des échantillons en lignes. La différence, c’est que les colonnes arrivent par blocs : un bloc par source.',
       'Si tous les blocs sont des spectres, on parle de multisource ou de multibloc, un terme que vous connaissez en chimiométrie. Si les blocs sont de nature différente — un spectre, un tableau de dosages de marqueurs, une image — on parle de multimodal.',
-      'nirs4all garde chaque bloc avec son axe et son unité : longueurs d’onde en nm pour le NIRS, déplacement Raman en cm⁻¹, pas d’axe pour les marqueurs, hauteur × largeur pour les images. Rien n’est fusionné en douce au chargement.',
+      'nirs4all garde chaque bloc avec son axe et son unité : longueurs d’onde en nm pour le NIRS, déplacement Raman en cm⁻¹, pas d’axe pour les marqueurs, hauteur × largeur pour les images, temps × variables pour une série temporelle. Rien n’est fusionné en douce au chargement.',
     ],
   },
   {
@@ -146,6 +147,25 @@ export const SLIDES: Slide[] = [
       'Avant toute fusion, les lignes doivent décrire les mêmes échantillons. Deux fichiers exportés par deux instruments ne sont presque jamais dans le même ordre.',
       'nirs4all joint par identifiant, exactement. S’il manque un échantillon dans une source, vous le voyez dans le tableau d’alignement ; il n’est jamais complété par numéro de ligne.',
       'Deuxième règle : les mesures répétées d’une même plante ou d’un même lot forment un groupe. Le groupe doit rester entièrement en entraînement ou entièrement en validation, sinon les scores sont optimistes. L’exemple génétique s’en sert.',
+    ],
+  },
+  {
+    id: 'series', section: 'Concepts', title: 'Séries temporelles : une série, une source', minutes: 1.5,
+    body: () => (
+      <div className="deck-split">
+        <Points items={[
+          <><strong>Une source</strong> = une série multivariée par échantillon : temps × variables (T<sub>max</sub>, T<sub>min</sub>, pluie, rayonnement), pas une source par variable</>,
+          <><strong>Un axe déclaré</strong> : jours avant récolte, même grille pour tous ; rien n’est rééchantillonné ni interpolé en douce</>,
+          <><strong>Souvent un contexte</strong> partagé : même météo pour toute une récolte, fenêtres qui se chevauchent dans une saison → folds <strong>groupés</strong> (ici région × saison)</>,
+        ]} />
+        <Capture src="../captures/timeseries-explore.png" alt="La source météo dans le labo : une série de quatre variables par fruit" />
+      </div>
+    ),
+    notes: [
+      'Les séries temporelles sont une autre nature de données : météo avant récolte, capteurs d’un procédé, suivi de maturation. nirs4all les traite comme une source à part entière.',
+      'Point important : une série, c’est un tableau temps × variables pour chaque échantillon. La météo entière est une seule source avec ses quatre variables, pas quatre sources indépendantes. La série garde son axe de temps déclaré, avec son unité, comme un spectre garde ses longueurs d’onde.',
+      'Souvent, la série est un contexte partagé : tous les fruits d’une même récolte ont la même météo, et deux récoltes à quelques jours d’écart partagent presque toute leur fenêtre de 90 jours. La série ne peut expliquer que les différences entre récoltes. Il faut donc grouper les folds par saison et par région, sinon le modèle reconnaît la saison et les scores sont optimistes. On le verra en démonstration.',
+      'Pour la fusion, les mêmes quatre niveaux s’appliquent : aplatir temps × variables en early, résumer la série (ACP, encodeur) en mid, un modèle par source en late.',
     ],
   },
   {
@@ -567,6 +587,51 @@ export const SLIDES: Slide[] = [
       'Ici la fusion aide clairement : early comme mid fusion battent la meilleure source seule.',
       'Le CNN, avec sa fusion au milieu, bat l’image seule et se rapproche du PLS ; le CNN minuscule est loin derrière. Avec de vraies images et plus d’échantillons, l’avantage de la convolution peut grandir.',
       'Les scores ACP sont aussi intéressants : cinq scores par source font presque aussi bien que les 208 variables. C’est l’idée qu’on reprend avec des encodeurs pré-entraînés d’images ou de spectres sur de plus gros problèmes.',
+    ],
+  },
+  {
+    id: 'demo-timeseries', section: 'Démonstration', title: 'Démo 4 · NIR + météo (mangue)', minutes: 2.5,
+    body: () => (
+      <div className="deck-split deck-split--demo">
+        <div>
+          <p className="deck-case">565 mangues réelles · spectre Vis-SWNIR 245 points · météo 90 jours × 4 variables · saisons 1–3 calibration (430) / saison 4 test (135) · folds groupés région × saison</p>
+          <Steps items={[
+            <><a href={labLink('timeseries')}>Ouvrir le cas</a> : un spectre et une série météo par fruit</>,
+            <>Explorer : la météo est <strong>une</strong> source, 4 courbes</>,
+            <><strong>« Run all presets »</strong> (≈ 1 min 40)</>,
+            <>Comparer <LevelTag level="single">NIR seul</LevelTag> et les fusions</>,
+          ]} />
+        </div>
+        <Capture src="../captures/timeseries-inspector.png" alt="L’Inspector classe les recettes du cas mangue et météo" />
+      </div>
+    ),
+    notes: [
+      'Données réelles et publiques : des mangues australiennes, un spectre Vis-SWNIR par fruit (Anderson et al., CC BY 4.0), et la météo journalière des 90 jours avant la récolte (Open-Meteo, réanalyse ERA5). La cible est la matière sèche.',
+      'Limite à dire tout de suite : la source ne publie que la région et la date de récolte, pas l’emplacement des vergers. La météo vient d’un point représentatif par région, et elle est la même pour tous les fruits d’une récolte.',
+      'Montrer la vue Explore : la météo est une seule source, avec quatre courbes : températures maximale et minimale, pluie, rayonnement. Le fruit sélectionné en rouge, l’enveloppe de tous les fruits derrière.',
+      'La validation suit les auteurs : saisons 1 à 3 en calibration, saison 4 en test. Les folds sont groupés par région et par saison, parce que les récoltes d’une même saison partagent presque toute leur météo. Lancer tous les presets, environ une minute quarante. Les scores ne sont pas comparables à ceux des publications, qui utilisent leurs propres découpages.',
+    ],
+  },
+  {
+    id: 'concl-timeseries', section: 'Démonstration', title: 'Démo 4 · ce qu’on retient', minutes: 1.5,
+    body: () => (
+      <div className="deck-split deck-split--chart">
+        <ResultsChart caseId="timeseries" highlight={['NIR seul', 'Météo seule', 'Early · concaténation', 'Late · stacking']} />
+        <div>
+          <Points items={[
+            <><strong>Le spectre porte le signal</strong> : NIR seul {fmt(R.ts('NIR seul').oofRmse)} % MS (R² {R.ts('NIR seul').oofR2?.toFixed(2)})</>,
+            <><strong>La météo seule ne se transfère pas</strong> d’une saison à l’autre : {fmt(R.ts('Météo seule').oofRmse)}, R² négatif</>,
+            <>Fusion early {fmt(R.ts('Early · concaténation').oofRmse)} : 360 colonnes de contexte <strong>diluent</strong> le spectre ; stacking {fmt(R.ts('Late · stacking').oofRmse)} (sa PLS spectre est fixée à 10 composantes)</>,
+          ]} />
+          <Provenance caseId="timeseries" />
+        </div>
+      </div>
+    ),
+    notes: [
+      'Résultat honnête, et c’est la leçon : ici, la météo n’aide pas. Le spectre seul est le meilleur.',
+      'Pourquoi ? La météo est la même pour tous les fruits d’une récolte, il n’y a que 36 récoltes et six blocs région × saison en calibration. Avec des folds groupés, le modèle doit prédire une saison qu’il n’a jamais vue : la météo seule n’y arrive pas, son R² est négatif.',
+      'En early, on ajoute 360 colonnes météo, constantes au sein d’une récolte, aux 245 longueurs d’onde ; après mise à l’échelle, elles pèsent plus que le spectre et la PLS fait nettement moins bien que le spectre seul. Le stacking fait mieux que l’early mais ne bat pas le spectre seul ; attention, sa PLS sur le spectre est fixée à 10 composantes, la comparaison avec le NIR seul à 15 composantes n’est pas à armes égales.',
+      'Sans folds groupés, un modèle pourrait simplement reconnaître la récolte à sa météo et paraître meilleur qu’il ne l’est : c’est le piège de la slide sur les séries temporelles. Pour qu’une série de contexte aide, il faut beaucoup plus de récoltes, ou des résumés agronomiques (somme de températures, cumul de pluie) plutôt que 90 jours bruts.',
     ],
   },
   {

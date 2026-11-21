@@ -1,16 +1,20 @@
 /** Host transport. IO owns assembly; native DAG and Methods own execution. */
 import type { AomSelection } from '../engine/aomSelection'
-export type LabCase = 'spectroscopy' | 'genetics' | 'images'
+export type LabCase = 'spectroscopy' | 'genetics' | 'images' | 'timeseries'
 export type LabStrategy = 'single' | 'early' | 'mbpls' | 'late' | 'stacking' | 'hybrid' | 'mid' | 'mid-stacking'
 export interface LabSource {
   id: string
   label: string
-  modality: 'spectroscopy' | 'genetics' | 'image'
-  representation: 'signal_1d' | 'tabular_numeric' | 'gray_image' | 'rgb_image'
+  modality: 'spectroscopy' | 'genetics' | 'image' | 'timeseries'
+  /** `series_mv`: one multivariate series per sample, shape `[time, variable]`, time-major. */
+  representation: 'signal_1d' | 'tabular_numeric' | 'gray_image' | 'rgb_image' | 'series_mv'
   sampleIds: string[]
   data: Float64Array
   shape: number[]
+  /** One name per stored column (a time series: `variable@time`, time-major). */
   featureNames: string[]
+  /** Time series only: the variables of the series, in storage order. */
+  variables?: string[]
   axis?: { values: number[]; unit: string; kind: string }
   validity?: Uint8Array
   provenance: Record<string, unknown>

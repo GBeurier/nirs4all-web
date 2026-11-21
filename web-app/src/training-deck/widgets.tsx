@@ -122,7 +122,7 @@ export function Provenance({ caseId }: { caseId: CaseId }) {
   const data = EVIDENCE.cases[caseId]
   return (
     <p className="deck-provenance">
-      Scores natifs enregistrés le {EVIDENCE.capturedAt} dans le labo · DAG-ML {data.ownerVersions.dag} · Methods {data.ownerVersions.methods} · folds {data.foldsFingerprint.slice(0, 10)} · données pédagogiques synthétiques
+      Scores natifs enregistrés le {data.capturedAt ?? EVIDENCE.capturedAt} dans le labo · DAG-ML {data.ownerVersions.dag} · Methods {data.ownerVersions.methods} · folds {data.foldsFingerprint.slice(0, 10)} · {data.data ?? 'données pédagogiques synthétiques'}
     </p>
   )
 }

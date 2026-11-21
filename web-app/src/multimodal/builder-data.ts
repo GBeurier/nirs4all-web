@@ -5,6 +5,7 @@ import type {
 } from 'nirs4all-ui/datasetBuilder'
 import { loadDataIoWasm } from '../engine/nirs4all-core'
 import type { LabCase, LabDataset } from './types'
+import { withSeriesColumns } from './data'
 
 export interface BuilderInput { name: string; bytes: Uint8Array }
 interface TableDescription {
@@ -21,9 +22,11 @@ interface OwnerIo {
 }
 interface OwnerFormats { decodeMultimodalBytes(profile: string, bytes: Uint8Array, budget: number): DecodedGenotype | DecodedImage }
 interface ManifestSource {
-  id: string; label: string; modality: 'spectroscopy' | 'genetics' | 'image'
-  profile: 'numeric_csv' | 'vcf_gt_dosage' | 'png_manifest'; file: string
+  id: string; label: string; modality: 'spectroscopy' | 'genetics' | 'image' | 'timeseries'
+  profile: 'numeric_csv' | 'vcf_gt_dosage' | 'png_manifest' | 'timeseries_csv'; file: string
   sampleId?: string; features?: string[]; axis?: { values: number[]; kind: string; unit: string }; shape?: number[]
+  /** `timeseries_csv` only: the column holding each row's time step. */
+  time?: string
 }
 export interface BuilderManifest {
   schema: 'nirs4all.multimodal-import.v1'; caseId: LabCase; name: string
@@ -36,6 +39,8 @@ export interface DeclaredTarget { file: string; target: string; targetKind: 'cat
 export interface InspectedBuilderFiles {
   inputs: BuilderInput[]; inventory: MultimodalBuilderFile[]; draft: MultimodalBuilderDraft
   provenance: Record<string, unknown>; declaredTarget?: DeclaredTarget
+  /** Long-format time series declared by the manifest (the shared builder has no time-series profile yet). */
+  declaredSeries: ManifestSource[]
 }
 const BUDGET = 64 * 1024 * 1024
 
@@ -49,10 +54,15 @@ function declaredDraft(source: MultimodalBuilderSource, manifest?: BuilderManife
   const metadata = manifest?.metadata.file === source.file ? manifest.metadata : undefined
   if (!declaration && !metadata) return manifest ? { ...source, role: 'ignored' } : source
   const features = declaration?.features ?? source.features
+  // The shared builder shows a declared time series as its declared variables; the
+  // host keeps the declaration (time column and axis) and passes it to IO unchanged.
+  if (declaration?.profile === 'timeseries_csv') return { ...source, id: declaration.id, label: declaration.label,
+    modality: 'timeseries', profile: 'timeseries_csv', sampleId: declaration.sampleId ?? source.sampleId, features,
+    axisMode: 'none', role: 'source' } as unknown as MultimodalBuilderSource
   return {
     ...source,
-    ...(declaration ? { id: declaration.id, label: declaration.label, modality: declaration.modality,
-      profile: declaration.profile, sampleId: declaration.sampleId ?? source.sampleId,
+    ...(declaration ? { id: declaration.id, label: declaration.label, modality: declaration.modality as MultimodalBuilderSource['modality'],
+      profile: declaration.profile as MultimodalBuilderSource['profile'], sampleId: declaration.sampleId ?? source.sampleId,
       features, shape: declaration.shape ?? source.shape,
       axisMode: declaration.axis ? 'declared' : 'none', axisUnit: declaration.axis?.unit ?? '',
       axisKind: declaration.axis?.kind ?? 'wavelength',
@@ -150,13 +160,14 @@ export async function inspectBuilderFiles(files: readonly File[], previous?: Mul
   }
   return { inputs, inventory: files.map(file => ({ name: file.name, size: file.size, kind: inputKind(file.name) })),
     draft: { name: previous?.name ?? manifest?.name ?? 'my-dataset', sources }, provenance: manifest?.provenance ?? {},
+    declaredSeries: manifest?.sources.filter(source => source.profile === 'timeseries_csv') ?? [],
     ...(manifest?.metadata.targetKind ? { declaredTarget: { file: manifest.metadata.file, target: manifest.metadata.target,
       targetKind: manifest.metadata.targetKind, classes: manifest.metadata.classes ?? [] } } : {}) }
 }
 
 /** Serialize explicit user choices into the owner's existing import contract. */
 export function buildBuilderManifest(draft: MultimodalBuilderDraft, caseId: LabCase, provenance: Record<string, unknown> = {},
-  declaredTarget?: DeclaredTarget): BuilderManifest {
+  declaredTarget?: DeclaredTarget, declaredSeries: readonly ManifestSource[] = []): BuilderManifest {
   const metadata = draft.sources.filter(source => source.role === 'metadata' || source.role === 'combined')
   if (metadata.length !== 1) throw new Error('Choose exactly one table for the target and sample metadata')
   const meta = metadata[0]
@@ -166,6 +177,9 @@ export function buildBuilderManifest(draft: MultimodalBuilderDraft, caseId: LabC
   const categorical = declaredTarget && declaredTarget.file === meta.file && declaredTarget.target === meta.target ? declaredTarget : undefined
   const sources = draft.sources.filter(source => source.role === 'source' || source.role === 'combined').map(source => {
     if (source.refusal) throw new Error(`${source.file}: ${source.refusal}`)
+    // A declared time series keeps its declaration (sample, time and variable columns, time axis); IO validates it.
+    const series = declaredSeries.find(item => item.file === source.file)
+    if (series) return { ...series, id: source.id, label: source.label }
     const declaration: ManifestSource = { id: source.id, label: source.label, modality: source.modality, profile: source.profile, file: source.file }
     if (source.profile === 'numeric_csv') {
       if (!source.sampleId || source.features.length === 0) throw new Error(`${source.label}: choose a sample ID and at least one feature`)
@@ -198,17 +212,17 @@ export function buildBuilderManifest(draft: MultimodalBuilderDraft, caseId: LabC
  * a spectra-and-images dataset, any marker table a spectra-and-markers one.
  */
 export function inferBuilderCase(draft: MultimodalBuilderDraft): LabCase {
-  const modalities = new Set(draft.sources.filter(source => source.role === 'source' || source.role === 'combined').map(source => source.modality))
-  return modalities.has('image') ? 'images' : modalities.has('genetics') ? 'genetics' : 'spectroscopy'
+  const modalities = new Set<string>(draft.sources.filter(source => source.role === 'source' || source.role === 'combined').map(source => source.modality))
+  return modalities.has('image') ? 'images' : modalities.has('timeseries') ? 'timeseries' : modalities.has('genetics') ? 'genetics' : 'spectroscopy'
 }
 
 export async function validateBuilderDraft(draft: MultimodalBuilderDraft, inputs: readonly BuilderInput[], provenance: Record<string, unknown>,
-  declaredTarget?: DeclaredTarget) {
-  const manifest = buildBuilderManifest(draft, inferBuilderCase(draft), provenance, declaredTarget)
+  declaredTarget?: DeclaredTarget, declaredSeries: readonly ManifestSource[] = []) {
+  const manifest = buildBuilderManifest(draft, inferBuilderCase(draft), provenance, declaredTarget, declaredSeries)
   const { io, formats } = await loadDataIoWasm()
   const ownerIo = io as unknown as OwnerIo, ownerFormats = formats as unknown as OwnerFormats
-  const dataset = ownerIo.assembleMultimodalFiles(JSON.stringify(manifest), inputs,
-    (profile, bytes, budget) => ownerFormats.decodeMultimodalBytes(profile, bytes, budget), BUDGET)
+  const dataset = withSeriesColumns(ownerIo.assembleMultimodalFiles(JSON.stringify(manifest), inputs,
+    (profile, bytes, budget) => ownerFormats.decodeMultimodalBytes(profile, bytes, budget), BUDGET))
   const missingCells = (source: LabDataset['sources'][number]) => source.validity ? Array.from(source.validity).filter(value => value === 0).length : 0
   const sources = dataset.sources.map(source => ({ id: source.id, label: source.label,
     ...(dataset.alignment.find(entry => entry.sourceId === source.id) ?? { matched: 0, missing: 0, refused: 0 }), missingCells: missingCells(source) }))

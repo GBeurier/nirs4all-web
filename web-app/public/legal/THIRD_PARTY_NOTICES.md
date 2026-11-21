@@ -58,7 +58,24 @@ https://doi.org/10.5281/zenodo.3241923 (paper https://doi.org/10.1109/ACCESS.202
 licensed CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), under
 `web-app/public/multimodal-data/rice-varieties/`. Changes: 10 varieties × 24 kernels, RGB kernel
 crops resized to 32 × 32, three calibrated pixel spectra per kernel, a stratified train/test
-partition. The synthetic teaching collections beside it are original to nirs4all-web.
+partition.
+It also bundles a derived subset of the mango dataset of Anderson, Walsh, Subedi and Walsh,
+*Mango DMC and NIR spectra* (Mendeley Data v6), https://doi.org/10.17632/46htwnp833.6
+(paper https://doi.org/10.1016/j.postharvbio.2020.111202), licensed CC BY 4.0, joined with
+daily weather from the Open-Meteo Historical Weather API (ERA5 reanalysis, Copernicus Climate
+Change Service; https://open-meteo.com/, CC BY 4.0), under
+`web-app/public/multimodal-data/mango-dry-matter-weather/`. Changes: one spectrum per fruit
+(replicate scans averaged), 405–1137 nm, seasons 1–3 train / season 4 test, up to 12/15 fruits
+per harvest event; 90 days of daily maximum/minimum temperature, precipitation and shortwave
+radiation up to each harvest date at one representative location per region.
+And a derived subset of the wheat phenomic-selection data of Rincent et al. (2018), *Phenomic
+selection is a low-cost and high-throughput method based on indirect predictions: proof of concept
+on wheat and poplar*, G3 8:3961–3972 (https://doi.org/10.1534/g3.118.200760), data
+https://doi.org/10.15454/MB4G3T (Recherche Data Gouv), Licence Ouverte / Etalab 2.0, under
+`web-app/public/multimodal-data/wheat-phenomic-rincent2018/`. Changes: 223 varieties, grain yield
+of the irrigated trial, grain and leaf NIRS of that trial every 4 nm, 2000 unimputed SNPs as 0/1/2
+dosages, a declared 20 % test partition.
+The synthetic teaching collections beside them are original to nirs4all-web.
 
 The optional server workspace transport is also distributed with this application.
 Its source archive identity and original license texts are available in

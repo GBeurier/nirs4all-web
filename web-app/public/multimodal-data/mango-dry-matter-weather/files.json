@@ -1,0 +1,10 @@
+{
+  "schema": "nirs4all.teaching-files.v1",
+  "files": [
+    "README.txt",
+    "manifest.json",
+    "metadata.csv",
+    "nir.csv",
+    "weather.csv"
+  ]
+}

@@ -7,9 +7,16 @@ Formats, IO, DAG-ML and Methods WebAssembly owners. There is no training server.
 
 ## Teaching experiments
 
-All bundled data are deterministic CC0 simulations generated offline. Each
-collection has 120 observations, with 96 calibration observations and 24 declared
+The three teaching collections below are deterministic CC0 simulations generated
+offline. Each has 120 observations, with 96 calibration observations and 24 declared
 test observations. They illustrate mechanisms, not expected rankings on real data.
+Three real public datasets are also bundled: rice varieties (classification, see
+below), mango dry matter with pre-harvest weather (time series, see below) and
+wheat phenomic prediction (case *Spectra and genetic markers*): grain and leaf NIRS
+of an irrigated trial and 2000 SNP markers of 223 varieties, grain yield as the
+target (Rincent et al. 2018, Licence Ouverte / Etalab 2.0; spectra published as
+normalized first derivatives; declared 178/45 split). Its Run all takes about
+8 min 30 s, of which the NICON preset alone about 4 min 40 s.
 
 | Case | Sources | Main teaching question |
 | --- | --- | --- |
@@ -20,6 +27,32 @@ test observations. They illustrate mechanisms, not expected rankings on real dat
 Each source retains its own axis, unit and representation. Selecting a sample
 links its spectrum, marker values, image and target by identity. Source files in
 the teaching collections intentionally use different row orders.
+
+## Time series
+
+A time series is one source holding one multivariate series per sample: time ×
+variables (for example the daily maximum and minimum temperature, rain and
+radiation of the 90 days before harvest), never one source per variable. The IO
+multimodal import declares it with modality `timeseries` and the long-format
+`timeseries_csv` profile (one row per sample and declared time step, one column per
+variable, a required time axis with its unit); IO assembles it as `series_mv`, shape
+`[time, variable]`. Every declared step must be present exactly once; nothing is
+resampled or interpolated. The laboratory names each flattened column
+`variable@time` for execution and shows one plot per variable in the Explore step.
+
+The bundled example (case *Spectra and time series*) is the public mango dataset of
+Anderson et al. (Mendeley Data v6, 2026, CC BY 4.0): 565 fruits, one Vis-SWNIR spectrum per
+fruit (405–1137 nm), dry matter as the target, seasons 1–3 for calibration and
+season 4 as the declared test set, as the authors define. Each fruit carries the
+Open-Meteo (ERA5, CC BY 4.0) daily weather of the 90 days up to its harvest date at
+one representative location per region, because orchard locations are not
+published. The weather is therefore shared by every fruit of a harvest event, and
+folds are grouped by region × season (harvests of one region and season share most of their weather window). Run all presets takes about 1 min 40 s; the
+spectrum alone (PLS) is the best model, the weather alone does not transfer to new
+harvests (negative cross-validated R²) and early fusion degrades the spectrum: an
+honest example of a context source that does not help with 36 calibration harvests.
+Time series need their manifest in the Dataset Builder (the shared builder maps
+spectra, markers and images by hand, not time series yet).
 
 ## Fusion pipelines
 
