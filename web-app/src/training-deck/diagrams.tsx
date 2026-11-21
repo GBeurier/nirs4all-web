@@ -192,23 +192,24 @@ export function SampleViewsDiagram() {
     { kind: 'raman', label: 'Raman', motif: 'spectrum', sub: 'intensité × déplacement Raman' },
     { kind: 'markers', label: 'Marqueurs génétiques', motif: 'table', sub: 'dosages 0 / 1 / 2' },
     { kind: 'image', label: 'Image', motif: 'image', sub: 'pixels (hauteur × largeur)' },
+    { kind: 'series', label: 'Série temporelle', motif: 'series', sub: 'météo, capteurs : temps × variables' },
   ]
   return (
-    <svg viewBox="0 0 1000 430" role="img" aria-label="Un échantillon mesuré par quatre instruments pour prédire une propriété">
+    <svg viewBox="0 0 1000 430" role="img" aria-label="Un échantillon mesuré par cinq sources pour prédire une propriété">
       <g>
         <GrainMotif x={52} y={150} w={136} h={130} seed={2} />
         <rect x={52} y={150} width={136} height={130} rx={8} fill="none" stroke="var(--border-warm)" strokeWidth={2} />
         <Caption x={120} y={308} weight={800} color="var(--text)" size={16}>Un échantillon</Caption>
       </g>
       {rows.map((row, index) => {
-        const y = 22 + index * 102
+        const y = 10 + index * 84
         return (
           <g key={row.label}>
-            <Arrow x1={196} y1={215} x2={360} y2={y + 38} color={SOURCE_COLORS[row.kind]} />
-            <Block x={370} y={y + 6} w={190} h={64} kind={row.kind} motif={row.motif} seed={index + 1} />
-            <Caption x={580} y={y + 34} anchor="start" weight={700} color={SOURCE_COLORS[row.kind]} size={17}>{row.label}</Caption>
-            <Caption x={580} y={y + 56} anchor="start" size={13} color="var(--text-3)">{row.sub}</Caption>
-            <Arrow x1={790} y1={y + 38} x2={850} y2={215} color="var(--border)" dashed />
+            <Arrow x1={196} y1={215} x2={360} y2={y + 34} color={SOURCE_COLORS[row.kind]} />
+            <Block x={370} y={y + 6} w={190} h={56} kind={row.kind} motif={row.motif} seed={index + 1} />
+            <Caption x={580} y={y + 30} anchor="start" weight={700} color={SOURCE_COLORS[row.kind]} size={17}>{row.label}</Caption>
+            <Caption x={580} y={y + 51} anchor="start" size={13} color="var(--text-3)">{row.sub}</Caption>
+            <Arrow x1={800} y1={y + 34} x2={850} y2={215} color="var(--border)" dashed />
           </g>
         )
       })}

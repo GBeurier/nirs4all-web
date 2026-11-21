@@ -119,7 +119,7 @@ export const SLIDES: Slide[] = [
       </div>
     ),
     notes: [
-      'Prenons un échantillon de grain. Le NIRS voit les harmoniques des liaisons C–H, O–H et N–H ; le Raman voit d’autres vibrations ; le génotype dit quelque chose que le spectre ne voit pas ; l’image voit la forme et la couleur.',
+      'Prenons un échantillon de grain. Le NIRS voit les harmoniques des liaisons C–H, O–H et N–H ; le Raman voit d’autres vibrations ; le génotype dit quelque chose que le spectre ne voit pas ; l’image voit la forme et la couleur ; une série temporelle, comme la météo avant récolte ou les capteurs d’un procédé, dit ce que l’échantillon a vécu.',
       'Chaque instrument donne une vue partielle. Quand les vues sont complémentaires, les combiner peut prédire mieux que n’importe laquelle seule.',
       'Mais une deuxième source apporte aussi son bruit, ses problèmes de prétraitement et un coût de mesure. La vraie question est donc : améliore-t-elle une prédiction que je peux défendre ?',
       'C’est exactement ce qu’on va tester en démonstration : chaque fusion est comparée à la meilleure source seule.',
