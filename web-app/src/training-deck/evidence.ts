@@ -53,16 +53,12 @@ const EDITS: Record<string, [string, LevelKind]> = {
 }
 function relabel(run: EvidenceRun, table: Record<string, [string, LevelKind]>, key: string): EvidenceRun {
   const entry = table[key]
-  // Runs recorded from the demo kit already carry their French display name and level.
+  // Runs recorded with their French display name and level pass through.
   if (!entry) return run
   return run.edit === undefined ? { ...run, name: entry[0], level: entry[1] } : { ...run, edit: entry[0], level: entry[1] }
 }
 const recorded = raw as unknown as Recorded
-// Optional local overlay, never committed (src/training-deck/private/ is gitignored): private
-// demonstration cases replace the public ones on the presenter's machine only.
-const overlay = Object.values(import.meta.glob<{ cases: Partial<Record<CaseId, EvidenceCase>> }>('./private/evidence.json', { eager: true, import: 'default' }))[0]
-const cases = { ...recorded.cases, ...(overlay?.cases ?? {}) }
-export const EVIDENCE: Recorded = { ...recorded, cases: Object.fromEntries(Object.entries(cases).map(([id, data]) => [id, {
+export const EVIDENCE: Recorded = { ...recorded, cases: Object.fromEntries(Object.entries(recorded.cases).map(([id, data]) => [id, {
   ...data,
   presets: data.presets.map(run => relabel(run, DISPLAY, run.name)),
   edits: data.edits.map(run => relabel(run, EDITS, run.edit!)),
