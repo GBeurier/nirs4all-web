@@ -1,6 +1,7 @@
 node_modules
 /dist
 /dist-single
+/dist-single-slides
 *.log
 .DS_Store
 /dist-strict

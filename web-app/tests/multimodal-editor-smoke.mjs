@@ -45,6 +45,13 @@ async function setParam(cell, label, value) {
   await field.press('Enter')
 }
 
+const EXAMPLES = { spectroscopy: 'Complementary spectral windows', genetics: 'Spectra and replicated genetic material', images: 'Spectra and spatial patterns' }
+// The laboratory opens empty: an example is loaded explicitly (or through a ?case= link).
+async function loadExample(caseId) {
+  await page.getByRole('button', { name: 'Example datasets', exact: true }).click()
+  await page.locator('.n4mm-list__item', { hasText: EXAMPLES[caseId] }).getByRole('button').click()
+}
+
 try {
   await page.goto(new URL('nirs4all_multimodale/?case=spectroscopy&preset=early', root).href, { waitUntil: 'load' })
   await lab.waitFor({ timeout: 60000 })
@@ -97,7 +104,7 @@ try {
   assert.ok(await page.getByRole('button', { name: 'Run this pipeline', exact: true }).isEnabled())
 
   // Spectral preprocessing is refused on marker tables.
-  await page.locator('input[name="n4mm-case"][value="genetics"]').check()
+  await loadExample('genetics')
   await lab.waitFor()
   await lab.getByRole('button', { name: /^Preprocessing: Standard scaling\./ }).nth(1).click()
   await page.keyboard.press('a')

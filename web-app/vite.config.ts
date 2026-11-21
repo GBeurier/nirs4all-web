@@ -13,6 +13,8 @@ import { runtimeProfileForBuildMode, type WebRuntimeProfile, webRuntimePolicy } 
 //                   `base: './'` keeps asset URLs relative so the file opens under file://
 export default defineConfig(({ mode }) => {
   const singlefile = mode === 'singlefile'
+  // `N4A_SINGLE_ENTRY=slides` builds the training slides as one offline HTML file (double-click, file://).
+  const singleEntry = process.env.N4A_SINGLE_ENTRY === 'slides' ? 'slides' : null
   // Standard production and the offline single-file builds are the strict browser product
   // (owner DAG-ML route, no compatibility fallback). Development and test stay transitional.
   const runtimeProfile: WebRuntimeProfile = runtimeProfileForBuildMode(mode)
@@ -21,6 +23,8 @@ export default defineConfig(({ mode }) => {
     base: './',
     define: {
       __N4A_WEB_RUNTIME_PROFILE__: JSON.stringify(runtimeProfile),
+      // Where the slides link the laboratory: the served page, or the online site from an offline file.
+      __N4A_DECK_LAB_URL__: JSON.stringify(singleEntry === 'slides' ? 'https://web.nirs4all.org/nirs4all_multimodale/' : '../../nirs4all_multimodale/'),
     },
     plugins: [
       react(),
@@ -92,7 +96,10 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       target: 'es2022',
-      outDir: singlefile ? 'dist-single' : mode === 'strict' ? 'dist-strict' : mode === 'transitional' ? 'dist-transitional' : 'dist',
+      outDir: singlefile ? (singleEntry ? `dist-single-${singleEntry}` : 'dist-single') : mode === 'strict' ? 'dist-strict' : mode === 'transitional' ? 'dist-transitional' : 'dist',
+      ...(singleEntry === 'slides' ? {
+        rollupOptions: { input: { trainingSlides: path.resolve(__dirname, 'multimodal-training/slides/index.html') } },
+      } : {}),
       ...(!singlefile ? {
         rollupOptions: {
           input: {

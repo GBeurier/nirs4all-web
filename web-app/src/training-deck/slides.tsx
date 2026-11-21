@@ -17,7 +17,7 @@ export interface Slide {
   notes: string[]
 }
 
-const LAB = '../../nirs4all_multimodale/'
+const LAB = typeof __N4A_DECK_LAB_URL__ === 'string' ? __N4A_DECK_LAB_URL__ : '../../nirs4all_multimodale/'
 const labLink = (caseId: CaseId, presetId = 'early') => `${LAB}?case=${caseId}&preset=${presetId}`
 
 function Points({ items }: { items: ReactNode[] }) {

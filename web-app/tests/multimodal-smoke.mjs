@@ -108,11 +108,18 @@ function verifyRuns(document, count) {
     rmse: document.runs.map(run => [run.name, run.candidate.oof.rmse, run.candidate.holdout.rmse]) }))
 }
 
+const EXAMPLES = { spectroscopy: 'Complementary spectral windows', genetics: 'Spectra and replicated genetic material', images: 'Spectra and spatial patterns' }
+// The laboratory opens empty: an example is loaded explicitly (or through a ?case= link).
+async function loadExample(caseId) {
+  await page.getByRole('button', { name: 'Example datasets', exact: true }).click()
+  await page.locator('.n4mm-list__item', { hasText: EXAMPLES[caseId] }).getByRole('button').click()
+}
+
 try {
   await page.goto(new URL('nirs4all_multimodale/', root).href, { waitUntil: 'load' })
   await page.getByRole('heading', { name: 'Multisource and multimodal fusion', exact: true }).waitFor()
   for (const caseId of Object.keys(LEVELS)) {
-    await page.locator(`input[name="n4mm-case"][value="${caseId}"]`).check()
+    await loadExample(caseId)
     await page.locator('[data-fusion-lab]').waitFor({ timeout: 60000 })
     assert.ok(await page.getByRole('button', { name: 'Download results (JSON)', exact: true }).isDisabled())
     await runAll()

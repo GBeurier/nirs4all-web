@@ -250,12 +250,15 @@ export default function MultimodalApp() {
   }, [acceptDataset, failLoad, patch])
 
 
-  // Open each case once with its first bundled preset; never replaces loaded or imported data.
+  // No dataset is loaded by default: the user picks an example or imports files. Only a
+  // `?case=` link (from the training slides) opens that case on its first bundled example.
+  const linkOpened = useRef(false)
   useEffect(() => {
-    if (workspace.dataset || workspace.status.kind !== 'empty') return
-    const preset = dataHost.presets.find(candidate => candidate.caseId === caseId)
-    if (preset) loadPreset(caseId, preset.id)
-  }, [caseId, workspace.dataset, workspace.status.kind, loadPreset])
+    if (linkOpened.current || !LINK.caseId) return
+    linkOpened.current = true
+    const preset = dataHost.presets.find(candidate => candidate.caseId === LINK.caseId)
+    if (preset) loadPreset(LINK.caseId, preset.id)
+  }, [loadPreset])
 
   // ---- configuration (every edit invalidates the current result) -----------
 
@@ -448,6 +451,8 @@ export default function MultimodalApp() {
               caseTitles={Object.fromEntries(LAB_CASES.map(info => [info.id, info.title]))}
               origin={workspace.origin}
               status={workspace.status}
+              summary={dataset ? { name: dataset.name, samples: dataset.sampleIds.length, target: dataset.target.name,
+                sources: dataset.sources.map(source => source.label) } : null}
               disabled={running}
               onLoadExample={preset => { setCaseId(preset.caseId); loadPreset(preset.caseId, preset.id) }}
             />
@@ -469,7 +474,7 @@ export default function MultimodalApp() {
             <p className="n4mm-note" role="status">
               {dataset && dataset.caseId === caseId
                 ? <>Dataset of this analysis: <strong>{dataset.name}</strong> ({workspace.origin?.kind === 'import' ? 'your files' : 'example'}, {dataset.sampleIds.length} samples, target {dataset.target.name}).</>
-                : `No ${caseInfo?.title.toLowerCase() ?? ''} dataset yet: its example dataset is being loaded.`}
+                : `No ${caseInfo?.title.toLowerCase() ?? ''} dataset yet: import your files or load an example in the Dataset step.`}
             </p>
           </Section>
           {ready && dataset && workspace.config ? (
