@@ -2,7 +2,7 @@
  "schema": "nirs4all.multimodal-training.evidence.v1",
  "capturedAt": "2026-11-21",
  "source": {
-  "web": "web.nirs4all.org (web 0.6.0, io 0.3.9), Run all presets on the example datasets",
+  "web": "web.nirs4all.org (main after PR #44: AOM on full spectra), Run all presets on the four example datasets",
   "ui": "787699446281d2a4a5a45cf73847b2cc3d90828e",
   "build": "served site, 21 November 2026; sweeps (5, 10, 15 components) keep the best component count by OOF",
   "edits": "Tiny CNN edit (images) recorded on 18 November on the same folds; the unedited CNN preset reproduces exactly (0.123) on the current build"
@@ -2642,7 +2642,24 @@
        ]
       }
      ],
-     "components": 15
+     "components": 15,
+     "sweep": [
+      {
+       "components": 5,
+       "oofRmse": 1.9424735263709996,
+       "testRmse": 2.9965481320333818
+      },
+      {
+       "components": 10,
+       "oofRmse": 2.028345147394306,
+       "testRmse": 2.6005869425572983
+      },
+      {
+       "components": 15,
+       "oofRmse": 1.4094032138621695,
+       "testRmse": 1.64694187093794
+      }
+     ]
     },
     {
      "name": "Daily weather, 90 days before harvest alone",
@@ -2686,11 +2703,28 @@
        ]
       }
      ],
-     "components": 15
+     "components": 15,
+     "sweep": [
+      {
+       "components": 5,
+       "oofRmse": 3.608935651071828,
+       "testRmse": 2.5537594401703534
+      },
+      {
+       "components": 10,
+       "oofRmse": 3.5806528529524013,
+       "testRmse": 2.6660933842628722
+      },
+      {
+       "components": 15,
+       "oofRmse": 3.574139252991743,
+       "testRmse": 2.6525867448743043
+      }
+     ]
     },
     {
      "name": "Early · concatenate",
-     "level": "early",
+     "level": "single",
      "oofRmse": 2.932557357884885,
      "oofR2": -0.5411855791392439,
      "testRmse": 2.4600311235623624,
@@ -2743,11 +2777,28 @@
        ]
       }
      ],
-     "components": 10
+     "components": 10,
+     "sweep": [
+      {
+       "components": 5,
+       "oofRmse": 3.157424319677804,
+       "testRmse": 2.716545021540406
+      },
+      {
+       "components": 10,
+       "oofRmse": 2.932557357884885,
+       "testRmse": 2.4600311235623624
+      },
+      {
+       "components": 15,
+       "oofRmse": 3.1396320002537457,
+       "testRmse": 2.3820846094162165
+      }
+     ]
     },
     {
      "name": "Mid · PCA scores",
-     "level": "mid",
+     "level": "single",
      "oofRmse": 2.609411784594638,
      "oofR2": -0.22024530407463594,
      "testRmse": 2.856006944532179,
@@ -2815,7 +2866,7 @@
     },
     {
      "name": "Early · MB-PLS",
-     "level": "early",
+     "level": "single",
      "oofRmse": 2.838429392353067,
      "oofR2": -0.4438367672618828,
      "testRmse": 2.456531830889054,
@@ -2861,11 +2912,28 @@
        ]
       }
      ],
-     "components": 10
+     "components": 10,
+     "sweep": [
+      {
+       "components": 5,
+       "oofRmse": 3.261500200483663,
+       "testRmse": 2.7260649825113763
+      },
+      {
+       "components": 10,
+       "oofRmse": 2.838429392353067,
+       "testRmse": 2.456531830889054
+      },
+      {
+       "components": 15,
+       "oofRmse": 3.2611281895990345,
+       "testRmse": 2.3267079909962938
+      }
+     ]
     },
     {
      "name": "Mid · CNN",
-     "level": "mid",
+     "level": "single",
      "oofRmse": 5.238245483355053,
      "oofR2": -3.91737807582414,
      "testRmse": 1.8198215396838517,
@@ -2928,7 +2996,7 @@
     },
     {
      "name": "Early · random forest",
-     "level": "early",
+     "level": "single",
      "oofRmse": 2.14494155743305,
      "oofR2": 0.17549587382265586,
      "testRmse": 2.3313773358551972,
@@ -2989,7 +3057,7 @@
     },
     {
      "name": "Late · AOM stacking",
-     "level": "late",
+     "level": "single",
      "oofRmse": 1.9933257434851528,
      "oofR2": 0.287936938027754,
      "testRmse": 2.4762019868157323,
@@ -3064,7 +3132,7 @@
     },
     {
      "name": "Late · average",
-     "level": "late",
+     "level": "single",
      "oofRmse": 2.1673994338020184,
      "oofR2": 0.15814011176064202,
      "testRmse": 2.2228475000666674,
@@ -3139,7 +3207,7 @@
     },
     {
      "name": "Late · stacking",
-     "level": "late",
+     "level": "single",
      "oofRmse": 2.0794491707751273,
      "oofR2": 0.225077047616713,
      "testRmse": 2.4486707654717845,
