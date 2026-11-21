@@ -185,14 +185,37 @@ export const SLIDES: Slide[] = [
         <div className="deck-heading-tag"><LevelTag level="early" /></div>
         <EarlyDiagram />
         <PipelineView preset="early" />
-        <ProsCons pro="simple · un seul modèle · outils PLS habituels" con="pondérer les blocs · plus de variables → plus de VL" />
+        <ProsCons pro="Simple : un seul modèle, avec les outils PLS que vous connaissez déjà." con="Il faut pondérer les blocs, et prévoir plus de variables latentes qu’avec une source seule." />
       </>
     ),
     notes: [
       'La fusion de bas niveau, c’est ce que la plupart d’entre vous ont déjà fait à la main : on concatène les colonnes des différents instruments et on ajuste un seul PLS.',
       'Chaque source garde son propre prétraitement, dans sa propre voie. Dans nirs4all, c’est une « source branch » suivie de « merge sources : concat », puis le modèle. Ce que vous voyez sous le dessin est le vrai éditeur de pipeline du labo, avec une voie par source.',
       'Deux précautions. Un bloc avec beaucoup de variables, ou une grande variance, peut dominer le PLS : c’est pour ça qu’on pondère chaque bloc. Et la matrice combinée a plus de variables : le modèle a généralement besoin de plus de variables latentes qu’une source seule. Retenez-le, c’est le point clé de la première démonstration.',
-      'Le MB-PLS est une variante multibloc de ce niveau. Chaque bloc donne un score, les scores de blocs sont combinés en un super-score commun, et on retire de toutes les variables la part qu’il explique. Westerhuis a montré en 1998 que ce MB-PLS équivaut à un PLS sur la concaténation des blocs pondérés. On travaille donc bien sur les variables : c’est du bas niveau, avec la structure en blocs en plus, notamment des poids par bloc à interpréter.',
+      'Le MB-PLS et les autres méthodes multiblocs travaillent aussi sur les variables : c’est de l’early fusion avec une structure en blocs. La slide suivante les situe.',
+    ],
+  },
+  {
+    id: 'multiblock', section: 'Concepts', title: 'Early fusion : et le multibloc ?', minutes: 1,
+    body: () => (
+      <>
+        <div className="deck-heading-tag"><LevelTag level="early" /></div>
+        <table className="deck-table deck-table--terms">
+          <thead><tr><th>Méthode</th><th>Par rapport à une PLS sur la concaténation</th><th>Dans nirs4all</th></tr></thead>
+          <tbody>
+            <tr><td><strong>MB-PLS</strong></td><td>Le même modèle sur des blocs pondérés, avec en plus des poids et des scores par bloc.</td><td>Methods · <strong>dans la démo</strong></td></tr>
+            <tr><td><strong>SO-PLS</strong></td><td>Les blocs entrent l’un après l’autre : on lit ce que chacun ajoute aux précédents.</td><td>Methods</td></tr>
+            <tr><td><strong>ROSA</strong></td><td>Chaque composante est prise dans le bloc le plus utile : une sélection de blocs.</td><td>Methods</td></tr>
+            <tr><td><strong>O2PLS · ON-PLS</strong></td><td>Séparent ce que les blocs ont en commun de ce qui est propre à chacun.</td><td>Methods</td></tr>
+          </tbody>
+        </table>
+        <Callout>Tous restent des modèles <strong>linéaires de niveau early</strong> : ils prédisent dans le même ordre que la concaténation bien réglée. Leur intérêt est la <strong>lecture par bloc</strong>. Démo 1 : MB-PLS {fmt(R.spec('Early · MB-PLS'))}, concaténation {fmt(R.spec('Early · concaténation'))}.</Callout>
+      </>
+    ),
+    notes: [
+      'Vous connaissez le multibloc ; je le situe simplement sur la carte. Ces méthodes travaillent sur les variables de tous les blocs à la fois : c’est de l’early fusion, avec une structure en blocs.',
+      'MB-PLS : Westerhuis a montré en 1998 qu’il équivaut à une PLS sur la concaténation des blocs pondérés ; ce qu’il ajoute, ce sont les poids et les scores par bloc. SO-PLS (Næs) ajoute les blocs un par un, orthogonalisés, et mesure l’apport de chacun ; l’ordre compte. ROSA (Liland) choisit à chaque composante le bloc qui explique le mieux y. O2PLS et ON-PLS, comme ComDim, séparent les parts communes et spécifiques.',
+      'Tout cela est disponible dans nirs4all-methods ; la démo expose MB-PLS. Dans les démos, MB-PLS et la concaténation donnent des scores très proches : on choisit le multibloc pour l’interprétation par bloc, pas pour gagner en précision.',
     ],
   },
   {
@@ -202,7 +225,7 @@ export const SLIDES: Slide[] = [
         <div className="deck-heading-tag"><LevelTag level="mid" /></div>
         <EmbeddingDiagram />
         <PipelineView preset="mid-pca" />
-        <ProsCons pro="même poids par source · peu de colonnes · moins de bruit" con="l’ACP ignore y : elle peut perdre le signal utile" />
+        <ProsCons pro="Chaque source pèse le même nombre de colonnes, et le résumé filtre une partie du bruit." con="L’ACP est calculée sans regarder y : elle peut laisser de côté l’information utile." />
       </>
     ),
     notes: [
@@ -213,19 +236,19 @@ export const SLIDES: Slide[] = [
     ],
   },
   {
-    id: 'mid-cnn', section: 'Concepts', title: 'Mid fusion ② : concaténer au milieu d’un CNN', minutes: 2,
+    id: 'mid-cnn', section: 'Concepts', title: 'Mid fusion ② : concaténer au milieu d’un réseau', minutes: 2,
     body: () => (
       <>
         <div className="deck-heading-tag"><LevelTag level="mid" /></div>
         <IntermediateDiagram />
         <PipelineView preset="cnn" caseId="images" />
-        <ProsCons pro="chaque source garde sa structure · caractéristiques apprises pour y" con="demande des échantillons et du réglage" />
+        <ProsCons pro="Chaque source garde sa structure, et les branches apprennent ce qui sert à prédire y." con="Beaucoup de paramètres : il faut plus d’échantillons, et l’entraînement demande des réglages." />
       </>
     ),
     notes: [
-      'Deuxième forme de mid fusion, celle du deep learning. Les blocs restent séparés jusque dans le réseau, et la fusion se fait au milieu, par concaténation.',
+      'Deuxième forme de mid fusion, celle du deep learning. Les blocs restent séparés jusque dans le réseau, et la fusion se fait au milieu, par concaténation. N’importe quel réseau de neurones peut le faire : couches denses, convolutions, réseaux récurrents ou transformers pour des séries ; ce qui compte, c’est une branche par source et une tête commune.',
       'Chaque source a une branche adaptée à sa nature : une convolution 1D glisse le long du spectre, une couche dense lit le tableau de marqueurs, une convolution 2D lit l’image. Chaque branche produit un petit vecteur, un embedding ; on concatène ces vecteurs au milieu du réseau et une tête commune prédit y. Tout est entraîné d’un bloc : les branches apprennent ce qui est utile pour y, en tenant compte des autres sources. C’est la différence avec les scores ACP, calculés à part et sans regarder y.',
-      'Le labo entraîne vraiment ce CNN dans le navigateur. Ce n’est ni PyTorch ni TensorFlow : c’est un petit réseau écrit en C++ dans Methods, compilé en WebAssembly avec le reste. Rétropropagation, optimiseur Adam, erreur quadratique, graine fixée : le résultat est reproductible. Il reste petit — 8 filtres par branche, des embeddings de 16, 150 epochs — et tourne sur le processeur, sans GPU, en quelques secondes.',
+      'Le labo du navigateur en entraîne un petit, pour la démonstration : quelques filtres par branche, sur le processeur, en quelques secondes, avec un résultat reproductible. Pour un vrai projet — plus d’échantillons, des réseaux plus gros, un GPU — on passe par nirs4all en Python ou par le Studio.',
       'Le prix : beaucoup plus de paramètres qu’un PLS, donc plus d’échantillons nécessaires, et des choix d’entraînement — taille, nombre d’epochs, taux d’apprentissage — qui comptent.',
     ],
   },
@@ -235,8 +258,8 @@ export const SLIDES: Slide[] = [
       <>
         <div className="deck-heading-tag"><LevelTag level="mid" /></div>
         <MultimodalEmbeddingDiagram />
-        <ProsCons pro="réutilise de gros encodeurs · peu de colonnes · espace commun : comparer les modalités, tolérer une modalité absente"
-          con="encodeur hors domaine (photos ≠ grains) · ajusté sur vos données : dans le fold · toujours battre les sources seules" />
+        <ProsCons pro="Des encodeurs déjà entraînés sur de grands jeux résument chaque source en quelques colonnes ; un espace commun permet même de prédire quand une modalité manque."
+          con="Un encodeur appris sur des photos du quotidien ne connaît pas vos grains : il faut vérifier qu’il aide, et l’ajuster dans le fold s’il apprend sur vos données." />
       </>
     ),
     notes: [
@@ -261,7 +284,7 @@ export const SLIDES: Slide[] = [
             <tr><td><strong>embedding fusion</strong></td><td>modèles de fondation</td><td>fusion des vecteurs d’encodeurs pré-entraînés, souvent gelés</td></tr>
           </tbody>
         </table>
-        <Callout>Même idée : on fusionne des <strong>caractéristiques</strong>. La vraie différence : <strong>extraites à part</strong> (ACP, encodeur gelé) ou <strong>apprises ensemble</strong> pour y (CNN entraîné de bout en bout).</Callout>
+        <Callout>Même idée : on fusionne des <strong>caractéristiques</strong>. La vraie différence : <strong>extraites à part</strong> (ACP, encodeur gelé) ou <strong>apprises ensemble</strong> pour y (réseau entraîné de bout en bout).</Callout>
       </>
     ),
     notes: [
@@ -272,13 +295,41 @@ export const SLIDES: Slide[] = [
     ],
   },
   {
+    id: 'kernels', section: 'Concepts', title: 'Et les approches à noyaux ?', minutes: 1,
+    body: () => (
+      <>
+        <div className="deck-heading-tag"><LevelTag level="mid" /></div>
+        <div className="deck-kernel-line">
+          <span>une similarité n × n par source</span><span className="deck-kernel__arrow">→</span>
+          <span className="deck-kernel-formula">K = w₁K₁ + w₂K₂ + w₃K₃</span><span className="deck-kernel__arrow">→</span>
+          <span>KRR · SVR · kernel PLS · processus gaussien</span>
+        </div>
+        <table className="deck-table deck-table--terms">
+          <thead><tr><th>Comparé à…</th><th>Ce qui change</th></tr></thead>
+          <tbody>
+            <tr><td><LevelTag level="early">early fusion</LevelTag></td><td>Avec des noyaux <strong>linéaires</strong>, c’est le même modèle : additionner les noyaux revient à concaténer des blocs pondérés.</td></tr>
+            <tr><td><LevelTag level="mid">mid · réseau</LevelTag></td><td>Avec des noyaux <strong>non linéaires</strong>, on capte des interactions avec peu de paramètres, là où un réseau demande beaucoup d’échantillons.</td></tr>
+            <tr><td><LevelTag level="late">late fusion</LevelTag></td><td>Les poids appris par source (multiple kernel learning) se lisent comme les poids d’un stacking, mais les sources sont combinées <strong>avant</strong> le modèle.</td></tr>
+          </tbody>
+        </table>
+        <Callout>Dans nirs4all-methods : <strong>kernel PLS</strong> (noyaux gaussien, polynomial, sigmoïde) et <strong>GPR-PLS</strong>. Pas dans le labo du navigateur. Limite : le coût grandit avec le nombre d’échantillons (matrices n × n).</Callout>
+      </>
+    ),
+    notes: [
+      'Ceux qui viennent des noyaux connaissent le principe : chaque source devient une matrice de similarité entre échantillons, on combine les matrices, puis un modèle à noyau apprend. Je situe juste cette famille par rapport aux autres.',
+      'Avec des noyaux linéaires, additionner les noyaux, c’est exactement faire une early fusion avec des blocs pondérés. Le GBLUP de la sélection génomique en est un exemple : un noyau linéaire sur les marqueurs.',
+      'L’intérêt vient des noyaux non linéaires, qui captent des interactions avec peu de paramètres, et des poids appris par source, le multiple kernel learning, qui se lisent un peu comme ceux d’un stacking. On fusionne des similarités : entre l’early et la mid fusion.',
+      'Côté outils : une kernel PLS et une GPR-PLS existent dans nirs4all-methods ; elles ne sont pas dans le labo du navigateur. Limites à garder en tête : coût en n² et n³, largeur du noyau à valider, et le modèle garde les échantillons d’entraînement.',
+    ],
+  },
+  {
     id: 'late', section: 'Concepts', title: 'Late fusion : un modèle par source, puis on combine', minutes: 2,
     body: () => (
       <>
         <div className="deck-heading-tag"><LevelTag level="late" /></div>
         <LateDiagram />
         <PipelineView preset="late-stacking" />
-        <ProsCons pro="modulaire · robuste à un instrument absent" con="aucune interaction entre les sources" />
+        <ProsCons pro="Modulaire : un modèle par source, et on prédit encore si un instrument manque." con="Les sources ne se croisent qu’à la fin : leurs effets conjoints sont perdus." />
       </>
     ),
     notes: [
@@ -331,7 +382,7 @@ export const SLIDES: Slide[] = [
       <table className="deck-table">
         <thead><tr><th>Chimiométrie</th><th>Machine learning</th><th>Ce qui est fusionné</th><th>Modèles du labo</th><th>Attention</th></tr></thead>
         <tbody>
-          <tr><td>bas niveau</td><td><LevelTag level="early">early fusion</LevelTag></td><td>les variables prétraitées</td><td>PLS sur la concaténation · MB-PLS</td><td>pondération des blocs, nombre de VL</td></tr>
+          <tr><td>bas niveau</td><td><LevelTag level="early">early fusion</LevelTag></td><td>les variables prétraitées</td><td>PLS sur la concaténation · MB-PLS</td><td>pondération des blocs, nombre de composantes</td></tr>
           <tr><td>niveau intermédiaire</td><td><LevelTag level="mid">feature-level</LevelTag></td><td>des caractéristiques extraites à part (scores ACP/PLS)</td><td>ACP par source → PLS</td><td>le résumé peut perdre le signal</td></tr>
           <tr><td>—</td><td><LevelTag level="mid">mid · intermediate · joint</LevelTag></td><td>des caractéristiques apprises, concaténées dans le réseau</td><td>CNN multibranche</td><td>données et réglage</td></tr>
           <tr><td>haut niveau</td><td><LevelTag level="late">late fusion</LevelTag></td><td>les prédictions</td><td>moyenne · stacking</td><td>pas d’interaction entre sources</td></tr>
@@ -345,66 +396,6 @@ export const SLIDES: Slide[] = [
     ],
   },
   {
-    id: 'multiblock', section: 'Concepts', title: 'Le multibloc chimiométrique', minutes: 1.5,
-    body: () => (
-      <>
-        <div className="deck-methods">
-          <Method name="MB-PLS" origin="Westerhuis 1998" idea="un super-score commun, un poids par bloc"
-            pros={['lecture par bloc (poids, scores)', 'standard, rapide']} cons={['linéaire', 'sensible à la pondération des blocs']} />
-          <Method name="SO-PLS" origin="Næs 2011" idea="les blocs entrent l’un après l’autre, orthogonalisés"
-            pros={['ce que chaque bloc ajoute', 'invariant à l’échelle des blocs']} cons={['l’ordre des blocs compte', 'composantes par bloc à régler']} />
-          <Method name="ROSA" origin="Liland 2016" idea="à chaque composante, le bloc le plus utile gagne"
-            pros={['sélection de blocs', 'rapide']} cons={['un seul bloc par composante']} />
-          <Method name="ComDim · O2PLS" origin="Qannari · Trygg" idea="parts communes et spécifiques des blocs"
-            pros={['exploration, saliences par bloc']} cons={['souvent non supervisé (ComDim)']} />
-        </div>
-        <Callout>Tous restent du <strong>bas niveau</strong> (ou intermédiaire) <strong>linéaire</strong>. Dans nirs4all-methods : MB-PLS, SO-PLS, ROSA, O2PLS, ON-PLS ; la démo expose MB-PLS.</Callout>
-      </>
-    ),
-    notes: [
-      'Beaucoup d’entre vous connaissent déjà le multibloc : c’est la réponse chimiométrique à la fusion. Je situe les grandes familles.',
-      'MB-PLS : un super-score commun et un poids par bloc. Westerhuis a montré que c’est équivalent à une PLS sur la concaténation pondérée : c’est donc du bas niveau, avec une lecture par bloc. Son point faible : le résultat dépend de la pondération des blocs.',
-      'SO-PLS : les blocs entrent l’un après l’autre, chacun orthogonalisé par rapport aux précédents. On lit directement ce qu’un bloc ajoute aux autres, et c’est invariant à l’échelle relative des blocs. Mais l’ordre compte, et il faut choisir un nombre de composantes par bloc.',
-      'ROSA : à chaque composante, le bloc qui explique le mieux y gagne. C’est rapide et ça fait de la sélection de blocs. ComDim et O2PLS séparent ce qui est commun et ce qui est spécifique à chaque bloc ; ComDim est surtout exploratoire.',
-      'Point commun : ce sont des méthodes linéaires, de bas niveau ou intermédiaire. Plusieurs sont déjà dans nirs4all-methods ; la démo expose MB-PLS.',
-    ],
-  },
-  {
-    id: 'kernels', section: 'Concepts', title: 'Les approches à noyaux', minutes: 2,
-    body: () => (
-      <>
-        <div className="deck-kernel-steps">
-          <div>
-            <h3><span className="deck-num">1</span>Une similarité par source</h3>
-            <p>K[i, j] = ressemblance des échantillons i et j : une matrice <strong>n × n</strong>, quel que soit le nombre de variables</p>
-            <p className="deck-kernel-ex">spectres : linéaire ou gaussien · marqueurs : parenté génomique (GBLUP) · images : sur leurs embeddings</p>
-          </div>
-          <div>
-            <h3><span className="deck-num">2</span>On additionne</h3>
-            <p className="deck-kernel-formula">K = w₁K₁ + w₂K₂ + w₃K₃</p>
-            <p>poids fixés, ou <strong>appris</strong> (multiple kernel learning) : ils disent quelle source compte</p>
-          </div>
-          <div>
-            <h3><span className="deck-num">3</span>On prédit par ressemblance</h3>
-            <p className="deck-kernel-formula">ŷ(x) = Σᵢ αᵢ · K(x, xᵢ)</p>
-            <p>kernel ridge · SVR · kernel PLS · processus gaussien</p>
-          </div>
-        </div>
-        <Callout>Des noyaux <strong>linéaires</strong> additionnés = une early fusion pondérée. Le gain vient des noyaux <strong>non linéaires</strong> et des poids appris par source.</Callout>
-        <ProsCons pro="non linéaire avec peu de paramètres · p ≫ n sans problème · un noyau adapté à chaque nature de source"
-          con="mémoire en n², calcul en n³ · largeur du noyau à valider · le modèle garde les échantillons d’entraînement" />
-      </>
-    ),
-    notes: [
-      'Les méthodes à noyaux changent de point de vue : on ne décrit plus un échantillon par ses variables, mais par sa ressemblance avec les autres échantillons.',
-      'Étape 1 : pour chaque source, une matrice n × n. La case i, j dit à quel point les échantillons i et j se ressemblent selon cette source. Noyau linéaire : le produit scalaire des deux spectres. Noyau gaussien : proche de 1 quand les spectres sont proches, vers 0 quand ils s’éloignent ; sa largeur fixe ce que « proche » veut dire. Pour les marqueurs, la matrice de parenté génomique du GBLUP est exactement un noyau linéaire. La taille ne dépend que du nombre d’échantillons : 200 échantillons donnent 200 × 200, que le spectre ait 100 ou 2 000 longueurs d’onde.',
-      'Étape 2 : on additionne les matrices avec un poids par source. Poids fixés, ou appris : c’est le multiple kernel learning, et les poids appris se lisent comme l’importance de chaque source. Il faut mettre les noyaux à la même échelle avant de les additionner, comme on pondère les blocs en early.',
-      'Étape 3 : un nouvel échantillon est prédit comme une somme pondérée de ses ressemblances aux échantillons d’entraînement. Kernel ridge, SVR, kernel PLS et processus gaussien diffèrent par la façon d’apprendre les coefficients α ; le processus gaussien donne en plus une incertitude.',
-      'À savoir : additionner des noyaux linéaires revient exactement à une early fusion avec des blocs pondérés. Le gain vient des noyaux non linéaires, qui captent des interactions, et des poids appris. On fusionne des similarités : ni les variables brutes, ni les prédictions.',
-      'Limites : mémoire en n² et calcul en n³, donc des approximations au-delà de quelques milliers d’échantillons ; la largeur du noyau est un hyperparamètre à régler en validation croisée ; le modèle garde les échantillons d’entraînement, ce qui compte pour le partage et la confidentialité ; on perd la lecture variable par variable. Dans nirs4all-methods il y a une kernel PLS (noyaux gaussien, polynomial, sigmoïde) et une GPR-PLS ; elles ne sont pas encore dans le labo.',
-    ],
-  },
-  {
     id: 'compare-families', section: 'Concepts', title: 'Quelle famille pour quel besoin ?', minutes: 1,
     body: () => (
       <>
@@ -414,7 +405,7 @@ export const SLIDES: Slide[] = [
             <tr><td>Concaténation + PLS</td><td><LevelTag level="early">bas</LevelTag></td><td>✗</td><td>✓</td><td>✓ variables</td><td>toujours, comme référence</td></tr>
             <tr><td>Multibloc (MB/SO-PLS)</td><td><LevelTag level="early">bas · interm.</LevelTag></td><td>✗</td><td>✓</td><td>✓ blocs</td><td>on veut le rôle de chaque bloc</td></tr>
             <tr><td>Noyaux (MKL)</td><td><LevelTag level="mid">intermédiaire</LevelTag></td><td>✓</td><td>✓</td><td>~ poids des sources</td><td>non-linéarité, n modéré</td></tr>
-            <tr><td>Réseaux (CNN)</td><td><LevelTag level="mid">mid · joint</LevelTag></td><td>✓</td><td>✗</td><td>✗</td><td>beaucoup d’échantillons, images</td></tr>
+            <tr><td>Réseaux de neurones</td><td><LevelTag level="mid">mid · joint</LevelTag></td><td>✓</td><td>✗</td><td>✗</td><td>beaucoup d’échantillons, images</td></tr>
             <tr><td>Moyenne · stacking</td><td><LevelTag level="late">haut</LevelTag></td><td>selon les modèles</td><td>✓</td><td>✓ poids des sources</td><td>sources très différentes, robustesse</td></tr>
           </tbody>
         </table>
@@ -501,7 +492,7 @@ export const SLIDES: Slide[] = [
         <div>
           <Points items={[
             <><strong>La fusion gagne</strong> : early {fmt(R.spec('Early · concaténation'))} contre Raman seul {fmt(R.spec('Raman seul'))}, alors que NIRS ({fmt(R.spec('NIRS seul'))}) et MIR ({fmt(R.spec('MIR seul'))}) sont mauvais seuls</>,
-            <><strong>Avec plus de composantes</strong> : la fusion passe de {fmt(sweep('spectroscopy', 'Early · concaténation', 5).oofRmse)} à {fmt(sweep('spectroscopy', 'Early · concaténation', 10).oofRmse)} entre 5 et 10 VL ; le Raman seul est meilleur à 5</>,
+            <><strong>Avec plus de composantes</strong> : la fusion passe de {fmt(sweep('spectroscopy', 'Early · concaténation', 5).oofRmse)} à {fmt(sweep('spectroscopy', 'Early · concaténation', 10).oofRmse)} entre 5 et 10 composantes ; le Raman seul est meilleur à 5</>,
             <><strong>Combiner les prédictions aide moins</strong> : moyenne {fmt(R.spec('Late · moyenne'))}, stacking {fmt(R.spec('Late · stacking'))}, stacking AOM {fmt(R.spec('Late · stacking AOM'))}, tous derrière la fusion des variables</>,
           ]} />
           <Provenance caseId="spectroscopy" />
@@ -649,15 +640,15 @@ export const SLIDES: Slide[] = [
     body: () => (
       <div className="deck-guide">
         <div><span className="deck-guide-key"><span className="deck-num">1</span>Références</span><p>chaque source seule</p></div>
-        <div><span className="deck-guide-key"><LevelTag level="early" /></span><p>pondérer les blocs, laisser croître les VL · MB-PLS</p></div>
+        <div><span className="deck-guide-key"><LevelTag level="early" /></span><p>pondérer les blocs, prévoir plus de composantes · MB-PLS</p></div>
         <div><span className="deck-guide-key"><LevelTag level="mid">Mid · scores</LevelTag></span><p>blocs très déséquilibrés : scores par source</p></div>
         <div><span className="deck-guide-key"><LevelTag level="late" /></span><p>instruments pas toujours disponibles : stacking</p></div>
-        <div><span className="deck-guide-key"><LevelTag level="mid">Mid · CNN</LevelTag></span><p>beaucoup d’échantillons, vraies images</p></div>
+        <div><span className="deck-guide-key"><LevelTag level="mid">Mid · réseau</LevelTag></span><p>beaucoup d’échantillons, vraies images</p></div>
         <div><span className="deck-guide-key"><span className="deck-num">✓</span>Protocole</span><p>mêmes folds · OOF · test une fois</p></div>
       </div>
     ),
     notes: [
-      'À retenir : commencer par les sources seules, puis une fusion early bien faite. Passer à la mid fusion par scores quand les blocs sont déséquilibrés, à la late fusion quand les instruments ne sont pas toujours là. La mid fusion dans un CNN quand on a beaucoup d’échantillons ou de vraies images.',
+      'À retenir : commencer par les sources seules, puis une fusion early bien faite. Passer à la mid fusion par scores quand les blocs sont déséquilibrés, à la late fusion quand les instruments ne sont pas toujours là. La mid fusion dans un réseau quand on a beaucoup d’échantillons ou de vraies images.',
       'Et toujours le même protocole. Merci ; place aux questions — le labo reste ouvert à l’écran.',
     ],
   },

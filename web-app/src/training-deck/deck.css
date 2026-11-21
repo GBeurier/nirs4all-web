@@ -131,7 +131,7 @@ kbd { font: 700 .8em var(--mono); padding: 1px 8px; border-radius: 6px; border: 
 /* Concept slides: diagram, full-width pipeline, one pro/con line. */
 .deck-body > .deck-rack { flex: 0 0 250px; height: 250px !important; }
 .deck-proscons { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-.deck-proscons p { margin: 0; display: flex; align-items: center; gap: 14px; padding: 12px 18px; border-radius: var(--radius-sm); font: 650 22px var(--font); }
+.deck-proscons p { margin: 0; display: flex; align-items: center; gap: 14px; padding: 12px 18px; border-radius: var(--radius-sm); font: 600 21px/1.3 var(--font); }
 .deck-proscons span { flex: 0 0 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: #fff; font: 800 22px var(--font); }
 .deck-proscons [data-kind="pro"] { background: #ecfdf5; color: #065f46; border: 1.5px solid #6ee7b7; }
 .deck-proscons [data-kind="pro"] span { background: #059669; }
@@ -208,3 +208,5 @@ kbd { font: 700 .8em var(--mono); padding: 1px 8px; border-radius: 6px; border: 
 .deck-kernel-steps p { margin: 10px 0 0; font-size: 22px; line-height: 1.35; color: var(--text-2); }
 .deck-kernel-steps .deck-kernel-formula { font: 800 22px var(--mono); color: #4c1d95; background: rgba(124,58,237,.08); border-radius: 10px; padding: 8px 12px; text-align: center; }
 .deck-kernel-steps .deck-kernel-ex { font-size: 17px; color: var(--text-3); }
+.deck-kernel-line { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; font: 700 23px var(--display); padding: 14px 18px; border-radius: 14px; background: var(--paper-2); border: 1.5px solid var(--border-warm); }
+.deck-kernel-line .deck-kernel-formula { font: 800 23px var(--mono); color: #4c1d95; background: rgba(124,58,237,.08); border-radius: 10px; padding: 6px 12px; }
