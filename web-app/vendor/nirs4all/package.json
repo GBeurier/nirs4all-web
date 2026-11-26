@@ -1,6 +1,6 @@
 {
   "name": "nirs4all",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Portable nirs4all aggregate binding for JavaScript and WASM",
   "type": "module",
   "exports": {
@@ -52,7 +52,7 @@
     "yaml": "^2.9.0"
   },
   "devDependencies": {
-    "@nirs4all/io-wasm": "^0.3.8",
+    "@nirs4all/io-wasm": "^0.4.0",
     "@tensorflow/tfjs": "^3.21.0",
     "dag-ml-wasm": "^0.5.0",
     "ml": "^8.0.0",
@@ -61,9 +61,9 @@
     "typescript": "5.9.3"
   },
   "peerDependencies": {
-    "@nirs4all/datasets-wasm": "^0.3.0",
-    "@nirs4all/formats-wasm": "^0.2.0",
-    "@nirs4all/io-wasm": "^0.3.8",
+    "@nirs4all/datasets-wasm": "^0.4.0",
+    "@nirs4all/formats-wasm": "^0.3.0",
+    "@nirs4all/io-wasm": "^0.4.0",
     "@nirs4all/methods": "~1.5.0",
     "@tensorflow/tfjs": "^3.21.0",
     "dag-ml-data-wasm": "^0.2.0",

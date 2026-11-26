@@ -1,20 +1,20 @@
 {
   "schema": "nirs4all-web.public-npm-acquisition.v1",
   "package": "nirs4all",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "source": {
     "repository": "https://github.com/GBeurier/nirs4all-core",
-    "commit": "d82bea70cbe5d66ac8ff46c5b66cc64c3b90498b",
-    "tree": "46d6e6387c2e9c4ea215bfe4c9abc2aa231b6746",
-    "tag": "v0.6.1"
+    "commit": "2bc85980b22b21b3990631dbd1cb6080762e0735",
+    "tree": "13bc15f3e9c7c468ba7d84ffebfc2a5a96639a77",
+    "tag": "v0.7.0"
   },
   "acquisition": {
-    "metadata_url": "https://registry.npmjs.org/nirs4all/0.6.1",
-    "tarball_url": "https://registry.npmjs.org/nirs4all/-/nirs4all-0.6.1.tgz",
-    "size": 4535276,
-    "sha256": "137369ff8792ca5de362dc0d658dd5a1c15d39562f17add27a517827bb0052f3",
-    "sha1": "0c097f4fce8374832aa9da8e95faf4ac18baefed",
-    "integrity": "sha512-y/PeBk0ibClbGZDmlaR4igIXzxP46JdshpuQmkP6WY/lxCAuJBBG6oN5mbZSjPpyIYAOHayQRHitpJ0ubQw/Dw=="
+    "metadata_url": "https://registry.npmjs.org/nirs4all/0.7.0",
+    "tarball_url": "https://registry.npmjs.org/nirs4all/-/nirs4all-0.7.0.tgz",
+    "size": 4533135,
+    "sha256": "1a982a0fb932ba9f61a828cfd4aa5c21262906d8b1dccb11cc14918ccb37681c",
+    "sha1": "55ce3a0e6b74ca10851e009fbe1aa6e5ef3b89e7",
+    "integrity": "sha512-Pg8tWltPUjBiRNvnZWCEzzab/lQQyefEA7Xwsw2S6BxQ3nXMxDEoN8vy3giQxnTKcUgtKHJdTzBDuIYoh9a0LA=="
   },
   "reproducibility": {
     "performed_by_web": false,
@@ -67,15 +67,15 @@
     },
     "native/nirs4all_core_wasm_native.d.ts": {
       "size": 35143,
-      "sha256": "92e26ef62b9c48f4f1b9a9d58449c86b077981fb2f9611d6b57622d074744ae6"
+      "sha256": "65a5b66cfdf1e32afc6cef7ad2c25d7e8e690722d0f02c1b89ea6cc832a472f6"
     },
     "native/nirs4all_core_wasm_native.js": {
       "size": 97851,
-      "sha256": "1e7dafbbd2c0f1f9f6e7b685c0843572fd8f3018e53297def572752888be89a4"
+      "sha256": "39f8505794cc05e81c121654403cbac1d83d57b8a3a5d100e1191af1b9598f40"
     },
     "native/nirs4all_core_wasm_native_bg.wasm": {
-      "size": 15114785,
-      "sha256": "3f7a8688a33bdf05147cb0fbf39a9f33d6dc845e5ed77494dedaa6e122cb14ae"
+      "size": 15111938,
+      "sha256": "3df862dc6ea3e310238f4c124674e2fcd4edfe8975339faab5ed694730761d3a"
     },
     "native/nirs4all_core_wasm_native_bg.wasm.d.ts": {
       "size": 14614,
@@ -83,11 +83,11 @@
     },
     "native/package.json": {
       "size": 570,
-      "sha256": "bc12dffb86ca73d648efcd7e1de8600eeddef728bb39a6c7ab8e1366d957b422"
+      "sha256": "8161c7eae6a17f53849baae0826521a4c7c3befb080232b54dc222b3114f6030"
     },
     "package.json": {
       "size": 2827,
-      "sha256": "7a3a45cbb56af1a172ace1e2683cd0b42af4de01414cdd345b3ed1686caeed5a"
+      "sha256": "ec012a0a091253dee4ea0f92b0e2bc0e1113b74569d70c1b450869aaeaaf30e1"
     },
     "src/archive-v2.js": {
       "size": 20637,
@@ -126,8 +126,8 @@
       "sha256": "1f587895ff94b4757476f9efb51c8864886c13c87e7e90a6d57d8a8f4692ad75"
     },
     "src/index.d.ts": {
-      "size": 20359,
-      "sha256": "f7bc9ee31d3693c25280e68b47d646b962a8d10d37898cfda0b3b95087dd0aa9"
+      "size": 20356,
+      "sha256": "ab3cac2bf19e200dc99db14fb02267762e8106ac56f833603358b0d481d8915d"
     },
     "src/index.js": {
       "size": 12622,

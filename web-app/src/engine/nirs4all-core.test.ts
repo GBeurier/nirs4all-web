@@ -60,23 +60,23 @@ describe('nirs4all-core aggregate loaders', () => {
     expect(existsSync(new URL('../../scripts/sync-core-shim.mjs', import.meta.url))).toBe(true)
     expect(existsSync(new URL('../../scripts/sync-lite-shim.mjs', import.meta.url))).toBe(false)
     expect(syncScript).not.toMatch(/NIRS4ALL_LITE|nirs4all-lite|sync-lite/)
-    expect(vendorPkg).toMatchObject({ name: 'nirs4all', version: '0.6.1' })
+    expect(vendorPkg).toMatchObject({ name: 'nirs4all', version: '0.7.0' })
     expect(provenance).toMatchObject({
       package: 'nirs4all',
-      version: '0.6.1',
+      version: '0.7.0',
       source: {
         repository: 'https://github.com/GBeurier/nirs4all-core',
-        commit: 'd82bea70cbe5d66ac8ff46c5b66cc64c3b90498b',
-        tree: '46d6e6387c2e9c4ea215bfe4c9abc2aa231b6746',
+        commit: '2bc85980b22b21b3990631dbd1cb6080762e0735',
+        tree: '13bc15f3e9c7c468ba7d84ffebfc2a5a96639a77',
       },
       acquisition: {
-        tarball_url: 'https://registry.npmjs.org/nirs4all/-/nirs4all-0.6.1.tgz',
-        sha256: '137369ff8792ca5de362dc0d658dd5a1c15d39562f17add27a517827bb0052f3',
+        tarball_url: 'https://registry.npmjs.org/nirs4all/-/nirs4all-0.7.0.tgz',
+        sha256: '1a982a0fb932ba9f61a828cfd4aa5c21262906d8b1dccb11cc14918ccb37681c',
       },
       reproducibility: { performed_by_web: false, independent_rebuild_claimed: false },
       files: {
-        'native/nirs4all_core_wasm_native.js': { sha256: '1e7dafbbd2c0f1f9f6e7b685c0843572fd8f3018e53297def572752888be89a4' },
-        'native/nirs4all_core_wasm_native_bg.wasm': { sha256: '3f7a8688a33bdf05147cb0fbf39a9f33d6dc845e5ed77494dedaa6e122cb14ae' },
+        'native/nirs4all_core_wasm_native.js': { sha256: '39f8505794cc05e81c121654403cbac1d83d57b8a3a5d100e1191af1b9598f40' },
+        'native/nirs4all_core_wasm_native_bg.wasm': { sha256: '3df862dc6ea3e310238f4c124674e2fcd4edfe8975339faab5ed694730761d3a' },
       },
     })
   })
@@ -85,7 +85,7 @@ describe('nirs4all-core aggregate loaders', () => {
     const script = fileURLToPath(new URL('../../scripts/sync-core-shim.mjs', import.meta.url))
     const verified = spawnSync(process.execPath, [script, '--check'], { encoding: 'utf8' })
     expect(verified.status).toBe(0)
-    expect(verified.stdout).toContain('nirs4all@0.6.1 published inventory and acquisition verified')
+    expect(verified.stdout).toContain('nirs4all@0.7.0 published inventory and acquisition verified')
   })
 
   it('keeps the datasets upstream candidate aligned with the vendored WASM package', () => {
@@ -232,16 +232,19 @@ describe('nirs4all-core aggregate loaders', () => {
     const wasm = readFileSync(new URL('./wasm/datasets/nirs4all_datasets_wasm_bg.wasm', import.meta.url))
     const provenance = JSON.parse(
       readFileSync(new URL('./wasm/datasets/PROVENANCE.json', import.meta.url), 'utf8'),
-    ) as { version: string; source: { commit: string }; build: { executions: number }; reproducibility: { independent_rebuild_claimed: boolean; byte_identical_rebuild_claimed: boolean } }
+    )
     datasets.initSync({ module: wasm })
 
-    expect(datasets.abiVersion()).toBe('0.3.23')
+    expect(datasets.abiVersion()).toBe('0.4.0')
     expect(provenance).toMatchObject({
       schema: 'nirs4all-web.public-npm-acquisition.v1',
-      version: '0.3.23',
-      source: { commit: 'c8aef1ec94ecde6a51abce1c61ee955c3fd0e838' },
-      build: { target: 'web', cargo_locked: true, executions: 1, wasm_bindgen: '0.2.129' },
-      reproducibility: { performed_by_web: true, independent_rebuild_claimed: false },
+      version: '0.4.0',
+      source: { commit: '74bd2c6a21d344771efa0c23695216e667daba6b' },
+      browser_deployment: {
+        receipt_url: 'https://github.com/GBeurier/nirs4all-datasets/releases/download/v0.4.0/nirs4all-datasets-browser-web.provenance.json',
+        build: { target: 'web', cargo_locked: true, tool: 'wasm-bindgen 0.2.129' },
+      },
+      reproducibility: { performed_by_web: false, independent_rebuild_claimed: false },
     })
     expect(datasets.sha256(new Uint8Array([97, 98, 99]))).toBe(
       'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',

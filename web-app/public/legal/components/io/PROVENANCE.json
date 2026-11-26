@@ -1,20 +1,20 @@
 {
   "schema": "nirs4all-web.public-npm-acquisition.v1",
   "package": "@nirs4all/io-wasm",
-  "version": "0.3.9",
+  "version": "0.4.0",
   "source": {
     "repository": "https://github.com/GBeurier/nirs4all-io",
-    "commit": "d8e3983f1b8ab921fc64a47a54d614330e08977d",
-    "tree": "159391b52b4551db52d2ff7ca7afcc12a6f3c8db",
-    "tag": "v0.3.9"
+    "commit": "c1c3cdfa0e394ef696c56ac65bfabdef1b65a468",
+    "tree": "a342170073609eb80ba500e28db5cb4e46ca26d6",
+    "tag": "v0.4.0"
   },
   "acquisition": {
-    "metadata_url": "https://registry.npmjs.org/@nirs4all/io-wasm/0.3.9",
-    "tarball_url": "https://registry.npmjs.org/@nirs4all/io-wasm/-/io-wasm-0.3.9.tgz",
-    "size": 1136645,
-    "sha256": "9750bf4063f80a1a5f9d9c7ea23d61bd5c175e4d4a1a172cde72aa94fb1f515d",
-    "sha1": "e83c9b40476bcdab902d36a5eb849e48e5710974",
-    "integrity": "sha512-NvhrkvKTdLADxlLOiZtdAB/JrakByaY3wGiF9lcPUJWO30S/8i4DkTF9rkK9PwBW6dh9BPcSPwMY/b+jURe60Q=="
+    "metadata_url": "https://registry.npmjs.org/@nirs4all/io-wasm/0.4.0",
+    "tarball_url": "https://registry.npmjs.org/@nirs4all/io-wasm/-/io-wasm-0.4.0.tgz",
+    "size": 1136647,
+    "sha256": "41266de8a32f6a9a3db848e33c8acb26ca900457e7f7c9b0afc1fcc0a0cf9e89",
+    "sha1": "f6e10725e7fe47ca1f57a28f3309446ccde1a62a",
+    "integrity": "sha512-7Yl4OimR7DaUTucD6PEAKUY19tZ0bFizejO1hghQ9zDcgNZUPQz8wintgtUCHuBTuPyG2gApfbAdTcfOmSxD0Q=="
   },
   "reproducibility": {
     "performed_by_web": false,
@@ -27,7 +27,7 @@
     },
     "nirs4all-io-wasm.cdx.json": {
       "size": 34796,
-      "sha256": "92a63462bc7f69aa112a88d1cb2e6274b64d492afb01f520450c29ac7bff3c61"
+      "sha256": "43dd5e731f7f87fdce3f7f20ad04f5d7f162a48e9943d1dc2bcc6909b2d05e77"
     },
     "LICENSES/COMMERCIAL-LICENSE_FR.md": {
       "size": 759,
@@ -122,8 +122,8 @@
       "sha256": "65b2236b75322c7e2ee2e1ccb0d2303808c43593c5ab7c0ccddf1a79a69f9615"
     },
     "nirs4all_io_wasm_bg.wasm": {
-      "size": 2920960,
-      "sha256": "d1ae1afccf3bb96bea144d319c09f9d55a76b782eea636efdef60029e68abdf8"
+      "size": 2923508,
+      "sha256": "8aa49ab5482f0485fbb6434d1e30e02117bf0c02f0ca1d0382fdb4184bb8d247"
     },
     "nirs4all_io_wasm_bg.wasm.d.ts": {
       "size": 1465,
@@ -131,18 +131,18 @@
     },
     "package.json": {
       "size": 689,
-      "sha256": "ea6b38e9457eb886b753861e64251269d962d99133eeac116bee4967ad510921"
+      "sha256": "1890c5814417080b4c0553ac5305cddab5dfba7f5a14e33b27b0781da5f011e4"
     }
   },
   "browser_deployment": {
     "payload": "Owner Release browser build; distinct from the registry Node payload.",
-    "receipt_url": "https://github.com/GBeurier/nirs4all-io/releases/download/v0.3.9/nirs4all-io-browser-web.provenance.json",
+    "receipt_url": "https://github.com/GBeurier/nirs4all-io/releases/download/v0.4.0/nirs4all-io-browser-web.provenance.json",
     "build": {
       "tool": "wasm-pack 0.15.0",
       "target": "web",
       "profile": "release",
       "cargo_locked": true,
-      "lock_sha256": "63a62e8b52a13cb04c198ac6a7b5eef78c7293c4e585d7ae483e740772d76958",
+      "lock_sha256": "fbdce3687d53eda8934cf9d6e4efe91f85a627b45451d97c4b8c8f0b30e9a75b",
       "command": "wasm-pack build bindings/wasm --target web --release -- --locked",
       "host": "Linux x86_64"
     }

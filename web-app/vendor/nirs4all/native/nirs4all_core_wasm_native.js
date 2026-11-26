@@ -105,17 +105,14 @@ export class N4aContainerHandle {
         return v1;
     }
     /**
-     * `length` bytes of a member from `offset`, or `undefined` for an unknown
-     * member. The bytes were validated when the container was opened.
+     * The exact bytes of one inventoried member, or `undefined`.
      * @param {string} path
-     * @param {bigint} offset
-     * @param {bigint} length
      * @returns {Uint8Array | undefined}
      */
-    member_chunk(path, offset, length) {
+    member(path) {
         const ptr0 = passStringToWasm0(path, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len0 = WASM_VECTOR_LEN;
-        const ret = wasm.n4acontainerhandle_member_chunk(this.__wbg_ptr, ptr0, len0, offset, length);
+        const ret = wasm.n4acontainerhandle_member(this.__wbg_ptr, ptr0, len0);
         if (ret[3]) {
             throw takeFromExternrefTable0(ret[2]);
         }
@@ -127,14 +124,17 @@ export class N4aContainerHandle {
         return v2;
     }
     /**
-     * The exact bytes of one inventoried member, or `undefined`.
+     * `length` bytes of a member from `offset`, or `undefined` for an unknown
+     * member. The bytes were validated when the container was opened.
      * @param {string} path
+     * @param {bigint} offset
+     * @param {bigint} length
      * @returns {Uint8Array | undefined}
      */
-    member(path) {
+    member_chunk(path, offset, length) {
         const ptr0 = passStringToWasm0(path, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len0 = WASM_VECTOR_LEN;
-        const ret = wasm.n4acontainerhandle_member(this.__wbg_ptr, ptr0, len0);
+        const ret = wasm.n4acontainerhandle_member_chunk(this.__wbg_ptr, ptr0, len0, offset, length);
         if (ret[3]) {
             throw takeFromExternrefTable0(ret[2]);
         }

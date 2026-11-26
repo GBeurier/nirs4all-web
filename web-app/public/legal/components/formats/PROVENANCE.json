@@ -1,23 +1,23 @@
 {
   "schema": "nirs4all-web.public-npm-acquisition.v1",
   "package": "@nirs4all/formats-wasm",
-  "version": "0.2.17",
+  "version": "0.3.1",
   "source": {
     "kind": "owner-browser-build-from-published-tag",
     "repository": "https://github.com/GBeurier/nirs4all-formats",
-    "commit": "53624331210b1a6e2d797fd13c6f07363386a91e",
-    "tree": "94b8fd7cfd6daec7cd5f5e743a1e0cce427d3993",
-    "tag": "v0.2.17",
+    "commit": "89f191396772c71379e7ad788f29f30472369498",
+    "tree": "d3e75dfb1da94988d13f9f37b392b541cdeb8e9d",
+    "tag": "v0.3.1",
     "artifact_origin": "Browser payload acquired from owner GitHub Release assets; npm identity describes the distinct published Node payload. Unchanged legal files come from the exact tagged owner source.",
     "independent_rebuild_claimed": false
   },
   "acquisition": {
-    "metadata_url": "https://registry.npmjs.org/@nirs4all%2fformats-wasm/0.2.17",
-    "tarball_url": "https://registry.npmjs.org/@nirs4all/formats-wasm/-/formats-wasm-0.2.17.tgz",
-    "size": 2214836,
-    "sha256": "9e8666899825912aeff640c6071eb7c707637572fcb7447761eb4e8d29231b55",
-    "sha1": "cd33a5775b6424d4fd16189a96ae2cd30747823b",
-    "integrity": "sha512-smeOiQC0l3OZWGaqE0yjImRlux7YzAcVyJH9IKcFiByu7Z8vG5YNFt+usffzBKk5JBBPSNJDq5LsErUqUoJyqg=="
+    "metadata_url": "https://registry.npmjs.org/@nirs4all%2fformats-wasm/0.3.1",
+    "tarball_url": "https://registry.npmjs.org/@nirs4all/formats-wasm/-/formats-wasm-0.3.1.tgz",
+    "size": 2476501,
+    "sha256": "620fc142dedf429562a68a8faf66d9ba7a746ec47642fcec895c6888d92667fc",
+    "sha1": "726506e3f722f88660dfc0fc48c1fb88128b8574",
+    "integrity": "sha512-qy/xoolMc1L9+FCDuEASVAbbxVSfKovHWVtl3PwsAODE/MwQE9dIA0w4P6+UfSj62ItcdWLhEUODC70PiNBHbA=="
   },
   "reproducibility": {
     "performed_by_web": false,
@@ -57,32 +57,32 @@
       "sha256": "d3256179c57f9821d53a63e496acfcfc170c5158d7924289ee4a2937fee2fed0"
     },
     "README.md": {
-      "size": 2918,
-      "sha256": "724b92047f40593956684d2e0e58fced595df93eb01c953792bc5e43ef0345ee"
+      "size": 3072,
+      "sha256": "75c59094b5a683d857afde59f1c6805b335bd60164c977d7b84eeb975d94cb94"
     },
     "THIRD_PARTY_NOTICES.md": {
       "size": 2630,
       "sha256": "39e06e5ca05c5bc5bab725d15f2eb28bfde7c33d79906c9f38534b7bb731a34a"
     },
     "nirs4all_formats_wasm.d.ts": {
-      "size": 5702,
-      "sha256": "289dd577b7042a5ce614b850499e0da09482b68d4594a7f205952b2ea4678f10"
+      "size": 6964,
+      "sha256": "37817c0a66ee0ce39f30334d26c5aaaea832568a08f4751df0afd6fbc5e4d3cd"
     },
     "nirs4all_formats_wasm.js": {
-      "size": 25923,
-      "sha256": "58fa8e66de312bee1bf6f3d055fe86574f74018b851c60a7c7940c0c8ab94d01"
+      "size": 29876,
+      "sha256": "02ac14094381159c124ffb9eecf5afb8f2f5a93b4208269fb2a03822161772d4"
     },
     "nirs4all_formats_wasm_bg.wasm": {
-      "size": 5988324,
-      "sha256": "fdc8f7f8e4db280467891ee79fdb1b49d3bfe69385917cc747badb4c245b27ef"
+      "size": 7684709,
+      "sha256": "a007ff06fbf7b5041f6cdef508d023cd20dc9f9473bd5543970cf4577386a47e"
     },
     "nirs4all_formats_wasm_bg.wasm.d.ts": {
-      "size": 2073,
-      "sha256": "a832542b730bb41a0481e25e038542f8516be26683538a51a90868a68f8b256f"
+      "size": 2325,
+      "sha256": "f8a3cd7249e68c8fed1441185524b1adbc702fb612008bb25dc0d3452f0916ee"
     },
     "package.json": {
-      "size": 609,
-      "sha256": "2f81e84e03e004298f1edcb62f379dd76bb430afcf32d9e15db7c03288805a2e"
+      "size": 608,
+      "sha256": "4bbd685ff03350b5f63719afeda325c23e2f76f9a1f0a58cb2c4ebb574e70179"
     },
     "reader-backports/hdf5-reader/Cargo.toml": {
       "size": 2346,
@@ -424,25 +424,24 @@
       "size": 20136,
       "sha256": "45803f57ab037a2fcb24e6ad7b5a8f7fb1cf6e50d8f60ad34c8133e1782f7ba2"
     },
-    "snippets/rds2rust-777dc4a0b14a5aca/wasm/decompress.js": {
+    "snippets/rds2rust-ca688fb9f32fd1d4/wasm/decompress.js": {
       "size": 16502,
       "sha256": "5258768404663b4b48572796afbe51e2a8669a89d3d5e21cf18c41830bf1d46b"
     }
   },
   "browser_deployment": {
     "target": "web",
-    "version": "0.2.17",
-    "receipt_url": "https://github.com/GBeurier/nirs4all-formats/releases/download/v0.2.17/nirs4all-formats-browser-web.provenance.json",
+    "version": "0.3.1",
+    "receipt_url": "https://github.com/GBeurier/nirs4all-formats/releases/download/v0.3.1/nirs4all-formats-browser-web.provenance.json",
     "build": {
+      "tool": "wasm-pack 0.15.0",
       "target": "web",
       "profile": "release",
-      "features": [
-        "fmt-hdf5",
-        "fmt-matlab",
-        "fmt-parquet"
-      ],
-      "executions": 1,
-      "independent_rebuild_claimed": false
+      "features": "Default binding features",
+      "command": "wasm-pack build bindings/wasm --target web --release --locked",
+      "host": "Linux x86_64",
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "path_remapping": true
     },
     "publication": "existing owner GitHub Release assets",
     "independent_rebuild_claimed": false
