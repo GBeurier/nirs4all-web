@@ -1,23 +1,23 @@
 {
   "schema": "nirs4all-web.public-npm-acquisition.v1",
   "package": "@nirs4all/datasets-wasm",
-  "version": "0.3.23",
+  "version": "0.4.0",
   "source": {
     "repository": "https://github.com/GBeurier/nirs4all-datasets",
-    "commit": "c8aef1ec94ecde6a51abce1c61ee955c3fd0e838",
-    "tree": "383ec36ca3667a9ee08cdf8e0facd3a81f1b869b",
-    "tag": "v0.3.23"
+    "commit": "74bd2c6a21d344771efa0c23695216e667daba6b",
+    "tree": "66f571ffde539da1536adf1ef46aa06c191baa5d",
+    "tag": "v0.4.0"
   },
   "acquisition": {
-    "metadata_url": "https://registry.npmjs.org/@nirs4all/datasets-wasm/0.3.23",
-    "tarball_url": "https://registry.npmjs.org/@nirs4all/datasets-wasm/-/datasets-wasm-0.3.23.tgz",
-    "size": 419454,
-    "sha256": "e4c401eb1587eca464763c15ab5582dac2c0ac9ddf223009e434ea7cb8f86d77",
-    "sha1": "93ded1bf1c1bca963d3598cbfd74be1cc2cca5be",
-    "integrity": "sha512-s+6f2sv3cUMqg1Qpa1AVMEkcX63+DXtH6IyD9xgLIEubHPAgVyVQdkohKWCBK15kawwG+blGjjrihZa+6TNVGA=="
+    "metadata_url": "https://registry.npmjs.org/@nirs4all%2fdatasets-wasm/0.4.0",
+    "tarball_url": "https://registry.npmjs.org/@nirs4all/datasets-wasm/-/datasets-wasm-0.4.0.tgz",
+    "size": 419363,
+    "sha256": "2a160bdd9a2c7cb212ad2fbc79df7c4cd6e40375a70d305d698635850b44e4ea",
+    "sha1": "c7a5fa62da208cab0fbb47fb7a28a57d9ebd5146",
+    "integrity": "sha512-3SFk5R2Nd+/+Su2p8O3/lnVBlk2qTMYHhoItIh+yIY1FjE9ykF4n0HlYONvWVyPa5tISVmgvkxh9pWK03ofIIw=="
   },
   "reproducibility": {
-    "performed_by_web": true,
+    "performed_by_web": false,
     "independent_rebuild_claimed": false
   },
   "files": {
@@ -213,151 +213,151 @@
       "size": 1211,
       "sha256": "7e12e5df4bae12cb21581ba157ced20e1986a0508dd10d0e8a4ab9a4cf94e85c"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSE": {
+    "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSE": {
       "size": 34020,
       "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/AGPL-3.0-or-later.txt": {
+    "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/AGPL-3.0-or-later.txt": {
       "size": 34020,
       "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/Apache-2.0.txt": {
+    "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/Apache-2.0.txt": {
       "size": 10280,
       "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/BSD-3-Clause.txt": {
+    "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/BSD-3-Clause.txt": {
       "size": 1460,
       "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/CC-BY-4.0.txt": {
+    "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/CC-BY-4.0.txt": {
       "size": 17023,
       "sha256": "d557539df68e771cc1eedcc91d13f70fca930e508d11eedcafa4b15db49e3744"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/COMMERCIAL-LICENSE.md": {
+    "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE.md": {
       "size": 682,
       "sha256": "951afe3e34cc4bfdea2253fc126d632fc76c3911dd3c39d0ce1eae9c144c60e5"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/COMMERCIAL-LICENSE_FR.md": {
+    "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE_FR.md": {
       "size": 771,
       "sha256": "85f1526a08c0e6080510a9a04c635ff316b6f692e958e526e8042497146b3efa"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/CeCILL-2.1.txt": {
+    "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/CeCILL-2.1.txt": {
       "size": 21778,
       "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/MIT.txt": {
+    "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/MIT.txt": {
       "size": 1078,
       "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSING.md": {
+    "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSING.md": {
       "size": 2541,
       "sha256": "efc4c0cf0b0e96be34154d7d3dde80e0bcb1868472afd33c56ecdef726c14031"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/THIRD_PARTY_NOTICES.md": {
+    "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/THIRD_PARTY_NOTICES.md": {
       "size": 3698,
       "sha256": "dcafb67b86f1bc94141833c5bdfa320714ea8ca1c30c2cef5bb3fcdbc5a3e979"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/LICENSE": {
+    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/LICENSE": {
       "size": 34020,
       "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/LICENSE-CeCILL-2.1": {
+    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/LICENSE-CeCILL-2.1": {
       "size": 21778,
       "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSE": {
+    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSE": {
       "size": 34020,
       "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/AGPL-3.0-or-later.txt": {
+    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/AGPL-3.0-or-later.txt": {
       "size": 34020,
       "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/Apache-2.0.txt": {
+    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/Apache-2.0.txt": {
       "size": 10280,
       "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/BSD-3-Clause.txt": {
+    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/BSD-3-Clause.txt": {
       "size": 1460,
       "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/CC-BY-4.0.txt": {
+    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/CC-BY-4.0.txt": {
       "size": 17023,
       "sha256": "d557539df68e771cc1eedcc91d13f70fca930e508d11eedcafa4b15db49e3744"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/COMMERCIAL-LICENSE.md": {
+    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE.md": {
       "size": 682,
       "sha256": "951afe3e34cc4bfdea2253fc126d632fc76c3911dd3c39d0ce1eae9c144c60e5"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/COMMERCIAL-LICENSE_FR.md": {
+    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE_FR.md": {
       "size": 771,
       "sha256": "85f1526a08c0e6080510a9a04c635ff316b6f692e958e526e8042497146b3efa"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/CeCILL-2.1.txt": {
+    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/CeCILL-2.1.txt": {
       "size": 21778,
       "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/MIT.txt": {
+    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/MIT.txt": {
       "size": 1078,
       "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSING.md": {
+    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSING.md": {
       "size": 2541,
       "sha256": "efc4c0cf0b0e96be34154d7d3dde80e0bcb1868472afd33c56ecdef726c14031"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/THIRD_PARTY_NOTICES.md": {
+    "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/THIRD_PARTY_NOTICES.md": {
       "size": 3698,
       "sha256": "dcafb67b86f1bc94141833c5bdfa320714ea8ca1c30c2cef5bb3fcdbc5a3e979"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/LICENSE": {
+    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/LICENSE": {
       "size": 34020,
       "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/COPY_PROVENANCE.md": {
+    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/COPY_PROVENANCE.md": {
       "size": 38239,
       "sha256": "87adbeec7f7a594712b1c463bf7674a519887fa29354f09ada1e7371c3d10562"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSE": {
+    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSE": {
       "size": 34020,
       "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/AGPL-3.0-or-later.txt": {
+    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/AGPL-3.0-or-later.txt": {
       "size": 34020,
       "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/Apache-2.0.txt": {
+    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/Apache-2.0.txt": {
       "size": 9723,
       "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/BSD-3-Clause.txt": {
+    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/BSD-3-Clause.txt": {
       "size": 1459,
       "sha256": "3cf06aba3588c41c514f6946bb2d757b413ff6491647d474800f55edca75dcb4"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/COMMERCIAL-LICENSE.md": {
+    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE.md": {
       "size": 670,
       "sha256": "e62a66dc45d618d419706048b17a840f87d0c0c5c940eadd1cf6ea13c7eae08f"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/COMMERCIAL-LICENSE_FR.md": {
+    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE_FR.md": {
       "size": 759,
       "sha256": "7d1fd841891d4cb53836a6aca2fbbf7f36ef3bca540a394a9d94633af34ea3d6"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/CeCILL-2.1.txt": {
+    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/CeCILL-2.1.txt": {
       "size": 21778,
       "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/MIT.txt": {
+    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/MIT.txt": {
       "size": 1078,
       "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/Unicode-3.0.txt": {
+    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/Unicode-3.0.txt": {
       "size": 1995,
       "sha256": "f7db81051789b729fea528a63ec4c938fdcb93d9d61d97dc8cc2e9df6d47f2a1"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSING.md": {
+    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSING.md": {
       "size": 2113,
       "sha256": "b41ad1d4b8e62c89e42704fc4c9b5bb8a2099a0ad0680d72e95efb57c5d3326c"
     },
-    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/THIRD_PARTY_NOTICES.md": {
+    "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/THIRD_PARTY_NOTICES.md": {
       "size": 5732,
       "sha256": "c2f5c9061e7bc5a259a2d630330930ce9438f157e9646724824730ce516a5179"
     },
@@ -626,8 +626,8 @@
       "sha256": "dcafb67b86f1bc94141833c5bdfa320714ea8ca1c30c2cef5bb3fcdbc5a3e979"
     },
     "nirs4all-datasets-wasm.licenses.json": {
-      "size": 27914,
-      "sha256": "a53da897f1c49ba7f4206f3806101436e4ca4c143a1cf7c32b9696bcad3c5b2e"
+      "size": 27887,
+      "sha256": "f49b0d7b99bcfcdc8d3e8b0008ffc82cb38b58557a2077ba60fdb876ad20be01"
     },
     "nirs4all_datasets_wasm.d.ts": {
       "size": 3006,
@@ -638,28 +638,30 @@
       "sha256": "f3ef929612b431e8f530a84e1a732ace45f71938c9a75ec0bc8cc1cba030083a"
     },
     "nirs4all_datasets_wasm_bg.wasm": {
-      "size": 1471074,
-      "sha256": "669729d3a077c9a8250b6484fc8ccc950b594af2aef2af95d5ed6feaaf4301ad"
+      "size": 1487842,
+      "sha256": "830e7e6349fd4b3f5564231f71de41886a2ff6745fc414100c500cbcbc41e442"
     },
     "nirs4all_datasets_wasm_bg.wasm.d.ts": {
       "size": 1060,
       "sha256": "f11cc6cebbaef3c8b38b958f17057139c3802c0433c23f4eee411794286e7ced"
     },
     "package.json": {
-      "size": 935,
-      "sha256": "09e0e9e9a9dd27c5b476095b3626a8845b9058b0ad8c7dbc2fade94558d265cc"
+      "size": 934,
+      "sha256": "26a902371f8e71f91b099062e28158280385278225f26cec2979b679ecd790e3"
     }
   },
-  "build": {
-    "target": "web",
-    "profile": "release",
-    "cargo_locked": true,
-    "manifest": "bindings/wasm/Cargo.toml",
-    "features": [],
-    "wasm_bindgen": "0.2.129",
-    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
-    "lock_sha256": "fcb87636ca9f3b17c9c814197549d8010c31db6c469174299fa54bb5b605035a",
-    "executions": 1,
-    "independent_rebuild_claimed": false
+  "browser_deployment": {
+    "payload": "Published owner web-target files and separately verified npm notices.",
+    "receipt_url": "https://github.com/GBeurier/nirs4all-datasets/releases/download/v0.4.0/nirs4all-datasets-browser-web.provenance.json",
+    "build": {
+      "target": "web",
+      "profile": "release",
+      "cargo_locked": true,
+      "lock_sha256": "fb658800d77fdfda220ae9adf53e7430e6b2e577a7b260f86d092d6e470fed12",
+      "tool": "wasm-bindgen 0.2.129",
+      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+      "command": "cargo build --locked --release --target wasm32-unknown-unknown --manifest-path bindings/wasm/Cargo.toml, then wasm-bindgen --target web",
+      "host": "Linux x86_64"
+    }
   }
 }

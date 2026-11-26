@@ -293,7 +293,7 @@ export function upstream(name: string): Upstream | null;
 export function importUpstream(name: string): Promise<unknown>;
 export function loadFormats(): Promise<unknown>;
 export function loadIo(): Promise<unknown>;
-/** IO-owned assembled schema 3 decoder; requires the optional IO 0.3.8+ peer. */
+/** IO-owned assembled schema 3 decoder; requires the optional IO 0.4 peer. */
 export function loadIoAssembledWire(): Promise<{ decodeAssembledFull(value: unknown): unknown }>;
 export function loadDatasets(): Promise<unknown>;
 export function loadMethods(): Promise<unknown>;

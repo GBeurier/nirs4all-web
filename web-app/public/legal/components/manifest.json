@@ -52,7 +52,7 @@
         {
           "path": "PROVENANCE.json",
           "size": 8686,
-          "sha256": "4547617c74fe1b1a8937224c4cb614cb584dc45015c4304b9bc47e0f1a16f9da"
+          "sha256": "3a8bbf6536b1a3fc8d26181caea665f298038c826b50cdffcefda37655b0eeb2"
         },
         {
           "path": "THIRD_PARTY_NOTICES.md",
@@ -415,187 +415,187 @@
           "sha256": "7e12e5df4bae12cb21581ba157ced20e1986a0508dd10d0e8a4ab9a4cf94e85c"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSE",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSE",
           "size": 34020,
           "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/AGPL-3.0-or-later.txt",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/AGPL-3.0-or-later.txt",
           "size": 34020,
           "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/Apache-2.0.txt",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/Apache-2.0.txt",
           "size": 10280,
           "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/BSD-3-Clause.txt",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/BSD-3-Clause.txt",
           "size": 1460,
           "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/CC-BY-4.0.txt",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/CC-BY-4.0.txt",
           "size": 17023,
           "sha256": "d557539df68e771cc1eedcc91d13f70fca930e508d11eedcafa4b15db49e3744"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/COMMERCIAL-LICENSE.md",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE.md",
           "size": 682,
           "sha256": "951afe3e34cc4bfdea2253fc126d632fc76c3911dd3c39d0ce1eae9c144c60e5"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/COMMERCIAL-LICENSE_FR.md",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE_FR.md",
           "size": 771,
           "sha256": "85f1526a08c0e6080510a9a04c635ff316b6f692e958e526e8042497146b3efa"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/CeCILL-2.1.txt",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/CeCILL-2.1.txt",
           "size": 21778,
           "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/MIT.txt",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/MIT.txt",
           "size": 1078,
           "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSING.md",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSING.md",
           "size": 2541,
           "sha256": "efc4c0cf0b0e96be34154d7d3dde80e0bcb1868472afd33c56ecdef726c14031"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/THIRD_PARTY_NOTICES.md",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/THIRD_PARTY_NOTICES.md",
           "size": 3698,
           "sha256": "dcafb67b86f1bc94141833c5bdfa320714ea8ca1c30c2cef5bb3fcdbc5a3e979"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/LICENSE",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/LICENSE",
           "size": 34020,
           "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/LICENSE-CeCILL-2.1",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/LICENSE-CeCILL-2.1",
           "size": 21778,
           "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSE",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSE",
           "size": 34020,
           "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/AGPL-3.0-or-later.txt",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/AGPL-3.0-or-later.txt",
           "size": 34020,
           "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/Apache-2.0.txt",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/Apache-2.0.txt",
           "size": 10280,
           "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/BSD-3-Clause.txt",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/BSD-3-Clause.txt",
           "size": 1460,
           "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/CC-BY-4.0.txt",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/CC-BY-4.0.txt",
           "size": 17023,
           "sha256": "d557539df68e771cc1eedcc91d13f70fca930e508d11eedcafa4b15db49e3744"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/COMMERCIAL-LICENSE.md",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE.md",
           "size": 682,
           "sha256": "951afe3e34cc4bfdea2253fc126d632fc76c3911dd3c39d0ce1eae9c144c60e5"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/COMMERCIAL-LICENSE_FR.md",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE_FR.md",
           "size": 771,
           "sha256": "85f1526a08c0e6080510a9a04c635ff316b6f692e958e526e8042497146b3efa"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/CeCILL-2.1.txt",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/CeCILL-2.1.txt",
           "size": 21778,
           "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/MIT.txt",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/MIT.txt",
           "size": 1078,
           "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSING.md",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSING.md",
           "size": 2541,
           "sha256": "efc4c0cf0b0e96be34154d7d3dde80e0bcb1868472afd33c56ecdef726c14031"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/THIRD_PARTY_NOTICES.md",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/THIRD_PARTY_NOTICES.md",
           "size": 3698,
           "sha256": "dcafb67b86f1bc94141833c5bdfa320714ea8ca1c30c2cef5bb3fcdbc5a3e979"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/LICENSE",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/LICENSE",
           "size": 34020,
           "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/COPY_PROVENANCE.md",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/COPY_PROVENANCE.md",
           "size": 38239,
           "sha256": "87adbeec7f7a594712b1c463bf7674a519887fa29354f09ada1e7371c3d10562"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSE",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSE",
           "size": 34020,
           "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/AGPL-3.0-or-later.txt",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/AGPL-3.0-or-later.txt",
           "size": 34020,
           "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/Apache-2.0.txt",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/Apache-2.0.txt",
           "size": 9723,
           "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/BSD-3-Clause.txt",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/BSD-3-Clause.txt",
           "size": 1459,
           "sha256": "3cf06aba3588c41c514f6946bb2d757b413ff6491647d474800f55edca75dcb4"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/COMMERCIAL-LICENSE.md",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE.md",
           "size": 670,
           "sha256": "e62a66dc45d618d419706048b17a840f87d0c0c5c940eadd1cf6ea13c7eae08f"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/COMMERCIAL-LICENSE_FR.md",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE_FR.md",
           "size": 759,
           "sha256": "7d1fd841891d4cb53836a6aca2fbbf7f36ef3bca540a394a9d94633af34ea3d6"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/CeCILL-2.1.txt",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/CeCILL-2.1.txt",
           "size": 21778,
           "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/MIT.txt",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/MIT.txt",
           "size": 1078,
           "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/Unicode-3.0.txt",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/Unicode-3.0.txt",
           "size": 1995,
           "sha256": "f7db81051789b729fea528a63ec4c938fdcb93d9d61d97dc8cc2e9df6d47f2a1"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSING.md",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSING.md",
           "size": 2113,
           "sha256": "b41ad1d4b8e62c89e42704fc4c9b5bb8a2099a0ad0680d72e95efb57c5d3326c"
         },
         {
-          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/THIRD_PARTY_NOTICES.md",
+          "path": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/THIRD_PARTY_NOTICES.md",
           "size": 5732,
           "sha256": "c2f5c9061e7bc5a259a2d630330930ce9438f157e9646724824730ce516a5179"
         },
@@ -921,8 +921,8 @@
         },
         {
           "path": "PROVENANCE.json",
-          "size": 28749,
-          "sha256": "6ab2d5109ae843ad047e3528576eccde27952d3a70374277eba21390cc871aa3"
+          "size": 29061,
+          "sha256": "351d17c36d03f3429d2629148a81d83356de2bb826040e7a6ef4f91d815ecfdd"
         },
         {
           "path": "THIRD_PARTY_NOTICES.md",
@@ -931,8 +931,8 @@
         },
         {
           "path": "nirs4all-datasets-wasm.licenses.json",
-          "size": 27914,
-          "sha256": "a53da897f1c49ba7f4206f3806101436e4ca4c143a1cf7c32b9696bcad3c5b2e"
+          "size": 27887,
+          "sha256": "f49b0d7b99bcfcdc8d3e8b0008ffc82cb38b58557a2077ba60fdb876ad20be01"
         }
       ]
     },
@@ -981,8 +981,8 @@
         },
         {
           "path": "PROVENANCE.json",
-          "size": 18398,
-          "sha256": "2e2d25d62a47984dcd28a30942a521d9e944b6f160e2fc3be30b57893dbdfc27"
+          "size": 18508,
+          "sha256": "f89427f1796d998dac2660a154400e3c88bd5af2d9c308115b19d76a4c7e9e54"
         },
         {
           "path": "THIRD_PARTY_NOTICES.md",
@@ -1082,7 +1082,7 @@
         {
           "path": "PROVENANCE.json",
           "size": 5412,
-          "sha256": "5630a9137abe2c6a8f39b5e80bd75536642ec20ee15c72329a3cb40ea249c3f0"
+          "sha256": "23402d20488f9f858f4e06cf98e913d9e753e5a3409b4eea2af43880dcba9031"
         },
         {
           "path": "THIRD_PARTY_NOTICES.md",
@@ -1092,7 +1092,7 @@
         {
           "path": "nirs4all-io-wasm.cdx.json",
           "size": 34796,
-          "sha256": "92a63462bc7f69aa112a88d1cb2e6274b64d492afb01f520450c29ac7bff3c61"
+          "sha256": "43dd5e731f7f87fdce3f7f20ad04f5d7f162a48e9943d1dc2bcc6909b2d05e77"
         }
       ]
     },

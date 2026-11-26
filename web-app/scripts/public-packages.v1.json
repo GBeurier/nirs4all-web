@@ -1,21 +1,21 @@
 {
   "core": {
     "package": "nirs4all",
-    "version": "0.6.1",
+    "version": "0.7.0",
     "destination": "vendor/nirs4all",
     "source": {
       "repository": "https://github.com/GBeurier/nirs4all-core",
-      "commit": "d82bea70cbe5d66ac8ff46c5b66cc64c3b90498b",
-      "tree": "46d6e6387c2e9c4ea215bfe4c9abc2aa231b6746",
-      "tag": "v0.6.1"
+      "commit": "2bc85980b22b21b3990631dbd1cb6080762e0735",
+      "tree": "13bc15f3e9c7c468ba7d84ffebfc2a5a96639a77",
+      "tag": "v0.7.0"
     },
     "registry": {
-      "metadata_url": "https://registry.npmjs.org/nirs4all/0.6.1",
-      "tarball_url": "https://registry.npmjs.org/nirs4all/-/nirs4all-0.6.1.tgz",
-      "size": 4535276,
-      "sha256": "137369ff8792ca5de362dc0d658dd5a1c15d39562f17add27a517827bb0052f3",
-      "sha1": "0c097f4fce8374832aa9da8e95faf4ac18baefed",
-      "integrity": "sha512-y/PeBk0ibClbGZDmlaR4igIXzxP46JdshpuQmkP6WY/lxCAuJBBG6oN5mbZSjPpyIYAOHayQRHitpJ0ubQw/Dw=="
+      "metadata_url": "https://registry.npmjs.org/nirs4all/0.7.0",
+      "tarball_url": "https://registry.npmjs.org/nirs4all/-/nirs4all-0.7.0.tgz",
+      "size": 4533135,
+      "sha256": "1a982a0fb932ba9f61a828cfd4aa5c21262906d8b1dccb11cc14918ccb37681c",
+      "sha1": "55ce3a0e6b74ca10851e009fbe1aa6e5ef3b89e7",
+      "integrity": "sha512-Pg8tWltPUjBiRNvnZWCEzzab/lQQyefEA7Xwsw2S6BxQ3nXMxDEoN8vy3giQxnTKcUgtKHJdTzBDuIYoh9a0LA=="
     },
     "projection": {
       "LICENSE": "LICENSE",
@@ -122,15 +122,15 @@
       },
       "native/nirs4all_core_wasm_native.d.ts": {
         "size": 35143,
-        "sha256": "92e26ef62b9c48f4f1b9a9d58449c86b077981fb2f9611d6b57622d074744ae6"
+        "sha256": "65a5b66cfdf1e32afc6cef7ad2c25d7e8e690722d0f02c1b89ea6cc832a472f6"
       },
       "native/nirs4all_core_wasm_native.js": {
         "size": 97851,
-        "sha256": "1e7dafbbd2c0f1f9f6e7b685c0843572fd8f3018e53297def572752888be89a4"
+        "sha256": "39f8505794cc05e81c121654403cbac1d83d57b8a3a5d100e1191af1b9598f40"
       },
       "native/nirs4all_core_wasm_native_bg.wasm": {
-        "size": 15114785,
-        "sha256": "3f7a8688a33bdf05147cb0fbf39a9f33d6dc845e5ed77494dedaa6e122cb14ae"
+        "size": 15111938,
+        "sha256": "3df862dc6ea3e310238f4c124674e2fcd4edfe8975339faab5ed694730761d3a"
       },
       "native/nirs4all_core_wasm_native_bg.wasm.d.ts": {
         "size": 14614,
@@ -138,11 +138,11 @@
       },
       "native/package.json": {
         "size": 570,
-        "sha256": "bc12dffb86ca73d648efcd7e1de8600eeddef728bb39a6c7ab8e1366d957b422"
+        "sha256": "8161c7eae6a17f53849baae0826521a4c7c3befb080232b54dc222b3114f6030"
       },
       "package.json": {
         "size": 2827,
-        "sha256": "7a3a45cbb56af1a172ace1e2683cd0b42af4de01414cdd345b3ed1686caeed5a"
+        "sha256": "ec012a0a091253dee4ea0f92b0e2bc0e1113b74569d70c1b450869aaeaaf30e1"
       },
       "src/archive-v2.js": {
         "size": 20637,
@@ -181,8 +181,8 @@
         "sha256": "1f587895ff94b4757476f9efb51c8864886c13c87e7e90a6d57d8a8f4692ad75"
       },
       "src/index.d.ts": {
-        "size": 20359,
-        "sha256": "f7bc9ee31d3693c25280e68b47d646b962a8d10d37898cfda0b3b95087dd0aa9"
+        "size": 20356,
+        "sha256": "ab3cac2bf19e200dc99db14fb02267762e8106ac56f833603358b0d481d8915d"
       },
       "src/index.js": {
         "size": 12622,
@@ -628,13 +628,13 @@
   },
   "io": {
     "package": "@nirs4all/io-wasm",
-    "version": "0.3.9",
+    "version": "0.4.0",
     "destination": "src/engine/wasm/io",
     "source": {
       "repository": "https://github.com/GBeurier/nirs4all-io",
-      "commit": "d8e3983f1b8ab921fc64a47a54d614330e08977d",
-      "tree": "159391b52b4551db52d2ff7ca7afcc12a6f3c8db",
-      "tag": "v0.3.9"
+      "commit": "c1c3cdfa0e394ef696c56ac65bfabdef1b65a468",
+      "tree": "a342170073609eb80ba500e28db5cb4e46ca26d6",
+      "tag": "v0.4.0"
     },
     "files": {
       "LICENSE": {
@@ -643,7 +643,7 @@
       },
       "nirs4all-io-wasm.cdx.json": {
         "size": 34796,
-        "sha256": "92a63462bc7f69aa112a88d1cb2e6274b64d492afb01f520450c29ac7bff3c61"
+        "sha256": "43dd5e731f7f87fdce3f7f20ad04f5d7f162a48e9943d1dc2bcc6909b2d05e77"
       },
       "LICENSES/COMMERCIAL-LICENSE_FR.md": {
         "size": 759,
@@ -738,8 +738,8 @@
         "sha256": "65b2236b75322c7e2ee2e1ccb0d2303808c43593c5ab7c0ccddf1a79a69f9615"
       },
       "nirs4all_io_wasm_bg.wasm": {
-        "size": 2920960,
-        "sha256": "d1ae1afccf3bb96bea144d319c09f9d55a76b782eea636efdef60029e68abdf8"
+        "size": 2923508,
+        "sha256": "8aa49ab5482f0485fbb6434d1e30e02117bf0c02f0ca1d0382fdb4184bb8d247"
       },
       "nirs4all_io_wasm_bg.wasm.d.ts": {
         "size": 1465,
@@ -747,17 +747,17 @@
       },
       "package.json": {
         "size": 689,
-        "sha256": "ea6b38e9457eb886b753861e64251269d962d99133eeac116bee4967ad510921"
+        "sha256": "1890c5814417080b4c0553ac5305cddab5dfba7f5a14e33b27b0781da5f011e4"
       }
     },
     "source_files": {},
     "registry": {
-      "metadata_url": "https://registry.npmjs.org/@nirs4all/io-wasm/0.3.9",
-      "tarball_url": "https://registry.npmjs.org/@nirs4all/io-wasm/-/io-wasm-0.3.9.tgz",
-      "size": 1136645,
-      "sha256": "9750bf4063f80a1a5f9d9c7ea23d61bd5c175e4d4a1a172cde72aa94fb1f515d",
-      "sha1": "e83c9b40476bcdab902d36a5eb849e48e5710974",
-      "integrity": "sha512-NvhrkvKTdLADxlLOiZtdAB/JrakByaY3wGiF9lcPUJWO30S/8i4DkTF9rkK9PwBW6dh9BPcSPwMY/b+jURe60Q=="
+      "metadata_url": "https://registry.npmjs.org/@nirs4all/io-wasm/0.4.0",
+      "tarball_url": "https://registry.npmjs.org/@nirs4all/io-wasm/-/io-wasm-0.4.0.tgz",
+      "size": 1136647,
+      "sha256": "41266de8a32f6a9a3db848e33c8acb26ca900457e7f7c9b0afc1fcc0a0cf9e89",
+      "sha1": "f6e10725e7fe47ca1f57a28f3309446ccde1a62a",
+      "integrity": "sha512-7Yl4OimR7DaUTucD6PEAKUY19tZ0bFizejO1hghQ9zDcgNZUPQz8wintgtUCHuBTuPyG2gApfbAdTcfOmSxD0Q=="
     },
     "projection": {
       "LICENSE": "LICENSE",
@@ -786,40 +786,40 @@
     },
     "browser_files": {
       "nirs4all_io_wasm.js": {
-        "url": "https://github.com/GBeurier/nirs4all-io/releases/download/v0.3.9/nirs4all-io-browser-web-nirs4all_io_wasm.js",
+        "url": "https://github.com/GBeurier/nirs4all-io/releases/download/v0.4.0/nirs4all-io-browser-web-nirs4all_io_wasm.js",
         "size": 27221,
         "sha256": "d3388bccc2540ead86cc41c27d0a932d732293df3ff61df8a85b2ff1f83bdc8c"
       },
       "nirs4all_io_wasm.d.ts": {
-        "url": "https://github.com/GBeurier/nirs4all-io/releases/download/v0.3.9/nirs4all-io-browser-web-nirs4all_io_wasm.d.ts",
+        "url": "https://github.com/GBeurier/nirs4all-io/releases/download/v0.4.0/nirs4all-io-browser-web-nirs4all_io_wasm.d.ts",
         "size": 6417,
         "sha256": "65b2236b75322c7e2ee2e1ccb0d2303808c43593c5ab7c0ccddf1a79a69f9615"
       },
       "nirs4all_io_wasm_bg.wasm": {
-        "url": "https://github.com/GBeurier/nirs4all-io/releases/download/v0.3.9/nirs4all-io-browser-web-nirs4all_io_wasm_bg.wasm",
-        "size": 2920960,
-        "sha256": "d1ae1afccf3bb96bea144d319c09f9d55a76b782eea636efdef60029e68abdf8"
+        "url": "https://github.com/GBeurier/nirs4all-io/releases/download/v0.4.0/nirs4all-io-browser-web-nirs4all_io_wasm_bg.wasm",
+        "size": 2923508,
+        "sha256": "8aa49ab5482f0485fbb6434d1e30e02117bf0c02f0ca1d0382fdb4184bb8d247"
       },
       "nirs4all_io_wasm_bg.wasm.d.ts": {
-        "url": "https://github.com/GBeurier/nirs4all-io/releases/download/v0.3.9/nirs4all-io-browser-web-nirs4all_io_wasm_bg.wasm.d.ts",
+        "url": "https://github.com/GBeurier/nirs4all-io/releases/download/v0.4.0/nirs4all-io-browser-web-nirs4all_io_wasm_bg.wasm.d.ts",
         "size": 1465,
         "sha256": "7c02f3dc116def130fe58a76321504653d20583636924c1837ab9f31301ef7a5"
       },
       "package.json": {
-        "url": "https://github.com/GBeurier/nirs4all-io/releases/download/v0.3.9/nirs4all-io-browser-web-package.json",
+        "url": "https://github.com/GBeurier/nirs4all-io/releases/download/v0.4.0/nirs4all-io-browser-web-package.json",
         "size": 689,
-        "sha256": "ea6b38e9457eb886b753861e64251269d962d99133eeac116bee4967ad510921"
+        "sha256": "1890c5814417080b4c0553ac5305cddab5dfba7f5a14e33b27b0781da5f011e4"
       }
     },
     "browser_deployment": {
       "payload": "Owner Release browser build; distinct from the registry Node payload.",
-      "receipt_url": "https://github.com/GBeurier/nirs4all-io/releases/download/v0.3.9/nirs4all-io-browser-web.provenance.json",
+      "receipt_url": "https://github.com/GBeurier/nirs4all-io/releases/download/v0.4.0/nirs4all-io-browser-web.provenance.json",
       "build": {
         "tool": "wasm-pack 0.15.0",
         "target": "web",
         "profile": "release",
         "cargo_locked": true,
-        "lock_sha256": "63a62e8b52a13cb04c198ac6a7b5eef78c7293c4e585d7ae483e740772d76958",
+        "lock_sha256": "fbdce3687d53eda8934cf9d6e4efe91f85a627b45451d97c4b8c8f0b30e9a75b",
         "command": "wasm-pack build bindings/wasm --target web --release -- --locked",
         "host": "Linux x86_64"
       }
@@ -828,14 +828,14 @@
   },
   "formats": {
     "package": "@nirs4all/formats-wasm",
-    "version": "0.2.17",
+    "version": "0.3.1",
     "destination": "src/engine/wasm/formats",
     "source": {
       "kind": "owner-browser-build-from-published-tag",
       "repository": "https://github.com/GBeurier/nirs4all-formats",
-      "commit": "53624331210b1a6e2d797fd13c6f07363386a91e",
-      "tree": "94b8fd7cfd6daec7cd5f5e743a1e0cce427d3993",
-      "tag": "v0.2.17",
+      "commit": "89f191396772c71379e7ad788f29f30472369498",
+      "tree": "d3e75dfb1da94988d13f9f37b392b541cdeb8e9d",
+      "tag": "v0.3.1",
       "artifact_origin": "Browser payload acquired from owner GitHub Release assets; npm identity describes the distinct published Node payload. Unchanged legal files come from the exact tagged owner source.",
       "independent_rebuild_claimed": false
     },
@@ -873,32 +873,32 @@
         "sha256": "d3256179c57f9821d53a63e496acfcfc170c5158d7924289ee4a2937fee2fed0"
       },
       "README.md": {
-        "size": 2918,
-        "sha256": "724b92047f40593956684d2e0e58fced595df93eb01c953792bc5e43ef0345ee"
+        "size": 3072,
+        "sha256": "75c59094b5a683d857afde59f1c6805b335bd60164c977d7b84eeb975d94cb94"
       },
       "THIRD_PARTY_NOTICES.md": {
         "size": 2630,
         "sha256": "39e06e5ca05c5bc5bab725d15f2eb28bfde7c33d79906c9f38534b7bb731a34a"
       },
       "nirs4all_formats_wasm.d.ts": {
-        "size": 5702,
-        "sha256": "289dd577b7042a5ce614b850499e0da09482b68d4594a7f205952b2ea4678f10"
+        "size": 6964,
+        "sha256": "37817c0a66ee0ce39f30334d26c5aaaea832568a08f4751df0afd6fbc5e4d3cd"
       },
       "nirs4all_formats_wasm.js": {
-        "size": 25923,
-        "sha256": "58fa8e66de312bee1bf6f3d055fe86574f74018b851c60a7c7940c0c8ab94d01"
+        "size": 29876,
+        "sha256": "02ac14094381159c124ffb9eecf5afb8f2f5a93b4208269fb2a03822161772d4"
       },
       "nirs4all_formats_wasm_bg.wasm": {
-        "size": 5988324,
-        "sha256": "fdc8f7f8e4db280467891ee79fdb1b49d3bfe69385917cc747badb4c245b27ef"
+        "size": 7684709,
+        "sha256": "a007ff06fbf7b5041f6cdef508d023cd20dc9f9473bd5543970cf4577386a47e"
       },
       "nirs4all_formats_wasm_bg.wasm.d.ts": {
-        "size": 2073,
-        "sha256": "a832542b730bb41a0481e25e038542f8516be26683538a51a90868a68f8b256f"
+        "size": 2325,
+        "sha256": "f8a3cd7249e68c8fed1441185524b1adbc702fb612008bb25dc0d3452f0916ee"
       },
       "package.json": {
-        "size": 609,
-        "sha256": "2f81e84e03e004298f1edcb62f379dd76bb430afcf32d9e15db7c03288805a2e"
+        "size": 608,
+        "sha256": "4bbd685ff03350b5f63719afeda325c23e2f76f9a1f0a58cb2c4ebb574e70179"
       },
       "reader-backports/hdf5-reader/Cargo.toml": {
         "size": 2346,
@@ -1240,14 +1240,14 @@
         "size": 20136,
         "sha256": "45803f57ab037a2fcb24e6ad7b5a8f7fb1cf6e50d8f60ad34c8133e1782f7ba2"
       },
-      "snippets/rds2rust-777dc4a0b14a5aca/wasm/decompress.js": {
+      "snippets/rds2rust-ca688fb9f32fd1d4/wasm/decompress.js": {
         "size": 16502,
         "sha256": "5258768404663b4b48572796afbe51e2a8669a89d3d5e21cf18c41830bf1d46b"
       }
     },
     "runtime_catalog": {
-      "count": 46,
-      "json_sha256": "4c74d3aa55dd9563e157c42cdac145250af2d658901da53c0155959df2cf58ed"
+      "count": 47,
+      "json_sha256": "d2558a8def57082e134f12457d03d009e415629dbe500bc13f3021c5af11afb8"
     },
     "source_files": {
       "LICENSE": {
@@ -1293,12 +1293,12 @@
     },
     "staged_package": "nirs4all-formats-wasm",
     "registry": {
-      "metadata_url": "https://registry.npmjs.org/@nirs4all%2fformats-wasm/0.2.17",
-      "tarball_url": "https://registry.npmjs.org/@nirs4all/formats-wasm/-/formats-wasm-0.2.17.tgz",
-      "size": 2214836,
-      "sha256": "9e8666899825912aeff640c6071eb7c707637572fcb7447761eb4e8d29231b55",
-      "sha1": "cd33a5775b6424d4fd16189a96ae2cd30747823b",
-      "integrity": "sha512-smeOiQC0l3OZWGaqE0yjImRlux7YzAcVyJH9IKcFiByu7Z8vG5YNFt+usffzBKk5JBBPSNJDq5LsErUqUoJyqg=="
+      "metadata_url": "https://registry.npmjs.org/@nirs4all%2fformats-wasm/0.3.1",
+      "tarball_url": "https://registry.npmjs.org/@nirs4all/formats-wasm/-/formats-wasm-0.3.1.tgz",
+      "size": 2476501,
+      "sha256": "620fc142dedf429562a68a8faf66d9ba7a746ec47642fcec895c6888d92667fc",
+      "sha1": "726506e3f722f88660dfc0fc48c1fb88128b8574",
+      "integrity": "sha512-qy/xoolMc1L9+FCDuEASVAbbxVSfKovHWVtl3PwsAODE/MwQE9dIA0w4P6+UfSj62ItcdWLhEUODC70PiNBHbA=="
     },
     "projection": {
       "README.md": "README.md",
@@ -1391,50 +1391,49 @@
     },
     "browser_files": {
       "nirs4all_formats_wasm.d.ts": {
-        "url": "https://github.com/GBeurier/nirs4all-formats/releases/download/v0.2.17/nirs4all-formats-browser-web-nirs4all_formats_wasm.d.ts",
-        "size": 5702,
-        "sha256": "289dd577b7042a5ce614b850499e0da09482b68d4594a7f205952b2ea4678f10"
+        "url": "https://github.com/GBeurier/nirs4all-formats/releases/download/v0.3.1/nirs4all-formats-browser-web-nirs4all_formats_wasm.d.ts",
+        "size": 6964,
+        "sha256": "37817c0a66ee0ce39f30334d26c5aaaea832568a08f4751df0afd6fbc5e4d3cd"
       },
       "nirs4all_formats_wasm.js": {
-        "url": "https://github.com/GBeurier/nirs4all-formats/releases/download/v0.2.17/nirs4all-formats-browser-web-nirs4all_formats_wasm.js",
-        "size": 25923,
-        "sha256": "58fa8e66de312bee1bf6f3d055fe86574f74018b851c60a7c7940c0c8ab94d01"
+        "url": "https://github.com/GBeurier/nirs4all-formats/releases/download/v0.3.1/nirs4all-formats-browser-web-nirs4all_formats_wasm.js",
+        "size": 29876,
+        "sha256": "02ac14094381159c124ffb9eecf5afb8f2f5a93b4208269fb2a03822161772d4"
       },
       "nirs4all_formats_wasm_bg.wasm": {
-        "url": "https://github.com/GBeurier/nirs4all-formats/releases/download/v0.2.17/nirs4all-formats-browser-web-nirs4all_formats_wasm_bg.wasm",
-        "size": 5988324,
-        "sha256": "fdc8f7f8e4db280467891ee79fdb1b49d3bfe69385917cc747badb4c245b27ef"
+        "url": "https://github.com/GBeurier/nirs4all-formats/releases/download/v0.3.1/nirs4all-formats-browser-web-nirs4all_formats_wasm_bg.wasm",
+        "size": 7684709,
+        "sha256": "a007ff06fbf7b5041f6cdef508d023cd20dc9f9473bd5543970cf4577386a47e"
       },
       "nirs4all_formats_wasm_bg.wasm.d.ts": {
-        "url": "https://github.com/GBeurier/nirs4all-formats/releases/download/v0.2.17/nirs4all-formats-browser-web-nirs4all_formats_wasm_bg.wasm.d.ts",
-        "size": 2073,
-        "sha256": "a832542b730bb41a0481e25e038542f8516be26683538a51a90868a68f8b256f"
+        "url": "https://github.com/GBeurier/nirs4all-formats/releases/download/v0.3.1/nirs4all-formats-browser-web-nirs4all_formats_wasm_bg.wasm.d.ts",
+        "size": 2325,
+        "sha256": "f8a3cd7249e68c8fed1441185524b1adbc702fb612008bb25dc0d3452f0916ee"
       },
       "package.json": {
-        "url": "https://github.com/GBeurier/nirs4all-formats/releases/download/v0.2.17/nirs4all-formats-browser-web-package.json",
-        "size": 609,
-        "sha256": "2f81e84e03e004298f1edcb62f379dd76bb430afcf32d9e15db7c03288805a2e"
+        "url": "https://github.com/GBeurier/nirs4all-formats/releases/download/v0.3.1/nirs4all-formats-browser-web-package.json",
+        "size": 608,
+        "sha256": "4bbd685ff03350b5f63719afeda325c23e2f76f9a1f0a58cb2c4ebb574e70179"
       },
-      "snippets/rds2rust-777dc4a0b14a5aca/wasm/decompress.js": {
-        "url": "https://github.com/GBeurier/nirs4all-formats/releases/download/v0.2.17/nirs4all-formats-browser-web-snippets__rds2rust-777dc4a0b14a5aca__wasm__decompress.js",
+      "snippets/rds2rust-ca688fb9f32fd1d4/wasm/decompress.js": {
+        "url": "https://github.com/GBeurier/nirs4all-formats/releases/download/v0.3.1/nirs4all-formats-browser-web-snippets__rds2rust-ca688fb9f32fd1d4__wasm__decompress.js",
         "size": 16502,
         "sha256": "5258768404663b4b48572796afbe51e2a8669a89d3d5e21cf18c41830bf1d46b"
       }
     },
     "browser_deployment": {
       "target": "web",
-      "version": "0.2.17",
-      "receipt_url": "https://github.com/GBeurier/nirs4all-formats/releases/download/v0.2.17/nirs4all-formats-browser-web.provenance.json",
+      "version": "0.3.1",
+      "receipt_url": "https://github.com/GBeurier/nirs4all-formats/releases/download/v0.3.1/nirs4all-formats-browser-web.provenance.json",
       "build": {
+        "tool": "wasm-pack 0.15.0",
         "target": "web",
         "profile": "release",
-        "features": [
-          "fmt-hdf5",
-          "fmt-matlab",
-          "fmt-parquet"
-        ],
-        "executions": 1,
-        "independent_rebuild_claimed": false
+        "features": "Default binding features",
+        "command": "wasm-pack build bindings/wasm --target web --release --locked",
+        "host": "Linux x86_64",
+        "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+        "path_remapping": true
       },
       "publication": "existing owner GitHub Release assets",
       "independent_rebuild_claimed": false
@@ -1815,21 +1814,21 @@
   },
   "datasets": {
     "package": "@nirs4all/datasets-wasm",
-    "version": "0.3.23",
+    "version": "0.4.0",
     "destination": "src/engine/wasm/datasets",
     "source": {
       "repository": "https://github.com/GBeurier/nirs4all-datasets",
-      "commit": "c8aef1ec94ecde6a51abce1c61ee955c3fd0e838",
-      "tree": "383ec36ca3667a9ee08cdf8e0facd3a81f1b869b",
-      "tag": "v0.3.23"
+      "commit": "74bd2c6a21d344771efa0c23695216e667daba6b",
+      "tree": "66f571ffde539da1536adf1ef46aa06c191baa5d",
+      "tag": "v0.4.0"
     },
     "registry": {
-      "metadata_url": "https://registry.npmjs.org/@nirs4all/datasets-wasm/0.3.23",
-      "tarball_url": "https://registry.npmjs.org/@nirs4all/datasets-wasm/-/datasets-wasm-0.3.23.tgz",
-      "size": 419454,
-      "sha256": "e4c401eb1587eca464763c15ab5582dac2c0ac9ddf223009e434ea7cb8f86d77",
-      "sha1": "93ded1bf1c1bca963d3598cbfd74be1cc2cca5be",
-      "integrity": "sha512-s+6f2sv3cUMqg1Qpa1AVMEkcX63+DXtH6IyD9xgLIEubHPAgVyVQdkohKWCBK15kawwG+blGjjrihZa+6TNVGA=="
+      "metadata_url": "https://registry.npmjs.org/@nirs4all%2fdatasets-wasm/0.4.0",
+      "tarball_url": "https://registry.npmjs.org/@nirs4all/datasets-wasm/-/datasets-wasm-0.4.0.tgz",
+      "size": 419363,
+      "sha256": "2a160bdd9a2c7cb212ad2fbc79df7c4cd6e40375a70d305d698635850b44e4ea",
+      "sha1": "c7a5fa62da208cab0fbb47fb7a28a57d9ebd5146",
+      "integrity": "sha512-3SFk5R2Nd+/+Su2p8O3/lnVBlk2qTMYHhoItIh+yIY1FjE9ykF4n0HlYONvWVyPa5tISVmgvkxh9pWK03ofIIw=="
     },
     "projection": {
       "LICENSE": "LICENSE",
@@ -1880,43 +1879,43 @@
       "LICENSES/THIRD-PARTY/memchr-2.8.3/COPYING": "LICENSES/THIRD-PARTY/memchr-2.8.3/COPYING",
       "LICENSES/THIRD-PARTY/memchr-2.8.3/LICENSE-MIT": "LICENSES/THIRD-PARTY/memchr-2.8.3/LICENSE-MIT",
       "LICENSES/THIRD-PARTY/memchr-2.8.3/UNLICENSE": "LICENSES/THIRD-PARTY/memchr-2.8.3/UNLICENSE",
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSE": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSE",
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/AGPL-3.0-or-later.txt": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/AGPL-3.0-or-later.txt",
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/Apache-2.0.txt": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/Apache-2.0.txt",
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/BSD-3-Clause.txt": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/BSD-3-Clause.txt",
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/CC-BY-4.0.txt": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/CC-BY-4.0.txt",
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/COMMERCIAL-LICENSE.md": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/COMMERCIAL-LICENSE.md",
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/COMMERCIAL-LICENSE_FR.md": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/COMMERCIAL-LICENSE_FR.md",
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/CeCILL-2.1.txt": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/CeCILL-2.1.txt",
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/MIT.txt": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/MIT.txt",
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSING.md": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSING.md",
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/THIRD_PARTY_NOTICES.md": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/THIRD_PARTY_NOTICES.md",
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/LICENSE": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/LICENSE",
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/LICENSE-CeCILL-2.1": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/LICENSE-CeCILL-2.1",
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSE": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSE",
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/AGPL-3.0-or-later.txt": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/AGPL-3.0-or-later.txt",
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/Apache-2.0.txt": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/Apache-2.0.txt",
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/BSD-3-Clause.txt": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/BSD-3-Clause.txt",
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/CC-BY-4.0.txt": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/CC-BY-4.0.txt",
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/COMMERCIAL-LICENSE.md": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/COMMERCIAL-LICENSE.md",
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/COMMERCIAL-LICENSE_FR.md": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/COMMERCIAL-LICENSE_FR.md",
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/CeCILL-2.1.txt": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/CeCILL-2.1.txt",
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/MIT.txt": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/MIT.txt",
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSING.md": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSING.md",
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/THIRD_PARTY_NOTICES.md": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/THIRD_PARTY_NOTICES.md",
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/LICENSE": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/LICENSE",
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/COPY_PROVENANCE.md": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/COPY_PROVENANCE.md",
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSE": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSE",
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/AGPL-3.0-or-later.txt": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/AGPL-3.0-or-later.txt",
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/Apache-2.0.txt": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/Apache-2.0.txt",
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/BSD-3-Clause.txt": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/BSD-3-Clause.txt",
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/COMMERCIAL-LICENSE.md": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/COMMERCIAL-LICENSE.md",
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/COMMERCIAL-LICENSE_FR.md": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/COMMERCIAL-LICENSE_FR.md",
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/CeCILL-2.1.txt": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/CeCILL-2.1.txt",
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/MIT.txt": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/MIT.txt",
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/Unicode-3.0.txt": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/Unicode-3.0.txt",
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSING.md": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSING.md",
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/THIRD_PARTY_NOTICES.md": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/THIRD_PARTY_NOTICES.md",
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSE": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSE",
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/AGPL-3.0-or-later.txt": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/AGPL-3.0-or-later.txt",
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/Apache-2.0.txt": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/Apache-2.0.txt",
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/BSD-3-Clause.txt": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/BSD-3-Clause.txt",
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/CC-BY-4.0.txt": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/CC-BY-4.0.txt",
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE.md": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE.md",
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE_FR.md": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE_FR.md",
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/CeCILL-2.1.txt": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/CeCILL-2.1.txt",
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/MIT.txt": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/MIT.txt",
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSING.md": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSING.md",
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/THIRD_PARTY_NOTICES.md": "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/THIRD_PARTY_NOTICES.md",
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/LICENSE": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/LICENSE",
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/LICENSE-CeCILL-2.1": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/LICENSE-CeCILL-2.1",
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSE": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSE",
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/AGPL-3.0-or-later.txt": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/AGPL-3.0-or-later.txt",
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/Apache-2.0.txt": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/Apache-2.0.txt",
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/BSD-3-Clause.txt": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/BSD-3-Clause.txt",
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/CC-BY-4.0.txt": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/CC-BY-4.0.txt",
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE.md": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE.md",
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE_FR.md": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE_FR.md",
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/CeCILL-2.1.txt": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/CeCILL-2.1.txt",
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/MIT.txt": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/MIT.txt",
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSING.md": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSING.md",
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/THIRD_PARTY_NOTICES.md": "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/THIRD_PARTY_NOTICES.md",
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/LICENSE": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/LICENSE",
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/COPY_PROVENANCE.md": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/COPY_PROVENANCE.md",
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSE": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSE",
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/AGPL-3.0-or-later.txt": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/AGPL-3.0-or-later.txt",
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/Apache-2.0.txt": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/Apache-2.0.txt",
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/BSD-3-Clause.txt": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/BSD-3-Clause.txt",
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE.md": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE.md",
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE_FR.md": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE_FR.md",
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/CeCILL-2.1.txt": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/CeCILL-2.1.txt",
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/MIT.txt": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/MIT.txt",
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/Unicode-3.0.txt": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/Unicode-3.0.txt",
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSING.md": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSING.md",
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/THIRD_PARTY_NOTICES.md": "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/THIRD_PARTY_NOTICES.md",
       "LICENSES/THIRD-PARTY/once_cell-1.21.4/LICENSE-APACHE": "LICENSES/THIRD-PARTY/once_cell-1.21.4/LICENSE-APACHE",
       "LICENSES/THIRD-PARTY/once_cell-1.21.4/LICENSE-MIT": "LICENSES/THIRD-PARTY/once_cell-1.21.4/LICENSE-MIT",
       "LICENSES/THIRD-PARTY/pin-project-lite-0.2.18/LICENSE-APACHE": "LICENSES/THIRD-PARTY/pin-project-lite-0.2.18/LICENSE-APACHE",
@@ -2180,151 +2179,151 @@
         "size": 1211,
         "sha256": "7e12e5df4bae12cb21581ba157ced20e1986a0508dd10d0e8a4ab9a4cf94e85c"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSE": {
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSE": {
         "size": 34020,
         "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/AGPL-3.0-or-later.txt": {
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/AGPL-3.0-or-later.txt": {
         "size": 34020,
         "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/Apache-2.0.txt": {
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/Apache-2.0.txt": {
         "size": 10280,
         "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/BSD-3-Clause.txt": {
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/BSD-3-Clause.txt": {
         "size": 1460,
         "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/CC-BY-4.0.txt": {
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/CC-BY-4.0.txt": {
         "size": 17023,
         "sha256": "d557539df68e771cc1eedcc91d13f70fca930e508d11eedcafa4b15db49e3744"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/COMMERCIAL-LICENSE.md": {
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE.md": {
         "size": 682,
         "sha256": "951afe3e34cc4bfdea2253fc126d632fc76c3911dd3c39d0ce1eae9c144c60e5"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/COMMERCIAL-LICENSE_FR.md": {
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE_FR.md": {
         "size": 771,
         "sha256": "85f1526a08c0e6080510a9a04c635ff316b6f692e958e526e8042497146b3efa"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/CeCILL-2.1.txt": {
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/CeCILL-2.1.txt": {
         "size": 21778,
         "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSES/MIT.txt": {
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSES/MIT.txt": {
         "size": 1078,
         "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/LICENSING.md": {
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/LICENSING.md": {
         "size": 2541,
         "sha256": "efc4c0cf0b0e96be34154d7d3dde80e0bcb1868472afd33c56ecdef726c14031"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.3.23/owner/THIRD_PARTY_NOTICES.md": {
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-core-0.4.0/owner/THIRD_PARTY_NOTICES.md": {
         "size": 3698,
         "sha256": "dcafb67b86f1bc94141833c5bdfa320714ea8ca1c30c2cef5bb3fcdbc5a3e979"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/LICENSE": {
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/LICENSE": {
         "size": 34020,
         "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/LICENSE-CeCILL-2.1": {
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/LICENSE-CeCILL-2.1": {
         "size": 21778,
         "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSE": {
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSE": {
         "size": 34020,
         "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/AGPL-3.0-or-later.txt": {
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/AGPL-3.0-or-later.txt": {
         "size": 34020,
         "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/Apache-2.0.txt": {
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/Apache-2.0.txt": {
         "size": 10280,
         "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/BSD-3-Clause.txt": {
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/BSD-3-Clause.txt": {
         "size": 1460,
         "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/CC-BY-4.0.txt": {
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/CC-BY-4.0.txt": {
         "size": 17023,
         "sha256": "d557539df68e771cc1eedcc91d13f70fca930e508d11eedcafa4b15db49e3744"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/COMMERCIAL-LICENSE.md": {
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE.md": {
         "size": 682,
         "sha256": "951afe3e34cc4bfdea2253fc126d632fc76c3911dd3c39d0ce1eae9c144c60e5"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/COMMERCIAL-LICENSE_FR.md": {
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE_FR.md": {
         "size": 771,
         "sha256": "85f1526a08c0e6080510a9a04c635ff316b6f692e958e526e8042497146b3efa"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/CeCILL-2.1.txt": {
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/CeCILL-2.1.txt": {
         "size": 21778,
         "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSES/MIT.txt": {
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSES/MIT.txt": {
         "size": 1078,
         "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/LICENSING.md": {
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/LICENSING.md": {
         "size": 2541,
         "sha256": "efc4c0cf0b0e96be34154d7d3dde80e0bcb1868472afd33c56ecdef726c14031"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.3.23/owner/THIRD_PARTY_NOTICES.md": {
+      "LICENSES/THIRD-PARTY/nirs4all-datasets-wasm-0.4.0/owner/THIRD_PARTY_NOTICES.md": {
         "size": 3698,
         "sha256": "dcafb67b86f1bc94141833c5bdfa320714ea8ca1c30c2cef5bb3fcdbc5a3e979"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/LICENSE": {
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/LICENSE": {
         "size": 34020,
         "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/COPY_PROVENANCE.md": {
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/COPY_PROVENANCE.md": {
         "size": 38239,
         "sha256": "87adbeec7f7a594712b1c463bf7674a519887fa29354f09ada1e7371c3d10562"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSE": {
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSE": {
         "size": 34020,
         "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/AGPL-3.0-or-later.txt": {
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/AGPL-3.0-or-later.txt": {
         "size": 34020,
         "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/Apache-2.0.txt": {
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/Apache-2.0.txt": {
         "size": 9723,
         "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/BSD-3-Clause.txt": {
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/BSD-3-Clause.txt": {
         "size": 1459,
         "sha256": "3cf06aba3588c41c514f6946bb2d757b413ff6491647d474800f55edca75dcb4"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/COMMERCIAL-LICENSE.md": {
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE.md": {
         "size": 670,
         "sha256": "e62a66dc45d618d419706048b17a840f87d0c0c5c940eadd1cf6ea13c7eae08f"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/COMMERCIAL-LICENSE_FR.md": {
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/COMMERCIAL-LICENSE_FR.md": {
         "size": 759,
         "sha256": "7d1fd841891d4cb53836a6aca2fbbf7f36ef3bca540a394a9d94633af34ea3d6"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/CeCILL-2.1.txt": {
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/CeCILL-2.1.txt": {
         "size": 21778,
         "sha256": "4ea234937bc7b0aa5247e436690d1eb9324875bc7590ecde50befd38e35190a5"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/MIT.txt": {
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/MIT.txt": {
         "size": 1078,
         "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSES/Unicode-3.0.txt": {
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSES/Unicode-3.0.txt": {
         "size": 1995,
         "sha256": "f7db81051789b729fea528a63ec4c938fdcb93d9d61d97dc8cc2e9df6d47f2a1"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/LICENSING.md": {
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/LICENSING.md": {
         "size": 2113,
         "sha256": "b41ad1d4b8e62c89e42704fc4c9b5bb8a2099a0ad0680d72e95efb57c5d3326c"
       },
-      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.3.6/owner/THIRD_PARTY_NOTICES.md": {
+      "LICENSES/THIRD-PARTY/nirs4all-io-core-0.4.0/owner/THIRD_PARTY_NOTICES.md": {
         "size": 5732,
         "sha256": "c2f5c9061e7bc5a259a2d630330930ce9438f157e9646724824730ce516a5179"
       },
@@ -2593,8 +2592,8 @@
         "sha256": "dcafb67b86f1bc94141833c5bdfa320714ea8ca1c30c2cef5bb3fcdbc5a3e979"
       },
       "nirs4all-datasets-wasm.licenses.json": {
-        "size": 27914,
-        "sha256": "a53da897f1c49ba7f4206f3806101436e4ca4c143a1cf7c32b9696bcad3c5b2e"
+        "size": 27887,
+        "sha256": "f49b0d7b99bcfcdc8d3e8b0008ffc82cb38b58557a2077ba60fdb876ad20be01"
       },
       "nirs4all_datasets_wasm.d.ts": {
         "size": 3006,
@@ -2605,30 +2604,54 @@
         "sha256": "f3ef929612b431e8f530a84e1a732ace45f71938c9a75ec0bc8cc1cba030083a"
       },
       "nirs4all_datasets_wasm_bg.wasm": {
-        "size": 1471074,
-        "sha256": "669729d3a077c9a8250b6484fc8ccc950b594af2aef2af95d5ed6feaaf4301ad"
+        "size": 1487842,
+        "sha256": "830e7e6349fd4b3f5564231f71de41886a2ff6745fc414100c500cbcbc41e442"
       },
       "nirs4all_datasets_wasm_bg.wasm.d.ts": {
         "size": 1060,
         "sha256": "f11cc6cebbaef3c8b38b958f17057139c3802c0433c23f4eee411794286e7ced"
       },
       "package.json": {
-        "size": 935,
-        "sha256": "09e0e9e9a9dd27c5b476095b3626a8845b9058b0ad8c7dbc2fade94558d265cc"
+        "size": 934,
+        "sha256": "26a902371f8e71f91b099062e28158280385278225f26cec2979b679ecd790e3"
       }
     },
-    "build": {
-      "target": "web",
-      "profile": "release",
-      "cargo_locked": true,
-      "manifest": "bindings/wasm/Cargo.toml",
-      "features": [],
-      "wasm_bindgen": "0.2.129",
-      "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
-      "lock_sha256": "fcb87636ca9f3b17c9c814197549d8010c31db6c469174299fa54bb5b605035a",
-      "executions": 1,
-      "independent_rebuild_claimed": false
+    "package_type_normalization": "module",
+    "browser_files": {
+      "nirs4all_datasets_wasm.d.ts": {
+        "url": "https://github.com/GBeurier/nirs4all-datasets/releases/download/v0.4.0/nirs4all-datasets-browser-web-nirs4all_datasets_wasm.d.ts",
+        "size": 3006,
+        "sha256": "c4a375e1a41eacf2b6e82d0790b2352ccbf9801261138679723dc361987c85d6"
+      },
+      "nirs4all_datasets_wasm.js": {
+        "url": "https://github.com/GBeurier/nirs4all-datasets/releases/download/v0.4.0/nirs4all-datasets-browser-web-nirs4all_datasets_wasm.js",
+        "size": 20509,
+        "sha256": "f3ef929612b431e8f530a84e1a732ace45f71938c9a75ec0bc8cc1cba030083a"
+      },
+      "nirs4all_datasets_wasm_bg.wasm": {
+        "url": "https://github.com/GBeurier/nirs4all-datasets/releases/download/v0.4.0/nirs4all-datasets-browser-web-nirs4all_datasets_wasm_bg.wasm",
+        "size": 1487842,
+        "sha256": "830e7e6349fd4b3f5564231f71de41886a2ff6745fc414100c500cbcbc41e442"
+      },
+      "nirs4all_datasets_wasm_bg.wasm.d.ts": {
+        "url": "https://github.com/GBeurier/nirs4all-datasets/releases/download/v0.4.0/nirs4all-datasets-browser-web-nirs4all_datasets_wasm_bg.wasm.d.ts",
+        "size": 1060,
+        "sha256": "f11cc6cebbaef3c8b38b958f17057139c3802c0433c23f4eee411794286e7ced"
+      }
     },
-    "package_type_normalization": "module"
+    "browser_deployment": {
+      "payload": "Published owner web-target files and separately verified npm notices.",
+      "receipt_url": "https://github.com/GBeurier/nirs4all-datasets/releases/download/v0.4.0/nirs4all-datasets-browser-web.provenance.json",
+      "build": {
+        "target": "web",
+        "profile": "release",
+        "cargo_locked": true,
+        "lock_sha256": "fb658800d77fdfda220ae9adf53e7430e6b2e577a7b260f86d092d6e470fed12",
+        "tool": "wasm-bindgen 0.2.129",
+        "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+        "command": "cargo build --locked --release --target wasm32-unknown-unknown --manifest-path bindings/wasm/Cargo.toml, then wasm-bindgen --target web",
+        "host": "Linux x86_64"
+      }
+    }
   }
 }

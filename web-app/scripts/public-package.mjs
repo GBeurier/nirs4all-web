@@ -79,7 +79,15 @@ export async function stagePackage(key) {
   const pin = pins[key]
   if (pin.local) return stageLocalPackage(key, pin)
   const metadata = await (await fetch(pin.registry.metadata_url)).json()
-  const bytes = Buffer.from(await (await fetch(pin.registry.tarball_url)).arrayBuffer())
+  const tarballUrl = new URL(pin.registry.tarball_url)
+  let tarball = await fetch(tarballUrl)
+  // An edge may still cache the 404 from before this version was published.
+  if (tarball.status === 404) {
+    tarballUrl.searchParams.set('version', pin.version)
+    tarball = await fetch(tarballUrl)
+  }
+  if (!tarball.ok) throw new Error(`Registry tarball request failed for ${key}: HTTP ${tarball.status}`)
+  const bytes = Buffer.from(await tarball.arrayBuffer())
   check(bytes, pin.registry, key)
   if (metadata.name !== pin.package || metadata.version !== pin.version || metadata.dist?.tarball !== pin.registry.tarball_url ||
       metadata.dist?.integrity !== pin.registry.integrity || metadata.dist?.shasum !== pin.registry.sha1 ||

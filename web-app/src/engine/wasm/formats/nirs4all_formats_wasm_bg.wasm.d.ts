@@ -3,14 +3,17 @@
 export const memory: WebAssembly.Memory;
 export const _start: () => void;
 export const decodeMultimodalBytes: (a: number, b: number, c: number, d: number, e: number) => [number, number, number];
+export const exportTargets: () => [number, number, number];
 export const features: () => [number, number, number];
 export const multimodalReaderCatalog: () => [number, number, number];
 export const openBytes: (a: number, b: number, c: number, d: number) => [number, number, number];
 export const openWithSidecars: (a: number, b: number, c: number, d: number, e: any) => [number, number, number];
+export const planConversion: (a: any, b: number, c: number, d: any) => [number, number, number];
 export const probeBytes: (a: number, b: number, c: number, d: number) => [number, number, number];
 export const readerCatalog: () => [number, number, number];
 export const recommended_chunk_size_mb: () => number;
 export const sidecarRequirements: (a: number, b: number, c: number, d: number) => [number, number, number];
+export const version: () => [number, number];
 export const rust_zstd_wasm_shim_calloc: (a: number, b: number) => number;
 export const rust_zstd_wasm_shim_free: (a: number) => void;
 export const rust_zstd_wasm_shim_malloc: (a: number) => number;
@@ -19,7 +22,7 @@ export const rust_zstd_wasm_shim_memcpy: (a: number, b: number, c: number) => nu
 export const rust_zstd_wasm_shim_memmove: (a: number, b: number, c: number) => number;
 export const rust_zstd_wasm_shim_memset: (a: number, b: number, c: number) => number;
 export const rust_zstd_wasm_shim_qsort: (a: number, b: number, c: number, d: number) => void;
-export const version: () => [number, number];
+export const writeRecords: (a: any, b: number, c: number, d: any) => [number, number, number];
 export const __wbindgen_malloc: (a: number, b: number) => number;
 export const __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
 export const __wbindgen_free: (a: number, b: number, c: number) => void;
